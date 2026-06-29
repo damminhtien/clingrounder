@@ -18,14 +18,15 @@ retrieval, and experiment-analysis ecosystem is stronger in Python for this proj
 
 ## Stack
 
-- Language: Python 3.11/3.12 target.
+- Language: Python 3.14 target.
 - Package/project: `uv` with `pyproject.toml` as the source of truth.
 - Code quality: ruff, mypy, pytest, pre-commit.
 - Schema: Pydantic v2 is available for external schemas; internal baseline schemas use dataclasses
   and enums.
 - Data: Polars, DuckDB, PyArrow/Parquet, and JSON Lines are optional extras for larger datasets.
 - NLP/ML: PyTorch, Transformers, Datasets, Tokenizers, Accelerate, and scikit-learn are optional
-  model extras.
+  model extras. PyTorch and Accelerate are platform-specific; keep markers where Python 3.14 wheels
+  are not available for a local platform.
 - Retrieval: built-in exact/fuzzy/char-ngram/BM25 baseline, with optional bm25s, RapidFuzz,
   FAISS CPU, and Qdrant client.
 - Graph: lightweight in-memory graph first, with optional NetworkX and DuckDB/SQLite-ready tables.

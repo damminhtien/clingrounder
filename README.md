@@ -4,6 +4,8 @@ Prototype system for clinical entity extraction, dictionary-constrained normaliz
 
 The official competition schema is not available yet, so this repository starts with a small but complete Vietnamese/English synthetic baseline that is easy to adapt when the final data arrives.
 
+Target runtime: Python 3.14+ with latest compatible library lower bounds in `pyproject.toml`.
+
 ## What Works Now
 
 - Typed internal schema for documents, entities, candidates, relations, and predictions.
@@ -62,6 +64,10 @@ uv sync --extra api           # fastapi, uvicorn
 uv sync --extra experiment    # hydra-core, omegaconf, mlflow
 uv sync --extra wandb         # optional W&B tracking
 ```
+
+Note: PyTorch and Accelerate wheels are platform-specific. On Python 3.14, they are enabled where
+compatible wheels exist; macOS x86_64 may need an official PyTorch index, a different Python build,
+or a source install.
 
 ## Expected Pipeline
 

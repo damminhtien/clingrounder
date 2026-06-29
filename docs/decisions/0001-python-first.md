@@ -11,7 +11,7 @@ future transformer integration. Python has the strongest local ecosystem for thi
 
 ## Decision
 
-Use Python 3.11+ as the core runtime. Keep Rust or C++ for profiled bottlenecks only.
+Use Python 3.14+ as the core runtime. Keep Rust or C++ for profiled bottlenecks only.
 
 ## Consequences
 
