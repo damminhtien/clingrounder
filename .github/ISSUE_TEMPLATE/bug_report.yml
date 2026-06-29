@@ -1,0 +1,54 @@
+name: Bug report
+description: Report a reproducible bug.
+title: "[bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "Do not include PHI, credentials, private clinical text, or restricted dataset files."
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Commands, input shape, and minimal synthetic example.
+      placeholder: |
+        python scripts/run_pipeline.py --input ... --output ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: |
+        Python:
+        OS:
+        Install method:
+  - type: checkboxes
+    id: invariants
+    attributes:
+      label: Invariant area
+      options:
+        - label: Offset preservation
+        - label: Dictionary/code validation
+        - label: Context/assertion
+        - label: KG/relation constraints
+        - label: Evaluation/metrics

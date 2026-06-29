@@ -1,0 +1,40 @@
+name: Feature request
+description: Propose an improvement or new module.
+title: "[feat]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What research or engineering need does this address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the desired behavior and module boundary.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation plan
+      description: Tests, metrics, or ablations that would prove the feature works.
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - label: Schema/export
+        - label: Offset/preprocessing
+        - label: Dictionaries/linking/retrieval
+        - label: Context/assertion
+        - label: Relations/KG
+        - label: Evaluation/experiments
+        - label: Docs/tooling

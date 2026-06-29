@@ -93,6 +93,16 @@ tests/                     Unit and smoke tests
 AGENTS.md                  Repo instructions for coding agents
 ```
 
+## Project Hygiene
+
+- License: MIT, see `LICENSE`.
+- Contributions: see `CONTRIBUTING.md`.
+- Security and private-data handling: see `SECURITY.md`.
+- Conduct: see `CODE_OF_CONDUCT.md`.
+- Changelog: see `CHANGELOG.md`.
+- CI: GitHub Actions workflow under `.github/workflows/ci.yml`.
+- Local shortcuts: `make lint`, `make type`, `make test`, `make pipeline`, `make validate`.
+
 ## Current Limitations
 
 - Dictionaries are seed dictionaries, not full ICD-10/RxNorm releases.

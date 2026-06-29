@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+title: "Ontological Reasoning in Medical Knowledge Retrieval"
+message: "If you use this prototype in research, please cite it using this metadata."
+type: software
+authors:
+  - name: "medical-kg-nlp contributors"
+license: MIT
+version: 0.1.0
+date-released: 2026-06-29
+abstract: "Python-first prototype for clinical entity extraction, dictionary-constrained normalization, context reasoning, relation extraction, and lightweight KG validation."
