@@ -1,0 +1,16 @@
+---
+description: Medical NLP invariants
+globs:
+  - "src/medical_kg_nlp/**/*.py"
+  - "tests/**/*.py"
+alwaysApply: true
+---
+
+# Medical NLP Rules
+
+- Preserve original character offsets.
+- Use normalized text only for matching and lookup.
+- Never output codes outside the loaded dictionary.
+- Never map drugs to ICD-10 or diseases to RxNorm.
+- Keep negated and family-history diseases distinct from present patient conditions.
+- Candidate generation must filter by entity type and code-system compatibility.

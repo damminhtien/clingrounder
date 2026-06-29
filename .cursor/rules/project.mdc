@@ -1,0 +1,15 @@
+---
+description: Project architecture guardrails
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# Project Rules
+
+- Keep the core Python-first.
+- Do not add Java as a core runtime.
+- Add Rust/C++ only after profiling identifies a bottleneck.
+- Keep modules behind the existing pipeline boundaries.
+- Do not add hosted APIs or graph databases to the core path without an explicit task.
+- Read `AGENTS.md` and the relevant docs before broad changes.

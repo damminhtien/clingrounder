@@ -18,16 +18,32 @@ The official competition schema is not available yet, so this repository starts 
 
 ## Quick Start
 
+Preferred:
+
+```bash
+uv sync --extra dev
+
+uv run python scripts/build_dictionaries.py --config configs/default.yaml
+uv run python scripts/build_indexes.py --config configs/default.yaml
+uv run python scripts/run_pipeline.py --input data/samples/sample_notes.jsonl --output outputs/predictions.jsonl
+uv run python scripts/validate_predictions.py --pred outputs/predictions.jsonl --documents data/samples/sample_notes.jsonl --dictionary data/dictionaries/seed_concepts.jsonl
+uv run python scripts/evaluate.py --gold data/samples/gold.jsonl --pred outputs/predictions.jsonl
+uv run pytest tests/
+```
+
+Fallback without `uv`:
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+python -m pip install -e ".[dev]"
 
 python scripts/build_dictionaries.py --config configs/default.yaml
 python scripts/build_indexes.py --config configs/default.yaml
 python scripts/run_pipeline.py --input data/samples/sample_notes.jsonl --output outputs/predictions.jsonl
+python scripts/validate_predictions.py --pred outputs/predictions.jsonl --documents data/samples/sample_notes.jsonl --dictionary data/dictionaries/seed_concepts.jsonl
 python scripts/evaluate.py --gold data/samples/gold.jsonl --pred outputs/predictions.jsonl
-pytest tests/
+python -m pytest tests/
 ```
 
 ## Expected Pipeline
@@ -51,10 +67,13 @@ Raw clinical text
 configs/                  YAML configuration
 data/dictionaries/         Seed ICD/RxNorm/local dictionaries
 data/samples/              Synthetic notes and gold annotations
-docs/design.md             Technical design
+docs/                      Architecture, invariants, schema, evaluation, decisions
 scripts/                   Pipeline, evaluation, dictionary, and index commands
 src/medical_kg_nlp/        Python package
 tests/                     Unit and smoke tests
+.cursor/rules/             Cursor project rules
+.claude/skills/            Claude skill briefs for module-focused agent work
+AGENTS.md                  Repo instructions for coding agents
 ```
 
 ## Current Limitations
@@ -65,4 +84,3 @@ tests/                     Unit and smoke tests
 - Evaluation is focused on the internal schema and synthetic sample.
 
 The current priority is correctness of schema, offsets, linking constraints, context handling, and end-to-end debuggability before adding large models.
-

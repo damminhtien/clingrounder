@@ -1,0 +1,16 @@
+---
+description: Testing and verification rules
+globs:
+  - "src/**/*.py"
+  - "tests/**/*.py"
+  - "scripts/**/*.py"
+alwaysApply: true
+---
+
+# Testing Rules
+
+- Add focused tests for every behavior change.
+- Run targeted pytest files while iterating.
+- Run full `pytest tests` before handoff when feasible.
+- Run `scripts/validate_predictions.py` when prediction JSON output changes.
+- Treat offset, schema, and KG constraint regressions as blocking.
