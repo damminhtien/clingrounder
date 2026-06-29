@@ -1,0 +1,7 @@
+constraints:
+  enforce_type_code_system: true
+  enforce_relation_types: true
+  suppress_confirmed_patient_condition_for:
+    - NEGATED
+    - FAMILY
+

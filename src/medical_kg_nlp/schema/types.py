@@ -1,0 +1,54 @@
+from __future__ import annotations
+from enum import Enum
+
+
+class EntityType(str, Enum):
+    DISEASE = "DISEASE"
+    SYMPTOM = "SYMPTOM"
+    DRUG = "DRUG"
+    LAB_TEST = "LAB_TEST"
+    LAB_RESULT = "LAB_RESULT"
+    PROCEDURE = "PROCEDURE"
+    PATIENT_INFO = "PATIENT_INFO"
+    ANATOMY = "ANATOMY"
+    FINDING = "FINDING"
+    OTHER = "OTHER"
+
+
+class AssertionStatus(str, Enum):
+    PRESENT = "PRESENT"
+    NEGATED = "NEGATED"
+    HISTORICAL = "HISTORICAL"
+    FAMILY = "FAMILY"
+    POSSIBLE = "POSSIBLE"
+    CONDITIONAL = "CONDITIONAL"
+    PLANNED = "PLANNED"
+    RESOLVED = "RESOLVED"
+    UNKNOWN = "UNKNOWN"
+
+
+class CodeSystem(str, Enum):
+    ICD10 = "ICD-10"
+    RXNORM = "RxNorm"
+    UMLS = "UMLS"
+    SNOMED = "SNOMED"
+    LOCAL = "LOCAL"
+    NONE = "NONE"
+
+
+class RelationType(str, Enum):
+    TREATS = "TREATS"
+    HAS_SYMPTOM = "HAS_SYMPTOM"
+    SUGGESTS = "SUGGESTS"
+    HAS_TEST = "HAS_TEST"
+    HAS_VALUE = "HAS_VALUE"
+    HAS_DOSE = "HAS_DOSE"
+    HAS_ROUTE = "HAS_ROUTE"
+    HAS_FREQUENCY = "HAS_FREQUENCY"
+    CAUSED_BY = "CAUSED_BY"
+    ASSOCIATED_WITH = "ASSOCIATED_WITH"
+    IS_A = "IS_A"
+    PART_OF = "PART_OF"
+    NEGATES = "NEGATES"
+    UNKNOWN = "UNKNOWN"
+

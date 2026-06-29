@@ -1,0 +1,19 @@
+candidate_generation:
+  max_candidates: 20
+  weights:
+    exact: 1.0
+    alias: 0.95
+    abbreviation: 0.9
+    fuzzy: 0.72
+    bm25: 0.55
+    kg: 0.15
+
+type_constraints:
+  DRUG: ["RxNorm"]
+  DISEASE: ["ICD-10", "UMLS", "SNOMED"]
+  SYMPTOM: ["UMLS", "SNOMED", "LOCAL"]
+  LAB_TEST: ["LOCAL"]
+  LAB_RESULT: ["NONE", "LOCAL"]
+  PROCEDURE: ["ICD-10", "UMLS", "SNOMED", "LOCAL"]
+  FINDING: ["UMLS", "SNOMED", "LOCAL"]
+

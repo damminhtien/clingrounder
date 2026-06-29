@@ -1,0 +1,20 @@
+synthetic:
+  sample_notes: "data/samples/sample_notes.jsonl"
+  gold: "data/samples/gold.jsonl"
+
+nbme:
+  enabled: false
+  note: "Adapter placeholder. Provide local Kaggle NBME paths when available."
+
+n2c2:
+  enabled: false
+  note: "Requires data use agreement."
+
+mimic:
+  enabled: false
+  note: "Requires PhysioNet credentialed access."
+
+codiesp:
+  enabled: false
+  note: "Spanish ICD coding adapter placeholder."
+

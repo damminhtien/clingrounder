@@ -1,0 +1,124 @@
+{
+  "a1c": [
+    "LOCAL:TEST_HBA1C"
+  ],
+  "albuterol": [
+    "RXNORM:435"
+  ],
+  "asthma": [
+    "ICD10:J45",
+    "ICD10:J45"
+  ],
+  "chest x-ray": [
+    "LOCAL:TEST_XRAY"
+  ],
+  "cough": [
+    "LOCAL:SYMPTOM_COUGH",
+    "LOCAL:SYMPTOM_COUGH"
+  ],
+  "dm2": [
+    "ICD10:E11"
+  ],
+  "dyspnea": [
+    "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "essential hypertension": [
+    "ICD10:I10"
+  ],
+  "fever": [
+    "LOCAL:SYMPTOM_FEVER",
+    "LOCAL:SYMPTOM_FEVER"
+  ],
+  "hba1c": [
+    "LOCAL:TEST_HBA1C"
+  ],
+  "hemoglobin a1c": [
+    "LOCAL:TEST_HBA1C"
+  ],
+  "hen": [
+    "ICD10:J45"
+  ],
+  "hen phế quản": [
+    "ICD10:J45"
+  ],
+  "high blood pressure": [
+    "ICD10:I10"
+  ],
+  "ho": [
+    "LOCAL:SYMPTOM_COUGH"
+  ],
+  "htn": [
+    "ICD10:I10"
+  ],
+  "hypertension": [
+    "ICD10:I10"
+  ],
+  "khó thở": [
+    "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "lung cancer": [
+    "ICD10:C34"
+  ],
+  "malignant neoplasm of bronchus and lung": [
+    "ICD10:C34"
+  ],
+  "metformin": [
+    "RXNORM:6809",
+    "RXNORM:6809"
+  ],
+  "metformin hydrochloride": [
+    "RXNORM:6809"
+  ],
+  "pneumonia": [
+    "ICD10:J18.9"
+  ],
+  "pneumonia unspecified organism": [
+    "ICD10:J18.9"
+  ],
+  "salbutamol": [
+    "RXNORM:435",
+    "RXNORM:435"
+  ],
+  "shortness of breath": [
+    "LOCAL:SYMPTOM_DYSPNEA",
+    "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "sob": [
+    "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "sốt": [
+    "LOCAL:SYMPTOM_FEVER"
+  ],
+  "t2dm": [
+    "ICD10:E11"
+  ],
+  "tiểu đường type 2": [
+    "ICD10:E11"
+  ],
+  "type 2 diabetes": [
+    "ICD10:E11"
+  ],
+  "type 2 diabetes mellitus": [
+    "ICD10:E11",
+    "ICD10:E11"
+  ],
+  "tăng huyết áp": [
+    "ICD10:I10"
+  ],
+  "ung thư phổi": [
+    "ICD10:C34"
+  ],
+  "viêm phổi": [
+    "ICD10:J18.9"
+  ],
+  "x-quang": [
+    "LOCAL:TEST_XRAY"
+  ],
+  "x-ray": [
+    "LOCAL:TEST_XRAY",
+    "LOCAL:TEST_XRAY"
+  ],
+  "đái tháo đường type 2": [
+    "ICD10:E11"
+  ]
+}

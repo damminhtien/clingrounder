@@ -1,0 +1,12 @@
+pipeline:
+  version: "0.1.0"
+  max_candidates: 20
+  context_window: 80
+
+dictionaries:
+  seed_dictionary: "data/dictionaries/seed_concepts.jsonl"
+  abbreviation_table: "data/dictionaries/abbreviations.jsonl"
+
+indexes:
+  lexical_index: "data/indexes/lexical_index.json"
+

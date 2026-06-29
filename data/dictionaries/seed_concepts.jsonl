@@ -1,0 +1,13 @@
+{"concept_id":"ICD10:E11","code":"E11","code_system":"ICD-10","canonical_name":"Type 2 diabetes mellitus","semantic_type":"DISEASE","aliases":["type 2 diabetes","type 2 diabetes mellitus","đái tháo đường type 2","tiểu đường type 2","T2DM","DM2"],"parents":["E10-E14"],"source":"seed"}
+{"concept_id":"ICD10:J18.9","code":"J18.9","code_system":"ICD-10","canonical_name":"Pneumonia, unspecified organism","semantic_type":"DISEASE","aliases":["pneumonia","viêm phổi"],"parents":["J18"],"source":"seed"}
+{"concept_id":"ICD10:J45","code":"J45","code_system":"ICD-10","canonical_name":"Asthma","semantic_type":"DISEASE","aliases":["asthma","hen phế quản","hen"],"parents":["J40-J47"],"source":"seed"}
+{"concept_id":"ICD10:C34","code":"C34","code_system":"ICD-10","canonical_name":"Malignant neoplasm of bronchus and lung","semantic_type":"DISEASE","aliases":["lung cancer","ung thư phổi"],"parents":["C30-C39"],"source":"seed"}
+{"concept_id":"ICD10:I10","code":"I10","code_system":"ICD-10","canonical_name":"Essential hypertension","semantic_type":"DISEASE","aliases":["hypertension","high blood pressure","tăng huyết áp","HTN"],"parents":["I10-I16"],"source":"seed"}
+{"concept_id":"RXNORM:6809","code":"6809","code_system":"RxNorm","canonical_name":"Metformin","semantic_type":"DRUG","aliases":["metformin","metformin hydrochloride"],"parents":[],"source":"seed"}
+{"concept_id":"RXNORM:435","code":"435","code_system":"RxNorm","canonical_name":"Salbutamol","semantic_type":"DRUG","aliases":["salbutamol","albuterol"],"parents":[],"source":"seed"}
+{"concept_id":"LOCAL:SYMPTOM_COUGH","code":"SYMPTOM_COUGH","code_system":"LOCAL","canonical_name":"Cough","semantic_type":"SYMPTOM","aliases":["cough","ho"],"parents":[],"source":"seed"}
+{"concept_id":"LOCAL:SYMPTOM_FEVER","code":"SYMPTOM_FEVER","code_system":"LOCAL","canonical_name":"Fever","semantic_type":"SYMPTOM","aliases":["fever","sốt"],"parents":[],"source":"seed"}
+{"concept_id":"LOCAL:SYMPTOM_DYSPNEA","code":"SYMPTOM_DYSPNEA","code_system":"LOCAL","canonical_name":"Shortness of breath","semantic_type":"SYMPTOM","aliases":["shortness of breath","dyspnea","SOB","khó thở"],"parents":[],"source":"seed"}
+{"concept_id":"LOCAL:TEST_XRAY","code":"XRAY","code_system":"LOCAL","canonical_name":"X-ray","semantic_type":"LAB_TEST","aliases":["X-ray","X-quang","chest x-ray"],"parents":[],"source":"seed"}
+{"concept_id":"LOCAL:TEST_HBA1C","code":"HBA1C","code_system":"LOCAL","canonical_name":"Hemoglobin A1c","semantic_type":"LAB_TEST","aliases":["HbA1c","A1c"],"parents":[],"source":"seed"}
+
