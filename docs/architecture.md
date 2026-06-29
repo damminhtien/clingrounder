@@ -16,6 +16,22 @@ Rust or C++ is reserved for measured bottlenecks such as phrase matching, fuzzy 
 mapping, or candidate merging. Java is not used as a core language because the biomedical NLP,
 retrieval, and experiment-analysis ecosystem is stronger in Python for this project phase.
 
+## Stack
+
+- Language: Python 3.11/3.12 target.
+- Package/project: `uv` with `pyproject.toml` as the source of truth.
+- Code quality: ruff, mypy, pytest, pre-commit.
+- Schema: Pydantic v2 is available for external schemas; internal baseline schemas use dataclasses
+  and enums.
+- Data: Polars, DuckDB, PyArrow/Parquet, and JSON Lines are optional extras for larger datasets.
+- NLP/ML: PyTorch, Transformers, Datasets, Tokenizers, Accelerate, and scikit-learn are optional
+  model extras.
+- Retrieval: built-in exact/fuzzy/char-ngram/BM25 baseline, with optional bm25s, RapidFuzz,
+  FAISS CPU, and Qdrant client.
+- Graph: lightweight in-memory graph first, with optional NetworkX and DuckDB/SQLite-ready tables.
+- API/CLI: Typer/Rich for future CLIs; FastAPI/Uvicorn only when serving is needed.
+- Experiments: Hydra/OmegaConf and MLflow optional; W&B separate.
+
 ## Pipeline
 
 ```text

@@ -22,6 +22,7 @@ Preferred:
 
 ```bash
 uv sync --extra dev
+uv run pre-commit install
 
 uv run python scripts/build_dictionaries.py --config configs/default.yaml
 uv run python scripts/build_indexes.py --config configs/default.yaml
@@ -37,6 +38,7 @@ Fallback without `uv`:
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
+pre-commit install
 
 python scripts/build_dictionaries.py --config configs/default.yaml
 python scripts/build_indexes.py --config configs/default.yaml
@@ -44,6 +46,21 @@ python scripts/run_pipeline.py --input data/samples/sample_notes.jsonl --output 
 python scripts/validate_predictions.py --pred outputs/predictions.jsonl --documents data/samples/sample_notes.jsonl --dictionary data/dictionaries/seed_concepts.jsonl
 python scripts/evaluate.py --gold data/samples/gold.jsonl --pred outputs/predictions.jsonl
 python -m pytest tests/
+```
+
+## Optional Stacks
+
+The baseline installs only lightweight runtime and dev dependencies. Add extras as needed:
+
+```bash
+uv sync --extra data          # polars, duckdb, pyarrow, jsonlines
+uv sync --extra retrieval     # rapidfuzz, bm25s, faiss-cpu
+uv sync --extra graph         # networkx
+uv sync --extra ml            # torch, transformers, datasets, tokenizers, accelerate, scikit-learn
+uv sync --extra cli           # typer, rich
+uv sync --extra api           # fastapi, uvicorn
+uv sync --extra experiment    # hydra-core, omegaconf, mlflow
+uv sync --extra wandb         # optional W&B tracking
 ```
 
 ## Expected Pipeline

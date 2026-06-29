@@ -36,6 +36,7 @@ Install with uv when available:
 
 ```bash
 uv sync --extra dev
+uv run pre-commit install
 ```
 
 Fallback install:
@@ -44,6 +45,7 @@ Fallback install:
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
+pre-commit install
 ```
 
 Lint:

@@ -1,0 +1,21 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: .venv/bin/python -m ruff check .
+        language: system
+        pass_filenames: false
+        types_or: [python, pyi]
+      - id: mypy
+        name: mypy src
+        entry: .venv/bin/python -m mypy src
+        language: system
+        pass_filenames: false
+        types_or: [python, pyi]
+      - id: pytest-targeted-smoke
+        name: pytest targeted smoke
+        entry: .venv/bin/python -m pytest tests/test_schema.py tests/test_offset_mapping.py tests/test_kg_constraints.py -q
+        language: system
+        pass_filenames: false
+        types: [python]
