@@ -44,7 +44,7 @@ Internal schemas live under `src/medical_kg_nlp/schema/`:
 
 ## Data Flow
 
-The sample note is stored in `data/samples/sample_notes.jsonl`. The runner loads it into `ClinicalDocument`, extracts spans from the original text, links only against `data/dictionaries/seed_concepts.jsonl`, validates ontology constraints, and writes JSONL predictions.
+The sample note is stored in `data/samples/sample_notes.jsonl`. The runner loads it into `ClinicalDocument`, extracts spans from the original text, links only against `data/dictionaries/seed_concepts.jsonl`, validates ontology constraints, and writes JSONL predictions. Candidate generation combines exact, abbreviation, fuzzy/token-overlap, character n-gram, and BM25 retrieval before type and code-system filtering.
 
 No normalization step is allowed to alter final offsets. Matching normalization is used only for lookup keys.
 
@@ -55,7 +55,7 @@ Implemented metrics:
 - Exact span/type precision, recall, F1.
 - Relaxed overlap span/type precision, recall, F1.
 - Linking accuracy@1, recall@5/10/20, and MRR.
-- Context accuracy.
+- Context accuracy, macro-F1, and confusion matrix.
 - Typed relation precision, recall, F1.
 - Error analysis CSV with document id, error type, text window, gold, prediction, candidate list, and notes.
 
@@ -78,4 +78,3 @@ Future public-dataset adapters should convert all gold labels to the same intern
 5. Add learned context and relation classifiers behind existing interfaces.
 6. Use candidate-generation recall@20 as the linking gate before training rerankers.
 7. Add KG scoring as a candidate reranker feature, not as an unconstrained generator.
-

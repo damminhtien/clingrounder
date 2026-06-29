@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Any
 
-from medical_kg_nlp.evaluation.context_metrics import context_accuracy
+from medical_kg_nlp.evaluation.context_metrics import context_accuracy, context_macro_f1, confusion_matrix
 from medical_kg_nlp.evaluation.linking_metrics import accuracy_at_1, mean_reciprocal_rank, recall_at_k
 from medical_kg_nlp.evaluation.relation_metrics import relation_f1
 from medical_kg_nlp.evaluation.span_metrics import exact_span_f1, overlap_span_f1
@@ -40,6 +40,7 @@ def evaluate_predictions(
         "linking_recall_at_20": recall_at_k(gold_entities, pred_entities, 20),
         "linking_mrr": mean_reciprocal_rank(gold_entities, pred_entities),
         "context_accuracy": context_accuracy(gold_entities, pred_entities),
+        "context_macro_f1": context_macro_f1(gold_entities, pred_entities),
+        "context_confusion_matrix": confusion_matrix(gold_entities, pred_entities),
         "relation": rel.__dict__,
     }
-

@@ -10,7 +10,7 @@ alwaysApply: true
 # Testing Rules
 
 - Add focused tests for every behavior change.
-- Run targeted pytest files while iterating.
+- Run targeted pytest files while iterating, such as `pytest tests/test_context_rules.py -q` or `pytest tests/test_offset_mapping.py -q`.
 - Run full `pytest tests` before handoff when feasible.
 - Run `scripts/validate_predictions.py` when prediction JSON output changes.
 - Treat offset, schema, and KG constraint regressions as blocking.

@@ -86,10 +86,15 @@ installing the dev dependencies.
 
 ## Task Workflow
 
-1. Read this file and the relevant docs under `docs/`.
+1. Read this file first.
 2. Treat `.cursor/rules/` as always-on guardrails for project structure, medical NLP invariants,
    and verification.
-3. For module-specific work, read the matching `.claude/skills/*/SKILL.md` file as the local
+3. Load only the minimal technical memory needed for the task:
+   - default: `docs/invariants.md`, `docs/schema.md`, the module under change, and nearby tests;
+   - architecture/stack decisions: add `docs/architecture.md` and relevant files in `docs/decisions/`;
+   - metrics/experiments: add `docs/evaluation.md`;
+   - broad design questions: add `docs/design.md`.
+4. For module-specific work, read the matching `.claude/skills/*/SKILL.md` file as the local
    playbook before editing:
    - schema/export/metrics: `schema-evaluator`
    - offsets/preprocessing/spans: `offset-safety`
@@ -99,12 +104,21 @@ installing the dev dependencies.
    - experiments/ablations: `experiment-runner`
    - profiling/performance: `performance-benchmark`
    - reviews: `code-reviewer`
-4. Inspect only the modules and tests needed for the task.
-5. Make a short plan for non-trivial changes.
-6. Keep edits scoped to the requested module.
-7. Add or update tests before final verification.
-8. Run targeted tests during iteration and full tests before handoff when feasible.
-9. Update docs when behavior or commands change.
+5. Use `rg` before opening long files. Examples:
+   - `rg "AssertionStatus" src tests`
+   - `rg "normalize_for_match|normalize_mention" src tests`
+   - `rg "class .*Entity|EntityAnnotation" src tests`
+6. Inspect only the modules and tests needed for the task. Do not read the whole repo unless the
+   task is explicitly cross-cutting.
+7. Make a short plan for non-trivial changes.
+8. Keep edits scoped to the requested module.
+9. Add or update tests before final verification.
+10. Run targeted tests during iteration, for example:
+    - `.venv/bin/python -m pytest tests/test_context_rules.py -q`
+    - `.venv/bin/python -m pytest tests/test_offset_mapping.py -q`
+    - `.venv/bin/python -m pytest tests/test_candidate_generation.py -q`
+11. Run full verification before handoff when feasible.
+12. Update docs when behavior or commands change.
 
 ## Definition of Done
 

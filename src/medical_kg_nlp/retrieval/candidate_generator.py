@@ -8,6 +8,7 @@ from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.retrieval.bm25_retriever import BM25Retriever
 from medical_kg_nlp.retrieval.exact_matcher import ExactMatcher
 from medical_kg_nlp.retrieval.fuzzy_matcher import FuzzyMatcher
+from medical_kg_nlp.retrieval.ngram_retriever import CharNgramRetriever
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.utils.text import normalize_for_match
 
@@ -34,6 +35,7 @@ class CandidateGenerator:
         self.max_candidates = max_candidates
         self.exact = ExactMatcher(store)
         self.fuzzy = FuzzyMatcher(store)
+        self.char_ngram = CharNgramRetriever(store)
         self.bm25 = BM25Retriever(store)
         self.abbreviations = self._load_abbreviations(abbreviation_path)
 
@@ -50,6 +52,7 @@ class CandidateGenerator:
             for candidate in self.exact.retrieve(expansion):
                 candidates.append(self._replace(candidate, score=0.9, source="abbreviation", matched_alias=expansion))
         candidates.extend(self.fuzzy.retrieve(mention, entity_type=entity_type, limit=self.max_candidates))
+        candidates.extend(self.char_ngram.retrieve(mention, entity_type=entity_type, limit=self.max_candidates))
         candidates.extend(self.bm25.retrieve(mention, entity_type=entity_type, limit=self.max_candidates))
         constrained = [candidate for candidate in candidates if self._allowed(candidate, entity_type)]
         merged = self._merge(constrained)
@@ -105,4 +108,3 @@ class CandidateGenerator:
             source=candidate.source if source is None else source,
             matched_alias=candidate.matched_alias if matched_alias is None else matched_alias,
         )
-

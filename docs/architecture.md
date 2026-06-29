@@ -41,6 +41,7 @@ mention
   -> exact lookup
   -> abbreviation lookup
   -> fuzzy top-k
+  -> character n-gram top-k
   -> BM25 top-k
   -> optional dense top-k
   -> merge and deduplicate

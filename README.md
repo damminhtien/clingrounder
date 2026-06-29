@@ -9,7 +9,7 @@ The official competition schema is not available yet, so this repository starts 
 - Typed internal schema for documents, entities, candidates, relations, and predictions.
 - Offset-preserving preprocessing utilities.
 - Seed ICD-10, RxNorm, and local concept dictionaries.
-- Exact, fuzzy, abbreviation, and BM25-style candidate generation.
+- Exact, fuzzy, abbreviation, character n-gram, and BM25-style candidate generation.
 - Rule-based NER over dictionary aliases plus lab/dose regexes.
 - Assertion rules for present, negated, historical, family, possible, planned, and resolved contexts.
 - Relation rules for treatment, symptom, test suggestion, and dose links.
