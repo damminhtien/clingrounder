@@ -16,7 +16,7 @@ Target runtime: Python 3.14+ with latest compatible library lower bounds in `pyp
 - Assertion rules for present, negated, historical, family, possible, planned, and resolved contexts.
 - Relation rules for treatment, symptom, test suggestion, and dose links.
 - KG constraints that prevent invalid code-system and relation-type outputs.
-- JSONL pipeline, evaluator, error analysis CSV, and pytest coverage.
+- JSONL pipeline, evaluator, ablation timing reports, error analysis CSV, and pytest coverage.
 
 ## Quick Start
 
@@ -31,6 +31,7 @@ uv run python scripts/build_indexes.py --config configs/default.yaml
 uv run python scripts/run_pipeline.py --input data/samples/sample_notes.jsonl --output outputs/predictions.jsonl
 uv run python scripts/validate_predictions.py --pred outputs/predictions.jsonl --documents data/samples/sample_notes.jsonl --dictionary data/dictionaries/seed_concepts.jsonl
 uv run python scripts/evaluate.py --gold data/samples/gold.jsonl --pred outputs/predictions.jsonl
+uv run python scripts/run_ablation.py --config configs/ablations.yaml
 uv run pytest tests/
 ```
 
@@ -47,6 +48,7 @@ python scripts/build_indexes.py --config configs/default.yaml
 python scripts/run_pipeline.py --input data/samples/sample_notes.jsonl --output outputs/predictions.jsonl
 python scripts/validate_predictions.py --pred outputs/predictions.jsonl --documents data/samples/sample_notes.jsonl --dictionary data/dictionaries/seed_concepts.jsonl
 python scripts/evaluate.py --gold data/samples/gold.jsonl --pred outputs/predictions.jsonl
+python scripts/run_ablation.py --config configs/ablations.yaml
 python -m pytest tests/
 ```
 
@@ -107,7 +109,8 @@ AGENTS.md                  Repo instructions for coding agents
 - Conduct: see `CODE_OF_CONDUCT.md`.
 - Changelog: see `CHANGELOG.md`.
 - CI: GitHub Actions workflow under `.github/workflows/ci.yml`.
-- Local shortcuts: `make lint`, `make type`, `make test`, `make pipeline`, `make validate`.
+- Local shortcuts: `make lint`, `make type`, `make test`, `make pipeline`, `make validate`,
+  `make ablation`.
 
 ## Current Limitations
 

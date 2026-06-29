@@ -13,6 +13,8 @@ from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.utils.text import normalize_for_match
 
 
+DEFAULT_RETRIEVAL_SOURCES = frozenset({"exact", "abbreviation", "fuzzy", "char_ngram", "bm25"})
+
 ALLOWED_CODE_SYSTEMS: dict[EntityType, set[CodeSystem]] = {
     EntityType.DRUG: {CodeSystem.RXNORM},
     EntityType.DISEASE: {CodeSystem.ICD10, CodeSystem.UMLS, CodeSystem.SNOMED},
@@ -30,9 +32,14 @@ class CandidateGenerator:
         store: DictionaryStore,
         abbreviation_path: str | Path | None = None,
         max_candidates: int = 20,
+        retrieval_sources: tuple[str, ...] | None = None,
     ) -> None:
         self.store = store
         self.max_candidates = max_candidates
+        self.retrieval_sources = set(DEFAULT_RETRIEVAL_SOURCES if retrieval_sources is None else retrieval_sources)
+        unknown_sources = self.retrieval_sources - DEFAULT_RETRIEVAL_SOURCES
+        if unknown_sources:
+            raise ValueError(f"Unknown retrieval source(s): {sorted(unknown_sources)}")
         self.exact = ExactMatcher(store)
         self.fuzzy = FuzzyMatcher(store)
         self.char_ngram = CharNgramRetriever(store)
@@ -46,14 +53,21 @@ class CandidateGenerator:
         context_window: str = "",
     ) -> list[Candidate]:
         candidates: list[Candidate] = []
-        candidates.extend(self.exact.retrieve(mention))
+        if "exact" in self.retrieval_sources:
+            candidates.extend(self.exact.retrieve(mention))
         normalized = normalize_for_match(mention)
-        for expansion in self.abbreviations.get(normalized, []):
-            for candidate in self.exact.retrieve(expansion):
-                candidates.append(self._replace(candidate, score=0.9, source="abbreviation", matched_alias=expansion))
-        candidates.extend(self.fuzzy.retrieve(mention, entity_type=entity_type, limit=self.max_candidates))
-        candidates.extend(self.char_ngram.retrieve(mention, entity_type=entity_type, limit=self.max_candidates))
-        candidates.extend(self.bm25.retrieve(mention, entity_type=entity_type, limit=self.max_candidates))
+        if "abbreviation" in self.retrieval_sources:
+            for expansion in self.abbreviations.get(normalized, []):
+                for candidate in self.exact.retrieve(expansion):
+                    candidates.append(
+                        self._replace(candidate, score=0.9, source="abbreviation", matched_alias=expansion)
+                    )
+        if "fuzzy" in self.retrieval_sources:
+            candidates.extend(self.fuzzy.retrieve(mention, entity_type=entity_type, limit=self.max_candidates))
+        if "char_ngram" in self.retrieval_sources:
+            candidates.extend(self.char_ngram.retrieve(mention, entity_type=entity_type, limit=self.max_candidates))
+        if "bm25" in self.retrieval_sources:
+            candidates.extend(self.bm25.retrieve(mention, entity_type=entity_type, limit=self.max_candidates))
         constrained = [candidate for candidate in candidates if self._allowed(candidate, entity_type)]
         merged = self._merge(constrained)
         return sorted(merged, key=lambda candidate: candidate.score, reverse=True)[: self.max_candidates]

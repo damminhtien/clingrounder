@@ -1,0 +1,42 @@
+input: data/samples/sample_notes.jsonl
+gold: data/samples/gold.jsonl
+output_dir: outputs/ablations
+dictionary: data/dictionaries/seed_concepts.jsonl
+abbreviations: data/dictionaries/abbreviations.jsonl
+
+variants:
+  - name: baseline
+    options: {}
+
+  - name: no_char_ngram
+    options:
+      candidate_sources:
+        - exact
+        - abbreviation
+        - fuzzy
+        - bm25
+
+  - name: no_bm25
+    options:
+      candidate_sources:
+        - exact
+        - abbreviation
+        - fuzzy
+        - char_ngram
+
+  - name: no_context
+    options:
+      enable_context: false
+
+  - name: no_relations
+    options:
+      enable_relations: false
+
+  - name: no_kg_validation
+    options:
+      enable_entity_kg_validation: false
+      enable_relation_kg_validation: false
+
+  - name: top5_candidates
+    options:
+      max_candidates: 5

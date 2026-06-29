@@ -1,4 +1,4 @@
-.PHONY: install install-dev pre-commit lint type test test-targeted validate pipeline evaluate qa clean
+.PHONY: install install-dev pre-commit lint type test test-targeted validate pipeline evaluate ablation qa clean
 
 PYTHON ?= .venv/bin/python
 
@@ -31,6 +31,9 @@ validate:
 
 evaluate:
 	$(PYTHON) scripts/evaluate.py --gold data/samples/gold.jsonl --pred outputs/predictions.jsonl
+
+ablation:
+	$(PYTHON) scripts/run_ablation.py --config configs/ablations.yaml
 
 qa: lint type test
 
