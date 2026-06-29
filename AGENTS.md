@@ -84,6 +84,32 @@ uv run python scripts/validate_predictions.py \
 If `uv` is not installed, use the same commands through `python -m` or the script path after
 installing the dev dependencies.
 
+## Command Output Hygiene
+
+Use context engineering first: keep tasks small, use technical memory selectively, search with `rg`,
+run targeted tests in the edit loop, and summarize after each phase.
+
+When `rtk` is available, prefer it for commands whose output can get noisy:
+
+```bash
+rtk pytest tests/
+rtk ruff check .
+rtk mypy src
+rtk git status
+rtk git diff --stat
+```
+
+Use raw commands instead of `rtk` when exact output matters:
+
+- prediction JSONL that must be inspected line by line;
+- medical dictionary samples or other source data;
+- benchmark raw logs that must be preserved;
+- hard-to-reproduce tracebacks where full stack details matter;
+- any command where truncation/filtering could hide the evidence needed for the task.
+
+RTK is optional. If it is unavailable or obscures useful details, run the underlying command
+directly and save verbose output to a file when needed.
+
 ## Task Workflow
 
 1. Read this file first.

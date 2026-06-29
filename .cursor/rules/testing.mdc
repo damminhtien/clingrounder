@@ -11,6 +11,8 @@ alwaysApply: true
 
 - Add focused tests for every behavior change.
 - Run targeted pytest files while iterating, such as `pytest tests/test_context_rules.py -q` or `pytest tests/test_offset_mapping.py -q`.
+- Use `rtk` for noisy verification output when exact logs are not required, such as `rtk pytest tests/`, `rtk ruff check .`, and `rtk mypy src`.
+- Run raw commands instead of `rtk` for full tracebacks, prediction JSONL, benchmark logs, and medical dictionary samples.
 - Run full `pytest tests` before handoff when feasible.
 - Run `scripts/validate_predictions.py` when prediction JSON output changes.
 - Treat offset, schema, and KG constraint regressions as blocking.

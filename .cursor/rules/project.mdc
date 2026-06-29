@@ -16,3 +16,4 @@ alwaysApply: true
 - Use technical memory selectively: default to `docs/invariants.md`, `docs/schema.md`, the relevant module, and nearby tests.
 - Read `docs/architecture.md`, `docs/evaluation.md`, `docs/design.md`, or `docs/decisions/*` only when the task needs that context.
 - Use `rg` to locate symbols and call sites before opening long files.
+- Treat RTK as an optional final layer for reducing noisy command output; context design and targeted reads remain primary.
