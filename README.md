@@ -76,13 +76,19 @@ or a source install.
 ```text
 Raw clinical text
   -> document loading
-  -> section and sentence splitting
-  -> rule NER
-  -> assertion classification
-  -> candidate generation and linking
+  -> offset-preserving preprocessing
+  -> section detection
+  -> sentence splitting
+  -> entity extraction
+  -> context/assertion classification
+  -> candidate generation
+  -> candidate reranking
+  -> normalization assignment
+  -> ICD/RxNorm/UMLS validation
   -> relation extraction
-  -> KG validation
+  -> ontology/KG consistency checking
   -> structured JSON output
+  -> prediction validation
   -> evaluation and error analysis
 ```
 

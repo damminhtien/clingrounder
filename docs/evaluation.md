@@ -41,8 +41,8 @@ python scripts/evaluate.py \
 ## Ablation And Bottleneck Workflow
 
 Use `configs/ablations.yaml` to compare small pipeline variants without changing code. The default
-variants isolate retrieval sources, context reasoning, relation extraction, KG validation, and
-candidate depth.
+variants isolate retrieval sources, candidate reranking, context reasoning, relation extraction, KG
+validation, and candidate depth.
 
 ```bash
 python scripts/run_ablation.py --config configs/ablations.yaml

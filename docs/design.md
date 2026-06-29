@@ -2,23 +2,35 @@
 
 ## Problem Decomposition
 
-The task is treated as end-to-end clinical information extraction and normalization, not simple NER. The prototype decomposes it into document loading, offset-safe preprocessing, section/sentence splitting, entity extraction, assertion classification, candidate generation, linking, relation extraction, KG validation, JSON export, and evaluation.
+The task is treated as end-to-end clinical information extraction and normalization, not simple NER.
+The prototype decomposes it into document loading, offset-safe preprocessing, section detection,
+sentence splitting, entity extraction, assertion classification, candidate generation, candidate
+reranking, normalization assignment, code-system validation, relation extraction, KG consistency
+checking, JSON export, prediction validation, and evaluation.
 
 ## Architecture
 
 ```text
 ClinicalDocument
-  -> split_sections / split_sentences
+  -> collapse_whitespace_preserve_offsets
+  -> split_sections
+  -> split_sentences
   -> RuleBasedNER
   -> AssertionClassifier
   -> CandidateGenerator
-  -> EntityLinker
+  -> HeuristicReranker
+  -> EntityLinker.apply_candidates
+  -> KGValidator.validate_entities
   -> RuleRelationExtractor
-  -> KGValidator
+  -> KGValidator.validate_relations
   -> ClinicalPrediction
 ```
 
-Each module is independently replaceable. Rule components provide deterministic baselines, while transformer and dense-retrieval files are explicit extension points.
+Each module is independently replaceable. Rule components provide deterministic baselines, while
+transformer NER, dense retrieval, learned reranking, learned context classification, and learned
+relation extraction remain extension points. `PipelineTrace` records timings and counters for each
+stage so ablations can identify whether an accuracy or runtime change came from retrieval,
+reranking, context, validation, or relation extraction.
 
 ## Schema
 
@@ -37,7 +49,8 @@ Internal schemas live under `src/medical_kg_nlp/schema/`:
 - `RuleBasedNER.extract(text)` returns offset-valid entities.
 - `AssertionClassifier.classify(entity, sentence)` returns an assertion label.
 - `CandidateGenerator.generate(mention, entity_type, context_window)` returns dictionary-constrained candidates.
-- `EntityLinker.link_entity(entity, context_window)` writes top code and candidate list.
+- `HeuristicReranker.rerank(candidates, context_window)` orders candidates.
+- `EntityLinker.apply_candidates(entity, candidates)` writes top code and candidate list.
 - `RuleRelationExtractor.extract(entities, sentences)` returns typed relations.
 - `KGValidator` filters or clears invalid outputs.
 - `evaluate_predictions(gold, pred)` returns span, linking, context, and relation metrics.

@@ -37,17 +37,26 @@ retrieval, and experiment-analysis ecosystem is stronger in Python for this proj
 
 ```text
 Raw clinical text
-  -> ClinicalDocument
-  -> section and sentence splitting
-  -> rule NER or model NER
-  -> assertion classification
-  -> candidate retrieval
-  -> entity linking
+  -> document_loader
+  -> offset_preserving_preprocessing
+  -> section_detection
+  -> sentence_splitting
+  -> entity_extraction
+  -> context_assertion_classification
+  -> candidate_generation
+  -> candidate_reranking
+  -> normalization_assignment
+  -> icd_rxnorm_umls_validation
   -> relation extraction
-  -> KG validation
-  -> ClinicalPrediction JSON
+  -> ontology_kg_consistency_check
+  -> structured_json_output
+  -> prediction_validation
   -> evaluation and error analysis
 ```
+
+Each runner stage emits timing and counters through `PipelineTrace`. Stage names are intentionally
+stable so ablations can compare runtime, validation issues, linking behavior, context behavior, and
+relation quality while swapping one component at a time.
 
 ## Retrieval
 

@@ -24,6 +24,10 @@ variants:
         - fuzzy
         - char_ngram
 
+  - name: no_reranking
+    options:
+      enable_candidate_reranking: false
+
   - name: no_context
     options:
       enable_context: false
