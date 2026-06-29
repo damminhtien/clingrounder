@@ -1,0 +1,36 @@
+# <type>(<scope>): <short imperative summary>
+#
+# Types:
+#   feat      new behavior or capability
+#   fix       bug fix or invariant correction
+#   test      test-only changes
+#   docs      documentation-only changes
+#   refactor  internal restructure without behavior change
+#   perf      measured performance improvement
+#   chore     tooling, config, repo maintenance
+#
+# Suggested scopes:
+#   schema, preprocessing, datasets, dictionaries, retrieval, linking, ner,
+#   context, relations, kg, evaluation, pipeline, docs, tests, tooling
+#
+# Body:
+# - What changed:
+# - Why:
+# - Risk / compatibility:
+#
+# Validation:
+# - [ ] targeted pytest:
+# - [ ] full pytest:
+# - [ ] ruff:
+# - [ ] mypy:
+# - [ ] prediction validator, if output/schema/linking/KG changed:
+#
+# Medical NLP invariants:
+# - [ ] offsets preserved or not touched
+# - [ ] no dictionary-absent final codes
+# - [ ] no drug -> ICD-10 mapping
+# - [ ] no disease -> RxNorm mapping
+# - [ ] negated/family-history context remains non-present
+#
+# Breaking changes:
+# - None
