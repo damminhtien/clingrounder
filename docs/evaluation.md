@@ -12,6 +12,8 @@ metrics are computed.
 - Typed relation precision, recall, and F1.
 - Error-analysis CSV with document id, error type, text window, gold label, prediction, candidate
   list, and notes.
+- Dataset profiling for entity, code, context, relation, section, abbreviation-like mention,
+  dictionary coverage, offset issue, and optional unseen-code overlap checks.
 
 ## Recommended Gates
 
@@ -20,6 +22,8 @@ metrics are computed.
 - Treat offset regressions as blocking.
 - Compare context-specific errors for negation, family history, historical mentions, and possible
   findings.
+- Run data profiling before model or reranker work so long-tail codes, sparse relations, and schema
+  risks are visible early.
 
 ## Commands
 
@@ -36,7 +40,17 @@ python scripts/validate_predictions.py \
 python scripts/evaluate.py \
   --gold data/samples/gold.jsonl \
   --pred outputs/predictions.jsonl
+
+python scripts/profile_data.py \
+  --documents data/samples/sample_notes.jsonl \
+  --gold data/samples/gold.jsonl \
+  --output outputs/profiles/sample_profile.json \
+  --markdown outputs/profiles/sample_profile.md
 ```
+
+The profiler output is intended to be a cacheable experiment artifact. Use it to compare train/dev
+entity distributions, span lengths, context cue frequency, dictionary coverage, and unseen-code
+risks before adding larger models.
 
 ## Ablation And Bottleneck Workflow
 

@@ -114,6 +114,7 @@ data/processed/*
 mlruns/
 wandb/
 outputs/ablations/
+outputs/profiles/
 
 # poetry
 #   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
