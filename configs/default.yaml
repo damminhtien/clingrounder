@@ -6,7 +6,7 @@ pipeline:
 dictionaries:
   seed_dictionary: "data/dictionaries/seed_concepts.jsonl"
   abbreviation_table: "data/dictionaries/abbreviations.jsonl"
+  vietnamese_alias_table: "data/dictionaries/vietnamese_medical_alias.jsonl"
 
 indexes:
   lexical_index: "data/indexes/lexical_index.json"
-

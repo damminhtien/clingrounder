@@ -3,8 +3,11 @@
 {"abbreviation":"DM1","expansions":["type 1 diabetes mellitus"]}
 {"abbreviation":"T1DM","expansions":["type 1 diabetes mellitus"]}
 {"abbreviation":"HTN","expansions":["hypertension"]}
+{"abbreviation":"THA","expansions":["tăng huyết áp"]}
 {"abbreviation":"COPD","expansions":["chronic obstructive pulmonary disease"]}
 {"abbreviation":"MI","expansions":["myocardial infarction","mitral insufficiency"]}
+{"abbreviation":"AMI","expansions":["acute myocardial infarction"]}
+{"abbreviation":"NMCT","expansions":["nhồi máu cơ tim"]}
 {"abbreviation":"CAD","expansions":["coronary artery disease"]}
 {"abbreviation":"CKD","expansions":["chronic kidney disease"]}
 {"abbreviation":"AKI","expansions":["acute kidney injury"]}
@@ -17,4 +20,3 @@
 {"abbreviation":"po","expansions":["oral"]}
 {"abbreviation":"iv","expansions":["intravenous"]}
 {"abbreviation":"sc","expansions":["subcutaneous"]}
-

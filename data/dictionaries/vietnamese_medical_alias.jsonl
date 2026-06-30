@@ -1,0 +1,5 @@
+{"alias":"tiểu đường","canonical":"đái tháo đường","target_concept_id":"ICD10:E11","semantic_type":"DISEASE","notes":"Common Vietnamese lay synonym; use type qualifiers when present."}
+{"alias":"cao huyết áp","canonical":"tăng huyết áp","target_concept_id":"ICD10:I10","semantic_type":"DISEASE","notes":"Lay synonym for hypertension."}
+{"alias":"tăng HA","canonical":"tăng huyết áp","target_concept_id":"ICD10:I10","semantic_type":"DISEASE","notes":"Vietnamese abbreviation mixing acronym and phrase."}
+{"alias":"nhồi máu cơ tim","canonical":"myocardial infarction","target_concept_id":"ICD10:I21.9","semantic_type":"DISEASE","notes":"Maps to unspecified acute MI in seed dictionary."}
+{"alias":"khó thở","canonical":"shortness of breath","target_concept_id":"LOCAL:SYMPTOM_DYSPNEA","semantic_type":"SYMPTOM","notes":"Vietnamese symptom alias."}

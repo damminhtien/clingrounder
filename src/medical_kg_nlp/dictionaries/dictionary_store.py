@@ -1,7 +1,9 @@
 from __future__ import annotations
 import json
 from collections import defaultdict
+from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
@@ -34,9 +36,20 @@ class DictionaryStore:
                         code_system=CodeSystem(row["code_system"]),
                         canonical_name=str(row["canonical_name"]),
                         semantic_type=EntityType(row["semantic_type"]),
-                        aliases=tuple(str(alias) for alias in row.get("aliases", [])),
-                        parents=tuple(str(parent) for parent in row.get("parents", [])),
+                        aliases=_string_tuple(row, "aliases"),
+                        official_name_vi=_optional_string(row.get("official_name_vi")),
+                        official_name_en=_optional_string(row.get("official_name_en")),
+                        synonyms=_string_tuple(row, "synonyms"),
+                        abbreviations=_string_tuple(row, "abbreviations"),
+                        parents=_parents(row),
+                        parent_code=_optional_string(row.get("parent_code")),
                         source=str(row.get("source", "")),
+                        rxnorm_id=_optional_string(row.get("rxnorm_id")),
+                        ingredient=_optional_string(row.get("ingredient")),
+                        brand_name=_optional_string(row.get("brand_name")),
+                        generic_name=_optional_string(row.get("generic_name")),
+                        dose_form=_optional_string(row.get("dose_form")),
+                        blocked_aliases=_string_tuple(row, "blocked_aliases"),
                     )
                 )
         return cls(entries)
@@ -57,3 +70,27 @@ class DictionaryStore:
                 aliases.append((alias, entry))
         return sorted(aliases, key=lambda item: len(item[0]), reverse=True)
 
+
+def _string_tuple(row: Mapping[str, Any], key: str) -> tuple[str, ...]:
+    value = row.get(key, [])
+    if value is None:
+        return ()
+    if isinstance(value, str):
+        return (value,)
+    if not isinstance(value, list | tuple):
+        raise ValueError(f"Expected string array for {key!r}.")
+    return tuple(str(item) for item in value)
+
+
+def _optional_string(value: Any) -> str | None:
+    if value is None:
+        return None
+    return str(value)
+
+
+def _parents(row: Mapping[str, Any]) -> tuple[str, ...]:
+    parents = list(_string_tuple(row, "parents"))
+    parent_code = _optional_string(row.get("parent_code"))
+    if parent_code is not None and parent_code not in parents:
+        parents.append(parent_code)
+    return tuple(parents)

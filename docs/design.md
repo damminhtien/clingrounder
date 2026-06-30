@@ -57,7 +57,7 @@ Internal schemas live under `src/medical_kg_nlp/schema/`:
 
 ## Data Flow
 
-The sample note is stored in `data/samples/sample_notes.jsonl`. The runner loads it into `ClinicalDocument`, extracts spans from the original text, links only against `data/dictionaries/seed_concepts.jsonl`, validates ontology constraints, and writes JSONL predictions. Candidate generation combines exact, abbreviation, fuzzy/token-overlap, character n-gram, and BM25 retrieval before type and code-system filtering.
+The sample note is stored in `data/samples/sample_notes.jsonl`. The runner loads it into `ClinicalDocument`, extracts spans from the original text, links only against `data/dictionaries/seed_concepts.jsonl`, validates ontology constraints, and writes JSONL predictions. Candidate generation combines exact, abbreviation, fuzzy/token-overlap, character n-gram, and BM25 retrieval before type and code-system filtering. Dictionary rows support official Vietnamese/English names, synonyms, abbreviations, ICD parent codes, RxNorm drug fields, and blocked aliases for false-positive control.
 
 No normalization step is allowed to alter final offsets. Matching normalization is used only for lookup keys.
 
@@ -86,7 +86,7 @@ Future public-dataset adapters should convert all gold labels to the same intern
 
 1. Add a schema adapter for the official prediction format.
 2. Load full ICD-10 and RxNorm releases into `ConceptEntry`.
-3. Expand Vietnamese-English synonym coverage and abbreviation ambiguity handling.
+3. Expand Vietnamese-English synonym coverage, abbreviation ambiguity handling, and blocked-alias false-positive lists.
 4. Train or plug in transformer NER while preserving original character offsets.
 5. Add learned context and relation classifiers behind existing interfaces.
 6. Use candidate-generation recall@20 as the linking gate before training rerankers.

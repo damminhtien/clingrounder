@@ -10,7 +10,7 @@ Target runtime: Python 3.14+ with latest compatible library lower bounds in `pyp
 
 - Typed internal schema for documents, entities, candidates, relations, and predictions.
 - Offset-preserving preprocessing utilities.
-- Seed ICD-10, RxNorm, and local concept dictionaries.
+- Structured seed ICD-10, RxNorm, Vietnamese alias, abbreviation, and local concept dictionaries.
 - Exact, fuzzy, abbreviation, character n-gram, and BM25-style candidate generation.
 - Rule-based NER over dictionary aliases plus lab/dose regexes.
 - Assertion rules for present, negated, historical, family, possible, planned, and resolved contexts.
@@ -100,7 +100,7 @@ Raw clinical text
 configs/                  YAML configuration
 data/dictionaries/         Seed ICD/RxNorm/local dictionaries
 data/samples/              Synthetic notes and gold annotations
-docs/                      Architecture, invariants, schema, evaluation, decisions
+docs/                      Architecture, dictionaries, invariants, schema, evaluation, decisions
 scripts/                   Pipeline, evaluation, dictionary, and index commands
 src/medical_kg_nlp/        Python package
 tests/                     Unit and smoke tests

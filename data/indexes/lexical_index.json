@@ -2,19 +2,53 @@
   "a1c": [
     "LOCAL:TEST_HBA1C"
   ],
+  "acute myocardial infarction": [
+    "ICD10:I21.9"
+  ],
+  "acute myocardial infarction unspecified": [
+    "ICD10:I21.9"
+  ],
   "albuterol": [
     "RXNORM:435"
   ],
+  "albuterol sulfate": [
+    "RXNORM:435"
+  ],
+  "ami": [
+    "ICD10:I21.9"
+  ],
+  "arterial hypertension": [
+    "ICD10:I10"
+  ],
   "asthma": [
-    "ICD10:J45",
     "ICD10:J45"
+  ],
+  "breathlessness": [
+    "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "bronchial asthma": [
+    "ICD10:J45"
+  ],
+  "cao huyet ap": [
+    "ICD10:I10"
+  ],
+  "cao huyết áp": [
+    "ICD10:I10"
   ],
   "chest x-ray": [
     "LOCAL:TEST_XRAY"
   ],
   "cough": [
-    "LOCAL:SYMPTOM_COUGH",
     "LOCAL:SYMPTOM_COUGH"
+  ],
+  "cxr": [
+    "LOCAL:TEST_XRAY"
+  ],
+  "dai thao duong type 2": [
+    "ICD10:E11"
+  ],
+  "dimethylbiguanide": [
+    "RXNORM:6809"
   ],
   "dm2": [
     "ICD10:E11"
@@ -26,17 +60,22 @@
     "ICD10:I10"
   ],
   "fever": [
-    "LOCAL:SYMPTOM_FEVER",
     "LOCAL:SYMPTOM_FEVER"
+  ],
+  "glucophage": [
+    "RXNORM:6809"
+  ],
+  "glycated hemoglobin": [
+    "LOCAL:TEST_HBA1C"
   ],
   "hba1c": [
     "LOCAL:TEST_HBA1C"
   ],
+  "heart attack": [
+    "ICD10:I21.9"
+  ],
   "hemoglobin a1c": [
     "LOCAL:TEST_HBA1C"
-  ],
-  "hen": [
-    "ICD10:J45"
   ],
   "hen phế quản": [
     "ICD10:J45"
@@ -59,15 +98,53 @@
   "lung cancer": [
     "ICD10:C34"
   ],
+  "lung infection": [
+    "ICD10:J18.9"
+  ],
+  "malignant lung neoplasm": [
+    "ICD10:C34"
+  ],
   "malignant neoplasm of bronchus and lung": [
     "ICD10:C34"
   ],
   "metformin": [
-    "RXNORM:6809",
+    "RXNORM:6809"
+  ],
+  "metformin hcl": [
     "RXNORM:6809"
   ],
   "metformin hydrochloride": [
     "RXNORM:6809"
+  ],
+  "mi": [
+    "ICD10:I21.9"
+  ],
+  "myocardial infarction": [
+    "ICD10:I21.9"
+  ],
+  "nhiễm trùng phổi": [
+    "ICD10:J18.9"
+  ],
+  "nhoi mau co tim": [
+    "ICD10:I21.9"
+  ],
+  "nhồi máu cơ tim": [
+    "ICD10:I21.9"
+  ],
+  "nhồi máu cơ tim cấp": [
+    "ICD10:I21.9"
+  ],
+  "niddm": [
+    "ICD10:E11"
+  ],
+  "nmct": [
+    "ICD10:I21.9"
+  ],
+  "non-insulin-dependent diabetes mellitus": [
+    "ICD10:E11"
+  ],
+  "pna": [
+    "ICD10:J18.9"
   ],
   "pneumonia": [
     "ICD10:J18.9"
@@ -75,12 +152,19 @@
   "pneumonia unspecified organism": [
     "ICD10:J18.9"
   ],
+  "radiograph": [
+    "LOCAL:TEST_XRAY"
+  ],
+  "saba": [
+    "RXNORM:435"
+  ],
   "salbutamol": [
-    "RXNORM:435",
+    "RXNORM:435"
+  ],
+  "short-acting beta agonist": [
     "RXNORM:435"
   ],
   "shortness of breath": [
-    "LOCAL:SYMPTOM_DYSPNEA",
     "LOCAL:SYMPTOM_DYSPNEA"
   ],
   "sob": [
@@ -92,33 +176,70 @@
   "t2dm": [
     "ICD10:E11"
   ],
+  "tang huyet ap": [
+    "ICD10:I10"
+  ],
+  "tha": [
+    "ICD10:I10"
+  ],
+  "tieu duong type 2": [
+    "ICD10:E11"
+  ],
   "tiểu đường type 2": [
+    "ICD10:E11"
+  ],
+  "tiểu đường týp 2": [
     "ICD10:E11"
   ],
   "type 2 diabetes": [
     "ICD10:E11"
   ],
   "type 2 diabetes mellitus": [
-    "ICD10:E11",
     "ICD10:E11"
+  ],
+  "tăng ha": [
+    "ICD10:I10"
   ],
   "tăng huyết áp": [
     "ICD10:I10"
   ],
+  "u ác phổi": [
+    "ICD10:C34"
+  ],
+  "ung thư phế quản": [
+    "ICD10:C34"
+  ],
   "ung thư phổi": [
     "ICD10:C34"
   ],
+  "ventolin": [
+    "RXNORM:435"
+  ],
   "viêm phổi": [
     "ICD10:J18.9"
+  ],
+  "viêm phổi cộng đồng": [
+    "ICD10:J18.9"
+  ],
+  "x quang ngực": [
+    "LOCAL:TEST_XRAY"
   ],
   "x-quang": [
     "LOCAL:TEST_XRAY"
   ],
   "x-ray": [
-    "LOCAL:TEST_XRAY",
     "LOCAL:TEST_XRAY"
   ],
+  "đtđ type 2": [
+    "ICD10:E11"
+  ],
+  "đái tháo đường không phụ thuộc insulin": [
+    "ICD10:E11"
+  ],
   "đái tháo đường type 2": [
+    "ICD10:E11"
+  ],
+  "đái tháo đường týp ii": [
     "ICD10:E11"
   ]
 }

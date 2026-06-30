@@ -18,6 +18,13 @@ def test_candidate_generation_handles_abbreviation() -> None:
     assert any(candidate.code == "E11" for candidate in candidates)
 
 
+def test_candidate_generation_handles_vietnamese_abbreviation() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+    candidates = generator.generate("THA", EntityType.DISEASE)
+    assert candidates[0].code == "I10"
+
+
 def test_char_ngram_retriever_handles_noisy_surface_form() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     candidates = CharNgramRetriever(store).retrieve("pnuemonia", EntityType.DISEASE)
