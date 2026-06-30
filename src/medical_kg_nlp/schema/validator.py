@@ -4,7 +4,11 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Protocol, overload
 
-from medical_kg_nlp.kg.constraints import entity_code_system_valid, relation_type_valid
+from medical_kg_nlp.kg.constraints import (
+    code_system_valid_for_entity_type,
+    entity_code_system_valid,
+    relation_type_valid,
+)
 from medical_kg_nlp.schema.annotation import CandidateConcept, EntityAnnotation, RelationAnnotation
 from medical_kg_nlp.schema.output import ClinicalPrediction, PredictionMetadata
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType, RelationType
@@ -109,6 +113,32 @@ class PredictionValidator:
                             ),
                         )
                     )
+
+            for candidate_index, candidate in enumerate(entity.candidates):
+                candidate_path = f"{path}.candidates[{candidate_index}]"
+                if not code_system_valid_for_entity_type(entity.type, candidate.code_system):
+                    issues.append(
+                        PredictionValidationIssue(
+                            "invalid_candidate_code_system",
+                            f"{candidate_path}.code_system",
+                            (
+                                f"{entity.type.value} candidate cannot map to "
+                                f"{candidate.code_system.value}."
+                            ),
+                        )
+                    )
+                if self._allowed_codes and candidate.code is not None:
+                    if (candidate.code_system, candidate.code) not in self._allowed_codes:
+                        issues.append(
+                            PredictionValidationIssue(
+                                "unknown_dictionary_code",
+                                f"{candidate_path}.code",
+                                (
+                                    f"{candidate.code_system.value} candidate code "
+                                    f"{candidate.code!r} is not present in the loaded dictionary."
+                                ),
+                            )
+                        )
 
         entities_by_id = {entity.id: entity for entity in prediction.entities}
         relation_ids: set[str] = set()

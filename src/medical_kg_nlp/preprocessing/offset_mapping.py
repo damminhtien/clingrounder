@@ -39,12 +39,14 @@ def collapse_whitespace_preserve_offsets(text: str) -> OffsetMappedText:
         previous_was_space = False
         chars.append(char)
         mapping.append(index)
-    normalized = "".join(chars)
-    leading = len(normalized) - len(normalized.lstrip())
-    trailing = len(normalized.rstrip()) - len(normalized.rstrip(" "))
-    end = len(normalized) - trailing if trailing else len(normalized)
+    leading = 0
+    while leading < len(chars) and chars[leading] == " ":
+        leading += 1
+    end = len(chars)
+    while end > leading and chars[end - 1] == " ":
+        end -= 1
     return OffsetMappedText(
         original=text,
-        normalized=normalized[leading:end],
+        normalized="".join(chars[leading:end]),
         normalized_to_original=tuple(mapping[leading:end]),
     )

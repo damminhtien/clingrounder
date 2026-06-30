@@ -28,9 +28,11 @@
 
 - `TREATS` requires a drug head and disease or symptom tail.
 - `HAS_SYMPTOM` requires a disease head and symptom tail.
+- `HAS_TEST` requires a disease or finding head and lab test tail.
 - `HAS_VALUE` requires a lab test head and lab result tail.
 - `HAS_DOSE` requires a drug head and lab result tail.
 - `SUGGESTS` requires a lab test or finding head and disease or finding tail.
+- Relation types not explicitly allowed by KG constraints must be rejected.
 
 ## Validation Gate
 

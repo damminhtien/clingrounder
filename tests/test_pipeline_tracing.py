@@ -30,6 +30,7 @@ def test_pipeline_trace_records_algorithm_stages() -> None:
     assert result.prediction.document_id == document.document_id
     by_stage = {stage.name: stage for stage in result.trace.stages}
     assert by_stage["offset_preserving_preprocessing"].counters["offset_map_entries"] > 0
+    assert by_stage["offset_preserving_preprocessing"].counters["diagnostic_only"] == 1
     assert by_stage["candidate_generation"].counters["generated_candidates"] > 0
     assert by_stage["candidate_reranking"].counters["reranked_candidates"] > 0
     assert by_stage["normalization_assignment"].counters["assigned_codes"] > 0

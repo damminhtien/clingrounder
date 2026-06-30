@@ -86,6 +86,8 @@ class PipelineRunner:
             counters["original_characters"] = len(mapped_text.original)
             counters["normalized_characters"] = len(mapped_text.normalized)
             counters["offset_map_entries"] = len(mapped_text.normalized_to_original)
+            # Downstream stages still consume source text until normalized-span NER is wired end to end.
+            counters["diagnostic_only"] = 1
 
         with trace.stage("section_detection") as counters:
             sections = self._sections(loaded_document.text)

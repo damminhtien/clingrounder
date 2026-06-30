@@ -58,6 +58,11 @@ Each runner stage emits timing and counters through `PipelineTrace`. Stage names
 stable so ablations can compare runtime, validation issues, linking behavior, context behavior, and
 relation quality while swapping one component at a time.
 
+The current deterministic baseline keeps `offset_preserving_preprocessing` diagnostic-only:
+downstream NER, context, linking, and relation stages consume original source text. Normalized text
+should only feed downstream stages after normalized spans are mapped back to source offsets end to
+end with offset regression tests.
+
 ## Retrieval
 
 Candidate generation must avoid brute-force mention-to-dictionary comparison. The intended order is:

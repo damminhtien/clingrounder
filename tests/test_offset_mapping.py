@@ -8,3 +8,11 @@ def test_offset_mapping_preserves_original_span() -> None:
     original_span = mapped.normalized_span_to_original((start, start + len("sốt")))
     assert text[original_span[0] : original_span[1]] == "sốt"
 
+
+def test_offset_mapping_trims_collapsed_edge_whitespace() -> None:
+    text = "  abc  "
+    mapped = collapse_whitespace_preserve_offsets(text)
+
+    assert mapped.normalized == "abc"
+    assert mapped.normalized_to_original == (2, 3, 4)
+    assert mapped.normalized_span_to_original((0, 3)) == (2, 5)

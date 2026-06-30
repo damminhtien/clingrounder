@@ -32,7 +32,8 @@ issues instead of silently accepting invalid output. It checks:
 - duplicate entity and relation ids;
 - source-text offsets and text hash when document text is supplied;
 - entity/code-system compatibility;
-- dictionary membership when a dictionary is supplied;
+- entity and candidate dictionary membership when a dictionary is supplied;
+- candidate code-system compatibility with the parent entity type;
 - relation endpoint existence and type compatibility.
 
 Command:

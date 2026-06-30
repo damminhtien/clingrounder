@@ -50,6 +50,50 @@ def test_prediction_validator_reports_unknown_dictionary_code() -> None:
     assert any(issue.kind == "unknown_dictionary_code" for issue in issues)
 
 
+def test_prediction_validator_reports_unknown_candidate_dictionary_code() -> None:
+    payload = _sample_prediction_payload()
+    payload["entities"][0]["candidates"] = [
+        {
+            "concept_id": "ICD10:MISSING",
+            "code_system": "ICD-10",
+            "code": "MISSING",
+            "name": "Missing disease",
+            "score": 0.9,
+            "source": "test",
+            "matched_alias": "missing",
+        }
+    ]
+    validator = PredictionValidator(DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl"))
+
+    _, issues = validator.validate_payload(payload, source_text=_sample_source_text())
+
+    assert any(
+        issue.kind == "unknown_dictionary_code"
+        and issue.path == "$.entities[0].candidates[0].code"
+        for issue in issues
+    )
+
+
+def test_prediction_validator_reports_invalid_candidate_code_system() -> None:
+    payload = _sample_prediction_payload()
+    payload["entities"][7]["candidates"] = [
+        {
+            "concept_id": "ICD10:E11",
+            "code_system": "ICD-10",
+            "code": "E11",
+            "name": "Type 2 diabetes mellitus",
+            "score": 0.9,
+            "source": "test",
+            "matched_alias": "metformin",
+        }
+    ]
+    validator = PredictionValidator(DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl"))
+
+    _, issues = validator.validate_payload(payload, source_text=_sample_source_text())
+
+    assert any(issue.kind == "invalid_candidate_code_system" for issue in issues)
+
+
 def test_prediction_validator_reports_invalid_relation_reference() -> None:
     payload = _sample_prediction_payload()
     payload["relations"][0]["tail"] = "NO_SUCH_ENTITY"

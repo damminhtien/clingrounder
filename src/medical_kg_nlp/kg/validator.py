@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 from medical_kg_nlp.kg.constraints import entity_code_system_valid, relation_type_valid
 from medical_kg_nlp.schema.annotation import EntityAnnotation, RelationAnnotation
+from medical_kg_nlp.schema.types import CodeSystem
 
 
 @dataclass(frozen=True)
@@ -28,6 +29,7 @@ class KGValidator:
                     )
                 )
                 entity.code = None
+                entity.code_system = CodeSystem.NONE
                 entity.candidates = []
                 valid.append(entity)
         return valid, issues
@@ -52,4 +54,3 @@ class KGValidator:
                     )
                 )
         return valid, issues
-
