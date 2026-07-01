@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -422,6 +423,7 @@ def build_loop_engineering_report(
         top_errors=top_errors,
         next_experiment=next_experiment,
     )
+    agent_poll = build_agent_poll_state(agent_context, agent_actions)
     return {
         "experiment_log": log,
         "decision": decision_payload,
@@ -432,23 +434,35 @@ def build_loop_engineering_report(
         "agent": {
             "context": agent_context,
             "actions": agent_actions,
+            "poll": agent_poll,
             "brief": render_agent_brief(agent_context, agent_actions),
+            "compact": render_agent_compact_markdown(agent_context, agent_actions, agent_poll),
         },
     }
 
 
-def write_loop_engineering_report(loop_report: dict[str, Any], output_dir: str | Path) -> None:
+def write_loop_engineering_report(
+    loop_report: dict[str, Any],
+    output_dir: str | Path,
+    *,
+    journal_dir: str | Path | None = None,
+) -> None:
     path = Path(output_dir)
+    journal_path = Path(journal_dir) if journal_dir is not None else path.parent / "journal"
+    _attach_journal_paths(loop_report, journal_path)
     path.mkdir(parents=True, exist_ok=True)
     _write_json(path / "loop_report.json", loop_report)
     _write_yaml(path / "experiment_log.yaml", _mapping(loop_report["experiment_log"]))
     _write_json(path / "experiment_log.json", loop_report["experiment_log"])
     _write_confusion_matrix(path / "confusion_matrix.csv", _list(loop_report["context_confusion_matrix"]))
+    _write_json(path / "agent_poll.json", _mapping(_mapping(loop_report["agent"])["poll"]))
     _write_jsonl(path / "agent_actions.jsonl", _dict_list(_mapping(loop_report["agent"])["actions"]))
     (path / "decision.md").write_text(render_decision_markdown(loop_report), encoding="utf-8")
     (path / "next_experiment.md").write_text(render_next_experiment_markdown(loop_report), encoding="utf-8")
     (path / "top_error_cases.md").write_text(render_top_error_cases_markdown(loop_report), encoding="utf-8")
     (path / "agent_brief.md").write_text(str(_mapping(loop_report["agent"])["brief"]), encoding="utf-8")
+    (path / "agent_compact.md").write_text(str(_mapping(loop_report["agent"])["compact"]), encoding="utf-8")
+    write_experiment_journal(loop_report, journal_path, run_output_dir=path)
 
 
 def metric_snapshot(report: dict[str, Any] | None) -> dict[str, float]:
@@ -671,6 +685,51 @@ def build_agent_actions(
     return [action]
 
 
+def build_agent_poll_state(
+    agent_context: dict[str, Any],
+    actions: list[dict[str, Any]],
+) -> dict[str, Any]:
+    next_action = actions[0] if actions else {}
+    blocking_issues = _float_value(agent_context.get("blocking_issues"))
+    status = "blocked_by_validation" if blocking_issues > 0 else "ready_for_agent"
+    return {
+        "schema_version": "agent-poll.v1",
+        "status": status,
+        "poll_interval_seconds": 30,
+        "next_action_id": next_action.get("id"),
+        "next_action_status": next_action.get("status"),
+        "action_count": len(actions),
+        "decision": agent_context.get("decision"),
+        "module": agent_context.get("module"),
+        "target_error": agent_context.get("target_error"),
+        "primary_metric": agent_context.get("primary_metric"),
+        "blocking_issues": blocking_issues,
+        "token_strategy": "Read agent_compact.md first, then agent_actions.jsonl. Open loop_report.json only for raw evidence.",
+        "read_order": [
+            "agent_poll.json",
+            "agent_compact.md",
+            "agent_actions.jsonl",
+            "top_error_cases.md",
+            "loop_report.json",
+        ],
+        "artifact_paths": {
+            "poll": "agent_poll.json",
+            "compact": "agent_compact.md",
+            "actions": "agent_actions.jsonl",
+            "full_report": "loop_report.json",
+            "cases": "top_error_cases.md",
+            "decision": "decision.md",
+        },
+        "completion_markers": [
+            "focused regression test updated",
+            "targeted commands pass",
+            "stage-wise metrics regenerated",
+            "loop report regenerated",
+            "validation_issue_count does not increase",
+        ],
+    }
+
+
 def render_agent_brief(agent_context: dict[str, Any], actions: list[dict[str, Any]]) -> str:
     lines = [
         "# Agent Brief",
@@ -713,6 +772,54 @@ def render_agent_brief(agent_context: dict[str, Any], actions: list[dict[str, An
         for condition in _list(action["stop_conditions"]):
             lines.append(f"- {condition}")
         lines.append("")
+    return "\n".join(lines) + "\n"
+
+
+def render_agent_compact_markdown(
+    agent_context: dict[str, Any],
+    actions: list[dict[str, Any]],
+    poll_state: dict[str, Any],
+) -> str:
+    next_experiment = _mapping(agent_context["next_experiment"])
+    action = actions[0] if actions else {}
+    evidence = _mapping(action.get("evidence"))
+    top_error = _mapping(evidence.get("top_error"))
+    lines = [
+        "# Agent Compact Context",
+        "",
+        f"Status: {poll_state['status']}",
+        f"Experiment: {agent_context['experiment_id']}",
+        f"Decision: {agent_context['decision']}",
+        f"Module: {agent_context['module']}",
+        f"Target error: {agent_context['target_error'] or 'N/A'}",
+        f"Primary metric: {agent_context['primary_metric']}",
+        f"Blocking issues: {_format_value(agent_context['blocking_issues'])}",
+        "",
+        "## Next Action",
+        "",
+        f"ID: {action.get('id', 'N/A')}",
+        f"Title: {action.get('title', 'N/A')}",
+        f"Objective: {action.get('objective', next_experiment.get('hypothesis', 'N/A'))}",
+        f"Success: {next_experiment.get('success_criteria', 'N/A')}",
+        "",
+        "## Evidence",
+        "",
+        f"Top error: {top_error.get('error_type', 'N/A')}",
+        f"Count: {top_error.get('count', 'N/A')}",
+        f"Priority: {_format_value(top_error.get('priority'))}",
+        f"Examples: {evidence.get('example_count', 0)}",
+        "",
+        "## Read Order",
+        "",
+    ]
+    for item in _list(poll_state["read_order"]):
+        lines.append(f"- {item}")
+    lines.extend(["", "## Commands", ""])
+    for command in _list(action.get("commands"))[:3]:
+        lines.append(f"- `{command}`")
+    lines.extend(["", "## Stop If", ""])
+    for condition in _list(action.get("stop_conditions"))[:4]:
+        lines.append(f"- {condition}")
     return "\n".join(lines) + "\n"
 
 
@@ -824,6 +931,158 @@ def render_top_error_cases_markdown(loop_report: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def write_experiment_journal(
+    loop_report: dict[str, Any],
+    journal_dir: str | Path,
+    *,
+    run_output_dir: str | Path,
+) -> None:
+    path = Path(journal_dir)
+    path.mkdir(parents=True, exist_ok=True)
+    entry = build_journal_entry(loop_report, run_output_dir=run_output_dir)
+    log_path = path / "experiments.jsonl"
+    _append_jsonl(log_path, entry)
+
+    entries = [*_load_jsonl(log_path)]
+    index = build_experiment_index(entries)
+    _write_json(path / "experiment_index.json", index)
+    _write_json(path / "experiment_memory.json", build_experiment_memory(index))
+    (path / "experiment_notebook.md").write_text(render_experiment_notebook(index), encoding="utf-8")
+
+
+def _attach_journal_paths(loop_report: dict[str, Any], journal_dir: Path) -> None:
+    agent = _mapping(loop_report.get("agent"))
+    poll = _mapping(agent.get("poll"))
+    artifact_paths = _mapping(poll.get("artifact_paths"))
+    artifact_paths.update(
+        {
+            "journal_dir": str(journal_dir),
+            "journal_log": str(journal_dir / "experiments.jsonl"),
+            "journal_index": str(journal_dir / "experiment_index.json"),
+            "journal_memory": str(journal_dir / "experiment_memory.json"),
+            "journal_notebook": str(journal_dir / "experiment_notebook.md"),
+        }
+    )
+    poll["artifact_paths"] = artifact_paths
+    agent["poll"] = poll
+    loop_report["agent"] = agent
+
+
+def build_journal_entry(loop_report: dict[str, Any], *, run_output_dir: str | Path) -> dict[str, Any]:
+    experiment = _mapping(loop_report["experiment_log"])
+    decision = _mapping(loop_report["decision"])
+    next_experiment = _mapping(loop_report["next_experiment"])
+    top_errors = _dict_list(loop_report["top_errors"])
+    run_path = str(Path(run_output_dir))
+    return {
+        "schema_version": "experiment-journal.v1",
+        "id": experiment.get("id"),
+        "date": experiment.get("date"),
+        "owner": experiment.get("owner"),
+        "module": experiment.get("module"),
+        "hypothesis": experiment.get("hypothesis"),
+        "change": experiment.get("change", []),
+        "baseline": experiment.get("baseline"),
+        "dataset": experiment.get("dataset", {}),
+        "decision": decision.get("decision"),
+        "primary_metric": decision.get("primary_metric"),
+        "primary_before": decision.get("primary_before"),
+        "primary_after": decision.get("primary_after"),
+        "primary_delta": decision.get("primary_delta"),
+        "blocking_issues": decision.get("blocking_issues"),
+        "top_errors": top_errors[:5],
+        "next": next_experiment,
+        "notes": experiment.get("notes", []),
+        "artifacts": {
+            "run_dir": run_path,
+            "decision": str(Path(run_path) / "decision.md"),
+            "agent_compact": str(Path(run_path) / "agent_compact.md"),
+            "agent_actions": str(Path(run_path) / "agent_actions.jsonl"),
+            "loop_report": str(Path(run_path) / "loop_report.json"),
+            "top_error_cases": str(Path(run_path) / "top_error_cases.md"),
+        },
+        "memory_hint": _memory_hint(decision.get("decision"), top_errors),
+    }
+
+
+def build_experiment_index(entries: list[dict[str, Any]]) -> dict[str, Any]:
+    latest_by_id: dict[str, dict[str, Any]] = {}
+    for entry in entries:
+        experiment_id = str(entry.get("id", ""))
+        if not experiment_id:
+            continue
+        latest_by_id[experiment_id] = entry
+    latest = sorted(
+        latest_by_id.values(),
+        key=lambda row: (str(row.get("date", "")), str(row.get("id", ""))),
+        reverse=True,
+    )
+    by_decision = _counter_dict(str(row.get("decision", "")) for row in latest)
+    by_module = _counter_dict(str(row.get("module", "")) for row in latest)
+    return {
+        "schema_version": "experiment-index.v1",
+        "total_log_rows": len(entries),
+        "unique_experiments": len(latest),
+        "by_decision": by_decision,
+        "by_module": by_module,
+        "latest": latest,
+    }
+
+
+def build_experiment_memory(index: dict[str, Any]) -> dict[str, Any]:
+    latest = _dict_list(index.get("latest", []))
+    return {
+        "schema_version": "experiment-memory.v1",
+        "summary": {
+            "unique_experiments": index.get("unique_experiments", 0),
+            "by_decision": index.get("by_decision", {}),
+            "by_module": index.get("by_module", {}),
+        },
+        "reuse": [_memory_row(row) for row in latest if row.get("decision") in {"keep", "baseline"}],
+        "avoid": [_memory_row(row) for row in latest if row.get("decision") == "revert"],
+        "refine": [_memory_row(row) for row in latest if row.get("decision") == "refine"],
+    }
+
+
+def render_experiment_notebook(index: dict[str, Any]) -> str:
+    latest = _dict_list(index.get("latest", []))
+    lines = [
+        "# Experiment Notebook",
+        "",
+        f"- Unique experiments: {index.get('unique_experiments', 0)}",
+        f"- Total log rows: {index.get('total_log_rows', 0)}",
+        "",
+        "## Decision Counts",
+        "",
+    ]
+    for decision, count in sorted(_mapping(index.get("by_decision", {})).items()):
+        lines.append(f"- {decision or 'UNKNOWN'}: {count}")
+    lines.extend(["", "## Experiments", ""])
+    if not latest:
+        lines.append("- No experiments recorded.")
+    for row in latest:
+        lines.append(f"### {row.get('id')} - {row.get('decision')}")
+        lines.append("")
+        lines.append(f"- Date: {row.get('date')}")
+        lines.append(f"- Module: {row.get('module')}")
+        lines.append(f"- Hypothesis: {row.get('hypothesis')}")
+        lines.append(f"- Primary metric: {row.get('primary_metric')}")
+        lines.append(f"- Before: {_format_value(row.get('primary_before'))}")
+        lines.append(f"- After: {_format_value(row.get('primary_after'))}")
+        lines.append(f"- Delta: {_format_value(row.get('primary_delta'))}")
+        lines.append(f"- Memory hint: {row.get('memory_hint')}")
+        artifacts = _mapping(row.get("artifacts", {}))
+        if artifacts:
+            lines.append(f"- Artifacts: {artifacts.get('run_dir')}")
+        top_errors = _dict_list(row.get("top_errors", []))
+        if top_errors:
+            lines.append("- Top errors:")
+            for error in top_errors[:3]:
+                lines.append(f"  - {error.get('error_type')}: {error.get('count')}")
+        lines.append("")
+    return "\n".join(lines) + "\n"
+
+
 def baseline_report_id(baseline_report: dict[str, Any] | None) -> str | None:
     if baseline_report is None:
         return None
@@ -852,6 +1111,41 @@ def _case_summaries(cases: list[dict[str, Any]]) -> list[dict[str, Any]]:
             }
         )
     return summaries
+
+
+def _memory_hint(decision: Any, top_errors: list[dict[str, Any]]) -> str:
+    target = top_errors[0]["error_type"] if top_errors else "no structured error"
+    if decision == "keep":
+        return f"Reuse this change pattern when {target} appears again."
+    if decision == "baseline":
+        return "Use this run as a valid baseline for future comparisons."
+    if decision == "revert":
+        return f"Avoid this change pattern; it did not produce a valid improvement for {target}."
+    if decision == "refine":
+        return f"Useful evidence but not decisive; refine before reusing for {target}."
+    return "Keep as experiment evidence."
+
+
+def _memory_row(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": row.get("id"),
+        "date": row.get("date"),
+        "module": row.get("module"),
+        "decision": row.get("decision"),
+        "hypothesis": row.get("hypothesis"),
+        "primary_metric": row.get("primary_metric"),
+        "primary_delta": row.get("primary_delta"),
+        "memory_hint": row.get("memory_hint"),
+        "artifacts": row.get("artifacts"),
+    }
+
+
+def _counter_dict(values: Iterable[str]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for value in values:
+        key = value or "UNKNOWN"
+        counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items()))
 
 
 def _success_criteria(success_metric: str, current_report: dict[str, Any]) -> str:
@@ -889,6 +1183,19 @@ def _int_value(value: Any) -> int:
     return 0
 
 
+def _float_value(value: Any) -> float:
+    if isinstance(value, bool):
+        return float(int(value))
+    if isinstance(value, int | float):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return 0.0
+    return 0.0
+
+
 def _write_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
@@ -901,6 +1208,26 @@ def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     with path.open("w", encoding="utf-8") as handle:
         for row in rows:
             handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+
+
+def _append_jsonl(path: Path, row: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+
+
+def _load_jsonl(path: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    if not path.exists():
+        return rows
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            payload = json.loads(line)
+            if isinstance(payload, dict):
+                rows.append(payload)
+    return rows
 
 
 def _write_yaml(path: Path, payload: dict[str, Any]) -> None:

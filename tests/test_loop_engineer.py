@@ -36,20 +36,37 @@ def test_loop_engineer_keeps_improved_valid_experiment(tmp_path: Path) -> None:
     assert "uv run pytest tests/test_candidate_generation.py tests/test_dictionary.py -q" in (
         loop_report["agent"]["actions"][0]["commands"]
     )
+    assert loop_report["agent"]["poll"]["status"] == "ready_for_agent"
+    assert loop_report["agent"]["poll"]["read_order"][:2] == ["agent_poll.json", "agent_compact.md"]
+    assert "Read agent_compact.md first" in loop_report["agent"]["poll"]["token_strategy"]
 
-    write_loop_engineering_report(loop_report, tmp_path)
+    journal_dir = tmp_path / "journal"
+    write_loop_engineering_report(loop_report, tmp_path, journal_dir=journal_dir)
     for filename in [
         "loop_report.json",
         "experiment_log.yaml",
         "experiment_log.json",
+        "agent_poll.json",
         "agent_actions.jsonl",
         "agent_brief.md",
+        "agent_compact.md",
         "confusion_matrix.csv",
         "decision.md",
         "next_experiment.md",
         "top_error_cases.md",
     ]:
         assert (tmp_path / filename).exists()
+    for filename in [
+        "experiments.jsonl",
+        "experiment_index.json",
+        "experiment_memory.json",
+        "experiment_notebook.md",
+    ]:
+        assert (journal_dir / filename).exists()
+    memory = json.loads((journal_dir / "experiment_memory.json").read_text(encoding="utf-8"))
+    assert memory["reuse"][0]["id"] == "N002"
+    poll = json.loads((tmp_path / "agent_poll.json").read_text(encoding="utf-8"))
+    assert poll["artifact_paths"]["journal_memory"] == str(journal_dir / "experiment_memory.json")
 
 
 def test_loop_engineer_reverts_when_validation_gets_worse() -> None:
@@ -68,6 +85,7 @@ def test_loop_engineer_reverts_when_validation_gets_worse() -> None:
     assert loop_report["decision"]["decision"] == "revert"
     assert metric_snapshot(current)["validation_issue_count"] == 1
     assert loop_report["top_errors"][0]["module"] == "kg_validation"
+    assert loop_report["agent"]["poll"]["status"] == "blocked_by_validation"
 
 
 def test_loop_engineer_cli_writes_decision_artifacts(tmp_path: Path) -> None:
@@ -105,12 +123,20 @@ def test_loop_engineer_cli_writes_decision_artifacts(tmp_path: Path) -> None:
     )
 
     loop_report = json.loads((output_dir / "loop_report.json").read_text(encoding="utf-8"))
+    journal_dir = tmp_path / "journal"
     assert loop_report["decision"]["decision"] == "keep"
     assert "severe_context_error" in (output_dir / "top_error_cases.md").read_text(encoding="utf-8")
     assert "Acceptance criteria" in (output_dir / "agent_brief.md").read_text(encoding="utf-8")
+    assert "Read Order" in (output_dir / "agent_compact.md").read_text(encoding="utf-8")
+    assert json.loads((output_dir / "agent_poll.json").read_text(encoding="utf-8"))[
+        "poll_interval_seconds"
+    ] == 30
     assert json.loads((output_dir / "agent_actions.jsonl").read_text(encoding="utf-8").splitlines()[0])[
         "module"
     ] == "context"
+    assert (journal_dir / "experiments.jsonl").exists()
+    notebook = (journal_dir / "experiment_notebook.md").read_text(encoding="utf-8")
+    assert "C001 - keep" in notebook
 
 
 def _report(

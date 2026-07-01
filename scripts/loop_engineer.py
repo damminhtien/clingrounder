@@ -30,6 +30,10 @@ def main() -> None:
         help="One meaningful change. Repeat for multiple lines in the experiment log.",
     )
     parser.add_argument("--baseline-report", help="Optional baseline metrics.json for comparison.")
+    parser.add_argument(
+        "--journal-dir",
+        help="Optional shared experiment journal directory. Defaults to a journal sibling of output-dir.",
+    )
     parser.add_argument("--owner", default="", help="Experiment owner.")
     parser.add_argument(
         "--dataset",
@@ -70,7 +74,7 @@ def main() -> None:
         revert_delta=args.revert_delta,
         top_k=args.top_k,
     )
-    write_loop_engineering_report(loop_report, args.output_dir)
+    write_loop_engineering_report(loop_report, args.output_dir, journal_dir=args.journal_dir)
     print(json.dumps(loop_report["decision"], ensure_ascii=False, indent=2, sort_keys=True))
 
 

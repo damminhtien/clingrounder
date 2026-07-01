@@ -89,17 +89,31 @@ python scripts/loop_engineer.py \
 ```
 
 Use `--baseline-report previous/metrics.json` when comparing one meaningful change against a frozen
-baseline. The loop engine writes:
+baseline. Each run writes per-experiment artifacts plus a shared journal. By default the journal is
+created as a `journal/` sibling of `--output-dir`; use `--journal-dir` to store it elsewhere.
+
+Per-experiment artifacts:
 
 - `experiment_log.yaml` and `experiment_log.json` for the experiment record.
 - `decision.md` for the baseline/keep/revert/refine decision.
 - `next_experiment.md` for the highest-priority follow-up.
 - `top_error_cases.md` for representative cases from the top error classes.
+- `agent_poll.json` for a small polling/status payload with read order, next action, and completion
+  markers.
+- `agent_compact.md` for token-efficient resume context; agents should read this before the full
+  report on long runs.
 - `agent_brief.md` for a coding-agent-ready task brief with guardrails, files, commands, and
   acceptance criteria.
 - `agent_actions.jsonl` for machine-readable action items.
 - `confusion_matrix.csv` for assertion/context confusion.
 - `loop_report.json` for the full machine-readable loop report.
+
+Journal artifacts:
+
+- `experiments.jsonl` append-only experiment log.
+- `experiment_index.json` latest indexed view by experiment id.
+- `experiment_memory.json` buckets for `reuse`, `avoid`, and `refine`.
+- `experiment_notebook.md` human-readable experiment notebook.
 
 ## Ablation And Bottleneck Workflow
 
