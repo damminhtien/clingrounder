@@ -5,7 +5,13 @@ from medical_kg_nlp.schema.types import AssertionStatus, EntityType, RelationTyp
 
 
 KNOWN_TREATS = {
+    ("amoxicillin", "J18.9"),
+    ("aspirin", "I21.9"),
+    ("atorvastatin", "I25.10"),
+    ("lisinopril", "I10"),
+    ("losartan", "I10"),
     ("metformin", "E11"),
+    ("omeprazole", "K21.9"),
     ("salbutamol", "J45"),
 }
 

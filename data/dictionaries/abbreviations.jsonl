@@ -11,8 +11,22 @@
 {"abbreviation":"CAD","expansions":["coronary artery disease"]}
 {"abbreviation":"CKD","expansions":["chronic kidney disease"]}
 {"abbreviation":"AKI","expansions":["acute kidney injury"]}
+{"abbreviation":"ARF","expansions":["acute renal failure","acute kidney failure"]}
+{"abbreviation":"BPTNMT","expansions":["bệnh phổi tắc nghẽn mạn tính"]}
+{"abbreviation":"BTM","expansions":["bệnh thận mạn"]}
+{"abbreviation":"HF","expansions":["heart failure"]}
+{"abbreviation":"CHF","expansions":["congestive heart failure"]}
+{"abbreviation":"GERD","expansions":["gastroesophageal reflux disease"]}
 {"abbreviation":"SOB","expansions":["shortness of breath"]}
+{"abbreviation":"CP","expansions":["chest pain"]}
 {"abbreviation":"N/V","expansions":["nausea/vomiting"]}
+{"abbreviation":"ECG","expansions":["electrocardiogram"]}
+{"abbreviation":"EKG","expansions":["electrocardiogram"]}
+{"abbreviation":"BG","expansions":["blood glucose"]}
+{"abbreviation":"Cr","expansions":["creatinine"]}
+{"abbreviation":"sCr","expansions":["serum creatinine"]}
+{"abbreviation":"ASA","expansions":["aspirin","acetylsalicylic acid"]}
+{"abbreviation":"AMX","expansions":["amoxicillin"]}
 {"abbreviation":"bid","expansions":["twice daily"]}
 {"abbreviation":"tid","expansions":["three times daily"]}
 {"abbreviation":"qd","expansions":["once daily"]}

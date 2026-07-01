@@ -7,6 +7,8 @@ dictionaries:
   seed_dictionary: "data/dictionaries/seed_concepts.jsonl"
   abbreviation_table: "data/dictionaries/abbreviations.jsonl"
   vietnamese_alias_table: "data/dictionaries/vietnamese_medical_alias.jsonl"
+  source_registry: "data/sources/medical_resource_registry.yaml"
+  assertion_cue_table: "data/heuristics/assertion_cues.jsonl"
 
 indexes:
   lexical_index: "data/indexes/lexical_index.json"

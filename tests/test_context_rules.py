@@ -36,6 +36,11 @@ def test_negation_rule() -> None:
     assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.NEGATED
 
 
+def test_source_backed_negation_cue() -> None:
+    entity, sentence = _entity("Patient is free of chest pain.", "chest pain")
+    assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.NEGATED
+
+
 def test_possible_rule_overrides_negation_phrase() -> None:
     entity, sentence = _entity("Không loại trừ viêm phổi.", "viêm phổi")
     assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.POSSIBLE
@@ -43,6 +48,11 @@ def test_possible_rule_overrides_negation_phrase() -> None:
 
 def test_family_history_rule() -> None:
     entity, sentence = _entity("Cha bệnh nhân bị ung thư phổi.", "ung thư phổi")
+    assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.FAMILY
+
+
+def test_source_backed_family_cue() -> None:
+    entity, sentence = _entity("Maternal history of asthma.", "asthma")
     assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.FAMILY
 
 

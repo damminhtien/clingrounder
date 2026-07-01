@@ -1,8 +1,13 @@
 from __future__ import annotations
+from medical_kg_nlp.context.cue_loader import (
+    cues_by_assertion,
+    load_default_assertion_cues,
+    section_priors_from_cues,
+)
 from medical_kg_nlp.schema.types import AssertionStatus
 
 
-POSSIBLE_CUES = (
+_FALLBACK_POSSIBLE_CUES = (
     "không loại trừ",
     "cannot exclude",
     "rule out",
@@ -15,7 +20,7 @@ POSSIBLE_CUES = (
     "suggestive of",
     "likely",
 )
-NEGATION_CUES = (
+_FALLBACK_NEGATION_CUES = (
     "không ghi nhận",
     "không có bằng chứng",
     "không thấy",
@@ -32,7 +37,7 @@ NEGATION_CUES = (
     "no ",
     "not ",
 )
-HISTORICAL_CUES = (
+_FALLBACK_HISTORICAL_CUES = (
     "tiền sử",
     "đã từng",
     "trước đây",
@@ -43,7 +48,7 @@ HISTORICAL_CUES = (
     "prior",
     "known case of",
 )
-FAMILY_CUES = (
+_FALLBACK_FAMILY_CUES = (
     "family history",
     "gia đình",
     "người nhà",
@@ -61,7 +66,7 @@ FAMILY_CUES = (
     "ông",
     "bà",
 )
-PLANNED_CUES = (
+_FALLBACK_PLANNED_CUES = (
     "will start",
     "planned",
     "scheduled",
@@ -71,9 +76,9 @@ PLANNED_CUES = (
     "chỉ định",
     "kế hoạch",
 )
-RESOLVED_CUES = ("resolved", "hết", "đã khỏi", "cải thiện")
+_FALLBACK_RESOLVED_CUES = ("resolved", "hết", "đã khỏi", "cải thiện")
 
-SECTION_PRIORS = {
+_FALLBACK_SECTION_PRIORS = {
     "family history": AssertionStatus.FAMILY,
     "tiền sử gia đình": AssertionStatus.FAMILY,
     "past medical history": AssertionStatus.HISTORICAL,
@@ -82,3 +87,18 @@ SECTION_PRIORS = {
     "kế hoạch": AssertionStatus.PLANNED,
 }
 
+
+_SOURCE_CUES = load_default_assertion_cues()
+_LEFT_CUES_BY_ASSERTION = cues_by_assertion(_SOURCE_CUES)
+
+POSSIBLE_CUES = _LEFT_CUES_BY_ASSERTION.get(AssertionStatus.POSSIBLE, _FALLBACK_POSSIBLE_CUES)
+NEGATION_CUES = _LEFT_CUES_BY_ASSERTION.get(AssertionStatus.NEGATED, _FALLBACK_NEGATION_CUES)
+HISTORICAL_CUES = _LEFT_CUES_BY_ASSERTION.get(AssertionStatus.HISTORICAL, _FALLBACK_HISTORICAL_CUES)
+FAMILY_CUES = _LEFT_CUES_BY_ASSERTION.get(AssertionStatus.FAMILY, _FALLBACK_FAMILY_CUES)
+PLANNED_CUES = _LEFT_CUES_BY_ASSERTION.get(AssertionStatus.PLANNED, _FALLBACK_PLANNED_CUES)
+RESOLVED_CUES = _LEFT_CUES_BY_ASSERTION.get(AssertionStatus.RESOLVED, _FALLBACK_RESOLVED_CUES)
+
+SECTION_PRIORS = {
+    **_FALLBACK_SECTION_PRIORS,
+    **section_priors_from_cues(_SOURCE_CUES),
+}

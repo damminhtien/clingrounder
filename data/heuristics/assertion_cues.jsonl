@@ -1,0 +1,72 @@
+{"cue":"không loại trừ","assertion":"POSSIBLE","language":"vi","scope":"bidirectional","source_ids":["context_algorithm","seed"],"notes":"Vietnamese uncertainty cue; must outrank generic negation."}
+{"cue":"rule out","assertion":"POSSIBLE","language":"en","scope":"bidirectional","source_ids":["context_algorithm"],"notes":"Diagnostic uncertainty / rule-out cue."}
+{"cue":"cannot exclude","assertion":"POSSIBLE","language":"en","scope":"bidirectional","source_ids":["context_algorithm"],"notes":"Diagnostic uncertainty cue."}
+{"cue":"gợi ý","assertion":"POSSIBLE","language":"vi","scope":"bidirectional","source_ids":["context_algorithm","seed"],"notes":"Suggestive evidence cue."}
+{"cue":"nghi","assertion":"POSSIBLE","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese suspected-condition cue."}
+{"cue":"theo dõi","assertion":"POSSIBLE","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese follow-up / watch cue."}
+{"cue":"có thể","assertion":"POSSIBLE","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese possible cue."}
+{"cue":"possible","assertion":"POSSIBLE","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Uncertainty cue."}
+{"cue":"suspected","assertion":"POSSIBLE","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Suspicion cue."}
+{"cue":"suggestive of","assertion":"POSSIBLE","language":"en","scope":"bidirectional","source_ids":["context_algorithm"],"notes":"Suggestive evidence cue."}
+{"cue":"likely","assertion":"POSSIBLE","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Kept as possible rather than present for conservative baseline."}
+{"cue":"không ghi nhận","assertion":"NEGATED","language":"vi","scope":"left","source_ids":["negex","seed"],"notes":"Vietnamese no-finding cue."}
+{"cue":"không có bằng chứng","assertion":"NEGATED","language":"vi","scope":"left","source_ids":["negex","seed"],"notes":"Vietnamese no-evidence cue."}
+{"cue":"không thấy","assertion":"NEGATED","language":"vi","scope":"left","source_ids":["negex","seed"],"notes":"Vietnamese not-seen cue."}
+{"cue":"âm tính với","assertion":"NEGATED","language":"vi","scope":"left","source_ids":["negex","seed"],"notes":"Vietnamese negative-for cue."}
+{"cue":"phủ nhận","assertion":"NEGATED","language":"vi","scope":"left","source_ids":["negex","seed"],"notes":"Vietnamese denies cue."}
+{"cue":"không có","assertion":"NEGATED","language":"vi","scope":"left","source_ids":["negex","seed"],"notes":"Generic Vietnamese absent cue."}
+{"cue":"không","assertion":"NEGATED","language":"vi","scope":"left","source_ids":["negex","seed"],"notes":"Generic Vietnamese negation; broad cue, rely on clause scope."}
+{"cue":"chưa","assertion":"NEGATED","language":"vi","scope":"left","source_ids":["negex","seed"],"notes":"Vietnamese not-yet cue."}
+{"cue":"no evidence of","assertion":"NEGATED","language":"en","scope":"left","source_ids":["negex"],"notes":"No-evidence cue."}
+{"cue":"negative for","assertion":"NEGATED","language":"en","scope":"left","source_ids":["negex"],"notes":"Negative-for cue."}
+{"cue":"without","assertion":"NEGATED","language":"en","scope":"left","source_ids":["negex"],"notes":"Without cue."}
+{"cue":"denies","assertion":"NEGATED","language":"en","scope":"left","source_ids":["negex"],"notes":"Denies cue."}
+{"cue":"denied","assertion":"NEGATED","language":"en","scope":"left","source_ids":["negex"],"notes":"Past-tense denies cue."}
+{"cue":"free of","assertion":"NEGATED","language":"en","scope":"left","source_ids":["negex"],"notes":"Additional negation cue from NegEx-style pattern lists."}
+{"cue":"no","assertion":"NEGATED","language":"en","scope":"left","source_ids":["negex"],"notes":"Broad no cue; rely on token boundary and clause scope."}
+{"cue":"not","assertion":"NEGATED","language":"en","scope":"left","source_ids":["negex"],"notes":"Broad not cue; rely on token boundary and clause scope."}
+{"cue":"tiền sử","assertion":"HISTORICAL","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese history cue."}
+{"cue":"đã từng","assertion":"HISTORICAL","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese prior event cue."}
+{"cue":"trước đây","assertion":"HISTORICAL","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese previous cue."}
+{"cue":"bệnh nền","assertion":"HISTORICAL","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese comorbidity / baseline disease cue."}
+{"cue":"history of","assertion":"HISTORICAL","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Historical cue."}
+{"cue":"past medical history","assertion":"HISTORICAL","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Historical section/cue."}
+{"cue":"previous","assertion":"HISTORICAL","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Previous cue."}
+{"cue":"prior","assertion":"HISTORICAL","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Prior cue."}
+{"cue":"known case of","assertion":"HISTORICAL","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Known-case cue."}
+{"cue":"family history","assertion":"FAMILY","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Family-history cue."}
+{"cue":"maternal history","assertion":"FAMILY","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Maternal-family cue."}
+{"cue":"paternal history","assertion":"FAMILY","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Paternal-family cue."}
+{"cue":"gia đình","assertion":"FAMILY","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese family cue."}
+{"cue":"người nhà","assertion":"FAMILY","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese household/family cue."}
+{"cue":"mother","assertion":"FAMILY","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Family member cue."}
+{"cue":"father","assertion":"FAMILY","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Family member cue."}
+{"cue":"sister","assertion":"FAMILY","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Family member cue."}
+{"cue":"brother","assertion":"FAMILY","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Family member cue."}
+{"cue":"parent","assertion":"FAMILY","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Family member cue."}
+{"cue":"mẹ","assertion":"FAMILY","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese family member cue."}
+{"cue":"cha","assertion":"FAMILY","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese family member cue."}
+{"cue":"bố","assertion":"FAMILY","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese family member cue."}
+{"cue":"anh","assertion":"FAMILY","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese family member cue."}
+{"cue":"chị","assertion":"FAMILY","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese family member cue."}
+{"cue":"em","assertion":"FAMILY","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese family member cue."}
+{"cue":"ông","assertion":"FAMILY","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese family member cue."}
+{"cue":"bà","assertion":"FAMILY","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese family member cue."}
+{"cue":"will start","assertion":"PLANNED","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Future plan cue."}
+{"cue":"planned","assertion":"PLANNED","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Plan cue."}
+{"cue":"scheduled","assertion":"PLANNED","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Scheduled intervention cue."}
+{"cue":"recommend","assertion":"PLANNED","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Plan/recommendation cue."}
+{"cue":"sẽ","assertion":"PLANNED","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese future cue."}
+{"cue":"dự kiến","assertion":"PLANNED","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese planned cue."}
+{"cue":"chỉ định","assertion":"PLANNED","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese order/indication cue."}
+{"cue":"kế hoạch","assertion":"PLANNED","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese plan cue."}
+{"cue":"resolved","assertion":"RESOLVED","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Resolved cue."}
+{"cue":"hết","assertion":"RESOLVED","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese resolved cue."}
+{"cue":"đã khỏi","assertion":"RESOLVED","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese recovered cue."}
+{"cue":"cải thiện","assertion":"RESOLVED","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese improved cue."}
+{"cue":"family history","assertion":"FAMILY","language":"en","scope":"section_prior","source_ids":["context_algorithm"],"notes":"Family history section prior."}
+{"cue":"tiền sử gia đình","assertion":"FAMILY","language":"vi","scope":"section_prior","source_ids":["context_algorithm","seed"],"notes":"Vietnamese family history section prior."}
+{"cue":"past medical history","assertion":"HISTORICAL","language":"en","scope":"section_prior","source_ids":["context_algorithm"],"notes":"Past medical history section prior."}
+{"cue":"tiền sử","assertion":"HISTORICAL","language":"vi","scope":"section_prior","source_ids":["context_algorithm","seed"],"notes":"Vietnamese history section prior."}
+{"cue":"plan","assertion":"PLANNED","language":"en","scope":"section_prior","source_ids":["context_algorithm"],"notes":"Plan section prior."}
+{"cue":"kế hoạch","assertion":"PLANNED","language":"vi","scope":"section_prior","source_ids":["context_algorithm","seed"],"notes":"Vietnamese plan section prior."}

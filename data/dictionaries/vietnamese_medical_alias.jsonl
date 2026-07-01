@@ -3,3 +3,14 @@
 {"alias":"tăng HA","canonical":"tăng huyết áp","target_concept_id":"ICD10:I10","semantic_type":"DISEASE","notes":"Vietnamese abbreviation mixing acronym and phrase."}
 {"alias":"nhồi máu cơ tim","canonical":"myocardial infarction","target_concept_id":"ICD10:I21.9","semantic_type":"DISEASE","notes":"Maps to unspecified acute MI in seed dictionary."}
 {"alias":"khó thở","canonical":"shortness of breath","target_concept_id":"LOCAL:SYMPTOM_DYSPNEA","semantic_type":"SYMPTOM","notes":"Vietnamese symptom alias."}
+{"alias":"bệnh phổi tắc nghẽn mạn tính","canonical":"chronic obstructive pulmonary disease","target_concept_id":"ICD10:J44.9","semantic_type":"DISEASE","notes":"Vietnamese official/common COPD phrase; source-backed seed."}
+{"alias":"suy thận mạn","canonical":"chronic kidney disease","target_concept_id":"ICD10:N18.9","semantic_type":"DISEASE","notes":"Vietnamese common CKD phrase; source-backed seed."}
+{"alias":"suy thận cấp","canonical":"acute kidney injury","target_concept_id":"ICD10:N17.9","semantic_type":"DISEASE","notes":"Vietnamese common AKI phrase; source-backed seed."}
+{"alias":"bệnh mạch vành","canonical":"coronary artery disease","target_concept_id":"ICD10:I25.10","semantic_type":"DISEASE","notes":"Vietnamese common CAD phrase; source-backed seed."}
+{"alias":"suy tim","canonical":"heart failure","target_concept_id":"ICD10:I50.9","semantic_type":"DISEASE","notes":"Vietnamese heart failure phrase; source-backed seed."}
+{"alias":"trào ngược dạ dày thực quản","canonical":"gastroesophageal reflux disease","target_concept_id":"ICD10:K21.9","semantic_type":"DISEASE","notes":"Vietnamese GERD phrase; source-backed seed."}
+{"alias":"đau ngực","canonical":"chest pain","target_concept_id":"LOCAL:SYMPTOM_CHEST_PAIN","semantic_type":"SYMPTOM","notes":"Vietnamese symptom alias."}
+{"alias":"đau đầu","canonical":"headache","target_concept_id":"LOCAL:SYMPTOM_HEADACHE","semantic_type":"SYMPTOM","notes":"Vietnamese symptom alias."}
+{"alias":"buồn nôn","canonical":"nausea and vomiting","target_concept_id":"LOCAL:SYMPTOM_NAUSEA_VOMITING","semantic_type":"SYMPTOM","notes":"Vietnamese symptom alias."}
+{"alias":"đường huyết","canonical":"blood glucose","target_concept_id":"LOCAL:TEST_GLUCOSE","semantic_type":"LAB_TEST","notes":"Vietnamese lab-test alias."}
+{"alias":"điện tâm đồ","canonical":"electrocardiogram","target_concept_id":"LOCAL:TEST_ECG","semantic_type":"LAB_TEST","notes":"Vietnamese lab-test alias."}

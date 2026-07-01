@@ -1,0 +1,105 @@
+resources:
+  - id: seed
+    name: Local seed curation
+    category: curation
+    access: local
+    url: docs/dictionaries.md
+    license: project
+    use: runtime_seed
+    notes: Hand-curated bootstrap rows maintained in this repository.
+  - id: cdc_icd10cm_2026
+    name: CDC ICD-10-CM FY 2026 files
+    category: terminology
+    access: open
+    url: https://www.cdc.gov/nchs/icd/icd-10-cm/files.html
+    license: us_government_public_resource
+    use: icd10_code_descriptions
+    notes: Official ICD-10-CM download page; use code descriptions and XML releases.
+  - id: who_icd10_2019
+    name: WHO ICD-10 browser
+    category: terminology
+    access: open
+    url: https://icd.who.int/browse10
+    license: who_terms_apply
+    use: icd10_hierarchy_reference
+    notes: Reference source for ICD hierarchy and stable disease grouping.
+  - id: icd_kcb_vn
+    name: Vietnamese ICD-10 lookup
+    category: terminology
+    access: open_manual_review
+    url: https://icd.kcb.vn/
+    license: verify_before_bulk_use
+    use: vietnamese_icd_labels
+    notes: Use only manually reviewed Vietnamese labels and aliases in committed seed rows.
+  - id: rxnorm_current
+    name: RxNorm current release and RxNav API
+    category: terminology
+    access: open_with_terms
+    url: https://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html
+    license: nlm_rxnorm_terms
+    use: rxnorm_drug_codes
+    notes: Use RxNorm identifiers and normalized names; full release terms must be respected.
+  - id: medlineplus_xml
+    name: MedlinePlus Health Topic XML
+    category: patient_education_text
+    access: open_with_attribution
+    url: https://medlineplus.gov/xml.html
+    license: attribution_required
+    use: aliases_public_health_topics
+    notes: Use topic titles and also-called terms with attribution to MedlinePlus.gov.
+  - id: codiesp_zenodo
+    name: CodiEsp corpus
+    category: competition_dataset
+    access: open
+    url: https://zenodo.org/records/3837305
+    license: CC-BY-4.0
+    use: icd_coding_cases_and_spans
+    notes: Spanish clinical cases with ICD10/CIE10 coding and text references.
+  - id: synthea
+    name: Synthea synthetic patient generator
+    category: synthetic_dataset
+    access: open
+    url: https://github.com/synthetichealth/synthea
+    license: apache-2.0
+    use: synthetic_patient_records
+    notes: Synthetic, non-PHI patient records; suitable for pipeline smoke and scale testing.
+  - id: negex
+    name: NegEx
+    category: heuristic_paper
+    access: paper_reference
+    url: https://pubmed.ncbi.nlm.nih.gov/12123149/
+    license: cite_paper
+    use: negation_cue_design
+    notes: Source pattern for rule-based negation cue and scope heuristics.
+  - id: context_algorithm
+    name: ConText assertion algorithm
+    category: heuristic_paper
+    access: paper_reference
+    url: https://pmc.ncbi.nlm.nih.gov/articles/PMC2757457/
+    license: cite_paper
+    use: negation_temporality_experiencer_design
+    notes: Source pattern for negation, hypothetical, historical, and experiencer cues.
+  - id: i2b2_2010
+    name: 2010 i2b2/VA concepts, assertions, and relations challenge
+    category: competition_dataset
+    access: dua_required
+    url: https://n2c2.dbmi.hms.harvard.edu/data-sets
+    license: data_use_agreement
+    use: assertion_and_relation_taxonomy
+    notes: Do not commit data; adapter should read locally provided files after DUA approval.
+  - id: mimic_iv_note
+    name: MIMIC-IV-Note
+    category: clinical_notes
+    access: credentialed
+    url: https://physionet.org/content/mimic-iv-note/
+    license: physionet_credentialed_health_data
+    use: local_private_evaluation_only
+    notes: Do not download or commit; requires credentialed PhysioNet access and training.
+  - id: nbme_kaggle
+    name: NBME Score Clinical Patient Notes
+    category: competition_dataset
+    access: platform_terms
+    url: https://www.kaggle.com/competitions/nbme-score-clinical-patient-notes
+    license: kaggle_competition_terms
+    use: local_span_extraction_benchmark
+    notes: Do not vendor data; adapter should read user-provided local Kaggle files.

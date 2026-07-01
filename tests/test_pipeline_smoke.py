@@ -14,3 +14,14 @@ def test_pipeline_smoke_sample_note() -> None:
     assert by_text["metformin"].code == "6809"
     assert any(relation.type == RelationType.TREATS for relation in prediction.relations)
 
+
+def test_pipeline_smoke_source_backed_treatment_seed() -> None:
+    prediction = PipelineRunner().process_text(
+        "source-backed-treatment",
+        "Tăng huyết áp đang điều trị lisinopril.",
+    )
+    by_text = {entity.text: entity for entity in prediction.entities}
+
+    assert by_text["Tăng huyết áp"].code == "I10"
+    assert by_text["lisinopril"].code == "29046"
+    assert any(relation.type == RelationType.TREATS for relation in prediction.relations)

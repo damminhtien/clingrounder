@@ -74,3 +74,30 @@ and Vietnamese-English equivalents:
 The current seed concepts already include these aliases in the merged concept rows so the runtime
 pipeline only needs one loaded dictionary. `scripts/build_dictionaries.py` validates that alias-table
 targets exist and have matching semantic types.
+
+## Source-Backed Resource Pack
+
+The repository keeps a small committed resource pack instead of downloading large or restricted
+medical corpora into git:
+
+- `data/sources/medical_resource_registry.yaml` records source ids, URLs, access class, license or
+  terms, intended use, and notes.
+- `data/dictionaries/seed_concepts.jsonl` may include `source_ids` on rows. The runtime loader is
+  backward-compatible and ignores this extra provenance field.
+- `data/heuristics/assertion_cues.jsonl` stores assertion/context cues with language, scope, and
+  source ids. `medical_kg_nlp.context.rules` loads this file when present and falls back to the
+  built-in cue tuples if the data file is unavailable.
+- `scripts/build_dictionaries.py` validates source ids in the dictionary and cue table against the
+  registry, then validates Vietnamese alias targets.
+
+Current committed open/manual-review sources include CDC ICD-10-CM, WHO ICD-10 references,
+Vietnamese ICD lookup labels, RxNorm/RxNav identifiers, MedlinePlus topic names, CodiEsp metadata,
+Synthea metadata, and NegEx/ConText-style cue provenance. Credentialed or DUA-bound corpora such as
+MIMIC-IV-Note, n2c2/i2b2, and NBME are registered for local adapters but are not downloaded or
+committed.
+
+Run the validation summary:
+
+```bash
+python scripts/build_dictionaries.py --config configs/default.yaml
+```
