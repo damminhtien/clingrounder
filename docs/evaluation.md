@@ -95,6 +95,9 @@ baseline. The loop engine writes:
 - `decision.md` for the baseline/keep/revert/refine decision.
 - `next_experiment.md` for the highest-priority follow-up.
 - `top_error_cases.md` for representative cases from the top error classes.
+- `agent_brief.md` for a coding-agent-ready task brief with guardrails, files, commands, and
+  acceptance criteria.
+- `agent_actions.jsonl` for machine-readable action items.
 - `confusion_matrix.csv` for assertion/context confusion.
 - `loop_report.json` for the full machine-readable loop report.
 

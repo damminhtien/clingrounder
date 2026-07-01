@@ -400,20 +400,40 @@ def build_loop_engineering_report(
         "notes": notes or [],
         "next": next_experiment,
     }
+    decision_payload = {
+        "decision": decision,
+        "primary_metric": primary_metric,
+        "primary_before": baseline_metrics.get(primary_metric),
+        "primary_after": current_metrics.get(primary_metric),
+        "primary_delta": delta.get(primary_metric),
+        "blocking_issues": current_metrics.get("validation_issue_count", 0.0),
+    }
+    agent_actions = build_agent_actions(
+        top_errors=top_errors,
+        next_experiment=next_experiment,
+        decision=decision_payload,
+        current_metrics=current_metrics,
+        top_error_cases_payload=top_error_cases(current_report, top_errors, top_k=top_k),
+    )
+    agent_context = build_agent_context(
+        experiment_log=log,
+        decision=decision_payload,
+        current_metrics=current_metrics,
+        top_errors=top_errors,
+        next_experiment=next_experiment,
+    )
     return {
         "experiment_log": log,
-        "decision": {
-            "decision": decision,
-            "primary_metric": primary_metric,
-            "primary_before": baseline_metrics.get(primary_metric),
-            "primary_after": current_metrics.get(primary_metric),
-            "primary_delta": delta.get(primary_metric),
-            "blocking_issues": current_metrics.get("validation_issue_count", 0.0),
-        },
+        "decision": decision_payload,
         "top_errors": top_errors,
         "next_experiment": next_experiment,
         "context_confusion_matrix": context_confusion_rows(current_report),
         "top_error_cases": top_error_cases(current_report, top_errors, top_k=top_k),
+        "agent": {
+            "context": agent_context,
+            "actions": agent_actions,
+            "brief": render_agent_brief(agent_context, agent_actions),
+        },
     }
 
 
@@ -424,9 +444,11 @@ def write_loop_engineering_report(loop_report: dict[str, Any], output_dir: str |
     _write_yaml(path / "experiment_log.yaml", _mapping(loop_report["experiment_log"]))
     _write_json(path / "experiment_log.json", loop_report["experiment_log"])
     _write_confusion_matrix(path / "confusion_matrix.csv", _list(loop_report["context_confusion_matrix"]))
+    _write_jsonl(path / "agent_actions.jsonl", _dict_list(_mapping(loop_report["agent"])["actions"]))
     (path / "decision.md").write_text(render_decision_markdown(loop_report), encoding="utf-8")
     (path / "next_experiment.md").write_text(render_next_experiment_markdown(loop_report), encoding="utf-8")
     (path / "top_error_cases.md").write_text(render_top_error_cases_markdown(loop_report), encoding="utf-8")
+    (path / "agent_brief.md").write_text(str(_mapping(loop_report["agent"])["brief"]), encoding="utf-8")
 
 
 def metric_snapshot(report: dict[str, Any] | None) -> dict[str, float]:
@@ -561,6 +583,139 @@ def recommend_next_experiment(
     }
 
 
+def build_agent_context(
+    *,
+    experiment_log: dict[str, Any],
+    decision: dict[str, Any],
+    current_metrics: dict[str, float],
+    top_errors: list[dict[str, Any]],
+    next_experiment: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "objective": "Run one disciplined experiment loop and make the smallest useful code change.",
+        "experiment_id": experiment_log["id"],
+        "module": next_experiment["module"],
+        "target_error": next_experiment["target_error"],
+        "decision": decision["decision"],
+        "primary_metric": decision["primary_metric"],
+        "blocking_issues": decision["blocking_issues"],
+        "current_metrics": current_metrics,
+        "top_errors": top_errors[:5],
+        "next_experiment": next_experiment,
+        "global_guardrails": [
+            "Preserve original character offsets.",
+            "Never output codes absent from the loaded dictionary.",
+            "Never map DRUG to ICD-10 or DISEASE to RxNorm.",
+            "Keep negated and family-history diseases distinct from present patient conditions.",
+            "Change one meaningful component per experiment.",
+        ],
+    }
+
+
+def build_agent_actions(
+    *,
+    top_errors: list[dict[str, Any]],
+    next_experiment: dict[str, Any],
+    decision: dict[str, Any],
+    current_metrics: dict[str, float],
+    top_error_cases_payload: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    module = str(next_experiment["module"])
+    playbook = AGENT_PLAYBOOKS.get(module, DEFAULT_AGENT_PLAYBOOK)
+    target_error = next_experiment.get("target_error")
+    top_error = top_errors[0] if top_errors else {}
+    action = {
+        "id": "AGENT-001",
+        "status": "ready",
+        "priority": 1,
+        "module": module,
+        "target_error": target_error,
+        "title": _agent_action_title(next_experiment),
+        "objective": str(next_experiment["hypothesis"]),
+        "decision_context": decision,
+        "evidence": {
+            "top_error": top_error,
+            "example_count": len(top_error_cases_payload),
+            "sample_cases": _case_summaries(top_error_cases_payload[:5]),
+            "current_metric": current_metrics.get(str(next_experiment["success_metric"])),
+        },
+        "recommended_files": list(playbook.focus_files),
+        "implementation_steps": [
+            "Read the top error cases before editing code.",
+            "Add or update one focused regression test for the target error.",
+            "Make the smallest scoped implementation change in the target module.",
+            "Run the targeted commands first, then the full verification commands if targeted tests pass.",
+            "Regenerate the stage report and loop report to compare against the frozen baseline.",
+        ],
+        "commands": list(playbook.commands),
+        "acceptance_criteria": [
+            str(next_experiment["success_criteria"]),
+            "Validation issue count must not increase.",
+            "Focused tests for the changed behavior must pass.",
+            "No offset, dictionary, code-system, context, or KG invariant may regress.",
+        ],
+        "stop_conditions": [
+            "Stop and report if the fix requires a second unrelated component change.",
+            "Stop and report if validation issues increase.",
+            "Stop and report if evidence points to missing labels or an ambiguous gold annotation.",
+            "Stop and report before adding hosted services, Java core, graph databases, or native extensions.",
+        ],
+        "guardrails": list(playbook.guardrails),
+        "required_artifacts_after_change": [
+            "updated focused test",
+            "stage-wise metrics.json",
+            "loop_report.json",
+            "decision.md",
+        ],
+    }
+    return [action]
+
+
+def render_agent_brief(agent_context: dict[str, Any], actions: list[dict[str, Any]]) -> str:
+    lines = [
+        "# Agent Brief",
+        "",
+        f"- Objective: {agent_context['objective']}",
+        f"- Experiment: {agent_context['experiment_id']}",
+        f"- Decision: {agent_context['decision']}",
+        f"- Module: {agent_context['module']}",
+        f"- Target error: {agent_context['target_error'] or 'N/A'}",
+        f"- Primary metric: {agent_context['primary_metric']}",
+        f"- Blocking issues: {_format_value(agent_context['blocking_issues'])}",
+        "",
+        "## Guardrails",
+        "",
+    ]
+    for guardrail in _list(agent_context["global_guardrails"]):
+        lines.append(f"- {guardrail}")
+    lines.extend(["", "## Actions", ""])
+    for action in actions:
+        lines.append(f"### {action['id']}: {action['title']}")
+        lines.append("")
+        lines.append(f"- Status: {action['status']}")
+        lines.append(f"- Module: {action['module']}")
+        lines.append(f"- Target error: {action['target_error'] or 'N/A'}")
+        lines.append(f"- Objective: {action['objective']}")
+        lines.append("")
+        lines.append("Recommended files:")
+        for file_path in _list(action["recommended_files"]):
+            lines.append(f"- {file_path}")
+        lines.append("")
+        lines.append("Commands:")
+        for command in _list(action["commands"]):
+            lines.append(f"- `{command}`")
+        lines.append("")
+        lines.append("Acceptance criteria:")
+        for criterion in _list(action["acceptance_criteria"]):
+            lines.append(f"- {criterion}")
+        lines.append("")
+        lines.append("Stop conditions:")
+        for condition in _list(action["stop_conditions"]):
+            lines.append(f"- {condition}")
+        lines.append("")
+    return "\n".join(lines) + "\n"
+
+
 def context_confusion_rows(report: dict[str, Any]) -> list[dict[str, Any]]:
     matrix = _mapping(_mapping(report.get("metrics", {})).get("context_confusion_matrix", {}))
     rows: list[dict[str, Any]] = []
@@ -676,6 +831,29 @@ def baseline_report_id(baseline_report: dict[str, Any] | None) -> str | None:
     return str(summary.get("run_id") or summary.get("pipeline_version") or "baseline")
 
 
+def _agent_action_title(next_experiment: dict[str, Any]) -> str:
+    target_error = next_experiment.get("target_error")
+    if target_error:
+        return f"Reduce {target_error}"
+    return "Harden evaluation on a more difficult split"
+
+
+def _case_summaries(cases: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    summaries: list[dict[str, Any]] = []
+    for row in cases:
+        summaries.append(
+            {
+                "document_id": row.get("document_id"),
+                "stage": row.get("stage"),
+                "error_type": row.get("error_type"),
+                "span": row.get("span"),
+                "text_window": str(row.get("text_window", "")).replace("\n", " ")[:240],
+                "notes": row.get("notes"),
+            }
+        )
+    return summaries
+
+
 def _success_criteria(success_metric: str, current_report: dict[str, Any]) -> str:
     metrics = metric_snapshot(current_report)
     current_value = metrics.get(success_metric)
@@ -716,6 +894,13 @@ def _write_json(path: Path, payload: Any) -> None:
     with path.open("w", encoding="utf-8") as handle:
         json.dump(payload, handle, ensure_ascii=False, indent=2, sort_keys=True)
         handle.write("\n")
+
+
+def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        for row in rows:
+            handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
 
 
 def _write_yaml(path: Path, payload: dict[str, Any]) -> None:

@@ -31,12 +31,19 @@ def test_loop_engineer_keeps_improved_valid_experiment(tmp_path: Path) -> None:
     assert loop_report["experiment_log"]["metric_delta"]["loop_score"] == 0.02
     assert loop_report["top_errors"][0]["error_type"] == "candidate_missing_gold"
     assert loop_report["next_experiment"]["module"] == "normalization"
+    assert loop_report["agent"]["actions"][0]["recommended_files"]
+    assert "Validation issue count must not increase." in loop_report["agent"]["actions"][0]["acceptance_criteria"]
+    assert "uv run pytest tests/test_candidate_generation.py tests/test_dictionary.py -q" in (
+        loop_report["agent"]["actions"][0]["commands"]
+    )
 
     write_loop_engineering_report(loop_report, tmp_path)
     for filename in [
         "loop_report.json",
         "experiment_log.yaml",
         "experiment_log.json",
+        "agent_actions.jsonl",
+        "agent_brief.md",
         "confusion_matrix.csv",
         "decision.md",
         "next_experiment.md",
@@ -100,6 +107,10 @@ def test_loop_engineer_cli_writes_decision_artifacts(tmp_path: Path) -> None:
     loop_report = json.loads((output_dir / "loop_report.json").read_text(encoding="utf-8"))
     assert loop_report["decision"]["decision"] == "keep"
     assert "severe_context_error" in (output_dir / "top_error_cases.md").read_text(encoding="utf-8")
+    assert "Acceptance criteria" in (output_dir / "agent_brief.md").read_text(encoding="utf-8")
+    assert json.loads((output_dir / "agent_actions.jsonl").read_text(encoding="utf-8").splitlines()[0])[
+        "module"
+    ] == "context"
 
 
 def _report(
