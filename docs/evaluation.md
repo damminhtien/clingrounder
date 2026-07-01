@@ -14,6 +14,8 @@ metrics are computed.
   list, and notes.
 - Dataset profiling for entity, code, context, relation, section, abbreviation-like mention,
   dictionary coverage, offset issue, and optional unseen-code overlap checks.
+- Stage-wise pipeline reports that combine dataset profile, validator issues, end-to-end metrics,
+  structured error rows, and per-stage trace counters/timings.
 
 ## Recommended Gates
 
@@ -46,11 +48,29 @@ python scripts/profile_data.py \
   --gold data/samples/gold.jsonl \
   --output outputs/profiles/sample_profile.json \
   --markdown outputs/profiles/sample_profile.md
+
+python scripts/evaluate_pipeline_steps.py \
+  --documents data/samples/sample_notes.jsonl \
+  --gold data/samples/gold.jsonl \
+  --dictionary data/dictionaries/seed_concepts.jsonl \
+  --output-dir outputs/evaluation/sample
 ```
 
 The profiler output is intended to be a cacheable experiment artifact. Use it to compare train/dev
 entity distributions, span lengths, context cue frequency, dictionary coverage, and unseen-code
 risks before adding larger models.
+
+The stage-wise report writes:
+
+- `metrics.json` for the full machine-readable report.
+- `stage_metrics.csv` for long-format metrics by pipeline stage.
+- `errors.csv` and `errors.jsonl` for structured error analysis.
+- `profile.json` and `profile.md` for the dataset profile.
+- `traces.json` for per-document trace details.
+- `summary.md` for a short run summary.
+
+Use `--pred existing_predictions.jsonl` to evaluate a saved prediction file without rerunning the
+pipeline. Omit `--pred` to run the pipeline, save `predictions.jsonl`, and collect traces.
 
 ## Ablation And Bottleneck Workflow
 
