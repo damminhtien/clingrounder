@@ -1,4 +1,4 @@
-.PHONY: install install-dev pre-commit lint type test test-targeted validate pipeline evaluate profile ablation qa clean
+.PHONY: install install-dev pre-commit lint type test test-targeted validate pipeline evaluate profile pipeline-report loop ablation qa clean
 
 PYTHON ?= .venv/bin/python
 
@@ -34,6 +34,12 @@ evaluate:
 
 profile:
 	$(PYTHON) scripts/profile_data.py --documents data/samples/sample_notes.jsonl --gold data/samples/gold.jsonl --output outputs/profiles/sample_profile.json --markdown outputs/profiles/sample_profile.md
+
+pipeline-report:
+	$(PYTHON) scripts/evaluate_pipeline_steps.py --documents data/samples/sample_notes.jsonl --gold data/samples/gold.jsonl --dictionary data/dictionaries/seed_concepts.jsonl --output-dir outputs/evaluation/sample
+
+loop: pipeline-report
+	$(PYTHON) scripts/loop_engineer.py --current-report outputs/evaluation/sample/metrics.json --output-dir outputs/loops/sample --experiment-id BASELINE --module evaluation --hypothesis "Establish a valid end-to-end baseline." --change "Run current pipeline and generate stage-wise metrics."
 
 ablation:
 	$(PYTHON) scripts/run_ablation.py --config configs/ablations.yaml

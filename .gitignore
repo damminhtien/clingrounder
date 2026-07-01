@@ -115,6 +115,7 @@ mlruns/
 wandb/
 outputs/ablations/
 outputs/evaluation/
+outputs/loops/
 outputs/profiles/
 
 # poetry

@@ -72,6 +72,32 @@ The stage-wise report writes:
 Use `--pred existing_predictions.jsonl` to evaluate a saved prediction file without rerunning the
 pipeline. Omit `--pred` to run the pipeline, save `predictions.jsonl`, and collect traces.
 
+## Loop Engineering
+
+Use the loop engine after a stage-wise report exists. It turns metrics and error rows into an
+experiment log, a keep/revert/refine decision, prioritized error groups, and a concrete next
+experiment.
+
+```bash
+python scripts/loop_engineer.py \
+  --current-report outputs/evaluation/sample/metrics.json \
+  --output-dir outputs/loops/sample \
+  --experiment-id BASELINE \
+  --module evaluation \
+  --hypothesis "Establish a valid end-to-end baseline." \
+  --change "Run current pipeline and generate stage-wise metrics."
+```
+
+Use `--baseline-report previous/metrics.json` when comparing one meaningful change against a frozen
+baseline. The loop engine writes:
+
+- `experiment_log.yaml` and `experiment_log.json` for the experiment record.
+- `decision.md` for the baseline/keep/revert/refine decision.
+- `next_experiment.md` for the highest-priority follow-up.
+- `top_error_cases.md` for representative cases from the top error classes.
+- `confusion_matrix.csv` for assertion/context confusion.
+- `loop_report.json` for the full machine-readable loop report.
+
 ## Ablation And Bottleneck Workflow
 
 Use `configs/ablations.yaml` to compare small pipeline variants without changing code. The default
