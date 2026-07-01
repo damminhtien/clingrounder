@@ -102,6 +102,30 @@ def test_loop_engineer_reexports_split_modules() -> None:
     }
 
 
+def test_loop_engineer_evaluation_path_uses_split_module_playbook() -> None:
+    loop_report = build_loop_engineering_report(
+        _report(loop_score_shift=0.0),
+        experiment_id="E001",
+        module="evaluation",
+        hypothesis="Baseline has no structured errors.",
+        changes=["Generate loop report for a clean run."],
+    )
+
+    action = loop_report["agent"]["actions"][0]
+    assert loop_report["next_experiment"]["module"] == "evaluation"
+    assert loop_report["top_error_cases"] == []
+    assert set(action["recommended_files"]) >= {
+        "src/medical_kg_nlp/evaluation/loop_engineer.py",
+        "src/medical_kg_nlp/evaluation/loop_analysis.py",
+        "src/medical_kg_nlp/evaluation/loop_artifacts.py",
+        "src/medical_kg_nlp/evaluation/loop_agent.py",
+        "src/medical_kg_nlp/evaluation/loop_journal.py",
+        "src/medical_kg_nlp/evaluation/loop_policy.py",
+    }
+    assert "src/medical_kg_nlp/evaluation/loop_analysis.py" in loop_report["agent"]["brief"]
+    assert "uv run pytest tests/test_pipeline_report.py tests/test_loop_engineer.py -q" in action["commands"]
+
+
 def test_loop_engineer_reverts_when_validation_gets_worse() -> None:
     baseline = _report(loop_score_shift=0.0, validation_issues=0)
     current = _report(loop_score_shift=0.05, validation_issues=1, errors={"invalid_code_system": 1})
