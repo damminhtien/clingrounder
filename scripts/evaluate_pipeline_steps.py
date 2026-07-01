@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.evaluation.pipeline_report import build_pipeline_report, write_pipeline_report
-from medical_kg_nlp.pipeline.runner import PipelineRunner
+from medical_kg_nlp.pipeline.parallel_batch import ParallelBatchOptions, run_batch_with_trace_parallel
 from medical_kg_nlp.utils.io import write_jsonl
 
 
@@ -38,6 +38,19 @@ def main() -> None:
         help="Optional reference/train gold JSONL for unseen-code overlap profiling.",
     )
     parser.add_argument("--top-k", type=int, default=20, help="Maximum profile top-list rows.")
+    parser.add_argument(
+        "--parallel-backend",
+        choices=("serial", "thread", "process"),
+        default="process",
+        help="Pipeline execution backend when --pred is omitted.",
+    )
+    parser.add_argument("--workers", type=int, default=1, help="Number of document workers.")
+    parser.add_argument("--chunksize", type=int, default=4, help="Document chunksize for process workers.")
+    parser.add_argument(
+        "--no-fail-fast",
+        action="store_true",
+        help="Collect document worker errors before raising a batch error.",
+    )
     args = parser.parse_args()
 
     adapter = SyntheticDatasetAdapter()
@@ -51,11 +64,17 @@ def main() -> None:
         predictions = adapter.load_gold(args.pred)
         traces = []
     else:
-        runner = PipelineRunner(
+        run_results = run_batch_with_trace_parallel(
+            documents,
             dictionary_path=args.dictionary,
             abbreviation_path=args.abbreviations,
+            parallel_options=ParallelBatchOptions(
+                backend=args.parallel_backend,
+                max_workers=args.workers,
+                chunksize=args.chunksize,
+                fail_fast=not args.no_fail_fast,
+            ),
         )
-        run_results = [runner.process_document_with_trace(document) for document in documents]
         predictions = [result.prediction for result in run_results]
         traces = [result.trace for result in run_results]
         write_jsonl(output_dir / "predictions.jsonl", [prediction.to_json() for prediction in predictions])

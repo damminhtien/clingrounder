@@ -72,6 +72,28 @@ The stage-wise report writes:
 Use `--pred existing_predictions.jsonl` to evaluate a saved prediction file without rerunning the
 pipeline. Omit `--pred` to run the pipeline, save `predictions.jsonl`, and collect traces.
 
+Pipeline execution can parallelize across documents:
+
+```bash
+python scripts/run_pipeline.py \
+  --input data/samples/sample_notes.jsonl \
+  --output outputs/predictions.jsonl \
+  --workers 4 \
+  --parallel-backend process
+
+python scripts/evaluate_pipeline_steps.py \
+  --documents data/samples/sample_notes.jsonl \
+  --gold data/samples/gold.jsonl \
+  --dictionary data/dictionaries/seed_concepts.jsonl \
+  --output-dir outputs/evaluation/sample \
+  --workers 4 \
+  --parallel-backend process
+```
+
+Use `process` for CPU-bound batches and `thread` only for low-overhead smoke runs or future I/O-heavy
+stages. Output order remains the same as input document order, and workers never write JSONL
+directly.
+
 ## Loop Engineering
 
 Use the loop engine after a stage-wise report exists. It turns metrics and error rows into an
@@ -114,6 +136,16 @@ Journal artifacts:
 - `experiment_index.json` latest indexed view by experiment id.
 - `experiment_memory.json` buckets for `reuse`, `avoid`, and `refine`.
 - `experiment_notebook.md` human-readable experiment notebook.
+
+Implementation boundary:
+
+- `loop_engineer.py` assembles one loop report and keeps backward-compatible public imports.
+- `loop_analysis.py` owns metric snapshots, deltas, decisions, error prioritization, and next
+  experiment selection.
+- `loop_policy.py` owns error policies and agent playbooks.
+- `loop_agent.py` owns agent context, actions, polling payloads, and compact briefs.
+- `loop_artifacts.py` owns file writing and markdown/CSV/JSONL artifacts.
+- `loop_journal.py` owns the append-only experiment log, memory, and notebook outputs.
 
 ## Ablation And Bottleneck Workflow
 

@@ -5,11 +5,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+from medical_kg_nlp.evaluation import loop_analysis, loop_artifacts
+from medical_kg_nlp.evaluation import loop_engineer as loop_engineer_module
 from medical_kg_nlp.evaluation.loop_engineer import (
     build_loop_engineering_report,
     metric_snapshot,
     write_loop_engineering_report,
 )
+from medical_kg_nlp.evaluation.loop_policy import AGENT_PLAYBOOKS
 
 
 def test_loop_engineer_keeps_improved_valid_experiment(tmp_path: Path) -> None:
@@ -67,6 +70,36 @@ def test_loop_engineer_keeps_improved_valid_experiment(tmp_path: Path) -> None:
     assert memory["reuse"][0]["id"] == "N002"
     poll = json.loads((tmp_path / "agent_poll.json").read_text(encoding="utf-8"))
     assert poll["artifact_paths"]["journal_memory"] == str(journal_dir / "experiment_memory.json")
+
+
+def test_loop_engineer_reexports_split_modules() -> None:
+    assert loop_engineer_module.metric_snapshot is loop_analysis.metric_snapshot
+    assert loop_engineer_module.prioritize_errors is loop_analysis.prioritize_errors
+    assert loop_engineer_module.write_loop_engineering_report is loop_artifacts.write_loop_engineering_report
+    assert loop_engineer_module.render_decision_markdown is loop_artifacts.render_decision_markdown
+    assert set(loop_engineer_module.__all__) == {
+        "baseline_report_id",
+        "build_loop_engineering_report",
+        "context_confusion_rows",
+        "decide_experiment",
+        "metric_delta",
+        "metric_snapshot",
+        "prioritize_errors",
+        "recommend_next_experiment",
+        "render_decision_markdown",
+        "render_next_experiment_markdown",
+        "render_top_error_cases_markdown",
+        "top_error_cases",
+        "write_loop_engineering_report",
+    }
+    assert set(AGENT_PLAYBOOKS["evaluation"].focus_files) >= {
+        "src/medical_kg_nlp/evaluation/loop_engineer.py",
+        "src/medical_kg_nlp/evaluation/loop_analysis.py",
+        "src/medical_kg_nlp/evaluation/loop_artifacts.py",
+        "src/medical_kg_nlp/evaluation/loop_agent.py",
+        "src/medical_kg_nlp/evaluation/loop_journal.py",
+        "src/medical_kg_nlp/evaluation/loop_policy.py",
+    }
 
 
 def test_loop_engineer_reverts_when_validation_gets_worse() -> None:
