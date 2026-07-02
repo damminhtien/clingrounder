@@ -17,6 +17,9 @@
 {"abbreviation":"HF","expansions":["heart failure"]}
 {"abbreviation":"CHF","expansions":["congestive heart failure"]}
 {"abbreviation":"GERD","expansions":["gastroesophageal reflux disease"]}
+{"abbreviation":"AF","expansions":["atrial fibrillation"]}
+{"abbreviation":"AFib","expansions":["atrial fibrillation"]}
+{"abbreviation":"HLD","expansions":["hyperlipidemia"]}
 {"abbreviation":"SOB","expansions":["shortness of breath"]}
 {"abbreviation":"CP","expansions":["chest pain"]}
 {"abbreviation":"N/V","expansions":["nausea/vomiting"]}
@@ -25,6 +28,16 @@
 {"abbreviation":"BG","expansions":["blood glucose"]}
 {"abbreviation":"Cr","expansions":["creatinine"]}
 {"abbreviation":"sCr","expansions":["serum creatinine"]}
+{"abbreviation":"K","expansions":["potassium"]}
+{"abbreviation":"WBC","expansions":["white blood cell count"]}
+{"abbreviation":"HCT","expansions":["hematocrit"]}
+{"abbreviation":"Hct","expansions":["hematocrit"]}
+{"abbreviation":"INR","expansions":["international normalized ratio"]}
+{"abbreviation":"ALT","expansions":["alanine aminotransferase"]}
+{"abbreviation":"AST","expansions":["aspartate aminotransferase"]}
+{"abbreviation":"BUN","expansions":["blood urea nitrogen"]}
+{"abbreviation":"NTG","expansions":["nitroglycerin"]}
+{"abbreviation":"APAP","expansions":["acetaminophen"]}
 {"abbreviation":"ASA","expansions":["aspirin","acetylsalicylic acid"]}
 {"abbreviation":"AMX","expansions":["amoxicillin"]}
 {"abbreviation":"bid","expansions":["twice daily"]}

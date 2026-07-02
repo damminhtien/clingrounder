@@ -16,6 +16,35 @@ from medical_kg_nlp.schema.types import AssertionStatus, EntityType
 
 
 _CLAUSE_BOUNDARY_RE = re.compile(r"[\n.;:!?]|,\s+")
+_NEGATION_FALSE_POSITIVE_PATTERNS = (
+    re.compile(r"(?<!\w)không\s+đặc\s+hiệu(?!\w)", flags=re.IGNORECASE | re.UNICODE),
+    re.compile(r"(?<!\w)không\s+loại\s+trừ(?!\w)", flags=re.IGNORECASE | re.UNICODE),
+)
+_FAMILY_FALSE_POSITIVE_PATTERNS = (
+    re.compile(r"(?<!\w)con\s+trai\s+phát\s+hiện\s+bệnh\s+nhân(?!\w)", flags=re.IGNORECASE | re.UNICODE),
+    re.compile(r"(?<!\w)con\s+gái\s+phát\s+hiện\s+bệnh\s+nhân(?!\w)", flags=re.IGNORECASE | re.UNICODE),
+)
+_FAMILY_MEMBER_CUES = frozenset(
+    {
+        "anh",
+        "bà",
+        "bố",
+        "brother",
+        "cha",
+        "chị",
+        "em",
+        "father",
+        "mẹ",
+        "mother",
+        "ông",
+        "parent",
+        "sister",
+    }
+)
+_FAMILY_PREDICATE_RE = re.compile(
+    r"(?<!\w)(bị|mắc|có|tiền\s+sử|history\s+of|diagnosed\s+with)(?!\w)",
+    flags=re.IGNORECASE | re.UNICODE,
+)
 
 
 class AssertionClassifier:
@@ -28,11 +57,11 @@ class AssertionClassifier:
         left_context = self._local_left_context(sentence_text, max(entity_start, 0))
         right_context = self._local_right_context(sentence_text, max(entity_end, 0))
 
-        if self._contains(left_context, FAMILY_CUES):
+        if self._contains_family(left_context, right_context):
             return AssertionStatus.FAMILY
         if self._contains(left_context, POSSIBLE_CUES) or self._contains(right_context, POSSIBLE_CUES):
             return AssertionStatus.POSSIBLE
-        if self._contains(left_context, NEGATION_CUES):
+        if self._contains_negation(left_context):
             return AssertionStatus.NEGATED
         if self._contains(left_context, HISTORICAL_CUES):
             return AssertionStatus.HISTORICAL
@@ -72,3 +101,50 @@ class AssertionClassifier:
             if re.search(pattern, text, flags=re.IGNORECASE | re.UNICODE):
                 return True
         return False
+
+    def _contains_negation(self, left_context: str) -> bool:
+        blocked_spans = self._pattern_spans(left_context, _NEGATION_FALSE_POSITIVE_PATTERNS)
+        return self._contains_outside_spans(left_context, NEGATION_CUES, blocked_spans)
+
+    def _contains_family(self, left_context: str, right_context: str) -> bool:
+        blocked_spans = self._pattern_spans(left_context, _FAMILY_FALSE_POSITIVE_PATTERNS)
+        for cue in FAMILY_CUES:
+            normalized_cue = cue.strip()
+            if not normalized_cue:
+                continue
+            pattern = rf"(?<!\w){re.escape(normalized_cue)}(?!\w)"
+            match = re.search(pattern, left_context, flags=re.IGNORECASE | re.UNICODE)
+            if match is None:
+                continue
+            if self._is_inside_spans(match.span(), blocked_spans):
+                continue
+            if normalized_cue.lower() not in _FAMILY_MEMBER_CUES:
+                return True
+            family_scope = left_context[match.end() :] + " " + right_context
+            if _FAMILY_PREDICATE_RE.search(family_scope):
+                return True
+        return False
+
+    def _contains_outside_spans(
+        self,
+        text: str,
+        cues: tuple[str, ...],
+        blocked_spans: list[tuple[int, int]],
+    ) -> bool:
+        for cue in cues:
+            normalized_cue = cue.strip()
+            if not normalized_cue:
+                continue
+            pattern = rf"(?<!\w){re.escape(normalized_cue)}(?!\w)"
+            for match in re.finditer(pattern, text, flags=re.IGNORECASE | re.UNICODE):
+                if not self._is_inside_spans(match.span(), blocked_spans):
+                    return True
+        return False
+
+    @staticmethod
+    def _pattern_spans(text: str, patterns: tuple[re.Pattern[str], ...]) -> list[tuple[int, int]]:
+        return [match.span() for pattern in patterns for match in pattern.finditer(text)]
+
+    @staticmethod
+    def _is_inside_spans(span: tuple[int, int], blocked_spans: list[tuple[int, int]]) -> bool:
+        return any(blocked_start <= span[0] and span[1] <= blocked_end for blocked_start, blocked_end in blocked_spans)

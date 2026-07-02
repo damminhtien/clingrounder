@@ -75,6 +75,66 @@ def test_source_backed_rxnorm_terms_are_dictionary_constrained() -> None:
     assert all(candidate.code_system == CodeSystem.RXNORM for candidate in aspirin)
 
 
+def test_phase1_frequent_disease_terms_map_to_icd10() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+
+    atrial_fibrillation = generator.generate("rung nhĩ", EntityType.DISEASE)
+    hyperlipidemia = generator.generate("rối loạn lipid máu", EntityType.DISEASE)
+    anemia = generator.generate("thiếu máu", EntityType.DISEASE)
+    infection = generator.generate("nhiễm khuẩn", EntityType.DISEASE)
+    kidney_stone = generator.generate("sỏi thận", EntityType.DISEASE)
+
+    assert atrial_fibrillation[0].code == "I48.91"
+    assert hyperlipidemia[0].code == "E78.5"
+    assert anemia[0].code == "D64.9"
+    assert infection[0].code == "B99.9"
+    assert kidney_stone[0].code == "N20.0"
+    assert all(candidate.code_system == CodeSystem.ICD10 for candidate in atrial_fibrillation)
+
+
+def test_phase1_frequent_drug_terms_map_to_rxnorm() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+
+    tylenol = generator.generate("Tylenol", EntityType.DRUG)
+    lasix = generator.generate("Lasix", EntityType.DRUG)
+    metoprolol = generator.generate("Metoprolol", EntityType.DRUG)
+    nitroglycerin = generator.generate("NTG", EntityType.DRUG)
+    vancomycin = generator.generate("Vancomycin", EntityType.DRUG)
+    prednisone = generator.generate("Prednisone", EntityType.DRUG)
+    doxycycline = generator.generate("Doxycycline", EntityType.DRUG)
+
+    assert tylenol[0].code == "161"
+    assert lasix[0].code == "4603"
+    assert metoprolol[0].code == "6918"
+    assert nitroglycerin[0].code == "4917"
+    assert vancomycin[0].code == "11124"
+    assert prednisone[0].code == "8640"
+    assert doxycycline[0].code == "3640"
+    assert all(candidate.code_system == CodeSystem.RXNORM for candidate in lasix)
+
+
+def test_phase1_frequent_symptom_and_lab_terms_are_dictionary_constrained() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+
+    vomiting = generator.generate("nôn", EntityType.SYMPTOM)
+    abdominal_pain = generator.generate("đau bụng", EntityType.SYMPTOM)
+    edema = generator.generate("phù", EntityType.SYMPTOM)
+    potassium = generator.generate("kali", EntityType.LAB_TEST)
+    wbc = generator.generate("bạch cầu", EntityType.LAB_TEST)
+    troponin = generator.generate("troponin", EntityType.LAB_TEST)
+
+    assert vomiting[0].code == "SYMPTOM_NAUSEA_VOMITING"
+    assert abdominal_pain[0].code == "SYMPTOM_ABDOMINAL_PAIN"
+    assert edema[0].code == "SYMPTOM_EDEMA"
+    assert potassium[0].code == "POTASSIUM"
+    assert wbc[0].code == "WBC"
+    assert troponin[0].code == "TROPONIN"
+    assert all(candidate.code_system == CodeSystem.LOCAL for candidate in wbc)
+
+
 def test_blocked_alias_removes_false_positive_term() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
 
@@ -91,7 +151,7 @@ def test_build_dictionaries_validates_vietnamese_alias_table() -> None:
     )
     summary = json.loads(result.stdout)
 
-    assert summary["concepts"] >= 31
+    assert summary["concepts"] >= 56
     assert summary["assertion_cues"] >= 70
     assert summary["source_registry_entries"] >= 13
-    assert summary["vietnamese_aliases"] == 16
+    assert summary["vietnamese_aliases"] >= 36

@@ -2,11 +2,47 @@
   "a1c": [
     "LOCAL:TEST_HBA1C"
   ],
+  "abdominal pain": [
+    "LOCAL:SYMPTOM_ABDOMINAL_PAIN"
+  ],
+  "acetaminophen": [
+    "RXNORM:161"
+  ],
+  "acetylsalicylic acid": [
+    "RXNORM:1191"
+  ],
+  "acid reflux": [
+    "ICD10:K21.9"
+  ],
+  "acute kidney failure": [
+    "ICD10:N17.9"
+  ],
+  "acute kidney failure unspecified": [
+    "ICD10:N17.9"
+  ],
+  "acute kidney injury": [
+    "ICD10:N17.9"
+  ],
   "acute myocardial infarction": [
     "ICD10:I21.9"
   ],
   "acute myocardial infarction unspecified": [
     "ICD10:I21.9"
+  ],
+  "acute renal failure": [
+    "ICD10:N17.9"
+  ],
+  "af": [
+    "ICD10:I48.91"
+  ],
+  "afib": [
+    "ICD10:I48.91"
+  ],
+  "aki": [
+    "ICD10:N17.9"
+  ],
+  "alanine aminotransferase": [
+    "LOCAL:TEST_ALT"
   ],
   "albuterol": [
     "RXNORM:435"
@@ -14,14 +50,104 @@
   "albuterol sulfate": [
     "RXNORM:435"
   ],
+  "alt": [
+    "LOCAL:TEST_ALT"
+  ],
   "ami": [
     "ICD10:I21.9"
+  ],
+  "amoxicillin": [
+    "RXNORM:723"
+  ],
+  "amoxicillin trihydrate": [
+    "RXNORM:723"
+  ],
+  "amoxil": [
+    "RXNORM:723"
+  ],
+  "amoxycillin": [
+    "RXNORM:723"
+  ],
+  "amx": [
+    "RXNORM:723"
+  ],
+  "anaemia": [
+    "ICD10:D64.9"
+  ],
+  "anemia": [
+    "ICD10:D64.9"
+  ],
+  "anemia unspecified": [
+    "ICD10:D64.9"
+  ],
+  "apap": [
+    "RXNORM:161"
+  ],
+  "arf": [
+    "ICD10:N17.9"
   ],
   "arterial hypertension": [
     "ICD10:I10"
   ],
+  "asa": [
+    "RXNORM:1191"
+  ],
+  "aspartate aminotransferase": [
+    "LOCAL:TEST_AST"
+  ],
+  "aspirin": [
+    "RXNORM:1191"
+  ],
+  "ast": [
+    "LOCAL:TEST_AST"
+  ],
   "asthma": [
     "ICD10:J45"
+  ],
+  "atherosclerotic heart disease": [
+    "ICD10:I25.10"
+  ],
+  "atherosclerotic heart disease of native coronary artery without angina pectoris": [
+    "ICD10:I25.10"
+  ],
+  "atorvastatin": [
+    "RXNORM:83367"
+  ],
+  "atorvastatin calcium": [
+    "RXNORM:83367"
+  ],
+  "atrial fibrillation": [
+    "ICD10:I48.91"
+  ],
+  "bayer aspirin": [
+    "RXNORM:1191"
+  ],
+  "benh mach vanh": [
+    "ICD10:I25.10"
+  ],
+  "benh phoi tac nghen man tinh": [
+    "ICD10:J44.9"
+  ],
+  "benh than man": [
+    "ICD10:N18.9"
+  ],
+  "bg": [
+    "LOCAL:TEST_GLUCOSE"
+  ],
+  "bilirubin": [
+    "LOCAL:TEST_BILIRUBIN"
+  ],
+  "blood glucose": [
+    "LOCAL:TEST_GLUCOSE"
+  ],
+  "blood sugar": [
+    "LOCAL:TEST_GLUCOSE"
+  ],
+  "blood urea nitrogen": [
+    "LOCAL:TEST_BUN"
+  ],
+  "bptnmt": [
+    "ICD10:J44.9"
   ],
   "breathlessness": [
     "LOCAL:SYMPTOM_DYSPNEA"
@@ -29,17 +155,131 @@
   "bronchial asthma": [
     "ICD10:J45"
   ],
+  "btm": [
+    "ICD10:N18.9"
+  ],
+  "bun": [
+    "LOCAL:TEST_BUN"
+  ],
+  "buồn nôn": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "buồn nôn và nôn": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "bạch cầu": [
+    "LOCAL:TEST_WBC"
+  ],
+  "bệnh mạch vành": [
+    "ICD10:I25.10"
+  ],
+  "bệnh nhiễm trùng": [
+    "ICD10:B99.9"
+  ],
+  "bệnh nhiễm trùng không đặc hiệu": [
+    "ICD10:B99.9"
+  ],
+  "bệnh phổi tắc nghẽn mạn": [
+    "ICD10:J44.9"
+  ],
+  "bệnh phổi tắc nghẽn mạn tính": [
+    "ICD10:J44.9"
+  ],
+  "bệnh thận mạn": [
+    "ICD10:N18.9"
+  ],
+  "bệnh thận mạn tính": [
+    "ICD10:N18.9"
+  ],
+  "bệnh trào ngược dạ dày thực quản": [
+    "ICD10:K21.9"
+  ],
+  "bệnh động mạch vành": [
+    "ICD10:I25.10"
+  ],
+  "cad": [
+    "ICD10:I25.10"
+  ],
+  "calculus of kidney": [
+    "ICD10:N20.0"
+  ],
   "cao huyet ap": [
     "ICD10:I10"
   ],
   "cao huyết áp": [
     "ICD10:I10"
   ],
+  "cardiac failure": [
+    "ICD10:I50.9"
+  ],
+  "cephalalgia": [
+    "LOCAL:SYMPTOM_HEADACHE"
+  ],
+  "chd": [
+    "ICD10:I25.10"
+  ],
+  "chest pain": [
+    "LOCAL:SYMPTOM_CHEST_PAIN"
+  ],
   "chest x-ray": [
     "LOCAL:TEST_XRAY"
   ],
+  "chf": [
+    "ICD10:I50.9"
+  ],
+  "chronic kidney disease": [
+    "ICD10:N18.9"
+  ],
+  "chronic kidney disease unspecified": [
+    "ICD10:N18.9"
+  ],
+  "chronic obstructive airway disease": [
+    "ICD10:J44.9"
+  ],
+  "chronic obstructive pulmonary disease": [
+    "ICD10:J44.9"
+  ],
+  "chronic obstructive pulmonary disease unspecified": [
+    "ICD10:J44.9"
+  ],
+  "chronic renal disease": [
+    "ICD10:N18.9"
+  ],
+  "ckd": [
+    "ICD10:N18.9"
+  ],
+  "congestive heart failure": [
+    "ICD10:I50.9"
+  ],
+  "copd": [
+    "ICD10:J44.9"
+  ],
+  "coronary artery disease": [
+    "ICD10:I25.10"
+  ],
+  "coronary heart disease": [
+    "ICD10:I25.10"
+  ],
   "cough": [
     "LOCAL:SYMPTOM_COUGH"
+  ],
+  "cozaar": [
+    "RXNORM:52175"
+  ],
+  "cp": [
+    "LOCAL:SYMPTOM_CHEST_PAIN"
+  ],
+  "cr": [
+    "LOCAL:TEST_CREATININE"
+  ],
+  "creatinin": [
+    "LOCAL:TEST_CREATININE"
+  ],
+  "creatinine": [
+    "LOCAL:TEST_CREATININE"
+  ],
+  "creatinine blood test": [
+    "LOCAL:TEST_CREATININE"
   ],
   "cxr": [
     "LOCAL:TEST_XRAY"
@@ -47,32 +287,116 @@
   "dai thao duong type 2": [
     "ICD10:E11"
   ],
+  "deltasone": [
+    "RXNORM:8640"
+  ],
+  "diarrhea": [
+    "LOCAL:SYMPTOM_DIARRHEA"
+  ],
+  "diarrhoea": [
+    "LOCAL:SYMPTOM_DIARRHEA"
+  ],
   "dimethylbiguanide": [
     "RXNORM:6809"
   ],
   "dm2": [
     "ICD10:E11"
   ],
+  "doxycycline": [
+    "RXNORM:3640"
+  ],
+  "dyslipidemia": [
+    "ICD10:E78.5"
+  ],
   "dyspnea": [
     "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "ecg": [
+    "LOCAL:TEST_ECG"
+  ],
+  "edema": [
+    "LOCAL:SYMPTOM_EDEMA"
+  ],
+  "ekg": [
+    "LOCAL:TEST_ECG"
+  ],
+  "electrocardiogram": [
+    "LOCAL:TEST_ECG"
+  ],
+  "emesis": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
   ],
   "essential hypertension": [
     "ICD10:I10"
   ],
+  "fatigue": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "fatigue and weakness": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
   "fever": [
     "LOCAL:SYMPTOM_FEVER"
+  ],
+  "frusemide": [
+    "RXNORM:4603"
+  ],
+  "furosemide": [
+    "RXNORM:4603"
+  ],
+  "gastro-esophageal reflux disease without esophagitis": [
+    "ICD10:K21.9"
+  ],
+  "gastro-oesophageal reflux disease": [
+    "ICD10:K21.9"
+  ],
+  "gastroesophageal reflux disease": [
+    "ICD10:K21.9"
+  ],
+  "gerd": [
+    "ICD10:K21.9"
   ],
   "glucophage": [
     "RXNORM:6809"
   ],
+  "glucose": [
+    "LOCAL:TEST_GLUCOSE"
+  ],
+  "glucose máu": [
+    "LOCAL:TEST_GLUCOSE"
+  ],
   "glycated hemoglobin": [
     "LOCAL:TEST_HBA1C"
+  ],
+  "glyceryl trinitrate": [
+    "RXNORM:4917"
+  ],
+  "ha": [
+    "LOCAL:SYMPTOM_HEADACHE"
+  ],
+  "haematocrit": [
+    "LOCAL:TEST_HEMATOCRIT"
   ],
   "hba1c": [
     "LOCAL:TEST_HBA1C"
   ],
+  "hct": [
+    "LOCAL:TEST_HEMATOCRIT"
+  ],
+  "headache": [
+    "LOCAL:SYMPTOM_HEADACHE"
+  ],
   "heart attack": [
     "ICD10:I21.9"
+  ],
+  "heart failure": [
+    "ICD10:I50.9"
+  ],
+  "heart failure unspecified": [
+    "ICD10:I50.9"
+  ],
+  "hematocrit": [
+    "LOCAL:TEST_HEMATOCRIT"
   ],
   "hemoglobin a1c": [
     "LOCAL:TEST_HBA1C"
@@ -80,8 +404,14 @@
   "hen phế quản": [
     "ICD10:J45"
   ],
+  "hf": [
+    "ICD10:I50.9"
+  ],
   "high blood pressure": [
     "ICD10:I10"
+  ],
+  "hld": [
+    "ICD10:E78.5"
   ],
   "ho": [
     "LOCAL:SYMPTOM_COUGH"
@@ -89,11 +419,68 @@
   "htn": [
     "ICD10:I10"
   ],
+  "hyperlipidemia": [
+    "ICD10:E78.5"
+  ],
+  "hyperlipidemia unspecified": [
+    "ICD10:E78.5"
+  ],
   "hypertension": [
     "ICD10:I10"
   ],
+  "infection": [
+    "ICD10:B99.9"
+  ],
+  "infectious disease": [
+    "ICD10:B99.9"
+  ],
+  "inr": [
+    "LOCAL:TEST_INR"
+  ],
+  "international normalized ratio": [
+    "LOCAL:TEST_INR"
+  ],
+  "k": [
+    "LOCAL:TEST_POTASSIUM"
+  ],
+  "k+": [
+    "LOCAL:TEST_POTASSIUM"
+  ],
+  "kali": [
+    "LOCAL:TEST_POTASSIUM"
+  ],
   "khó thở": [
     "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "kidney stone": [
+    "ICD10:N20.0"
+  ],
+  "lasix": [
+    "RXNORM:4603"
+  ],
+  "leucocyte count": [
+    "LOCAL:TEST_WBC"
+  ],
+  "leukocyte count": [
+    "LOCAL:TEST_WBC"
+  ],
+  "lipid disorder": [
+    "ICD10:E78.5"
+  ],
+  "lipitor": [
+    "RXNORM:83367"
+  ],
+  "lisinopril": [
+    "RXNORM:29046"
+  ],
+  "lopressor": [
+    "RXNORM:6918"
+  ],
+  "losartan": [
+    "RXNORM:52175"
+  ],
+  "losartan potassium": [
+    "RXNORM:52175"
   ],
   "lung cancer": [
     "ICD10:C34"
@@ -116,11 +503,44 @@
   "metformin hydrochloride": [
     "RXNORM:6809"
   ],
+  "metoprolol": [
+    "RXNORM:6918"
+  ],
+  "metoprolol succinate": [
+    "RXNORM:6918"
+  ],
+  "metoprolol tartrate": [
+    "RXNORM:6918"
+  ],
   "mi": [
     "ICD10:I21.9"
   ],
   "myocardial infarction": [
     "ICD10:I21.9"
+  ],
+  "mệt mỏi": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "mệt mỏi và yếu": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "n/v": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "nausea": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "nausea and vomiting": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "nephrolithiasis": [
+    "ICD10:N20.0"
+  ],
+  "nhiễm khuẩn": [
+    "ICD10:B99.9"
+  ],
+  "nhiễm trùng": [
+    "ICD10:B99.9"
   ],
   "nhiễm trùng phổi": [
     "ICD10:J18.9"
@@ -137,11 +557,41 @@
   "niddm": [
     "ICD10:E11"
   ],
+  "nitroglycerin": [
+    "RXNORM:4917"
+  ],
+  "nitrostat": [
+    "RXNORM:4917"
+  ],
   "nmct": [
     "ICD10:I21.9"
   ],
   "non-insulin-dependent diabetes mellitus": [
     "ICD10:E11"
+  ],
+  "ntg": [
+    "RXNORM:4917"
+  ],
+  "nôn": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "nôn ói": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "oedema": [
+    "LOCAL:SYMPTOM_EDEMA"
+  ],
+  "omeprazole": [
+    "RXNORM:7646"
+  ],
+  "paracetamol": [
+    "RXNORM:161"
+  ],
+  "phù": [
+    "LOCAL:SYMPTOM_EDEMA"
+  ],
+  "phổi tắc nghẽn mạn tính": [
+    "ICD10:J44.9"
   ],
   "pna": [
     "ICD10:J18.9"
@@ -152,14 +602,53 @@
   "pneumonia unspecified organism": [
     "ICD10:J18.9"
   ],
+  "potassium": [
+    "LOCAL:TEST_POTASSIUM"
+  ],
+  "prednisone": [
+    "RXNORM:8640"
+  ],
+  "prilosec": [
+    "RXNORM:7646"
+  ],
+  "prinivil": [
+    "RXNORM:29046"
+  ],
   "radiograph": [
     "LOCAL:TEST_XRAY"
+  ],
+  "renal calculus": [
+    "ICD10:N20.0"
+  ],
+  "rung nhĩ": [
+    "ICD10:I48.91"
+  ],
+  "rung nhĩ không đặc hiệu": [
+    "ICD10:I48.91"
+  ],
+  "rối loạn lipid máu": [
+    "ICD10:E78.5"
   ],
   "saba": [
     "RXNORM:435"
   ],
   "salbutamol": [
     "RXNORM:435"
+  ],
+  "scr": [
+    "LOCAL:TEST_CREATININE"
+  ],
+  "serum creatinine": [
+    "LOCAL:TEST_CREATININE"
+  ],
+  "serum potassium": [
+    "LOCAL:TEST_POTASSIUM"
+  ],
+  "sgot": [
+    "LOCAL:TEST_AST"
+  ],
+  "sgpt": [
+    "LOCAL:TEST_ALT"
   ],
   "short-acting beta agonist": [
     "RXNORM:435"
@@ -170,6 +659,42 @@
   "sob": [
     "LOCAL:SYMPTOM_DYSPNEA"
   ],
+  "stomach pain": [
+    "LOCAL:SYMPTOM_ABDOMINAL_PAIN"
+  ],
+  "suy nhược": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "suy than cap": [
+    "ICD10:N17.9"
+  ],
+  "suy than man": [
+    "ICD10:N18.9"
+  ],
+  "suy thận cấp": [
+    "ICD10:N17.9"
+  ],
+  "suy thận mạn": [
+    "ICD10:N18.9"
+  ],
+  "suy tim": [
+    "ICD10:I50.9"
+  ],
+  "suy tim sung huyet": [
+    "ICD10:I50.9"
+  ],
+  "suy tim sung huyết": [
+    "ICD10:I50.9"
+  ],
+  "swelling": [
+    "LOCAL:SYMPTOM_EDEMA"
+  ],
+  "sưng phù": [
+    "LOCAL:SYMPTOM_EDEMA"
+  ],
+  "sỏi thận": [
+    "ICD10:N20.0"
+  ],
   "sốt": [
     "LOCAL:SYMPTOM_FEVER"
   ],
@@ -179,11 +704,29 @@
   "tang huyet ap": [
     "ICD10:I10"
   ],
+  "tbili": [
+    "LOCAL:TEST_BILIRUBIN"
+  ],
   "tha": [
     "ICD10:I10"
   ],
+  "thiếu máu": [
+    "ICD10:D64.9"
+  ],
+  "thiếu máu cơ tim": [
+    "ICD10:I25.10"
+  ],
+  "thoracic pain": [
+    "LOCAL:SYMPTOM_CHEST_PAIN"
+  ],
   "tieu duong type 2": [
     "ICD10:E11"
+  ],
+  "tiredness": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "tiêu chảy": [
+    "LOCAL:SYMPTOM_DIARRHEA"
   ],
   "tiểu đường type 2": [
     "ICD10:E11"
@@ -191,17 +734,59 @@
   "tiểu đường týp 2": [
     "ICD10:E11"
   ],
+  "tni": [
+    "LOCAL:TEST_TROPONIN"
+  ],
+  "tnt": [
+    "LOCAL:TEST_TROPONIN"
+  ],
+  "toprol xl": [
+    "RXNORM:6918"
+  ],
+  "total bilirubin": [
+    "LOCAL:TEST_BILIRUBIN"
+  ],
+  "trao nguoc da day thuc quan": [
+    "ICD10:K21.9"
+  ],
+  "troponin": [
+    "LOCAL:TEST_TROPONIN"
+  ],
+  "troponin i": [
+    "LOCAL:TEST_TROPONIN"
+  ],
+  "troponin t": [
+    "LOCAL:TEST_TROPONIN"
+  ],
+  "trào ngược dạ dày thực quản": [
+    "ICD10:K21.9"
+  ],
+  "tylenol": [
+    "RXNORM:161"
+  ],
   "type 2 diabetes": [
     "ICD10:E11"
   ],
   "type 2 diabetes mellitus": [
     "ICD10:E11"
   ],
+  "tăng cholesterol máu": [
+    "ICD10:E78.5"
+  ],
   "tăng ha": [
     "ICD10:I10"
   ],
   "tăng huyết áp": [
     "ICD10:I10"
+  ],
+  "tăng lipid máu": [
+    "ICD10:E78.5"
+  ],
+  "tổn thương thận cấp": [
+    "ICD10:N17.9"
+  ],
+  "tức ngực": [
+    "LOCAL:SYMPTOM_CHEST_PAIN"
   ],
   "u ác phổi": [
     "ICD10:C34"
@@ -212,14 +797,53 @@
   "ung thư phổi": [
     "ICD10:C34"
   ],
+  "unspecified atrial fibrillation": [
+    "ICD10:I48.91"
+  ],
+  "unspecified infectious disease": [
+    "ICD10:B99.9"
+  ],
+  "ure": [
+    "LOCAL:TEST_BUN"
+  ],
+  "ure máu": [
+    "LOCAL:TEST_BUN"
+  ],
+  "urea": [
+    "LOCAL:TEST_BUN"
+  ],
+  "vancocin": [
+    "RXNORM:11124"
+  ],
+  "vancomycin": [
+    "RXNORM:11124"
+  ],
   "ventolin": [
     "RXNORM:435"
+  ],
+  "vibramycin": [
+    "RXNORM:3640"
   ],
   "viêm phổi": [
     "ICD10:J18.9"
   ],
   "viêm phổi cộng đồng": [
     "ICD10:J18.9"
+  ],
+  "vomiting": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "wbc": [
+    "LOCAL:TEST_WBC"
+  ],
+  "weakness": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "white blood cell count": [
+    "LOCAL:TEST_WBC"
+  ],
+  "white blood cells": [
+    "LOCAL:TEST_WBC"
   ],
   "x quang ngực": [
     "LOCAL:TEST_XRAY"
@@ -229,6 +853,27 @@
   ],
   "x-ray": [
     "LOCAL:TEST_XRAY"
+  ],
+  "yếu": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "zestril": [
+    "RXNORM:29046"
+  ],
+  "ói": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "đau bụng": [
+    "LOCAL:SYMPTOM_ABDOMINAL_PAIN"
+  ],
+  "đau ngực": [
+    "LOCAL:SYMPTOM_CHEST_PAIN"
+  ],
+  "đau đầu": [
+    "LOCAL:SYMPTOM_HEADACHE"
+  ],
+  "điện tâm đồ": [
+    "LOCAL:TEST_ECG"
   ],
   "đtđ type 2": [
     "ICD10:E11"
@@ -241,5 +886,8 @@
   ],
   "đái tháo đường týp ii": [
     "ICD10:E11"
+  ],
+  "đường huyết": [
+    "LOCAL:TEST_GLUCOSE"
   ]
 }

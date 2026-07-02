@@ -46,8 +46,28 @@ def test_possible_rule_overrides_negation_phrase() -> None:
     assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.POSSIBLE
 
 
+def test_non_specific_phrase_does_not_negate_condition() -> None:
+    entity, sentence = _entity("Hình ảnh không đặc hiệu cho viêm phổi.", "viêm phổi")
+    assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.PRESENT
+
+
+def test_non_specific_phrase_does_not_mask_real_negation_cue() -> None:
+    entity, sentence = _entity("Không ghi nhận viêm phổi, hình ảnh không đặc hiệu.", "viêm phổi")
+    assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.NEGATED
+
+
 def test_family_history_rule() -> None:
     entity, sentence = _entity("Cha bệnh nhân bị ung thư phổi.", "ung thư phổi")
+    assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.FAMILY
+
+
+def test_family_member_observation_does_not_mark_patient_condition_as_family() -> None:
+    entity, sentence = _entity("Con trai phát hiện bệnh nhân có viêm phổi tại nhà.", "viêm phổi")
+    assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.PRESENT
+
+
+def test_family_member_with_disease_predicate_still_marks_family_history() -> None:
+    entity, sentence = _entity("Anh bệnh nhân bị ung thư phổi.", "ung thư phổi")
     assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.FAMILY
 
 

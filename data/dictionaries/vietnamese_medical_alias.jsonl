@@ -14,3 +14,23 @@
 {"alias":"buồn nôn","canonical":"nausea and vomiting","target_concept_id":"LOCAL:SYMPTOM_NAUSEA_VOMITING","semantic_type":"SYMPTOM","notes":"Vietnamese symptom alias."}
 {"alias":"đường huyết","canonical":"blood glucose","target_concept_id":"LOCAL:TEST_GLUCOSE","semantic_type":"LAB_TEST","notes":"Vietnamese lab-test alias."}
 {"alias":"điện tâm đồ","canonical":"electrocardiogram","target_concept_id":"LOCAL:TEST_ECG","semantic_type":"LAB_TEST","notes":"Vietnamese lab-test alias."}
+{"alias":"rung nhĩ","canonical":"atrial fibrillation","target_concept_id":"ICD10:I48.91","semantic_type":"DISEASE","notes":"Frequent Phase 1 diagnosis alias."}
+{"alias":"tăng lipid máu","canonical":"hyperlipidemia","target_concept_id":"ICD10:E78.5","semantic_type":"DISEASE","notes":"Frequent Phase 1 diagnosis alias."}
+{"alias":"rối loạn lipid máu","canonical":"hyperlipidemia","target_concept_id":"ICD10:E78.5","semantic_type":"DISEASE","notes":"Common Vietnamese dyslipidemia alias."}
+{"alias":"thiếu máu","canonical":"anemia","target_concept_id":"ICD10:D64.9","semantic_type":"DISEASE","notes":"Frequent Phase 1 diagnosis alias."}
+{"alias":"nhiễm trùng","canonical":"infection","target_concept_id":"ICD10:B99.9","semantic_type":"DISEASE","notes":"Generic infection alias; keep constrained to diagnosis type."}
+{"alias":"nhiễm khuẩn","canonical":"infection","target_concept_id":"ICD10:B99.9","semantic_type":"DISEASE","notes":"Common Vietnamese infection alias."}
+{"alias":"sỏi thận","canonical":"kidney stone","target_concept_id":"ICD10:N20.0","semantic_type":"DISEASE","notes":"Specific stone alias, avoids broad single-token 'sỏi'."}
+{"alias":"đau bụng","canonical":"abdominal pain","target_concept_id":"LOCAL:SYMPTOM_ABDOMINAL_PAIN","semantic_type":"SYMPTOM","notes":"Frequent Phase 1 symptom alias."}
+{"alias":"mệt mỏi","canonical":"fatigue and weakness","target_concept_id":"LOCAL:SYMPTOM_FATIGUE_WEAKNESS","semantic_type":"SYMPTOM","notes":"Frequent Phase 1 symptom alias."}
+{"alias":"yếu","canonical":"fatigue and weakness","target_concept_id":"LOCAL:SYMPTOM_FATIGUE_WEAKNESS","semantic_type":"SYMPTOM","notes":"Frequent Phase 1 symptom alias."}
+{"alias":"phù","canonical":"edema","target_concept_id":"LOCAL:SYMPTOM_EDEMA","semantic_type":"SYMPTOM","notes":"Frequent Phase 1 symptom alias."}
+{"alias":"tiêu chảy","canonical":"diarrhea","target_concept_id":"LOCAL:SYMPTOM_DIARRHEA","semantic_type":"SYMPTOM","notes":"Common Vietnamese symptom alias."}
+{"alias":"kali","canonical":"potassium","target_concept_id":"LOCAL:TEST_POTASSIUM","semantic_type":"LAB_TEST","notes":"Frequent Phase 1 lab-test alias."}
+{"alias":"bạch cầu","canonical":"white blood cell count","target_concept_id":"LOCAL:TEST_WBC","semantic_type":"LAB_TEST","notes":"Frequent Phase 1 lab-test alias."}
+{"alias":"bilirubin","canonical":"bilirubin","target_concept_id":"LOCAL:TEST_BILIRUBIN","semantic_type":"LAB_TEST","notes":"Frequent Phase 1 lab-test alias."}
+{"alias":"troponin","canonical":"troponin","target_concept_id":"LOCAL:TEST_TROPONIN","semantic_type":"LAB_TEST","notes":"Frequent Phase 1 lab-test alias."}
+{"alias":"hct","canonical":"hematocrit","target_concept_id":"LOCAL:TEST_HEMATOCRIT","semantic_type":"LAB_TEST","notes":"Frequent Phase 1 lab-test abbreviation."}
+{"alias":"inr","canonical":"international normalized ratio","target_concept_id":"LOCAL:TEST_INR","semantic_type":"LAB_TEST","notes":"Frequent Phase 1 lab-test abbreviation."}
+{"alias":"alt","canonical":"alanine aminotransferase","target_concept_id":"LOCAL:TEST_ALT","semantic_type":"LAB_TEST","notes":"Frequent Phase 1 lab-test abbreviation."}
+{"alias":"ast","canonical":"aspartate aminotransferase","target_concept_id":"LOCAL:TEST_AST","semantic_type":"LAB_TEST","notes":"Frequent Phase 1 lab-test abbreviation."}
