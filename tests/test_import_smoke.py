@@ -14,6 +14,8 @@ import pytest
         "medical_kg_nlp.kg.validator",
         "medical_kg_nlp.kg.constraints",
         "medical_kg_nlp.schema.validator",
+        "medical_kg_nlp.evaluation.phase1",
+        "medical_kg_nlp.evaluation",
     ],
 )
 def test_public_modules_import_in_fresh_process(module_name: str) -> None:

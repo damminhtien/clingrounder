@@ -123,7 +123,29 @@ def test_loop_engineer_evaluation_path_uses_split_module_playbook() -> None:
         "src/medical_kg_nlp/evaluation/loop_policy.py",
     }
     assert "src/medical_kg_nlp/evaluation/loop_analysis.py" in loop_report["agent"]["brief"]
-    assert "uv run pytest tests/test_pipeline_report.py tests/test_loop_engineer.py -q" in action["commands"]
+    assert "uv run pytest tests/test_phase1.py tests/test_pipeline_report.py tests/test_loop_engineer.py -q" in (
+        action["commands"]
+    )
+
+
+def test_loop_engineer_prefers_phase1_score_when_report_has_phase1_metrics() -> None:
+    report = _report(loop_score_shift=0.0)
+    report["metrics"]["relation"]["f1"] = 0.0
+    report["phase1"] = {
+        "metrics": {
+            "score": 88.0,
+            "text_score": 0.9,
+            "assertions_score": 0.8,
+            "candidates_score": 0.92,
+        },
+        "validation_summary": {"issue_count": 2, "by_kind": {"phase1_offset": 2}},
+    }
+
+    snapshot = metric_snapshot(report)
+
+    assert snapshot["loop_score"] == 0.88
+    assert snapshot["phase1_score"] == 88.0
+    assert snapshot["validation_issue_count"] == 2
 
 
 def test_loop_engineer_reverts_when_validation_gets_worse() -> None:

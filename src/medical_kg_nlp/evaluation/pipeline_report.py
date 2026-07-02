@@ -11,6 +11,7 @@ from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.evaluation.ablation import StageAggregate, aggregate_traces, flatten_metrics
 from medical_kg_nlp.evaluation.data_profile import profile_dataset, render_markdown
 from medical_kg_nlp.evaluation.end_to_end_metrics import evaluate_predictions
+from medical_kg_nlp.evaluation.phase1 import build_phase1_report, phase1_validation_error_rows
 from medical_kg_nlp.pipeline.tracing import PipelineTrace
 from medical_kg_nlp.preprocessing.section_splitter import split_sections
 from medical_kg_nlp.preprocessing.sentence_splitter import split_sentences
@@ -71,11 +72,20 @@ def build_pipeline_report(
     candidate_metrics = _candidate_metrics(gold, predictions)
     section_sentence_metrics = _section_sentence_metrics(documents_by_id, predictions)
     preprocessing_metrics = _preprocessing_metrics(documents_by_id, predictions, stage_aggregates)
+    phase1_report = build_phase1_report(
+        documents=documents,
+        gold=gold,
+        predictions=predictions,
+        dictionary=dictionary,
+    )
     errors = _error_rows(gold, predictions, documents_by_id, validation_issues)
+    errors.extend(_dict_list(phase1_report["errors"]))
+    errors.extend(phase1_validation_error_rows(_dict_list(phase1_report["validation_issues"])))
     error_summary = dict(Counter(str(row["error_type"]) for row in errors))
     stage_metrics = _stage_metric_rows(
         profile=profile,
         metrics=metrics,
+        phase1_report=phase1_report,
         validation_summary=validation_summary,
         runtime=runtime,
         stage_aggregates=stage_aggregates,
@@ -88,6 +98,7 @@ def build_pipeline_report(
         documents=documents,
         predictions=predictions,
         metrics=metrics,
+        phase1_report=phase1_report,
         validation_summary=validation_summary,
         runtime=runtime,
         errors=errors,
@@ -96,6 +107,7 @@ def build_pipeline_report(
     return {
         "summary": summary,
         "metrics": metrics,
+        "phase1": phase1_report,
         "profile": profile,
         "stage_metrics": stage_metrics,
         "validation": {
@@ -130,6 +142,8 @@ def render_summary_markdown(report: dict[str, Any]) -> str:
     summary = _mapping(report["summary"])
     runtime = _mapping(report["runtime"])
     validation = _mapping(_mapping(report["validation"])["summary"])
+    phase1 = _mapping(report.get("phase1", {}))
+    phase1_validation = _mapping(phase1.get("validation_summary", {}))
     error_summary = _mapping(report["error_summary"])
     lines = [
         "# Pipeline Evaluation Summary",
@@ -138,17 +152,22 @@ def render_summary_markdown(report: dict[str, Any]) -> str:
         "",
         f"- Documents: {summary['document_count']}",
         f"- Predictions: {summary['prediction_count']}",
-        f"- Validation issues: {validation['issue_count']}",
+        f"- Internal validation issues: {validation['issue_count']}",
+        f"- Phase 1 validation issues: {phase1_validation.get('issue_count', 0)}",
         f"- Error rows: {summary['error_count']}",
         f"- Docs/sec: {_format_float(runtime['docs_per_second'])}",
         f"- Bottleneck stage: {runtime['bottleneck_stage'] or 'N/A'}",
         "",
         "## Key Metrics",
         "",
+        f"- Phase 1 score: {_format_float(summary.get('phase1_score', 'N/A'))}",
+        f"- Phase 1 text: {_format_float(summary.get('phase1_text_score', 'N/A'))}",
+        f"- Phase 1 assertions: {_format_float(summary.get('phase1_assertions_score', 'N/A'))}",
+        f"- Phase 1 candidates: {_format_float(summary.get('phase1_candidates_score', 'N/A'))}",
         f"- Span exact F1: {_format_float(summary['span_exact_f1'])}",
         f"- Linking accuracy@1: {_format_float(summary['linking_accuracy_at_1'])}",
         f"- Context macro-F1: {_format_float(summary['context_macro_f1'])}",
-        f"- Relation F1: {_format_float(summary['relation_f1'])}",
+        f"- Relation F1 (internal only): {_format_float(summary['relation_f1'])}",
         "",
         "## Top Error Types",
         "",
@@ -611,6 +630,7 @@ def _stage_metric_rows(
     *,
     profile: dict[str, Any],
     metrics: dict[str, Any],
+    phase1_report: dict[str, Any],
     validation_summary: dict[str, Any],
     runtime: dict[str, Any],
     stage_aggregates: list[StageAggregate],
@@ -636,6 +656,13 @@ def _stage_metric_rows(
     flattened = flatten_metrics(metrics)
     for key, value in flattened.items():
         _add_row(rows, _metric_stage(key), key, value)
+    _add_mapping(rows, "phase1_submission", _mapping(phase1_report["metrics"]), "phase1")
+    _add_mapping(
+        rows,
+        "phase1_submission",
+        _mapping(phase1_report["validation_summary"]),
+        "phase1.validation",
+    )
     _add_mapping(rows, "candidate_generation", candidate_metrics)
     _add_mapping(rows, "schema_kg_validation", validation_summary)
     _add_mapping(rows, "error_analysis", error_summary)
@@ -658,17 +685,27 @@ def _summary(
     documents: list[ClinicalDocument],
     predictions: list[ClinicalPrediction],
     metrics: dict[str, Any],
+    phase1_report: dict[str, Any],
     validation_summary: dict[str, Any],
     runtime: dict[str, Any],
     errors: list[dict[str, Any]],
 ) -> dict[str, Any]:
     span_exact = _mapping(metrics["span_exact"])
     relation = _mapping(metrics["relation"])
+    phase1_metrics = _mapping(phase1_report["metrics"])
+    phase1_validation = _mapping(phase1_report["validation_summary"])
+    phase1_issue_count = int(phase1_validation["issue_count"])
     return {
         "document_count": len(documents),
         "prediction_count": len(predictions),
-        "validation_issue_count": validation_summary["issue_count"],
+        "validation_issue_count": validation_summary["issue_count"] + phase1_issue_count,
+        "internal_validation_issue_count": validation_summary["issue_count"],
+        "phase1_validation_issue_count": phase1_issue_count,
         "error_count": len(errors),
+        "phase1_score": phase1_metrics["score"],
+        "phase1_text_score": phase1_metrics["text_score"],
+        "phase1_assertions_score": phase1_metrics["assertions_score"],
+        "phase1_candidates_score": phase1_metrics["candidates_score"],
         "span_exact_f1": span_exact["f1"],
         "linking_accuracy_at_1": metrics["linking_accuracy_at_1"],
         "context_macro_f1": metrics["context_macro_f1"],

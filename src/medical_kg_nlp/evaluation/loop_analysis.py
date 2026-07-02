@@ -13,11 +13,22 @@ def metric_snapshot(report: dict[str, Any] | None) -> dict[str, float]:
     if report is None:
         return {}
     metrics = _mapping(report.get("metrics", {}))
+    phase1 = _mapping(report.get("phase1", {}))
+    phase1_metrics = _mapping(phase1.get("metrics", {}))
+    phase1_validation = _mapping(phase1.get("validation_summary", {}))
     summary = _mapping(report.get("summary", {}))
     validation = _mapping(_mapping(report.get("validation", {})).get("summary", {}))
     error_summary = _mapping(report.get("error_summary", {}))
     candidate_metrics = _mapping(report.get("candidate_metrics", {}))
+    internal_validation_count = _number_at(validation, ["issue_count"])
+    phase1_validation_count = _number_at(phase1_validation, ["issue_count"])
     snapshot: dict[str, float] = {
+        "phase1_score": _number_at(phase1_metrics, ["score"]),
+        "phase1_score_normalized": _number_at(phase1_metrics, ["score"]) / 100.0,
+        "phase1_text_score": _number_at(phase1_metrics, ["text_score"]),
+        "phase1_assertions_score": _number_at(phase1_metrics, ["assertions_score"]),
+        "phase1_candidates_score": _number_at(phase1_metrics, ["candidates_score"]),
+        "phase1_validation_issue_count": phase1_validation_count,
         "span_exact_f1": _number_at(metrics, ["span_exact", "f1"]),
         "span_exact_precision": _number_at(metrics, ["span_exact", "precision"]),
         "span_exact_recall": _number_at(metrics, ["span_exact", "recall"]),
@@ -30,7 +41,8 @@ def metric_snapshot(report: dict[str, Any] | None) -> dict[str, float]:
         "context_accuracy": _number_at(metrics, ["context_accuracy"]),
         "context_macro_f1": _number_at(metrics, ["context_macro_f1"]),
         "relation_f1": _number_at(metrics, ["relation", "f1"]),
-        "validation_issue_count": _number_at(validation, ["issue_count"]),
+        "internal_validation_issue_count": internal_validation_count,
+        "validation_issue_count": internal_validation_count + phase1_validation_count,
         "error_count": _number_at(summary, ["error_count"]),
         "candidate_missing_gold": _number_at(error_summary, ["candidate_missing_gold"]),
         "candidate_empty": _number_at(error_summary, ["candidate_empty"]),
@@ -40,10 +52,18 @@ def metric_snapshot(report: dict[str, Any] | None) -> dict[str, float]:
         "missing_entity": _number_at(error_summary, ["missing_entity"]),
         "spurious_entity": _number_at(error_summary, ["spurious_entity"]),
         "invalid_relation": _number_at(error_summary, ["invalid_relation"]),
+        "phase1_schema": _number_at(error_summary, ["phase1_schema"]),
+        "phase1_offset": _number_at(error_summary, ["phase1_offset"]),
+        "phase1_missing_entity": _number_at(error_summary, ["phase1_missing_entity"]),
+        "phase1_spurious_entity": _number_at(error_summary, ["phase1_spurious_entity"]),
+        "phase1_candidate_confusion": _number_at(error_summary, ["phase1_candidate_confusion"]),
         "entities_with_no_candidates": _number_at(candidate_metrics, ["entities_with_no_candidates"]),
     }
-    core_values = [snapshot[key] for key in CORE_SCORE_METRICS]
-    snapshot["loop_score"] = round(sum(core_values) / len(core_values), 6)
+    if _has_numeric_key(phase1_metrics, "score"):
+        snapshot["loop_score"] = round(snapshot["phase1_score_normalized"], 6)
+    else:
+        core_values = [snapshot[key] for key in CORE_SCORE_METRICS]
+        snapshot["loop_score"] = round(sum(core_values) / len(core_values), 6)
     return snapshot
 
 
@@ -206,6 +226,11 @@ def _mapping(value: Any) -> dict[str, Any]:
     if not isinstance(value, dict):
         return {}
     return value
+
+
+def _has_numeric_key(payload: dict[str, Any], key: str) -> bool:
+    value = payload.get(key)
+    return isinstance(value, int | float) and not isinstance(value, bool)
 
 
 def _dict_list(value: Any) -> list[dict[str, Any]]:

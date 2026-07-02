@@ -29,6 +29,7 @@ def build_agent_context(
             "Never output codes absent from the loaded dictionary.",
             "Never map DRUG to ICD-10 or DISEASE to RxNorm.",
             "Keep negated and family-history diseases distinct from present patient conditions.",
+            "For Phase 1, submit flat entity JSON only; relations stay internal unless schema changes.",
             "Change one meaningful component per experiment.",
         ],
     }

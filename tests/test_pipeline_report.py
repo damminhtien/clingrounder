@@ -58,6 +58,9 @@ def test_pipeline_report_merges_metrics_validation_trace_and_errors(tmp_path: Pa
     assert report["runtime"]["bottleneck_stage"] == "candidate_generation"
     assert report["candidate_metrics"]["gold_rank"]["min"] == 2
     assert report["validation"]["summary"]["by_kind"]["invalid_candidate_code_system"] == 1
+    assert "score" in report["phase1"]["metrics"]
+    assert report["summary"]["phase1_score"] == report["phase1"]["metrics"]["score"]
+    assert any(row["stage"] == "phase1_submission" for row in report["stage_metrics"])
 
     error_counts = Counter(row["error_type"] for row in report["errors"])
     assert error_counts["severe_context_error"] == 1
@@ -79,6 +82,7 @@ def test_pipeline_report_merges_metrics_validation_trace_and_errors(tmp_path: Pa
 
     saved_report = json.loads((tmp_path / "metrics.json").read_text(encoding="utf-8"))
     assert saved_report["summary"]["error_count"] == len(report["errors"])
+    assert "Phase 1 score" in (tmp_path / "summary.md").read_text(encoding="utf-8")
 
 
 def test_evaluate_pipeline_steps_cli_writes_stage_report(tmp_path: Path) -> None:
@@ -112,6 +116,9 @@ def test_evaluate_pipeline_steps_cli_writes_stage_report(tmp_path: Path) -> None
         assert (tmp_path / filename).exists()
     traces = json.loads((tmp_path / "traces.json").read_text(encoding="utf-8"))
     assert traces == []
+    report = json.loads((tmp_path / "metrics.json").read_text(encoding="utf-8"))
+    assert "phase1" in report
+    assert "phase1_score" in report["summary"]
 
 
 def _sample_documents_and_gold() -> tuple[list[ClinicalDocument], list[ClinicalPrediction]]:
