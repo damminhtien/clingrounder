@@ -2,7 +2,8 @@
 
 Prototype system for clinical entity extraction, dictionary-constrained normalization, context reasoning, relation extraction, and lightweight KG validation.
 
-The official competition schema is not available yet, so this repository starts with a small but complete Vietnamese/English synthetic baseline that is easy to adapt when the final data arrives.
+The internal schema stays rich for debugging, while the Phase 1 exporter writes the official flat
+entity JSON files for `input/1.txt` through `input/100.txt`.
 
 Target runtime: Python 3.14+ with latest compatible library lower bounds in `pyproject.toml`.
 
@@ -16,6 +17,7 @@ Target runtime: Python 3.14+ with latest compatible library lower bounds in `pyp
 - Assertion rules for present, negated, historical, family, possible, planned, and resolved contexts.
 - Relation rules for treatment, symptom, test suggestion, and dose links.
 - KG constraints that prevent invalid code-system and relation-type outputs.
+- Phase 1 flat JSON exporter, validator, ZIP builder, and stage-wise Phase 1 metrics.
 - JSONL pipeline, data profiler, evaluator, ablation timing reports, error analysis CSV, and pytest coverage.
 
 ## Quick Start
@@ -32,7 +34,8 @@ uv run python scripts/run_pipeline.py --input data/samples/sample_notes.jsonl --
 uv run python scripts/validate_predictions.py --pred outputs/predictions.jsonl --documents data/samples/sample_notes.jsonl --dictionary data/dictionaries/seed_concepts.jsonl
 uv run python scripts/evaluate.py --gold data/samples/gold.jsonl --pred outputs/predictions.jsonl
 uv run python scripts/profile_data.py --documents data/samples/sample_notes.jsonl --gold data/samples/gold.jsonl --output outputs/profiles/sample_profile.json --markdown outputs/profiles/sample_profile.md
-uv run python scripts/run_ablation.py --config configs/ablations.yaml
+uv run python scripts/build_phase1_submission.py --input-dir data/raw/input --run-root outputs/runs --output-dir phase1/output --zip phase1/output.zip --expected-count 100
+uv run python scripts/run_ablation.py --config configs/ablations.yaml --run-root outputs/runs
 uv run pytest tests/
 ```
 
@@ -50,7 +53,8 @@ python scripts/run_pipeline.py --input data/samples/sample_notes.jsonl --output 
 python scripts/validate_predictions.py --pred outputs/predictions.jsonl --documents data/samples/sample_notes.jsonl --dictionary data/dictionaries/seed_concepts.jsonl
 python scripts/evaluate.py --gold data/samples/gold.jsonl --pred outputs/predictions.jsonl
 python scripts/profile_data.py --documents data/samples/sample_notes.jsonl --gold data/samples/gold.jsonl --output outputs/profiles/sample_profile.json --markdown outputs/profiles/sample_profile.md
-python scripts/run_ablation.py --config configs/ablations.yaml
+python scripts/build_phase1_submission.py --input-dir data/raw/input --run-root outputs/runs --output-dir phase1/output --zip phase1/output.zip --expected-count 100
+python scripts/run_ablation.py --config configs/ablations.yaml --run-root outputs/runs
 python -m pytest tests/
 ```
 
@@ -73,6 +77,21 @@ Note: PyTorch and Accelerate wheels are platform-specific. On Python 3.14, they 
 compatible wheels exist; macOS x86_64 may need an official PyTorch index, a different Python build,
 or a source install.
 
+## Hashed Run Outputs
+
+Use `--run-root outputs/runs` on long-running commands to avoid overwriting old results. Each run
+creates a directory like `outputs/runs/20260702T143000Z_phase1_a1b2c3d4e5/` with a
+`run_manifest.json`; relative output paths are written inside that directory.
+
+```bash
+uv run python scripts/build_phase1_submission.py \
+  --input-dir data/raw/input \
+  --run-root outputs/runs \
+  --output-dir phase1/output \
+  --zip phase1/output.zip \
+  --expected-count 100
+```
+
 ## Expected Pipeline
 
 ```text
@@ -87,9 +106,10 @@ Raw clinical text
   -> candidate reranking
   -> normalization assignment
   -> ICD/RxNorm/UMLS validation
-  -> relation extraction
+  -> relation extraction (internal reasoning for Phase 1)
   -> ontology/KG consistency checking
   -> structured JSON output
+  -> Phase 1 flat JSON/ZIP export when building a submission
   -> prediction validation
   -> evaluation and error analysis
 ```
@@ -118,13 +138,15 @@ AGENTS.md                  Repo instructions for coding agents
 - Changelog: see `CHANGELOG.md`.
 - CI: GitHub Actions workflow under `.github/workflows/ci.yml`.
 - Local shortcuts: `make lint`, `make type`, `make test`, `make pipeline`, `make validate`,
-  `make evaluate`, `make profile`, `make ablation`.
+  `make evaluate`, `make profile`, `make phase1-submit`, `make phase1-validate`, `make ablation`.
 
 ## Current Limitations
 
 - Dictionaries are seed dictionaries, not full ICD-10/RxNorm releases.
 - Transformer NER, context, and relation classifiers are placeholders.
 - Public dataset adapters are schema-compatible placeholders until local dataset paths are supplied.
-- Evaluation is focused on the internal schema and synthetic sample.
+- Hidden Phase 1 test data has no gold labels, so official-style `phase1_score` is only local on
+  synthetic or labeled regression data; test submissions are gated by schema, offset, dictionary,
+  and ZIP validation.
 
 The current priority is correctness of schema, offsets, linking constraints, context handling, and end-to-end debuggability before adding large models.

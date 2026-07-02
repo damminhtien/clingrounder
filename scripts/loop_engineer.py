@@ -12,6 +12,7 @@ from medical_kg_nlp.evaluation.loop_engineer import (
     build_loop_engineering_report,
     write_loop_engineering_report,
 )
+from medical_kg_nlp.utils.run_output import create_hashed_run_dir, path_in_run
 
 
 def main() -> None:
@@ -20,6 +21,11 @@ def main() -> None:
     )
     parser.add_argument("--current-report", required=True, help="Current metrics.json from stage report.")
     parser.add_argument("--output-dir", required=True, help="Directory for loop-engineering artifacts.")
+    parser.add_argument(
+        "--run-root",
+        help="Optional root for hashed run directories. Relative output paths are written under it.",
+    )
+    parser.add_argument("--run-label", default="loop", help="Label embedded in the hashed run directory.")
     parser.add_argument("--experiment-id", required=True, help="Stable experiment id, e.g. N006.")
     parser.add_argument("--module", required=True, help="Target module, e.g. normalization.")
     parser.add_argument("--hypothesis", required=True, help="One concrete experiment hypothesis.")
@@ -50,7 +56,10 @@ def main() -> None:
     parser.add_argument(
         "--primary-metric",
         default="loop_score",
-        help="Decision metric. Default averages span/linking/context/relation core metrics.",
+        help=(
+            "Decision metric. Default uses Phase 1 score when present, "
+            "otherwise falls back to internal span/linking/context/relation metrics."
+        ),
     )
     parser.add_argument("--keep-delta", type=float, default=0.001)
     parser.add_argument("--revert-delta", type=float, default=0.001)
@@ -59,6 +68,15 @@ def main() -> None:
 
     current_report = _read_json(args.current_report)
     baseline_report = _read_json(args.baseline_report) if args.baseline_report else None
+    run_output = (
+        create_hashed_run_dir(
+            args.run_root,
+            label=args.run_label,
+            inputs=[args.current_report, args.baseline_report or "none", args.experiment_id],
+        )
+        if args.run_root
+        else None
+    )
     loop_report = build_loop_engineering_report(
         current_report,
         baseline_report=baseline_report,
@@ -74,7 +92,12 @@ def main() -> None:
         revert_delta=args.revert_delta,
         top_k=args.top_k,
     )
-    write_loop_engineering_report(loop_report, args.output_dir, journal_dir=args.journal_dir)
+    output_dir = path_in_run(args.output_dir, run_output)
+    if run_output:
+        loop_report["decision"]["run_id"] = run_output.run_id
+        loop_report["decision"]["run_dir"] = str(run_output.run_dir)
+        loop_report["decision"]["run_manifest"] = str(run_output.manifest_path)
+    write_loop_engineering_report(loop_report, output_dir, journal_dir=args.journal_dir)
     print(json.dumps(loop_report["decision"], ensure_ascii=False, indent=2, sort_keys=True))
 
 

@@ -10,6 +10,8 @@ metrics are computed.
 - Linking accuracy at 1, recall at 5/10/20, and MRR.
 - Assertion/context accuracy.
 - Typed relation precision, recall, and F1.
+- Phase 1 submission score for the official flat entity JSON format:
+  `100 * (0.3 * text_score + 0.3 * assertions_score + 0.4 * candidates_score)`.
 - Error-analysis CSV with document id, error type, text window, gold label, prediction, candidate
   list, and notes.
 - Dataset profiling for entity, code, context, relation, section, abbreviation-like mention,
@@ -20,6 +22,9 @@ metrics are computed.
 ## Recommended Gates
 
 - Run validator checks before evaluation.
+- For Phase 1, treat `phase1_score` as the primary loop score and relation F1 as internal
+  diagnostics only.
+- Validate that `output.zip` contains `output/1.json` through `output/100.json`.
 - Track candidate recall at 20 before adding rerankers.
 - Treat offset regressions as blocking.
 - Compare context-specific errors for negation, family history, historical mentions, and possible
@@ -53,7 +58,16 @@ python scripts/evaluate_pipeline_steps.py \
   --documents data/samples/sample_notes.jsonl \
   --gold data/samples/gold.jsonl \
   --dictionary data/dictionaries/seed_concepts.jsonl \
-  --output-dir outputs/evaluation/sample
+  --run-root outputs/runs \
+  --output-dir evaluation/sample
+
+python scripts/build_phase1_submission.py \
+  --input-dir data/raw/input \
+  --run-root outputs/runs \
+  --output-dir phase1/output \
+  --zip phase1/output.zip \
+  --workers 4 \
+  --expected-count 100
 ```
 
 The profiler output is intended to be a cacheable experiment artifact. Use it to compare train/dev
@@ -63,6 +77,8 @@ risks before adding larger models.
 The stage-wise report writes:
 
 - `metrics.json` for the full machine-readable report.
+- `phase1` inside `metrics.json` for official Phase 1 schema validation, scored flat predictions,
+  and Phase 1-specific errors.
 - `stage_metrics.csv` for long-format metrics by pipeline stage.
 - `errors.csv` and `errors.jsonl` for structured error analysis.
 - `profile.json` and `profile.md` for the dataset profile.
@@ -93,6 +109,36 @@ python scripts/evaluate_pipeline_steps.py \
 Use `process` for CPU-bound batches and `thread` only for low-overhead smoke runs or future I/O-heavy
 stages. Output order remains the same as input document order, and workers never write JSONL
 directly.
+
+## Phase 1 Submission
+
+Phase 1 is an offline batch submission, not an API. The exported artifact is a ZIP whose root entry
+is `output/`, with one JSON file per input TXT file. Each JSON file is a flat list of entities with
+only these fields:
+
+- `text`
+- `type`
+- `assertions`
+- `candidates`
+- `position`
+
+Allowed Phase 1 types are `TRIỆU_CHỨNG`, `TÊN_XÉT_NGHIỆM`, `KẾT_QUẢ_XÉT_NGHIỆM`, `CHẨN_ĐOÁN`, and
+`THUỐC`. `position` uses raw-text `[start, end)` offsets, so `raw_text[start:end] == text` must hold.
+Only `TRIỆU_CHỨNG`, `CHẨN_ĐOÁN`, and `THUỐC` may emit assertions; lab-test names and lab-test
+results must emit `assertions: []`. Only `CHẨN_ĐOÁN` may emit ICD-10 candidates and only `THUỐC`
+may emit RxNorm candidates. Other types must emit `candidates: []`. Relations stay internal for
+Phase 1 unless the official schema changes.
+
+The checked-in Phase 1 input lives under `data/raw/input` and contains 100 unlabeled TXT files. Since
+there is no hidden gold locally, the pre-submit gate for that folder is validation-first: no schema
+issues, no offset mismatches, no invalid candidates, and a correct ZIP layout. `phase1_score` is
+available for labeled regression data and synthetic samples so the loop engine can still optimize the
+official 0.3/0.3/0.4 objective before submitting.
+
+Use `--run-root outputs/runs` for submission and experiment commands when you do not want to
+overwrite previous artifacts. The command creates a timestamped hash directory, writes
+`run_manifest.json`, and prints the concrete `output_dir` and `zip` paths for optional follow-up
+validation.
 
 ## Loop Engineering
 
@@ -154,7 +200,7 @@ variants isolate retrieval sources, candidate reranking, context reasoning, rela
 validation, and candidate depth.
 
 ```bash
-python scripts/run_ablation.py --config configs/ablations.yaml
+python scripts/run_ablation.py --config configs/ablations.yaml --run-root outputs/runs
 ```
 
 The command writes:
@@ -169,7 +215,8 @@ Interpretation loop:
 
 1. Check `validation_issues`; fix schema, offset, dictionary, or KG failures before comparing
    metrics.
-2. Compare `span_exact.f1`, linking recall/MRR, context metrics, and relation F1 across variants.
+2. For Phase 1, compare `phase1_score` first, then inspect span, linking, and context diagnostics;
+   relation F1 is internal-only unless the official schema adds relations.
 3. Inspect `bottleneck_stage` and `stage_timings.csv` before optimizing. Add Rust/C++ only after a
    stable Python bottleneck is measured and a Python fallback remains.
 4. When tuning parameters, add a new variant to `configs/ablations.yaml` instead of editing core
