@@ -25,3 +25,20 @@ def test_pipeline_smoke_source_backed_treatment_seed() -> None:
     assert by_text["Tăng huyết áp"].code == "I10"
     assert by_text["lisinopril"].code == "29046"
     assert any(relation.type == RelationType.TREATS for relation in prediction.relations)
+
+
+def test_pipeline_phase1_sections_drive_historical_context_and_skip_dose_result() -> None:
+    prediction = PipelineRunner().process_text(
+        "phase1-section-context",
+        "1. Tiền sử bệnh\n"
+        "Thuốc trước khi nhập viện\n"
+        "- metoprolol 25mg po bid\n"
+        "2. Bệnh sử hiện tại\n"
+        "Triệu chứng hiện tại\n"
+        "- đánh trống ngực\n",
+    )
+    by_text = {entity.text: entity for entity in prediction.entities}
+
+    assert by_text["metoprolol"].assertion == AssertionStatus.HISTORICAL
+    assert by_text["đánh trống ngực"].assertion == AssertionStatus.PRESENT
+    assert "25mg" not in by_text

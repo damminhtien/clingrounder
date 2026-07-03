@@ -135,6 +135,53 @@ def test_phase1_frequent_symptom_and_lab_terms_are_dictionary_constrained() -> N
     assert all(candidate.code_system == CodeSystem.LOCAL for candidate in wbc)
 
 
+def test_phase1_missed_terms_expand_ner_and_candidate_recall() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+
+    palpitations = generator.generate("đánh trống ngực", EntityType.SYMPTOM)
+    chest_tightness = generator.generate("thắt chặt ngực", EntityType.SYMPTOM)
+    syncope = generator.generate("ngất", EntityType.SYMPTOM)
+    dizziness = generator.generate("chóng mặt", EntityType.SYMPTOM)
+    chest_discomfort = generator.generate("khó chịu vùng ngực", EntityType.SYMPTOM)
+    diabetes = generator.generate("đái tháo đường", EntityType.DISEASE)
+    cancer = generator.generate("ung thư", EntityType.DISEASE)
+    cardiovascular = generator.generate("bệnh tim mạch", EntityType.DISEASE)
+    calculus = generator.generate("sỏi", EntityType.DISEASE)
+    atenolol = generator.generate("atenolol", EntityType.DRUG)
+
+    assert palpitations[0].code == "SYMPTOM_PALPITATIONS"
+    assert chest_tightness[0].code == "SYMPTOM_CHEST_TIGHTNESS"
+    assert syncope[0].code == "SYMPTOM_SYNCOPE"
+    assert dizziness[0].code == "SYMPTOM_DIZZINESS"
+    assert chest_discomfort[0].code == "SYMPTOM_CHEST_TIGHTNESS"
+    assert diabetes[0].code == "E11"
+    assert cancer[0].code == "C80.1"
+    assert cardiovascular[0].code == "I51.9"
+    assert calculus[0].code == "N20.9"
+    assert atenolol[0].code == "1202"
+
+
+def test_phase1_empty_file_terms_expand_recall() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+
+    assert generator.generate("hẹp động mạch cảnh", EntityType.DISEASE)[0].code == "I65.29"
+    assert generator.generate("tách thành động mạch chủ", EntityType.DISEASE)[0].code == "I71.00"
+    assert generator.generate("liệt hai chân", EntityType.DISEASE)[0].code == "G82.20"
+    assert generator.generate("béo phì", EntityType.DISEASE)[0].code == "E66.9"
+    assert generator.generate("tiểu tiện không tự chủ", EntityType.DISEASE)[0].code == "R32"
+    assert generator.generate("sa âm đạo", EntityType.DISEASE)[0].code == "N81.9"
+    assert generator.generate("bệnh rễ thần kinh", EntityType.DISEASE)[0].code == "M54.10"
+    assert generator.generate("loét ngón chân", EntityType.DISEASE)[0].code == "L97.509"
+    assert generator.generate("bàn chân vẹo bẩm sinh", EntityType.DISEASE)[0].code == "Q66.89"
+    assert generator.generate("gãy xương sườn trái", EntityType.DISEASE)[0].code == "S22.42"
+    assert generator.generate("vết thương thấu bụng", EntityType.DISEASE)[0].code == "S31.109"
+    assert generator.generate("giọng khàn", EntityType.SYMPTOM)[0].code == "SYMPTOM_HOARSENESS"
+    assert generator.generate("tổn thương dây thanh quản", EntityType.DISEASE)[0].code == "J38.3"
+    assert generator.generate("cơn co tử cung", EntityType.SYMPTOM)[0].code == "SYMPTOM_UTERINE_CONTRACTIONS"
+
+
 def test_blocked_alias_removes_false_positive_term() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
 
@@ -151,7 +198,7 @@ def test_build_dictionaries_validates_vietnamese_alias_table() -> None:
     )
     summary = json.loads(result.stdout)
 
-    assert summary["concepts"] >= 56
+    assert summary["concepts"] >= 80
     assert summary["assertion_cues"] >= 70
     assert summary["source_registry_entries"] >= 13
-    assert summary["vietnamese_aliases"] >= 36
+    assert summary["vietnamese_aliases"] >= 68

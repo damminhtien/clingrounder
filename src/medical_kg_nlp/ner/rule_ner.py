@@ -7,8 +7,8 @@ from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
 from medical_kg_nlp.utils.text import normalize_for_match
 
 
-_LAB_OR_DOSE_RE = re.compile(
-    r"(?<!\w)\d+(?:\.\d+)?\s?(?:mg|g|mcg|ml|mmol/L|mg/dL|%)(?!\w)",
+_LAB_VALUE_RE = re.compile(
+    r"(?<!\w)\d+(?:[\.,]\d+)?\s?(?:mmol/L|mg/dL|g/dL|ng/mL|mEq/L|IU/L|U/L|%)(?!\w)",
     flags=re.IGNORECASE,
 )
 _BP_RE = re.compile(r"(?<!\w)BP\s*\d{2,3}/\d{2,3}(?!\w)", flags=re.IGNORECASE)
@@ -44,7 +44,7 @@ class RuleBasedNER:
                         confidence=0.78,
                     )
                 )
-        for regex in (_HBA1C_RE, _BP_RE, _LAB_OR_DOSE_RE):
+        for regex in (_HBA1C_RE, _BP_RE, _LAB_VALUE_RE):
             for match in regex.finditer(text):
                 span = match.span()
                 if self._overlaps(span, occupied):
@@ -70,4 +70,3 @@ class RuleBasedNER:
     @staticmethod
     def _overlaps(span: tuple[int, int], occupied: list[tuple[int, int]]) -> bool:
         return any(span[0] < old_end and old_start < span[1] for old_start, old_end in occupied)
-

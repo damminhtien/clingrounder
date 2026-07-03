@@ -34,3 +34,35 @@
 {"alias":"inr","canonical":"international normalized ratio","target_concept_id":"LOCAL:TEST_INR","semantic_type":"LAB_TEST","notes":"Frequent Phase 1 lab-test abbreviation."}
 {"alias":"alt","canonical":"alanine aminotransferase","target_concept_id":"LOCAL:TEST_ALT","semantic_type":"LAB_TEST","notes":"Frequent Phase 1 lab-test abbreviation."}
 {"alias":"ast","canonical":"aspartate aminotransferase","target_concept_id":"LOCAL:TEST_AST","semantic_type":"LAB_TEST","notes":"Frequent Phase 1 lab-test abbreviation."}
+{"alias":"đánh trống ngực","canonical":"palpitations","target_concept_id":"LOCAL:SYMPTOM_PALPITATIONS","semantic_type":"SYMPTOM","notes":"High-miss Phase 1 symptom alias."}
+{"alias":"hồi hộp trống ngực","canonical":"palpitations","target_concept_id":"LOCAL:SYMPTOM_PALPITATIONS","semantic_type":"SYMPTOM","notes":"Vietnamese palpitations synonym."}
+{"alias":"thắt chặt ngực","canonical":"chest tightness","target_concept_id":"LOCAL:SYMPTOM_CHEST_TIGHTNESS","semantic_type":"SYMPTOM","notes":"High-miss Phase 1 symptom alias."}
+{"alias":"cảm giác thắt chặt ngực","canonical":"chest tightness","target_concept_id":"LOCAL:SYMPTOM_CHEST_TIGHTNESS","semantic_type":"SYMPTOM","notes":"Long-form chest tightness alias."}
+{"alias":"khó chịu vùng ngực","canonical":"chest discomfort","target_concept_id":"LOCAL:SYMPTOM_CHEST_TIGHTNESS","semantic_type":"SYMPTOM","notes":"High-miss Phase 1 symptom alias."}
+{"alias":"ngất","canonical":"syncope","target_concept_id":"LOCAL:SYMPTOM_SYNCOPE","semantic_type":"SYMPTOM","notes":"High-miss Phase 1 symptom alias."}
+{"alias":"ngất xỉu","canonical":"syncope","target_concept_id":"LOCAL:SYMPTOM_SYNCOPE","semantic_type":"SYMPTOM","notes":"Common Vietnamese syncope alias."}
+{"alias":"chóng mặt","canonical":"dizziness","target_concept_id":"LOCAL:SYMPTOM_DIZZINESS","semantic_type":"SYMPTOM","notes":"High-miss Phase 1 symptom alias."}
+{"alias":"choáng váng","canonical":"dizziness","target_concept_id":"LOCAL:SYMPTOM_DIZZINESS","semantic_type":"SYMPTOM","notes":"Common Vietnamese dizziness alias."}
+{"alias":"đái tháo đường","canonical":"type 2 diabetes mellitus","target_concept_id":"ICD10:E11","semantic_type":"DISEASE","notes":"Broad Phase 1 diabetes mention; seed maps to common type-2 code."}
+{"alias":"ung thư","canonical":"malignant neoplasm, unspecified","target_concept_id":"ICD10:C80.1","semantic_type":"DISEASE","notes":"Broad cancer mention, separated from lung-cancer specific concept."}
+{"alias":"bệnh tim mạch","canonical":"cardiovascular disease","target_concept_id":"ICD10:I51.9","semantic_type":"DISEASE","notes":"Broad cardiovascular disease alias."}
+{"alias":"sỏi","canonical":"urinary calculus, unspecified","target_concept_id":"ICD10:N20.9","semantic_type":"DISEASE","notes":"Broad stone mention, separated from kidney-stone specific concept."}
+{"alias":"hẹp động mạch cảnh","canonical":"carotid artery stenosis","target_concept_id":"ICD10:I65.29","semantic_type":"DISEASE","notes":"Empty-file recall alias from Phase 1 input."}
+{"alias":"nghẽn tắc và hẹp động mạch cảnh","canonical":"carotid artery occlusion and stenosis","target_concept_id":"ICD10:I65.29","semantic_type":"DISEASE","notes":"Empty-file recall alias from Phase 1 input."}
+{"alias":"tách thành động mạch chủ","canonical":"aortic dissection","target_concept_id":"ICD10:I71.00","semantic_type":"DISEASE","notes":"Empty-file recall alias from Phase 1 input."}
+{"alias":"liệt hai chân","canonical":"paraplegia","target_concept_id":"ICD10:G82.20","semantic_type":"DISEASE","notes":"Empty-file recall alias from Phase 1 input."}
+{"alias":"béo phì","canonical":"obesity","target_concept_id":"ICD10:E66.9","semantic_type":"DISEASE","notes":"Empty-file recall alias from Phase 1 input."}
+{"alias":"tiểu tiện không tự chủ","canonical":"urinary incontinence","target_concept_id":"ICD10:R32","semantic_type":"DISEASE","notes":"Empty-file recall alias from Phase 1 input."}
+{"alias":"sa âm đạo","canonical":"female genital prolapse","target_concept_id":"ICD10:N81.9","semantic_type":"DISEASE","notes":"Empty-file recall alias from Phase 1 input."}
+{"alias":"bệnh rễ thần kinh","canonical":"radiculopathy","target_concept_id":"ICD10:M54.10","semantic_type":"DISEASE","notes":"Empty-file recall alias from Phase 1 input."}
+{"alias":"hẹp ống sống","canonical":"spinal stenosis","target_concept_id":"ICD10:M48.00","semantic_type":"DISEASE","notes":"Empty-file recall alias from Phase 1 input."}
+{"alias":"loét ngón chân","canonical":"toe ulcer","target_concept_id":"ICD10:L97.509","semantic_type":"DISEASE","notes":"Empty-file recall alias from Phase 1 input."}
+{"alias":"bàn chân vẹo bẩm sinh","canonical":"congenital foot deformity","target_concept_id":"ICD10:Q66.89","semantic_type":"DISEASE","notes":"Empty-file recall alias from Phase 1 input."}
+{"alias":"gãy xương sườn trái","canonical":"left rib fracture","target_concept_id":"ICD10:S22.42","semantic_type":"DISEASE","notes":"Empty-file recall alias from Phase 1 input."}
+{"alias":"vết thương thấu bụng","canonical":"penetrating abdominal wound","target_concept_id":"ICD10:S31.109","semantic_type":"DISEASE","notes":"Empty-file recall alias from Phase 1 input."}
+{"alias":"giọng khàn","canonical":"hoarseness","target_concept_id":"LOCAL:SYMPTOM_HOARSENESS","semantic_type":"SYMPTOM","notes":"Empty-file recall alias from Phase 1 input."}
+{"alias":"tổn thương dây thanh quản","canonical":"vocal cord lesion","target_concept_id":"ICD10:J38.3","semantic_type":"DISEASE","notes":"Empty-file recall alias from Phase 1 input."}
+{"alias":"cơn co tử cung","canonical":"uterine contractions","target_concept_id":"LOCAL:SYMPTOM_UTERINE_CONTRACTIONS","semantic_type":"SYMPTOM","notes":"Empty-file recall alias from Phase 1 input."}
+{"alias":"chuyển dạ","canonical":"uterine contractions","target_concept_id":"LOCAL:SYMPTOM_UTERINE_CONTRACTIONS","semantic_type":"SYMPTOM","notes":"Empty-file recall alias from Phase 1 input."}
+{"alias":"giảm cân","canonical":"weight change","target_concept_id":"LOCAL:SYMPTOM_WEIGHT_CHANGE","semantic_type":"SYMPTOM","notes":"Empty-file recall alias from Phase 1 input."}
+{"alias":"tăng cân","canonical":"weight change","target_concept_id":"LOCAL:SYMPTOM_WEIGHT_CHANGE","semantic_type":"SYMPTOM","notes":"Empty-file recall alias from Phase 1 input."}

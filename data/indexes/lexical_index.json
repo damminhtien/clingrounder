@@ -5,6 +5,9 @@
   "abdominal pain": [
     "LOCAL:SYMPTOM_ABDOMINAL_PAIN"
   ],
+  "abdominal wound": [
+    "ICD10:S31.109"
+  ],
   "acetaminophen": [
     "RXNORM:161"
   ],
@@ -80,6 +83,9 @@
   "anemia unspecified": [
     "ICD10:D64.9"
   ],
+  "aortic dissection": [
+    "ICD10:I71.00"
+  ],
   "apap": [
     "RXNORM:161"
   ],
@@ -103,6 +109,9 @@
   ],
   "asthma": [
     "ICD10:J45"
+  ],
+  "atenolol": [
+    "RXNORM:1202"
   ],
   "atherosclerotic heart disease": [
     "ICD10:I25.10"
@@ -167,6 +176,12 @@
   "buồn nôn và nôn": [
     "LOCAL:SYMPTOM_NAUSEA_VOMITING"
   ],
+  "bàn chân vẹo bẩm sinh": [
+    "ICD10:Q66.89"
+  ],
+  "béo phì": [
+    "ICD10:E66.9"
+  ],
   "bạch cầu": [
     "LOCAL:TEST_WBC"
   ],
@@ -185,11 +200,26 @@
   "bệnh phổi tắc nghẽn mạn tính": [
     "ICD10:J44.9"
   ],
+  "bệnh rễ thần kinh": [
+    "ICD10:M54.10"
+  ],
+  "bệnh rễ thần kinh tuỷ sống": [
+    "ICD10:M54.10"
+  ],
   "bệnh thận mạn": [
     "ICD10:N18.9"
   ],
   "bệnh thận mạn tính": [
     "ICD10:N18.9"
+  ],
+  "bệnh tim": [
+    "ICD10:I51.9"
+  ],
+  "bệnh tim không đặc hiệu": [
+    "ICD10:I51.9"
+  ],
+  "bệnh tim mạch": [
+    "ICD10:I51.9"
   ],
   "bệnh trào ngược dạ dày thực quản": [
     "ICD10:K21.9"
@@ -203,14 +233,29 @@
   "calculus of kidney": [
     "ICD10:N20.0"
   ],
+  "cancer": [
+    "ICD10:C80.1"
+  ],
   "cao huyet ap": [
     "ICD10:I10"
   ],
   "cao huyết áp": [
     "ICD10:I10"
   ],
+  "cardiac disease": [
+    "ICD10:I51.9"
+  ],
   "cardiac failure": [
     "ICD10:I50.9"
+  ],
+  "cardiovascular disease": [
+    "ICD10:I51.9"
+  ],
+  "carotid artery occlusion": [
+    "ICD10:I65.29"
+  ],
+  "carotid artery stenosis": [
+    "ICD10:I65.29"
   ],
   "cephalalgia": [
     "LOCAL:SYMPTOM_HEADACHE"
@@ -218,14 +263,26 @@
   "chd": [
     "ICD10:I25.10"
   ],
+  "chest discomfort": [
+    "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
   "chest pain": [
     "LOCAL:SYMPTOM_CHEST_PAIN"
+  ],
+  "chest tightness": [
+    "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
+  "chest tightness or discomfort": [
+    "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
   ],
   "chest x-ray": [
     "LOCAL:TEST_XRAY"
   ],
   "chf": [
     "ICD10:I50.9"
+  ],
+  "choáng váng": [
+    "LOCAL:SYMPTOM_DIZZINESS"
   ],
   "chronic kidney disease": [
     "ICD10:N18.9"
@@ -245,8 +302,20 @@
   "chronic renal disease": [
     "ICD10:N18.9"
   ],
+  "chuyển dạ": [
+    "LOCAL:SYMPTOM_UTERINE_CONTRACTIONS"
+  ],
+  "chóng mặt": [
+    "LOCAL:SYMPTOM_DIZZINESS"
+  ],
   "ckd": [
     "ICD10:N18.9"
+  ],
+  "clubfoot": [
+    "ICD10:Q66.89"
+  ],
+  "congenital foot deformity": [
+    "ICD10:Q66.89"
   ],
   "congestive heart failure": [
     "ICD10:I50.9"
@@ -281,8 +350,20 @@
   "creatinine blood test": [
     "LOCAL:TEST_CREATININE"
   ],
+  "cvd": [
+    "ICD10:I51.9"
+  ],
   "cxr": [
     "LOCAL:TEST_XRAY"
+  ],
+  "cơn co tử cung": [
+    "LOCAL:SYMPTOM_UTERINE_CONTRACTIONS"
+  ],
+  "cảm giác thắt chặt ngực": [
+    "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
+  "dai thao duong": [
+    "ICD10:E11"
   ],
   "dai thao duong type 2": [
     "ICD10:E11"
@@ -298,6 +379,15 @@
   ],
   "dimethylbiguanide": [
     "RXNORM:6809"
+  ],
+  "dissection of aorta": [
+    "ICD10:I71.00"
+  ],
+  "dissection of unspecified site of aorta": [
+    "ICD10:I71.00"
+  ],
+  "dizziness": [
+    "LOCAL:SYMPTOM_DIZZINESS"
   ],
   "dm2": [
     "ICD10:E11"
@@ -329,14 +419,26 @@
   "essential hypertension": [
     "ICD10:I10"
   ],
+  "fainting": [
+    "LOCAL:SYMPTOM_SYNCOPE"
+  ],
   "fatigue": [
     "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
   ],
   "fatigue and weakness": [
     "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
   ],
+  "female genital prolapse": [
+    "ICD10:N81.9"
+  ],
+  "female genital prolapse unspecified": [
+    "ICD10:N81.9"
+  ],
   "fever": [
     "LOCAL:SYMPTOM_FEVER"
+  ],
+  "foot ulcer": [
+    "ICD10:L97.509"
   ],
   "frusemide": [
     "RXNORM:4603"
@@ -356,6 +458,12 @@
   "gerd": [
     "ICD10:K21.9"
   ],
+  "giảm cân": [
+    "LOCAL:SYMPTOM_WEIGHT_CHANGE"
+  ],
+  "giọng khàn": [
+    "LOCAL:SYMPTOM_HOARSENESS"
+  ],
   "glucophage": [
     "RXNORM:6809"
   ],
@@ -370,6 +478,12 @@
   ],
   "glyceryl trinitrate": [
     "RXNORM:4917"
+  ],
+  "gãy xương sườn": [
+    "ICD10:S22.42"
+  ],
+  "gãy xương sườn trái": [
+    "ICD10:S22.42"
   ],
   "ha": [
     "LOCAL:SYMPTOM_HEADACHE"
@@ -388,6 +502,12 @@
   ],
   "heart attack": [
     "ICD10:I21.9"
+  ],
+  "heart disease": [
+    "ICD10:I51.9"
+  ],
+  "heart disease unspecified": [
+    "ICD10:I51.9"
   ],
   "heart failure": [
     "ICD10:I50.9"
@@ -416,6 +536,12 @@
   "ho": [
     "LOCAL:SYMPTOM_COUGH"
   ],
+  "hoarse voice": [
+    "LOCAL:SYMPTOM_HOARSENESS"
+  ],
+  "hoarseness": [
+    "LOCAL:SYMPTOM_HOARSENESS"
+  ],
   "htn": [
     "ICD10:I10"
   ],
@@ -427,6 +553,18 @@
   ],
   "hypertension": [
     "ICD10:I10"
+  ],
+  "hẹp lỗ liên hợp": [
+    "ICD10:M48.00"
+  ],
+  "hẹp động mạch cảnh": [
+    "ICD10:I65.29"
+  ],
+  "hẹp ống sống": [
+    "ICD10:M48.00"
+  ],
+  "hồi hộp trống ngực": [
+    "LOCAL:SYMPTOM_PALPITATIONS"
   ],
   "infection": [
     "ICD10:B99.9"
@@ -449,6 +587,15 @@
   "kali": [
     "LOCAL:TEST_POTASSIUM"
   ],
+  "khàn tiếng": [
+    "LOCAL:SYMPTOM_HOARSENESS"
+  ],
+  "khó chịu ngực": [
+    "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
+  "khó chịu vùng ngực": [
+    "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
   "khó thở": [
     "LOCAL:SYMPTOM_DYSPNEA"
   ],
@@ -458,11 +605,17 @@
   "lasix": [
     "RXNORM:4603"
   ],
+  "left rib fracture": [
+    "ICD10:S22.42"
+  ],
   "leucocyte count": [
     "LOCAL:TEST_WBC"
   ],
   "leukocyte count": [
     "LOCAL:TEST_WBC"
+  ],
+  "lightheadedness": [
+    "LOCAL:SYMPTOM_DIZZINESS"
   ],
   "lipid disorder": [
     "ICD10:E78.5"
@@ -473,6 +626,9 @@
   "lisinopril": [
     "RXNORM:29046"
   ],
+  "liệt hai chân": [
+    "ICD10:G82.20"
+  ],
   "lopressor": [
     "RXNORM:6918"
   ],
@@ -482,17 +638,38 @@
   "losartan potassium": [
     "RXNORM:52175"
   ],
+  "loét bàn chân": [
+    "ICD10:L97.509"
+  ],
+  "loét bàn chân không đặc hiệu": [
+    "ICD10:L97.509"
+  ],
+  "loét mới ở ngón chân": [
+    "ICD10:L97.509"
+  ],
+  "loét ngón chân": [
+    "ICD10:L97.509"
+  ],
   "lung cancer": [
     "ICD10:C34"
   ],
   "lung infection": [
     "ICD10:J18.9"
   ],
+  "malignancy": [
+    "ICD10:C80.1"
+  ],
   "malignant lung neoplasm": [
     "ICD10:C34"
   ],
+  "malignant neoplasm": [
+    "ICD10:C80.1"
+  ],
   "malignant neoplasm of bronchus and lung": [
     "ICD10:C34"
+  ],
+  "malignant neoplasm unspecified": [
+    "ICD10:C80.1"
   ],
   "metformin": [
     "RXNORM:6809"
@@ -515,6 +692,9 @@
   "mi": [
     "ICD10:I21.9"
   ],
+  "multiple fractures of ribs left side": [
+    "ICD10:S22.42"
+  ],
   "myocardial infarction": [
     "ICD10:I21.9"
   ],
@@ -535,6 +715,18 @@
   ],
   "nephrolithiasis": [
     "ICD10:N20.0"
+  ],
+  "nerve root disorder": [
+    "ICD10:M54.10"
+  ],
+  "nghẽn tắc và hẹp động mạch cảnh": [
+    "ICD10:I65.29"
+  ],
+  "ngất": [
+    "LOCAL:SYMPTOM_SYNCOPE"
+  ],
+  "ngất xỉu": [
+    "LOCAL:SYMPTOM_SYNCOPE"
   ],
   "nhiễm khuẩn": [
     "ICD10:B99.9"
@@ -569,6 +761,9 @@
   "non-insulin-dependent diabetes mellitus": [
     "ICD10:E11"
   ],
+  "non-pressure chronic ulcer of other part of unspecified foot with unspecified severity": [
+    "ICD10:L97.509"
+  ],
   "ntg": [
     "RXNORM:4917"
   ],
@@ -578,14 +773,47 @@
   "nôn ói": [
     "LOCAL:SYMPTOM_NAUSEA_VOMITING"
   ],
+  "obesity": [
+    "ICD10:E66.9"
+  ],
+  "obesity unspecified": [
+    "ICD10:E66.9"
+  ],
+  "occlusion and stenosis of unspecified carotid artery": [
+    "ICD10:I65.29"
+  ],
   "oedema": [
     "LOCAL:SYMPTOM_EDEMA"
   ],
   "omeprazole": [
     "RXNORM:7646"
   ],
+  "open wound of abdomen": [
+    "ICD10:S31.109"
+  ],
+  "other congenital deformities of feet": [
+    "ICD10:Q66.89"
+  ],
+  "other diseases of vocal cords": [
+    "ICD10:J38.3"
+  ],
+  "palpitations": [
+    "LOCAL:SYMPTOM_PALPITATIONS"
+  ],
   "paracetamol": [
     "RXNORM:161"
+  ],
+  "paraplegia": [
+    "ICD10:G82.20"
+  ],
+  "paraplegia unspecified": [
+    "ICD10:G82.20"
+  ],
+  "passing out": [
+    "LOCAL:SYMPTOM_SYNCOPE"
+  ],
+  "penetrating abdominal wound": [
+    "ICD10:S31.109"
   ],
   "phù": [
     "LOCAL:SYMPTOM_EDEMA"
@@ -614,11 +842,20 @@
   "prinivil": [
     "RXNORM:29046"
   ],
+  "radiculopathy": [
+    "ICD10:M54.10"
+  ],
+  "radiculopathy site unspecified": [
+    "ICD10:M54.10"
+  ],
   "radiograph": [
     "LOCAL:TEST_XRAY"
   ],
   "renal calculus": [
     "ICD10:N20.0"
+  ],
+  "rib fracture": [
+    "ICD10:S22.42"
   ],
   "rung nhĩ": [
     "ICD10:I48.91"
@@ -628,6 +865,12 @@
   ],
   "rối loạn lipid máu": [
     "ICD10:E78.5"
+  ],
+  "sa tạng chậu": [
+    "ICD10:N81.9"
+  ],
+  "sa âm đạo": [
+    "ICD10:N81.9"
   ],
   "saba": [
     "RXNORM:435"
@@ -659,6 +902,12 @@
   "sob": [
     "LOCAL:SYMPTOM_DYSPNEA"
   ],
+  "spinal stenosis": [
+    "ICD10:M48.00"
+  ],
+  "spinal stenosis site unspecified": [
+    "ICD10:M48.00"
+  ],
   "stomach pain": [
     "LOCAL:SYMPTOM_ABDOMINAL_PAIN"
   ],
@@ -689,11 +938,26 @@
   "swelling": [
     "LOCAL:SYMPTOM_EDEMA"
   ],
+  "syncope": [
+    "LOCAL:SYMPTOM_SYNCOPE"
+  ],
   "sưng phù": [
     "LOCAL:SYMPTOM_EDEMA"
   ],
+  "sỏi": [
+    "ICD10:N20.9"
+  ],
   "sỏi thận": [
     "ICD10:N20.0"
+  ],
+  "sỏi tiết niệu": [
+    "ICD10:N20.9"
+  ],
+  "sỏi tiết niệu không đặc hiệu": [
+    "ICD10:N20.9"
+  ],
+  "sỏi đường tiết niệu": [
+    "ICD10:N20.9"
   ],
   "sốt": [
     "LOCAL:SYMPTOM_FEVER"
@@ -707,8 +971,14 @@
   "tbili": [
     "LOCAL:TEST_BILIRUBIN"
   ],
+  "tenormin": [
+    "RXNORM:1202"
+  ],
   "tha": [
     "ICD10:I10"
+  ],
+  "thay đổi cân nặng": [
+    "LOCAL:SYMPTOM_WEIGHT_CHANGE"
   ],
   "thiếu máu": [
     "ICD10:D64.9"
@@ -719,6 +989,12 @@
   "thoracic pain": [
     "LOCAL:SYMPTOM_CHEST_PAIN"
   ],
+  "thắt chặt hoặc khó chịu vùng ngực": [
+    "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
+  "thắt chặt ngực": [
+    "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
   "tieu duong type 2": [
     "ICD10:E11"
   ],
@@ -727,6 +1003,12 @@
   ],
   "tiêu chảy": [
     "LOCAL:SYMPTOM_DIARRHEA"
+  ],
+  "tiểu không tự chủ": [
+    "ICD10:R32"
+  ],
+  "tiểu tiện không tự chủ": [
+    "ICD10:R32"
   ],
   "tiểu đường type 2": [
     "ICD10:E11"
@@ -739,6 +1021,9 @@
   ],
   "tnt": [
     "LOCAL:TEST_TROPONIN"
+  ],
+  "toe ulcer": [
+    "ICD10:L97.509"
   ],
   "toprol xl": [
     "RXNORM:6918"
@@ -770,8 +1055,17 @@
   "type 2 diabetes mellitus": [
     "ICD10:E11"
   ],
+  "tách thành động mạch chủ": [
+    "ICD10:I71.00"
+  ],
+  "tách động mạch chủ": [
+    "ICD10:I71.00"
+  ],
   "tăng cholesterol máu": [
     "ICD10:E78.5"
+  ],
+  "tăng cân": [
+    "LOCAL:SYMPTOM_WEIGHT_CHANGE"
   ],
   "tăng ha": [
     "ICD10:I10"
@@ -782,6 +1076,12 @@
   "tăng lipid máu": [
     "ICD10:E78.5"
   ],
+  "tắc động mạch cảnh": [
+    "ICD10:I65.29"
+  ],
+  "tổn thương dây thanh quản": [
+    "ICD10:J38.3"
+  ],
   "tổn thương thận cấp": [
     "ICD10:N17.9"
   ],
@@ -790,6 +1090,15 @@
   ],
   "u ác phổi": [
     "ICD10:C34"
+  ],
+  "u ác tính": [
+    "ICD10:C80.1"
+  ],
+  "ung thư": [
+    "ICD10:C80.1"
+  ],
+  "ung thư không đặc hiệu": [
+    "ICD10:C80.1"
   ],
   "ung thư phế quản": [
     "ICD10:C34"
@@ -803,6 +1112,12 @@
   "unspecified infectious disease": [
     "ICD10:B99.9"
   ],
+  "unspecified open wound of abdominal wall": [
+    "ICD10:S31.109"
+  ],
+  "unspecified urinary incontinence": [
+    "ICD10:R32"
+  ],
   "ure": [
     "LOCAL:TEST_BUN"
   ],
@@ -811,6 +1126,27 @@
   ],
   "urea": [
     "LOCAL:TEST_BUN"
+  ],
+  "urinary calculus": [
+    "ICD10:N20.9"
+  ],
+  "urinary calculus unspecified": [
+    "ICD10:N20.9"
+  ],
+  "urinary incontinence": [
+    "ICD10:R32"
+  ],
+  "urinary stone": [
+    "ICD10:N20.9"
+  ],
+  "urolithiasis": [
+    "ICD10:N20.9"
+  ],
+  "uterine contractions": [
+    "LOCAL:SYMPTOM_UTERINE_CONTRACTIONS"
+  ],
+  "vaginal prolapse": [
+    "ICD10:N81.9"
   ],
   "vancocin": [
     "RXNORM:11124"
@@ -830,14 +1166,32 @@
   "viêm phổi cộng đồng": [
     "ICD10:J18.9"
   ],
+  "vocal cord disease": [
+    "ICD10:J38.3"
+  ],
+  "vocal cord lesion": [
+    "ICD10:J38.3"
+  ],
   "vomiting": [
     "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "vết thương thấu bụng": [
+    "ICD10:S31.109"
   ],
   "wbc": [
     "LOCAL:TEST_WBC"
   ],
   "weakness": [
     "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "weight change": [
+    "LOCAL:SYMPTOM_WEIGHT_CHANGE"
+  ],
+  "weight gain": [
+    "LOCAL:SYMPTOM_WEIGHT_CHANGE"
+  ],
+  "weight loss": [
+    "LOCAL:SYMPTOM_WEIGHT_CHANGE"
   ],
   "white blood cell count": [
     "LOCAL:TEST_WBC"
@@ -853,6 +1207,9 @@
   ],
   "x-ray": [
     "LOCAL:TEST_XRAY"
+  ],
+  "xỉu": [
+    "LOCAL:SYMPTOM_SYNCOPE"
   ],
   "yếu": [
     "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
@@ -875,7 +1232,13 @@
   "điện tâm đồ": [
     "LOCAL:TEST_ECG"
   ],
+  "đtđ": [
+    "ICD10:E11"
+  ],
   "đtđ type 2": [
+    "ICD10:E11"
+  ],
+  "đái tháo đường": [
     "ICD10:E11"
   ],
   "đái tháo đường không phụ thuộc insulin": [
@@ -886,6 +1249,9 @@
   ],
   "đái tháo đường týp ii": [
     "ICD10:E11"
+  ],
+  "đánh trống ngực": [
+    "LOCAL:SYMPTOM_PALPITATIONS"
   ],
   "đường huyết": [
     "LOCAL:TEST_GLUCOSE"

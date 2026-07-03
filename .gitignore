@@ -234,3 +234,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+.DS_Store
+data/.DS_Store
+# docs/source_of_truths/
+outputs/phase1/
+outputs/runs/

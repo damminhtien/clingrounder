@@ -320,6 +320,73 @@ def test_phase1_submission_cli_validates_zip(tmp_path: Path) -> None:
     )
 
 
+def test_phase1_pre_submit_gate_writes_analysis_and_loop_artifacts(tmp_path: Path) -> None:
+    input_dir = tmp_path / "input"
+    output_dir = tmp_path / "output"
+    gate_dir = tmp_path / "gate"
+    input_dir.mkdir()
+    text = "Bệnh nhân ho. Dùng metformin."
+    (input_dir / "1.txt").write_text(text, encoding="utf-8")
+    prediction = ClinicalPrediction.from_text(
+        "1",
+        text,
+        [
+            _entity("E1", text, "ho", EntityType.SYMPTOM),
+            _entity(
+                "E2",
+                text,
+                "metformin",
+                EntityType.DRUG,
+                code_system=CodeSystem.RXNORM,
+                code="6809",
+                candidates=[_candidate(CodeSystem.RXNORM, "6809")],
+            ),
+        ],
+        [],
+        "test",
+    )
+    write_phase1_output_dir([prediction], output_dir, max_candidates=3)
+    zip_path = tmp_path / "output.zip"
+    zip_phase1_output_dir(output_dir, zip_path)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/phase1_pre_submit_gate.py",
+            "--input-dir",
+            str(input_dir),
+            "--zip",
+            str(zip_path),
+            "--output-dir",
+            str(gate_dir),
+            "--journal-dir",
+            str(tmp_path / "journal"),
+            "--expected-count",
+            "1",
+            "--experiment-id",
+            "TEST_GATE",
+            "--score",
+            "14.5",
+            "--wer",
+            "81.0",
+            "--j-assertion",
+            "17.0",
+            "--j-candidates",
+            "9.0",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    summary = json.loads(result.stdout)
+
+    assert summary["valid"] is True
+    assert (gate_dir / "analysis.md").exists()
+    assert (gate_dir / "external_grader_report.json").exists()
+    assert (gate_dir / "loop_report.json").exists()
+    assert (tmp_path / "journal" / "experiment_notebook.md").exists()
+
+
 def _entity(
     entity_id: str,
     source_text: str,

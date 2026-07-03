@@ -83,6 +83,10 @@ _FALLBACK_SECTION_PRIORS = {
     "tiền sử gia đình": AssertionStatus.FAMILY,
     "past medical history": AssertionStatus.HISTORICAL,
     "tiền sử": AssertionStatus.HISTORICAL,
+    "tiền sử bệnh": AssertionStatus.HISTORICAL,
+    "tiền sử bệnh nội khoa": AssertionStatus.HISTORICAL,
+    "các bệnh lý mạn tính": AssertionStatus.HISTORICAL,
+    "thuốc trước khi nhập viện": AssertionStatus.HISTORICAL,
     "plan": AssertionStatus.PLANNED,
     "kế hoạch": AssertionStatus.PLANNED,
 }
