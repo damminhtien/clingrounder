@@ -101,3 +101,32 @@ Run the validation summary:
 ```bash
 python scripts/build_dictionaries.py --config configs/default.yaml
 ```
+
+## ICD-10 Source Import
+
+Use `scripts/import_icd10_dictionary.py` when you have local ICD source files and need to build a
+larger ICD-10 dictionary in the same `ConceptEntry` JSONL shape as `seed_concepts.jsonl`.
+
+Supported inputs:
+
+- WHO ICD-10 ClaML XML, or a ZIP containing ClaML XML.
+- CDC ICD-10-CM code-description TXT/CSV files, or a ZIP containing them.
+- CDC ICD-10-CM tabular XML, or a ZIP containing the tabular XML release.
+- Curated Vietnamese alias JSONL using either the existing `target_concept_id` alias-table shape or
+  rows with `code`, `official_name_vi`, and `aliases`.
+
+Example:
+
+```bash
+python scripts/import_icd10_dictionary.py \
+  --who-claml data/raw/icd/icd102019en.xml.zip \
+  --cdc-xml data/raw/icd/icd10cm-April-1-2026-XML.zip \
+  --vietnamese-aliases data/dictionaries/vietnamese_medical_alias.jsonl \
+  --output data/processed/icd10_concepts.jsonl \
+  --manifest data/processed/icd10_import_manifest.json
+```
+
+The importer is offline and deterministic. It does not download source files, and it does not make
+the runtime pipeline depend on WHO, CDC, or KCB availability. After review, selected rows can be
+merged into `seed_concepts.jsonl`, then validated with `scripts/build_dictionaries.py` and indexed
+with `scripts/build_indexes.py`.

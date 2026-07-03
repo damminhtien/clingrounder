@@ -12,14 +12,20 @@ resources:
     category: terminology
     access: open
     url: https://www.cdc.gov/nchs/icd/icd-10-cm/files.html
+    download_urls:
+      - https://ftp.cdc.gov/pub/Health_Statistics/NCHS/Publications/ICD10CM/2026-update/icd10cm-Code%20Descriptions-April-1-2026.zip
+      - https://ftp.cdc.gov/pub/Health_Statistics/NCHS/Publications/ICD10CM/2026-update/icd10cm-April-1-2026-XML.zip
     license: us_government_public_resource
-    use: icd10_code_descriptions
+    use: icd10_code_descriptions_and_tabular_xml
     notes: Official ICD-10-CM download page; use code descriptions and XML releases.
   - id: who_icd10_2019
-    name: WHO ICD-10 browser
+    name: WHO ICD-10 2019 ClaML and browser
     category: terminology
     access: open
-    url: https://icd.who.int/browse10
+    url: https://icdcdn.who.int/icd10/index.html
+    download_urls:
+      - https://icdcdn.who.int/icd10/claml/icd102019en.xml.zip
+      - https://icdcdn.who.int/icd10/meta/icd102019enMeta.zip
     license: who_terms_apply
     use: icd10_hierarchy_reference
     notes: Reference source for ICD hierarchy and stable disease grouping.
