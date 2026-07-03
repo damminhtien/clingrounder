@@ -29,6 +29,8 @@ class RuleBasedNER:
             pattern = re.compile(rf"(?<!\w){re.escape(alias)}(?!\w)", flags=re.IGNORECASE | re.UNICODE)
             for match in pattern.finditer(text):
                 span = match.span()
+                if self._blocked_contextual_alias(alias, text, span):
+                    continue
                 if self._overlaps(span, occupied):
                     continue
                 occupied.append(span)
@@ -70,3 +72,11 @@ class RuleBasedNER:
     @staticmethod
     def _overlaps(span: tuple[int, int], occupied: list[tuple[int, int]]) -> bool:
         return any(span[0] < old_end and old_start < span[1] for old_start, old_end in occupied)
+
+    @staticmethod
+    def _blocked_contextual_alias(alias: str, text: str, span: tuple[int, int]) -> bool:
+        if normalize_for_match(alias) != "yếu":
+            return False
+        left = text[max(0, span[0] - 8) : span[0]].lower()
+        right = text[span[1] : min(len(text), span[1] + 8)].lower()
+        return bool(re.search(r"chủ\s*$", left, flags=re.UNICODE) or re.match(r"\s*tố(?!\w)", right, flags=re.UNICODE))

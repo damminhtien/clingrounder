@@ -20,6 +20,11 @@ _NEGATION_FALSE_POSITIVE_PATTERNS = (
     re.compile(r"(?<!\w)không\s+đặc\s+hiệu(?!\w)", flags=re.IGNORECASE | re.UNICODE),
     re.compile(r"(?<!\w)không\s+loại\s+trừ(?!\w)", flags=re.IGNORECASE | re.UNICODE),
 )
+_NEGATION_COORDINATION_BOUNDARY_RE = re.compile(r"[\n.;!?]", flags=re.UNICODE)
+_NEGATION_COORDINATION_BREAK_RE = re.compile(
+    r"(?<!\w)(nhưng|tuy\s+nhiên|song|however|but|bệnh\s+nhân\s+có|bn\s+có|ghi\s+nhận\s+có|kèm\s+theo|có)(?!\w)",
+    flags=re.IGNORECASE | re.UNICODE,
+)
 _FAMILY_FALSE_POSITIVE_PATTERNS = (
     re.compile(r"(?<!\w)con\s+trai\s+phát\s+hiện\s+bệnh\s+nhân(?!\w)", flags=re.IGNORECASE | re.UNICODE),
     re.compile(r"(?<!\w)con\s+gái\s+phát\s+hiện\s+bệnh\s+nhân(?!\w)", flags=re.IGNORECASE | re.UNICODE),
@@ -63,6 +68,8 @@ class AssertionClassifier:
             return AssertionStatus.POSSIBLE
         if self._contains_negation(left_context):
             return AssertionStatus.NEGATED
+        if self._contains_coordinated_negation(sentence_text, max(entity_start, 0)):
+            return AssertionStatus.NEGATED
         if self._contains(left_context, HISTORICAL_CUES):
             return AssertionStatus.HISTORICAL
         if self._contains(left_context, PLANNED_CUES):
@@ -105,6 +112,34 @@ class AssertionClassifier:
     def _contains_negation(self, left_context: str) -> bool:
         blocked_spans = self._pattern_spans(left_context, _NEGATION_FALSE_POSITIVE_PATTERNS)
         return self._contains_outside_spans(left_context, NEGATION_CUES, blocked_spans)
+
+    def _contains_coordinated_negation(self, sentence_text: str, entity_start: int) -> bool:
+        segment_start = 0
+        for match in _NEGATION_COORDINATION_BOUNDARY_RE.finditer(sentence_text[:entity_start]):
+            segment_start = match.end()
+        segment = sentence_text[segment_start:entity_start]
+        blocked_spans = self._pattern_spans(segment, _NEGATION_FALSE_POSITIVE_PATTERNS)
+        best_match: re.Match[str] | None = None
+        for cue in NEGATION_CUES:
+            normalized_cue = cue.strip()
+            if not normalized_cue:
+                continue
+            pattern = rf"(?<!\w){re.escape(normalized_cue)}(?!\w)"
+            for match in re.finditer(pattern, segment, flags=re.IGNORECASE | re.UNICODE):
+                if self._is_inside_spans(match.span(), blocked_spans):
+                    continue
+                if (
+                    best_match is None
+                    or match.start() > best_match.start()
+                    or (match.start() == best_match.start() and match.end() > best_match.end())
+                ):
+                    best_match = match
+        if best_match is None:
+            return False
+        scope = segment[best_match.end() :]
+        if len(scope) > 120:
+            return False
+        return _NEGATION_COORDINATION_BREAK_RE.search(scope) is None
 
     def _contains_family(self, left_context: str, right_context: str) -> bool:
         blocked_spans = self._pattern_spans(left_context, _FAMILY_FALSE_POSITIVE_PATTERNS)

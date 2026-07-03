@@ -53,6 +53,12 @@
   "albuterol sulfate": [
     "RXNORM:435"
   ],
+  "alcoholic cirrhosis": [
+    "ICD10:K70.3"
+  ],
+  "alcoholic cirrhosis of liver": [
+    "ICD10:K70.3"
+  ],
   "alt": [
     "LOCAL:TEST_ALT"
   ],
@@ -82,6 +88,12 @@
   ],
   "anemia unspecified": [
     "ICD10:D64.9"
+  ],
+  "anxiety disorder": [
+    "ICD10:F41.9"
+  ],
+  "anxiety disorder unspecified": [
+    "ICD10:F41.9"
   ],
   "aortic dissection": [
     "ICD10:I71.00"
@@ -146,6 +158,15 @@
   "bilirubin": [
     "LOCAL:TEST_BILIRUBIN"
   ],
+  "bipolar affective disorder": [
+    "ICD10:F31.9"
+  ],
+  "bipolar affective disorder unspecified": [
+    "ICD10:F31.9"
+  ],
+  "bipolar disorder": [
+    "ICD10:F31.9"
+  ],
   "blood glucose": [
     "LOCAL:TEST_GLUCOSE"
   ],
@@ -170,6 +191,15 @@
   "bun": [
     "LOCAL:TEST_BUN"
   ],
+  "buprenorphine / naloxone": [
+    "RXNORM:352364"
+  ],
+  "buprenorphine naloxone": [
+    "RXNORM:352364"
+  ],
+  "buprenorphine/naloxone": [
+    "RXNORM:352364"
+  ],
   "buồn nôn": [
     "LOCAL:SYMPTOM_NAUSEA_VOMITING"
   ],
@@ -193,6 +223,9 @@
   ],
   "bệnh nhiễm trùng không đặc hiệu": [
     "ICD10:B99.9"
+  ],
+  "bệnh não gan": [
+    "ICD10:K76.82"
   ],
   "bệnh phổi tắc nghẽn mạn": [
     "ICD10:J44.9"
@@ -257,6 +290,9 @@
   "carotid artery stenosis": [
     "ICD10:I65.29"
   ],
+  "catapres": [
+    "RXNORM:2599"
+  ],
   "cephalalgia": [
     "LOCAL:SYMPTOM_HEADACHE"
   ],
@@ -310,6 +346,9 @@
   ],
   "ckd": [
     "ICD10:N18.9"
+  ],
+  "clonidine": [
+    "RXNORM:2599"
   ],
   "clubfoot": [
     "ICD10:Q66.89"
@@ -370,6 +409,9 @@
   ],
   "deltasone": [
     "RXNORM:8640"
+  ],
+  "delusional disorder": [
+    "ICD10:F22"
   ],
   "diarrhea": [
     "LOCAL:SYMPTOM_DIARRHEA"
@@ -524,6 +566,9 @@
   "hen phế quản": [
     "ICD10:J45"
   ],
+  "hepatic encephalopathy": [
+    "ICD10:K76.82"
+  ],
   "hf": [
     "ICD10:I50.9"
   ],
@@ -536,11 +581,17 @@
   "ho": [
     "LOCAL:SYMPTOM_COUGH"
   ],
+  "hoang tưởng": [
+    "ICD10:F22"
+  ],
   "hoarse voice": [
     "LOCAL:SYMPTOM_HOARSENESS"
   ],
   "hoarseness": [
     "LOCAL:SYMPTOM_HOARSENESS"
+  ],
+  "hoảng sợ": [
+    "ICD10:F41.0"
   ],
   "htn": [
     "ICD10:I10"
@@ -565,6 +616,9 @@
   ],
   "hồi hộp trống ngực": [
     "LOCAL:SYMPTOM_PALPITATIONS"
+  ],
+  "hội chứng não gan": [
+    "ICD10:K76.82"
   ],
   "infection": [
     "ICD10:B99.9"
@@ -599,6 +653,15 @@
   "khó thở": [
     "LOCAL:SYMPTOM_DYSPNEA"
   ],
+  "khó thở khi gắng sức": [
+    "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "khó thở khi nằm": [
+    "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "khó thở về đêm": [
+    "LOCAL:SYMPTOM_DYSPNEA"
+  ],
   "kidney stone": [
     "ICD10:N20.0"
   ],
@@ -628,6 +691,9 @@
   ],
   "liệt hai chân": [
     "ICD10:G82.20"
+  ],
+  "lo âu": [
+    "ICD10:F41.9"
   ],
   "lopressor": [
     "RXNORM:6918"
@@ -691,6 +757,9 @@
   ],
   "mi": [
     "ICD10:I21.9"
+  ],
+  "mood disorder": [
+    "ICD10:F39"
   ],
   "multiple fractures of ribs left side": [
     "ICD10:S22.42"
@@ -764,8 +833,17 @@
   "non-pressure chronic ulcer of other part of unspecified foot with unspecified severity": [
     "ICD10:L97.509"
   ],
+  "nontraumatic intracranial hemorrhage": [
+    "ICD10:I62.9"
+  ],
+  "nontraumatic intracranial hemorrhage unspecified": [
+    "ICD10:I62.9"
+  ],
   "ntg": [
     "RXNORM:4917"
+  ],
+  "não gan": [
+    "ICD10:K76.82"
   ],
   "nôn": [
     "LOCAL:SYMPTOM_NAUSEA_VOMITING"
@@ -800,6 +878,9 @@
   "palpitations": [
     "LOCAL:SYMPTOM_PALPITATIONS"
   ],
+  "panic disorder": [
+    "ICD10:F41.0"
+  ],
   "paracetamol": [
     "RXNORM:161"
   ],
@@ -815,7 +896,13 @@
   "penetrating abdominal wound": [
     "ICD10:S31.109"
   ],
+  "persistent delusional disorders": [
+    "ICD10:F22"
+  ],
   "phù": [
+    "LOCAL:SYMPTOM_EDEMA"
+  ],
+  "phù mắt cá chân": [
     "LOCAL:SYMPTOM_EDEMA"
   ],
   "phổi tắc nghẽn mạn tính": [
@@ -863,8 +950,23 @@
   "rung nhĩ không đặc hiệu": [
     "ICD10:I48.91"
   ],
+  "rối loạn cảm xúc": [
+    "ICD10:F39"
+  ],
+  "rối loạn hoang tưởng": [
+    "ICD10:F22"
+  ],
+  "rối loạn hoảng sợ": [
+    "ICD10:F41.0"
+  ],
   "rối loạn lipid máu": [
     "ICD10:E78.5"
+  ],
+  "rối loạn lo âu": [
+    "ICD10:F41.9"
+  ],
+  "rối loạn lưỡng cực": [
+    "ICD10:F31.9"
   ],
   "sa tạng chậu": [
     "ICD10:N81.9"
@@ -910,6 +1012,15 @@
   ],
   "stomach pain": [
     "LOCAL:SYMPTOM_ABDOMINAL_PAIN"
+  ],
+  "suboxone": [
+    "RXNORM:352364"
+  ],
+  "suicidal ideation": [
+    "ICD10:R45.851"
+  ],
+  "suicidal ideations": [
+    "ICD10:R45.851"
   ],
   "suy nhược": [
     "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
@@ -1112,6 +1223,9 @@
   "unspecified infectious disease": [
     "ICD10:B99.9"
   ],
+  "unspecified mood disorder": [
+    "ICD10:F39"
+  ],
   "unspecified open wound of abdominal wall": [
     "ICD10:S31.109"
   ],
@@ -1208,10 +1322,46 @@
   "x-ray": [
     "LOCAL:TEST_XRAY"
   ],
+  "xuất huyết nội sọ": [
+    "ICD10:I62.9"
+  ],
+  "xuất huyết nội sọ không do chấn thương": [
+    "ICD10:I62.9"
+  ],
+  "xuất huyết nội sọ không do chấn thương không đặc hiệu": [
+    "ICD10:I62.9"
+  ],
+  "xơ gan do rượu": [
+    "ICD10:K70.3"
+  ],
+  "xơ gan rượu": [
+    "ICD10:K70.3"
+  ],
   "xỉu": [
     "LOCAL:SYMPTOM_SYNCOPE"
   ],
   "yếu": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "yếu chân phải": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "yếu cơ": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "yếu nửa người": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "yếu nửa người bên phải": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "yếu nửa người trái": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "yếu sức": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "yếu sức chân phải": [
     "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
   ],
   "zestril": [
@@ -1219,6 +1369,12 @@
   ],
   "ói": [
     "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "ý nghĩ tự tử": [
+    "ICD10:R45.851"
+  ],
+  "ý định tự tử": [
+    "ICD10:R45.851"
   ],
   "đau bụng": [
     "LOCAL:SYMPTOM_ABDOMINAL_PAIN"

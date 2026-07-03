@@ -42,3 +42,20 @@ def test_pipeline_phase1_sections_drive_historical_context_and_skip_dose_result(
     assert by_text["metoprolol"].assertion == AssertionStatus.HISTORICAL
     assert by_text["đánh trống ngực"].assertion == AssertionStatus.PRESENT
     assert "25mg" not in by_text
+
+
+def test_pipeline_phase1_preadmission_status_section_is_historical() -> None:
+    prediction = PipelineRunner().process_text(
+        "phase1-preadmission-status",
+        "1. Tiền sử bệnh hiện tại\n"
+        "Tình trạng ngay trước khi nhập viện: Tiếp tục cảm thấy đánh trống ngực.\n"
+        "2. Đánh giá tại bệnh viện\n"
+        "Không ghi nhận đau ngực, khó thở, buồn nôn hoặc chóng mặt.\n",
+    )
+    by_text = {entity.text: entity for entity in prediction.entities}
+
+    assert by_text["đánh trống ngực"].assertion == AssertionStatus.HISTORICAL
+    assert by_text["đau ngực"].assertion == AssertionStatus.NEGATED
+    assert by_text["khó thở"].assertion == AssertionStatus.NEGATED
+    assert by_text["buồn nôn"].assertion == AssertionStatus.NEGATED
+    assert by_text["chóng mặt"].assertion == AssertionStatus.NEGATED

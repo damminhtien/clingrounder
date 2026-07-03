@@ -182,11 +182,30 @@ def test_phase1_empty_file_terms_expand_recall() -> None:
     assert generator.generate("cơn co tử cung", EntityType.SYMPTOM)[0].code == "SYMPTOM_UTERINE_CONTRACTIONS"
 
 
+def test_phase1_new_empty_file_terms_expand_recall() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+
+    assert generator.generate("xơ gan do rượu", EntityType.DISEASE)[0].code == "K70.3"
+    assert generator.generate("hội chứng não gan", EntityType.DISEASE)[0].code == "K76.82"
+    assert generator.generate("xuất huyết nội sọ không do chấn thương", EntityType.DISEASE)[0].code == "I62.9"
+    assert generator.generate("rối loạn lưỡng cực", EntityType.DISEASE)[0].code == "F31.9"
+    assert generator.generate("rối loạn lo âu", EntityType.DISEASE)[0].code == "F41.9"
+    assert generator.generate("rối loạn cảm xúc", EntityType.DISEASE)[0].code == "F39"
+    assert generator.generate("ý định tự tử", EntityType.DISEASE)[0].code == "R45.851"
+    assert generator.generate("hoảng sợ", EntityType.DISEASE)[0].code == "F41.0"
+    assert generator.generate("hoang tưởng", EntityType.DISEASE)[0].code == "F22"
+    assert generator.generate("clonidine", EntityType.DRUG)[0].code == "2599"
+    assert generator.generate("suboxone", EntityType.DRUG)[0].code == "352364"
+
+
 def test_blocked_alias_removes_false_positive_term() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
 
     assert store.exact_lookup("hen") == []
     assert store.exact_lookup("hen phế quản")[0].code == "J45"
+    assert store.exact_lookup("yếu")[0].code == "SYMPTOM_FATIGUE_WEAKNESS"
+    assert store.exact_lookup("mệt mỏi")[0].code == "SYMPTOM_FATIGUE_WEAKNESS"
 
 
 def test_build_dictionaries_validates_vietnamese_alias_table() -> None:

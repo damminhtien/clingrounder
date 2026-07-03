@@ -87,6 +87,8 @@ _FALLBACK_SECTION_PRIORS = {
     "tiền sử bệnh nội khoa": AssertionStatus.HISTORICAL,
     "các bệnh lý mạn tính": AssertionStatus.HISTORICAL,
     "thuốc trước khi nhập viện": AssertionStatus.HISTORICAL,
+    "các sự kiện trước khi nhập viện": AssertionStatus.HISTORICAL,
+    "tình trạng ngay trước khi nhập viện": AssertionStatus.HISTORICAL,
     "plan": AssertionStatus.PLANNED,
     "kế hoạch": AssertionStatus.PLANNED,
 }

@@ -17,6 +17,7 @@ _HEADING_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("Tiền sử bệnh", ("tiền sử bệnh",)),
     ("Triệu chứng hiện tại", ("các triệu chứng hiện tại", "triệu chứng hiện tại", "triệu chứng khi đến")),
     ("Các sự kiện trước khi nhập viện", ("các sự kiện trước khi nhập viện", "diễn biến trước khi nhập viện")),
+    ("Tình trạng ngay trước khi nhập viện", ("tình trạng ngay trước khi nhập viện",)),
     ("Đặc điểm triệu chứng", ("đặc điểm triệu chứng khi khám tại khoa cấp cứu", "đặc điểm triệu chứng")),
     ("Đánh giá tại bệnh viện", ("đánh giá tại bệnh viện",)),
     ("Kết quả khám lâm sàng", ("kết quả khám lâm sàng",)),

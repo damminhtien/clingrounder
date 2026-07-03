@@ -37,3 +37,20 @@ def test_split_sections_recognizes_inline_subheading_content() -> None:
     assert sections[0].title == "Thuốc trước khi nhập viện"
     assert sections[0].text.startswith("aspirin 325mg")
     assert sections[1].title == "Bệnh sử hiện tại"
+
+
+def test_split_sections_recognizes_preadmission_status_heading() -> None:
+    text = (
+        "1. Tiền sử bệnh hiện tại\n"
+        "Tình trạng ngay trước khi nhập viện: Tiếp tục cảm thấy đánh trống ngực.\n"
+        "2. Đánh giá tại bệnh viện\n"
+        "Không ghi nhận đau ngực.\n"
+    )
+
+    sections = split_sections(text)
+    titles = [section.title for section in sections]
+
+    assert "Tình trạng ngay trước khi nhập viện" in titles
+    status_section = next(section for section in sections if section.title == "Tình trạng ngay trước khi nhập viện")
+    assert status_section.text.startswith("Tiếp tục cảm thấy đánh trống ngực")
+    assert text[status_section.span[0] : status_section.span[1]] == status_section.text

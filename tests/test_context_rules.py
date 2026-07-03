@@ -100,6 +100,26 @@ def test_negation_clause_does_not_leak_to_present_condition() -> None:
     assert classifier.classify(present, sentence) == AssertionStatus.PRESENT
 
 
+def test_negation_scope_covers_same_sentence_vietnamese_symptom_list() -> None:
+    text = "Bệnh nhân không choáng váng, chóng mặt, buồn nôn, đánh trống ngực, hoặc đau ngực."
+    sentence = Sentence(span=(0, len(text)), text=text)
+    classifier = AssertionClassifier()
+
+    for mention in ("choáng váng", "chóng mặt", "buồn nôn", "đánh trống ngực", "đau ngực"):
+        entity = _entity_in_sentence(text, mention)
+        entity.type = EntityType.SYMPTOM
+        assert classifier.classify(entity, sentence) == AssertionStatus.NEGATED
+
+
+def test_negation_coordination_stops_at_present_patient_clause() -> None:
+    text = "Không ghi nhận viêm phổi, bệnh nhân có đái tháo đường type 2."
+    sentence = Sentence(span=(0, len(text)), text=text)
+    classifier = AssertionClassifier()
+
+    present = _entity_in_sentence(text, "đái tháo đường type 2")
+    assert classifier.classify(present, sentence) == AssertionStatus.PRESENT
+
+
 def test_possible_clause_does_not_leak_to_confirmed_condition() -> None:
     text = "Nghi viêm phổi, đái tháo đường type 2 đang điều trị metformin."
     sentence = Sentence(span=(0, len(text)), text=text)
