@@ -14,6 +14,7 @@ import pytest
         "medical_kg_nlp.kg.validator",
         "medical_kg_nlp.kg.constraints",
         "medical_kg_nlp.schema.validator",
+        "medical_kg_nlp.ontology.phase1",
         "medical_kg_nlp.evaluation.phase1",
         "medical_kg_nlp.evaluation",
     ],

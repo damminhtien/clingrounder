@@ -69,3 +69,15 @@ def test_rule_ner_blocks_cancer_inside_cea_lab_name_but_keeps_real_cancer_mentio
     cancer_spans = [entity.span for entity in entities if entity.text.lower() == "ung thư" and entity.type == EntityType.DISEASE]
 
     assert cancer_spans == [(50, 57)]
+
+
+def test_rule_ner_blocks_spouse_azithromycin_but_keeps_patient_use() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    text = (
+        "Vợ có các triệu chứng tương tự, được chẩn đoán là giãn phế quản, "
+        "phản ứng tốt với azithromycin. Bệnh nhân được kê azithromycin."
+    )
+    entities = RuleBasedNER(store).extract(text)
+    drug_texts = [entity.text for entity in entities if entity.type == EntityType.DRUG]
+
+    assert drug_texts == ["azithromycin"]

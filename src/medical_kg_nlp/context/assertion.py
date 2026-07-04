@@ -16,13 +16,23 @@ from medical_kg_nlp.schema.types import AssertionStatus, EntityType
 
 
 _CLAUSE_BOUNDARY_RE = re.compile(r"[\n.;:!?]|,\s+")
+_SCOPE_RESET_RE = re.compile(
+    r"(?<!\w)(?:"
+    r"chuyển\s+sang\s+(?:sử\s+dụng|điều\s+trị\s+bằng)"
+    r"|bắt\s+đầu\s+dùng"
+    r"|được\s+kê"
+    r"|được\s+chỉ\s+định"
+    r")(?!\w)",
+    flags=re.IGNORECASE | re.UNICODE,
+)
 _NEGATION_FALSE_POSITIVE_PATTERNS = (
     re.compile(r"(?<!\w)không\s+đặc\s+hiệu(?!\w)", flags=re.IGNORECASE | re.UNICODE),
     re.compile(r"(?<!\w)không\s+loại\s+trừ(?!\w)", flags=re.IGNORECASE | re.UNICODE),
 )
 _NEGATION_COORDINATION_BOUNDARY_RE = re.compile(r"[\n.;!?]", flags=re.UNICODE)
 _NEGATION_COORDINATION_BREAK_RE = re.compile(
-    r"(?<!\w)(nhưng|tuy\s+nhiên|song|however|but|bệnh\s+nhân\s+có|bn\s+có|ghi\s+nhận\s+có|kèm\s+theo|có)(?!\w)",
+    r"(?<!\w)(nhưng|tuy\s+nhiên|song|however|but|bệnh\s+nhân\s+có|bn\s+có|ghi\s+nhận\s+có|kèm\s+theo|có"
+    r"|chuyển\s+sang\s+(?:sử\s+dụng|điều\s+trị\s+bằng)|bắt\s+đầu\s+dùng|được\s+kê|được\s+chỉ\s+định)(?!\w)",
     flags=re.IGNORECASE | re.UNICODE,
 )
 _FAMILY_FALSE_POSITIVE_PATTERNS = (
@@ -93,7 +103,11 @@ class AssertionClassifier:
         last_boundary_end = 0
         for match in _CLAUSE_BOUNDARY_RE.finditer(left_context):
             last_boundary_end = match.end()
-        return left_context[last_boundary_end:]
+        scoped_context = left_context[last_boundary_end:]
+        last_reset_end = 0
+        for match in _SCOPE_RESET_RE.finditer(scoped_context):
+            last_reset_end = match.end()
+        return scoped_context[last_reset_end:]
 
     @staticmethod
     def _local_right_context(text: str, entity_end: int) -> str:

@@ -130,6 +130,20 @@ def test_negation_coordination_stops_at_present_patient_clause() -> None:
     assert classifier.classify(present, sentence) == AssertionStatus.PRESENT
 
 
+def test_negation_from_intolerance_does_not_leak_to_switched_medication() -> None:
+    text = "Bệnh nhân không dung nạp amoxicillin do tiêu chảy nên được chuyển sang sử dụng azithromycin."
+    sentence = Sentence(span=(0, len(text)), text=text)
+    classifier = AssertionClassifier()
+
+    stopped = _entity_in_sentence(text, "amoxicillin")
+    stopped.type = EntityType.DRUG
+    switched = _entity_in_sentence(text, "azithromycin")
+    switched.type = EntityType.DRUG
+
+    assert classifier.classify(stopped, sentence) == AssertionStatus.NEGATED
+    assert classifier.classify(switched, sentence) == AssertionStatus.PRESENT
+
+
 def test_possible_clause_does_not_leak_to_confirmed_condition() -> None:
     text = "Nghi viêm phổi, đái tháo đường type 2 đang điều trị metformin."
     sentence = Sentence(span=(0, len(text)), text=text)

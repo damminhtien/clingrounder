@@ -13,23 +13,21 @@ from medical_kg_nlp.ontology.phase1_assertions import (
     Phase1AssertionOverlay,
     load_phase1_assertion_overlays,
 )
+from medical_kg_nlp.ontology.phase1 import (
+    PHASE1_ALLOWED_ASSERTIONS,
+    PHASE1_ALLOWED_TYPES,
+    PHASE1_ASSERTABLE_TYPES,
+    PHASE1_CODABLE_TYPES,
+    PHASE1_REQUIRED_KEYS,
+    PHASE1_TYPE_BY_ENTITY_TYPE,
+    expected_code_system,
+)
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.output import ClinicalPrediction
-from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
+from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem
 
 
-PHASE1_TYPE_BY_ENTITY_TYPE: dict[EntityType, str] = {
-    EntityType.SYMPTOM: "TRIỆU_CHỨNG",
-    EntityType.LAB_TEST: "TÊN_XÉT_NGHIỆM",
-    EntityType.LAB_RESULT: "KẾT_QUẢ_XÉT_NGHIỆM",
-    EntityType.DISEASE: "CHẨN_ĐOÁN",
-    EntityType.DRUG: "THUỐC",
-}
-PHASE1_CODABLE_TYPES = {"CHẨN_ĐOÁN", "THUỐC"}
-PHASE1_ASSERTABLE_TYPES = {"TRIỆU_CHỨNG", "CHẨN_ĐOÁN", "THUỐC"}
-PHASE1_ALLOWED_TYPES = set(PHASE1_TYPE_BY_ENTITY_TYPE.values())
-PHASE1_ALLOWED_ASSERTIONS = ("isNegated", "isFamily", "isHistorical")
 _PHASE1_ASSERTION_BY_STATUS = {
     AssertionStatus.NEGATED: "isNegated",
     AssertionStatus.FAMILY: "isFamily",
@@ -483,7 +481,7 @@ def _validate_phase1_item(
     allowed_rxnorm: set[str],
 ) -> list[Phase1ValidationIssue]:
     issues: list[Phase1ValidationIssue] = []
-    required = {"text", "type", "assertions", "candidates", "position"}
+    required = set(PHASE1_REQUIRED_KEYS)
     extra = sorted(set(item) - required)
     missing = sorted(required - set(item))
     for key in missing:
@@ -683,11 +681,7 @@ def _phase1_candidates(entity: EntityAnnotation, phase1_type: str, *, max_candid
 
 
 def _expected_code_system(phase1_type: str) -> CodeSystem | None:
-    if phase1_type == "CHẨN_ĐOÁN":
-        return CodeSystem.ICD10
-    if phase1_type == "THUỐC":
-        return CodeSystem.RXNORM
-    return None
+    return expected_code_system(phase1_type)
 
 
 def _allowed_codes(dictionary: DictionaryStore | None) -> tuple[set[str], set[str]]:

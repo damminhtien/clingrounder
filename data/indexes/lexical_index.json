@@ -11,6 +11,15 @@
   "acetaminophen": [
     "RXNORM:161"
   ],
+  "acetaminophen / hydrocodone": [
+    "RXNORM:214182"
+  ],
+  "acetaminophen hydrocodone": [
+    "RXNORM:214182"
+  ],
+  "acetaminophen/hydrocodone": [
+    "RXNORM:214182"
+  ],
   "acetylcysteine": [
     "RXNORM:197"
   ],
@@ -38,6 +47,9 @@
   "acute renal failure": [
     "ICD10:N17.9"
   ],
+  "advil": [
+    "RXNORM:5640"
+  ],
   "af": [
     "ICD10:I48.91"
   ],
@@ -53,8 +65,23 @@
   "albuterol": [
     "RXNORM:435"
   ],
+  "albuterol / ipratropium": [
+    "RXNORM:214199"
+  ],
+  "albuterol ipratropium": [
+    "RXNORM:214199"
+  ],
   "albuterol sulfate": [
     "RXNORM:435"
+  ],
+  "albuterol và ipratropium": [
+    "RXNORM:214199"
+  ],
+  "albuterol/ipratropium": [
+    "RXNORM:214199"
+  ],
+  "albuterolipratropium": [
+    "RXNORM:214199"
   ],
   "alcoholic cirrhosis": [
     "ICD10:K70.3"
@@ -119,6 +146,9 @@
   "apap": [
     "RXNORM:161"
   ],
+  "apixaban": [
+    "RXNORM:1364430"
+  ],
   "arf": [
     "ICD10:N17.9"
   ],
@@ -158,8 +188,17 @@
   "atrial fibrillation": [
     "ICD10:I48.91"
   ],
+  "atrovent": [
+    "RXNORM:7213"
+  ],
   "augmentin": [
     "RXNORM:151392"
+  ],
+  "azathioprine": [
+    "RXNORM:1256"
+  ],
+  "azithromycin": [
+    "RXNORM:18631"
   ],
   "bactrim": [
     "RXNORM:10831"
@@ -178,6 +217,12 @@
   ],
   "bg": [
     "LOCAL:TEST_GLUCOSE"
+  ],
+  "bicarb": [
+    "RXNORM:36676"
+  ],
+  "bicarbonate": [
+    "RXNORM:36676"
   ],
   "bile duct calculus": [
     "ICD10:K80.50"
@@ -217,6 +262,12 @@
   ],
   "btm": [
     "ICD10:N18.9"
+  ],
+  "bumetanide": [
+    "RXNORM:1808"
+  ],
+  "bumex": [
+    "RXNORM:1808"
   ],
   "bun": [
     "LOCAL:TEST_BUN"
@@ -320,6 +371,9 @@
   "cardiovascular disease": [
     "ICD10:I51.9"
   ],
+  "cardizem": [
+    "RXNORM:3443"
+  ],
   "carotid artery occlusion": [
     "ICD10:I65.29"
   ],
@@ -332,11 +386,26 @@
   "catapres": [
     "RXNORM:2599"
   ],
+  "cefepim": [
+    "RXNORM:20481"
+  ],
+  "cefepime": [
+    "RXNORM:20481"
+  ],
+  "ceftazidime": [
+    "RXNORM:2191"
+  ],
+  "ceftriaxone": [
+    "RXNORM:2193"
+  ],
   "cellcept": [
     "RXNORM:68149"
   ],
   "cephalalgia": [
     "LOCAL:SYMPTOM_HEADACHE"
+  ],
+  "cephalexin": [
+    "RXNORM:2231"
   ],
   "chd": [
     "ICD10:I25.10"
@@ -401,6 +470,9 @@
   "ckd": [
     "ICD10:N18.9"
   ],
+  "clonazepam": [
+    "RXNORM:2598"
+  ],
   "clonidine": [
     "RXNORM:2599"
   ],
@@ -412,6 +484,12 @@
   ],
   "colace": [
     "RXNORM:82003"
+  ],
+  "combivent": [
+    "RXNORM:214199"
+  ],
+  "compazine": [
+    "RXNORM:8704"
   ],
   "congenital foot deformity": [
     "ICD10:Q66.89"
@@ -436,6 +514,9 @@
   ],
   "cough": [
     "LOCAL:SYMPTOM_COUGH"
+  ],
+  "coumadin": [
+    "RXNORM:11289"
   ],
   "cozaar": [
     "RXNORM:52175"
@@ -476,6 +557,9 @@
   "dai thao duong type 2": [
     "ICD10:E11"
   ],
+  "ddavp": [
+    "RXNORM:3251"
+  ],
   "deltasone": [
     "RXNORM:8640"
   ],
@@ -485,6 +569,9 @@
   "demadex": [
     "RXNORM:38413"
   ],
+  "desmopressin": [
+    "RXNORM:3251"
+  ],
   "diarrhea": [
     "LOCAL:SYMPTOM_DIARRHEA"
   ],
@@ -493,6 +580,9 @@
   ],
   "dilaudid": [
     "RXNORM:3423"
+  ],
+  "diltiazem": [
+    "RXNORM:3443"
   ],
   "dimethylbiguanide": [
     "RXNORM:6809"
@@ -530,11 +620,17 @@
   "edema": [
     "LOCAL:SYMPTOM_EDEMA"
   ],
+  "effient": [
+    "RXNORM:613391"
+  ],
   "ekg": [
     "LOCAL:TEST_ECG"
   ],
   "electrocardiogram": [
     "LOCAL:TEST_ECG"
+  ],
+  "eliquis": [
+    "RXNORM:1364430"
   ],
   "emesis": [
     "LOCAL:SYMPTOM_NAUSEA_VOMITING"
@@ -547,6 +643,9 @@
   ],
   "fainting": [
     "LOCAL:SYMPTOM_SYNCOPE"
+  ],
+  "faslodex": [
+    "RXNORM:282357"
   ],
   "fatigue": [
     "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
@@ -569,8 +668,14 @@
   "foot ulcer": [
     "ICD10:L97.509"
   ],
+  "fortaz": [
+    "RXNORM:2191"
+  ],
   "frusemide": [
     "RXNORM:4603"
+  ],
+  "fulvestrant": [
+    "RXNORM:282357"
   ],
   "furosemide": [
     "RXNORM:4603"
@@ -619,6 +724,9 @@
   ],
   "glyceryl trinitrate": [
     "RXNORM:4917"
+  ],
+  "guaifenesin": [
+    "RXNORM:5032"
   ],
   "gãy xương sườn": [
     "ICD10:S22.42"
@@ -701,6 +809,12 @@
   "htn": [
     "ICD10:I10"
   ],
+  "hydrocodone acetaminophen": [
+    "RXNORM:214182"
+  ],
+  "hydrocodone/acetaminophen": [
+    "RXNORM:214182"
+  ],
   "hydromorphone": [
     "RXNORM:3423"
   ],
@@ -728,8 +842,14 @@
   "hội chứng não gan": [
     "ICD10:K76.82"
   ],
+  "ibuprofen": [
+    "RXNORM:5640"
+  ],
   "imatinib": [
     "RXNORM:282388"
+  ],
+  "imuran": [
+    "RXNORM:1256"
   ],
   "infection": [
     "ICD10:B99.9"
@@ -749,6 +869,12 @@
   "invanz": [
     "RXNORM:325642"
   ],
+  "ipratropium": [
+    "RXNORM:7213"
+  ],
+  "iron": [
+    "RXNORM:90176"
+  ],
   "isosorbide": [
     "RXNORM:6057"
   ],
@@ -766,6 +892,9 @@
   ],
   "kali": [
     "LOCAL:TEST_POTASSIUM"
+  ],
+  "keflex": [
+    "RXNORM:2231"
   ],
   "ketorolac": [
     "RXNORM:35827"
@@ -794,10 +923,16 @@
   "kidney stone": [
     "ICD10:N20.0"
   ],
+  "klonopin": [
+    "RXNORM:2598"
+  ],
   "lantus": [
     "RXNORM:274783"
   ],
   "lasix": [
+    "RXNORM:4603"
+  ],
+  "laxis": [
     "RXNORM:4603"
   ],
   "left rib fracture": [
@@ -808,6 +943,15 @@
   ],
   "leukocyte count": [
     "LOCAL:TEST_WBC"
+  ],
+  "levafloxacin": [
+    "RXNORM:82122"
+  ],
+  "levaquin": [
+    "RXNORM:82122"
+  ],
+  "levofloxacin": [
+    "RXNORM:82122"
   ],
   "lightheadedness": [
     "LOCAL:SYMPTOM_DIZZINESS"
@@ -854,6 +998,9 @@
   "lung infection": [
     "ICD10:J18.9"
   ],
+  "magnesium": [
+    "RXNORM:6574"
+  ],
   "malignancy": [
     "ICD10:C80.1"
   ],
@@ -869,6 +1016,12 @@
   "malignant neoplasm unspecified": [
     "ICD10:C80.1"
   ],
+  "maxipime": [
+    "RXNORM:20481"
+  ],
+  "medrol": [
+    "RXNORM:6902"
+  ],
   "metformin": [
     "RXNORM:6809"
   ],
@@ -880,6 +1033,9 @@
   ],
   "methadone": [
     "RXNORM:6813"
+  ],
+  "methylprednisolone": [
+    "RXNORM:6902"
   ],
   "metoprolol": [
     "RXNORM:6918"
@@ -901,6 +1057,9 @@
   ],
   "morphine": [
     "RXNORM:7052"
+  ],
+  "mucinex": [
+    "RXNORM:5032"
   ],
   "multiple fractures of ribs left side": [
     "ICD10:S22.42"
@@ -925,6 +1084,9 @@
   ],
   "nac": [
     "RXNORM:197"
+  ],
+  "natri bicarbonate": [
+    "RXNORM:36676"
   ],
   "nausea": [
     "LOCAL:SYMPTOM_NAUSEA_VOMITING"
@@ -1010,6 +1172,9 @@
   "occlusion and stenosis of unspecified carotid artery": [
     "ICD10:I65.29"
   ],
+  "octreotide": [
+    "RXNORM:7617"
+  ],
   "oedema": [
     "LOCAL:SYMPTOM_EDEMA"
   ],
@@ -1024,6 +1189,18 @@
   ],
   "other diseases of vocal cords": [
     "ICD10:J38.3"
+  ],
+  "oxycodone / acetaminophen": [
+    "RXNORM:42844"
+  ],
+  "oxycodone acetaminophen": [
+    "RXNORM:42844"
+  ],
+  "oxycodone/acetaminophen": [
+    "RXNORM:42844"
+  ],
+  "paclitaxel": [
+    "RXNORM:56946"
   ],
   "palpitations": [
     "LOCAL:SYMPTOM_PALPITATIONS"
@@ -1046,6 +1223,9 @@
   "penetrating abdominal wound": [
     "ICD10:S31.109"
   ],
+  "percocet": [
+    "RXNORM:42844"
+  ],
   "persistent delusional disorders": [
     "ICD10:F22"
   ],
@@ -1057,6 +1237,15 @@
   ],
   "phổi tắc nghẽn mạn tính": [
     "ICD10:J44.9"
+  ],
+  "piperacillin / tazobactam": [
+    "RXNORM:74170"
+  ],
+  "piperacillin tazobactam": [
+    "RXNORM:74170"
+  ],
+  "piperacillin/tazobactam": [
+    "RXNORM:74170"
   ],
   "plavix": [
     "RXNORM:32968"
@@ -1073,6 +1262,9 @@
   "potassium": [
     "LOCAL:TEST_POTASSIUM"
   ],
+  "prasugrel": [
+    "RXNORM:613391"
+  ],
   "prednisone": [
     "RXNORM:8640"
   ],
@@ -1081,6 +1273,15 @@
   ],
   "prinivil": [
     "RXNORM:29046"
+  ],
+  "prochlorperazine": [
+    "RXNORM:8704"
+  ],
+  "prograf": [
+    "RXNORM:42316"
+  ],
+  "quetiapine": [
+    "RXNORM:51272"
   ],
   "radiculopathy": [
     "ICD10:M54.10"
@@ -1091,11 +1292,20 @@
   "radiograph": [
     "LOCAL:TEST_XRAY"
   ],
+  "ranexa": [
+    "RXNORM:35829"
+  ],
+  "ranolazine": [
+    "RXNORM:35829"
+  ],
   "renal calculus": [
     "ICD10:N20.0"
   ],
   "rib fracture": [
     "ICD10:S22.42"
+  ],
+  "rocephin": [
+    "RXNORM:2193"
   ],
   "rosuvastatin": [
     "RXNORM:301542"
@@ -1136,8 +1346,14 @@
   "salbutamol": [
     "RXNORM:435"
   ],
+  "sandostatin": [
+    "RXNORM:7617"
+  ],
   "scr": [
     "LOCAL:TEST_CREATININE"
+  ],
+  "seroquel": [
+    "RXNORM:51272"
   ],
   "serum creatinine": [
     "LOCAL:TEST_CREATININE"
@@ -1159,6 +1375,12 @@
   ],
   "sob": [
     "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "sodium bicarbonate": [
+    "RXNORM:36676"
+  ],
+  "solu-medrol": [
+    "RXNORM:6902"
   ],
   "spinal stenosis": [
     "ICD10:M48.00"
@@ -1265,8 +1487,14 @@
   "t2dm": [
     "ICD10:E11"
   ],
+  "tacrolimus": [
+    "RXNORM:42316"
+  ],
   "tang huyet ap": [
     "ICD10:I10"
+  ],
+  "taxol": [
+    "RXNORM:56946"
   ],
   "tbili": [
     "LOCAL:TEST_BILIRUBIN"
@@ -1478,6 +1706,9 @@
   "vibramycin": [
     "RXNORM:3640"
   ],
+  "vicodin": [
+    "RXNORM:214182"
+  ],
   "viêm phổi": [
     "ICD10:J18.9"
   ],
@@ -1495,6 +1726,9 @@
   ],
   "vết thương thấu bụng": [
     "ICD10:S31.109"
+  ],
+  "warfarin": [
+    "RXNORM:11289"
   ],
   "wbc": [
     "LOCAL:TEST_WBC"
@@ -1568,8 +1802,23 @@
   "yếu sức chân phải": [
     "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
   ],
+  "z pack": [
+    "RXNORM:18631"
+  ],
+  "z-pack": [
+    "RXNORM:18631"
+  ],
+  "z-pak": [
+    "RXNORM:18631"
+  ],
   "zestril": [
     "RXNORM:29046"
+  ],
+  "zithromax": [
+    "RXNORM:18631"
+  ],
+  "zosyn": [
+    "RXNORM:74170"
   ],
   "zyloprim": [
     "RXNORM:519"
