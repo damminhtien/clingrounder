@@ -78,6 +78,92 @@ def test_prediction_to_phase1_entities_exports_flat_official_schema() -> None:
     assert all(set(row) == {"text", "type", "assertions", "candidates", "position"} for row in rows)
 
 
+def test_prediction_to_phase1_entities_can_expand_drug_dose_span_from_source_text() -> None:
+    text = "Bệnh nhân dùng metoprolol 25mg po bid, không cải thiện."
+    prediction = ClinicalPrediction.from_text(
+        "1",
+        text,
+        [
+            _entity(
+                "E1",
+                text,
+                "metoprolol",
+                EntityType.DRUG,
+                code_system=CodeSystem.RXNORM,
+                code="6918",
+                candidates=[_candidate(CodeSystem.RXNORM, "6918")],
+            )
+        ],
+        [],
+        "test",
+    )
+
+    rows = prediction_to_phase1_entities(prediction, max_candidates=1, source_text=text)
+
+    assert rows == [
+        {
+            "text": "metoprolol 25mg po bid",
+            "type": "THUỐC",
+            "assertions": [],
+            "candidates": ["6918"],
+            "position": [text.index("metoprolol"), text.index("metoprolol 25mg po bid") + len("metoprolol 25mg po bid")],
+        }
+    ]
+    assert validate_phase1_entities(rows, text) == []
+
+
+def test_prediction_to_phase1_entities_does_not_expand_drug_into_reason_clause() -> None:
+    text = "Bệnh nhân dùng doxycycline cho viêm phổi."
+    prediction = ClinicalPrediction.from_text(
+        "1",
+        text,
+        [_entity("E1", text, "doxycycline", EntityType.DRUG)],
+        [],
+        "test",
+    )
+
+    rows = prediction_to_phase1_entities(prediction, source_text=text)
+
+    assert rows[0]["text"] == "doxycycline"
+    assert rows[0]["position"] == [text.index("doxycycline"), text.index("doxycycline") + len("doxycycline")]
+    assert validate_phase1_entities(rows, text) == []
+
+
+def test_prediction_to_phase1_entities_expands_drug_duration_only_after_dose_context() -> None:
+    text = "Đã dùng prednisone 40 mg/ngày trong 3 ngày, sau đó 30 mg/ngày."
+    prediction = ClinicalPrediction.from_text(
+        "1",
+        text,
+        [_entity("E1", text, "prednisone", EntityType.DRUG)],
+        [],
+        "test",
+    )
+
+    rows = prediction_to_phase1_entities(prediction, source_text=text)
+
+    expected = "prednisone 40 mg/ngày trong 3 ngày, sau đó 30 mg/ngày"
+    assert rows[0]["text"] == expected
+    assert rows[0]["position"] == [text.index("prednisone"), text.index(expected) + len(expected)]
+    assert validate_phase1_entities(rows, text) == []
+
+
+def test_prediction_to_phase1_entities_does_not_expand_drug_into_prior_duration() -> None:
+    text = "Bệnh nhân bắt đầu dùng suboxone 3 tuần trước vì rẻ hơn."
+    prediction = ClinicalPrediction.from_text(
+        "1",
+        text,
+        [_entity("E1", text, "suboxone", EntityType.DRUG)],
+        [],
+        "test",
+    )
+
+    rows = prediction_to_phase1_entities(prediction, source_text=text)
+
+    assert rows[0]["text"] == "suboxone"
+    assert rows[0]["position"] == [text.index("suboxone"), text.index("suboxone") + len("suboxone")]
+    assert validate_phase1_entities(rows, text) == []
+
+
 def test_validate_phase1_entities_blocks_schema_offset_and_candidate_violations() -> None:
     text = "Bệnh nhân ho."
     row = {

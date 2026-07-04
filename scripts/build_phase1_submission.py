@@ -100,7 +100,13 @@ def main() -> None:
         traces = [result.trace.to_json() for result in run_results]
 
     output_dir = path_in_run(args.output_dir, run_output)
-    write_phase1_output_dir(predictions, output_dir, max_candidates=args.max_candidates)
+    source_text_by_document = {document.document_id: document.text for document in documents}
+    write_phase1_output_dir(
+        predictions,
+        output_dir,
+        max_candidates=args.max_candidates,
+        source_text_by_document=source_text_by_document,
+    )
     zip_path = path_in_run(args.zip_path, run_output) if args.zip_path else None
     if args.zip_path:
         zip_phase1_output_dir(output_dir, zip_path or args.zip_path)

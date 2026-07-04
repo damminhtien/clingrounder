@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import re
 import zipfile
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
@@ -29,6 +31,55 @@ _PHASE1_ASSERTION_BY_STATUS = {
     AssertionStatus.FAMILY: "isFamily",
     AssertionStatus.HISTORICAL: "isHistorical",
 }
+_DRUG_EXTENSION_MAX_CHARS = 96
+_DRUG_EXTENSION_STOP_RE = re.compile(
+    r"\s*(?:cho|vì|do|để|không|nhưng|tuy nhiên|with|for|due\s+to|because)\b",
+    re.IGNORECASE,
+)
+_DRUG_EXTENSION_PATTERNS: tuple[tuple[re.Pattern[str], bool], ...] = (
+    (
+        re.compile(
+            r"\s*(?:,?\s*)?\d+(?:[.,]\d+)?\s*"
+            r"(?:mg|g|gram|mcg|microgram|ml|iu|đơn vị|units?)"
+            r"(?:\s*/\s*(?:ngày|day|lần|dose))?",
+            re.IGNORECASE,
+        ),
+        False,
+    ),
+    (
+        re.compile(
+            r"\s*(?:po|p\.o\.|iv|i\.v\.|im|sc|sl|uống|đường uống|tiêm tĩnh mạch|"
+            r"tĩnh mạch|hít|nebs?|xịt|dán|nhỏ)\b",
+            re.IGNORECASE,
+        ),
+        False,
+    ),
+    (
+        re.compile(
+            r"\s*(?:bid|tid|qid|qhs|q\d+h|q\s*\d+\s*h|daily|once|prn|hằng ngày|"
+            r"hàng ngày|mỗi ngày|lần/ngày|lần mỗi ngày)\b",
+            re.IGNORECASE,
+        ),
+        False,
+    ),
+    (re.compile(r"\s*x\s*\d+\b", re.IGNORECASE), False),
+    (re.compile(r"\s+\d+\s*(?:lần|liều|viên)\b", re.IGNORECASE), False),
+    (
+        re.compile(r"\s+trong\s+\d+(?:[.,]\d+)?\s*(?:ngày|day|days|tuần|weeks?)\b", re.IGNORECASE),
+        True,
+    ),
+    (
+        re.compile(
+            r"\s*,?\s*(?:sau đó|then|rồi)(?:\s+giảm\s+xuống)?\s+\d+(?:[.,]\d+)?\s*"
+            r"(?:mg|g|gram|mcg|microgram|ml|iu|đơn vị|units?)"
+            r"(?:\s*/\s*(?:ngày|day|lần|dose))?",
+            re.IGNORECASE,
+        ),
+        True,
+    ),
+    (re.compile(r"\s+tại nhà\b", re.IGNORECASE), True),
+    (re.compile(r"\s*\([^)\n\r]{1,50}\)"), True),
+)
 
 
 @dataclass(frozen=True)
@@ -58,13 +109,21 @@ def prediction_to_phase1_entities(
     prediction: ClinicalPrediction,
     *,
     max_candidates: int = 1,
+    source_text: str | None = None,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for entity in prediction.entities:
         phase1_type = PHASE1_TYPE_BY_ENTITY_TYPE.get(entity.type)
         if phase1_type is None:
             continue
-        rows.append(entity_to_phase1(entity, phase1_type=phase1_type, max_candidates=max_candidates))
+        rows.append(
+            entity_to_phase1(
+                entity,
+                phase1_type=phase1_type,
+                max_candidates=max_candidates,
+                source_text=source_text,
+            )
+        )
     return rows
 
 
@@ -73,13 +132,15 @@ def entity_to_phase1(
     *,
     phase1_type: str,
     max_candidates: int = 1,
+    source_text: str | None = None,
 ) -> dict[str, Any]:
+    text, span = _phase1_text_and_span(entity, phase1_type, source_text)
     return {
-        "text": entity.text,
+        "text": text,
         "type": phase1_type,
         "assertions": _phase1_assertions(entity.assertion) if phase1_type in PHASE1_ASSERTABLE_TYPES else [],
         "candidates": _phase1_candidates(entity, phase1_type, max_candidates=max_candidates),
-        "position": [entity.span[0], entity.span[1]],
+        "position": [span[0], span[1]],
     }
 
 
@@ -358,6 +419,7 @@ def write_phase1_output_dir(
     *,
     max_candidates: int = 1,
     clean: bool = True,
+    source_text_by_document: Mapping[str, str] | None = None,
 ) -> None:
     path = Path(output_dir)
     path.mkdir(parents=True, exist_ok=True)
@@ -365,7 +427,11 @@ def write_phase1_output_dir(
         for json_path in path.glob("*.json"):
             json_path.unlink()
     for prediction in predictions:
-        rows = prediction_to_phase1_entities(prediction, max_candidates=max_candidates)
+        rows = prediction_to_phase1_entities(
+            prediction,
+            max_candidates=max_candidates,
+            source_text=source_text_by_document.get(prediction.document_id) if source_text_by_document else None,
+        )
         (path / f"{prediction.document_id}.json").write_text(
             json.dumps(rows, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
@@ -528,6 +594,63 @@ def _phase1_by_document(
 def _phase1_assertions(assertion: AssertionStatus) -> list[str]:
     value = _PHASE1_ASSERTION_BY_STATUS.get(assertion)
     return [value] if value else []
+
+
+def _phase1_text_and_span(
+    entity: EntityAnnotation,
+    phase1_type: str,
+    source_text: str | None,
+) -> tuple[str, tuple[int, int]]:
+    if phase1_type == "THUỐC" and source_text is not None:
+        return _phase1_drug_text_and_span(entity, source_text)
+    return entity.text, entity.span
+
+
+def _phase1_drug_text_and_span(entity: EntityAnnotation, source_text: str) -> tuple[str, tuple[int, int]]:
+    start, end = entity.span
+    if start < 0 or end <= start or end > len(source_text):
+        return entity.text, entity.span
+    if source_text[start:end] != entity.text:
+        return entity.text, entity.span
+
+    expanded_end = _phase1_drug_expanded_end(source_text, end)
+    if expanded_end <= end:
+        return entity.text, entity.span
+    return source_text[start:expanded_end], (start, expanded_end)
+
+
+def _phase1_drug_expanded_end(source_text: str, end: int) -> int:
+    limit = min(len(source_text), end + _DRUG_EXTENSION_MAX_CHARS)
+    cursor = end
+    expanded_end = end
+    while cursor < limit:
+        tail = source_text[cursor:limit]
+        if "\n" in tail[:1] or "\r" in tail[:1] or ";" in tail[:1]:
+            break
+        if _DRUG_EXTENSION_STOP_RE.match(source_text, cursor):
+            break
+
+        matched_end = None
+        has_extension = expanded_end > end
+        for pattern, requires_prior_extension in _DRUG_EXTENSION_PATTERNS:
+            if requires_prior_extension and not has_extension:
+                continue
+            match = pattern.match(source_text, cursor)
+            if match is None or match.end() <= cursor:
+                continue
+            token = source_text[cursor : match.end()]
+            if not token.strip(" ,"):
+                continue
+            matched_end = match.end()
+            break
+        if matched_end is None:
+            break
+        cursor = matched_end
+        expanded_end = matched_end
+
+    while expanded_end > end and source_text[expanded_end - 1] in " ,":
+        expanded_end -= 1
+    return expanded_end
 
 
 def _phase1_candidates(entity: EntityAnnotation, phase1_type: str, *, max_candidates: int) -> list[str]:
