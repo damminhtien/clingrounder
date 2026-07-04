@@ -15,6 +15,8 @@ _LAB_VALUE_RE = re.compile(
 )
 _BP_RE = re.compile(r"(?<!\w)BP\s*\d{2,3}/\d{2,3}(?!\w)", flags=re.IGNORECASE)
 _HBA1C_RE = re.compile(r"(?<!\w)HbA1c\s*\d+(?:\.\d+)?%(?!\w)", flags=re.IGNORECASE)
+_UPPERCASE_LETTERS = "A-ZÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬĐÈÉẺẼẸÊẾỀỂỄỆÌÍỈĨỊÒÓỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÙÚỦŨỤƯỨỪỬỮỰỲÝỶỸỴ"
+_RIGHT_ALIAS_BOUNDARY = rf"(?=$|[^\w]|[{_UPPERCASE_LETTERS}])"
 
 
 class RuleBasedNER:
@@ -34,7 +36,10 @@ class RuleBasedNER:
         for alias, entry in self.aliases:
             if len(alias.strip()) < 2:
                 continue
-            pattern = re.compile(rf"(?<!\w){re.escape(alias)}(?!\w)", flags=re.IGNORECASE | re.UNICODE)
+            pattern = re.compile(
+                rf"(?<!\w)(?i:{re.escape(alias)}){_right_boundary_for_alias(alias)}",
+                flags=re.UNICODE,
+            )
             for match in pattern.finditer(text):
                 span = match.span()
                 if self._blocked_contextual_alias(alias, text, span):
@@ -97,3 +102,10 @@ class RuleBasedNER:
         left = text[max(0, span[0] - 8) : span[0]].lower()
         right = text[span[1] : min(len(text), span[1] + 8)].lower()
         return bool(re.search(r"chủ\s*$", left, flags=re.UNICODE) or re.match(r"\s*tố(?!\w)", right, flags=re.UNICODE))
+
+
+def _right_boundary_for_alias(alias: str) -> str:
+    compact = re.sub(r"[\W_]+", "", alias, flags=re.UNICODE)
+    if compact and compact.upper() == compact:
+        return r"(?!\w)"
+    return _RIGHT_ALIAS_BOUNDARY

@@ -20,6 +20,7 @@ _SCOPE_RESET_RE = re.compile(
     r"(?<!\w)(?:"
     r"chuyển\s+sang\s+(?:sử\s+dụng|điều\s+trị\s+bằng)"
     r"|bắt\s+đầu\s+dùng"
+    r"|chẩn\s+đoán"
     r"|được\s+kê"
     r"|được\s+chỉ\s+định"
     r")(?!\w)",
@@ -28,11 +29,15 @@ _SCOPE_RESET_RE = re.compile(
 _NEGATION_FALSE_POSITIVE_PATTERNS = (
     re.compile(r"(?<!\w)không\s+đặc\s+hiệu(?!\w)", flags=re.IGNORECASE | re.UNICODE),
     re.compile(r"(?<!\w)không\s+loại\s+trừ(?!\w)", flags=re.IGNORECASE | re.UNICODE),
+    re.compile(r"(?<!\w)không\s+thuốc\s+cản\s+quang(?!\w)", flags=re.IGNORECASE | re.UNICODE),
+    re.compile(r"(?<!\w)không\s+thể\s+giữ\s+được(?!\w)", flags=re.IGNORECASE | re.UNICODE),
+    re.compile(r"(?<!\w)không\s+nghĩ.{0,100}có\s+khả\s+năng(?!\w)", flags=re.IGNORECASE | re.UNICODE),
 )
 _NEGATION_COORDINATION_BOUNDARY_RE = re.compile(r"[\n.;!?]", flags=re.UNICODE)
 _NEGATION_COORDINATION_BREAK_RE = re.compile(
     r"(?<!\w)(nhưng|tuy\s+nhiên|song|however|but|bệnh\s+nhân\s+có|bn\s+có|ghi\s+nhận\s+có|kèm\s+theo|có"
-    r"|chuyển\s+sang\s+(?:sử\s+dụng|điều\s+trị\s+bằng)|bắt\s+đầu\s+dùng|được\s+kê|được\s+chỉ\s+định)(?!\w)",
+    r"|bệnh\s+nhân\s+bị|hậu\s+phẫu|chuyển\s+sang\s+(?:sử\s+dụng|điều\s+trị\s+bằng)|bắt\s+đầu\s+dùng"
+    r"|chẩn\s+đoán|có\s+khả\s+năng|được\s+kê|được\s+chỉ\s+định)(?!\w)",
     flags=re.IGNORECASE | re.UNICODE,
 )
 _FAMILY_FALSE_POSITIVE_PATTERNS = (

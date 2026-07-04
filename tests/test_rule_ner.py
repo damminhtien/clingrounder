@@ -66,9 +66,12 @@ def test_rule_ner_blocks_cancer_inside_cea_lab_name_but_keeps_real_cancer_mentio
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     text = "CEA (kháng nguyên ung thư phôi) tăng nhẹ. Tiền sử ung thư đại tràng."
     entities = RuleBasedNER(store).extract(text)
-    cancer_spans = [entity.span for entity in entities if entity.text.lower() == "ung thư" and entity.type == EntityType.DISEASE]
+    cancer_spans = [
+        entity.span for entity in entities if entity.text.lower() == "ung thư đại tràng" and entity.type == EntityType.DISEASE
+    ]
 
-    assert cancer_spans == [(50, 57)]
+    assert cancer_spans == [(50, 67)]
+    assert all(entity.text.lower() != "ung thư phôi" for entity in entities)
 
 
 def test_rule_ner_blocks_spouse_azithromycin_but_keeps_patient_use() -> None:
@@ -81,3 +84,33 @@ def test_rule_ner_blocks_spouse_azithromycin_but_keeps_patient_use() -> None:
     drug_texts = [entity.text for entity in entities if entity.type == EntityType.DRUG]
 
     assert drug_texts == ["azithromycin"]
+
+
+def test_rule_ner_allows_alias_boundary_before_concatenated_uppercase_sentence() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    text = "Chẩn đoán u ác của tuyến tiền liệtAnh ấy đang chờ ghép thận."
+    entities = RuleBasedNER(store).extract(text)
+
+    prostate_cancer = [
+        entity for entity in entities if entity.type == EntityType.DISEASE and entity.text == "u ác của tuyến tiền liệt"
+    ]
+
+    assert len(prostate_cancer) == 1
+    assert text[prostate_cancer[0].span[0] : prostate_cancer[0].span[1]] == "u ác của tuyến tiền liệt"
+
+
+def test_rule_ner_does_not_allow_alias_boundary_inside_lowercase_word() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    entities = RuleBasedNER(store).extract("Chẩn đoán u ác của tuyến tiền liệtanh ấy đang chờ ghép thận.")
+
+    assert all(entity.text != "u ác của tuyến tiền liệt" for entity in entities)
+
+
+def test_rule_ner_keeps_strict_boundary_for_uppercase_abbreviations() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    entities = RuleBasedNER(store).extract("Khi đến MICU không có MI. Tiền sử CML.")
+    disease_texts = [entity.text for entity in entities if entity.type == EntityType.DISEASE]
+
+    assert "MI" in disease_texts
+    assert "CML" in disease_texts
+    assert all(entity.span != (8, 10) for entity in entities)

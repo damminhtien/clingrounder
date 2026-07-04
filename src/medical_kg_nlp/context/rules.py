@@ -15,6 +15,7 @@ _FALLBACK_POSSIBLE_CUES = (
     "nghi",
     "theo dõi",
     "có thể",
+    "có khả năng",
     "possible",
     "suspected",
     "suggestive of",

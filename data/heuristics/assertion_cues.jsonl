@@ -5,6 +5,7 @@
 {"cue":"nghi","assertion":"POSSIBLE","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese suspected-condition cue."}
 {"cue":"theo dõi","assertion":"POSSIBLE","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese follow-up / watch cue."}
 {"cue":"có thể","assertion":"POSSIBLE","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese possible cue."}
+{"cue":"có khả năng","assertion":"POSSIBLE","language":"vi","scope":"left","source_ids":["context_algorithm","seed"],"notes":"Vietnamese likely/possible cue."}
 {"cue":"possible","assertion":"POSSIBLE","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Uncertainty cue."}
 {"cue":"suspected","assertion":"POSSIBLE","language":"en","scope":"left","source_ids":["context_algorithm"],"notes":"Suspicion cue."}
 {"cue":"suggestive of","assertion":"POSSIBLE","language":"en","scope":"bidirectional","source_ids":["context_algorithm"],"notes":"Suggestive evidence cue."}

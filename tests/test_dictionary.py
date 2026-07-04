@@ -264,6 +264,92 @@ def test_phase1_biliary_stone_terms_prefer_specific_icd10_codes() -> None:
     assert all(candidate.code_system == CodeSystem.ICD10 for candidate in gallstone)
 
 
+def test_phase1_ontology_lite_diagnosis_terms_map_to_icd10() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+
+    expected = {
+        "hen suyễn": "J45",
+        "bệnh trào ngược dạ dày- thực quản không có viêm thực quản": "K21.9",
+        "viêm túi mật cấp": "K81.0",
+        "viêm túi mật": "K81.9",
+        "viêm dạ dày": "K29.7",
+        "viêm dạ dày ruột do virus": "A08.4",
+        "loét tá tràng": "K26",
+        "viêm thực quản": "K20",
+        "loét thực quản": "K22.1",
+        "ngưng thở khi ngủ": "G47.30",
+        "ngưng thở khi ngủ do tắc nghẽn": "G47.33",
+        "tăng kali máu": "E87.5",
+        "tăng sản tuyến tiền liệt": "N40",
+        "bệnh thận đa nang": "Q61.3",
+        "viêm bể thận": "N12",
+        "viêm bể thận cấp": "N10",
+        "viêm phế quản": "J40",
+        "phù gai thị": "H47.1",
+        "viêm loét đại tràng": "K51.9",
+        "bệnh túi thừa": "K57.9",
+        "tăng áp động mạch phổi": "I27.20",
+        "bệnh mạch máu ngoại biên": "I73.9",
+        "thuyên tắc phổi": "I26.99",
+        "huyết khối tĩnh mạch sâu": "I82.40",
+        "viêm gan virus B": "B18.1",
+        "viêm gan virus C": "B18.2",
+        "viêm xương tủy": "M86.9",
+        "phình động mạch chủ nhỏ": "I71.9",
+        "u ác tuyến tiền liệt": "C61",
+        "u ác đầu tụy": "C25.0",
+    }
+
+    for mention, code in expected.items():
+        candidates = generator.generate(mention, EntityType.DISEASE)
+        assert candidates[0].code == code
+        assert all(candidate.code_system == CodeSystem.ICD10 for candidate in candidates)
+
+
+def test_phase1_ontology_lite_diagnosis_batch2_terms_map_to_icd10() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+
+    expected = {
+        "u ác của tuyến tiền liệt": "C61",
+        "u ác của đầu tuỵ": "C25.0",
+        "bệnh bạch cầu dòng tủy mãn tính": "C92.1",
+        "viêm mô tế bào": "L03.90",
+        "nhiễm virus Herpes simplex": "B00.9",
+        "bệnh thủy đậu": "B01.9",
+        "Zona": "B02.9",
+        "bệnh phổi kẽ": "J84.9",
+        "U Sacoit": "D86.85",
+        "suy giảm miễn dịch do sử dụng corticoid": "D84.821",
+        "u cơ trơn tử cung": "D25.9",
+        "ung thư vú trái": "C50.912",
+        "ung thư vú di căn": "C50.919",
+        "nhiễm Clostridioides difficile": "A04.72",
+        "nhiễm trùng huyết": "A41.9",
+        "bệnh lý thần kinh ngoại biên": "G62.9",
+        "bàng quang thần kinh": "N31.9",
+        "Đa u tủy xương": "C90.0",
+        "tăng calci máu": "E83.52",
+        "hạ kali máu": "E87.6",
+        "cường cận giáp nguyên phát": "E21.0",
+        "tràn dịch màng phổi": "J90",
+        "xẹp phổi": "J98.11",
+        "đau thắt ngực không ổn định": "I20.0",
+        "bệnh lý chất trắng": "R90.82",
+        "xuất huyết dưới nhện": "I60.9",
+        "khối máu tụ dưới màng cứng": "I62.00",
+        "hạ huyết áp": "I95.9",
+        "u ác của đại tràng": "C18.9",
+        "xơ vữa động mạch": "I70.90",
+    }
+
+    for mention, code in expected.items():
+        candidates = generator.generate(mention, EntityType.DISEASE)
+        assert candidates[0].code == code
+        assert all(candidate.code_system == CodeSystem.ICD10 for candidate in candidates)
+
+
 def test_phase1_empty_file_terms_expand_recall() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
@@ -306,6 +392,7 @@ def test_blocked_alias_removes_false_positive_term() -> None:
 
     assert store.exact_lookup("hen") == []
     assert store.exact_lookup("hen phế quản")[0].code == "J45"
+    assert store.exact_lookup("hen suyễn")[0].code == "J45"
     assert store.exact_lookup("yếu")[0].code == "SYMPTOM_FATIGUE_WEAKNESS"
     assert store.exact_lookup("mệt mỏi")[0].code == "SYMPTOM_FATIGUE_WEAKNESS"
 

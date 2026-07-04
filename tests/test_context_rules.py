@@ -144,6 +144,44 @@ def test_negation_from_intolerance_does_not_leak_to_switched_medication() -> Non
     assert classifier.classify(switched, sentence) == AssertionStatus.PRESENT
 
 
+def test_non_disease_negative_phrases_do_not_negate_later_diagnosis() -> None:
+    text = "Không thể giữ được bất cứ thứ gì, chẩn đoán viêm dạ dày ruột do virus."
+    sentence = Sentence(span=(0, len(text)), text=text)
+    entity = _entity_in_sentence(text, "viêm dạ dày ruột do virus")
+
+    assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.PRESENT
+
+
+def test_without_contrast_imaging_phrase_does_not_negate_suggested_diagnosis() -> None:
+    text = (
+        "Chụp CT bụng, chậu, không thuốc cản quang cho thấy dịch quanh đại tràng sigma, "
+        "gợi ý viêm túi mật cấp tính không biến chứng."
+    )
+    sentence = Sentence(span=(0, len(text)), text=text)
+    entity = _entity_in_sentence(text, "viêm túi mật cấp tính không biến chứng")
+
+    assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.POSSIBLE
+
+
+def test_possible_reset_stops_negation_from_leaking_to_likely_diagnosis() -> None:
+    text = "Không nghĩ đây là biến đổi cấp tính và có khả năng đại diện cho CML trong bối cảnh ngừng thuốc."
+    sentence = Sentence(span=(0, len(text)), text=text)
+    entity = _entity_in_sentence(text, "CML")
+
+    assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.POSSIBLE
+
+
+def test_postoperative_patient_condition_breaks_earlier_negated_procedure_clause() -> None:
+    text = (
+        "ERCP không thể qua được chỗ gián đoạn ống dẫn, không làm giảm đáng kể lượng dịch rò, "
+        "hậu phẫu bệnh nhân bị nhiễm Clostridioides difficile."
+    )
+    sentence = Sentence(span=(0, len(text)), text=text)
+    entity = _entity_in_sentence(text, "nhiễm Clostridioides difficile")
+
+    assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.PRESENT
+
+
 def test_possible_clause_does_not_leak_to_confirmed_condition() -> None:
     text = "Nghi viêm phổi, đái tháo đường type 2 đang điều trị metformin."
     sentence = Sentence(span=(0, len(text)), text=text)

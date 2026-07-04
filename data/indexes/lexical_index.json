@@ -29,6 +29,12 @@
   "acid reflux": [
     "ICD10:K21.9"
   ],
+  "acute cholecystitis": [
+    "ICD10:K81.0"
+  ],
+  "acute embolism and thrombosis of unspecified deep veins of lower extremity": [
+    "ICD10:I82.40"
+  ],
   "acute kidney failure": [
     "ICD10:N17.9"
   ],
@@ -44,8 +50,14 @@
   "acute myocardial infarction unspecified": [
     "ICD10:I21.9"
   ],
+  "acute pyelonephritis": [
+    "ICD10:N10"
+  ],
   "acute renal failure": [
     "ICD10:N17.9"
+  ],
+  "acute tubulo-interstitial nephritis": [
+    "ICD10:N10"
   ],
   "advil": [
     "RXNORM:5640"
@@ -140,6 +152,12 @@
   "anxiety disorder unspecified": [
     "ICD10:F41.9"
   ],
+  "aortic aneurysm": [
+    "ICD10:I71.9"
+  ],
+  "aortic aneurysm of unspecified site without mention of rupture": [
+    "ICD10:I71.9"
+  ],
   "aortic dissection": [
     "ICD10:I71.00"
   ],
@@ -170,8 +188,14 @@
   "asthma": [
     "ICD10:J45"
   ],
+  "atelectasis": [
+    "ICD10:J98.11"
+  ],
   "atenolol": [
     "RXNORM:1202"
+  ],
+  "atherosclerosis": [
+    "ICD10:I70.90"
   ],
   "atherosclerotic heart disease": [
     "ICD10:I25.10"
@@ -215,6 +239,9 @@
   "benh than man": [
     "ICD10:N18.9"
   ],
+  "benign prostatic hyperplasia": [
+    "ICD10:N40"
+  ],
   "bg": [
     "LOCAL:TEST_GLUCOSE"
   ],
@@ -251,14 +278,26 @@
   "blood urea nitrogen": [
     "LOCAL:TEST_BUN"
   ],
+  "bph": [
+    "ICD10:N40"
+  ],
   "bptnmt": [
     "ICD10:J44.9"
+  ],
+  "breast cancer": [
+    "ICD10:C50.919"
   ],
   "breathlessness": [
     "LOCAL:SYMPTOM_DYSPNEA"
   ],
   "bronchial asthma": [
     "ICD10:J45"
+  ],
+  "bronchitis": [
+    "ICD10:J40"
+  ],
+  "bronchitis not specified as acute or chronic": [
+    "ICD10:J40"
   ],
   "btm": [
     "ICD10:N18.9"
@@ -290,11 +329,38 @@
   "bàn chân vẹo bẩm sinh": [
     "ICD10:Q66.89"
   ],
+  "bàng quang thần kinh": [
+    "ICD10:N31.9"
+  ],
   "béo phì": [
     "ICD10:E66.9"
   ],
   "bạch cầu": [
     "LOCAL:TEST_WBC"
+  ],
+  "bạch cầu dòng tủy mãn tính": [
+    "ICD10:C92.1"
+  ],
+  "bạch cầu dòng tủy mạn tính": [
+    "ICD10:C92.1"
+  ],
+  "bệnh bạch cầu dòng tủy mãn tính": [
+    "ICD10:C92.1"
+  ],
+  "bệnh bạch cầu dòng tủy mạn tính": [
+    "ICD10:C92.1"
+  ],
+  "bệnh lý chất trắng": [
+    "ICD10:R90.82"
+  ],
+  "bệnh lý thần kinh ngoại biên": [
+    "ICD10:G62.9"
+  ],
+  "bệnh mạch máu ngoại biên": [
+    "ICD10:I73.9"
+  ],
+  "bệnh mạch máu ngoại vi": [
+    "ICD10:I73.9"
   ],
   "bệnh mạch vành": [
     "ICD10:I25.10"
@@ -308,6 +374,9 @@
   "bệnh não gan": [
     "ICD10:K76.82"
   ],
+  "bệnh phổi kẽ": [
+    "ICD10:J84.9"
+  ],
   "bệnh phổi tắc nghẽn mạn": [
     "ICD10:J44.9"
   ],
@@ -320,11 +389,20 @@
   "bệnh rễ thần kinh tuỷ sống": [
     "ICD10:M54.10"
   ],
+  "bệnh thần kinh ngoại biên": [
+    "ICD10:G62.9"
+  ],
   "bệnh thận mạn": [
     "ICD10:N18.9"
   ],
   "bệnh thận mạn tính": [
     "ICD10:N18.9"
+  ],
+  "bệnh thận đa nang": [
+    "ICD10:Q61.3"
+  ],
+  "bệnh thủy đậu": [
+    "ICD10:B01.9"
   ],
   "bệnh tim": [
     "ICD10:I51.9"
@@ -335,11 +413,44 @@
   "bệnh tim mạch": [
     "ICD10:I51.9"
   ],
+  "bệnh trào ngược dạ dày - thực quản": [
+    "ICD10:K21.9"
+  ],
   "bệnh trào ngược dạ dày thực quản": [
     "ICD10:K21.9"
   ],
+  "bệnh trào ngược dạ dày- thực quản": [
+    "ICD10:K21.9"
+  ],
+  "bệnh trào ngược dạ dày- thực quản không có viêm thực quản": [
+    "ICD10:K21.9"
+  ],
+  "bệnh túi thừa": [
+    "ICD10:K57.9"
+  ],
+  "bệnh túi thừa của cả ruột non và đại tràng": [
+    "ICD10:K57.9"
+  ],
+  "bệnh túi thừa ruột": [
+    "ICD10:K57.9"
+  ],
+  "bệnh túi thừa ở cả ruột non và đại tràng": [
+    "ICD10:K57.9"
+  ],
+  "bệnh zona": [
+    "ICD10:B02.9"
+  ],
+  "bệnh động mạch ngoại biên": [
+    "ICD10:I73.9"
+  ],
   "bệnh động mạch vành": [
     "ICD10:I25.10"
+  ],
+  "c difficile": [
+    "ICD10:A04.72"
+  ],
+  "c. difficile": [
+    "ICD10:A04.72"
   ],
   "cad": [
     "ICD10:I25.10"
@@ -367,6 +478,9 @@
   ],
   "cardiac failure": [
     "ICD10:I50.9"
+  ],
+  "cardiac sarcoidosis": [
+    "ICD10:D86.85"
   ],
   "cardiovascular disease": [
     "ICD10:I51.9"
@@ -401,6 +515,12 @@
   "cellcept": [
     "RXNORM:68149"
   ],
+  "cellulitis": [
+    "ICD10:L03.90"
+  ],
+  "cellulitis unspecified": [
+    "ICD10:L03.90"
+  ],
   "cephalalgia": [
     "LOCAL:SYMPTOM_HEADACHE"
   ],
@@ -428,6 +548,15 @@
   "chf": [
     "ICD10:I50.9"
   ],
+  "chickenpox": [
+    "ICD10:B01.9"
+  ],
+  "cholecystitis": [
+    "ICD10:K81.9"
+  ],
+  "cholecystitis unspecified": [
+    "ICD10:K81.9"
+  ],
   "choledocholithiasis": [
     "ICD10:K80.50"
   ],
@@ -443,6 +572,18 @@
   "chronic kidney disease unspecified": [
     "ICD10:N18.9"
   ],
+  "chronic myelogenous leukemia": [
+    "ICD10:C92.1"
+  ],
+  "chronic myeloid leukaemia cml bcr/abl-positive": [
+    "ICD10:C92.1"
+  ],
+  "chronic myeloid leukemia": [
+    "ICD10:C92.1"
+  ],
+  "chronic myeloid leukemia bcr/abl-positive": [
+    "ICD10:C92.1"
+  ],
   "chronic obstructive airway disease": [
     "ICD10:J44.9"
   ],
@@ -454,6 +595,15 @@
   ],
   "chronic renal disease": [
     "ICD10:N18.9"
+  ],
+  "chronic viral hepatitis b": [
+    "ICD10:B18.1"
+  ],
+  "chronic viral hepatitis b without delta-agent": [
+    "ICD10:B18.1"
+  ],
+  "chronic viral hepatitis c": [
+    "ICD10:B18.2"
   ],
   "chuyển dạ": [
     "LOCAL:SYMPTOM_UTERINE_CONTRACTIONS"
@@ -479,11 +629,26 @@
   "clopidogrel": [
     "RXNORM:32968"
   ],
+  "clostridioides difficile infection": [
+    "ICD10:A04.72"
+  ],
+  "clostridium difficile infection": [
+    "ICD10:A04.72"
+  ],
   "clubfoot": [
     "ICD10:Q66.89"
   ],
+  "cml": [
+    "ICD10:C92.1"
+  ],
   "colace": [
     "RXNORM:82003"
+  ],
+  "colon cancer": [
+    "ICD10:C18.9"
+  ],
+  "colon unspecified": [
+    "ICD10:C18.9"
   ],
   "combivent": [
     "RXNORM:214199"
@@ -548,6 +713,12 @@
   "cơn co tử cung": [
     "LOCAL:SYMPTOM_UTERINE_CONTRACTIONS"
   ],
+  "cơn đau thắt ngực không ổn định": [
+    "ICD10:I20.0"
+  ],
+  "cường cận giáp nguyên phát": [
+    "ICD10:E21.0"
+  ],
   "cảm giác thắt chặt ngực": [
     "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
   ],
@@ -559,6 +730,9 @@
   ],
   "ddavp": [
     "RXNORM:3251"
+  ],
+  "deep vein thrombosis": [
+    "ICD10:I82.40"
   ],
   "deltasone": [
     "RXNORM:8640"
@@ -593,6 +767,12 @@
   "dissection of unspecified site of aorta": [
     "ICD10:I71.00"
   ],
+  "diverticular disease": [
+    "ICD10:K57.9"
+  ],
+  "diverticular disease of intestine part unspecified without perforation or abscess": [
+    "ICD10:K57.9"
+  ],
   "dizziness": [
     "LOCAL:SYMPTOM_DIZZINESS"
   ],
@@ -607,6 +787,12 @@
   ],
   "doxycycline": [
     "RXNORM:3640"
+  ],
+  "duodenal ulcer": [
+    "ICD10:K26"
+  ],
+  "dvt": [
+    "ICD10:I82.40"
   ],
   "dyslipidemia": [
     "ICD10:E78.5"
@@ -635,8 +821,17 @@
   "emesis": [
     "LOCAL:SYMPTOM_NAUSEA_VOMITING"
   ],
+  "enterocolitis due to clostridium difficile not specified as recurrent": [
+    "ICD10:A04.72"
+  ],
   "ertapenem": [
     "RXNORM:325642"
+  ],
+  "esophageal ulcer": [
+    "ICD10:K22.1"
+  ],
+  "esophagitis": [
+    "ICD10:K20"
   ],
   "essential hypertension": [
     "ICD10:I10"
@@ -686,6 +881,12 @@
   "gallstones": [
     "ICD10:K80.20"
   ],
+  "gastritis": [
+    "ICD10:K29.7"
+  ],
+  "gastritis unspecified": [
+    "ICD10:K29.7"
+  ],
   "gastro-esophageal reflux disease without esophagitis": [
     "ICD10:K21.9"
   ],
@@ -700,6 +901,9 @@
   ],
   "giảm cân": [
     "LOCAL:SYMPTOM_WEIGHT_CHANGE"
+  ],
+  "giảm kali máu": [
+    "ICD10:E87.6"
   ],
   "giọng khàn": [
     "LOCAL:SYMPTOM_HOARSENESS"
@@ -743,8 +947,17 @@
   "hba1c": [
     "LOCAL:TEST_HBA1C"
   ],
+  "hbv": [
+    "ICD10:B18.1"
+  ],
   "hct": [
     "LOCAL:TEST_HEMATOCRIT"
+  ],
+  "hcv": [
+    "ICD10:B18.2"
+  ],
+  "head of pancreas": [
+    "ICD10:C25.0"
   ],
   "headache": [
     "LOCAL:SYMPTOM_HEADACHE"
@@ -773,6 +986,9 @@
   "hen phế quản": [
     "ICD10:J45"
   ],
+  "hen suyễn": [
+    "ICD10:J45"
+  ],
   "heparin": [
     "RXNORM:5224"
   ],
@@ -781,6 +997,18 @@
   ],
   "hepatic encephalopathy": [
     "ICD10:K76.82"
+  ],
+  "herpes simplex infection": [
+    "ICD10:B00.9"
+  ],
+  "herpes zoster": [
+    "ICD10:B02.9"
+  ],
+  "herpesviral infection": [
+    "ICD10:B00.9"
+  ],
+  "herpesviral infection unspecified": [
+    "ICD10:B00.9"
   ],
   "hf": [
     "ICD10:I50.9"
@@ -806,8 +1034,14 @@
   "hoảng sợ": [
     "ICD10:F41.0"
   ],
+  "hsv": [
+    "ICD10:B00.9"
+  ],
   "htn": [
     "ICD10:I10"
+  ],
+  "huyết khối tĩnh mạch sâu": [
+    "ICD10:I82.40"
   ],
   "hydrocodone acetaminophen": [
     "RXNORM:214182"
@@ -818,14 +1052,44 @@
   "hydromorphone": [
     "RXNORM:3423"
   ],
+  "hypercalcemia": [
+    "ICD10:E83.52"
+  ],
+  "hyperkalaemia": [
+    "ICD10:E87.5"
+  ],
+  "hyperkalemia": [
+    "ICD10:E87.5"
+  ],
   "hyperlipidemia": [
     "ICD10:E78.5"
   ],
   "hyperlipidemia unspecified": [
     "ICD10:E78.5"
   ],
+  "hyperplasia of prostate": [
+    "ICD10:N40"
+  ],
   "hypertension": [
     "ICD10:I10"
+  ],
+  "hypokalaemia": [
+    "ICD10:E87.6"
+  ],
+  "hypokalemia": [
+    "ICD10:E87.6"
+  ],
+  "hypotension": [
+    "ICD10:I95.9"
+  ],
+  "hypotension unspecified": [
+    "ICD10:I95.9"
+  ],
+  "hạ huyết áp": [
+    "ICD10:I95.9"
+  ],
+  "hạ kali máu": [
+    "ICD10:E87.6"
   ],
   "hẹp lỗ liên hợp": [
     "ICD10:M48.00"
@@ -845,8 +1109,14 @@
   "ibuprofen": [
     "RXNORM:5640"
   ],
+  "ild": [
+    "ICD10:J84.9"
+  ],
   "imatinib": [
     "RXNORM:282388"
+  ],
+  "immunodeficiency due to drugs": [
+    "ICD10:D84.821"
   ],
   "imuran": [
     "RXNORM:1256"
@@ -865,6 +1135,15 @@
   ],
   "international normalized ratio": [
     "LOCAL:TEST_INR"
+  ],
+  "interstitial lung disease": [
+    "ICD10:J84.9"
+  ],
+  "interstitial pulmonary disease": [
+    "ICD10:J84.9"
+  ],
+  "interstitial pulmonary disease unspecified": [
+    "ICD10:J84.9"
   ],
   "invanz": [
     "RXNORM:325642"
@@ -920,6 +1199,9 @@
   "khó thở về đêm": [
     "LOCAL:SYMPTOM_DYSPNEA"
   ],
+  "khối máu tụ dưới màng cứng": [
+    "ICD10:I62.00"
+  ],
   "kidney stone": [
     "ICD10:N20.0"
   ],
@@ -935,8 +1217,17 @@
   "laxis": [
     "RXNORM:4603"
   ],
+  "left breast cancer": [
+    "ICD10:C50.912"
+  ],
   "left rib fracture": [
     "ICD10:S22.42"
+  ],
+  "leiomyoma of uterus": [
+    "ICD10:D25.9"
+  ],
+  "leiomyoma of uterus unspecified": [
+    "ICD10:D25.9"
   ],
   "leucocyte count": [
     "LOCAL:TEST_WBC"
@@ -986,11 +1277,23 @@
   "loét bàn chân không đặc hiệu": [
     "ICD10:L97.509"
   ],
+  "loét hành tá tràng": [
+    "ICD10:K26"
+  ],
   "loét mới ở ngón chân": [
     "ICD10:L97.509"
   ],
   "loét ngón chân": [
     "ICD10:L97.509"
+  ],
+  "loét thực quản": [
+    "ICD10:K22.1"
+  ],
+  "loét thực quản dưới": [
+    "ICD10:K22.1"
+  ],
+  "loét tá tràng": [
+    "ICD10:K26"
   ],
   "lung cancer": [
     "ICD10:C34"
@@ -1010,8 +1313,32 @@
   "malignant neoplasm": [
     "ICD10:C80.1"
   ],
+  "malignant neoplasm of breast": [
+    "ICD10:C50.919"
+  ],
   "malignant neoplasm of bronchus and lung": [
     "ICD10:C34"
+  ],
+  "malignant neoplasm of colon": [
+    "ICD10:C18.9"
+  ],
+  "malignant neoplasm of colon unspecified": [
+    "ICD10:C18.9"
+  ],
+  "malignant neoplasm of head of pancreas": [
+    "ICD10:C25.0"
+  ],
+  "malignant neoplasm of left breast": [
+    "ICD10:C50.912"
+  ],
+  "malignant neoplasm of prostate": [
+    "ICD10:C61"
+  ],
+  "malignant neoplasm of unspecified site of left female breast": [
+    "ICD10:C50.912"
+  ],
+  "malignant neoplasm of unspecified site of unspecified female breast": [
+    "ICD10:C50.919"
   ],
   "malignant neoplasm unspecified": [
     "ICD10:C80.1"
@@ -1064,6 +1391,9 @@
   "multiple fractures of ribs left side": [
     "ICD10:S22.42"
   ],
+  "multiple myeloma": [
+    "ICD10:C90.0"
+  ],
   "mycophenolate mofetil": [
     "RXNORM:68149"
   ],
@@ -1100,8 +1430,23 @@
   "nerve root disorder": [
     "ICD10:M54.10"
   ],
+  "neurogenic bladder": [
+    "ICD10:N31.9"
+  ],
+  "neuromuscular dysfunction of bladder unspecified": [
+    "ICD10:N31.9"
+  ],
   "nghẽn tắc và hẹp động mạch cảnh": [
     "ICD10:I65.29"
+  ],
+  "ngưng thở khi ngủ": [
+    "ICD10:G47.30"
+  ],
+  "ngưng thở khi ngủ do tắc nghẽn": [
+    "ICD10:G47.33"
+  ],
+  "ngưng thở khi ngủ không đặc hiệu": [
+    "ICD10:G47.30"
   ],
   "ngất": [
     "LOCAL:SYMPTOM_SYNCOPE"
@@ -1109,14 +1454,38 @@
   "ngất xỉu": [
     "LOCAL:SYMPTOM_SYNCOPE"
   ],
+  "ngừng thở khi ngủ": [
+    "ICD10:G47.30"
+  ],
+  "ngừng thở khi ngủ do tắc nghẽn": [
+    "ICD10:G47.33"
+  ],
+  "nhiễm clostridioides difficile": [
+    "ICD10:A04.72"
+  ],
+  "nhiễm clostridium difficile": [
+    "ICD10:A04.72"
+  ],
+  "nhiễm herpes simplex": [
+    "ICD10:B00.9"
+  ],
   "nhiễm khuẩn": [
     "ICD10:B99.9"
+  ],
+  "nhiễm khuẩn huyết": [
+    "ICD10:A41.9"
   ],
   "nhiễm trùng": [
     "ICD10:B99.9"
   ],
+  "nhiễm trùng huyết": [
+    "ICD10:A41.9"
+  ],
   "nhiễm trùng phổi": [
     "ICD10:J18.9"
+  ],
+  "nhiễm virus herpes simplex": [
+    "ICD10:B00.9"
   ],
   "nhoi mau co tim": [
     "ICD10:I21.9"
@@ -1151,6 +1520,12 @@
   "nontraumatic intracranial hemorrhage unspecified": [
     "ICD10:I62.9"
   ],
+  "nontraumatic subarachnoid hemorrhage unspecified": [
+    "ICD10:I60.9"
+  ],
+  "nontraumatic subdural hemorrhage unspecified": [
+    "ICD10:I62.00"
+  ],
   "ntg": [
     "RXNORM:4917"
   ],
@@ -1169,6 +1544,12 @@
   "obesity unspecified": [
     "ICD10:E66.9"
   ],
+  "obstructive sleep apnea": [
+    "ICD10:G47.33"
+  ],
+  "obstructive sleep apnea adult pediatric": [
+    "ICD10:G47.33"
+  ],
   "occlusion and stenosis of unspecified carotid artery": [
     "ICD10:I65.29"
   ],
@@ -1178,17 +1559,32 @@
   "oedema": [
     "LOCAL:SYMPTOM_EDEMA"
   ],
+  "oesophagitis": [
+    "ICD10:K20"
+  ],
   "omeprazole": [
     "RXNORM:7646"
   ],
   "open wound of abdomen": [
     "ICD10:S31.109"
   ],
+  "osa": [
+    "ICD10:G47.33"
+  ],
+  "osteomyelitis": [
+    "ICD10:M86.9"
+  ],
+  "osteomyelitis unspecified": [
+    "ICD10:M86.9"
+  ],
   "other congenital deformities of feet": [
     "ICD10:Q66.89"
   ],
   "other diseases of vocal cords": [
     "ICD10:J38.3"
+  ],
+  "other pulmonary embolism without acute cor pulmonale": [
+    "ICD10:I26.99"
   ],
   "oxycodone / acetaminophen": [
     "RXNORM:42844"
@@ -1205,8 +1601,20 @@
   "palpitations": [
     "LOCAL:SYMPTOM_PALPITATIONS"
   ],
+  "pancreatic head cancer": [
+    "ICD10:C25.0"
+  ],
   "panic disorder": [
     "ICD10:F41.0"
+  ],
+  "papilledema": [
+    "ICD10:H47.1"
+  ],
+  "papilloedema": [
+    "ICD10:H47.1"
+  ],
+  "papilloedema unspecified": [
+    "ICD10:H47.1"
   ],
   "paracetamol": [
     "RXNORM:161"
@@ -1220,20 +1628,47 @@
   "passing out": [
     "LOCAL:SYMPTOM_SYNCOPE"
   ],
+  "pe": [
+    "ICD10:I26.99"
+  ],
   "penetrating abdominal wound": [
     "ICD10:S31.109"
   ],
   "percocet": [
     "RXNORM:42844"
   ],
+  "peripheral neuropathy": [
+    "ICD10:G62.9"
+  ],
+  "peripheral vascular disease": [
+    "ICD10:I73.9"
+  ],
+  "peripheral vascular disease unspecified": [
+    "ICD10:I73.9"
+  ],
   "persistent delusional disorders": [
     "ICD10:F22"
+  ],
+  "phì đại tuyến tiền liệt": [
+    "ICD10:N40"
+  ],
+  "phình động mạch chủ": [
+    "ICD10:I71.9"
+  ],
+  "phình động mạch chủ nhỏ": [
+    "ICD10:I71.9"
   ],
   "phù": [
     "LOCAL:SYMPTOM_EDEMA"
   ],
+  "phù gai thị": [
+    "ICD10:H47.1"
+  ],
   "phù mắt cá chân": [
     "LOCAL:SYMPTOM_EDEMA"
+  ],
+  "phổi kẽ": [
+    "ICD10:J84.9"
   ],
   "phổi tắc nghẽn mạn tính": [
     "ICD10:J44.9"
@@ -1247,8 +1682,17 @@
   "piperacillin/tazobactam": [
     "RXNORM:74170"
   ],
+  "pkd": [
+    "ICD10:Q61.3"
+  ],
   "plavix": [
     "RXNORM:32968"
+  ],
+  "pleural effusion": [
+    "ICD10:J90"
+  ],
+  "pleural effusion not elsewhere classified": [
+    "ICD10:J90"
   ],
   "pna": [
     "ICD10:J18.9"
@@ -1258,6 +1702,21 @@
   ],
   "pneumonia unspecified organism": [
     "ICD10:J18.9"
+  ],
+  "polycystic kidney": [
+    "ICD10:Q61.3"
+  ],
+  "polycystic kidney disease": [
+    "ICD10:Q61.3"
+  ],
+  "polycystic kidney unspecified": [
+    "ICD10:Q61.3"
+  ],
+  "polyneuropathy": [
+    "ICD10:G62.9"
+  ],
+  "polyneuropathy unspecified": [
+    "ICD10:G62.9"
   ],
   "potassium": [
     "LOCAL:TEST_POTASSIUM"
@@ -1271,6 +1730,9 @@
   "prilosec": [
     "RXNORM:7646"
   ],
+  "primary hyperparathyroidism": [
+    "ICD10:E21.0"
+  ],
   "prinivil": [
     "RXNORM:29046"
   ],
@@ -1279,6 +1741,27 @@
   ],
   "prograf": [
     "RXNORM:42316"
+  ],
+  "prostate cancer": [
+    "ICD10:C61"
+  ],
+  "prostatic hyperplasia": [
+    "ICD10:N40"
+  ],
+  "pulmonary embolism": [
+    "ICD10:I26.99"
+  ],
+  "pulmonary hypertension": [
+    "ICD10:I27.20"
+  ],
+  "pulmonary hypertension unspecified": [
+    "ICD10:I27.20"
+  ],
+  "pvd": [
+    "ICD10:I73.9"
+  ],
+  "pyelonephritis": [
+    "ICD10:N12"
   ],
   "quetiapine": [
     "RXNORM:51272"
@@ -1343,14 +1826,38 @@
   "saba": [
     "RXNORM:435"
   ],
+  "sacoit": [
+    "ICD10:D86.85"
+  ],
   "salbutamol": [
     "RXNORM:435"
   ],
   "sandostatin": [
     "RXNORM:7617"
   ],
+  "sarcoid myocarditis": [
+    "ICD10:D86.85"
+  ],
+  "sarcoid tim": [
+    "ICD10:D86.85"
+  ],
+  "sarcoidosis tim": [
+    "ICD10:D86.85"
+  ],
   "scr": [
     "LOCAL:TEST_CREATININE"
+  ],
+  "sepsis": [
+    "ICD10:A41.9"
+  ],
+  "sepsis unspecified": [
+    "ICD10:A41.9"
+  ],
+  "sepsis unspecified organism": [
+    "ICD10:A41.9"
+  ],
+  "septicemia": [
+    "ICD10:A41.9"
   ],
   "seroquel": [
     "RXNORM:51272"
@@ -1373,6 +1880,12 @@
   "shortness of breath": [
     "LOCAL:SYMPTOM_DYSPNEA"
   ],
+  "sleep apnea": [
+    "ICD10:G47.30"
+  ],
+  "sleep apnea unspecified": [
+    "ICD10:G47.30"
+  ],
   "sob": [
     "LOCAL:SYMPTOM_DYSPNEA"
   ],
@@ -1391,6 +1904,18 @@
   "stomach pain": [
     "LOCAL:SYMPTOM_ABDOMINAL_PAIN"
   ],
+  "subarachnoid haemorrhage unspecified": [
+    "ICD10:I60.9"
+  ],
+  "subarachnoid hemorrhage": [
+    "ICD10:I60.9"
+  ],
+  "subdural hematoma": [
+    "ICD10:I62.00"
+  ],
+  "subdural hemorrhage": [
+    "ICD10:I62.00"
+  ],
   "suboxone": [
     "RXNORM:352364"
   ],
@@ -1405,6 +1930,15 @@
   ],
   "sulfamethoxazole trimethoprim": [
     "RXNORM:10831"
+  ],
+  "suy giảm miễn dịch do sử dụng corticoid": [
+    "ICD10:D84.821"
+  ],
+  "suy giảm miễn dịch do sử dụng corticoid kéo dài": [
+    "ICD10:D84.821"
+  ],
+  "suy giảm miễn dịch do thuốc": [
+    "ICD10:D84.821"
   ],
   "suy nhược": [
     "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
@@ -1517,11 +2051,23 @@
   "thoracic pain": [
     "LOCAL:SYMPTOM_CHEST_PAIN"
   ],
+  "thuyên tắc phổi": [
+    "ICD10:I26.99"
+  ],
+  "thuyên tắc phổi hai bên": [
+    "ICD10:I26.99"
+  ],
+  "thận đa nang": [
+    "ICD10:Q61.3"
+  ],
   "thắt chặt hoặc khó chịu vùng ngực": [
     "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
   ],
   "thắt chặt ngực": [
     "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
+  "thủy đậu": [
+    "ICD10:B01.9"
   ],
   "tieu duong type 2": [
     "ICD10:E11"
@@ -1586,8 +2132,26 @@
   "troponin t": [
     "LOCAL:TEST_TROPONIN"
   ],
+  "tràn dịch màng phổi": [
+    "ICD10:J90"
+  ],
+  "tràn dịch màng phổi hai bên": [
+    "ICD10:J90"
+  ],
+  "tràn dịch màng phổi trái": [
+    "ICD10:J90"
+  ],
+  "trào ngược dạ dày - thực quản": [
+    "ICD10:K21.9"
+  ],
   "trào ngược dạ dày thực quản": [
     "ICD10:K21.9"
+  ],
+  "trào ngược dạ dày- thực quản": [
+    "ICD10:K21.9"
+  ],
+  "tubulo-interstitial nephritis not specified as acute or chronic": [
+    "ICD10:N12"
   ],
   "tylenol": [
     "RXNORM:161"
@@ -1604,6 +2168,12 @@
   "tách động mạch chủ": [
     "ICD10:I71.00"
   ],
+  "tăng calci máu": [
+    "ICD10:E83.52"
+  ],
+  "tăng canxi máu": [
+    "ICD10:E83.52"
+  ],
   "tăng cholesterol máu": [
     "ICD10:E78.5"
   ],
@@ -1616,8 +2186,26 @@
   "tăng huyết áp": [
     "ICD10:I10"
   ],
+  "tăng kali": [
+    "ICD10:E87.5"
+  ],
+  "tăng kali máu": [
+    "ICD10:E87.5"
+  ],
   "tăng lipid máu": [
     "ICD10:E78.5"
+  ],
+  "tăng sản tuyến tiền liệt": [
+    "ICD10:N40"
+  ],
+  "tăng áp phổi": [
+    "ICD10:I27.20"
+  ],
+  "tăng áp phổi động mạch": [
+    "ICD10:I27.20"
+  ],
+  "tăng áp động mạch phổi": [
+    "ICD10:I27.20"
   ],
   "tắc động mạch cảnh": [
     "ICD10:I65.29"
@@ -1628,14 +2216,68 @@
   "tổn thương thận cấp": [
     "ICD10:N17.9"
   ],
+  "tụ máu dưới màng cứng": [
+    "ICD10:I62.00"
+  ],
   "tức ngực": [
     "LOCAL:SYMPTOM_CHEST_PAIN"
+  ],
+  "u cơ trơn tử cung": [
+    "ICD10:D25.9"
+  ],
+  "u sacoit": [
+    "ICD10:D86.85"
+  ],
+  "u xơ tử cung": [
+    "ICD10:D25.9"
+  ],
+  "u ác của tuyến tiền liệt": [
+    "ICD10:C61"
+  ],
+  "u ác của đại tràng": [
+    "ICD10:C18.9"
+  ],
+  "u ác của đầu tuỵ": [
+    "ICD10:C25.0"
+  ],
+  "u ác của đầu tụy": [
+    "ICD10:C25.0"
   ],
   "u ác phổi": [
     "ICD10:C34"
   ],
+  "u ác tuyến tiền liệt": [
+    "ICD10:C61"
+  ],
   "u ác tính": [
     "ICD10:C80.1"
+  ],
+  "u ác tính tuyến tiền liệt": [
+    "ICD10:C61"
+  ],
+  "u ác tính đầu tụy": [
+    "ICD10:C25.0"
+  ],
+  "u ác đại tràng": [
+    "ICD10:C18.9"
+  ],
+  "u ác đầu tuỵ": [
+    "ICD10:C25.0"
+  ],
+  "u ác đầu tụy": [
+    "ICD10:C25.0"
+  ],
+  "ulcer of esophagus": [
+    "ICD10:K22.1"
+  ],
+  "ulcer of oesophagus": [
+    "ICD10:K22.1"
+  ],
+  "ulcerative colitis": [
+    "ICD10:K51.9"
+  ],
+  "ulcerative colitis unspecified": [
+    "ICD10:K51.9"
   ],
   "ung thư": [
     "ICD10:C80.1"
@@ -1648,6 +2290,33 @@
   ],
   "ung thư phổi": [
     "ICD10:C34"
+  ],
+  "ung thư tuyến tiền liệt": [
+    "ICD10:C61"
+  ],
+  "ung thư vú": [
+    "ICD10:C50.919"
+  ],
+  "ung thư vú di căn": [
+    "ICD10:C50.919"
+  ],
+  "ung thư vú trái": [
+    "ICD10:C50.912"
+  ],
+  "ung thư vú trái giai iiib": [
+    "ICD10:C50.912"
+  ],
+  "ung thư đại tràng": [
+    "ICD10:C18.9"
+  ],
+  "ung thư đầu tuỵ": [
+    "ICD10:C25.0"
+  ],
+  "ung thư đầu tụy": [
+    "ICD10:C25.0"
+  ],
+  "unspecified atherosclerosis": [
+    "ICD10:I70.90"
   ],
   "unspecified atrial fibrillation": [
     "ICD10:I48.91"
@@ -1663,6 +2332,9 @@
   ],
   "unspecified urinary incontinence": [
     "ICD10:R32"
+  ],
+  "unstable angina": [
+    "ICD10:I20.0"
   ],
   "ure": [
     "LOCAL:TEST_BUN"
@@ -1691,6 +2363,9 @@
   "uterine contractions": [
     "LOCAL:SYMPTOM_UTERINE_CONTRACTIONS"
   ],
+  "uterine leiomyoma": [
+    "ICD10:D25.9"
+  ],
   "vaginal prolapse": [
     "ICD10:N81.9"
   ],
@@ -1699,6 +2374,15 @@
   ],
   "vancomycin": [
     "RXNORM:11124"
+  ],
+  "varicella": [
+    "ICD10:B01.9"
+  ],
+  "varicella without complication": [
+    "ICD10:B01.9"
+  ],
+  "varicella zoster virus": [
+    "ICD10:B02.9"
   ],
   "ventolin": [
     "RXNORM:435"
@@ -1709,11 +2393,110 @@
   "vicodin": [
     "RXNORM:214182"
   ],
+  "viral gastroenteritis": [
+    "ICD10:A08.4"
+  ],
+  "viral hepatitis b": [
+    "ICD10:B18.1"
+  ],
+  "viral hepatitis c": [
+    "ICD10:B18.2"
+  ],
+  "viral intestinal infection unspecified": [
+    "ICD10:A08.4"
+  ],
+  "viêm bể thận": [
+    "ICD10:N12"
+  ],
+  "viêm bể thận cấp": [
+    "ICD10:N10"
+  ],
+  "viêm bể thận không đặc hiệu": [
+    "ICD10:N12"
+  ],
+  "viêm dạ dày": [
+    "ICD10:K29.7"
+  ],
+  "viêm dạ dày không đặc hiệu": [
+    "ICD10:K29.7"
+  ],
+  "viêm dạ dày ruột do virus": [
+    "ICD10:A08.4"
+  ],
+  "viêm dạ dày ruột virus": [
+    "ICD10:A08.4"
+  ],
+  "viêm gan siêu vi b": [
+    "ICD10:B18.1"
+  ],
+  "viêm gan siêu vi c": [
+    "ICD10:B18.2"
+  ],
+  "viêm gan virus b": [
+    "ICD10:B18.1"
+  ],
+  "viêm gan virus b mạn tính": [
+    "ICD10:B18.1"
+  ],
+  "viêm gan virus c": [
+    "ICD10:B18.2"
+  ],
+  "viêm gan virus c mạn tính": [
+    "ICD10:B18.2"
+  ],
+  "viêm loét đại tràng": [
+    "ICD10:K51.9"
+  ],
+  "viêm mô tế bào": [
+    "ICD10:L03.90"
+  ],
+  "viêm phế quản": [
+    "ICD10:J40"
+  ],
+  "viêm phế quản không đặc hiệu": [
+    "ICD10:J40"
+  ],
   "viêm phổi": [
     "ICD10:J18.9"
   ],
   "viêm phổi cộng đồng": [
     "ICD10:J18.9"
+  ],
+  "viêm thận bể thận cấp": [
+    "ICD10:N10"
+  ],
+  "viêm thực quản": [
+    "ICD10:K20"
+  ],
+  "viêm thực quản độ c": [
+    "ICD10:K20"
+  ],
+  "viêm túi mật": [
+    "ICD10:K81.9"
+  ],
+  "viêm túi mật cấp": [
+    "ICD10:K81.0"
+  ],
+  "viêm túi mật cấp tính": [
+    "ICD10:K81.0"
+  ],
+  "viêm túi mật cấp tính không biến chứng": [
+    "ICD10:K81.0"
+  ],
+  "viêm túi mật không biến chứng": [
+    "ICD10:K81.9"
+  ],
+  "viêm túi mật không đặc hiệu": [
+    "ICD10:K81.9"
+  ],
+  "viêm túi mật thủng cấp tính": [
+    "ICD10:K81.0"
+  ],
+  "viêm tủy xương": [
+    "ICD10:M86.9"
+  ],
+  "viêm xương tủy": [
+    "ICD10:M86.9"
   ],
   "vocal cord disease": [
     "ICD10:J38.3"
@@ -1723,6 +2506,9 @@
   ],
   "vomiting": [
     "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "vzv": [
+    "ICD10:B02.9"
   ],
   "vết thương thấu bụng": [
     "ICD10:S31.109"
@@ -1751,6 +2537,12 @@
   "white blood cells": [
     "LOCAL:TEST_WBC"
   ],
+  "white matter disease": [
+    "ICD10:R90.82"
+  ],
+  "white matter disease unspecified": [
+    "ICD10:R90.82"
+  ],
   "x quang ngực": [
     "LOCAL:TEST_XRAY"
   ],
@@ -1759,6 +2551,12 @@
   ],
   "x-ray": [
     "LOCAL:TEST_XRAY"
+  ],
+  "xuất huyết dưới nhện": [
+    "ICD10:I60.9"
+  ],
+  "xuất huyết dưới nhện vùng trán phải": [
+    "ICD10:I60.9"
   ],
   "xuất huyết nội sọ": [
     "ICD10:I62.9"
@@ -1774,6 +2572,18 @@
   ],
   "xơ gan rượu": [
     "ICD10:K70.3"
+  ],
+  "xơ vữa động mạch": [
+    "ICD10:I70.90"
+  ],
+  "xẹp phổi": [
+    "ICD10:J98.11"
+  ],
+  "xẹp phổi hai đáy": [
+    "ICD10:J98.11"
+  ],
+  "xẹp phổi thùy dưới phải": [
+    "ICD10:J98.11"
   ],
   "xỉu": [
     "LOCAL:SYMPTOM_SYNCOPE"
@@ -1817,6 +2627,18 @@
   "zithromax": [
     "RXNORM:18631"
   ],
+  "zona": [
+    "ICD10:B02.9"
+  ],
+  "zoster": [
+    "ICD10:B02.9"
+  ],
+  "zoster without complication": [
+    "ICD10:B02.9"
+  ],
+  "zoster without complications": [
+    "ICD10:B02.9"
+  ],
   "zosyn": [
     "RXNORM:74170"
   ],
@@ -1832,11 +2654,23 @@
   "ý định tự tử": [
     "ICD10:R45.851"
   ],
+  "đa u tuỷ xương": [
+    "ICD10:C90.0"
+  ],
+  "đa u tủy": [
+    "ICD10:C90.0"
+  ],
+  "đa u tủy xương": [
+    "ICD10:C90.0"
+  ],
   "đau bụng": [
     "LOCAL:SYMPTOM_ABDOMINAL_PAIN"
   ],
   "đau ngực": [
     "LOCAL:SYMPTOM_CHEST_PAIN"
+  ],
+  "đau thắt ngực không ổn định": [
+    "ICD10:I20.0"
   ],
   "đau đầu": [
     "LOCAL:SYMPTOM_HEADACHE"
