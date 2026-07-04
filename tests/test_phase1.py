@@ -164,6 +164,75 @@ def test_prediction_to_phase1_entities_does_not_expand_drug_into_prior_duration(
     assert validate_phase1_entities(rows, text) == []
 
 
+def test_prediction_to_phase1_entities_exports_negated_historical_multilabel() -> None:
+    text = "Không có tiền sử hen phế quản."
+    prediction = ClinicalPrediction.from_text(
+        "1",
+        text,
+        [_entity("E1", text, "hen phế quản", EntityType.DISEASE, assertion=AssertionStatus.NEGATED)],
+        [],
+        "test",
+    )
+
+    rows = prediction_to_phase1_entities(prediction, source_text=text)
+
+    assert rows[0]["assertions"] == ["isNegated", "isHistorical"]
+    assert validate_phase1_entities(rows, text) == []
+
+
+def test_prediction_to_phase1_entities_exports_negated_family_history_multilabel() -> None:
+    text = "Không có tiền sử gia đình ung thư phổi."
+    prediction = ClinicalPrediction.from_text(
+        "1",
+        text,
+        [_entity("E1", text, "ung thư phổi", EntityType.DISEASE, assertion=AssertionStatus.NEGATED)],
+        [],
+        "test",
+    )
+
+    rows = prediction_to_phase1_entities(prediction, source_text=text)
+
+    assert rows[0]["assertions"] == ["isNegated", "isFamily", "isHistorical"]
+    assert validate_phase1_entities(rows, text) == []
+
+
+def test_prediction_to_phase1_entities_does_not_treat_current_history_header_as_historical() -> None:
+    text = "Tiền sử bệnh hiện tại Lý do nhập viện: đau bụng."
+    prediction = ClinicalPrediction.from_text(
+        "1",
+        text,
+        [_entity("E1", text, "đau bụng", EntityType.SYMPTOM, assertion=AssertionStatus.PRESENT)],
+        [],
+        "test",
+    )
+
+    rows = prediction_to_phase1_entities(prediction, source_text=text)
+
+    assert rows[0]["assertions"] == []
+    assert validate_phase1_entities(rows, text) == []
+
+
+def test_prediction_to_phase1_entities_limits_allergy_history_overlay_to_drugs() -> None:
+    text = "Dị ứng: Dị ứng furosemide. Tiền sử bệnh hiện tại Lý do nhập viện: khó thở."
+    prediction = ClinicalPrediction.from_text(
+        "1",
+        text,
+        [
+            _entity("E1", text, "furosemide", EntityType.DRUG, assertion=AssertionStatus.PRESENT),
+            _entity("E2", text, "khó thở", EntityType.SYMPTOM, assertion=AssertionStatus.PRESENT),
+        ],
+        [],
+        "test",
+    )
+
+    rows = prediction_to_phase1_entities(prediction, source_text=text)
+    by_text = {row["text"]: row for row in rows}
+
+    assert by_text["furosemide"]["assertions"] == ["isHistorical"]
+    assert by_text["khó thở"]["assertions"] == []
+    assert validate_phase1_entities(rows, text) == []
+
+
 def test_validate_phase1_entities_blocks_schema_offset_and_candidate_violations() -> None:
     text = "Bệnh nhân ho."
     row = {

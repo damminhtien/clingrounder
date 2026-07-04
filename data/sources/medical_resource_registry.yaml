@@ -45,6 +45,14 @@ resources:
     license: nlm_rxnorm_terms
     use: rxnorm_drug_codes
     notes: Use RxNorm identifiers and normalized names; full release terms must be respected.
+  - id: rxnav_rest_2026_07_04
+    name: RxNav REST API lookups on 2026-07-04
+    category: terminology
+    access: open_with_terms
+    url: https://rxnav.nlm.nih.gov/RxNormAPIs.html
+    license: nlm_rxnorm_terms
+    use: phase1_drug_alias_rxcui_curation
+    notes: Manual curation batch for Phase 1 drug mentions found in local input files.
   - id: medlineplus_xml
     name: MedlinePlus Health Topic XML
     category: patient_education_text

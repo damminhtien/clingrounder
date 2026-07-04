@@ -34,11 +34,12 @@ class PipelineRunner:
         self,
         dictionary_path: str | Path = "data/dictionaries/seed_concepts.jsonl",
         abbreviation_path: str | Path = "data/dictionaries/abbreviations.jsonl",
+        alias_overlay_path: str | Path | None = "data/dictionaries/vietnamese_medical_alias.jsonl",
         pipeline_version: str = "0.1.0",
         options: PipelineOptions | None = None,
     ) -> None:
         self.options = options or PipelineOptions()
-        self.store = DictionaryStore.from_jsonl(dictionary_path)
+        self.store = DictionaryStore.from_jsonl(dictionary_path, alias_overlay_path=alias_overlay_path)
         self.ner = RuleBasedNER(self.store)
         self.linker = EntityLinker(
             CandidateGenerator(

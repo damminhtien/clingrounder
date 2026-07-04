@@ -50,6 +50,30 @@ def test_vietnamese_medical_alias_maps_to_icd_code() -> None:
     assert gerd[0].code == "K21.9"
 
 
+def test_dictionary_alias_overlay_expands_runtime_candidate_lookup(tmp_path) -> None:
+    alias_path = tmp_path / "aliases.jsonl"
+    alias_path.write_text(
+        json.dumps(
+            {
+                "alias": "đái đường",
+                "target_concept_id": "ICD10:E11",
+                "semantic_type": "DISEASE",
+            },
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl", alias_overlay_path=alias_path)
+    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+
+    candidates = generator.generate("đái đường", EntityType.DISEASE)
+
+    assert candidates[0].code == "E11"
+    assert candidates[0].code_system == CodeSystem.ICD10
+    assert all(candidate.code_system != CodeSystem.RXNORM for candidate in candidates)
+
+
 def test_rxnorm_drug_fields_expand_aliases_without_icd_leakage() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
@@ -113,6 +137,36 @@ def test_phase1_frequent_drug_terms_map_to_rxnorm() -> None:
     assert prednisone[0].code == "8640"
     assert doxycycline[0].code == "3640"
     assert all(candidate.code_system == CodeSystem.RXNORM for candidate in lasix)
+
+
+def test_phase1_ontology_lite_drug_terms_map_to_rxnorm() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+
+    expected = {
+        "gleevec": "282388",
+        "allopurinol": "519",
+        "cellcept": "68149",
+        "torsemide": "38413",
+        "glargine": "274783",
+        "crestor": "301542",
+        "methadone": "6813",
+        "plavix": "32968",
+        "augmentin": "151392",
+        "amiodarone": "703",
+        "colace": "82003",
+        "bactrim": "10831",
+        "heparin": "5224",
+        "dilaudid": "3423",
+        "toradol": "35827",
+        "ertapenem": "325642",
+        "nac": "197",
+    }
+
+    for mention, code in expected.items():
+        candidates = generator.generate(mention, EntityType.DRUG)
+        assert candidates[0].code == code
+        assert all(candidate.code_system == CodeSystem.RXNORM for candidate in candidates)
 
 
 def test_phase1_frequent_symptom_and_lab_terms_are_dictionary_constrained() -> None:

@@ -9,6 +9,10 @@ from pathlib import Path
 from typing import Any, cast
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.ontology.phase1_assertions import (
+    Phase1AssertionOverlay,
+    load_phase1_assertion_overlays,
+)
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.output import ClinicalPrediction
@@ -31,6 +35,7 @@ _PHASE1_ASSERTION_BY_STATUS = {
     AssertionStatus.FAMILY: "isFamily",
     AssertionStatus.HISTORICAL: "isHistorical",
 }
+_PHASE1_ASSERTION_OVERLAYS: tuple[Phase1AssertionOverlay, ...] = load_phase1_assertion_overlays()
 _DRUG_EXTENSION_MAX_CHARS = 96
 _DRUG_EXTENSION_STOP_RE = re.compile(
     r"\s*(?:cho|vì|do|để|không|nhưng|tuy nhiên|with|for|due\s+to|because)\b",
@@ -138,7 +143,7 @@ def entity_to_phase1(
     return {
         "text": text,
         "type": phase1_type,
-        "assertions": _phase1_assertions(entity.assertion) if phase1_type in PHASE1_ASSERTABLE_TYPES else [],
+        "assertions": _phase1_assertions(entity, source_text) if phase1_type in PHASE1_ASSERTABLE_TYPES else [],
         "candidates": _phase1_candidates(entity, phase1_type, max_candidates=max_candidates),
         "position": [span[0], span[1]],
     }
@@ -591,9 +596,16 @@ def _phase1_by_document(
     }
 
 
-def _phase1_assertions(assertion: AssertionStatus) -> list[str]:
-    value = _PHASE1_ASSERTION_BY_STATUS.get(assertion)
-    return [value] if value else []
+def _phase1_assertions(entity: EntityAnnotation, source_text: str | None) -> list[str]:
+    labels: set[str] = set()
+    value = _PHASE1_ASSERTION_BY_STATUS.get(entity.assertion)
+    if value:
+        labels.add(value)
+    if source_text is not None:
+        for overlay in _PHASE1_ASSERTION_OVERLAYS:
+            if overlay.matches(source_text, entity.span, entity_type=entity.type.value):
+                labels.add(overlay.assertion)
+    return [label for label in PHASE1_ALLOWED_ASSERTIONS if label in labels]
 
 
 def _phase1_text_and_span(

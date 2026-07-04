@@ -2,6 +2,7 @@ from __future__ import annotations
 import json
 from collections import defaultdict
 from collections.abc import Mapping
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -22,7 +23,12 @@ class DictionaryStore:
                 self.toneless_alias_index[normalize_for_match(alias, strip_diacritics=True)].append(entry)
 
     @classmethod
-    def from_jsonl(cls, path: str | Path) -> "DictionaryStore":
+    def from_jsonl(
+        cls,
+        path: str | Path,
+        *,
+        alias_overlay_path: str | Path | None = None,
+    ) -> "DictionaryStore":
         entries: list[ConceptEntry] = []
         with Path(path).open("r", encoding="utf-8") as handle:
             for line in handle:
@@ -52,6 +58,7 @@ class DictionaryStore:
                         blocked_aliases=_string_tuple(row, "blocked_aliases"),
                     )
                 )
+        entries = _apply_alias_overlays(entries, alias_overlay_path)
         return cls(entries)
 
     def exact_lookup(self, mention: str) -> list[ConceptEntry]:
@@ -94,3 +101,48 @@ def _parents(row: Mapping[str, Any]) -> tuple[str, ...]:
     if parent_code is not None and parent_code not in parents:
         parents.append(parent_code)
     return tuple(parents)
+
+
+def _apply_alias_overlays(
+    entries: list[ConceptEntry],
+    alias_overlay_path: str | Path | None,
+) -> list[ConceptEntry]:
+    if alias_overlay_path is None:
+        return entries
+    path = Path(alias_overlay_path)
+    if not path.exists():
+        return entries
+    by_concept_id = {entry.concept_id: entry for entry in entries}
+    aliases_by_concept_id: dict[str, list[str]] = defaultdict(list)
+    with path.open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            if not isinstance(row, dict):
+                raise ValueError(f"{path}:{line_number}: expected JSON object.")
+            target_concept_id = str(row.get("target_concept_id", "")).strip()
+            alias = str(row.get("alias", "")).strip()
+            if not target_concept_id or not alias:
+                raise ValueError(f"{path}:{line_number}: target_concept_id and alias are required.")
+            if target_concept_id not in by_concept_id:
+                continue
+            aliases_by_concept_id[target_concept_id].append(alias)
+    if not aliases_by_concept_id:
+        return entries
+
+    updated: list[ConceptEntry] = []
+    for entry in entries:
+        overlay_aliases = aliases_by_concept_id.get(entry.concept_id)
+        if not overlay_aliases:
+            updated.append(entry)
+            continue
+        existing = {alias.casefold().strip() for alias in entry.all_names}
+        aliases = list(entry.aliases)
+        for alias in overlay_aliases:
+            key = alias.casefold().strip()
+            if key and key not in existing:
+                aliases.append(alias)
+                existing.add(key)
+        updated.append(replace(entry, aliases=tuple(aliases)))
+    return updated

@@ -11,6 +11,9 @@
   "acetaminophen": [
     "RXNORM:161"
   ],
+  "acetylcysteine": [
+    "RXNORM:197"
+  ],
   "acetylsalicylic acid": [
     "RXNORM:1191"
   ],
@@ -59,17 +62,32 @@
   "alcoholic cirrhosis of liver": [
     "ICD10:K70.3"
   ],
+  "allopurinol": [
+    "RXNORM:519"
+  ],
   "alt": [
     "LOCAL:TEST_ALT"
   ],
   "ami": [
     "ICD10:I21.9"
   ],
+  "amiodarone": [
+    "RXNORM:703"
+  ],
   "amoxicillin": [
     "RXNORM:723"
   ],
+  "amoxicillin / clavulanate": [
+    "RXNORM:151392"
+  ],
+  "amoxicillin clavulanate": [
+    "RXNORM:151392"
+  ],
   "amoxicillin trihydrate": [
     "RXNORM:723"
+  ],
+  "amoxicillin/clavulanate": [
+    "RXNORM:151392"
   ],
   "amoxil": [
     "RXNORM:723"
@@ -139,6 +157,12 @@
   ],
   "atrial fibrillation": [
     "ICD10:I48.91"
+  ],
+  "augmentin": [
+    "RXNORM:151392"
+  ],
+  "bactrim": [
+    "RXNORM:10831"
   ],
   "bayer aspirin": [
     "RXNORM:1191"
@@ -302,8 +326,14 @@
   "carotid artery stenosis": [
     "ICD10:I65.29"
   ],
+  "carvedilol": [
+    "RXNORM:20352"
+  ],
   "catapres": [
     "RXNORM:2599"
+  ],
+  "cellcept": [
+    "RXNORM:68149"
   ],
   "cephalalgia": [
     "LOCAL:SYMPTOM_HEADACHE"
@@ -362,14 +392,26 @@
   "chóng mặt": [
     "LOCAL:SYMPTOM_DIZZINESS"
   ],
+  "cipro": [
+    "RXNORM:2551"
+  ],
+  "ciprofloxacin": [
+    "RXNORM:2551"
+  ],
   "ckd": [
     "ICD10:N18.9"
   ],
   "clonidine": [
     "RXNORM:2599"
   ],
+  "clopidogrel": [
+    "RXNORM:32968"
+  ],
   "clubfoot": [
     "ICD10:Q66.89"
+  ],
+  "colace": [
+    "RXNORM:82003"
   ],
   "congenital foot deformity": [
     "ICD10:Q66.89"
@@ -379,6 +421,12 @@
   ],
   "copd": [
     "ICD10:J44.9"
+  ],
+  "cordarone": [
+    "RXNORM:703"
+  ],
+  "coreg": [
+    "RXNORM:20352"
   ],
   "coronary artery disease": [
     "ICD10:I25.10"
@@ -407,6 +455,9 @@
   "creatinine blood test": [
     "LOCAL:TEST_CREATININE"
   ],
+  "crestor": [
+    "RXNORM:301542"
+  ],
   "cvd": [
     "ICD10:I51.9"
   ],
@@ -431,11 +482,17 @@
   "delusional disorder": [
     "ICD10:F22"
   ],
+  "demadex": [
+    "RXNORM:38413"
+  ],
   "diarrhea": [
     "LOCAL:SYMPTOM_DIARRHEA"
   ],
   "diarrhoea": [
     "LOCAL:SYMPTOM_DIARRHEA"
+  ],
+  "dilaudid": [
+    "RXNORM:3423"
   ],
   "dimethylbiguanide": [
     "RXNORM:6809"
@@ -451,6 +508,12 @@
   ],
   "dm2": [
     "ICD10:E11"
+  ],
+  "docusate": [
+    "RXNORM:82003"
+  ],
+  "dolophine": [
+    "RXNORM:6813"
   ],
   "doxycycline": [
     "RXNORM:3640"
@@ -476,6 +539,9 @@
   "emesis": [
     "LOCAL:SYMPTOM_NAUSEA_VOMITING"
   ],
+  "ertapenem": [
+    "RXNORM:325642"
+  ],
   "essential hypertension": [
     "ICD10:I10"
   ],
@@ -496,6 +562,9 @@
   ],
   "fever": [
     "LOCAL:SYMPTOM_FEVER"
+  ],
+  "flagyl": [
+    "RXNORM:6922"
   ],
   "foot ulcer": [
     "ICD10:L97.509"
@@ -529,6 +598,12 @@
   ],
   "giọng khàn": [
     "LOCAL:SYMPTOM_HOARSENESS"
+  ],
+  "glargine": [
+    "RXNORM:274783"
+  ],
+  "gleevec": [
+    "RXNORM:282388"
   ],
   "glucophage": [
     "RXNORM:6809"
@@ -590,6 +665,12 @@
   "hen phế quản": [
     "ICD10:J45"
   ],
+  "heparin": [
+    "RXNORM:5224"
+  ],
+  "heparin sodium": [
+    "RXNORM:5224"
+  ],
   "hepatic encephalopathy": [
     "ICD10:K76.82"
   ],
@@ -620,6 +701,9 @@
   "htn": [
     "ICD10:I10"
   ],
+  "hydromorphone": [
+    "RXNORM:3423"
+  ],
   "hyperlipidemia": [
     "ICD10:E78.5"
   ],
@@ -644,6 +728,9 @@
   "hội chứng não gan": [
     "ICD10:K76.82"
   ],
+  "imatinib": [
+    "RXNORM:282388"
+  ],
   "infection": [
     "ICD10:B99.9"
   ],
@@ -653,8 +740,23 @@
   "inr": [
     "LOCAL:TEST_INR"
   ],
+  "insulin glargine": [
+    "RXNORM:274783"
+  ],
   "international normalized ratio": [
     "LOCAL:TEST_INR"
+  ],
+  "invanz": [
+    "RXNORM:325642"
+  ],
+  "isosorbide": [
+    "RXNORM:6057"
+  ],
+  "isosorbide dinitrate": [
+    "RXNORM:6057"
+  ],
+  "isosorbide mononitrate": [
+    "RXNORM:6057"
   ],
   "k": [
     "LOCAL:TEST_POTASSIUM"
@@ -664,6 +766,9 @@
   ],
   "kali": [
     "LOCAL:TEST_POTASSIUM"
+  ],
+  "ketorolac": [
+    "RXNORM:35827"
   ],
   "khàn tiếng": [
     "LOCAL:SYMPTOM_HOARSENESS"
@@ -688,6 +793,9 @@
   ],
   "kidney stone": [
     "ICD10:N20.0"
+  ],
+  "lantus": [
+    "RXNORM:274783"
   ],
   "lasix": [
     "RXNORM:4603"
@@ -770,6 +878,9 @@
   "metformin hydrochloride": [
     "RXNORM:6809"
   ],
+  "methadone": [
+    "RXNORM:6813"
+  ],
   "metoprolol": [
     "RXNORM:6918"
   ],
@@ -779,14 +890,23 @@
   "metoprolol tartrate": [
     "RXNORM:6918"
   ],
+  "metronidazole": [
+    "RXNORM:6922"
+  ],
   "mi": [
     "ICD10:I21.9"
   ],
   "mood disorder": [
     "ICD10:F39"
   ],
+  "morphine": [
+    "RXNORM:7052"
+  ],
   "multiple fractures of ribs left side": [
     "ICD10:S22.42"
+  ],
+  "mycophenolate mofetil": [
+    "RXNORM:68149"
   ],
   "myocardial infarction": [
     "ICD10:I21.9"
@@ -797,8 +917,14 @@
   "mệt mỏi và yếu": [
     "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
   ],
+  "n-acetylcysteine": [
+    "RXNORM:197"
+  ],
   "n/v": [
     "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "nac": [
+    "RXNORM:197"
   ],
   "nausea": [
     "LOCAL:SYMPTOM_NAUSEA_VOMITING"
@@ -932,6 +1058,9 @@
   "phổi tắc nghẽn mạn tính": [
     "ICD10:J44.9"
   ],
+  "plavix": [
+    "RXNORM:32968"
+  ],
   "pna": [
     "ICD10:J18.9"
   ],
@@ -967,6 +1096,9 @@
   ],
   "rib fracture": [
     "ICD10:S22.42"
+  ],
+  "rosuvastatin": [
+    "RXNORM:301542"
   ],
   "rung nhĩ": [
     "ICD10:I48.91"
@@ -1045,6 +1177,12 @@
   ],
   "suicidal ideations": [
     "ICD10:R45.851"
+  ],
+  "sulfamethoxazole / trimethoprim": [
+    "RXNORM:10831"
+  ],
+  "sulfamethoxazole trimethoprim": [
+    "RXNORM:10831"
   ],
   "suy nhược": [
     "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
@@ -1172,11 +1310,17 @@
   "tiểu tiện không tự chủ": [
     "ICD10:R32"
   ],
+  "tiểu đường": [
+    "ICD10:E11"
+  ],
   "tiểu đường type 2": [
     "ICD10:E11"
   ],
   "tiểu đường týp 2": [
     "ICD10:E11"
+  ],
+  "tmp-smx": [
+    "RXNORM:10831"
   ],
   "tni": [
     "LOCAL:TEST_TROPONIN"
@@ -1190,11 +1334,20 @@
   "toprol xl": [
     "RXNORM:6918"
   ],
+  "toradol": [
+    "RXNORM:35827"
+  ],
+  "torsemide": [
+    "RXNORM:38413"
+  ],
   "total bilirubin": [
     "LOCAL:TEST_BILIRUBIN"
   ],
   "trao nguoc da day thuc quan": [
     "ICD10:K21.9"
+  ],
+  "trimethoprim sulfamethoxazole": [
+    "RXNORM:10831"
   ],
   "troponin": [
     "LOCAL:TEST_TROPONIN"
@@ -1417,6 +1570,9 @@
   ],
   "zestril": [
     "RXNORM:29046"
+  ],
+  "zyloprim": [
+    "RXNORM:519"
   ],
   "ói": [
     "LOCAL:SYMPTOM_NAUSEA_VOMITING"

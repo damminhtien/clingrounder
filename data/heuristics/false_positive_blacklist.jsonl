@@ -1,0 +1,4 @@
+{"alias":"ho","right_initial_uppercase":true,"context_radius":12,"notes":"Blocks phase-1 translated history-list artifact such as 'ho Rung nhĩ' while preserving true lowercase cough mentions."}
+{"alias":"ung thư","context_regex":"kháng\\s+nguyên\\s+ung\\s+thư\\s+phôi","context_radius":24,"notes":"Blocks cancer mention inside CEA lab-name expansion."}
+{"alias":"yếu","left_regex":"chủ\\s*$","context_radius":12,"notes":"Blocks adjective fragment in 'chủ yếu'."}
+{"alias":"yếu","right_regex":"^\\s*tố(?!\\w)","context_radius":12,"notes":"Blocks factor noun phrase in 'yếu tố'."}

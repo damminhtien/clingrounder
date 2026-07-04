@@ -3,6 +3,21 @@ from medical_kg_nlp.ner.rule_ner import RuleBasedNER
 from medical_kg_nlp.schema.types import EntityType
 
 
+def test_rule_ner_applies_data_driven_false_positive_blacklist(tmp_path) -> None:
+    blacklist_path = tmp_path / "blacklist.jsonl"
+    blacklist_path.write_text(
+        '{"alias":"đau bụng","left_regex":"mẫu\\\\s*$","context_radius":20}\n',
+        encoding="utf-8",
+    )
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    entities = RuleBasedNER(store, false_positive_path=blacklist_path).extract("mẫu đau bụng. Đau bụng thật.")
+
+    abdominal_pain = [entity for entity in entities if entity.normalized_text == "đau bụng"]
+
+    assert len(abdominal_pain) == 1
+    assert abdominal_pain[0].text == "Đau bụng"
+
+
 def test_rule_ner_does_not_export_medication_dose_as_lab_result() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     entities = RuleBasedNER(store).extract("Dùng metoprolol 25mg. HbA1c 7.2%. Creatinine 1.4 mg/dL.")

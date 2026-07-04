@@ -18,8 +18,12 @@ def main() -> None:
     args = parser.parse_args()
     config = read_yaml(args.config)
     dictionary_path = Path(config["dictionaries"]["seed_dictionary"])
+    alias_overlay_path = config["dictionaries"].get("vietnamese_alias_table")
     index_path = Path(config["indexes"]["lexical_index"])
-    store = DictionaryStore.from_jsonl(dictionary_path)
+    store = DictionaryStore.from_jsonl(
+        dictionary_path,
+        alias_overlay_path=Path(str(alias_overlay_path)) if alias_overlay_path else None,
+    )
     index: dict[str, list[str]] = {}
     for entry in store.entries:
         for alias in entry.all_names:

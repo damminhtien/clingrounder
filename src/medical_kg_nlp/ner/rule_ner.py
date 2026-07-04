@@ -1,7 +1,9 @@
 from __future__ import annotations
 import re
+from pathlib import Path
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.ontology.false_positive import DEFAULT_FALSE_POSITIVE_PATH, FalsePositiveRule, load_false_positive_rules
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
 from medical_kg_nlp.utils.text import normalize_for_match
@@ -16,9 +18,15 @@ _HBA1C_RE = re.compile(r"(?<!\w)HbA1c\s*\d+(?:\.\d+)?%(?!\w)", flags=re.IGNORECA
 
 
 class RuleBasedNER:
-    def __init__(self, store: DictionaryStore) -> None:
+    def __init__(
+        self,
+        store: DictionaryStore,
+        *,
+        false_positive_path: str | Path | None = DEFAULT_FALSE_POSITIVE_PATH,
+    ) -> None:
         self.store = store
         self.aliases = store.aliases_for_ner()
+        self.false_positive_rules: tuple[FalsePositiveRule, ...] = load_false_positive_rules(false_positive_path)
 
     def extract(self, text: str) -> list[EntityAnnotation]:
         spans: list[EntityAnnotation] = []
@@ -73,8 +81,9 @@ class RuleBasedNER:
     def _overlaps(span: tuple[int, int], occupied: list[tuple[int, int]]) -> bool:
         return any(span[0] < old_end and old_start < span[1] for old_start, old_end in occupied)
 
-    @staticmethod
-    def _blocked_contextual_alias(alias: str, text: str, span: tuple[int, int]) -> bool:
+    def _blocked_contextual_alias(self, alias: str, text: str, span: tuple[int, int]) -> bool:
+        if any(rule.blocks(alias, text, span) for rule in self.false_positive_rules):
+            return True
         normalized_alias = normalize_for_match(alias)
         if normalized_alias == "ho":
             right = text[span[1] : min(len(text), span[1] + 12)]
