@@ -35,3 +35,22 @@ def test_rule_ner_prefers_long_phase1_symptom_spans() -> None:
     assert by_text["phù mắt cá chân"].type == EntityType.SYMPTOM
     assert "khó thở" not in by_text
     assert "phù" not in by_text
+
+
+def test_rule_ner_blocks_phase1_history_of_ho_artifact_before_disease_name() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    text = "Các bệnh lý mạn tính - ho Rung nhĩ. Triệu chứng hiện tại - ho khan, ho đánh thức và ho mạn tính."
+    entities = RuleBasedNER(store).extract(text)
+    cough_spans = [entity.span for entity in entities if entity.text.lower() == "ho" and entity.type == EntityType.SYMPTOM]
+
+    assert cough_spans == [(59, 61), (68, 70), (84, 86)]
+    assert any(entity.text == "Rung nhĩ" and entity.type == EntityType.DISEASE for entity in entities)
+
+
+def test_rule_ner_blocks_cancer_inside_cea_lab_name_but_keeps_real_cancer_mentions() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    text = "CEA (kháng nguyên ung thư phôi) tăng nhẹ. Tiền sử ung thư đại tràng."
+    entities = RuleBasedNER(store).extract(text)
+    cancer_spans = [entity.span for entity in entities if entity.text.lower() == "ung thư" and entity.type == EntityType.DISEASE]
+
+    assert cancer_spans == [(50, 57)]

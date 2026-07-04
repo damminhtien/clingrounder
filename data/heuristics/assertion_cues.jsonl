@@ -14,6 +14,7 @@
 {"cue":"không thấy","assertion":"NEGATED","language":"vi","scope":"left","source_ids":["negex","seed"],"notes":"Vietnamese not-seen cue."}
 {"cue":"âm tính với","assertion":"NEGATED","language":"vi","scope":"left","source_ids":["negex","seed"],"notes":"Vietnamese negative-for cue."}
 {"cue":"phủ nhận","assertion":"NEGATED","language":"vi","scope":"left","source_ids":["negex","seed"],"notes":"Vietnamese denies cue."}
+{"cue":"loại trừ","assertion":"NEGATED","language":"vi","scope":"left","source_ids":["negex","seed"],"notes":"Vietnamese ruled-out cue; protected from không loại trừ by the false-positive pattern."}
 {"cue":"không có","assertion":"NEGATED","language":"vi","scope":"left","source_ids":["negex","seed"],"notes":"Generic Vietnamese absent cue."}
 {"cue":"không","assertion":"NEGATED","language":"vi","scope":"left","source_ids":["negex","seed"],"notes":"Generic Vietnamese negation; broad cue, rely on clause scope."}
 {"cue":"chưa","assertion":"NEGATED","language":"vi","scope":"left","source_ids":["negex","seed"],"notes":"Vietnamese not-yet cue."}

@@ -75,7 +75,15 @@ class RuleBasedNER:
 
     @staticmethod
     def _blocked_contextual_alias(alias: str, text: str, span: tuple[int, int]) -> bool:
-        if normalize_for_match(alias) != "yếu":
+        normalized_alias = normalize_for_match(alias)
+        if normalized_alias == "ho":
+            right = text[span[1] : min(len(text), span[1] + 12)]
+            right_token = right.lstrip()
+            return bool(right_token and right_token[0].isalpha() and right_token[0].isupper())
+        if normalized_alias == "ung thư":
+            context = text[max(0, span[0] - 20) : min(len(text), span[1] + 20)].lower()
+            return bool(re.search(r"kháng\s+nguyên\s+ung\s+thư\s+phôi", context, flags=re.UNICODE))
+        if normalized_alias != "yếu":
             return False
         left = text[max(0, span[0] - 8) : span[0]].lower()
         right = text[span[1] : min(len(text), span[1] + 8)].lower()

@@ -46,6 +46,16 @@ def test_possible_rule_overrides_negation_phrase() -> None:
     assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.POSSIBLE
 
 
+def test_vietnamese_ruled_out_cue_is_negated_but_not_khong_loai_tru() -> None:
+    ruled_out, ruled_out_sentence = _entity("Đã loại trừ nhồi máu cơ tim.", "nhồi máu cơ tim")
+    possible, possible_sentence = _entity("Không loại trừ nhồi máu cơ tim.", "nhồi máu cơ tim")
+
+    classifier = AssertionClassifier()
+
+    assert classifier.classify(ruled_out, ruled_out_sentence) == AssertionStatus.NEGATED
+    assert classifier.classify(possible, possible_sentence) == AssertionStatus.POSSIBLE
+
+
 def test_non_specific_phrase_does_not_negate_condition() -> None:
     entity, sentence = _entity("Hình ảnh không đặc hiệu cho viêm phổi.", "viêm phổi")
     assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.PRESENT
@@ -130,3 +140,19 @@ def test_possible_clause_does_not_leak_to_confirmed_condition() -> None:
 
     assert classifier.classify(possible, sentence) == AssertionStatus.POSSIBLE
     assert classifier.classify(confirmed, sentence) == AssertionStatus.PRESENT
+
+
+def test_historical_section_prior_overrides_possible_cue_for_phase1_pmh() -> None:
+    text = "nghi ngờ xơ gan do rượu"
+    sentence = Sentence(span=(0, len(text)), text=text, section_title="Các bệnh lý mạn tính")
+    entity = _entity_in_sentence(text, "xơ gan do rượu")
+
+    assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.HISTORICAL
+
+
+def test_negation_still_overrides_historical_section_prior() -> None:
+    text = "không có viêm phổi"
+    sentence = Sentence(span=(0, len(text)), text=text, section_title="Các bệnh lý mạn tính")
+    entity = _entity_in_sentence(text, "viêm phổi")
+
+    assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.NEGATED

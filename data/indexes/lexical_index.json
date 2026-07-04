@@ -155,6 +155,12 @@
   "bg": [
     "LOCAL:TEST_GLUCOSE"
   ],
+  "bile duct calculus": [
+    "ICD10:K80.50"
+  ],
+  "bile duct stone": [
+    "ICD10:K80.50"
+  ],
   "bilirubin": [
     "LOCAL:TEST_BILIRUBIN"
   ],
@@ -263,6 +269,12 @@
   "cad": [
     "ICD10:I25.10"
   ],
+  "calculus of bile duct without cholangitis or cholecystitis without obstruction": [
+    "ICD10:K80.50"
+  ],
+  "calculus of gallbladder without cholecystitis without obstruction": [
+    "ICD10:K80.20"
+  ],
   "calculus of kidney": [
     "ICD10:N20.0"
   ],
@@ -316,6 +328,12 @@
   ],
   "chf": [
     "ICD10:I50.9"
+  ],
+  "choledocholithiasis": [
+    "ICD10:K80.50"
+  ],
+  "cholelithiasis": [
+    "ICD10:K80.20"
   ],
   "choáng váng": [
     "LOCAL:SYMPTOM_DIZZINESS"
@@ -487,6 +505,12 @@
   ],
   "furosemide": [
     "RXNORM:4603"
+  ],
+  "gallstone": [
+    "ICD10:K80.20"
+  ],
+  "gallstones": [
+    "ICD10:K80.20"
   ],
   "gastro-esophageal reflux disease without esophagitis": [
     "ICD10:K21.9"
@@ -1058,6 +1082,9 @@
   "sỏi": [
     "ICD10:N20.9"
   ],
+  "sỏi mật": [
+    "ICD10:K80.20"
+  ],
   "sỏi thận": [
     "ICD10:N20.0"
   ],
@@ -1067,8 +1094,32 @@
   "sỏi tiết niệu không đặc hiệu": [
     "ICD10:N20.9"
   ],
+  "sỏi túi mật": [
+    "ICD10:K80.20"
+  ],
+  "sỏi túi mật không viêm túi mật không tắc nghẽn": [
+    "ICD10:K80.20"
+  ],
+  "sỏi đoạn cuối ống mật chủ": [
+    "ICD10:K80.50"
+  ],
   "sỏi đường tiết niệu": [
     "ICD10:N20.9"
+  ],
+  "sỏi ống dẫn mật": [
+    "ICD10:K80.50"
+  ],
+  "sỏi ống dẫn mật chung": [
+    "ICD10:K80.50"
+  ],
+  "sỏi ống mật": [
+    "ICD10:K80.50"
+  ],
+  "sỏi ống mật chủ": [
+    "ICD10:K80.50"
+  ],
+  "sỏi ống mật không viêm đường mật hoặc túi mật không tắc nghẽn": [
+    "ICD10:K80.50"
   ],
   "sốt": [
     "LOCAL:SYMPTOM_FEVER"

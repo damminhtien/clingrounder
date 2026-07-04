@@ -59,3 +59,17 @@ def test_pipeline_phase1_preadmission_status_section_is_historical() -> None:
     assert by_text["khó thở"].assertion == AssertionStatus.NEGATED
     assert by_text["buồn nôn"].assertion == AssertionStatus.NEGATED
     assert by_text["chóng mặt"].assertion == AssertionStatus.NEGATED
+
+
+def test_pipeline_phase1_chronic_conditions_section_overrides_possible_cue() -> None:
+    prediction = PipelineRunner().process_text(
+        "phase1-chronic-possible-history",
+        "1. Tiền sử bệnh nội khoa\n"
+        "Các bệnh lý mãn tính: nghi ngờ xơ gan do rượu\n"
+        "2. Tiền sử bệnh hiện tại\n"
+        "Triệu chứng hiện tại: hội chứng não gan\n",
+    )
+    by_text = {entity.text: entity for entity in prediction.entities}
+
+    assert by_text["xơ gan do rượu"].assertion == AssertionStatus.HISTORICAL
+    assert by_text["hội chứng não gan"].assertion == AssertionStatus.PRESENT

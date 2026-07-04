@@ -162,6 +162,20 @@ def test_phase1_missed_terms_expand_ner_and_candidate_recall() -> None:
     assert atenolol[0].code == "1202"
 
 
+def test_phase1_biliary_stone_terms_prefer_specific_icd10_codes() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+
+    gallstone = generator.generate("sỏi mật", EntityType.DISEASE)
+    bile_duct_stone = generator.generate("sỏi ống mật", EntityType.DISEASE)
+    distal_bile_duct_stone = generator.generate("sỏi đoạn cuối ống mật chủ", EntityType.DISEASE)
+
+    assert gallstone[0].code == "K80.20"
+    assert bile_duct_stone[0].code == "K80.50"
+    assert distal_bile_duct_stone[0].code == "K80.50"
+    assert all(candidate.code_system == CodeSystem.ICD10 for candidate in gallstone)
+
+
 def test_phase1_empty_file_terms_expand_recall() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")

@@ -61,11 +61,10 @@ class AssertionClassifier:
         entity_end = entity.span[1] - sentence.span[0] if sentence else entity_start
         left_context = self._local_left_context(sentence_text, max(entity_start, 0))
         right_context = self._local_right_context(sentence_text, max(entity_end, 0))
+        section_prior = self._section_prior(sentence)
 
         if self._contains_family(left_context, right_context):
             return AssertionStatus.FAMILY
-        if self._contains(left_context, POSSIBLE_CUES) or self._contains(right_context, POSSIBLE_CUES):
-            return AssertionStatus.POSSIBLE
         if self._contains_negation(left_context):
             return AssertionStatus.NEGATED
         if self._contains_coordinated_negation(sentence_text, max(entity_start, 0)):
@@ -76,11 +75,17 @@ class AssertionClassifier:
             return AssertionStatus.PLANNED
         if self._contains(left_context, RESOLVED_CUES):
             return AssertionStatus.RESOLVED
-        if sentence and sentence.section_title:
-            prior = SECTION_PRIORS.get(sentence.section_title.lower().strip())
-            if prior is not None:
-                return prior
+        if section_prior is not None:
+            return section_prior
+        if self._contains(left_context, POSSIBLE_CUES) or self._contains(right_context, POSSIBLE_CUES):
+            return AssertionStatus.POSSIBLE
         return AssertionStatus.PRESENT
+
+    @staticmethod
+    def _section_prior(sentence: Sentence | None) -> AssertionStatus | None:
+        if sentence is None or not sentence.section_title:
+            return None
+        return SECTION_PRIORS.get(sentence.section_title.lower().strip())
 
     @staticmethod
     def _local_left_context(text: str, entity_start: int) -> str:
