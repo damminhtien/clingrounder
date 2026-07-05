@@ -1,0 +1,24 @@
+{
+  "icd10_vn": {
+    "source_id": "icd10_vn_tt06_2026",
+    "source": "TT 06/2026/TT-BYT",
+    "issuing_body": "Bộ Y tế",
+    "issued_date": "2026-04-02",
+    "effective_date": "2026-07-01",
+    "primary_file": "06-byt-kem.pdf",
+    "lookup_source_ids": ["icd_kcb_vn"],
+    "reference_source_ids": ["who_icd10_2019"],
+    "non_primary_source_ids": ["cdc_icd10cm_2026"],
+    "notes": "Phase 1 ICD candidates should use Vietnamese ICD-10 labels from TT 06/2026/TT-BYT or reviewed KCB extracts. CDC ICD-10-CM is not a primary source."
+  },
+  "rxnorm": {
+    "source": "NLM RxNorm",
+    "release_date": "2026-06-01",
+    "primary_source_id": "rxnorm_prescribable_2026_06_01",
+    "primary_file": "RxNorm_full_prescribe_06012026.zip",
+    "fallback_source_id": "rxnorm_full_2026_06_01",
+    "fallback_file": "RxNorm_full_06012026.zip",
+    "tty_priority": ["SCD", "SBD", "IN", "PIN", "MIN", "SCDF", "SBDF", "GPCK", "BPCK"],
+    "notes": "Use prescribable RxNorm as the primary drug dictionary and full monthly release as fallback coverage."
+  }
+}

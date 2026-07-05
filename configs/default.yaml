@@ -8,6 +8,7 @@ dictionaries:
   abbreviation_table: "data/dictionaries/abbreviations.jsonl"
   vietnamese_alias_table: "data/dictionaries/vietnamese_medical_alias.jsonl"
   source_registry: "data/sources/medical_resource_registry.yaml"
+  standard_versions: "data/standards/source_versions.json"
   assertion_cue_table: "data/heuristics/assertion_cues.jsonl"
 
 indexes:

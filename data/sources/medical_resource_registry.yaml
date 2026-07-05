@@ -7,6 +7,16 @@ resources:
     license: project
     use: runtime_seed
     notes: Hand-curated bootstrap rows maintained in this repository.
+  - id: icd10_vn_tt06_2026
+    name: ICD-10 tiếng Việt theo TT 06/2026/TT-BYT
+    category: terminology
+    access: open_official_pdf
+    url: https://vanban.chinhphu.vn/?docid=217536&pageid=27160
+    download_urls:
+      - https://vanban.chinhphu.vn/?docid=217536&pageid=27160
+    license: vietnam_government_document
+    use: phase1_icd10_vietnamese_primary
+    notes: Primary ICD source for Viettel Phase 1; use reviewed structured extracts of 06-byt-kem.pdf.
   - id: cdc_icd10cm_2026
     name: CDC ICD-10-CM FY 2026 files
     category: terminology
@@ -16,8 +26,8 @@ resources:
       - https://ftp.cdc.gov/pub/Health_Statistics/NCHS/Publications/ICD10CM/2026-update/icd10cm-Code%20Descriptions-April-1-2026.zip
       - https://ftp.cdc.gov/pub/Health_Statistics/NCHS/Publications/ICD10CM/2026-update/icd10cm-April-1-2026-XML.zip
     license: us_government_public_resource
-    use: icd10_code_descriptions_and_tabular_xml
-    notes: Official ICD-10-CM download page; use code descriptions and XML releases.
+    use: icd10cm_reference_only_not_phase1_primary
+    notes: US ICD-10-CM reference only. Do not use as the primary Vietnamese ICD-10 source for Phase 1.
   - id: who_icd10_2019
     name: WHO ICD-10 2019 ClaML and browser
     category: terminology
@@ -27,24 +37,44 @@ resources:
       - https://icdcdn.who.int/icd10/claml/icd102019en.xml.zip
       - https://icdcdn.who.int/icd10/meta/icd102019enMeta.zip
     license: who_terms_apply
-    use: icd10_hierarchy_reference
-    notes: Reference source for ICD hierarchy and stable disease grouping.
+    use: icd10_hierarchy_reference_not_vietnamese_primary
+    notes: Reference source for ICD hierarchy and stable disease grouping, not the primary Vietnamese label source.
   - id: icd_kcb_vn
     name: Vietnamese ICD-10 lookup
     category: terminology
     access: open_manual_review
     url: https://icd.kcb.vn/
     license: verify_before_bulk_use
-    use: vietnamese_icd_labels
-    notes: Use only manually reviewed Vietnamese labels and aliases in committed seed rows.
+    use: vietnamese_icd_labels_tt06_lookup
+    notes: Use manually reviewed Vietnamese labels and aliases; align new bulk extracts to TT 06/2026/TT-BYT.
+  - id: rxnorm_prescribable_2026_06_01
+    name: RxNorm Current Prescribable Content Monthly Release June 1 2026
+    category: terminology
+    access: open_with_terms
+    url: https://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html
+    download_urls:
+      - https://download.nlm.nih.gov/umls/kss/rxnorm/RxNorm_full_prescribe_06012026.zip
+    license: nlm_rxnorm_terms
+    use: phase1_rxnorm_primary_drug_codes
+    notes: Primary RxNorm source for Phase 1 drug candidates; parse RXNCONSO/RXNREL/RXNSAT.
+  - id: rxnorm_full_2026_06_01
+    name: RxNorm Full Monthly Release June 1 2026
+    category: terminology
+    access: open_with_terms_or_umls
+    url: https://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html
+    download_urls:
+      - https://download.nlm.nih.gov/umls/kss/rxnorm/RxNorm_full_06012026.zip
+    license: nlm_rxnorm_terms
+    use: phase1_rxnorm_fallback_drug_codes
+    notes: Fallback coverage when prescribable content misses a legitimate medication mention.
   - id: rxnorm_current
     name: RxNorm current release and RxNav API
     category: terminology
     access: open_with_terms
     url: https://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html
     license: nlm_rxnorm_terms
-    use: rxnorm_drug_codes
-    notes: Use RxNorm identifiers and normalized names; full release terms must be respected.
+    use: rxnorm_generic_current_pointer
+    notes: Generic current-release pointer; Phase 1 locked source is June 1 2026 in data/standards/source_versions.json.
   - id: rxnav_rest_2026_07_04
     name: RxNav REST API lookups on 2026-07-04
     category: terminology

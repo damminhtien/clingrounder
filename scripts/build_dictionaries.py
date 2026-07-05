@@ -23,6 +23,10 @@ def main() -> None:
     source_ids: set[str] = set()
     if source_registry:
         source_ids = _validate_source_registry(Path(str(source_registry)))
+    standard_versions = config["dictionaries"].get("standard_versions")
+    standard_version_count = 0
+    if standard_versions:
+        standard_version_count = _validate_standard_versions(Path(str(standard_versions)), source_ids)
     store = DictionaryStore.from_jsonl(dictionary_path)
     dictionary_source_count = _validate_dictionary_sources(dictionary_path, source_ids)
     alias_count = 0
@@ -40,6 +44,7 @@ def main() -> None:
         "aliases": sum(len(entry.all_names) for entry in store.entries),
         "assertion_cues": cue_count,
         "dictionary_source_links": dictionary_source_count,
+        "standard_versions": standard_version_count,
         "source_registry_entries": len(source_ids),
         "vietnamese_aliases": alias_count,
     }
@@ -112,6 +117,51 @@ def _validate_assertion_cue_table(path: Path, known_source_ids: set[str]) -> int
         if unknown:
             raise ValueError(f"{path}:{index}: unknown source ids {unknown}")
     return len(cues)
+
+
+def _validate_standard_versions(path: Path, known_source_ids: set[str]) -> int:
+    if not path.exists():
+        raise ValueError(f"standard versions file not found: {path}")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"{path}: expected mapping")
+
+    icd10 = _required_mapping(payload, "icd10_vn", path)
+    rxnorm = _required_mapping(payload, "rxnorm", path)
+    _require_source_id(path, "icd10_vn.source_id", icd10.get("source_id"), known_source_ids)
+    _require_source_id(path, "rxnorm.primary_source_id", rxnorm.get("primary_source_id"), known_source_ids)
+    _require_source_id(path, "rxnorm.fallback_source_id", rxnorm.get("fallback_source_id"), known_source_ids)
+    for key in ("issued_date", "effective_date", "primary_file"):
+        if not str(icd10.get(key, "")).strip():
+            raise ValueError(f"{path}: icd10_vn.{key} is required")
+    for key in ("release_date", "primary_file", "fallback_file"):
+        if not str(rxnorm.get(key, "")).strip():
+            raise ValueError(f"{path}: rxnorm.{key} is required")
+    for key in ("lookup_source_ids", "reference_source_ids", "non_primary_source_ids"):
+        _require_source_ids(path, f"icd10_vn.{key}", icd10.get(key), known_source_ids)
+    return len(payload)
+
+
+def _required_mapping(payload: dict[str, object], key: str, path: Path) -> dict[str, object]:
+    value = payload.get(key)
+    if not isinstance(value, dict):
+        raise ValueError(f"{path}: {key} must be a mapping")
+    return value
+
+
+def _require_source_ids(path: Path, key: str, value: object, known_source_ids: set[str]) -> None:
+    if not isinstance(value, list):
+        raise ValueError(f"{path}: {key} must be a list")
+    for item in value:
+        _require_source_id(path, key, item, known_source_ids)
+
+
+def _require_source_id(path: Path, key: str, value: object, known_source_ids: set[str]) -> None:
+    source_id = str(value or "").strip()
+    if not source_id:
+        raise ValueError(f"{path}: {key} is required")
+    if known_source_ids and source_id not in known_source_ids:
+        raise ValueError(f"{path}: {key} has unknown source id {source_id!r}")
 
 
 def _row_source_ids(row: dict[str, object]) -> set[str]:

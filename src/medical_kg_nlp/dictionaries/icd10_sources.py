@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import csv
+import io
 import json
 import re
+import unicodedata
 import zipfile
 from collections import defaultdict
 from collections.abc import Iterable, Iterator, Mapping, Sequence
@@ -14,13 +17,58 @@ from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.utils.io import read_jsonl, write_jsonl
 
 
+ICD10_VN_TT06_2026_SOURCE_ID = "icd10_vn_tt06_2026"
 WHO_ICD10_2019_SOURCE_ID = "who_icd10_2019"
 CDC_ICD10CM_2026_SOURCE_ID = "cdc_icd10cm_2026"
 ICD_KCB_VN_SOURCE_ID = "icd_kcb_vn"
+ICD10_VN_TT06_2026_SOURCE = {
+    "source_id": ICD10_VN_TT06_2026_SOURCE_ID,
+    "source": "TT 06/2026/TT-BYT",
+    "issued_date": "2026-04-02",
+    "effective_date": "2026-07-01",
+    "primary_file": "06-byt-kem.pdf",
+}
 
 _ICD10_CATEGORY_RE = re.compile(r"^[A-Z][0-9]{2}(?:\.[0-9A-Z]+)?$")
 _CDC_LINE_RE = re.compile(r"^(?P<code>[A-TV-Z][0-9][0-9A-Z](?:\.?[0-9A-Z]{1,4})?)\s+(?P<name>.+)$")
 _SPACE_RE = re.compile(r"\s+")
+_FIELD_KEY_RE = re.compile(r"[^0-9a-z]+")
+_ICD10_CODE_KEYS = frozenset(
+    {
+        "code",
+        "icd_code",
+        "icd10_code",
+        "ma",
+        "ma_benh",
+        "ma_icd",
+        "ma_icd10",
+        "ma_icd_10",
+    }
+)
+_ICD10_VI_NAME_KEYS = frozenset(
+    {
+        "official_name_vi",
+        "title_vi",
+        "name_vi",
+        "ten",
+        "ten_benh",
+        "ten_benh_tat",
+        "chan_doan",
+        "diagnosis_vi",
+        "mo_ta",
+    }
+)
+_ICD10_EN_NAME_KEYS = frozenset(
+    {
+        "official_name_en",
+        "title_en",
+        "name_en",
+        "english_name",
+        "diagnosis_en",
+    }
+)
+_ICD10_ALIAS_KEYS = frozenset({"alias", "aliases", "synonym", "synonyms", "ten_khac"})
+_ICD10_PARENT_KEYS = frozenset({"parent", "parent_code", "ma_cha", "block", "chapter"})
 
 
 @dataclass(frozen=True)
@@ -30,6 +78,7 @@ class ICD10SourceConcept:
     source_id: str
     parent_code: str | None = None
     aliases: tuple[str, ...] = ()
+    official_name_vi: str | None = None
 
 
 @dataclass(frozen=True)
@@ -103,6 +152,35 @@ def parse_cdc_icd10cm_tabular_xml(path: str | Path) -> list[ICD10SourceConcept]:
     return sorted(concepts.values(), key=lambda concept: concept.code)
 
 
+def parse_icd10_vn_tt06_table(path: str | Path) -> list[ICD10SourceConcept]:
+    """Parse a local structured extract of TT 06/2026/TT-BYT ICD-10 rows.
+
+    The official source is a PDF appendix. This parser intentionally accepts reviewed local
+    extracts in JSON/JSONL/CSV/TSV form instead of trying to infer table structure from arbitrary
+    PDFs. Required fields are an ICD-10 code and a Vietnamese disease name. Optional fields include
+    English name, parent/block, and aliases.
+    """
+    concepts: dict[str, ICD10SourceConcept] = {}
+    for row in _iter_structured_rows(path):
+        code = _format_icd10_code(str(_row_value(row, _ICD10_CODE_KEYS) or ""))
+        if not _is_icd10_category_code(code):
+            continue
+        official_name_vi = _optional_clean_string(_row_value(row, _ICD10_VI_NAME_KEYS))
+        official_name_en = _optional_clean_string(_row_value(row, _ICD10_EN_NAME_KEYS))
+        if official_name_vi is None:
+            continue
+        aliases = _structured_aliases(row)
+        concepts[code] = ICD10SourceConcept(
+            code=code,
+            official_name_en=official_name_en or official_name_vi,
+            official_name_vi=official_name_vi,
+            source_id=ICD10_VN_TT06_2026_SOURCE_ID,
+            parent_code=_optional_parent_code(_row_value(row, _ICD10_PARENT_KEYS)) or _parent_code(code),
+            aliases=tuple(_unique(aliases)),
+        )
+    return sorted(concepts.values(), key=lambda concept: concept.code)
+
+
 def load_icd10_vietnamese_overlays(path: str | Path) -> list[ICD10AliasOverlay]:
     """Load curated Vietnamese ICD labels/aliases.
 
@@ -139,7 +217,12 @@ def build_icd10_concept_rows(
     source_concepts: Iterable[ICD10SourceConcept],
     overlays: Iterable[ICD10AliasOverlay] = (),
     *,
-    source_priority: Sequence[str] = (WHO_ICD10_2019_SOURCE_ID, CDC_ICD10CM_2026_SOURCE_ID),
+    source_priority: Sequence[str] = (
+        ICD10_VN_TT06_2026_SOURCE_ID,
+        ICD_KCB_VN_SOURCE_ID,
+        WHO_ICD10_2019_SOURCE_ID,
+        CDC_ICD10CM_2026_SOURCE_ID,
+    ),
 ) -> list[dict[str, Any]]:
     priority = {source_id: index for index, source_id in enumerate(source_priority)}
     merged: dict[str, _MergedICD10Concept] = {}
@@ -151,14 +234,18 @@ def build_icd10_concept_rows(
         if current is None:
             current = _MergedICD10Concept(
                 code=concept.code,
-                canonical_name=concept.official_name_en,
+                canonical_name=concept.official_name_vi or concept.official_name_en,
                 official_name_en=concept.official_name_en,
+                official_name_vi=concept.official_name_vi,
                 source=concept.source_id,
                 parent_code=concept.parent_code,
             )
             merged[concept.code] = current
         else:
-            current.synonyms.append(concept.official_name_en)
+            if concept.official_name_en != current.official_name_en:
+                current.synonyms.append(concept.official_name_en)
+            if concept.official_name_vi is not None and current.official_name_vi is None:
+                current.official_name_vi = concept.official_name_vi
             if current.parent_code is None:
                 current.parent_code = concept.parent_code
         current.source_ids.add(concept.source_id)
@@ -216,6 +303,7 @@ def write_icd10_import_manifest(
             source_counts[source_id] += 1
     manifest = {
         "concepts": len(rows),
+        "source_policy": icd10_source_policy(),
         "source_parse_counts": [dict(count) for count in source_parse_counts],
         "source_inputs": list(source_inputs),
         "source_counts": dict(sorted(source_counts.items())),
@@ -225,6 +313,19 @@ def write_icd10_import_manifest(
     with output_path.open("w", encoding="utf-8") as handle:
         json.dump(manifest, handle, ensure_ascii=False, indent=2, sort_keys=True)
     return manifest
+
+
+def icd10_source_policy() -> dict[str, Any]:
+    return {
+        "primary_source": dict(ICD10_VN_TT06_2026_SOURCE),
+        "lookup_source_ids": [ICD_KCB_VN_SOURCE_ID],
+        "reference_source_ids": [WHO_ICD10_2019_SOURCE_ID],
+        "non_primary_source_ids": [CDC_ICD10CM_2026_SOURCE_ID],
+        "notes": (
+            "For Phase 1, Vietnamese ICD-10 labels should come from TT 06/2026/TT-BYT "
+            "or reviewed KCB extracts. CDC ICD-10-CM is not the primary source."
+        ),
+    }
 
 
 @dataclass
@@ -258,6 +359,56 @@ def _iter_text_lines(path: str | Path) -> Iterator[str]:
         return
     with input_path.open("r", encoding="utf-8-sig") as handle:
         yield from handle
+
+
+def _iter_structured_rows(path: str | Path) -> Iterator[Mapping[str, Any]]:
+    input_path = Path(path)
+    if input_path.suffix.lower() == ".zip":
+        with zipfile.ZipFile(input_path) as archive:
+            for name in sorted(archive.namelist()):
+                if not name.lower().endswith((".json", ".jsonl", ".csv", ".tsv", ".txt")):
+                    continue
+                text = archive.read(name).decode("utf-8-sig", errors="replace")
+                yield from _structured_rows_from_text(name, text)
+        return
+    yield from _structured_rows_from_text(input_path.name, input_path.read_text(encoding="utf-8-sig"))
+
+
+def _structured_rows_from_text(name: str, text: str) -> Iterator[Mapping[str, Any]]:
+    lower_name = name.lower()
+    if lower_name.endswith(".jsonl"):
+        for line in text.splitlines():
+            if line.strip():
+                row = json.loads(line)
+                if isinstance(row, dict):
+                    yield row
+        return
+    if lower_name.endswith(".json"):
+        payload = json.loads(text)
+        if isinstance(payload, list):
+            for row in payload:
+                if isinstance(row, dict):
+                    yield row
+        elif isinstance(payload, dict):
+            rows = payload.get("rows")
+            if isinstance(rows, list):
+                for row in rows:
+                    if isinstance(row, dict):
+                        yield row
+        return
+
+    delimiter = "\t" if lower_name.endswith(".tsv") else _sniff_delimiter(text)
+    reader = csv.DictReader(io.StringIO(text), delimiter=delimiter)
+    for row in reader:
+        yield row
+
+
+def _sniff_delimiter(text: str) -> str:
+    sample = text[:4096]
+    try:
+        return csv.Sniffer().sniff(sample, delimiters=",\t;").delimiter
+    except csv.Error:
+        return "\t" if "\t" in sample else ","
 
 
 def _parse_cdc_description_line(line: str) -> tuple[str, str] | None:
@@ -354,6 +505,38 @@ def _code_from_overlay_row(row: Mapping[str, Any]) -> str | None:
     return code if _is_icd10_category_code(code) else None
 
 
+def _row_value(row: Mapping[str, Any], keys: set[str] | frozenset[str]) -> Any:
+    normalized = {_normalize_field_key(str(key)): value for key, value in row.items()}
+    for key in keys:
+        value = normalized.get(key)
+        if value not in (None, ""):
+            return value
+    return None
+
+
+def _structured_aliases(row: Mapping[str, Any]) -> list[str]:
+    aliases: list[str] = []
+    normalized = {_normalize_field_key(str(key)): value for key, value in row.items()}
+    for key in _ICD10_ALIAS_KEYS:
+        value = normalized.get(key)
+        aliases.extend(_alias_values(value))
+    return [_clean_label(alias) for alias in aliases if _clean_label(alias)]
+
+
+def _alias_values(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list | tuple):
+        return [str(item) for item in value]
+    return [part for part in re.split(r"[;|]", str(value)) if part.strip()]
+
+
+def _normalize_field_key(key: str) -> str:
+    decomposed = unicodedata.normalize("NFD", key)
+    without_accents = "".join(char for char in decomposed if unicodedata.category(char) != "Mn")
+    return _FIELD_KEY_RE.sub("_", without_accents.casefold()).strip("_")
+
+
 def _overlay_aliases(row: Mapping[str, Any]) -> list[str]:
     aliases: list[str] = []
     alias = _optional_clean_string(row.get("alias"))
@@ -376,6 +559,16 @@ def _optional_clean_string(value: Any) -> str | None:
         return None
     cleaned = _clean_label(str(value))
     return cleaned or None
+
+
+def _optional_parent_code(value: Any) -> str | None:
+    raw_value = _optional_clean_string(value)
+    if raw_value is None:
+        return None
+    code = _format_icd10_code(raw_value)
+    if _is_icd10_category_code(code) or "-" in code:
+        return code
+    return None
 
 
 def _row_source_ids(row: Mapping[str, Any]) -> set[str]:

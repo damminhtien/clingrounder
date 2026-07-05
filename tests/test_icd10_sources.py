@@ -6,10 +6,13 @@ from pathlib import Path
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.icd10_sources import (
+    ICD10_VN_TT06_2026_SOURCE_ID,
     build_icd10_concept_rows,
+    icd10_source_policy,
     load_icd10_vietnamese_overlays,
     parse_cdc_icd10cm_descriptions,
     parse_cdc_icd10cm_tabular_xml,
+    parse_icd10_vn_tt06_table,
     parse_who_icd10_claml,
     write_icd10_concept_rows,
 )
@@ -104,6 +107,69 @@ def test_parse_cdc_icd10cm_tabular_xml_keeps_nested_parent_and_inclusions(
     assert by_code["E11.9"].official_name_en == "Type 2 diabetes mellitus without complications"
 
 
+def test_parse_icd10_vn_tt06_structured_extract_keeps_vietnamese_primary_name(
+    tmp_path: Path,
+) -> None:
+    tt06_path = tmp_path / "tt06.jsonl"
+    tt06_path.write_text(
+        json.dumps(
+            {
+                "ma_benh": "E11",
+                "ten_benh": "Đái tháo đường không phụ thuộc insulin",
+                "official_name_en": "Type 2 diabetes mellitus",
+                "aliases": ["đái tháo đường type 2", "tiểu đường type 2"],
+                "parent_code": "E10-E14",
+            },
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    concepts = parse_icd10_vn_tt06_table(tt06_path)
+
+    assert len(concepts) == 1
+    concept = concepts[0]
+    assert concept.source_id == ICD10_VN_TT06_2026_SOURCE_ID
+    assert concept.code == "E11"
+    assert concept.official_name_vi == "Đái tháo đường không phụ thuộc insulin"
+    assert concept.official_name_en == "Type 2 diabetes mellitus"
+    assert concept.parent_code == "E10-E14"
+    assert concept.aliases == ("đái tháo đường type 2", "tiểu đường type 2")
+
+
+def test_build_icd10_concept_rows_prefers_tt06_over_cdc_for_phase1(tmp_path: Path) -> None:
+    cdc_path = tmp_path / "cdc.txt"
+    cdc_path.write_text("E11 Type 2 diabetes mellitus\n", encoding="utf-8")
+    tt06_path = tmp_path / "tt06.jsonl"
+    tt06_path.write_text(
+        json.dumps(
+            {
+                "code": "E11",
+                "official_name_vi": "Đái tháo đường không phụ thuộc insulin",
+                "official_name_en": "Type 2 diabetes mellitus",
+            },
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    rows = build_icd10_concept_rows(
+        [
+            *parse_cdc_icd10cm_descriptions(cdc_path),
+            *parse_icd10_vn_tt06_table(tt06_path),
+        ]
+    )
+
+    diabetes = rows[0]
+    assert diabetes["code"] == "E11"
+    assert diabetes["canonical_name"] == "Đái tháo đường không phụ thuộc insulin"
+    assert diabetes["official_name_vi"] == "Đái tháo đường không phụ thuộc insulin"
+    assert diabetes["source"] == ICD10_VN_TT06_2026_SOURCE_ID
+    assert diabetes["source_ids"] == ["cdc_icd10cm_2026", ICD10_VN_TT06_2026_SOURCE_ID]
+
+
 def test_build_icd10_concept_rows_merges_sources_and_vietnamese_aliases(
     tmp_path: Path,
 ) -> None:
@@ -185,6 +251,7 @@ def test_import_icd10_dictionary_cli_accepts_source_zips(tmp_path: Path) -> None
             str(who_zip),
             "--cdc-xml",
             str(cdc_zip),
+            "--allow-non-vietnamese-primary",
             "--output",
             str(output_path),
             "--manifest",
@@ -206,6 +273,65 @@ def test_import_icd10_dictionary_cli_accepts_source_zips(tmp_path: Path) -> None
         {"concepts": 3, "parser": "cdc_xml", "path": str(cdc_zip)},
     ]
     assert output_path.exists()
+
+
+def test_import_icd10_dictionary_cli_accepts_tt06_primary_source(tmp_path: Path) -> None:
+    tt06_path = tmp_path / "tt06.csv"
+    tt06_path.write_text(
+        "code,official_name_vi,official_name_en,aliases,parent_code\n"
+        "J18.9,\"Viêm phổi, không xác định\",\"Pneumonia, unspecified\",\"viêm phổi|VP\",J18\n",
+        encoding="utf-8",
+    )
+    output_path = tmp_path / "icd10.jsonl"
+    manifest_path = tmp_path / "manifest.json"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/import_icd10_dictionary.py",
+            "--icd10-vn-tt06",
+            str(tt06_path),
+            "--output",
+            str(output_path),
+            "--manifest",
+            str(manifest_path),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    summary = json.loads(result.stdout)
+    row = json.loads(output_path.read_text(encoding="utf-8").splitlines()[0])
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert summary["source_policy"] == icd10_source_policy()
+    assert row["canonical_name"] == "Viêm phổi, không xác định"
+    assert row["source"] == ICD10_VN_TT06_2026_SOURCE_ID
+    assert manifest["source_counts"][ICD10_VN_TT06_2026_SOURCE_ID] == 1
+
+
+def test_import_icd10_dictionary_cli_rejects_non_vietnamese_primary_by_default(
+    tmp_path: Path,
+) -> None:
+    cdc_path = tmp_path / "cdc_descriptions.txt"
+    cdc_path.write_text("E11 Type 2 diabetes mellitus\n", encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/import_icd10_dictionary.py",
+            "--cdc-descriptions",
+            str(cdc_path),
+            "--output",
+            str(tmp_path / "icd10.jsonl"),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert "TT 06/2026/TT-BYT" in result.stderr
 
 
 def test_import_icd10_dictionary_cli_fails_when_source_parses_zero(
