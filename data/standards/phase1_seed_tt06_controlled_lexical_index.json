@@ -1,0 +1,3339 @@
+{
+  "a1c": [
+    "LOCAL:TEST_HBA1C"
+  ],
+  "abdominal pain": [
+    "LOCAL:SYMPTOM_ABDOMINAL_PAIN"
+  ],
+  "abdominal wound": [
+    "ICD10:S31.109"
+  ],
+  "acetaminophen": [
+    "RXNORM:161"
+  ],
+  "acetaminophen / hydrocodone": [
+    "RXNORM:214182"
+  ],
+  "acetaminophen hydrocodone": [
+    "RXNORM:214182"
+  ],
+  "acetaminophen/hydrocodone": [
+    "RXNORM:214182"
+  ],
+  "acetylcysteine": [
+    "RXNORM:197"
+  ],
+  "acetylsalicylic acid": [
+    "RXNORM:1191"
+  ],
+  "acid reflux": [
+    "ICD10:K21.9"
+  ],
+  "acute cholecystitis": [
+    "ICD10:K81.0"
+  ],
+  "acute embolism and thrombosis of unspecified deep veins of lower extremity": [
+    "ICD10:I82.40"
+  ],
+  "acute kidney failure": [
+    "ICD10:N17.9"
+  ],
+  "acute kidney failure unspecified": [
+    "ICD10:N17.9"
+  ],
+  "acute kidney injury": [
+    "ICD10:N17.9"
+  ],
+  "acute myocardial infarction": [
+    "ICD10:I21.9"
+  ],
+  "acute myocardial infarction unspecified": [
+    "ICD10:I21.9"
+  ],
+  "acute pyelonephritis": [
+    "ICD10:N10"
+  ],
+  "acute renal failure": [
+    "ICD10:N17.9"
+  ],
+  "acute renal failure unspecified": [
+    "ICD10:N17.9"
+  ],
+  "acute tubulo- interstitial nephritis": [
+    "ICD10:N10"
+  ],
+  "acute tubulo-interstitial nephritis": [
+    "ICD10:N10"
+  ],
+  "advil": [
+    "RXNORM:5640"
+  ],
+  "af": [
+    "ICD10:I48.91"
+  ],
+  "afib": [
+    "ICD10:I48.91"
+  ],
+  "aki": [
+    "ICD10:N17.9"
+  ],
+  "alanine aminotransferase": [
+    "LOCAL:TEST_ALT"
+  ],
+  "albuterol": [
+    "RXNORM:435"
+  ],
+  "albuterol / ipratropium": [
+    "RXNORM:214199"
+  ],
+  "albuterol ipratropium": [
+    "RXNORM:214199"
+  ],
+  "albuterol sulfate": [
+    "RXNORM:435"
+  ],
+  "albuterol và ipratropium": [
+    "RXNORM:214199"
+  ],
+  "albuterol/ipratropium": [
+    "RXNORM:214199"
+  ],
+  "albuterolipratropium": [
+    "RXNORM:214199"
+  ],
+  "alcoholic cirrhosis": [
+    "ICD10:K70.3"
+  ],
+  "alcoholic cirrhosis of liver": [
+    "ICD10:K70.3"
+  ],
+  "alcoholic liver disease": [
+    "ICD10:K70"
+  ],
+  "alcoholic liver disease unspecified": [
+    "ICD10:K70.9"
+  ],
+  "allopurinol": [
+    "RXNORM:519"
+  ],
+  "alt": [
+    "LOCAL:TEST_ALT"
+  ],
+  "ami": [
+    "ICD10:I21.9"
+  ],
+  "amiodarone": [
+    "RXNORM:703"
+  ],
+  "amoxicillin": [
+    "RXNORM:723"
+  ],
+  "amoxicillin / clavulanate": [
+    "RXNORM:151392"
+  ],
+  "amoxicillin clavulanate": [
+    "RXNORM:151392"
+  ],
+  "amoxicillin trihydrate": [
+    "RXNORM:723"
+  ],
+  "amoxicillin/clavulanate": [
+    "RXNORM:151392"
+  ],
+  "amoxil": [
+    "RXNORM:723"
+  ],
+  "amoxycillin": [
+    "RXNORM:723"
+  ],
+  "amx": [
+    "RXNORM:723"
+  ],
+  "anaemia": [
+    "ICD10:D64.9"
+  ],
+  "anaemia unspecified": [
+    "ICD10:D64.9"
+  ],
+  "anemia": [
+    "ICD10:D64.9"
+  ],
+  "anemia unspecified": [
+    "ICD10:D64.9"
+  ],
+  "angina pectoris": [
+    "ICD10:I20"
+  ],
+  "angina pectoris unspecified": [
+    "ICD10:I20.9"
+  ],
+  "anxiety disorder": [
+    "ICD10:F41.9"
+  ],
+  "anxiety disorder unspecified": [
+    "ICD10:F41.9"
+  ],
+  "aortic aneurysm": [
+    "ICD10:I71.9"
+  ],
+  "aortic aneurysm of unspecified site without mention of rupture": [
+    "ICD10:I71.9"
+  ],
+  "aortic dissection": [
+    "ICD10:I71.00"
+  ],
+  "aortic valve stenosis": [
+    "ICD10:I35.0"
+  ],
+  "apap": [
+    "RXNORM:161"
+  ],
+  "apixaban": [
+    "RXNORM:1364430"
+  ],
+  "arf": [
+    "ICD10:N17.9"
+  ],
+  "arterial hypertension": [
+    "ICD10:I10"
+  ],
+  "asa": [
+    "RXNORM:1191"
+  ],
+  "aspartate aminotransferase": [
+    "LOCAL:TEST_AST"
+  ],
+  "aspirin": [
+    "RXNORM:1191"
+  ],
+  "ast": [
+    "LOCAL:TEST_AST"
+  ],
+  "asthma": [
+    "ICD10:J45"
+  ],
+  "astigmatism": [
+    "ICD10:H52.2"
+  ],
+  "atelectasis": [
+    "ICD10:J98.11"
+  ],
+  "atenolol": [
+    "RXNORM:1202"
+  ],
+  "atherosclerosis": [
+    "ICD10:I70.90"
+  ],
+  "atherosclerotic heart disease": [
+    "ICD10:I25.1",
+    "ICD10:I25.10"
+  ],
+  "atherosclerotic heart disease of native coronary artery without angina pectoris": [
+    "ICD10:I25.10"
+  ],
+  "atorvastatin": [
+    "RXNORM:83367"
+  ],
+  "atorvastatin calcium": [
+    "RXNORM:83367"
+  ],
+  "atrial fibrillation": [
+    "ICD10:I48.91"
+  ],
+  "atrial premature depolarization": [
+    "ICD10:I49.1"
+  ],
+  "atrioventricular block complete": [
+    "ICD10:I44.2"
+  ],
+  "atrovent": [
+    "RXNORM:7213"
+  ],
+  "augmentin": [
+    "RXNORM:151392"
+  ],
+  "azathioprine": [
+    "RXNORM:1256"
+  ],
+  "azithromycin": [
+    "RXNORM:18631"
+  ],
+  "bactrim": [
+    "RXNORM:10831"
+  ],
+  "bayer aspirin": [
+    "RXNORM:1191"
+  ],
+  "benh mach vanh": [
+    "ICD10:I25.10"
+  ],
+  "benh phoi tac nghen man tinh": [
+    "ICD10:J44.9"
+  ],
+  "benh than man": [
+    "ICD10:N18.9"
+  ],
+  "benign prostatic hyperplasia": [
+    "ICD10:N40"
+  ],
+  "bg": [
+    "LOCAL:TEST_GLUCOSE"
+  ],
+  "bicarb": [
+    "RXNORM:36676"
+  ],
+  "bicarbonate": [
+    "RXNORM:36676"
+  ],
+  "bile duct calculus": [
+    "ICD10:K80.50"
+  ],
+  "bile duct stone": [
+    "ICD10:K80.50"
+  ],
+  "bilirubin": [
+    "LOCAL:TEST_BILIRUBIN"
+  ],
+  "bipolar affective disorder": [
+    "ICD10:F31",
+    "ICD10:F31.9"
+  ],
+  "bipolar affective disorder unspecified": [
+    "ICD10:F31.9"
+  ],
+  "bipolar disorder": [
+    "ICD10:F31.9"
+  ],
+  "blood glucose": [
+    "LOCAL:TEST_GLUCOSE"
+  ],
+  "blood sugar": [
+    "LOCAL:TEST_GLUCOSE"
+  ],
+  "blood urea nitrogen": [
+    "LOCAL:TEST_BUN"
+  ],
+  "blốc nhĩ thất hoàn toàn": [
+    "ICD10:I44.2"
+  ],
+  "bph": [
+    "ICD10:N40"
+  ],
+  "bptnmt": [
+    "ICD10:J44.9"
+  ],
+  "breast cancer": [
+    "ICD10:C50.919"
+  ],
+  "breathlessness": [
+    "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "bronchial asthma": [
+    "ICD10:J45"
+  ],
+  "bronchiectasis": [
+    "ICD10:J47"
+  ],
+  "bronchitis": [
+    "ICD10:J40"
+  ],
+  "bronchitis not specified as acute or chronic": [
+    "ICD10:J40"
+  ],
+  "btm": [
+    "ICD10:N18.9"
+  ],
+  "bumetanide": [
+    "RXNORM:1808"
+  ],
+  "bumex": [
+    "RXNORM:1808"
+  ],
+  "bun": [
+    "LOCAL:TEST_BUN"
+  ],
+  "buprenorphine / naloxone": [
+    "RXNORM:352364"
+  ],
+  "buprenorphine naloxone": [
+    "RXNORM:352364"
+  ],
+  "buprenorphine/naloxone": [
+    "RXNORM:352364"
+  ],
+  "buồn nôn": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "buồn nôn và nôn": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "bàn chân vẹo bẩm sinh": [
+    "ICD10:Q66.89"
+  ],
+  "bàng quang thần kinh": [
+    "ICD10:N31.9"
+  ],
+  "béo phì": [
+    "ICD10:E66.9"
+  ],
+  "béo phì không xác định": [
+    "ICD10:E66.9"
+  ],
+  "bạch cầu": [
+    "LOCAL:TEST_WBC"
+  ],
+  "bạch cầu dòng tủy": [
+    "ICD10:C92"
+  ],
+  "bạch cầu dòng tủy không xác định": [
+    "ICD10:C92.9"
+  ],
+  "bạch cầu dòng tủy mãn tính": [
+    "ICD10:C92.1"
+  ],
+  "bạch cầu dòng tủy mạn tính": [
+    "ICD10:C92.1"
+  ],
+  "bạch cầu dòng tủy mạn tính cml bcr/abl - dương tính": [
+    "ICD10:C92.1"
+  ],
+  "bạch cầu không xác định": [
+    "ICD10:C95.9"
+  ],
+  "bệnh béo phì": [
+    "ICD10:E66.9"
+  ],
+  "bệnh béo phì không xác định": [
+    "ICD10:E66.9"
+  ],
+  "bệnh bạch cầu": [
+    "ICD10:C95.9"
+  ],
+  "bệnh bạch cầu dòng tủy": [
+    "ICD10:C92",
+    "ICD10:C92.9"
+  ],
+  "bệnh bạch cầu dòng tủy không xác định": [
+    "ICD10:C92.9"
+  ],
+  "bệnh bạch cầu dòng tủy mãn tính": [
+    "ICD10:C92.1"
+  ],
+  "bệnh bạch cầu dòng tủy mạn tính": [
+    "ICD10:C92.1"
+  ],
+  "bệnh bạch cầu dòng tủy mạn tính cml bcr/abl - dương tính": [
+    "ICD10:C92.1"
+  ],
+  "bệnh bạch cầu không xác định": [
+    "ICD10:C95.9"
+  ],
+  "bệnh do nhiễm virus herpes herpes simplex": [
+    "ICD10:B00.9"
+  ],
+  "bệnh do nhiễm virus herpes herpes simplex không xác định": [
+    "ICD10:B00.9"
+  ],
+  "bệnh gan do rượu": [
+    "ICD10:K70",
+    "ICD10:K70.9"
+  ],
+  "bệnh gan do rượu không xác định": [
+    "ICD10:K70.9"
+  ],
+  "bệnh lý chất trắng": [
+    "ICD10:R90.82"
+  ],
+  "bệnh lý khác của dây thanh âm": [
+    "ICD10:J38.3"
+  ],
+  "bệnh lý thần kinh ngoại biên": [
+    "ICD10:G62.9"
+  ],
+  "bệnh lý đa dây thần kinh không xác định bệnh lý đa dây thần kinh do bệnh phân loại mục khác bệnh lý đa dây thần kinh do bệnh nhiễm trùng và/hoặc ký sinh trùng phân loại mục khác bệnh lý đa dây thần kinh do u tân sinh c00.- - d48.- bệnh lý đa dây thần kinh do đái tháo đường e10- e14 với ký tự thứ tự chung là.4 bệnh lý đa dây thần kinh do bệnh nội tiết và/hoặc chuyển hóa khác e00- e07 e15-e16 e20- e34 e70-e89 bệnh lý đa dây thần kinh do suy dinh dưỡng e40- e64 bệnh lý đa dây thần kinh do rối loạn mô liên kết hệ thống m30-m35 bệnh lý đa dây thần kinh do rối loạn cơ xương khớp khác m00-m25 m40- m96 bệnh lý đa dây thần kinh do bệnh khác phân loại mục khác": [
+    "ICD10:G62.9"
+  ],
+  "bệnh mạch máu ngoại biên": [
+    "ICD10:I73.9"
+  ],
+  "bệnh mạch máu ngoại vi": [
+    "ICD10:I73.9"
+  ],
+  "bệnh mạch máu ngoại vi không xác định": [
+    "ICD10:I73.9"
+  ],
+  "bệnh mạch vành": [
+    "ICD10:I25.10"
+  ],
+  "bệnh nhiễm trùng": [
+    "ICD10:B99.9"
+  ],
+  "bệnh nhiễm trùng không đặc hiệu": [
+    "ICD10:B99.9"
+  ],
+  "bệnh não gan": [
+    "ICD10:K76.82"
+  ],
+  "bệnh não úng thủy": [
+    "ICD10:G91"
+  ],
+  "bệnh phổi kẽ": [
+    "ICD10:J84.9"
+  ],
+  "bệnh phổi mô kẽ": [
+    "ICD10:J84.9"
+  ],
+  "bệnh phổi mô kẽ không xác định": [
+    "ICD10:J84.9"
+  ],
+  "bệnh phổi tắc nghẽn mạn": [
+    "ICD10:J44.9"
+  ],
+  "bệnh phổi tắc nghẽn mạn tính": [
+    "ICD10:J44.9"
+  ],
+  "bệnh phổi tắc nghẽn mạn tính không xác định": [
+    "ICD10:J44.9"
+  ],
+  "bệnh rễ thần kinh": [
+    "ICD10:M54.10"
+  ],
+  "bệnh rễ thần kinh tuỷ sống": [
+    "ICD10:M54.10"
+  ],
+  "bệnh thần kinh ngoại biên": [
+    "ICD10:G62.9"
+  ],
+  "bệnh thận mạn": [
+    "ICD10:N18.9"
+  ],
+  "bệnh thận mạn tính": [
+    "ICD10:N18.9"
+  ],
+  "bệnh thận mạn tính không xác định": [
+    "ICD10:N18.9"
+  ],
+  "bệnh thận đa nang": [
+    "ICD10:Q61.3"
+  ],
+  "bệnh thận đa nang bẩm sinh": [
+    "ICD10:Q61.3"
+  ],
+  "bệnh thận đa nang bẩm sinh không xác định": [
+    "ICD10:Q61.3"
+  ],
+  "bệnh thủy đậu": [
+    "ICD10:B01.9"
+  ],
+  "bệnh thủy đậu không biến chứng": [
+    "ICD10:B01.9"
+  ],
+  "bệnh tim": [
+    "ICD10:I51.9"
+  ],
+  "bệnh tim không xác định rối loạn tim khác do bệnh phân loại mục khác rối loạn tim khác do bệnh nhiễm trùng phân loại mục khác rối loạn tim khác do bệnh nhiễm trùng và ký sinh trùng khác phân loại mục khác rối loạn tim khác do bệnh khác phân loại mục khác": [
+    "ICD10:I51.9"
+  ],
+  "bệnh tim không đặc hiệu": [
+    "ICD10:I51.9"
+  ],
+  "bệnh tim mạch": [
+    "ICD10:I51.9"
+  ],
+  "bệnh tim mạch do xơ vữa động mạch": [
+    "ICD10:I25.1"
+  ],
+  "bệnh tiêu xương": [
+    "ICD10:M89.5"
+  ],
+  "bệnh trào ngược dạ dày - thực quản": [
+    "ICD10:K21.9"
+  ],
+  "bệnh trào ngược dạ dày - thực quản không kèm viêm thực quản": [
+    "ICD10:K21.9"
+  ],
+  "bệnh trào ngược dạ dày thực quản": [
+    "ICD10:K21.9"
+  ],
+  "bệnh trào ngược dạ dày- thực quản": [
+    "ICD10:K21.9"
+  ],
+  "bệnh trào ngược dạ dày- thực quản không có viêm thực quản": [
+    "ICD10:K21.9"
+  ],
+  "bệnh túi thừa": [
+    "ICD10:K57.9"
+  ],
+  "bệnh túi thừa của cả ruột non và đại tràng": [
+    "ICD10:K57.9"
+  ],
+  "bệnh túi thừa của ruột phần không xác định không thủng hoặc áp xe": [
+    "ICD10:K57.9"
+  ],
+  "bệnh túi thừa ruột": [
+    "ICD10:K57.9"
+  ],
+  "bệnh túi thừa ở cả ruột non và đại tràng": [
+    "ICD10:K57.9"
+  ],
+  "bệnh tăng huyết áp vô căn nguyên phát": [
+    "ICD10:I10"
+  ],
+  "bệnh viêm gan virus b mạn tính không có viêm gan d tác nhân delta": [
+    "ICD10:B18.1"
+  ],
+  "bệnh viêm gan virus c mạn tính": [
+    "ICD10:B18.2"
+  ],
+  "bệnh zona": [
+    "ICD10:B02.9"
+  ],
+  "bệnh zona không biến chứng": [
+    "ICD10:B02.9"
+  ],
+  "bệnh đa xơ cứng": [
+    "ICD10:G35"
+  ],
+  "bệnh đái tháo đường típ 1": [
+    "ICD10:E10"
+  ],
+  "bệnh đái tháo đường típ 2": [
+    "ICD10:E11"
+  ],
+  "bệnh động kinh": [
+    "ICD10:G40"
+  ],
+  "bệnh động mạch ngoại biên": [
+    "ICD10:I73.9"
+  ],
+  "bệnh động mạch vành": [
+    "ICD10:I25.10"
+  ],
+  "c difficile": [
+    "ICD10:A04.72"
+  ],
+  "c. difficile": [
+    "ICD10:A04.72"
+  ],
+  "cad": [
+    "ICD10:I25.10"
+  ],
+  "calculus of bile duct without cholangitis or cholecystitis without obstruction": [
+    "ICD10:K80.50"
+  ],
+  "calculus of gallbladder without cholecystitis without obstruction": [
+    "ICD10:K80.20"
+  ],
+  "calculus of kidney": [
+    "ICD10:N20.0"
+  ],
+  "cancer": [
+    "ICD10:C80.1"
+  ],
+  "cao huyet ap": [
+    "ICD10:I10"
+  ],
+  "cao huyết áp": [
+    "ICD10:I10"
+  ],
+  "cardiac disease": [
+    "ICD10:I51.9"
+  ],
+  "cardiac failure": [
+    "ICD10:I50.9"
+  ],
+  "cardiac sarcoidosis": [
+    "ICD10:D86.85"
+  ],
+  "cardiomegaly": [
+    "ICD10:I51.7"
+  ],
+  "cardiovascular disease": [
+    "ICD10:I51.9"
+  ],
+  "cardizem": [
+    "RXNORM:3443"
+  ],
+  "carotid artery occlusion": [
+    "ICD10:I65.29"
+  ],
+  "carotid artery stenosis": [
+    "ICD10:I65.29"
+  ],
+  "carvedilol": [
+    "RXNORM:20352"
+  ],
+  "catapres": [
+    "RXNORM:2599"
+  ],
+  "cefepim": [
+    "RXNORM:20481"
+  ],
+  "cefepime": [
+    "RXNORM:20481"
+  ],
+  "ceftazidime": [
+    "RXNORM:2191"
+  ],
+  "ceftriaxone": [
+    "RXNORM:2193"
+  ],
+  "cellcept": [
+    "RXNORM:68149"
+  ],
+  "cellulitis": [
+    "ICD10:L03.90"
+  ],
+  "cellulitis unspecified": [
+    "ICD10:L03.90"
+  ],
+  "cephalalgia": [
+    "LOCAL:SYMPTOM_HEADACHE"
+  ],
+  "cephalexin": [
+    "RXNORM:2231"
+  ],
+  "chd": [
+    "ICD10:I25.10"
+  ],
+  "chest discomfort": [
+    "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
+  "chest pain": [
+    "LOCAL:SYMPTOM_CHEST_PAIN"
+  ],
+  "chest tightness": [
+    "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
+  "chest tightness or discomfort": [
+    "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
+  "chest x-ray": [
+    "LOCAL:TEST_XRAY"
+  ],
+  "chf": [
+    "ICD10:I50.9"
+  ],
+  "chickenpox": [
+    "ICD10:B01.9"
+  ],
+  "cholecystitis": [
+    "ICD10:K81.9"
+  ],
+  "cholecystitis unspecified": [
+    "ICD10:K81.9"
+  ],
+  "choledocholithiasis": [
+    "ICD10:K80.50"
+  ],
+  "cholelithiasis": [
+    "ICD10:K80.20"
+  ],
+  "choáng váng": [
+    "LOCAL:SYMPTOM_DIZZINESS"
+  ],
+  "chronic kidney disease": [
+    "ICD10:N18.9"
+  ],
+  "chronic kidney disease unspecified": [
+    "ICD10:N18.9"
+  ],
+  "chronic myelogenous leukemia": [
+    "ICD10:C92.1"
+  ],
+  "chronic myeloid leukaemia cml bcr/abl-positive": [
+    "ICD10:C92.1"
+  ],
+  "chronic myeloid leukemia": [
+    "ICD10:C92.1"
+  ],
+  "chronic myeloid leukemia bcr/abl-positive": [
+    "ICD10:C92.1"
+  ],
+  "chronic obstructive airway disease": [
+    "ICD10:J44.9"
+  ],
+  "chronic obstructive pulmonary disease": [
+    "ICD10:J44.9"
+  ],
+  "chronic obstructive pulmonary disease unspecified": [
+    "ICD10:J44.9"
+  ],
+  "chronic renal disease": [
+    "ICD10:N18.9"
+  ],
+  "chronic viral hepatitis b": [
+    "ICD10:B18.1"
+  ],
+  "chronic viral hepatitis b without delta-agent": [
+    "ICD10:B18.1"
+  ],
+  "chronic viral hepatitis c": [
+    "ICD10:B18.2"
+  ],
+  "chuyển dạ": [
+    "LOCAL:SYMPTOM_UTERINE_CONTRACTIONS"
+  ],
+  "chóng mặt": [
+    "LOCAL:SYMPTOM_DIZZINESS"
+  ],
+  "cipro": [
+    "RXNORM:2551"
+  ],
+  "ciprofloxacin": [
+    "RXNORM:2551"
+  ],
+  "ckd": [
+    "ICD10:N18.9"
+  ],
+  "clonazepam": [
+    "RXNORM:2598"
+  ],
+  "clonidine": [
+    "RXNORM:2599"
+  ],
+  "clopidogrel": [
+    "RXNORM:32968"
+  ],
+  "clostridioides difficile infection": [
+    "ICD10:A04.72"
+  ],
+  "clostridium difficile infection": [
+    "ICD10:A04.72"
+  ],
+  "clubfoot": [
+    "ICD10:Q66.89"
+  ],
+  "cml": [
+    "ICD10:C92.1"
+  ],
+  "coagulation defect unspecified": [
+    "ICD10:D68.9"
+  ],
+  "colace": [
+    "RXNORM:82003"
+  ],
+  "colon cancer": [
+    "ICD10:C18.9"
+  ],
+  "colon unspecified": [
+    "ICD10:C18.9"
+  ],
+  "combivent": [
+    "RXNORM:214199"
+  ],
+  "compazine": [
+    "RXNORM:8704"
+  ],
+  "congenital foot deformity": [
+    "ICD10:Q66.89"
+  ],
+  "congestive heart failure": [
+    "ICD10:I50.9"
+  ],
+  "constipation": [
+    "ICD10:K59.0"
+  ],
+  "copd": [
+    "ICD10:J44.9"
+  ],
+  "cordarone": [
+    "RXNORM:703"
+  ],
+  "coreg": [
+    "RXNORM:20352"
+  ],
+  "coronary artery disease": [
+    "ICD10:I25.10"
+  ],
+  "coronary heart disease": [
+    "ICD10:I25.10"
+  ],
+  "cough": [
+    "LOCAL:SYMPTOM_COUGH"
+  ],
+  "coumadin": [
+    "RXNORM:11289"
+  ],
+  "cozaar": [
+    "RXNORM:52175"
+  ],
+  "cp": [
+    "LOCAL:SYMPTOM_CHEST_PAIN"
+  ],
+  "cr": [
+    "LOCAL:TEST_CREATININE"
+  ],
+  "creatinin": [
+    "LOCAL:TEST_CREATININE"
+  ],
+  "creatinine": [
+    "LOCAL:TEST_CREATININE"
+  ],
+  "creatinine blood test": [
+    "LOCAL:TEST_CREATININE"
+  ],
+  "crestor": [
+    "RXNORM:301542"
+  ],
+  "cvd": [
+    "ICD10:I51.9"
+  ],
+  "cxr": [
+    "LOCAL:TEST_XRAY"
+  ],
+  "cơn co tử cung": [
+    "LOCAL:SYMPTOM_UTERINE_CONTRACTIONS"
+  ],
+  "cơn đau thắt ngực": [
+    "ICD10:I20",
+    "ICD10:I20.9"
+  ],
+  "cơn đau thắt ngực không xác định": [
+    "ICD10:I20.9"
+  ],
+  "cơn đau thắt ngực không ổn định": [
+    "ICD10:I20.0"
+  ],
+  "cường cận giáp": [
+    "ICD10:E21.3"
+  ],
+  "cường cận giáp không xác định": [
+    "ICD10:E21.3"
+  ],
+  "cường cận giáp nguyên phát": [
+    "ICD10:E21.0"
+  ],
+  "cảm giác thắt chặt ngực": [
+    "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
+  "dai thao duong": [
+    "ICD10:E11"
+  ],
+  "dai thao duong type 2": [
+    "ICD10:E11"
+  ],
+  "ddavp": [
+    "RXNORM:3251"
+  ],
+  "deep vein thrombosis": [
+    "ICD10:I82.40"
+  ],
+  "deltasone": [
+    "RXNORM:8640"
+  ],
+  "delusional disorder": [
+    "ICD10:F22"
+  ],
+  "demadex": [
+    "RXNORM:38413"
+  ],
+  "depressive episode": [
+    "ICD10:F32"
+  ],
+  "depressive episode unspecified": [
+    "ICD10:F32.9"
+  ],
+  "desmopressin": [
+    "RXNORM:3251"
+  ],
+  "diarrhea": [
+    "LOCAL:SYMPTOM_DIARRHEA"
+  ],
+  "diarrhoea": [
+    "LOCAL:SYMPTOM_DIARRHEA"
+  ],
+  "dilaudid": [
+    "RXNORM:3423"
+  ],
+  "diltiazem": [
+    "RXNORM:3443"
+  ],
+  "dimethylbiguanide": [
+    "RXNORM:6809"
+  ],
+  "diplopia": [
+    "ICD10:H53.2"
+  ],
+  "dissection of aorta": [
+    "ICD10:I71.00"
+  ],
+  "dissection of unspecified site of aorta": [
+    "ICD10:I71.00"
+  ],
+  "diverticular disease": [
+    "ICD10:K57.9"
+  ],
+  "diverticular disease of intestine part unspecified without perforation or abscess": [
+    "ICD10:K57.9"
+  ],
+  "dizziness": [
+    "LOCAL:SYMPTOM_DIZZINESS"
+  ],
+  "dm2": [
+    "ICD10:E11"
+  ],
+  "do nhiễm virus herpes herpes simplex không xác định": [
+    "ICD10:B00.9"
+  ],
+  "docusate": [
+    "RXNORM:82003"
+  ],
+  "dolophine": [
+    "RXNORM:6813"
+  ],
+  "doxycycline": [
+    "RXNORM:3640"
+  ],
+  "duodenal ulcer": [
+    "ICD10:K26"
+  ],
+  "dvt": [
+    "ICD10:I82.40"
+  ],
+  "dyslipidemia": [
+    "ICD10:E78.5"
+  ],
+  "dyspnea": [
+    "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "ecg": [
+    "LOCAL:TEST_ECG"
+  ],
+  "edema": [
+    "LOCAL:SYMPTOM_EDEMA"
+  ],
+  "effient": [
+    "RXNORM:613391"
+  ],
+  "ekg": [
+    "LOCAL:TEST_ECG"
+  ],
+  "electrocardiogram": [
+    "LOCAL:TEST_ECG"
+  ],
+  "eliquis": [
+    "RXNORM:1364430"
+  ],
+  "emesis": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "enterocolitis due to clostridium difficile not specified as recurrent": [
+    "ICD10:A04.72"
+  ],
+  "epilepsy": [
+    "ICD10:G40"
+  ],
+  "ertapenem": [
+    "RXNORM:325642"
+  ],
+  "esophageal ulcer": [
+    "ICD10:K22.1"
+  ],
+  "esophagitis": [
+    "ICD10:K20"
+  ],
+  "essential hypertension": [
+    "ICD10:I10"
+  ],
+  "essential primary hypertension": [
+    "ICD10:I10"
+  ],
+  "fainting": [
+    "LOCAL:SYMPTOM_SYNCOPE"
+  ],
+  "faslodex": [
+    "RXNORM:282357"
+  ],
+  "fatigue": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "fatigue and weakness": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "female genital prolapse": [
+    "ICD10:N81.9"
+  ],
+  "female genital prolapse unspecified": [
+    "ICD10:N81.9"
+  ],
+  "fever": [
+    "LOCAL:SYMPTOM_FEVER"
+  ],
+  "flagyl": [
+    "RXNORM:6922"
+  ],
+  "foot ulcer": [
+    "ICD10:L97.509"
+  ],
+  "fortaz": [
+    "RXNORM:2191"
+  ],
+  "frusemide": [
+    "RXNORM:4603"
+  ],
+  "fulvestrant": [
+    "RXNORM:282357"
+  ],
+  "furosemide": [
+    "RXNORM:4603"
+  ],
+  "gallstone": [
+    "ICD10:K80.20"
+  ],
+  "gallstones": [
+    "ICD10:K80.20"
+  ],
+  "gan do rượu": [
+    "ICD10:K70"
+  ],
+  "gan do rượu không xác định": [
+    "ICD10:K70.9"
+  ],
+  "gastritis": [
+    "ICD10:K29.7"
+  ],
+  "gastritis unspecified": [
+    "ICD10:K29.7"
+  ],
+  "gastro- oesophageal reflux disease without oesophagitis": [
+    "ICD10:K21.9"
+  ],
+  "gastro-esophageal reflux disease without esophagitis": [
+    "ICD10:K21.9"
+  ],
+  "gastro-oesophageal reflux disease": [
+    "ICD10:K21.9"
+  ],
+  "gastroesophageal reflux disease": [
+    "ICD10:K21.9"
+  ],
+  "generalized and unspecified atherosclerosis without gangrene": [
+    "ICD10:I70.90"
+  ],
+  "gerd": [
+    "ICD10:K21.9"
+  ],
+  "giai đoạn trầm cảm": [
+    "ICD10:F32",
+    "ICD10:F32.9"
+  ],
+  "giai đoạn trầm cảm không xác định": [
+    "ICD10:F32.9"
+  ],
+  "giãn phế quản": [
+    "ICD10:J47"
+  ],
+  "giảm cân": [
+    "LOCAL:SYMPTOM_WEIGHT_CHANGE"
+  ],
+  "giảm kali máu": [
+    "ICD10:E87.6"
+  ],
+  "giọng khàn": [
+    "LOCAL:SYMPTOM_HOARSENESS"
+  ],
+  "glargine": [
+    "RXNORM:274783"
+  ],
+  "gleevec": [
+    "RXNORM:282388"
+  ],
+  "glucophage": [
+    "RXNORM:6809"
+  ],
+  "glucose": [
+    "LOCAL:TEST_GLUCOSE"
+  ],
+  "glucose máu": [
+    "LOCAL:TEST_GLUCOSE"
+  ],
+  "glycated hemoglobin": [
+    "LOCAL:TEST_HBA1C"
+  ],
+  "glyceryl trinitrate": [
+    "RXNORM:4917"
+  ],
+  "guaifenesin": [
+    "RXNORM:5032"
+  ],
+  "gãy xương sườn": [
+    "ICD10:S22.42"
+  ],
+  "gãy xương sườn trái": [
+    "ICD10:S22.42"
+  ],
+  "ha": [
+    "LOCAL:SYMPTOM_HEADACHE"
+  ],
+  "haematocrit": [
+    "LOCAL:TEST_HEMATOCRIT"
+  ],
+  "hba1c": [
+    "LOCAL:TEST_HBA1C"
+  ],
+  "hbv": [
+    "ICD10:B18.1"
+  ],
+  "hct": [
+    "LOCAL:TEST_HEMATOCRIT"
+  ],
+  "hcv": [
+    "ICD10:B18.2"
+  ],
+  "head of pancreas": [
+    "ICD10:C25.0"
+  ],
+  "headache": [
+    "LOCAL:SYMPTOM_HEADACHE"
+  ],
+  "heart attack": [
+    "ICD10:I21.9"
+  ],
+  "heart disease": [
+    "ICD10:I51.9"
+  ],
+  "heart disease unspecified": [
+    "ICD10:I51.9"
+  ],
+  "heart disease unspecified other heart disorders in diseases classified elsewhere other heart disorders in bacterial diseases classified elsewhere other heart disorders in other infectious and parasitic diseases classified elsewhere other heart disorders in other diseases classified elsewhere": [
+    "ICD10:I51.9"
+  ],
+  "heart failure": [
+    "ICD10:I50.9"
+  ],
+  "heart failure unspecified": [
+    "ICD10:I50.9"
+  ],
+  "hematocrit": [
+    "LOCAL:TEST_HEMATOCRIT"
+  ],
+  "hemoglobin a1c": [
+    "LOCAL:TEST_HBA1C"
+  ],
+  "hen phế quản": [
+    "ICD10:J45"
+  ],
+  "hen phế quản hen suyễn hen": [
+    "ICD10:J45"
+  ],
+  "hen suyễn": [
+    "ICD10:J45"
+  ],
+  "heparin": [
+    "RXNORM:5224"
+  ],
+  "heparin sodium": [
+    "RXNORM:5224"
+  ],
+  "hepatic encephalopathy": [
+    "ICD10:K76.82"
+  ],
+  "herpes simplex infection": [
+    "ICD10:B00.9"
+  ],
+  "herpes zoster": [
+    "ICD10:B02.9"
+  ],
+  "herpesviral infection": [
+    "ICD10:B00.9"
+  ],
+  "herpesviral infection unspecified": [
+    "ICD10:B00.9"
+  ],
+  "hf": [
+    "ICD10:I50.9"
+  ],
+  "high blood pressure": [
+    "ICD10:I10"
+  ],
+  "hld": [
+    "ICD10:E78.5"
+  ],
+  "ho": [
+    "LOCAL:SYMPTOM_COUGH"
+  ],
+  "hoang tưởng": [
+    "ICD10:F22"
+  ],
+  "hoarse voice": [
+    "LOCAL:SYMPTOM_HOARSENESS"
+  ],
+  "hoarseness": [
+    "LOCAL:SYMPTOM_HOARSENESS"
+  ],
+  "hoảng sợ": [
+    "ICD10:F41.0"
+  ],
+  "hsv": [
+    "ICD10:B00.9"
+  ],
+  "htn": [
+    "ICD10:I10"
+  ],
+  "huyết khối tĩnh mạch sâu": [
+    "ICD10:I82.40"
+  ],
+  "hydrocephalus": [
+    "ICD10:G91"
+  ],
+  "hydrocodone acetaminophen": [
+    "RXNORM:214182"
+  ],
+  "hydrocodone/acetaminophen": [
+    "RXNORM:214182"
+  ],
+  "hydromorphone": [
+    "RXNORM:3423"
+  ],
+  "hypercalcemia": [
+    "ICD10:E83.52"
+  ],
+  "hyperkalaemia": [
+    "ICD10:E87.5"
+  ],
+  "hyperkalemia": [
+    "ICD10:E87.5"
+  ],
+  "hyperlipidaemia unspecified": [
+    "ICD10:E78.5"
+  ],
+  "hyperlipidemia": [
+    "ICD10:E78.5"
+  ],
+  "hyperlipidemia unspecified": [
+    "ICD10:E78.5"
+  ],
+  "hyperparathyroidis m unspecified": [
+    "ICD10:E21.3"
+  ],
+  "hyperplasia of prostate": [
+    "ICD10:N40"
+  ],
+  "hypertension": [
+    "ICD10:I10"
+  ],
+  "hypokalaemia": [
+    "ICD10:E87.6"
+  ],
+  "hypokalemia": [
+    "ICD10:E87.6"
+  ],
+  "hypotension": [
+    "ICD10:I95.9"
+  ],
+  "hypotension unspecified": [
+    "ICD10:I95.9"
+  ],
+  "hạ huyết áp": [
+    "ICD10:I95.9"
+  ],
+  "hạ huyết áp không xác định": [
+    "ICD10:I95.9"
+  ],
+  "hạ kali máu": [
+    "ICD10:E87.6"
+  ],
+  "hẹp lỗ liên hợp": [
+    "ICD10:M48.00"
+  ],
+  "hẹp van động mạch chủ": [
+    "ICD10:I35.0"
+  ],
+  "hẹp động mạch cảnh": [
+    "ICD10:I65.29"
+  ],
+  "hẹp ống sống": [
+    "ICD10:M48.00"
+  ],
+  "hồi hộp trống ngực": [
+    "LOCAL:SYMPTOM_PALPITATIONS"
+  ],
+  "hội chứng não gan": [
+    "ICD10:K76.82"
+  ],
+  "hội chứng ruột kích thích": [
+    "ICD10:K58"
+  ],
+  "hội chứng turner": [
+    "ICD10:Q96",
+    "ICD10:Q96.9"
+  ],
+  "hội chứng turner không xác định": [
+    "ICD10:Q96.9"
+  ],
+  "hở van ba lá": [
+    "ICD10:I07.1"
+  ],
+  "hở van hai lá": [
+    "ICD10:I34.0"
+  ],
+  "ibuprofen": [
+    "RXNORM:5640"
+  ],
+  "ild": [
+    "ICD10:J84.9"
+  ],
+  "imatinib": [
+    "RXNORM:282388"
+  ],
+  "immunodeficiency due to drugs": [
+    "ICD10:D84.821"
+  ],
+  "immunodeficiency unspecified": [
+    "ICD10:D84.9"
+  ],
+  "imuran": [
+    "RXNORM:1256"
+  ],
+  "infection": [
+    "ICD10:B99.9"
+  ],
+  "infectious disease": [
+    "ICD10:B99.9"
+  ],
+  "inr": [
+    "LOCAL:TEST_INR"
+  ],
+  "insulin glargine": [
+    "RXNORM:274783"
+  ],
+  "international normalized ratio": [
+    "LOCAL:TEST_INR"
+  ],
+  "interstitial lung disease": [
+    "ICD10:J84.9"
+  ],
+  "interstitial pulmonary disease": [
+    "ICD10:J84.9"
+  ],
+  "interstitial pulmonary disease unspecified": [
+    "ICD10:J84.9"
+  ],
+  "intracranial haemorrhage nontraumatic unspecified": [
+    "ICD10:I62.9"
+  ],
+  "invanz": [
+    "RXNORM:325642"
+  ],
+  "ipratropium": [
+    "RXNORM:7213"
+  ],
+  "iron": [
+    "RXNORM:90176"
+  ],
+  "irritable bowel syndrome": [
+    "ICD10:K58"
+  ],
+  "isosorbide": [
+    "RXNORM:6057"
+  ],
+  "isosorbide dinitrate": [
+    "RXNORM:6057"
+  ],
+  "isosorbide mononitrate": [
+    "RXNORM:6057"
+  ],
+  "k": [
+    "LOCAL:TEST_POTASSIUM"
+  ],
+  "k+": [
+    "LOCAL:TEST_POTASSIUM"
+  ],
+  "kali": [
+    "LOCAL:TEST_POTASSIUM"
+  ],
+  "keflex": [
+    "RXNORM:2231"
+  ],
+  "ketorolac": [
+    "RXNORM:35827"
+  ],
+  "khàn tiếng": [
+    "LOCAL:SYMPTOM_HOARSENESS"
+  ],
+  "khó chịu ngực": [
+    "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
+  "khó chịu vùng ngực": [
+    "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
+  "khó thở": [
+    "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "khó thở khi gắng sức": [
+    "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "khó thở khi nằm": [
+    "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "khó thở về đêm": [
+    "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "khối máu tụ dưới màng cứng": [
+    "ICD10:I62.00"
+  ],
+  "kidney stone": [
+    "ICD10:N20.0"
+  ],
+  "klonopin": [
+    "RXNORM:2598"
+  ],
+  "lantus": [
+    "RXNORM:274783"
+  ],
+  "lasix": [
+    "RXNORM:4603"
+  ],
+  "laxis": [
+    "RXNORM:4603"
+  ],
+  "left breast cancer": [
+    "ICD10:C50.912"
+  ],
+  "left rib fracture": [
+    "ICD10:S22.42"
+  ],
+  "leiomyoma of uterus": [
+    "ICD10:D25.9"
+  ],
+  "leiomyoma of uterus unspecified": [
+    "ICD10:D25.9"
+  ],
+  "leucocyte count": [
+    "LOCAL:TEST_WBC"
+  ],
+  "leukaemia unspecified": [
+    "ICD10:C95.9"
+  ],
+  "leukocyte count": [
+    "LOCAL:TEST_WBC"
+  ],
+  "levafloxacin": [
+    "RXNORM:82122"
+  ],
+  "levaquin": [
+    "RXNORM:82122"
+  ],
+  "levofloxacin": [
+    "RXNORM:82122"
+  ],
+  "lightheadedness": [
+    "LOCAL:SYMPTOM_DIZZINESS"
+  ],
+  "lipid disorder": [
+    "ICD10:E78.5"
+  ],
+  "lipitor": [
+    "RXNORM:83367"
+  ],
+  "lisinopril": [
+    "RXNORM:29046"
+  ],
+  "liệt hai chân": [
+    "ICD10:G82.20"
+  ],
+  "lo âu": [
+    "ICD10:F41.9"
+  ],
+  "lopressor": [
+    "RXNORM:6918"
+  ],
+  "losartan": [
+    "RXNORM:52175"
+  ],
+  "losartan potassium": [
+    "RXNORM:52175"
+  ],
+  "loét bàn chân": [
+    "ICD10:L97.509"
+  ],
+  "loét bàn chân không đặc hiệu": [
+    "ICD10:L97.509"
+  ],
+  "loét hành tá tràng": [
+    "ICD10:K26"
+  ],
+  "loét mới ở ngón chân": [
+    "ICD10:L97.509"
+  ],
+  "loét ngón chân": [
+    "ICD10:L97.509"
+  ],
+  "loét thực quản": [
+    "ICD10:K22.1"
+  ],
+  "loét thực quản dưới": [
+    "ICD10:K22.1"
+  ],
+  "loét tá tràng": [
+    "ICD10:K26"
+  ],
+  "loạn thị": [
+    "ICD10:H52.2"
+  ],
+  "lung cancer": [
+    "ICD10:C34"
+  ],
+  "lung infection": [
+    "ICD10:J18.9"
+  ],
+  "lý khác của dây thanh âm": [
+    "ICD10:J38.3"
+  ],
+  "lý đa dây thần kinh không xác định bệnh lý đa dây thần kinh do bệnh phân loại mục khác bệnh lý đa dây thần kinh do bệnh nhiễm trùng và/hoặc ký sinh trùng phân loại mục khác bệnh lý đa dây thần kinh do u tân sinh c00.- - d48.- bệnh lý đa dây thần kinh do đái tháo đường e10- e14 với ký tự thứ tự chung là.4 bệnh lý đa dây thần kinh do bệnh nội tiết và/hoặc chuyển hóa khác e00- e07 e15-e16 e20- e34 e70-e89 bệnh lý đa dây thần kinh do suy dinh dưỡng e40- e64 bệnh lý đa dây thần kinh do rối loạn mô liên kết hệ thống m30-m35 bệnh lý đa dây thần kinh do rối loạn cơ xương khớp khác m00-m25 m40- m96 bệnh lý đa dây thần kinh do bệnh khác phân loại mục khác": [
+    "ICD10:G62.9"
+  ],
+  "magnesium": [
+    "RXNORM:6574"
+  ],
+  "malignancy": [
+    "ICD10:C80.1"
+  ],
+  "malignant lung neoplasm": [
+    "ICD10:C34"
+  ],
+  "malignant neoplasm": [
+    "ICD10:C80.1"
+  ],
+  "malignant neoplasm of breast": [
+    "ICD10:C50.919"
+  ],
+  "malignant neoplasm of bronchus and lung": [
+    "ICD10:C34"
+  ],
+  "malignant neoplasm of colon": [
+    "ICD10:C18.9"
+  ],
+  "malignant neoplasm of colon unspecified": [
+    "ICD10:C18.9"
+  ],
+  "malignant neoplasm of head of pancreas": [
+    "ICD10:C25.0"
+  ],
+  "malignant neoplasm of left breast": [
+    "ICD10:C50.912"
+  ],
+  "malignant neoplasm of prostate": [
+    "ICD10:C61"
+  ],
+  "malignant neoplasm of unspecified site of left female breast": [
+    "ICD10:C50.912"
+  ],
+  "malignant neoplasm of unspecified site of unspecified female breast": [
+    "ICD10:C50.919"
+  ],
+  "malignant neoplasm unspecified": [
+    "ICD10:C80.1"
+  ],
+  "maxipime": [
+    "RXNORM:20481"
+  ],
+  "medrol": [
+    "RXNORM:6902"
+  ],
+  "metformin": [
+    "RXNORM:6809"
+  ],
+  "metformin hcl": [
+    "RXNORM:6809"
+  ],
+  "metformin hydrochloride": [
+    "RXNORM:6809"
+  ],
+  "methadone": [
+    "RXNORM:6813"
+  ],
+  "methylprednisolone": [
+    "RXNORM:6902"
+  ],
+  "metoprolol": [
+    "RXNORM:6918"
+  ],
+  "metoprolol succinate": [
+    "RXNORM:6918"
+  ],
+  "metoprolol tartrate": [
+    "RXNORM:6918"
+  ],
+  "metronidazole": [
+    "RXNORM:6922"
+  ],
+  "mi": [
+    "ICD10:I21.9"
+  ],
+  "mitral valve insufficiency": [
+    "ICD10:I34.0"
+  ],
+  "mitral valve prolapse": [
+    "ICD10:I34.1"
+  ],
+  "mixed disorder of acid-base balance": [
+    "ICD10:E87.4"
+  ],
+  "mood disorder": [
+    "ICD10:F39"
+  ],
+  "morphine": [
+    "RXNORM:7052"
+  ],
+  "mucinex": [
+    "RXNORM:5032"
+  ],
+  "multiple fractures of ribs left side": [
+    "ICD10:S22.42"
+  ],
+  "multiple myeloma": [
+    "ICD10:C90.0"
+  ],
+  "multiple sclerosis": [
+    "ICD10:G35"
+  ],
+  "myalgia": [
+    "ICD10:M79.1"
+  ],
+  "mycophenolate mofetil": [
+    "RXNORM:68149"
+  ],
+  "myeloid leukaemia": [
+    "ICD10:C92"
+  ],
+  "myeloid leukaemia unspecified": [
+    "ICD10:C92.9"
+  ],
+  "myocardial infarction": [
+    "ICD10:I21.9"
+  ],
+  "mạch máu ngoại vi không xác định": [
+    "ICD10:I73.9"
+  ],
+  "mệt mỏi": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "mệt mỏi và yếu": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "n-acetylcysteine": [
+    "RXNORM:197"
+  ],
+  "n/v": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "nac": [
+    "RXNORM:197"
+  ],
+  "natri bicarbonate": [
+    "RXNORM:36676"
+  ],
+  "nausea": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "nausea and vomiting": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "nephrolithiasis": [
+    "ICD10:N20.0"
+  ],
+  "nerve root disorder": [
+    "ICD10:M54.10"
+  ],
+  "neurogenic bladder": [
+    "ICD10:N31.9"
+  ],
+  "neuromuscular dysfunction of bladder unspecified": [
+    "ICD10:N31.9"
+  ],
+  "nghẽn tắc và hẹp động mạch cảnh": [
+    "ICD10:I65.29"
+  ],
+  "ngoại tâm thu nhĩ": [
+    "ICD10:I49.1"
+  ],
+  "ngoại tâm thu thất": [
+    "ICD10:I49.3"
+  ],
+  "ngưng thở khi ngủ": [
+    "ICD10:G47.30"
+  ],
+  "ngưng thở khi ngủ do tắc nghẽn": [
+    "ICD10:G47.33"
+  ],
+  "ngưng thở khi ngủ không đặc hiệu": [
+    "ICD10:G47.30"
+  ],
+  "ngất": [
+    "LOCAL:SYMPTOM_SYNCOPE"
+  ],
+  "ngất xỉu": [
+    "LOCAL:SYMPTOM_SYNCOPE"
+  ],
+  "ngừng thở khi ngủ": [
+    "ICD10:G47.30"
+  ],
+  "ngừng thở khi ngủ do tắc nghẽn": [
+    "ICD10:G47.33"
+  ],
+  "nhiễm clostridioides difficile": [
+    "ICD10:A04.72"
+  ],
+  "nhiễm clostridium difficile": [
+    "ICD10:A04.72"
+  ],
+  "nhiễm herpes simplex": [
+    "ICD10:B00.9"
+  ],
+  "nhiễm khuẩn": [
+    "ICD10:B99.9"
+  ],
+  "nhiễm khuẩn huyết": [
+    "ICD10:A41.9"
+  ],
+  "nhiễm trùng": [
+    "ICD10:B99.9"
+  ],
+  "nhiễm trùng huyết": [
+    "ICD10:A41.9"
+  ],
+  "nhiễm trùng hệ thống": [
+    "ICD10:A41.9"
+  ],
+  "nhiễm trùng hệ thống không xác định": [
+    "ICD10:A41.9"
+  ],
+  "nhiễm trùng phổi": [
+    "ICD10:J18.9"
+  ],
+  "nhiễm trùng đường ruột do virus": [
+    "ICD10:A08.4"
+  ],
+  "nhiễm trùng đường ruột do virus không xác định": [
+    "ICD10:A08.4"
+  ],
+  "nhiễm virus": [
+    "ICD10:B34.9"
+  ],
+  "nhiễm virus herpes simplex": [
+    "ICD10:B00.9"
+  ],
+  "nhiễm virus không xác định": [
+    "ICD10:B34.9"
+  ],
+  "nhoi mau co tim": [
+    "ICD10:I21.9"
+  ],
+  "nhịp nhanh trên thất": [
+    "ICD10:I47.1"
+  ],
+  "nhồi máu cơ tim": [
+    "ICD10:I21.9"
+  ],
+  "nhồi máu cơ tim cấp": [
+    "ICD10:I21.9"
+  ],
+  "nhồi máu cơ tim cấp tính": [
+    "ICD10:I21.9"
+  ],
+  "nhồi máu cơ tim cấp tính không xác định": [
+    "ICD10:I21.9"
+  ],
+  "niddm": [
+    "ICD10:E11"
+  ],
+  "nitroglycerin": [
+    "RXNORM:4917"
+  ],
+  "nitrostat": [
+    "RXNORM:4917"
+  ],
+  "nmct": [
+    "ICD10:I21.9"
+  ],
+  "non-insulin-dependent diabetes mellitus": [
+    "ICD10:E11"
+  ],
+  "non-pressure chronic ulcer of other part of unspecified foot with unspecified severity": [
+    "ICD10:L97.509"
+  ],
+  "nontraumatic intracranial hemorrhage": [
+    "ICD10:I62.9"
+  ],
+  "nontraumatic intracranial hemorrhage unspecified": [
+    "ICD10:I62.9"
+  ],
+  "nontraumatic subarachnoid hemorrhage unspecified": [
+    "ICD10:I60.9"
+  ],
+  "nontraumatic subdural hemorrhage unspecified": [
+    "ICD10:I62.00"
+  ],
+  "ntg": [
+    "RXNORM:4917"
+  ],
+  "não gan": [
+    "ICD10:K76.82"
+  ],
+  "não úng thủy": [
+    "ICD10:G91"
+  ],
+  "nôn": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "nôn ói": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "obesity": [
+    "ICD10:E66.9"
+  ],
+  "obesity unspecified": [
+    "ICD10:E66.9"
+  ],
+  "obstructive sleep apnea": [
+    "ICD10:G47.33"
+  ],
+  "obstructive sleep apnea adult pediatric": [
+    "ICD10:G47.33"
+  ],
+  "occlusion and stenosis of unspecified carotid artery": [
+    "ICD10:I65.29"
+  ],
+  "octreotide": [
+    "RXNORM:7617"
+  ],
+  "oedema": [
+    "LOCAL:SYMPTOM_EDEMA"
+  ],
+  "oesophagitis": [
+    "ICD10:K20"
+  ],
+  "omeprazole": [
+    "RXNORM:7646"
+  ],
+  "open wound of abdomen": [
+    "ICD10:S31.109"
+  ],
+  "osa": [
+    "ICD10:G47.33"
+  ],
+  "osteolysis": [
+    "ICD10:M89.5"
+  ],
+  "osteomyelitis": [
+    "ICD10:M86.9"
+  ],
+  "osteomyelitis unspecified": [
+    "ICD10:M86.9"
+  ],
+  "other bipolar affective disorders": [
+    "ICD10:F31.8"
+  ],
+  "other congenital deformities of feet": [
+    "ICD10:Q66.89"
+  ],
+  "other diseases of vocal cords": [
+    "ICD10:J38.3"
+  ],
+  "other pulmonary embolism without acute cor pulmonale": [
+    "ICD10:I26.99"
+  ],
+  "oxycodone / acetaminophen": [
+    "RXNORM:42844"
+  ],
+  "oxycodone acetaminophen": [
+    "RXNORM:42844"
+  ],
+  "oxycodone/acetaminophen": [
+    "RXNORM:42844"
+  ],
+  "paclitaxel": [
+    "RXNORM:56946"
+  ],
+  "palpitations": [
+    "LOCAL:SYMPTOM_PALPITATIONS"
+  ],
+  "pancreatic head cancer": [
+    "ICD10:C25.0"
+  ],
+  "panic disorder": [
+    "ICD10:F41.0"
+  ],
+  "panic disorder episodic paroxysmal anxiety": [
+    "ICD10:F41.0"
+  ],
+  "papilledema": [
+    "ICD10:H47.1"
+  ],
+  "papilloedema": [
+    "ICD10:H47.1"
+  ],
+  "papilloedema unspecified": [
+    "ICD10:H47.1"
+  ],
+  "paracetamol": [
+    "RXNORM:161"
+  ],
+  "paraplegia": [
+    "ICD10:G82.20"
+  ],
+  "paraplegia unspecified": [
+    "ICD10:G82.20"
+  ],
+  "paroxysmal atrial fibrillation": [
+    "ICD10:I48.0"
+  ],
+  "passing out": [
+    "LOCAL:SYMPTOM_SYNCOPE"
+  ],
+  "pe": [
+    "ICD10:I26.99"
+  ],
+  "penetrating abdominal wound": [
+    "ICD10:S31.109"
+  ],
+  "percocet": [
+    "RXNORM:42844"
+  ],
+  "peripheral neuropathy": [
+    "ICD10:G62.9"
+  ],
+  "peripheral vascular disease": [
+    "ICD10:I73.9"
+  ],
+  "peripheral vascular disease unspecified": [
+    "ICD10:I73.9"
+  ],
+  "persistent delusional disorders": [
+    "ICD10:F22"
+  ],
+  "phì đại tuyến tiền liệt": [
+    "ICD10:N40"
+  ],
+  "phì đại tăng sản tuyến tiền liệt": [
+    "ICD10:N40"
+  ],
+  "phình động mạch chủ": [
+    "ICD10:I71.9"
+  ],
+  "phình động mạch chủ nhỏ": [
+    "ICD10:I71.9"
+  ],
+  "phình động mạch chủ vị trí không xác định không vỡ": [
+    "ICD10:I71.9"
+  ],
+  "phù": [
+    "LOCAL:SYMPTOM_EDEMA"
+  ],
+  "phù gai thị": [
+    "ICD10:H47.1"
+  ],
+  "phù gai thị không xác định": [
+    "ICD10:H47.1"
+  ],
+  "phù mắt cá chân": [
+    "LOCAL:SYMPTOM_EDEMA"
+  ],
+  "phù phổi": [
+    "ICD10:J81"
+  ],
+  "phổi kẽ": [
+    "ICD10:J84.9"
+  ],
+  "phổi mô kẽ không xác định": [
+    "ICD10:J84.9"
+  ],
+  "phổi tắc nghẽn mạn tính": [
+    "ICD10:J44.9"
+  ],
+  "phổi tắc nghẽn mạn tính không xác định": [
+    "ICD10:J44.9"
+  ],
+  "piperacillin / tazobactam": [
+    "RXNORM:74170"
+  ],
+  "piperacillin tazobactam": [
+    "RXNORM:74170"
+  ],
+  "piperacillin/tazobactam": [
+    "RXNORM:74170"
+  ],
+  "pkd": [
+    "ICD10:Q61.3"
+  ],
+  "plavix": [
+    "RXNORM:32968"
+  ],
+  "pleural effusion": [
+    "ICD10:J90"
+  ],
+  "pleural effusion not elsewhere classified": [
+    "ICD10:J90"
+  ],
+  "pleural effusion not elsewhere classified pleural effusion in conditions classified elsewhere": [
+    "ICD10:J90"
+  ],
+  "pna": [
+    "ICD10:J18.9"
+  ],
+  "pneumonia": [
+    "ICD10:J18.9"
+  ],
+  "pneumonia unspecified": [
+    "ICD10:J18.9"
+  ],
+  "pneumonia unspecified organism": [
+    "ICD10:J18.9"
+  ],
+  "polycystic kidney": [
+    "ICD10:Q61.3"
+  ],
+  "polycystic kidney disease": [
+    "ICD10:Q61.3"
+  ],
+  "polycystic kidney unspecified": [
+    "ICD10:Q61.3"
+  ],
+  "polyneuropathy": [
+    "ICD10:G62.9"
+  ],
+  "polyneuropathy unspecified": [
+    "ICD10:G62.9"
+  ],
+  "polyneuropathy unspecified polyneuropathy in diseases classified elsewhere polyneuropathy in infectious and parasitic diseases classified elsewhere polyneuropathy in neoplastic disease c00-d48 diabetic polyneuropathy e10-e14 with common fourth character .4 polyneuropathy in other endocrine and metabolic diseases e00- e07 e15- e16 e20- e34 e70-e89 polyneuropathy in nutritional deficiency e40- e64 polyneuropathy in systemic connective tissue disorders m30- m35 polyneuropathy in other musculoskeletal disorders m00- m25 m40-m96 polyneuropathy in other diseases classified elsewhere": [
+    "ICD10:G62.9"
+  ],
+  "potassium": [
+    "LOCAL:TEST_POTASSIUM"
+  ],
+  "prasugrel": [
+    "RXNORM:613391"
+  ],
+  "prednisone": [
+    "RXNORM:8640"
+  ],
+  "prilosec": [
+    "RXNORM:7646"
+  ],
+  "primary hyperparathyroidis m": [
+    "ICD10:E21.0"
+  ],
+  "primary hyperparathyroidism": [
+    "ICD10:E21.0"
+  ],
+  "prinivil": [
+    "RXNORM:29046"
+  ],
+  "prochlorperazine": [
+    "RXNORM:8704"
+  ],
+  "prograf": [
+    "RXNORM:42316"
+  ],
+  "prostate cancer": [
+    "ICD10:C61"
+  ],
+  "prostatic hyperplasia": [
+    "ICD10:N40"
+  ],
+  "pulmonary embolism": [
+    "ICD10:I26.99"
+  ],
+  "pulmonary hypertension": [
+    "ICD10:I27.20"
+  ],
+  "pulmonary hypertension unspecified": [
+    "ICD10:I27.20"
+  ],
+  "pulmonary oedema": [
+    "ICD10:J81"
+  ],
+  "pure hypercholesterolae mia": [
+    "ICD10:E78.0"
+  ],
+  "pvd": [
+    "ICD10:I73.9"
+  ],
+  "pyelonephritis": [
+    "ICD10:N12"
+  ],
+  "quetiapine": [
+    "RXNORM:51272"
+  ],
+  "radiculopathy": [
+    "ICD10:M54.10"
+  ],
+  "radiculopathy site unspecified": [
+    "ICD10:M54.10"
+  ],
+  "radiograph": [
+    "LOCAL:TEST_XRAY"
+  ],
+  "ranexa": [
+    "RXNORM:35829"
+  ],
+  "ranolazine": [
+    "RXNORM:35829"
+  ],
+  "renal calculus": [
+    "ICD10:N20.0"
+  ],
+  "rib fracture": [
+    "ICD10:S22.42"
+  ],
+  "rocephin": [
+    "RXNORM:2193"
+  ],
+  "rosuvastatin": [
+    "RXNORM:301542"
+  ],
+  "rung nhĩ": [
+    "ICD10:I48.91"
+  ],
+  "rung nhĩ không đặc hiệu": [
+    "ICD10:I48.91"
+  ],
+  "rung nhĩ kịch phát": [
+    "ICD10:I48.0"
+  ],
+  "rối loạn chức năng của thần kinh - cơ bàng quang": [
+    "ICD10:N31.9"
+  ],
+  "rối loạn chức năng của thần kinh - cơ bàng quang không xác định": [
+    "ICD10:N31.9"
+  ],
+  "rối loạn cân bằng kiềm toan phối hợp": [
+    "ICD10:E87.4"
+  ],
+  "rối loạn cảm xúc": [
+    "ICD10:F39"
+  ],
+  "rối loạn cảm xúc lưỡng cực": [
+    "ICD10:F31",
+    "ICD10:F31.9"
+  ],
+  "rối loạn cảm xúc lưỡng cực khác": [
+    "ICD10:F31.8"
+  ],
+  "rối loạn cảm xúc lưỡng cực không xác định": [
+    "ICD10:F31.9"
+  ],
+  "rối loạn hoang tưởng": [
+    "ICD10:F22"
+  ],
+  "rối loạn hoang tưởng dai dẳng": [
+    "ICD10:F22"
+  ],
+  "rối loạn hoảng sợ": [
+    "ICD10:F41.0"
+  ],
+  "rối loạn hoảng sợ lo âu kịch phát từng giai đoạn": [
+    "ICD10:F41.0"
+  ],
+  "rối loạn khí sắc cảm xúc không xác định": [
+    "ICD10:F39"
+  ],
+  "rối loạn lipid máu": [
+    "ICD10:E78.5"
+  ],
+  "rối loạn lo âu": [
+    "ICD10:F41.9"
+  ],
+  "rối loạn lo âu không xác định": [
+    "ICD10:F41.9"
+  ],
+  "rối loạn lưỡng cực": [
+    "ICD10:F31.9"
+  ],
+  "rối loạn thị giác": [
+    "ICD10:H53",
+    "ICD10:H53.9"
+  ],
+  "rối loạn thị giác không xác định": [
+    "ICD10:H53.9"
+  ],
+  "rối loạn đông máu": [
+    "ICD10:D68.9"
+  ],
+  "rối loạn đông máu không xác định": [
+    "ICD10:D68.9"
+  ],
+  "sa sinh dục ở nữ giới": [
+    "ICD10:N81.9"
+  ],
+  "sa sinh dục ở nữ giới không xác định": [
+    "ICD10:N81.9"
+  ],
+  "sa tạng chậu": [
+    "ICD10:N81.9"
+  ],
+  "sa van hai lá": [
+    "ICD10:I34.1"
+  ],
+  "sa âm đạo": [
+    "ICD10:N81.9"
+  ],
+  "saba": [
+    "RXNORM:435"
+  ],
+  "sacoit": [
+    "ICD10:D86.85"
+  ],
+  "salbutamol": [
+    "RXNORM:435"
+  ],
+  "sandostatin": [
+    "RXNORM:7617"
+  ],
+  "sarcoid myocarditis": [
+    "ICD10:D86.85"
+  ],
+  "sarcoid tim": [
+    "ICD10:D86.85"
+  ],
+  "sarcoidosis tim": [
+    "ICD10:D86.85"
+  ],
+  "schizophrenia": [
+    "ICD10:F20"
+  ],
+  "schizophrenia unspecified": [
+    "ICD10:F20.9"
+  ],
+  "scr": [
+    "LOCAL:TEST_CREATININE"
+  ],
+  "sepsis": [
+    "ICD10:A41.9"
+  ],
+  "sepsis unspecified": [
+    "ICD10:A41.9"
+  ],
+  "sepsis unspecified organism": [
+    "ICD10:A41.9"
+  ],
+  "septicemia": [
+    "ICD10:A41.9"
+  ],
+  "seroquel": [
+    "RXNORM:51272"
+  ],
+  "serum creatinine": [
+    "LOCAL:TEST_CREATININE"
+  ],
+  "serum potassium": [
+    "LOCAL:TEST_POTASSIUM"
+  ],
+  "sgot": [
+    "LOCAL:TEST_AST"
+  ],
+  "sgpt": [
+    "LOCAL:TEST_ALT"
+  ],
+  "short-acting beta agonist": [
+    "RXNORM:435"
+  ],
+  "shortness of breath": [
+    "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "sleep apnea": [
+    "ICD10:G47.30"
+  ],
+  "sleep apnea unspecified": [
+    "ICD10:G47.30"
+  ],
+  "sob": [
+    "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "sodium bicarbonate": [
+    "RXNORM:36676"
+  ],
+  "solu-medrol": [
+    "RXNORM:6902"
+  ],
+  "song thị": [
+    "ICD10:H53.2"
+  ],
+  "spinal stenosis": [
+    "ICD10:M48.00"
+  ],
+  "spinal stenosis site unspecified": [
+    "ICD10:M48.00"
+  ],
+  "stomach pain": [
+    "LOCAL:SYMPTOM_ABDOMINAL_PAIN"
+  ],
+  "subarachnoid haemorrhage unspecified": [
+    "ICD10:I60.9"
+  ],
+  "subarachnoid hemorrhage": [
+    "ICD10:I60.9"
+  ],
+  "subdural hematoma": [
+    "ICD10:I62.00"
+  ],
+  "subdural hemorrhage": [
+    "ICD10:I62.00"
+  ],
+  "suboxone": [
+    "RXNORM:352364"
+  ],
+  "suicidal ideation": [
+    "ICD10:R45.851"
+  ],
+  "suicidal ideations": [
+    "ICD10:R45.851"
+  ],
+  "sulfamethoxazole / trimethoprim": [
+    "RXNORM:10831"
+  ],
+  "sulfamethoxazole trimethoprim": [
+    "RXNORM:10831"
+  ],
+  "supraventricular tachycardia": [
+    "ICD10:I47.1"
+  ],
+  "suy giảm miễn dịch": [
+    "ICD10:D84.9"
+  ],
+  "suy giảm miễn dịch do sử dụng corticoid": [
+    "ICD10:D84.821"
+  ],
+  "suy giảm miễn dịch do sử dụng corticoid kéo dài": [
+    "ICD10:D84.821"
+  ],
+  "suy giảm miễn dịch do thuốc": [
+    "ICD10:D84.821"
+  ],
+  "suy giảm miễn dịch không xác định": [
+    "ICD10:D84.9"
+  ],
+  "suy nhược": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "suy than cap": [
+    "ICD10:N17.9"
+  ],
+  "suy than man": [
+    "ICD10:N18.9"
+  ],
+  "suy thận cấp": [
+    "ICD10:N17.9"
+  ],
+  "suy thận cấp tính": [
+    "ICD10:N17.9"
+  ],
+  "suy thận cấp tính không xác định": [
+    "ICD10:N17.9"
+  ],
+  "suy thận mạn": [
+    "ICD10:N18.9"
+  ],
+  "suy tim": [
+    "ICD10:I50.9"
+  ],
+  "suy tim không xác định": [
+    "ICD10:I50.9"
+  ],
+  "suy tim sung huyet": [
+    "ICD10:I50.9"
+  ],
+  "suy tim sung huyết": [
+    "ICD10:I50.9"
+  ],
+  "swelling": [
+    "LOCAL:SYMPTOM_EDEMA"
+  ],
+  "syncope": [
+    "LOCAL:SYMPTOM_SYNCOPE"
+  ],
+  "sưng phù": [
+    "LOCAL:SYMPTOM_EDEMA"
+  ],
+  "sỏi": [
+    "ICD10:N20.9"
+  ],
+  "sỏi mật": [
+    "ICD10:K80.20"
+  ],
+  "sỏi thận": [
+    "ICD10:N20.0"
+  ],
+  "sỏi tiết niệu": [
+    "ICD10:N20.9"
+  ],
+  "sỏi tiết niệu không xác định": [
+    "ICD10:N20.9"
+  ],
+  "sỏi tiết niệu không đặc hiệu": [
+    "ICD10:N20.9"
+  ],
+  "sỏi túi mật": [
+    "ICD10:K80.20"
+  ],
+  "sỏi túi mật không viêm túi mật không tắc nghẽn": [
+    "ICD10:K80.20"
+  ],
+  "sỏi đoạn cuối ống mật chủ": [
+    "ICD10:K80.50"
+  ],
+  "sỏi đường tiết niệu": [
+    "ICD10:N20.9"
+  ],
+  "sỏi ống dẫn mật": [
+    "ICD10:K80.50"
+  ],
+  "sỏi ống dẫn mật chung": [
+    "ICD10:K80.50"
+  ],
+  "sỏi ống mật": [
+    "ICD10:K80.50"
+  ],
+  "sỏi ống mật chủ": [
+    "ICD10:K80.50"
+  ],
+  "sỏi ống mật không viêm đường mật hoặc túi mật không tắc nghẽn": [
+    "ICD10:K80.50"
+  ],
+  "sốt": [
+    "LOCAL:SYMPTOM_FEVER"
+  ],
+  "t2dm": [
+    "ICD10:E11"
+  ],
+  "tacrolimus": [
+    "RXNORM:42316"
+  ],
+  "tang huyet ap": [
+    "ICD10:I10"
+  ],
+  "taxol": [
+    "RXNORM:56946"
+  ],
+  "tbili": [
+    "LOCAL:TEST_BILIRUBIN"
+  ],
+  "tenormin": [
+    "RXNORM:1202"
+  ],
+  "tha": [
+    "ICD10:I10"
+  ],
+  "thay đổi cân nặng": [
+    "LOCAL:SYMPTOM_WEIGHT_CHANGE"
+  ],
+  "thiếu máu": [
+    "ICD10:D64.9"
+  ],
+  "thiếu máu cơ tim": [
+    "ICD10:I25.10"
+  ],
+  "thiếu máu không xác định": [
+    "ICD10:D64.9"
+  ],
+  "thoracic pain": [
+    "LOCAL:SYMPTOM_CHEST_PAIN"
+  ],
+  "thuyên tắc phổi": [
+    "ICD10:I26.99"
+  ],
+  "thuyên tắc phổi hai bên": [
+    "ICD10:I26.99"
+  ],
+  "thận mạn tính không xác định": [
+    "ICD10:N18.9"
+  ],
+  "thận đa nang": [
+    "ICD10:Q61.3"
+  ],
+  "thận đa nang bẩm sinh không xác định": [
+    "ICD10:Q61.3"
+  ],
+  "thắt chặt hoặc khó chịu vùng ngực": [
+    "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
+  "thắt chặt ngực": [
+    "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
+  "thủy đậu": [
+    "ICD10:B01.9"
+  ],
+  "thủy đậu không biến chứng": [
+    "ICD10:B01.9"
+  ],
+  "tieu duong type 2": [
+    "ICD10:E11"
+  ],
+  "tim không xác định rối loạn tim khác do bệnh phân loại mục khác rối loạn tim khác do bệnh nhiễm trùng phân loại mục khác rối loạn tim khác do bệnh nhiễm trùng và ký sinh trùng khác phân loại mục khác rối loạn tim khác do bệnh khác phân loại mục khác": [
+    "ICD10:I51.9"
+  ],
+  "tim mạch do xơ vữa động mạch": [
+    "ICD10:I25.1"
+  ],
+  "tim to": [
+    "ICD10:I51.7"
+  ],
+  "tiredness": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "tiêu chảy": [
+    "LOCAL:SYMPTOM_DIARRHEA"
+  ],
+  "tiêu xương": [
+    "ICD10:M89.5"
+  ],
+  "tiểu không tự chủ": [
+    "ICD10:R32"
+  ],
+  "tiểu tiện không tự chủ": [
+    "ICD10:R32"
+  ],
+  "tiểu tiện không tự chủ không xác định": [
+    "ICD10:R32"
+  ],
+  "tiểu đường": [
+    "ICD10:E11"
+  ],
+  "tiểu đường type 2": [
+    "ICD10:E11"
+  ],
+  "tiểu đường týp 2": [
+    "ICD10:E11"
+  ],
+  "tmp-smx": [
+    "RXNORM:10831"
+  ],
+  "tni": [
+    "LOCAL:TEST_TROPONIN"
+  ],
+  "tnt": [
+    "LOCAL:TEST_TROPONIN"
+  ],
+  "toe ulcer": [
+    "ICD10:L97.509"
+  ],
+  "toprol xl": [
+    "RXNORM:6918"
+  ],
+  "toradol": [
+    "RXNORM:35827"
+  ],
+  "torsemide": [
+    "RXNORM:38413"
+  ],
+  "total bilirubin": [
+    "LOCAL:TEST_BILIRUBIN"
+  ],
+  "trao nguoc da day thuc quan": [
+    "ICD10:K21.9"
+  ],
+  "tricuspid insufficiency": [
+    "ICD10:I07.1"
+  ],
+  "trimethoprim sulfamethoxazole": [
+    "RXNORM:10831"
+  ],
+  "troponin": [
+    "LOCAL:TEST_TROPONIN"
+  ],
+  "troponin i": [
+    "LOCAL:TEST_TROPONIN"
+  ],
+  "troponin t": [
+    "LOCAL:TEST_TROPONIN"
+  ],
+  "tràn dịch màng phổi": [
+    "ICD10:J90"
+  ],
+  "tràn dịch màng phổi hai bên": [
+    "ICD10:J90"
+  ],
+  "tràn dịch màng phổi không phân loại mục khác tràn dịch màng phổi do bệnh phân loại mục khác": [
+    "ICD10:J90"
+  ],
+  "tràn dịch màng phổi trái": [
+    "ICD10:J90"
+  ],
+  "trào ngược dạ dày - thực quản": [
+    "ICD10:K21.9"
+  ],
+  "trào ngược dạ dày - thực quản không kèm viêm thực quản": [
+    "ICD10:K21.9"
+  ],
+  "trào ngược dạ dày thực quản": [
+    "ICD10:K21.9"
+  ],
+  "trào ngược dạ dày- thực quản": [
+    "ICD10:K21.9"
+  ],
+  "tubulo-interstitial nephritis not specified as acute or chronic": [
+    "ICD10:N12"
+  ],
+  "turner syndrome": [
+    "ICD10:Q96"
+  ],
+  "turner syndrome unspecified": [
+    "ICD10:Q96.9"
+  ],
+  "tylenol": [
+    "RXNORM:161"
+  ],
+  "type 1 diabetes mellitus": [
+    "ICD10:E10"
+  ],
+  "type 2 diabetes": [
+    "ICD10:E11"
+  ],
+  "type 2 diabetes mellitus": [
+    "ICD10:E11"
+  ],
+  "tách thành động mạch chủ": [
+    "ICD10:I71.00"
+  ],
+  "tách động mạch chủ": [
+    "ICD10:I71.00"
+  ],
+  "táo bón": [
+    "ICD10:K59.0"
+  ],
+  "tâm thần phân liệt": [
+    "ICD10:F20",
+    "ICD10:F20.9"
+  ],
+  "tâm thần phân liệt không xác định": [
+    "ICD10:F20.9"
+  ],
+  "túi thừa của ruột phần không xác định không thủng hoặc áp xe": [
+    "ICD10:K57.9"
+  ],
+  "tăng calci máu": [
+    "ICD10:E83.52"
+  ],
+  "tăng canxi máu": [
+    "ICD10:E83.52"
+  ],
+  "tăng cholesterol máu": [
+    "ICD10:E78.5"
+  ],
+  "tăng cholesterol máu đơn thuần": [
+    "ICD10:E78.0"
+  ],
+  "tăng cân": [
+    "LOCAL:SYMPTOM_WEIGHT_CHANGE"
+  ],
+  "tăng ha": [
+    "ICD10:I10"
+  ],
+  "tăng huyết áp": [
+    "ICD10:I10"
+  ],
+  "tăng huyết áp vô căn nguyên phát": [
+    "ICD10:I10"
+  ],
+  "tăng kali": [
+    "ICD10:E87.5"
+  ],
+  "tăng kali máu": [
+    "ICD10:E87.5"
+  ],
+  "tăng lipid máu": [
+    "ICD10:E78.5"
+  ],
+  "tăng lipid máu không xác định": [
+    "ICD10:E78.5"
+  ],
+  "tăng sản tuyến tiền liệt": [
+    "ICD10:N40"
+  ],
+  "tăng áp phổi": [
+    "ICD10:I27.20"
+  ],
+  "tăng áp phổi động mạch": [
+    "ICD10:I27.20"
+  ],
+  "tăng áp động mạch phổi": [
+    "ICD10:I27.20"
+  ],
+  "tắc động mạch cảnh": [
+    "ICD10:I65.29"
+  ],
+  "tổn thương dây thanh quản": [
+    "ICD10:J38.3"
+  ],
+  "tổn thương thận cấp": [
+    "ICD10:N17.9"
+  ],
+  "tụ máu dưới màng cứng": [
+    "ICD10:I62.00"
+  ],
+  "tức ngực": [
+    "LOCAL:SYMPTOM_CHEST_PAIN"
+  ],
+  "u cơ trơn tử cung": [
+    "ICD10:D25.9"
+  ],
+  "u cơ trơn tử cung không xác định": [
+    "ICD10:D25.9"
+  ],
+  "u sacoit": [
+    "ICD10:D86.85"
+  ],
+  "u xơ tử cung": [
+    "ICD10:D25.9"
+  ],
+  "u ác của tuyến tiền liệt": [
+    "ICD10:C61"
+  ],
+  "u ác của đại tràng": [
+    "ICD10:C18.9"
+  ],
+  "u ác của đầu tuỵ": [
+    "ICD10:C25.0"
+  ],
+  "u ác của đầu tụy": [
+    "ICD10:C25.0"
+  ],
+  "u ác phổi": [
+    "ICD10:C34"
+  ],
+  "u ác tuyến tiền liệt": [
+    "ICD10:C61"
+  ],
+  "u ác tính": [
+    "ICD10:C80.1"
+  ],
+  "u ác tính tuyến tiền liệt": [
+    "ICD10:C61"
+  ],
+  "u ác tính đầu tụy": [
+    "ICD10:C25.0"
+  ],
+  "u ác tính ở phế quản và/hoặc phổi": [
+    "ICD10:C34"
+  ],
+  "u ác tính ở tuyến tiền liệt": [
+    "ICD10:C61"
+  ],
+  "u ác tính ở đại tràng": [
+    "ICD10:C18.9"
+  ],
+  "u ác tính ở đại tràng không xác định": [
+    "ICD10:C18.9"
+  ],
+  "u ác tính ở đầu tụy": [
+    "ICD10:C25.0"
+  ],
+  "u ác đại tràng": [
+    "ICD10:C18.9"
+  ],
+  "u ác đầu tuỵ": [
+    "ICD10:C25.0"
+  ],
+  "u ác đầu tụy": [
+    "ICD10:C25.0"
+  ],
+  "ulcer of esophagus": [
+    "ICD10:K22.1"
+  ],
+  "ulcer of oesophagus": [
+    "ICD10:K22.1"
+  ],
+  "ulcerative colitis": [
+    "ICD10:K51.9"
+  ],
+  "ulcerative colitis unspecified": [
+    "ICD10:K51.9"
+  ],
+  "ung thư": [
+    "ICD10:C80.1"
+  ],
+  "ung thư không đặc hiệu": [
+    "ICD10:C80.1"
+  ],
+  "ung thư phế quản": [
+    "ICD10:C34"
+  ],
+  "ung thư phổi": [
+    "ICD10:C34"
+  ],
+  "ung thư tuyến tiền liệt": [
+    "ICD10:C61"
+  ],
+  "ung thư vú": [
+    "ICD10:C50.919"
+  ],
+  "ung thư vú di căn": [
+    "ICD10:C50.919"
+  ],
+  "ung thư vú trái": [
+    "ICD10:C50.912"
+  ],
+  "ung thư vú trái giai iiib": [
+    "ICD10:C50.912"
+  ],
+  "ung thư đại tràng": [
+    "ICD10:C18.9"
+  ],
+  "ung thư đầu tuỵ": [
+    "ICD10:C25.0"
+  ],
+  "ung thư đầu tụy": [
+    "ICD10:C25.0"
+  ],
+  "unspecified atherosclerosis": [
+    "ICD10:I70.90"
+  ],
+  "unspecified atrial fibrillation": [
+    "ICD10:I48.91"
+  ],
+  "unspecified infectious disease": [
+    "ICD10:B99.9"
+  ],
+  "unspecified mood affective disorder": [
+    "ICD10:F39"
+  ],
+  "unspecified mood disorder": [
+    "ICD10:F39"
+  ],
+  "unspecified open wound of abdominal wall": [
+    "ICD10:S31.109"
+  ],
+  "unspecified urinary incontinence": [
+    "ICD10:R32"
+  ],
+  "unstable angina": [
+    "ICD10:I20.0"
+  ],
+  "ure": [
+    "LOCAL:TEST_BUN"
+  ],
+  "ure máu": [
+    "LOCAL:TEST_BUN"
+  ],
+  "urea": [
+    "LOCAL:TEST_BUN"
+  ],
+  "urinary calculus": [
+    "ICD10:N20.9"
+  ],
+  "urinary calculus unspecified": [
+    "ICD10:N20.9"
+  ],
+  "urinary incontinence": [
+    "ICD10:R32"
+  ],
+  "urinary stone": [
+    "ICD10:N20.9"
+  ],
+  "urolithiasis": [
+    "ICD10:N20.9"
+  ],
+  "uterine contractions": [
+    "LOCAL:SYMPTOM_UTERINE_CONTRACTIONS"
+  ],
+  "uterine leiomyoma": [
+    "ICD10:D25.9"
+  ],
+  "vaginal prolapse": [
+    "ICD10:N81.9"
+  ],
+  "vancocin": [
+    "RXNORM:11124"
+  ],
+  "vancomycin": [
+    "RXNORM:11124"
+  ],
+  "varicella": [
+    "ICD10:B01.9"
+  ],
+  "varicella without complication": [
+    "ICD10:B01.9"
+  ],
+  "varicella zoster virus": [
+    "ICD10:B02.9"
+  ],
+  "ventolin": [
+    "RXNORM:435"
+  ],
+  "ventricular premature depolarization": [
+    "ICD10:I49.3"
+  ],
+  "vibramycin": [
+    "RXNORM:3640"
+  ],
+  "vicodin": [
+    "RXNORM:214182"
+  ],
+  "viral gastroenteritis": [
+    "ICD10:A08.4"
+  ],
+  "viral hepatitis b": [
+    "ICD10:B18.1"
+  ],
+  "viral hepatitis c": [
+    "ICD10:B18.2"
+  ],
+  "viral infection unspecified": [
+    "ICD10:B34.9"
+  ],
+  "viral intestinal infection unspecified": [
+    "ICD10:A08.4"
+  ],
+  "visual disturbance unspecified": [
+    "ICD10:H53.9"
+  ],
+  "visual disturbances": [
+    "ICD10:H53"
+  ],
+  "viêm bể thận": [
+    "ICD10:N12"
+  ],
+  "viêm bể thận cấp": [
+    "ICD10:N10"
+  ],
+  "viêm bể thận không đặc hiệu": [
+    "ICD10:N12"
+  ],
+  "viêm dạ dày": [
+    "ICD10:K29.7"
+  ],
+  "viêm dạ dày không xác định": [
+    "ICD10:K29.7"
+  ],
+  "viêm dạ dày không đặc hiệu": [
+    "ICD10:K29.7"
+  ],
+  "viêm dạ dày ruột do virus": [
+    "ICD10:A08.4"
+  ],
+  "viêm dạ dày ruột virus": [
+    "ICD10:A08.4"
+  ],
+  "viêm gan siêu vi b": [
+    "ICD10:B18.1"
+  ],
+  "viêm gan siêu vi c": [
+    "ICD10:B18.2"
+  ],
+  "viêm gan virus b": [
+    "ICD10:B18.1"
+  ],
+  "viêm gan virus b mạn tính": [
+    "ICD10:B18.1"
+  ],
+  "viêm gan virus b mạn tính không có viêm gan d tác nhân delta": [
+    "ICD10:B18.1"
+  ],
+  "viêm gan virus c": [
+    "ICD10:B18.2"
+  ],
+  "viêm gan virus c mạn tính": [
+    "ICD10:B18.2"
+  ],
+  "viêm loét không xác định của đại tràng": [
+    "ICD10:K51.9"
+  ],
+  "viêm loét đại tràng": [
+    "ICD10:K51.9"
+  ],
+  "viêm mô tế bào": [
+    "ICD10:L03.90"
+  ],
+  "viêm phế quản": [
+    "ICD10:J40"
+  ],
+  "viêm phế quản không xác định được là cấp tính hoặc mạn tính": [
+    "ICD10:J40"
+  ],
+  "viêm phế quản không đặc hiệu": [
+    "ICD10:J40"
+  ],
+  "viêm phổi": [
+    "ICD10:J18.9"
+  ],
+  "viêm phổi cộng đồng": [
+    "ICD10:J18.9"
+  ],
+  "viêm phổi không xác định": [
+    "ICD10:J18.9"
+  ],
+  "viêm phổi kẽ": [
+    "ICD10:J84.9"
+  ],
+  "viêm thận bể thận cấp": [
+    "ICD10:N10"
+  ],
+  "viêm thực quản": [
+    "ICD10:K20"
+  ],
+  "viêm thực quản độ c": [
+    "ICD10:K20"
+  ],
+  "viêm túi mật": [
+    "ICD10:K81.9"
+  ],
+  "viêm túi mật cấp": [
+    "ICD10:K81.0"
+  ],
+  "viêm túi mật cấp tính": [
+    "ICD10:K81.0"
+  ],
+  "viêm túi mật cấp tính không biến chứng": [
+    "ICD10:K81.0"
+  ],
+  "viêm túi mật không biến chứng": [
+    "ICD10:K81.9"
+  ],
+  "viêm túi mật không đặc hiệu": [
+    "ICD10:K81.9"
+  ],
+  "viêm túi mật thủng cấp tính": [
+    "ICD10:K81.0"
+  ],
+  "viêm tủy xương": [
+    "ICD10:M86.9"
+  ],
+  "viêm xương tủy": [
+    "ICD10:M86.9"
+  ],
+  "viêm xương tủy không xác định": [
+    "ICD10:M86.9"
+  ],
+  "viêm ống thận mô kẽ cấp tính": [
+    "ICD10:N10"
+  ],
+  "viêm ống thận mô kẽ không xác định cấp tính hay mạn tính": [
+    "ICD10:N12"
+  ],
+  "vocal cord disease": [
+    "ICD10:J38.3"
+  ],
+  "vocal cord lesion": [
+    "ICD10:J38.3"
+  ],
+  "vomiting": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "vzv": [
+    "ICD10:B02.9"
+  ],
+  "vết thương thấu bụng": [
+    "ICD10:S31.109"
+  ],
+  "warfarin": [
+    "RXNORM:11289"
+  ],
+  "wbc": [
+    "LOCAL:TEST_WBC"
+  ],
+  "weakness": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "weight change": [
+    "LOCAL:SYMPTOM_WEIGHT_CHANGE"
+  ],
+  "weight gain": [
+    "LOCAL:SYMPTOM_WEIGHT_CHANGE"
+  ],
+  "weight loss": [
+    "LOCAL:SYMPTOM_WEIGHT_CHANGE"
+  ],
+  "white blood cell count": [
+    "LOCAL:TEST_WBC"
+  ],
+  "white blood cells": [
+    "LOCAL:TEST_WBC"
+  ],
+  "white matter disease": [
+    "ICD10:R90.82"
+  ],
+  "white matter disease unspecified": [
+    "ICD10:R90.82"
+  ],
+  "x quang ngực": [
+    "LOCAL:TEST_XRAY"
+  ],
+  "x-quang": [
+    "LOCAL:TEST_XRAY"
+  ],
+  "x-ray": [
+    "LOCAL:TEST_XRAY"
+  ],
+  "xuất huyết dưới nhện": [
+    "ICD10:I60.9"
+  ],
+  "xuất huyết dưới nhện không xác định": [
+    "ICD10:I60.9"
+  ],
+  "xuất huyết dưới nhện vùng trán phải": [
+    "ICD10:I60.9"
+  ],
+  "xuất huyết não không do chấn thương": [
+    "ICD10:I62.9"
+  ],
+  "xuất huyết não không do chấn thương không xác định": [
+    "ICD10:I62.9"
+  ],
+  "xuất huyết nội sọ": [
+    "ICD10:I62.9"
+  ],
+  "xuất huyết nội sọ không do chấn thương": [
+    "ICD10:I62.9"
+  ],
+  "xuất huyết nội sọ không do chấn thương không đặc hiệu": [
+    "ICD10:I62.9"
+  ],
+  "xơ gan do rượu": [
+    "ICD10:K70.3"
+  ],
+  "xơ gan rượu": [
+    "ICD10:K70.3"
+  ],
+  "xơ vữa động mạch": [
+    "ICD10:I70.90"
+  ],
+  "xơ vữa động mạch toàn thể và/hoặc xơ vữa động mạch không xác định không kèm hoại thư": [
+    "ICD10:I70.90"
+  ],
+  "xẹp phổi": [
+    "ICD10:J98.11"
+  ],
+  "xẹp phổi hai đáy": [
+    "ICD10:J98.11"
+  ],
+  "xẹp phổi thùy dưới phải": [
+    "ICD10:J98.11"
+  ],
+  "xỉu": [
+    "LOCAL:SYMPTOM_SYNCOPE"
+  ],
+  "yếu": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "yếu chân phải": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "yếu cơ": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "yếu nửa người": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "yếu nửa người bên phải": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "yếu nửa người trái": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "yếu sức": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "yếu sức chân phải": [
+    "LOCAL:SYMPTOM_FATIGUE_WEAKNESS"
+  ],
+  "z pack": [
+    "RXNORM:18631"
+  ],
+  "z-pack": [
+    "RXNORM:18631"
+  ],
+  "z-pak": [
+    "RXNORM:18631"
+  ],
+  "zestril": [
+    "RXNORM:29046"
+  ],
+  "zithromax": [
+    "RXNORM:18631"
+  ],
+  "zona": [
+    "ICD10:B02.9"
+  ],
+  "zona không biến chứng": [
+    "ICD10:B02.9"
+  ],
+  "zoster": [
+    "ICD10:B02.9"
+  ],
+  "zoster without complication": [
+    "ICD10:B02.9"
+  ],
+  "zoster without complications": [
+    "ICD10:B02.9"
+  ],
+  "zosyn": [
+    "RXNORM:74170"
+  ],
+  "zyloprim": [
+    "RXNORM:519"
+  ],
+  "ói": [
+    "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "ý nghĩ tự tử": [
+    "ICD10:R45.851"
+  ],
+  "ý định tự tử": [
+    "ICD10:R45.851"
+  ],
+  "đa u tuỷ xương": [
+    "ICD10:C90.0"
+  ],
+  "đa u tủy": [
+    "ICD10:C90.0"
+  ],
+  "đa u tủy xương": [
+    "ICD10:C90.0"
+  ],
+  "đa xơ cứng": [
+    "ICD10:G35"
+  ],
+  "đau bụng": [
+    "LOCAL:SYMPTOM_ABDOMINAL_PAIN"
+  ],
+  "đau cơ": [
+    "ICD10:M79.1"
+  ],
+  "đau ngực": [
+    "LOCAL:SYMPTOM_CHEST_PAIN"
+  ],
+  "đau thắt ngực không ổn định": [
+    "ICD10:I20.0"
+  ],
+  "đau đầu": [
+    "LOCAL:SYMPTOM_HEADACHE"
+  ],
+  "điện tâm đồ": [
+    "LOCAL:TEST_ECG"
+  ],
+  "đtđ": [
+    "ICD10:E11"
+  ],
+  "đtđ type 2": [
+    "ICD10:E11"
+  ],
+  "đái tháo đường": [
+    "ICD10:E11"
+  ],
+  "đái tháo đường không phụ thuộc insulin": [
+    "ICD10:E11"
+  ],
+  "đái tháo đường type 2": [
+    "ICD10:E11"
+  ],
+  "đái tháo đường típ 1": [
+    "ICD10:E10"
+  ],
+  "đái tháo đường típ 2": [
+    "ICD10:E11"
+  ],
+  "đái tháo đường týp ii": [
+    "ICD10:E11"
+  ],
+  "đánh trống ngực": [
+    "LOCAL:SYMPTOM_PALPITATIONS"
+  ],
+  "đường huyết": [
+    "LOCAL:TEST_GLUCOSE"
+  ],
+  "động kinh": [
+    "ICD10:G40"
+  ]
+}

@@ -15,11 +15,14 @@ from medical_kg_nlp.utils.text import normalize_for_match
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build a lightweight lexical alias index.")
     parser.add_argument("--config", default="configs/default.yaml")
+    parser.add_argument("--dictionary", help="Override dictionary JSONL path from config.")
+    parser.add_argument("--alias-overlay", help="Override alias overlay JSONL path from config.")
+    parser.add_argument("--output", help="Override lexical index output path from config.")
     args = parser.parse_args()
     config = read_yaml(args.config)
-    dictionary_path = Path(config["dictionaries"]["seed_dictionary"])
-    alias_overlay_path = config["dictionaries"].get("vietnamese_alias_table")
-    index_path = Path(config["indexes"]["lexical_index"])
+    dictionary_path = Path(args.dictionary or config["dictionaries"]["seed_dictionary"])
+    alias_overlay_path = args.alias_overlay or config["dictionaries"].get("vietnamese_alias_table")
+    index_path = Path(args.output or config["indexes"]["lexical_index"])
     store = DictionaryStore.from_jsonl(
         dictionary_path,
         alias_overlay_path=Path(str(alias_overlay_path)) if alias_overlay_path else None,
