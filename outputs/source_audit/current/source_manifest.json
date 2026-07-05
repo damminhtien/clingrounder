@@ -1099,7 +1099,7 @@
       "unknown_source_ids": {}
     },
     {
-      "alias_count": 1334,
+      "alias_count": 1360,
       "ambiguous_alias_count": 23,
       "ambiguous_aliases": [
         {
@@ -1894,7 +1894,7 @@
         }
       ],
       "blocked_alias_count": 1,
-      "broad_alias_count": 103,
+      "broad_alias_count": 106,
       "broad_aliases": [
         {
           "alias": "sepsis",
@@ -2473,6 +2473,12 @@
           "reason": "too_short"
         },
         {
+          "alias": "BP",
+          "concept_id": "LOCAL:TEST_BLOOD_PRESSURE",
+          "normalized_alias": "bp",
+          "reason": "too_short"
+        },
+        {
           "alias": "Cr",
           "concept_id": "LOCAL:TEST_CREATININE",
           "normalized_alias": "cr",
@@ -2489,23 +2495,17 @@
           "concept_id": "LOCAL:TEST_GLUCOSE",
           "normalized_alias": "bg",
           "reason": "too_short"
-        },
-        {
-          "alias": "K+",
-          "concept_id": "LOCAL:TEST_POTASSIUM",
-          "normalized_alias": "k+",
-          "reason": "too_short"
         }
       ],
       "by_code_system": {
         "ICD-10": 146,
-        "LOCAL": 51,
+        "LOCAL": 56,
         "RxNorm": 119
       },
       "by_semantic_type": {
         "DISEASE": 146,
         "DRUG": 119,
-        "LAB_TEST": 21,
+        "LAB_TEST": 26,
         "SYMPTOM": 30
       },
       "by_source": {
@@ -2517,7 +2517,7 @@
         "rxnorm_current": 70,
         "rxnorm_prescribable_2026_06_01": 116,
         "seed": 39,
-        "vn_clinical_lexicon_reviewed_2026_07_05": 21,
+        "vn_clinical_lexicon_reviewed_2026_07_05": 26,
         "who_icd10_2019": 76
       },
       "duplicate_codes": [],
@@ -2548,7 +2548,7 @@
       },
       "missing_source_rows": 0,
       "path": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
-      "row_count": 316,
+      "row_count": 321,
       "rxnorm_enrichment": {
         "inactive_or_obsolete": 1,
         "rows": 119,
@@ -2558,9 +2558,9 @@
         "with_status": 116,
         "with_strength": 16
       },
-      "unique_alias_count": 1277,
-      "unique_codes": 316,
-      "unique_concept_ids": 316,
+      "unique_alias_count": 1303,
+      "unique_codes": 321,
+      "unique_concept_ids": 321,
       "unknown_mention_candidates": [
         {
           "count": 86,
@@ -2586,11 +2586,6 @@
           "count": 61,
           "normalized": "động mạch",
           "term": "động mạch"
-        },
-        {
-          "count": 55,
-          "normalized": "huyết áp",
-          "term": "huyết áp"
         },
         {
           "count": 38,
@@ -2954,11 +2949,6 @@
         },
         {
           "count": 9,
-          "normalized": "nhịp tim",
-          "term": "nhịp tim"
-        },
-        {
-          "count": 9,
           "normalized": "mạch do xơ",
           "term": "mạch do xơ"
         },
@@ -3061,6 +3051,16 @@
           "count": 8,
           "normalized": "tăng lipid",
           "term": "tăng lipid"
+        },
+        {
+          "count": 8,
+          "normalized": "áp không",
+          "term": "áp không"
+        },
+        {
+          "count": 8,
+          "normalized": "huyết áp không",
+          "term": "huyết áp không"
         }
       ],
       "unknown_source_ids": {}
@@ -4408,6 +4408,20 @@
       "severity": "medium"
     },
     {
+      "alias": "BP",
+      "concept_id": "LOCAL:TEST_BLOOD_PRESSURE",
+      "dictionaries": [
+        "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "false_positive_alias_candidate",
+      "normalized_alias": "bp",
+      "notes": "Very short aliases should require type/context-specific evidence before matching.",
+      "reason": "too_short",
+      "recommended_action": "review_block_alias_or_require_type_context",
+      "severity": "medium"
+    },
+    {
       "alias": "CP",
       "concept_id": "LOCAL:SYMPTOM_CHEST_PAIN",
       "dictionaries": [
@@ -4514,8 +4528,7 @@
       "alias": "K+",
       "concept_id": "LOCAL:TEST_POTASSIUM",
       "dictionaries": [
-        "data/dictionaries/seed_concepts.jsonl",
-        "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
+        "data/dictionaries/seed_concepts.jsonl"
       ],
       "dictionary": "data/dictionaries/seed_concepts.jsonl",
       "issue_type": "false_positive_alias_candidate",
@@ -4594,31 +4607,31 @@
     },
     {
       "exists": true,
-      "md5": "5a83978d66151af9df1841782b9c1595",
+      "md5": "16e9661460fd11a196da337abfff1853",
       "path": "data/standards/vn_clinical_lexicon/raw/reviewed_terms.tsv",
       "required": true,
       "role": "raw_reviewed_terms_tsv",
-      "sha256": "6e630bbc683b206057480e61a50a4aff1ad5374b2a846fa182da0f8af118424c",
-      "size_bytes": 5182,
+      "sha256": "70a8ee463b933096c04b5aa939c2f70c834b2490eddd25ebaf8faba30d40f4ef",
+      "size_bytes": 6065,
       "source_id": "vn_clinical_lexicon_reviewed_2026_07_05"
     },
     {
       "exists": true,
-      "md5": "db5e30a08a64261ca6fd61af80a24af7",
+      "md5": "1e07cba9882ba0cf6943ffa00b37514b",
       "path": "data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl",
       "required": true,
       "role": "concept_rows_jsonl",
-      "sha256": "931b0ba1636974dd9debfb562e71f930e6b99d13d30fdb5ad5ca140945a4edea",
-      "size_bytes": 15475,
+      "sha256": "e52993176cebe6935d74e26cf1ba3fbc1ccd6c03065ba313a274cf20317e1a66",
+      "size_bytes": 18187,
       "source_id": "vn_clinical_lexicon_reviewed_2026_07_05"
     },
     {
       "exists": true,
-      "md5": "5b7495edc582eec6d9d732807677621d",
+      "md5": "c641c37a4c4460bd5f1a3fc97d779dcd",
       "path": "data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_import_manifest.json",
       "required": true,
       "role": "import_manifest",
-      "sha256": "65b1b81df657a94d4ea68e7c55bd846242b0b767bde61f0822e3381bf286046f",
+      "sha256": "eb3c0b8fbe87ef83316b3bc9380cfe75133bc470debe133f1af0b9caecb6566e",
       "size_bytes": 588,
       "source_id": "vn_clinical_lexicon_reviewed_2026_07_05"
     },
@@ -7017,15 +7030,6 @@
       "term": "động mạch"
     },
     {
-      "count": 55,
-      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
-      "issue_type": "unknown_mention_candidate",
-      "normalized": "huyết áp",
-      "notes": "Frequent input n-gram not covered by dictionary aliases; review before adding.",
-      "severity": "low",
-      "term": "huyết áp"
-    },
-    {
       "count": 38,
       "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
       "issue_type": "unknown_mention_candidate",
@@ -7420,6 +7424,15 @@
       "notes": "Frequent input n-gram not covered by dictionary aliases; review before adding.",
       "severity": "low",
       "term": "đau khi"
+    },
+    {
+      "count": 13,
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "unknown_mention_candidate",
+      "normalized": "giảm đau",
+      "notes": "Frequent input n-gram not covered by dictionary aliases; review before adding.",
+      "severity": "low",
+      "term": "giảm đau"
     }
   ],
   "registry": {
@@ -7950,7 +7963,7 @@
   },
   "summary": {
     "dictionary_count": 2,
-    "false_positive_blocklist_count": 101,
+    "false_positive_blocklist_count": 102,
     "file_count": 16,
     "manual_review_item_count": 223,
     "missing_required_file_count": 0,

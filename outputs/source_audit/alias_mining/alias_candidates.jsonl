@@ -3,7 +3,6 @@
 {"count": 79, "normalized_alias": "điều trị", "priority": 109, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "điều trị"}
 {"count": 65, "normalized_alias": "xét nghiệm", "priority": 95, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "xét nghiệm"}
 {"count": 61, "normalized_alias": "động mạch", "priority": 91, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "động mạch"}
-{"count": 55, "normalized_alias": "huyết áp", "priority": 85, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "huyết áp"}
 {"count": 38, "normalized_alias": "thủ thuật đã", "priority": 68, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "thủ thuật đã"}
 {"count": 37, "normalized_alias": "sử phẫu", "priority": 67, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "sử phẫu"}
 {"count": 37, "normalized_alias": "sử phẫu thuật", "priority": 67, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "sử phẫu thuật"}
@@ -99,7 +98,6 @@
 {"count": 9, "normalized_alias": "lipid máu", "priority": 39, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "lipid máu"}
 {"count": 9, "normalized_alias": "làm giảm n/a", "priority": 39, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "làm giảm n/a"}
 {"count": 9, "normalized_alias": "mạch do xơ", "priority": 39, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "mạch do xơ"}
-{"count": 9, "normalized_alias": "nhịp tim", "priority": 39, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "nhịp tim"}
 {"count": 9, "normalized_alias": "thận mạn", "priority": 39, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "thận mạn"}
 {"count": 9, "normalized_alias": "tiểu tiện", "priority": 39, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "tiểu tiện"}
 {"count": 9, "normalized_alias": "tăng lên", "priority": 39, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "tăng lên"}
@@ -130,6 +128,7 @@
 {"count": 7, "normalized_alias": "huyết áp tăng", "priority": 37, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "huyết áp tăng"}
 {"count": 7, "normalized_alias": "thủ thuật thực", "priority": 37, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "thủ thuật thực"}
 {"count": 7, "normalized_alias": "tính tăng", "priority": 37, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "tính tăng"}
+{"count": 7, "normalized_alias": "tăng liều", "priority": 37, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "tăng liều"}
 {"count": 7, "normalized_alias": "tăng men", "priority": 37, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "tăng men"}
 {"count": 7, "normalized_alias": "tăng men gan", "priority": 37, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "tăng men gan"}
 {"count": 7, "normalized_alias": "viện các thủ", "priority": 37, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "viện các thủ"}
@@ -137,6 +136,7 @@
 {"count": 7, "normalized_alias": "viện xét nghiệm", "priority": 37, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "viện xét nghiệm"}
 {"count": 7, "normalized_alias": "áp tăng", "priority": 37, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "áp tăng"}
 {"count": 7, "normalized_alias": "được điều trị", "priority": 37, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "được điều trị"}
+{"count": 7, "normalized_alias": "ổ bụng", "priority": 37, "proposal_type": "unknown_phrase", "recommended_action": "review_classify_as_alias_section_or_ignore", "term": "ổ bụng"}
 {"alias": "PCP", "normalized_alias": "pcp", "occurrence_count": 10, "priority": 30, "proposal_type": "abbreviation_candidate", "recommended_action": "review_expand_abbreviation"}
 {"alias": "ERCP", "normalized_alias": "ercp", "occurrence_count": 5, "priority": 25, "proposal_type": "abbreviation_candidate", "recommended_action": "review_expand_abbreviation"}
 {"alias": "ST", "normalized_alias": "st", "occurrence_count": 5, "priority": 25, "proposal_type": "abbreviation_candidate", "recommended_action": "review_expand_abbreviation"}

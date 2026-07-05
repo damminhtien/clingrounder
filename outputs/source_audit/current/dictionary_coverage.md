@@ -5,7 +5,7 @@
 - Missing required local files: 0
 - Dictionary profiles: 2
 - Manual review items: 223
-- False-positive blocklist candidates: 101
+- False-positive blocklist candidates: 102
 
 ## Source Registry
 
@@ -63,14 +63,14 @@
 
 ### `data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl`
 
-- Rows: 316
-- Code systems: {'ICD-10': 146, 'LOCAL': 51, 'RxNorm': 119}
-- Semantic types: {'DISEASE': 146, 'DRUG': 119, 'LAB_TEST': 21, 'SYMPTOM': 30}
+- Rows: 321
+- Code systems: {'ICD-10': 146, 'LOCAL': 56, 'RxNorm': 119}
+- Semantic types: {'DISEASE': 146, 'DRUG': 119, 'LAB_TEST': 26, 'SYMPTOM': 30}
 - ICD hierarchy: {'rows': 146, 'with_parent_code': 131, 'with_block': 130, 'with_chapter': 146, 'by_chapter': {'I': 10, 'II': 13, 'III': 5, 'IV': 11, 'IX': 32, 'V': 11, 'VI': 7, 'VII': 5, 'X': 10, 'XI': 17, 'XII': 2, 'XIII': 5, 'XIV': 9, 'XIX': 2, 'XVII': 4, 'XVIII': 3}}
 - RxNorm enrichment: {'rows': 119, 'with_ingredient': 119, 'with_brand_name': 108, 'with_dose_form': 113, 'with_strength': 16, 'with_status': 116, 'inactive_or_obsolete': 1}
-- Sources: {'cdc_icd10cm_2026': 94, 'icd10_vn_tt06_2026': 112, 'icd_kcb_vn': 41, 'medlineplus_xml': 51, 'rxnav_rest_2026_07_04': 54, 'rxnorm_current': 70, 'rxnorm_prescribable_2026_06_01': 116, 'seed': 39, 'vn_clinical_lexicon_reviewed_2026_07_05': 21, 'who_icd10_2019': 76}
+- Sources: {'cdc_icd10cm_2026': 94, 'icd10_vn_tt06_2026': 112, 'icd_kcb_vn': 41, 'medlineplus_xml': 51, 'rxnav_rest_2026_07_04': 54, 'rxnorm_current': 70, 'rxnorm_prescribable_2026_06_01': 116, 'seed': 39, 'vn_clinical_lexicon_reviewed_2026_07_05': 26, 'who_icd10_2019': 76}
 - Ambiguous aliases: 23
-- Broad/blocked review aliases: 103
+- Broad/blocked review aliases: 106
 - Missing source rows: 0
 
 ## RxNorm Releases

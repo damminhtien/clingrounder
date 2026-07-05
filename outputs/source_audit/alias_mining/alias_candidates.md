@@ -10,7 +10,6 @@
 - 109 `unknown_phrase` `điều trị` count=79 target= action=review_classify_as_alias_section_or_ignore
 - 95 `unknown_phrase` `xét nghiệm` count=65 target= action=review_classify_as_alias_section_or_ignore
 - 91 `unknown_phrase` `động mạch` count=61 target= action=review_classify_as_alias_section_or_ignore
-- 85 `unknown_phrase` `huyết áp` count=55 target= action=review_classify_as_alias_section_or_ignore
 - 68 `unknown_phrase` `thủ thuật đã` count=38 target= action=review_classify_as_alias_section_or_ignore
 - 67 `unknown_phrase` `sử phẫu` count=37 target= action=review_classify_as_alias_section_or_ignore
 - 67 `unknown_phrase` `sử phẫu thuật` count=37 target= action=review_classify_as_alias_section_or_ignore
@@ -85,3 +84,4 @@
 - 41 `unknown_phrase` `đi tiểu` count=11 target= action=review_classify_as_alias_section_or_ignore
 - 41 `unknown_phrase` `để điều trị` count=11 target= action=review_classify_as_alias_section_or_ignore
 - 40 `unknown_phrase` `khuẩn đường` count=10 target= action=review_classify_as_alias_section_or_ignore
+- 40 `unknown_phrase` `khuẩn đường tiết` count=10 target= action=review_classify_as_alias_section_or_ignore
