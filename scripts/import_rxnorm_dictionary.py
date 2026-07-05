@@ -10,9 +10,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from medical_kg_nlp.dictionaries.rxnorm_sources import (
     RXNORM_FULL_2026_06_01_SOURCE_ID,
+    RXNORM_ENRICHMENT_TTYS,
     RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID,
     build_rxnorm_concept_rows,
     parse_rxnorm_rxnconso,
+    parse_rxnorm_rxnrel,
+    parse_rxnorm_rxnsat,
+    profile_rxnorm_release,
     rxnorm_source_policy,
     write_rxnorm_concept_rows,
     write_rxnorm_import_manifest,
@@ -43,24 +47,73 @@ def main() -> None:
     args = parser.parse_args()
 
     terms = []
+    enrichment_terms = []
+    relations = []
+    attributes = []
     source_inputs: list[str] = []
     source_parse_counts: list[dict[str, object]] = []
+    release_profiles: list[dict[str, object]] = []
     for path in args.prescribable_rxnorm:
         source_inputs.append(path)
         parsed = parse_rxnorm_rxnconso(path, source_id=RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID)
+        parsed_enrichment_terms = parse_rxnorm_rxnconso(
+            path,
+            source_id=RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID,
+            allowed_ttys=RXNORM_ENRICHMENT_TTYS,
+        )
+        parsed_relations = parse_rxnorm_rxnrel(path, source_id=RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID)
+        parsed_attributes = parse_rxnorm_rxnsat(path, source_id=RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID)
         _require_parsed(path, "prescribable_rxnorm", len(parsed))
-        source_parse_counts.append({"path": path, "parser": "prescribable_rxnorm", "terms": len(parsed)})
+        source_parse_counts.append(
+            {
+                "path": path,
+                "parser": "prescribable_rxnorm",
+                "terms": len(parsed),
+                "enrichment_terms": len(parsed_enrichment_terms),
+                "relations": len(parsed_relations),
+                "attributes": len(parsed_attributes),
+            }
+        )
+        release_profiles.append(profile_rxnorm_release(path))
         terms.extend(parsed)
+        enrichment_terms.extend(parsed_enrichment_terms)
+        relations.extend(parsed_relations)
+        attributes.extend(parsed_attributes)
     for path in args.full_rxnorm:
         source_inputs.append(path)
         parsed = parse_rxnorm_rxnconso(path, source_id=RXNORM_FULL_2026_06_01_SOURCE_ID)
+        parsed_enrichment_terms = parse_rxnorm_rxnconso(
+            path,
+            source_id=RXNORM_FULL_2026_06_01_SOURCE_ID,
+            allowed_ttys=RXNORM_ENRICHMENT_TTYS,
+        )
+        parsed_relations = parse_rxnorm_rxnrel(path, source_id=RXNORM_FULL_2026_06_01_SOURCE_ID)
+        parsed_attributes = parse_rxnorm_rxnsat(path, source_id=RXNORM_FULL_2026_06_01_SOURCE_ID)
         _require_parsed(path, "full_rxnorm", len(parsed))
-        source_parse_counts.append({"path": path, "parser": "full_rxnorm", "terms": len(parsed)})
+        source_parse_counts.append(
+            {
+                "path": path,
+                "parser": "full_rxnorm",
+                "terms": len(parsed),
+                "enrichment_terms": len(parsed_enrichment_terms),
+                "relations": len(parsed_relations),
+                "attributes": len(parsed_attributes),
+            }
+        )
+        release_profiles.append(profile_rxnorm_release(path))
         terms.extend(parsed)
+        enrichment_terms.extend(parsed_enrichment_terms)
+        relations.extend(parsed_relations)
+        attributes.extend(parsed_attributes)
     if not terms:
         raise SystemExit("At least one --prescribable-rxnorm or --full-rxnorm source file is required.")
 
-    rows = build_rxnorm_concept_rows(terms)
+    rows = build_rxnorm_concept_rows(
+        terms,
+        enrichment_terms=enrichment_terms,
+        relations=relations,
+        attributes=attributes,
+    )
     write_rxnorm_concept_rows(args.output, rows)
     manifest = {
         "concepts": len(rows),
@@ -68,6 +121,7 @@ def main() -> None:
         "source_policy": rxnorm_source_policy(),
         "source_parse_counts": source_parse_counts,
         "source_inputs": source_inputs,
+        "release_profiles": release_profiles,
     }
     if args.manifest:
         manifest = write_rxnorm_import_manifest(
@@ -75,6 +129,7 @@ def main() -> None:
             rows=rows,
             source_inputs=source_inputs,
             source_parse_counts=source_parse_counts,
+            release_profiles=release_profiles,
         )
         manifest["output"] = args.output
     print(json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True))
