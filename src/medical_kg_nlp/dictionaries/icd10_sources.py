@@ -69,6 +69,30 @@ _ICD10_EN_NAME_KEYS = frozenset(
 )
 _ICD10_ALIAS_KEYS = frozenset({"alias", "aliases", "synonym", "synonyms", "ten_khac"})
 _ICD10_PARENT_KEYS = frozenset({"parent", "parent_code", "ma_cha", "block", "chapter"})
+_ICD10_CHAPTERS: tuple[tuple[str, str, str, str], ...] = (
+    ("A00", "B99", "I", "Certain infectious and parasitic diseases"),
+    ("C00", "D48", "II", "Neoplasms"),
+    ("D50", "D89", "III", "Diseases of the blood and blood-forming organs and immune mechanism"),
+    ("E00", "E90", "IV", "Endocrine, nutritional and metabolic diseases"),
+    ("F00", "F99", "V", "Mental and behavioural disorders"),
+    ("G00", "G99", "VI", "Diseases of the nervous system"),
+    ("H00", "H59", "VII", "Diseases of the eye and adnexa"),
+    ("H60", "H95", "VIII", "Diseases of the ear and mastoid process"),
+    ("I00", "I99", "IX", "Diseases of the circulatory system"),
+    ("J00", "J99", "X", "Diseases of the respiratory system"),
+    ("K00", "K93", "XI", "Diseases of the digestive system"),
+    ("L00", "L99", "XII", "Diseases of the skin and subcutaneous tissue"),
+    ("M00", "M99", "XIII", "Diseases of the musculoskeletal system and connective tissue"),
+    ("N00", "N99", "XIV", "Diseases of the genitourinary system"),
+    ("O00", "O99", "XV", "Pregnancy, childbirth and the puerperium"),
+    ("P00", "P96", "XVI", "Certain conditions originating in the perinatal period"),
+    ("Q00", "Q99", "XVII", "Congenital malformations, deformations and chromosomal abnormalities"),
+    ("R00", "R99", "XVIII", "Symptoms, signs and abnormal clinical and laboratory findings"),
+    ("S00", "T98", "XIX", "Injury, poisoning and certain other consequences of external causes"),
+    ("V01", "Y98", "XX", "External causes of morbidity and mortality"),
+    ("Z00", "Z99", "XXI", "Factors influencing health status and contact with health services"),
+    ("U00", "U99", "XXII", "Codes for special purposes"),
+)
 
 
 @dataclass(frozen=True)
@@ -265,6 +289,7 @@ def build_icd10_concept_rows(
     for code, merged_concept in sorted(merged.items()):
         parent_code = merged_concept.parent_code or _parent_code(code)
         parents = [parent_code] if parent_code else []
+        chapter = icd10_chapter_for_code(code)
         rows.append(
             {
                 "concept_id": f"ICD10:{code}",
@@ -279,6 +304,10 @@ def build_icd10_concept_rows(
                 "abbreviations": [],
                 "parent_code": parent_code,
                 "parents": parents,
+                "icd10_chapter": chapter.get("chapter"),
+                "icd10_chapter_range": chapter.get("range"),
+                "icd10_chapter_name_en": chapter.get("name_en"),
+                "icd10_block": _icd10_block_code(code, parent_code),
                 "source": merged_concept.source,
                 "source_ids": sorted(merged_concept.source_ids),
             }
@@ -326,6 +355,14 @@ def icd10_source_policy() -> dict[str, Any]:
             "or reviewed KCB extracts. CDC ICD-10-CM is not the primary source."
         ),
     }
+
+
+def icd10_chapter_for_code(code: str) -> dict[str, str | None]:
+    comparable = _icd10_comparable_code(code)
+    for start, end, chapter, name in _ICD10_CHAPTERS:
+        if _icd10_comparable_code(start) <= comparable <= _icd10_comparable_code(end):
+            return {"chapter": chapter, "range": f"{start}-{end}", "name_en": name}
+    return {"chapter": None, "range": None, "name_en": None}
 
 
 @dataclass
@@ -597,6 +634,23 @@ def _parent_code(code: str) -> str | None:
     if "." in code:
         return code.split(".", maxsplit=1)[0]
     return None
+
+
+def _icd10_block_code(code: str, parent_code: str | None) -> str | None:
+    if parent_code and "-" in parent_code:
+        return parent_code
+    if "." in code:
+        return code.split(".", maxsplit=1)[0]
+    return None
+
+
+def _icd10_comparable_code(code: str) -> tuple[str, int]:
+    cleaned = _format_icd10_code(code)
+    if not cleaned:
+        return ("", -1)
+    letter = cleaned[0]
+    digits = re.sub(r"\D", "", cleaned[1:])
+    return (letter, int(digits[:2] or "0"))
 
 
 def _is_icd10_category_code(code: str) -> bool:

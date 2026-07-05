@@ -8,6 +8,7 @@ from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.icd10_sources import (
     ICD10_VN_TT06_2026_SOURCE_ID,
     build_icd10_concept_rows,
+    icd10_chapter_for_code,
     icd10_source_policy,
     load_icd10_vietnamese_overlays,
     parse_cdc_icd10cm_descriptions,
@@ -168,6 +169,8 @@ def test_build_icd10_concept_rows_prefers_tt06_over_cdc_for_phase1(tmp_path: Pat
     assert diabetes["official_name_vi"] == "Đái tháo đường không phụ thuộc insulin"
     assert diabetes["source"] == ICD10_VN_TT06_2026_SOURCE_ID
     assert diabetes["source_ids"] == ["cdc_icd10cm_2026", ICD10_VN_TT06_2026_SOURCE_ID]
+    assert diabetes["icd10_chapter"] == "IV"
+    assert diabetes["icd10_chapter_range"] == "E00-E90"
 
 
 def test_build_icd10_concept_rows_merges_sources_and_vietnamese_aliases(
@@ -231,6 +234,13 @@ def test_build_icd10_concept_rows_merges_sources_and_vietnamese_aliases(
     write_icd10_concept_rows(output_path, rows)
     store = DictionaryStore.from_jsonl(output_path)
     assert store.exact_lookup("tiểu đường")[0].code == "E11"
+
+
+def test_icd10_chapter_for_code_maps_core_chapters() -> None:
+    assert icd10_chapter_for_code("A00")["chapter"] == "I"
+    assert icd10_chapter_for_code("E11.9")["chapter"] == "IV"
+    assert icd10_chapter_for_code("I25.1")["chapter"] == "IX"
+    assert icd10_chapter_for_code("Z99")["chapter"] == "XXI"
 
 
 def test_import_icd10_dictionary_cli_accepts_source_zips(tmp_path: Path) -> None:
