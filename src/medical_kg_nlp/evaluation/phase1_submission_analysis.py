@@ -310,11 +310,11 @@ def _heuristic_errors(
                 counts["assertion_confusion"] += 1
                 counts["likely_missing_historical"] += 1
                 errors.append(_assertion_error(document_id, row, window, "isHistorical?", "Historical/preadmission context with empty assertion."))
-            if "isNegated" not in assertions and any(marker in left for marker in _NEGATION_MARKERS):
+            if "isNegated" not in assertions and _contains_marker(left, _NEGATION_MARKERS):
                 counts["assertion_confusion"] += 1
                 counts["likely_missing_negation"] += 1
                 errors.append(_assertion_error(document_id, row, window, "isNegated?", "Negation cue in local left context but isNegated is absent."))
-            if not assertions and any(marker in left or marker in right for marker in _POSSIBLE_MARKERS):
+            if not assertions and (_contains_marker(left, _POSSIBLE_MARKERS) or _contains_marker(right, _POSSIBLE_MARKERS)):
                 counts["assertion_confusion"] += 1
                 counts["likely_possible"] += 1
                 errors.append(_assertion_error(document_id, row, window, "possible/not-present?", "Uncertainty cue exists; Phase 1 export has no possible label."))
@@ -324,7 +324,15 @@ def _heuristic_errors(
 def _has_historical_marker(left_context: str) -> bool:
     if any(marker in left_context for marker in _HISTORICAL_FALSE_POSITIVE_MARKERS):
         return False
-    return any(marker in left_context for marker in _HISTORICAL_MARKERS)
+    return _contains_marker(left_context, _HISTORICAL_MARKERS)
+
+
+def _contains_marker(text: str, markers: tuple[str, ...]) -> bool:
+    for marker in markers:
+        marker_pattern = r"\s+".join(re.escape(part) for part in marker.split())
+        if re.search(rf"(?<!\w){marker_pattern}(?!\w)", text, flags=re.IGNORECASE | re.UNICODE):
+            return True
+    return False
 
 
 def _error_summary(profile: dict[str, Any], counts: dict[str, int], metrics: dict[str, float]) -> dict[str, int]:
@@ -436,14 +444,20 @@ def _left_context(text: str, span: Any, radius: int = 100) -> str:
     if not _valid_span(span):
         return ""
     start, _ = span
-    return text[max(0, start - radius) : start]
+    context = text[max(0, start - radius) : start]
+    boundary = max(context.rfind(marker) for marker in (".", "\n", ";", "!", "?"))
+    return context[boundary + 1 :] if boundary >= 0 else context
 
 
 def _right_context(text: str, span: Any, radius: int = 70) -> str:
     if not _valid_span(span):
         return ""
     _, end = span
-    return text[end : min(len(text), end + radius)]
+    context = text[end : min(len(text), end + radius)]
+    boundaries = [position for marker in (".", "\n", ";", "!", "?") if (position := context.find(marker)) >= 0]
+    if not boundaries:
+        return context
+    return context[: min(boundaries)]
 
 
 def _valid_span(span: Any) -> bool:

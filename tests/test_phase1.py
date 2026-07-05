@@ -17,6 +17,7 @@ from medical_kg_nlp.evaluation.phase1 import (
     write_phase1_output_dir,
     zip_phase1_output_dir,
 )
+from medical_kg_nlp.evaluation.phase1_submission_analysis import build_phase1_submission_analysis
 from medical_kg_nlp.schema.annotation import CandidateConcept, EntityAnnotation
 from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.output import ClinicalPrediction
@@ -540,6 +541,52 @@ def test_phase1_pre_submit_gate_writes_analysis_and_loop_artifacts(tmp_path: Pat
     assert (gate_dir / "external_grader_report.json").exists()
     assert (gate_dir / "loop_report.json").exists()
     assert (tmp_path / "journal" / "experiment_notebook.md").exists()
+
+
+def test_phase1_submission_analysis_uses_word_boundaries_for_possible_markers(tmp_path: Path) -> None:
+    input_dir = tmp_path / "input"
+    output_dir = tmp_path / "output"
+    input_dir.mkdir()
+    output_dir.mkdir()
+    text = (
+        "Đặc điểm triệu chứng: đau ngực - Mức độ nghiêm trọng: N/A. "
+        "Được điều trị vì nghi ngờ viêm phổi."
+    )
+    (input_dir / "1.txt").write_text(text, encoding="utf-8")
+    rows = [
+        {
+            "text": "đau ngực",
+            "type": "TRIỆU_CHỨNG",
+            "assertions": [],
+            "candidates": [],
+            "position": [text.index("đau ngực"), text.index("đau ngực") + len("đau ngực")],
+        },
+        {
+            "text": "viêm phổi",
+            "type": "CHẨN_ĐOÁN",
+            "assertions": [],
+            "candidates": [],
+            "position": [text.index("viêm phổi"), text.index("viêm phổi") + len("viêm phổi")],
+        },
+    ]
+    (output_dir / "1.json").write_text(json.dumps(rows, ensure_ascii=False), encoding="utf-8")
+    zip_path = tmp_path / "output.zip"
+    zip_phase1_output_dir(output_dir, zip_path)
+
+    report = build_phase1_submission_analysis(
+        input_dir=input_dir,
+        zip_path=zip_path,
+        dictionary=DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl"),
+        expected_count=1,
+    )
+
+    possible_errors = [
+        error
+        for error in report["errors"]
+        if error["notes"] == "Uncertainty cue exists; Phase 1 export has no possible label."
+    ]
+    assert report["profile"]["likely_possible_context_count"] == 1
+    assert [error["prediction"]["text"] for error in possible_errors] == ["viêm phổi"]
 
 
 def _entity(

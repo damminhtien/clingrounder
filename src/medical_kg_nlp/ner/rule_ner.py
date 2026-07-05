@@ -17,6 +17,8 @@ _BP_RE = re.compile(r"(?<!\w)BP\s*\d{2,3}/\d{2,3}(?!\w)", flags=re.IGNORECASE)
 _HBA1C_RE = re.compile(r"(?<!\w)HbA1c\s*\d+(?:\.\d+)?%(?!\w)", flags=re.IGNORECASE)
 _UPPERCASE_LETTERS = "A-ZÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬĐÈÉẺẼẸÊẾỀỂỄỆÌÍỈĨỊÒÓỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÙÚỦŨỤƯỨỪỬỮỰỲÝỶỸỴ"
 _RIGHT_ALIAS_BOUNDARY = rf"(?=$|[^\w]|[{_UPPERCASE_LETTERS}])"
+_CONCATENATED_DRUG_LEFT_PREFIXES = ("dùng", "uống", "tiêm", "truyền")
+_CONCATENATED_DRUG_RIGHT_SUFFIXES = ("đã", "và", "trong", "kéo", "iv", "oral", "and")
 
 
 class RuleBasedNER:
@@ -28,6 +30,12 @@ class RuleBasedNER:
     ) -> None:
         self.store = store
         self.aliases = store.aliases_for_ner()
+        self._drug_aliases = tuple(
+            (alias, entry)
+            for alias, entry in self.aliases
+            if entry.semantic_type == EntityType.DRUG and len(alias.strip()) >= 4
+        )
+        self._drug_alias_lowers = tuple(alias.lower() for alias, _ in self._drug_aliases)
         self.false_positive_rules: tuple[FalsePositiveRule, ...] = load_false_positive_rules(false_positive_path)
 
     def extract(self, text: str) -> list[EntityAnnotation]:
@@ -59,6 +67,7 @@ class RuleBasedNER:
                         confidence=0.78,
                     )
                 )
+        self._extract_concatenated_drugs(text, occupied, spans)
         for regex in (_HBA1C_RE, _BP_RE, _LAB_VALUE_RE):
             for match in regex.finditer(text):
                 span = match.span()
@@ -102,6 +111,49 @@ class RuleBasedNER:
         left = text[max(0, span[0] - 8) : span[0]].lower()
         right = text[span[1] : min(len(text), span[1] + 8)].lower()
         return bool(re.search(r"chủ\s*$", left, flags=re.UNICODE) or re.match(r"\s*tố(?!\w)", right, flags=re.UNICODE))
+
+    def _extract_concatenated_drugs(
+        self,
+        text: str,
+        occupied: list[tuple[int, int]],
+        spans: list[EntityAnnotation],
+    ) -> None:
+        lowered = text.lower()
+        for alias, entry in self._drug_aliases:
+            pattern = re.compile(re.escape(alias), flags=re.IGNORECASE | re.UNICODE)
+            for match in pattern.finditer(text):
+                span = match.span()
+                if self._overlaps(span, occupied):
+                    continue
+                left_concat = self._has_concatenated_drug_left_boundary(lowered, span[0])
+                right_concat = self._has_concatenated_drug_right_boundary(lowered, span[1])
+                left_boundary = span[0] == 0 or not text[span[0] - 1].isalnum() or left_concat
+                right_boundary = span[1] == len(text) or not text[span[1]].isalnum() or right_concat
+                if not (left_boundary and right_boundary and (left_concat or right_concat)):
+                    continue
+                if self._blocked_contextual_alias(alias, text, span):
+                    continue
+                occupied.append(span)
+                spans.append(
+                    EntityAnnotation(
+                        id="",
+                        span=span,
+                        text=text[span[0] : span[1]],
+                        normalized_text=normalize_for_match(text[span[0] : span[1]]),
+                        type=entry.semantic_type,
+                        assertion=AssertionStatus.UNKNOWN,
+                        code_system=CodeSystem.NONE,
+                        confidence=0.74,
+                    )
+                )
+
+    def _has_concatenated_drug_left_boundary(self, lowered: str, start: int) -> bool:
+        left = lowered[max(0, start - 32) : start]
+        return left.endswith(self._drug_alias_lowers) or left.endswith(_CONCATENATED_DRUG_LEFT_PREFIXES)
+
+    def _has_concatenated_drug_right_boundary(self, lowered: str, end: int) -> bool:
+        right = lowered[end : end + 32]
+        return right.startswith(self._drug_alias_lowers) or right.startswith(_CONCATENATED_DRUG_RIGHT_SUFFIXES)
 
 
 def _right_boundary_for_alias(alias: str) -> str:

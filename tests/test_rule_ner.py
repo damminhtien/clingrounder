@@ -114,3 +114,33 @@ def test_rule_ner_keeps_strict_boundary_for_uppercase_abbreviations() -> None:
     assert "MI" in disease_texts
     assert "CML" in disease_texts
     assert all(entity.span != (8, 10) for entity in entities)
+
+
+def test_rule_ner_recovers_concatenated_drug_aliases_with_source_offsets() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    text = (
+        "Dùngmethadonekéo dài. "
+        "Tiếp tục doxycyclinebactrim. "
+        "lasixđã dừng. "
+        "morphineiv morphineoral. "
+        "klonopinclonidine và ciproflagyl. "
+        "atenololtrong ngày."
+    )
+    entities = RuleBasedNER(store).extract(text)
+    drug_texts = [entity.text for entity in entities if entity.type == EntityType.DRUG]
+
+    for expected in (
+        "methadone",
+        "doxycycline",
+        "bactrim",
+        "lasix",
+        "morphine",
+        "klonopin",
+        "clonidine",
+        "cipro",
+        "flagyl",
+        "atenolol",
+    ):
+        assert expected in [item.lower() for item in drug_texts]
+    for entity in entities:
+        assert text[entity.span[0] : entity.span[1]] == entity.text

@@ -320,6 +320,7 @@ def test_phase1_ontology_lite_diagnosis_batch2_terms_map_to_icd10() -> None:
         "bệnh thủy đậu": "B01.9",
         "Zona": "B02.9",
         "bệnh phổi kẽ": "J84.9",
+        "viêm phổi kẽ": "J84.9",
         "U Sacoit": "D86.85",
         "suy giảm miễn dịch do sử dụng corticoid": "D84.821",
         "u cơ trơn tử cung": "D25.9",
