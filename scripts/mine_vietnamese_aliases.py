@@ -38,6 +38,7 @@ def main() -> None:
     standard_paths = args.standard_dictionary or [
         "data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl",
         "data/standards/rxnorm/processed/rxnorm_prescribable_06012026_concepts.jsonl",
+        "data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl",
     ]
     candidates = mine_vietnamese_alias_candidates(
         input_dir=args.input_dir,

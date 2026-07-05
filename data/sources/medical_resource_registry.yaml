@@ -15,6 +15,26 @@ resources:
         path: data/dictionaries/vietnamese_medical_alias.jsonl
         required: true
     notes: Hand-curated bootstrap rows maintained in this repository.
+  - id: vn_clinical_lexicon_reviewed_2026_07_05
+    name: Reviewed Vietnamese clinical LOCAL lexicon
+    category: curation
+    access: local_reviewed
+    url: docs/dictionaries.md
+    version: reviewed snapshot 2026-07-05
+    release_date: "2026-07-05"
+    license: project
+    use: reviewed_vietnamese_symptom_lab_procedure_aliases
+    local_files:
+      - role: raw_reviewed_terms_tsv
+        path: data/standards/vn_clinical_lexicon/raw/reviewed_terms.tsv
+        required: true
+      - role: concept_rows_jsonl
+        path: data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl
+        required: true
+      - role: import_manifest
+        path: data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_import_manifest.json
+        required: true
+    notes: Source-backed local curation for Vietnamese symptoms, lab names, and future procedure terms.
   - id: icd10_vn_tt06_2026
     name: ICD-10 tiếng Việt theo TT 06/2026/TT-BYT
     category: terminology

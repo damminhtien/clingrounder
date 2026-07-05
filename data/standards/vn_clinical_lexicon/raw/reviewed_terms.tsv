@@ -1,0 +1,30 @@
+code	semantic_type	canonical_name	official_name_vi	official_name_en	aliases	synonyms	abbreviations	parents	notes
+SYMPTOM_HEMOPTYSIS	SYMPTOM	Hemoptysis	Ho ra máu	Hemoptysis	ho ra máu|khạc ra máu|ho máu		hemoptysis		Vietnamese symptom alias from Phase 1 unknown-mention review.
+SYMPTOM_DYSPHAGIA	SYMPTOM	Dysphagia	Khó nuốt	Dysphagia	khó nuốt|nuốt khó		dysphagia		Vietnamese symptom alias from Phase 1 unknown-mention review.
+SYMPTOM_WHEEZING	SYMPTOM	Wheezing	Thở khò khè	Wheezing	thở khò khè|khò khè|thở rít		wheezing		Vietnamese symptom alias from Phase 1 unknown-mention review.
+SYMPTOM_SORE_THROAT	SYMPTOM	Sore throat	Đau họng	Sore throat	đau họng|rát họng		sore throat		Vietnamese symptom alias from Phase 1 unknown-mention review.
+SYMPTOM_HEMATEMESIS	SYMPTOM	Hematemesis	Nôn ra máu	Hematemesis	nôn ra máu|ói ra máu		hematemesis		Vietnamese symptom alias from Phase 1 unknown-mention review.
+SYMPTOM_MELENA	SYMPTOM	Melena	Đi ngoài phân đen	Melena	đi ngoài phân đen|phân đen|đại tiện phân đen		melena		Vietnamese symptom alias from Phase 1 clinical-note review.
+SYMPTOM_HEMATURIA	SYMPTOM	Hematuria	Tiểu máu	Hematuria	tiểu máu|đái máu|nước tiểu có máu		hematuria		Vietnamese symptom alias from Phase 1 clinical-note review.
+SYMPTOM_DYSURIA	SYMPTOM	Dysuria	Tiểu buốt	Dysuria	tiểu buốt|đái buốt|tiểu rát|đái rát		dysuria		Vietnamese symptom alias from Phase 1 clinical-note review.
+SYMPTOM_POLYURIA	SYMPTOM	Polyuria	Tiểu nhiều	Polyuria	tiểu nhiều|đái nhiều		polyuria		Vietnamese symptom alias from Phase 1 clinical-note review.
+SYMPTOM_OLIGURIA	SYMPTOM	Oliguria	Tiểu ít	Oliguria	tiểu ít|thiểu niệu		oliguria		Vietnamese symptom alias from Phase 1 clinical-note review.
+SYMPTOM_SEIZURE	SYMPTOM	Seizure	Co giật	Seizure	co giật|cơn co giật		seizure		Vietnamese symptom alias from Phase 1 clinical-note review.
+SYMPTOM_CONFUSION	SYMPTOM	Confusion	Lú lẫn	Confusion	lú lẫn|rối loạn ý thức|ý thức lơ mơ		confusion		Vietnamese symptom alias from Phase 1 clinical-note review.
+SYMPTOM_CHILLS	SYMPTOM	Chills	Rét run	Chills	rét run|ớn lạnh|lạnh run		chills		Vietnamese symptom alias from Phase 1 clinical-note review.
+SYMPTOM_BLOOD_PRESSURE_HIGH	SYMPTOM	High blood pressure reading	Huyết áp cao	High blood pressure reading	huyết áp cao|tăng huyết áp đo được|cao huyết áp đo được		HTN reading		Finding-like symptom row; disease normalization remains ICD10:I10.
+SYMPTOM_HYPOXIA	SYMPTOM	Hypoxia	Giảm oxy máu	Hypoxia	giảm oxy máu|thiếu oxy|SpO2 thấp		hypoxia		Vietnamese symptom alias from Phase 1 clinical-note review.
+XRAY	LAB_TEST	X-ray	X-quang	X-ray	chụp X-quang|chụp x quang|chụp x-quang|x-quang ngực|x quang ngực|chụp x-quang ngực	radiograph	CXR		Enrich existing LOCAL:TEST_XRAY by code.
+CT	LAB_TEST	Computed tomography	Chụp cắt lớp vi tính	Computed tomography	chụp CT|CT scan|chụp cắt lớp|chụp cắt lớp vi tính|cắt lớp vi tính		CT		Imaging test aliases from Phase 1 unknown-mention review.
+MRI	LAB_TEST	Magnetic resonance imaging	Chụp cộng hưởng từ	Magnetic resonance imaging	chụp MRI|MRI|chụp cộng hưởng từ|cộng hưởng từ		MRI		Imaging test alias.
+ULTRASOUND	LAB_TEST	Ultrasound	Siêu âm	Ultrasound	siêu âm|siêu âm bụng|siêu âm tim		US		Imaging test alias.
+URINALYSIS	LAB_TEST	Urinalysis	Xét nghiệm nước tiểu	Urinalysis	xét nghiệm nước tiểu|tổng phân tích nước tiểu|nước tiểu|que thử nước tiểu		UA		Common Vietnamese lab alias.
+CBC	LAB_TEST	Complete blood count	Công thức máu	Complete blood count	công thức máu|tổng phân tích tế bào máu|huyết đồ|xét nghiệm máu	CBC	CBC		Common Vietnamese lab alias.
+ELECTROLYTES	LAB_TEST	Electrolyte panel	Điện giải đồ	Electrolyte panel	điện giải|điện giải đồ|xét nghiệm điện giải|ion đồ		ELEC		Common Vietnamese lab alias.
+LIVER_ENZYMES	LAB_TEST	Liver enzymes	Men gan	Liver enzymes	men gan|xét nghiệm men gan|chức năng gan		LFT		Common Vietnamese lab alias.
+RENAL_FUNCTION	LAB_TEST	Renal function panel	Chức năng thận	Renal function panel	chức năng thận|xét nghiệm chức năng thận		RFT		Common Vietnamese lab alias.
+CRP	LAB_TEST	C-reactive protein	CRP	C-reactive protein	CRP|C reactive protein|protein phản ứng C		CRP		Common inflammatory marker.
+ESR	LAB_TEST	Erythrocyte sedimentation rate	Tốc độ máu lắng	Erythrocyte sedimentation rate	tốc độ máu lắng|máu lắng|ESR		ESR		Common inflammatory marker.
+PROC_SURGERY	PROCEDURE	Surgery	Phẫu thuật	Surgery	phẫu thuật|mổ		surgery		Future phase procedure lexicon; not merged into Phase 1 runtime by default.
+PROC_PROCEDURE	PROCEDURE	Procedure	Thủ thuật	Procedure	thủ thuật|can thiệp	procedure			Future phase procedure lexicon; not merged into Phase 1 runtime by default.
+PROC_CARDIAC_CATH	PROCEDURE	Cardiac catheterization	Thông tim	Cardiac catheterization	thông tim|chụp mạch vành|can thiệp mạch vành		cath		Future phase procedure lexicon; not merged into Phase 1 runtime by default.

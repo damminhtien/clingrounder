@@ -20,5 +20,14 @@
     "fallback_file": "RxNorm_full_06012026.zip",
     "tty_priority": ["SCD", "SBD", "IN", "PIN", "MIN", "SCDF", "SBDF", "GPCK", "BPCK"],
     "notes": "Use prescribable RxNorm as the primary drug dictionary and full monthly release as fallback coverage."
+  },
+  "vn_clinical_lexicon": {
+    "source": "Reviewed Vietnamese LOCAL clinical lexicon",
+    "source_id": "vn_clinical_lexicon_reviewed_2026_07_05",
+    "release_date": "2026-07-05",
+    "raw_file": "data/standards/vn_clinical_lexicon/raw/reviewed_terms.tsv",
+    "processed_file": "data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl",
+    "phase1_allowed_new_semantic_types": ["DISEASE", "DRUG", "SYMPTOM", "LAB_TEST"],
+    "notes": "Reviewed LOCAL symptom and lab aliases can be merged into Phase 1 runtime; procedure rows are kept for later phases until export support exists."
   }
 }
