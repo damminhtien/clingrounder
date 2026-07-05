@@ -6,7 +6,7 @@ SYMPTOM_SORE_THROAT	SYMPTOM	Sore throat	Đau họng	Sore throat	đau họng|rát
 SYMPTOM_HEMATEMESIS	SYMPTOM	Hematemesis	Nôn ra máu	Hematemesis	nôn ra máu|ói ra máu		hematemesis		Vietnamese symptom alias from Phase 1 unknown-mention review.
 SYMPTOM_MELENA	SYMPTOM	Melena	Đi ngoài phân đen	Melena	đi ngoài phân đen|phân đen|đại tiện phân đen		melena		Vietnamese symptom alias from Phase 1 clinical-note review.
 SYMPTOM_HEMATURIA	SYMPTOM	Hematuria	Tiểu máu	Hematuria	tiểu máu|đái máu|nước tiểu có máu		hematuria		Vietnamese symptom alias from Phase 1 clinical-note review.
-SYMPTOM_DYSURIA	SYMPTOM	Dysuria	Tiểu buốt	Dysuria	tiểu buốt|đái buốt|tiểu rát|đái rát		dysuria		Vietnamese symptom alias from Phase 1 clinical-note review.
+SYMPTOM_DYSURIA	SYMPTOM	Dysuria	Tiểu buốt	Dysuria	tiểu buốt|đái buốt|tiểu rát|đái rát|đau buốt khi đi tiểu|đau rát khi đi tiểu|đau đớn khi đi tiểu|khó chịu khi đi tiểu		dysuria		Vietnamese symptom alias from Phase 1 clinical-note review.
 SYMPTOM_POLYURIA	SYMPTOM	Polyuria	Tiểu nhiều	Polyuria	tiểu nhiều|đái nhiều		polyuria		Vietnamese symptom alias from Phase 1 clinical-note review.
 SYMPTOM_OLIGURIA	SYMPTOM	Oliguria	Tiểu ít	Oliguria	tiểu ít|thiểu niệu		oliguria		Vietnamese symptom alias from Phase 1 clinical-note review.
 SYMPTOM_SEIZURE	SYMPTOM	Seizure	Co giật	Seizure	co giật|cơn co giật		seizure		Vietnamese symptom alias from Phase 1 clinical-note review.
@@ -25,6 +25,11 @@ LIVER_ENZYMES	LAB_TEST	Liver enzymes	Men gan	Liver enzymes	men gan|xét nghiệm
 RENAL_FUNCTION	LAB_TEST	Renal function panel	Chức năng thận	Renal function panel	chức năng thận|xét nghiệm chức năng thận		RFT		Common Vietnamese lab alias.
 CRP	LAB_TEST	C-reactive protein	CRP	C-reactive protein	CRP|C reactive protein|protein phản ứng C		CRP		Common inflammatory marker.
 ESR	LAB_TEST	Erythrocyte sedimentation rate	Tốc độ máu lắng	Erythrocyte sedimentation rate	tốc độ máu lắng|máu lắng|ESR		ESR		Common inflammatory marker.
+BLOOD_PRESSURE	LAB_TEST	Blood pressure	Huyết áp	Blood pressure	huyết áp|huyết áp tâm thu|huyết áp tâm trương|chỉ số huyết áp	blood pressure	BP		Vital-sign lab name alias.
+HEART_RATE	LAB_TEST	Heart rate	Nhịp tim	Heart rate	nhịp tim|tần số tim	heart rate	HR		Vital-sign lab name alias.
+RESPIRATORY_RATE	LAB_TEST	Respiratory rate	Nhịp thở	Respiratory rate	nhịp thở|tần số thở	respiratory rate	RR		Vital-sign lab name alias.
+TEMPERATURE	LAB_TEST	Temperature	Nhiệt độ	Temperature	nhiệt độ	temperature	Temp		Vital-sign lab name alias.
+OXYGEN_SATURATION	LAB_TEST	Oxygen saturation	Độ bão hòa oxy	Oxygen saturation	SpO2|độ bão hòa oxy|bão hòa oxy|độ bão hoà oxy	oxygen saturation	SpO2		Vital-sign lab name alias.
 PROC_SURGERY	PROCEDURE	Surgery	Phẫu thuật	Surgery	phẫu thuật|mổ		surgery		Future phase procedure lexicon; not merged into Phase 1 runtime by default.
 PROC_PROCEDURE	PROCEDURE	Procedure	Thủ thuật	Procedure	thủ thuật|can thiệp	procedure			Future phase procedure lexicon; not merged into Phase 1 runtime by default.
 PROC_CARDIAC_CATH	PROCEDURE	Cardiac catheterization	Thông tim	Cardiac catheterization	thông tim|chụp mạch vành|can thiệp mạch vành		cath		Future phase procedure lexicon; not merged into Phase 1 runtime by default.

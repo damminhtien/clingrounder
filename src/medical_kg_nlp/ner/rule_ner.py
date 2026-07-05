@@ -13,7 +13,24 @@ _LAB_VALUE_RE = re.compile(
     r"(?<!\w)\d+(?:[\.,]\d+)?\s?(?:mmol/L|mg/dL|g/dL|ng/mL|mEq/L|IU/L|U/L|%)(?!\w)",
     flags=re.IGNORECASE,
 )
-_BP_RE = re.compile(r"(?<!\w)BP\s*\d{2,3}/\d{2,3}(?!\w)", flags=re.IGNORECASE)
+_BP_RE = re.compile(r"(?<!\w)BP\s*(?P<value>\d{2,3}/\d{2,3})(?!\w)", flags=re.IGNORECASE)
+_VITAL_VALUE_RE = re.compile(
+    r"(?<!\w)"
+    r"(?:"
+    r"huyết\s+áp(?:\s+tâm\s+(?:thu|trương))?|"
+    r"nhịp\s+thở|"
+    r"nhịp\s+tim|"
+    r"nhiệt\s+độ|"
+    r"thân\s+nhiệt|"
+    r"spo2|"
+    r"độ\s+bão\s+h[oò]a\s+oxy|"
+    r"bão\s+h[oò]a\s+oxy"
+    r")"
+    r"(?:\s+là)?\s*"
+    r"(?P<value>\d{2,5}(?:/\d{2,3})?(?:[\.,]\d+)?(?:-\d{2,3})?(?:\s*%|\s*mmhg|\s*°?\s*c)?)"
+    r"(?!\w)",
+    flags=re.IGNORECASE | re.UNICODE,
+)
 _HBA1C_RE = re.compile(r"(?<!\w)HbA1c\s*\d+(?:\.\d+)?%(?!\w)", flags=re.IGNORECASE)
 _UPPERCASE_LETTERS = "A-ZÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬĐÈÉẺẼẸÊẾỀỂỄỆÌÍỈĨỊÒÓỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÙÚỦŨỤƯỨỪỬỮỰỲÝỶỸỴ"
 _RIGHT_ALIAS_BOUNDARY = rf"(?=$|[^\w]|[{_UPPERCASE_LETTERS}])"
@@ -68,9 +85,9 @@ class RuleBasedNER:
                     )
                 )
         self._extract_concatenated_drugs(text, occupied, spans)
-        for regex in (_HBA1C_RE, _BP_RE, _LAB_VALUE_RE):
+        for regex in (_HBA1C_RE, _BP_RE, _VITAL_VALUE_RE, _LAB_VALUE_RE):
             for match in regex.finditer(text):
-                span = match.span()
+                span = _lab_result_span(match)
                 if self._overlaps(span, occupied):
                     continue
                 occupied.append(span)
@@ -161,3 +178,9 @@ def _right_boundary_for_alias(alias: str) -> str:
     if compact and compact.upper() == compact:
         return r"(?!\w)"
     return _RIGHT_ALIAS_BOUNDARY
+
+
+def _lab_result_span(match: re.Match[str]) -> tuple[int, int]:
+    if "value" in match.re.groupindex:
+        return match.span("value")
+    return match.span()

@@ -231,6 +231,9 @@ def test_phase1_controlled_dictionary_includes_reviewed_vietnamese_symptom_and_l
     ct = generator.generate("chụp CT", EntityType.LAB_TEST)
     urinalysis = generator.generate("xét nghiệm nước tiểu", EntityType.LAB_TEST)
     chest_xray = generator.generate("chụp x-quang ngực", EntityType.LAB_TEST)
+    blood_pressure = generator.generate("huyết áp", EntityType.LAB_TEST)
+    spo2 = generator.generate("SpO2", EntityType.LAB_TEST)
+    dysuria = generator.generate("đau buốt khi đi tiểu", EntityType.SYMPTOM)
     procedure = generator.generate("thủ thuật", EntityType.PROCEDURE)
 
     assert hemoptysis[0].code == "SYMPTOM_HEMOPTYSIS"
@@ -238,6 +241,9 @@ def test_phase1_controlled_dictionary_includes_reviewed_vietnamese_symptom_and_l
     assert ct[0].code == "CT"
     assert urinalysis[0].code == "URINALYSIS"
     assert chest_xray[0].code == "XRAY"
+    assert blood_pressure[0].code == "BLOOD_PRESSURE"
+    assert spo2[0].code == "OXYGEN_SATURATION"
+    assert dysuria[0].code == "SYMPTOM_DYSURIA"
     assert procedure == []
     assert all(candidate.code_system == CodeSystem.LOCAL for candidate in hemoptysis)
     assert all(candidate.code_system == CodeSystem.LOCAL for candidate in ct)

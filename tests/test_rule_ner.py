@@ -28,6 +28,30 @@ def test_rule_ner_does_not_export_medication_dose_as_lab_result() -> None:
     assert by_text["1.4 mg/dL"].type == EntityType.LAB_RESULT
 
 
+def test_rule_ner_extracts_vietnamese_vital_sign_names_and_value_spans() -> None:
+    store = DictionaryStore.from_jsonl("data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
+    text = (
+        "Dấu hiệu sinh tồn: huyết áp 159/72, nhịp thở 20, nhịp tim 84, "
+        "SpO2 96%, nhiệt độ 36.7°c. Tăng huyết áp đang điều trị."
+    )
+    entities = RuleBasedNER(store).extract(text)
+    by_text = {entity.text: entity for entity in entities}
+
+    assert by_text["huyết áp"].type == EntityType.LAB_TEST
+    assert by_text["159/72"].type == EntityType.LAB_RESULT
+    assert by_text["nhịp thở"].type == EntityType.LAB_TEST
+    assert by_text["20"].type == EntityType.LAB_RESULT
+    assert by_text["nhịp tim"].type == EntityType.LAB_TEST
+    assert by_text["84"].type == EntityType.LAB_RESULT
+    assert by_text["SpO2"].type == EntityType.LAB_TEST
+    assert by_text["96%"].type == EntityType.LAB_RESULT
+    assert by_text["nhiệt độ"].type == EntityType.LAB_TEST
+    assert by_text["36.7°c"].type == EntityType.LAB_RESULT
+    assert by_text["Tăng huyết áp"].type == EntityType.DISEASE
+    for entity in entities:
+        assert text[entity.span[0] : entity.span[1]] == entity.text
+
+
 def test_rule_ner_blocks_ambiguous_yeu_to_and_chu_yeu_contexts() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     entities = RuleBasedNER(store).extract(

@@ -370,6 +370,9 @@
   "blood glucose": [
     "LOCAL:TEST_GLUCOSE"
   ],
+  "blood pressure": [
+    "LOCAL:TEST_BLOOD_PRESSURE"
+  ],
   "blood sugar": [
     "LOCAL:TEST_GLUCOSE"
   ],
@@ -378,6 +381,9 @@
   ],
   "blốc nhĩ thất hoàn toàn": [
     "ICD10:I44.2"
+  ],
+  "bp": [
+    "LOCAL:TEST_BLOOD_PRESSURE"
   ],
   "bph": [
     "ICD10:N40"
@@ -435,6 +441,9 @@
   ],
   "bàng quang thần kinh": [
     "ICD10:N31.9"
+  ],
+  "bão hòa oxy": [
+    "LOCAL:TEST_OXYGEN_SATURATION"
   ],
   "béo phì": [
     "ICD10:E66.9"
@@ -892,6 +901,9 @@
   ],
   "chóng mặt": [
     "LOCAL:SYMPTOM_DIZZINESS"
+  ],
+  "chỉ số huyết áp": [
+    "LOCAL:TEST_BLOOD_PRESSURE"
   ],
   "chụp ct": [
     "LOCAL:TEST_CT"
@@ -1417,6 +1429,9 @@
   "heart failure unspecified": [
     "ICD10:I50.9"
   ],
+  "heart rate": [
+    "LOCAL:TEST_HEART_RATE"
+  ],
   "hematemesis": [
     "LOCAL:SYMPTOM_HEMATEMESIS"
   ],
@@ -1489,6 +1504,9 @@
   "hoảng sợ": [
     "ICD10:F41.0"
   ],
+  "hr": [
+    "LOCAL:TEST_HEART_RATE"
+  ],
   "hsv": [
     "ICD10:B00.9"
   ],
@@ -1497,6 +1515,15 @@
   ],
   "huyết khối tĩnh mạch sâu": [
     "ICD10:I82.40"
+  ],
+  "huyết áp": [
+    "LOCAL:TEST_BLOOD_PRESSURE"
+  ],
+  "huyết áp tâm thu": [
+    "LOCAL:TEST_BLOOD_PRESSURE"
+  ],
+  "huyết áp tâm trương": [
+    "LOCAL:TEST_BLOOD_PRESSURE"
   ],
   "huyết đồ": [
     "LOCAL:TEST_CBC"
@@ -1693,6 +1720,9 @@
   ],
   "khò khè": [
     "LOCAL:SYMPTOM_WHEEZING"
+  ],
+  "khó chịu khi đi tiểu": [
+    "LOCAL:SYMPTOM_DYSURIA"
   ],
   "khó chịu ngực": [
     "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
@@ -2168,11 +2198,20 @@
   "nhiễm virus không xác định": [
     "ICD10:B34.9"
   ],
+  "nhiệt độ": [
+    "LOCAL:TEST_TEMPERATURE"
+  ],
   "nhoi mau co tim": [
     "ICD10:I21.9"
   ],
   "nhịp nhanh trên thất": [
     "ICD10:I47.1"
+  ],
+  "nhịp thở": [
+    "LOCAL:TEST_RESPIRATORY_RATE"
+  ],
+  "nhịp tim": [
+    "LOCAL:TEST_HEART_RATE"
   ],
   "nhồi máu cơ tim": [
     "ICD10:I21.9"
@@ -2317,6 +2356,9 @@
   ],
   "oxycodone/acetaminophen": [
     "RXNORM:42844"
+  ],
+  "oxygen saturation": [
+    "LOCAL:TEST_OXYGEN_SATURATION"
   ],
   "pacerone": [
     "RXNORM:703"
@@ -2597,6 +2639,9 @@
   "renal calculus": [
     "ICD10:N20.0"
   ],
+  "respiratory rate": [
+    "LOCAL:TEST_RESPIRATORY_RATE"
+  ],
   "rib fracture": [
     "ICD10:S22.42"
   ],
@@ -2605,6 +2650,9 @@
   ],
   "rosuvastatin": [
     "RXNORM:301542"
+  ],
+  "rr": [
+    "LOCAL:TEST_RESPIRATORY_RATE"
   ],
   "rung nhĩ": [
     "ICD10:I48.91"
@@ -2806,6 +2854,9 @@
   "spinal stenosis site unspecified": [
     "ICD10:M48.00"
   ],
+  "spo2": [
+    "LOCAL:TEST_OXYGEN_SATURATION"
+  ],
   "spo2 thấp": [
     "LOCAL:SYMPTOM_HYPOXIA"
   ],
@@ -2961,6 +3012,12 @@
   ],
   "tbili": [
     "LOCAL:TEST_BILIRUBIN"
+  ],
+  "temp": [
+    "LOCAL:TEST_TEMPERATURE"
+  ],
+  "temperature": [
+    "LOCAL:TEST_TEMPERATURE"
   ],
   "tenoretic": [
     "RXNORM:1202"
@@ -3229,6 +3286,12 @@
   ],
   "tăng áp động mạch phổi": [
     "ICD10:I27.20"
+  ],
+  "tần số thở": [
+    "LOCAL:TEST_RESPIRATORY_RATE"
+  ],
+  "tần số tim": [
+    "LOCAL:TEST_HEART_RATE"
   ],
   "tắc động mạch cảnh": [
     "ICD10:I65.29"
@@ -3809,6 +3872,9 @@
   "đa xơ cứng": [
     "ICD10:G35"
   ],
+  "đau buốt khi đi tiểu": [
+    "LOCAL:SYMPTOM_DYSURIA"
+  ],
   "đau bụng": [
     "LOCAL:SYMPTOM_ABDOMINAL_PAIN"
   ],
@@ -3821,11 +3887,17 @@
   "đau ngực": [
     "LOCAL:SYMPTOM_CHEST_PAIN"
   ],
+  "đau rát khi đi tiểu": [
+    "LOCAL:SYMPTOM_DYSURIA"
+  ],
   "đau thắt ngực không ổn định": [
     "ICD10:I20.0"
   ],
   "đau đầu": [
     "LOCAL:SYMPTOM_HEADACHE"
+  ],
+  "đau đớn khi đi tiểu": [
+    "LOCAL:SYMPTOM_DYSURIA"
   ],
   "đi ngoài phân đen": [
     "LOCAL:SYMPTOM_MELENA"
@@ -3880,6 +3952,12 @@
   ],
   "đại tiện phân đen": [
     "LOCAL:SYMPTOM_MELENA"
+  ],
+  "độ bão hoà oxy": [
+    "LOCAL:TEST_OXYGEN_SATURATION"
+  ],
+  "độ bão hòa oxy": [
+    "LOCAL:TEST_OXYGEN_SATURATION"
   ],
   "động kinh": [
     "ICD10:G40"
