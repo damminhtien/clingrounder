@@ -115,6 +115,16 @@ def main() -> None:
         action="store_true",
         help="Include all standard rows, not just base-code or input-matched rows.",
     )
+    parser.add_argument(
+        "--allow-new-semantic-type",
+        action="append",
+        default=[],
+        choices=[entity_type.value for entity_type in EntityType],
+        help=(
+            "Allow adding new standard rows only for this semantic type. Repeatable. "
+            "Existing rows are still enriched by concept_id/code."
+        ),
+    )
     args = parser.parse_args()
 
     base_rows = read_jsonl(args.base)
@@ -126,6 +136,7 @@ def main() -> None:
         normalized_input_text=input_text,
         min_match_chars=args.min_match_chars,
         include_unmatched_standard=args.include_unmatched_standard,
+        allowed_new_semantic_types=set(args.allow_new_semantic_type) or None,
     )
     write_jsonl(args.output, merged_rows)
     summary["base"] = args.base
@@ -141,6 +152,7 @@ def merge_standard_rows(
     normalized_input_text: str | None = None,
     min_match_chars: int = 5,
     include_unmatched_standard: bool = False,
+    allowed_new_semantic_types: set[str] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     merged = {str(row["concept_id"]): dict(row) for row in base_rows}
     merged_by_code = _concept_ids_by_code(merged.values())
@@ -167,6 +179,9 @@ def merge_standard_rows(
             merged[existing_concept_id] = _merge_existing_row(merged[existing_concept_id], row)
             enriched += 1
             code_matched_enriched += 1
+            continue
+        if allowed_new_semantic_types is not None and str(row.get("semantic_type", "")) not in allowed_new_semantic_types:
+            skipped += 1
             continue
         matched_alias = _matched_alias(row, normalized_input_text, min_match_chars, base_alias_keys)
         if not include_unmatched_standard and matched_alias is None:
@@ -196,6 +211,7 @@ def merge_standard_rows(
         "code_matched_enriched_rows": code_matched_enriched,
         "skipped_rows": skipped,
         "matched_alias_examples": matched_alias_examples,
+        "allowed_new_semantic_types": sorted(allowed_new_semantic_types) if allowed_new_semantic_types else None,
         "by_code_system": _count_by(rows, "code_system"),
         "by_semantic_type": _count_by(rows, "semantic_type"),
     }

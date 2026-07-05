@@ -192,3 +192,42 @@ def test_merge_standard_rows_derives_icd_hierarchy_for_seed_only_codes() -> None
     assert row["icd10_chapter"] == "I"
     assert row["icd10_chapter_range"] == "A00-B99"
     assert row["icd10_block"] == "A04.7"
+
+
+def test_merge_standard_rows_can_gate_new_rows_by_semantic_type() -> None:
+    standards = [
+        {
+            "concept_id": "LOCAL:SYMPTOM_HEMOPTYSIS",
+            "code": "SYMPTOM_HEMOPTYSIS",
+            "code_system": "LOCAL",
+            "canonical_name": "Hemoptysis",
+            "official_name_vi": "Ho ra máu",
+            "semantic_type": "SYMPTOM",
+            "aliases": ["ho ra máu"],
+            "source": "vn_clinical_lexicon_reviewed_2026_07_05",
+        },
+        {
+            "concept_id": "LOCAL:PROC_PROCEDURE",
+            "code": "PROC_PROCEDURE",
+            "code_system": "LOCAL",
+            "canonical_name": "Procedure",
+            "official_name_vi": "Thủ thuật",
+            "semantic_type": "PROCEDURE",
+            "aliases": ["thủ thuật"],
+            "source": "vn_clinical_lexicon_reviewed_2026_07_05",
+        },
+    ]
+
+    rows, summary = merge_standard_rows(
+        [],
+        standards,
+        normalized_input_text=" bệnh nhân ho ra máu và đã làm thủ thuật ",
+        allowed_new_semantic_types={"SYMPTOM", "LAB_TEST"},
+    )
+    by_id = {row["concept_id"]: row for row in rows}
+
+    assert summary["added_rows"] == 1
+    assert summary["skipped_rows"] == 1
+    assert summary["allowed_new_semantic_types"] == ["LAB_TEST", "SYMPTOM"]
+    assert "LOCAL:SYMPTOM_HEMOPTYSIS" in by_id
+    assert "LOCAL:PROC_PROCEDURE" not in by_id

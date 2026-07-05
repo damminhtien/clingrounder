@@ -168,16 +168,36 @@ python scripts/import_rxnorm_dictionary.py \
   --manifest data/standards/rxnorm/processed/rxnorm_import_manifest.json
 ```
 
+## Vietnamese Clinical Lexicon Import
+
+Use `scripts/import_vn_clinical_lexicon.py` for reviewed Vietnamese LOCAL terminology that is not
+owned by ICD-10 or RxNorm: symptoms, lab names, and future procedure terms. This source stays
+separate from `seed_concepts.jsonl` so it can be audited by checksum, regenerated from raw TSV, and
+merged into runtime dictionaries only through explicit gates.
+
+```bash
+python scripts/import_vn_clinical_lexicon.py \
+  --input data/standards/vn_clinical_lexicon/raw/reviewed_terms.tsv \
+  --output data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl \
+  --manifest data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_import_manifest.json
+```
+
 For Phase 1 experiments, avoid merging the full standards directly into runtime NER. Use the
 controlled merge command to preserve seed behavior and add only codes whose names occur in the
-current input set:
+current input set. Procedure rows are kept in the source layer until a later phase explicitly
+exports procedures.
 
 ```bash
 python scripts/merge_standard_dictionaries.py \
   --base data/dictionaries/seed_concepts.jsonl \
   --standard data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
   --standard data/standards/rxnorm/processed/rxnorm_prescribable_06012026_concepts.jsonl \
+  --standard data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl \
   --phase1-input-dir data/raw/input \
+  --allow-new-semantic-type DISEASE \
+  --allow-new-semantic-type DRUG \
+  --allow-new-semantic-type SYMPTOM \
+  --allow-new-semantic-type LAB_TEST \
   --output data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
 
 python scripts/build_indexes.py \
@@ -193,6 +213,8 @@ Keep full standards separate from runtime dictionaries:
 - `data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl` is the full TT06 ICD layer.
 - `data/standards/rxnorm/processed/rxnorm_prescribable_06012026_concepts.jsonl` is the full
   imported RxNorm prescribable layer.
+- `data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl` is the
+  reviewed Vietnamese LOCAL symptom, lab, and procedure layer.
 - `data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl` is a runtime-controlled
   dictionary built from seed plus reviewed/input-gated standard rows.
 
@@ -229,6 +251,7 @@ python scripts/mine_vietnamese_aliases.py \
   --runtime-dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl \
   --standard-dictionary data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
   --standard-dictionary data/standards/rxnorm/processed/rxnorm_prescribable_06012026_concepts.jsonl \
+  --standard-dictionary data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl \
   --output-dir outputs/source_audit/alias_mining
 ```
 

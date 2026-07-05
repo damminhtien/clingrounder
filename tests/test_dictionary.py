@@ -220,7 +220,27 @@ def test_phase1_frequent_symptom_and_lab_terms_are_dictionary_constrained() -> N
     assert potassium[0].code == "POTASSIUM"
     assert wbc[0].code == "WBC"
     assert troponin[0].code == "TROPONIN"
-    assert all(candidate.code_system == CodeSystem.LOCAL for candidate in wbc)
+
+
+def test_phase1_controlled_dictionary_includes_reviewed_vietnamese_symptom_and_lab_aliases() -> None:
+    store = DictionaryStore.from_jsonl("data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
+    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+
+    hemoptysis = generator.generate("ho ra máu", EntityType.SYMPTOM)
+    dysphagia = generator.generate("khó nuốt", EntityType.SYMPTOM)
+    ct = generator.generate("chụp CT", EntityType.LAB_TEST)
+    urinalysis = generator.generate("xét nghiệm nước tiểu", EntityType.LAB_TEST)
+    chest_xray = generator.generate("chụp x-quang ngực", EntityType.LAB_TEST)
+    procedure = generator.generate("thủ thuật", EntityType.PROCEDURE)
+
+    assert hemoptysis[0].code == "SYMPTOM_HEMOPTYSIS"
+    assert dysphagia[0].code == "SYMPTOM_DYSPHAGIA"
+    assert ct[0].code == "CT"
+    assert urinalysis[0].code == "URINALYSIS"
+    assert chest_xray[0].code == "XRAY"
+    assert procedure == []
+    assert all(candidate.code_system == CodeSystem.LOCAL for candidate in hemoptysis)
+    assert all(candidate.code_system == CodeSystem.LOCAL for candidate in ct)
 
 
 def test_phase1_missed_terms_expand_ner_and_candidate_recall() -> None:

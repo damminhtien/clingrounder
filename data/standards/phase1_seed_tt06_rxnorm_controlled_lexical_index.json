@@ -776,6 +776,9 @@
   "catapres": [
     "RXNORM:2599"
   ],
+  "cbc": [
+    "LOCAL:TEST_CBC"
+  ],
   "cefepim": [
     "RXNORM:20481"
   ],
@@ -826,6 +829,9 @@
   ],
   "chickenpox": [
     "ICD10:B01.9"
+  ],
+  "chills": [
+    "LOCAL:SYMPTOM_CHILLS"
   ],
   "cholecystitis": [
     "ICD10:K81.9"
@@ -887,6 +893,33 @@
   "chóng mặt": [
     "LOCAL:SYMPTOM_DIZZINESS"
   ],
+  "chụp ct": [
+    "LOCAL:TEST_CT"
+  ],
+  "chụp cắt lớp": [
+    "LOCAL:TEST_CT"
+  ],
+  "chụp cắt lớp vi tính": [
+    "LOCAL:TEST_CT"
+  ],
+  "chụp cộng hưởng từ": [
+    "LOCAL:TEST_MRI"
+  ],
+  "chụp mri": [
+    "LOCAL:TEST_MRI"
+  ],
+  "chụp x quang": [
+    "LOCAL:TEST_XRAY"
+  ],
+  "chụp x-quang": [
+    "LOCAL:TEST_XRAY"
+  ],
+  "chụp x-quang ngực": [
+    "LOCAL:TEST_XRAY"
+  ],
+  "chức năng gan": [
+    "LOCAL:TEST_LIVER_ENZYMES"
+  ],
   "cipro": [
     "RXNORM:2551"
   ],
@@ -917,6 +950,9 @@
   "cml": [
     "ICD10:C92.1"
   ],
+  "co giật": [
+    "LOCAL:SYMPTOM_SEIZURE"
+  ],
   "coagulation defect unspecified": [
     "ICD10:D68.9"
   ],
@@ -934,6 +970,15 @@
   ],
   "compazine": [
     "RXNORM:8704"
+  ],
+  "complete blood count": [
+    "LOCAL:TEST_CBC"
+  ],
+  "computed tomography": [
+    "LOCAL:TEST_CT"
+  ],
+  "confusion": [
+    "LOCAL:SYMPTOM_CONFUSION"
   ],
   "congenital foot deformity": [
     "ICD10:Q66.89"
@@ -986,11 +1031,23 @@
   "crestor": [
     "RXNORM:301542"
   ],
+  "ct": [
+    "LOCAL:TEST_CT"
+  ],
+  "ct scan": [
+    "LOCAL:TEST_CT"
+  ],
   "cvd": [
     "ICD10:I51.9"
   ],
   "cxr": [
     "LOCAL:TEST_XRAY"
+  ],
+  "công thức máu": [
+    "LOCAL:TEST_CBC"
+  ],
+  "cơn co giật": [
+    "LOCAL:SYMPTOM_SEIZURE"
   ],
   "cơn co tử cung": [
     "LOCAL:SYMPTOM_UTERINE_CONTRACTIONS"
@@ -1016,6 +1073,12 @@
   ],
   "cảm giác thắt chặt ngực": [
     "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
+  "cắt lớp vi tính": [
+    "LOCAL:TEST_CT"
+  ],
+  "cộng hưởng từ": [
+    "LOCAL:TEST_MRI"
   ],
   "dai thao duong": [
     "ICD10:E11"
@@ -1113,8 +1176,14 @@
   "dyslipidemia": [
     "ICD10:E78.5"
   ],
+  "dysphagia": [
+    "LOCAL:SYMPTOM_DYSPHAGIA"
+  ],
   "dyspnea": [
     "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "dysuria": [
+    "LOCAL:SYMPTOM_DYSURIA"
   ],
   "ecg": [
     "LOCAL:TEST_ECG"
@@ -1128,8 +1197,14 @@
   "ekg": [
     "LOCAL:TEST_ECG"
   ],
+  "elec": [
+    "LOCAL:TEST_ELECTROLYTES"
+  ],
   "electrocardiogram": [
     "LOCAL:TEST_ECG"
+  ],
+  "electrolyte panel": [
+    "LOCAL:TEST_ELECTROLYTES"
   ],
   "eliquis": [
     "RXNORM:1364430"
@@ -1264,6 +1339,9 @@
   "giảm kali máu": [
     "ICD10:E87.6"
   ],
+  "giảm oxy máu": [
+    "LOCAL:SYMPTOM_HYPOXIA"
+  ],
   "giọng khàn": [
     "LOCAL:SYMPTOM_HOARSENESS"
   ],
@@ -1339,11 +1417,17 @@
   "heart failure unspecified": [
     "ICD10:I50.9"
   ],
+  "hematemesis": [
+    "LOCAL:SYMPTOM_HEMATEMESIS"
+  ],
   "hematocrit": [
     "LOCAL:TEST_HEMATOCRIT"
   ],
   "hemoglobin a1c": [
     "LOCAL:TEST_HBA1C"
+  ],
+  "hemoptysis": [
+    "LOCAL:SYMPTOM_HEMOPTYSIS"
   ],
   "hen phế quản": [
     "ICD10:J45"
@@ -1387,6 +1471,12 @@
   "ho": [
     "LOCAL:SYMPTOM_COUGH"
   ],
+  "ho máu": [
+    "LOCAL:SYMPTOM_HEMOPTYSIS"
+  ],
+  "ho ra máu": [
+    "LOCAL:SYMPTOM_HEMOPTYSIS"
+  ],
   "hoang tưởng": [
     "ICD10:F22"
   ],
@@ -1407,6 +1497,9 @@
   ],
   "huyết khối tĩnh mạch sâu": [
     "ICD10:I82.40"
+  ],
+  "huyết đồ": [
+    "LOCAL:TEST_CBC"
   ],
   "hydrocephalus": [
     "ICD10:G91"
@@ -1458,6 +1551,9 @@
   ],
   "hypotension unspecified": [
     "ICD10:I95.9"
+  ],
+  "hypoxia": [
+    "LOCAL:SYMPTOM_HYPOXIA"
   ],
   "hạ huyết áp": [
     "ICD10:I95.9"
@@ -1550,6 +1646,9 @@
   "invanz": [
     "RXNORM:325642"
   ],
+  "ion đồ": [
+    "LOCAL:TEST_ELECTROLYTES"
+  ],
   "ipratropium": [
     "RXNORM:7213"
   ],
@@ -1592,11 +1691,17 @@
   "khàn tiếng": [
     "LOCAL:SYMPTOM_HOARSENESS"
   ],
+  "khò khè": [
+    "LOCAL:SYMPTOM_WHEEZING"
+  ],
   "khó chịu ngực": [
     "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
   ],
   "khó chịu vùng ngực": [
     "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
+  "khó nuốt": [
+    "LOCAL:SYMPTOM_DYSPHAGIA"
   ],
   "khó thở": [
     "LOCAL:SYMPTOM_DYSPNEA"
@@ -1609,6 +1714,9 @@
   ],
   "khó thở về đêm": [
     "LOCAL:SYMPTOM_DYSPNEA"
+  ],
+  "khạc ra máu": [
+    "LOCAL:SYMPTOM_HEMOPTYSIS"
   ],
   "khối máu tụ dưới màng cứng": [
     "ICD10:I62.00"
@@ -1663,6 +1771,9 @@
     "RXNORM:209217",
     "RXNORM:1745278"
   ],
+  "lft": [
+    "LOCAL:TEST_LIVER_ENZYMES"
+  ],
   "lightheadedness": [
     "LOCAL:SYMPTOM_DIZZINESS"
   ],
@@ -1674,6 +1785,9 @@
   ],
   "lisinopril": [
     "RXNORM:29046"
+  ],
+  "liver enzymes": [
+    "LOCAL:TEST_LIVER_ENZYMES"
   ],
   "liệt hai chân": [
     "ICD10:G82.20"
@@ -1793,14 +1907,23 @@
   "lung infection": [
     "ICD10:J18.9"
   ],
+  "lú lẫn": [
+    "LOCAL:SYMPTOM_CONFUSION"
+  ],
   "lý khác của dây thanh âm": [
     "ICD10:J38.3"
   ],
   "lý đa dây thần kinh không xác định bệnh lý đa dây thần kinh do bệnh phân loại mục khác bệnh lý đa dây thần kinh do bệnh nhiễm trùng và/hoặc ký sinh trùng phân loại mục khác bệnh lý đa dây thần kinh do u tân sinh c00.- - d48.- bệnh lý đa dây thần kinh do đái tháo đường e10- e14 với ký tự thứ tự chung là.4 bệnh lý đa dây thần kinh do bệnh nội tiết và/hoặc chuyển hóa khác e00- e07 e15-e16 e20- e34 e70-e89 bệnh lý đa dây thần kinh do suy dinh dưỡng e40- e64 bệnh lý đa dây thần kinh do rối loạn mô liên kết hệ thống m30-m35 bệnh lý đa dây thần kinh do rối loạn cơ xương khớp khác m00-m25 m40- m96 bệnh lý đa dây thần kinh do bệnh khác phân loại mục khác": [
     "ICD10:G62.9"
   ],
+  "lạnh run": [
+    "LOCAL:SYMPTOM_CHILLS"
+  ],
   "magnesium": [
     "RXNORM:6574"
+  ],
+  "magnetic resonance imaging": [
+    "LOCAL:TEST_MRI"
   ],
   "malignancy": [
     "ICD10:C80.1"
@@ -1846,6 +1969,12 @@
   ],
   "medrol": [
     "RXNORM:6902"
+  ],
+  "melena": [
+    "LOCAL:SYMPTOM_MELENA"
+  ],
+  "men gan": [
+    "LOCAL:TEST_LIVER_ENZYMES"
   ],
   "metformin": [
     "RXNORM:6809"
@@ -1894,6 +2023,9 @@
   ],
   "morphine": [
     "RXNORM:7052"
+  ],
+  "mri": [
+    "LOCAL:TEST_MRI"
   ],
   "mucinex": [
     "RXNORM:5032"
@@ -2096,6 +2228,9 @@
   "ntg": [
     "RXNORM:4917"
   ],
+  "nuốt khó": [
+    "LOCAL:SYMPTOM_DYSPHAGIA"
+  ],
   "não gan": [
     "ICD10:K76.82"
   ],
@@ -2105,8 +2240,14 @@
   "nôn": [
     "LOCAL:SYMPTOM_NAUSEA_VOMITING"
   ],
+  "nôn ra máu": [
+    "LOCAL:SYMPTOM_HEMATEMESIS"
+  ],
   "nôn ói": [
     "LOCAL:SYMPTOM_NAUSEA_VOMITING"
+  ],
+  "nước tiểu": [
+    "LOCAL:TEST_URINALYSIS"
   ],
   "obesity": [
     "ICD10:E66.9"
@@ -2131,6 +2272,9 @@
   ],
   "oesophagitis": [
     "ICD10:K20"
+  ],
+  "oliguria": [
+    "LOCAL:SYMPTOM_OLIGURIA"
   ],
   "omeprazole": [
     "RXNORM:7646"
@@ -2259,6 +2403,9 @@
   "phentolamine ophthalmic solution ryzumvi": [
     "RXNORM:2677792"
   ],
+  "phân đen": [
+    "LOCAL:SYMPTOM_MELENA"
+  ],
   "phì đại tuyến tiền liệt": [
     "ICD10:N40"
   ],
@@ -2355,6 +2502,9 @@
   "polyneuropathy unspecified polyneuropathy in diseases classified elsewhere polyneuropathy in infectious and parasitic diseases classified elsewhere polyneuropathy in neoplastic disease c00-d48 diabetic polyneuropathy e10-e14 with common fourth character .4 polyneuropathy in other endocrine and metabolic diseases e00- e07 e15- e16 e20- e34 e70-e89 polyneuropathy in nutritional deficiency e40- e64 polyneuropathy in systemic connective tissue disorders m30- m35 polyneuropathy in other musculoskeletal disorders m00- m25 m40-m96 polyneuropathy in other diseases classified elsewhere": [
     "ICD10:G62.9"
   ],
+  "polyuria": [
+    "LOCAL:SYMPTOM_POLYURIA"
+  ],
   "potassium": [
     "LOCAL:TEST_POTASSIUM"
   ],
@@ -2423,6 +2573,9 @@
   "pyelonephritis": [
     "ICD10:N12"
   ],
+  "que thử nước tiểu": [
+    "LOCAL:TEST_URINALYSIS"
+  ],
   "quetiapine": [
     "RXNORM:51272"
   ],
@@ -2461,6 +2614,12 @@
   ],
   "rung nhĩ kịch phát": [
     "ICD10:I48.0"
+  ],
+  "rát họng": [
+    "LOCAL:SYMPTOM_SORE_THROAT"
+  ],
+  "rét run": [
+    "LOCAL:SYMPTOM_CHILLS"
   ],
   "rối loạn chức năng của thần kinh - cơ bàng quang": [
     "ICD10:N31.9"
@@ -2518,6 +2677,9 @@
   "rối loạn thị giác không xác định": [
     "ICD10:H53.9"
   ],
+  "rối loạn ý thức": [
+    "LOCAL:SYMPTOM_CONFUSION"
+  ],
   "rối loạn đông máu": [
     "ICD10:D68.9"
   ],
@@ -2569,6 +2731,9 @@
   "scr": [
     "LOCAL:TEST_CREATININE"
   ],
+  "seizure": [
+    "LOCAL:SYMPTOM_SEIZURE"
+  ],
   "sepsis": [
     "ICD10:A41.9"
   ],
@@ -2602,6 +2767,15 @@
   "shortness of breath": [
     "LOCAL:SYMPTOM_DYSPNEA"
   ],
+  "siêu âm": [
+    "LOCAL:TEST_ULTRASOUND"
+  ],
+  "siêu âm bụng": [
+    "LOCAL:TEST_ULTRASOUND"
+  ],
+  "siêu âm tim": [
+    "LOCAL:TEST_ULTRASOUND"
+  ],
   "sleep apnea": [
     "ICD10:G47.30"
   ],
@@ -2623,11 +2797,17 @@
   "song thị": [
     "ICD10:H53.2"
   ],
+  "sore throat": [
+    "LOCAL:SYMPTOM_SORE_THROAT"
+  ],
   "spinal stenosis": [
     "ICD10:M48.00"
   ],
   "spinal stenosis site unspecified": [
     "ICD10:M48.00"
+  ],
+  "spo2 thấp": [
+    "LOCAL:SYMPTOM_HYPOXIA"
   ],
   "stomach pain": [
     "LOCAL:SYMPTOM_ABDOMINAL_PAIN"
@@ -2803,6 +2983,12 @@
   "thiếu máu không xác định": [
     "ICD10:D64.9"
   ],
+  "thiếu oxy": [
+    "LOCAL:SYMPTOM_HYPOXIA"
+  ],
+  "thiểu niệu": [
+    "LOCAL:SYMPTOM_OLIGURIA"
+  ],
   "thoracic pain": [
     "LOCAL:SYMPTOM_CHEST_PAIN"
   ],
@@ -2826,6 +3012,12 @@
   ],
   "thắt chặt ngực": [
     "LOCAL:SYMPTOM_CHEST_TIGHTNESS"
+  ],
+  "thở khò khè": [
+    "LOCAL:SYMPTOM_WHEEZING"
+  ],
+  "thở rít": [
+    "LOCAL:SYMPTOM_WHEEZING"
   ],
   "thủy đậu": [
     "ICD10:B01.9"
@@ -2854,14 +3046,26 @@
   "tiêu xương": [
     "ICD10:M89.5"
   ],
+  "tiểu buốt": [
+    "LOCAL:SYMPTOM_DYSURIA"
+  ],
   "tiểu không tự chủ": [
     "ICD10:R32"
+  ],
+  "tiểu nhiều": [
+    "LOCAL:SYMPTOM_POLYURIA"
+  ],
+  "tiểu rát": [
+    "LOCAL:SYMPTOM_DYSURIA"
   ],
   "tiểu tiện không tự chủ": [
     "ICD10:R32"
   ],
   "tiểu tiện không tự chủ không xác định": [
     "ICD10:R32"
+  ],
+  "tiểu ít": [
+    "LOCAL:SYMPTOM_OLIGURIA"
   ],
   "tiểu đường": [
     "ICD10:E11"
@@ -3035,6 +3239,12 @@
   "tổn thương thận cấp": [
     "ICD10:N17.9"
   ],
+  "tổng phân tích nước tiểu": [
+    "LOCAL:TEST_URINALYSIS"
+  ],
+  "tổng phân tích tế bào máu": [
+    "LOCAL:TEST_CBC"
+  ],
   "tụ máu dưới màng cứng": [
     "ICD10:I62.00"
   ],
@@ -3104,6 +3314,9 @@
   "u ác đầu tụy": [
     "ICD10:C25.0"
   ],
+  "ua": [
+    "LOCAL:TEST_URINALYSIS"
+  ],
   "ulcer of esophagus": [
     "ICD10:K22.1"
   ],
@@ -3115,6 +3328,9 @@
   ],
   "ulcerative colitis unspecified": [
     "ICD10:K51.9"
+  ],
+  "ultrasound": [
+    "LOCAL:TEST_ULTRASOUND"
   ],
   "ung thư": [
     "ICD10:C80.1"
@@ -3185,6 +3401,9 @@
   "urea": [
     "LOCAL:TEST_BUN"
   ],
+  "urinalysis": [
+    "LOCAL:TEST_URINALYSIS"
+  ],
   "urinary calculus": [
     "ICD10:N20.9"
   ],
@@ -3199,6 +3418,9 @@
   ],
   "urolithiasis": [
     "ICD10:N20.9"
+  ],
+  "us": [
+    "LOCAL:TEST_ULTRASOUND"
   ],
   "uterine contractions": [
     "LOCAL:SYMPTOM_UTERINE_CONTRACTIONS"
@@ -3410,6 +3632,9 @@
   "weight loss": [
     "LOCAL:SYMPTOM_WEIGHT_CHANGE"
   ],
+  "wheezing": [
+    "LOCAL:SYMPTOM_WHEEZING"
+  ],
   "white blood cell count": [
     "LOCAL:TEST_WBC"
   ],
@@ -3426,6 +3651,9 @@
     "LOCAL:TEST_XRAY"
   ],
   "x-quang": [
+    "LOCAL:TEST_XRAY"
+  ],
+  "x-quang ngực": [
     "LOCAL:TEST_XRAY"
   ],
   "x-ray": [
@@ -3454,6 +3682,18 @@
   ],
   "xuất huyết nội sọ không do chấn thương không đặc hiệu": [
     "ICD10:I62.9"
+  ],
+  "xét nghiệm men gan": [
+    "LOCAL:TEST_LIVER_ENZYMES"
+  ],
+  "xét nghiệm máu": [
+    "LOCAL:TEST_CBC"
+  ],
+  "xét nghiệm nước tiểu": [
+    "LOCAL:TEST_URINALYSIS"
+  ],
+  "xét nghiệm điện giải": [
+    "LOCAL:TEST_ELECTROLYTES"
   ],
   "xơ gan do rượu": [
     "ICD10:K70.3"
@@ -3545,8 +3785,14 @@
   "ói": [
     "LOCAL:SYMPTOM_NAUSEA_VOMITING"
   ],
+  "ói ra máu": [
+    "LOCAL:SYMPTOM_HEMATEMESIS"
+  ],
   "ý nghĩ tự tử": [
     "ICD10:R45.851"
+  ],
+  "ý thức lơ mơ": [
+    "LOCAL:SYMPTOM_CONFUSION"
   ],
   "ý định tự tử": [
     "ICD10:R45.851"
@@ -3569,6 +3815,9 @@
   "đau cơ": [
     "ICD10:M79.1"
   ],
+  "đau họng": [
+    "LOCAL:SYMPTOM_SORE_THROAT"
+  ],
   "đau ngực": [
     "LOCAL:SYMPTOM_CHEST_PAIN"
   ],
@@ -3578,6 +3827,15 @@
   "đau đầu": [
     "LOCAL:SYMPTOM_HEADACHE"
   ],
+  "đi ngoài phân đen": [
+    "LOCAL:SYMPTOM_MELENA"
+  ],
+  "điện giải": [
+    "LOCAL:TEST_ELECTROLYTES"
+  ],
+  "điện giải đồ": [
+    "LOCAL:TEST_ELECTROLYTES"
+  ],
   "điện tâm đồ": [
     "LOCAL:TEST_ECG"
   ],
@@ -3586,6 +3844,15 @@
   ],
   "đtđ type 2": [
     "ICD10:E11"
+  ],
+  "đái buốt": [
+    "LOCAL:SYMPTOM_DYSURIA"
+  ],
+  "đái nhiều": [
+    "LOCAL:SYMPTOM_POLYURIA"
+  ],
+  "đái rát": [
+    "LOCAL:SYMPTOM_DYSURIA"
   ],
   "đái tháo đường": [
     "ICD10:E11"
@@ -3611,7 +3878,13 @@
   "đường huyết": [
     "LOCAL:TEST_GLUCOSE"
   ],
+  "đại tiện phân đen": [
+    "LOCAL:SYMPTOM_MELENA"
+  ],
   "động kinh": [
     "ICD10:G40"
+  ],
+  "ớn lạnh": [
+    "LOCAL:SYMPTOM_CHILLS"
   ]
 }
