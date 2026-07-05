@@ -1099,7 +1099,7 @@
       "unknown_source_ids": {}
     },
     {
-      "alias_count": 1243,
+      "alias_count": 1334,
       "ambiguous_alias_count": 23,
       "ambiguous_aliases": [
         {
@@ -1894,7 +1894,7 @@
         }
       ],
       "blocked_alias_count": 1,
-      "broad_alias_count": 100,
+      "broad_alias_count": 103,
       "broad_aliases": [
         {
           "alias": "sepsis",
@@ -2479,6 +2479,12 @@
           "reason": "too_short"
         },
         {
+          "alias": "CT",
+          "concept_id": "LOCAL:TEST_CT",
+          "normalized_alias": "ct",
+          "reason": "too_short"
+        },
+        {
           "alias": "BG",
           "concept_id": "LOCAL:TEST_GLUCOSE",
           "normalized_alias": "bg",
@@ -2489,24 +2495,18 @@
           "concept_id": "LOCAL:TEST_POTASSIUM",
           "normalized_alias": "k+",
           "reason": "too_short"
-        },
-        {
-          "alias": "K",
-          "concept_id": "LOCAL:TEST_POTASSIUM",
-          "normalized_alias": "k",
-          "reason": "too_short"
         }
       ],
       "by_code_system": {
         "ICD-10": 146,
-        "LOCAL": 31,
+        "LOCAL": 51,
         "RxNorm": 119
       },
       "by_semantic_type": {
         "DISEASE": 146,
         "DRUG": 119,
-        "LAB_TEST": 14,
-        "SYMPTOM": 17
+        "LAB_TEST": 21,
+        "SYMPTOM": 30
       },
       "by_source": {
         "cdc_icd10cm_2026": 94,
@@ -2517,6 +2517,7 @@
         "rxnorm_current": 70,
         "rxnorm_prescribable_2026_06_01": 116,
         "seed": 39,
+        "vn_clinical_lexicon_reviewed_2026_07_05": 21,
         "who_icd10_2019": 76
       },
       "duplicate_codes": [],
@@ -2547,7 +2548,7 @@
       },
       "missing_source_rows": 0,
       "path": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
-      "row_count": 296,
+      "row_count": 316,
       "rxnorm_enrichment": {
         "inactive_or_obsolete": 1,
         "rows": 119,
@@ -2557,9 +2558,9 @@
         "with_status": 116,
         "with_strength": 16
       },
-      "unique_alias_count": 1186,
-      "unique_codes": 296,
-      "unique_concept_ids": 296,
+      "unique_alias_count": 1277,
+      "unique_codes": 316,
+      "unique_concept_ids": 316,
       "unknown_mention_candidates": [
         {
           "count": 86,
@@ -2698,11 +2699,6 @@
         },
         {
           "count": 22,
-          "normalized": "chụp ct",
-          "term": "chụp ct"
-        },
-        {
-          "count": 22,
           "normalized": "tháo đường",
           "term": "tháo đường"
         },
@@ -2727,16 +2723,6 @@
           "term": "chụp cắt"
         },
         {
-          "count": 19,
-          "normalized": "chụp cắt lớp",
-          "term": "chụp cắt lớp"
-        },
-        {
-          "count": 18,
-          "normalized": "chụp x-quang",
-          "term": "chụp x-quang"
-        },
-        {
           "count": 17,
           "normalized": "tim mạch",
           "term": "tim mạch"
@@ -2755,21 +2741,6 @@
           "count": 17,
           "normalized": "máu cơ",
           "term": "máu cơ"
-        },
-        {
-          "count": 16,
-          "normalized": "x-quang ngực",
-          "term": "x-quang ngực"
-        },
-        {
-          "count": 16,
-          "normalized": "nước tiểu",
-          "term": "nước tiểu"
-        },
-        {
-          "count": 16,
-          "normalized": "chụp x-quang ngực",
-          "term": "chụp x-quang ngực"
         },
         {
           "count": 16,
@@ -2857,11 +2828,6 @@
           "term": "đường tiết niệu"
         },
         {
-          "count": 13,
-          "normalized": "nôn ra máu",
-          "term": "nôn ra máu"
-        },
-        {
           "count": 12,
           "normalized": "máu không",
           "term": "máu không"
@@ -2875,11 +2841,6 @@
           "count": 11,
           "normalized": "âm tim",
           "term": "âm tim"
-        },
-        {
-          "count": 11,
-          "normalized": "siêu âm tim",
-          "term": "siêu âm tim"
         },
         {
           "count": 11,
@@ -3060,6 +3021,46 @@
           "count": 9,
           "normalized": "hiện đau",
           "term": "hiện đau"
+        },
+        {
+          "count": 9,
+          "normalized": "tập viêm",
+          "term": "tập viêm"
+        },
+        {
+          "count": 9,
+          "normalized": "tập viêm dạ",
+          "term": "tập viêm dạ"
+        },
+        {
+          "count": 8,
+          "normalized": "ngực khó",
+          "term": "ngực khó"
+        },
+        {
+          "count": 8,
+          "normalized": "ngực khó thở",
+          "term": "ngực khó thở"
+        },
+        {
+          "count": 8,
+          "normalized": "nhồi máu cơ",
+          "term": "nhồi máu cơ"
+        },
+        {
+          "count": 8,
+          "normalized": "chứng đau",
+          "term": "chứng đau"
+        },
+        {
+          "count": 8,
+          "normalized": "có đau",
+          "term": "có đau"
+        },
+        {
+          "count": 8,
+          "normalized": "tăng lipid",
+          "term": "tăng lipid"
         }
       ],
       "unknown_source_ids": {}
@@ -4437,6 +4438,20 @@
       "severity": "medium"
     },
     {
+      "alias": "CT",
+      "concept_id": "LOCAL:TEST_CT",
+      "dictionaries": [
+        "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "false_positive_alias_candidate",
+      "normalized_alias": "ct",
+      "notes": "Very short aliases should require type/context-specific evidence before matching.",
+      "reason": "too_short",
+      "recommended_action": "review_block_alias_or_require_type_context",
+      "severity": "medium"
+    },
+    {
       "alias": "HA",
       "concept_id": "LOCAL:SYMPTOM_HEADACHE",
       "dictionaries": [
@@ -4485,8 +4500,7 @@
       "alias": "K",
       "concept_id": "LOCAL:TEST_POTASSIUM",
       "dictionaries": [
-        "data/dictionaries/seed_concepts.jsonl",
-        "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
+        "data/dictionaries/seed_concepts.jsonl"
       ],
       "dictionary": "data/dictionaries/seed_concepts.jsonl",
       "issue_type": "false_positive_alias_candidate",
@@ -4577,6 +4591,36 @@
       "sha256": "bc5b9853214f720866b785e0956be45aa3c82f6525465b6c69c9de368d152011",
       "size_bytes": 12082,
       "source_id": "seed"
+    },
+    {
+      "exists": true,
+      "md5": "5a83978d66151af9df1841782b9c1595",
+      "path": "data/standards/vn_clinical_lexicon/raw/reviewed_terms.tsv",
+      "required": true,
+      "role": "raw_reviewed_terms_tsv",
+      "sha256": "6e630bbc683b206057480e61a50a4aff1ad5374b2a846fa182da0f8af118424c",
+      "size_bytes": 5182,
+      "source_id": "vn_clinical_lexicon_reviewed_2026_07_05"
+    },
+    {
+      "exists": true,
+      "md5": "db5e30a08a64261ca6fd61af80a24af7",
+      "path": "data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl",
+      "required": true,
+      "role": "concept_rows_jsonl",
+      "sha256": "931b0ba1636974dd9debfb562e71f930e6b99d13d30fdb5ad5ca140945a4edea",
+      "size_bytes": 15475,
+      "source_id": "vn_clinical_lexicon_reviewed_2026_07_05"
+    },
+    {
+      "exists": true,
+      "md5": "5b7495edc582eec6d9d732807677621d",
+      "path": "data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_import_manifest.json",
+      "required": true,
+      "role": "import_manifest",
+      "sha256": "65b1b81df657a94d4ea68e7c55bd846242b0b767bde61f0822e3381bf286046f",
+      "size_bytes": 588,
+      "source_id": "vn_clinical_lexicon_reviewed_2026_07_05"
     },
     {
       "exists": true,
@@ -7174,15 +7218,6 @@
       "count": 22,
       "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
       "issue_type": "unknown_mention_candidate",
-      "normalized": "chụp ct",
-      "notes": "Frequent input n-gram not covered by dictionary aliases; review before adding.",
-      "severity": "low",
-      "term": "chụp ct"
-    },
-    {
-      "count": 22,
-      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
-      "issue_type": "unknown_mention_candidate",
       "normalized": "tháo đường",
       "notes": "Frequent input n-gram not covered by dictionary aliases; review before adding.",
       "severity": "low",
@@ -7225,24 +7260,6 @@
       "term": "chụp cắt"
     },
     {
-      "count": 19,
-      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
-      "issue_type": "unknown_mention_candidate",
-      "normalized": "chụp cắt lớp",
-      "notes": "Frequent input n-gram not covered by dictionary aliases; review before adding.",
-      "severity": "low",
-      "term": "chụp cắt lớp"
-    },
-    {
-      "count": 18,
-      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
-      "issue_type": "unknown_mention_candidate",
-      "normalized": "chụp x-quang",
-      "notes": "Frequent input n-gram not covered by dictionary aliases; review before adding.",
-      "severity": "low",
-      "term": "chụp x-quang"
-    },
-    {
       "count": 17,
       "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
       "issue_type": "unknown_mention_candidate",
@@ -7277,33 +7294,6 @@
       "notes": "Frequent input n-gram not covered by dictionary aliases; review before adding.",
       "severity": "low",
       "term": "máu cơ"
-    },
-    {
-      "count": 16,
-      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
-      "issue_type": "unknown_mention_candidate",
-      "normalized": "x-quang ngực",
-      "notes": "Frequent input n-gram not covered by dictionary aliases; review before adding.",
-      "severity": "low",
-      "term": "x-quang ngực"
-    },
-    {
-      "count": 16,
-      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
-      "issue_type": "unknown_mention_candidate",
-      "normalized": "nước tiểu",
-      "notes": "Frequent input n-gram not covered by dictionary aliases; review before adding.",
-      "severity": "low",
-      "term": "nước tiểu"
-    },
-    {
-      "count": 16,
-      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
-      "issue_type": "unknown_mention_candidate",
-      "normalized": "chụp x-quang ngực",
-      "notes": "Frequent input n-gram not covered by dictionary aliases; review before adding.",
-      "severity": "low",
-      "term": "chụp x-quang ngực"
     },
     {
       "count": 16,
@@ -7376,12 +7366,66 @@
       "notes": "Frequent input n-gram not covered by dictionary aliases; review before adding.",
       "severity": "low",
       "term": "điều trị bằng"
+    },
+    {
+      "count": 14,
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "unknown_mention_candidate",
+      "normalized": "tại đau",
+      "notes": "Frequent input n-gram not covered by dictionary aliases; review before adding.",
+      "severity": "low",
+      "term": "tại đau"
+    },
+    {
+      "count": 14,
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "unknown_mention_candidate",
+      "normalized": "viêm dạ",
+      "notes": "Frequent input n-gram not covered by dictionary aliases; review before adding.",
+      "severity": "low",
+      "term": "viêm dạ"
+    },
+    {
+      "count": 14,
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "unknown_mention_candidate",
+      "normalized": "hiện tại đau",
+      "notes": "Frequent input n-gram not covered by dictionary aliases; review before adding.",
+      "severity": "low",
+      "term": "hiện tại đau"
+    },
+    {
+      "count": 13,
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "unknown_mention_candidate",
+      "normalized": "động mạch chủ",
+      "notes": "Frequent input n-gram not covered by dictionary aliases; review before adding.",
+      "severity": "low",
+      "term": "động mạch chủ"
+    },
+    {
+      "count": 13,
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "unknown_mention_candidate",
+      "normalized": "hạ huyết",
+      "notes": "Frequent input n-gram not covered by dictionary aliases; review before adding.",
+      "severity": "low",
+      "term": "hạ huyết"
+    },
+    {
+      "count": 13,
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "unknown_mention_candidate",
+      "normalized": "đau khi",
+      "notes": "Frequent input n-gram not covered by dictionary aliases; review before adding.",
+      "severity": "low",
+      "term": "đau khi"
     }
   ],
   "registry": {
     "issues": [],
     "path": "data/sources/medical_resource_registry.yaml",
-    "resource_count": 17,
+    "resource_count": 18,
     "resources": [
       {
         "access": "open",
@@ -7648,6 +7692,35 @@
         "version": "upstream-unpinned"
       },
       {
+        "access": "local_reviewed",
+        "category": "curation",
+        "id": "vn_clinical_lexicon_reviewed_2026_07_05",
+        "license": "project",
+        "local_files": [
+          {
+            "path": "data/standards/vn_clinical_lexicon/raw/reviewed_terms.tsv",
+            "required": true,
+            "role": "raw_reviewed_terms_tsv"
+          },
+          {
+            "path": "data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl",
+            "required": true,
+            "role": "concept_rows_jsonl"
+          },
+          {
+            "path": "data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_import_manifest.json",
+            "required": true,
+            "role": "import_manifest"
+          }
+        ],
+        "name": "Reviewed Vietnamese clinical LOCAL lexicon",
+        "notes": "Source-backed local curation for Vietnamese symptoms, lab names, and future procedure terms.",
+        "release_date": "2026-07-05",
+        "url": "docs/dictionaries.md",
+        "use": "reviewed_vietnamese_symptom_lab_procedure_aliases",
+        "version": "reviewed snapshot 2026-07-05"
+      },
+      {
         "access": "open",
         "category": "terminology",
         "download_urls": [
@@ -7681,6 +7754,7 @@
       "rxnorm_prescribable_2026_06_01",
       "seed",
       "synthea",
+      "vn_clinical_lexicon_reviewed_2026_07_05",
       "who_icd10_2019"
     ]
   },
@@ -7857,17 +7931,31 @@
           "GPCK",
           "BPCK"
         ]
+      },
+      "vn_clinical_lexicon": {
+        "notes": "Reviewed LOCAL symptom and lab aliases can be merged into Phase 1 runtime; procedure rows are kept for later phases until export support exists.",
+        "phase1_allowed_new_semantic_types": [
+          "DISEASE",
+          "DRUG",
+          "SYMPTOM",
+          "LAB_TEST"
+        ],
+        "processed_file": "data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl",
+        "raw_file": "data/standards/vn_clinical_lexicon/raw/reviewed_terms.tsv",
+        "release_date": "2026-07-05",
+        "source": "Reviewed Vietnamese LOCAL clinical lexicon",
+        "source_id": "vn_clinical_lexicon_reviewed_2026_07_05"
       }
     }
   },
   "summary": {
     "dictionary_count": 2,
-    "false_positive_blocklist_count": 100,
-    "file_count": 13,
+    "false_positive_blocklist_count": 101,
+    "file_count": 16,
     "manual_review_item_count": 223,
     "missing_required_file_count": 0,
     "registry_issue_count": 0,
-    "registry_resource_count": 17,
+    "registry_resource_count": 18,
     "rxnorm_release_profile_count": 1
   }
 }

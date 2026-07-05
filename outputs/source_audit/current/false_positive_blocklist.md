@@ -1,7 +1,7 @@
 # False-Positive Blocklist Candidates
 
-- Total candidates: 100
-- By reason: {'ascii_single_token_icd_alias': 88, 'too_short': 12}
+- Total candidates: 101
+- By reason: {'ascii_single_token_icd_alias': 88, 'too_short': 13}
 
 These rows are review candidates. They are not automatically applied to the runtime dictionary.
 
@@ -99,6 +99,7 @@ These rows are review candidates. They are not automatically applied to the runt
 - medium `too_short` `BG` -> LOCAL:TEST_GLUCOSE action=review_block_alias_or_require_type_context
 - medium `too_short` `CP` -> LOCAL:SYMPTOM_CHEST_PAIN action=review_block_alias_or_require_type_context
 - medium `too_short` `Cr` -> LOCAL:TEST_CREATININE action=review_block_alias_or_require_type_context
+- medium `too_short` `CT` -> LOCAL:TEST_CT action=review_block_alias_or_require_type_context
 - medium `too_short` `HA` -> LOCAL:SYMPTOM_HEADACHE action=review_block_alias_or_require_type_context
 - medium `too_short` `HF` -> ICD10:I50.9 action=review_block_alias_or_require_type_context
 - medium `too_short` `Ho` -> LOCAL:SYMPTOM_COUGH action=review_block_alias_or_require_type_context
@@ -106,4 +107,3 @@ These rows are review candidates. They are not automatically applied to the runt
 - medium `too_short` `K+` -> LOCAL:TEST_POTASSIUM action=review_block_alias_or_require_type_context
 - medium `too_short` `MI` -> ICD10:I21.9 action=review_block_alias_or_require_type_context
 - medium `too_short` `PE` -> ICD10:I26.99 action=review_block_alias_or_require_type_context
-- medium `too_short` `ói` -> LOCAL:SYMPTOM_NAUSEA_VOMITING action=review_block_alias_or_require_type_context

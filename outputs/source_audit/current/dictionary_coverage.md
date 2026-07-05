@@ -1,11 +1,11 @@
 # Medical Source Audit
 
-- Registry resources: 17
+- Registry resources: 18
 - Registry issues: 0
 - Missing required local files: 0
 - Dictionary profiles: 2
 - Manual review items: 223
-- False-positive blocklist candidates: 100
+- False-positive blocklist candidates: 101
 
 ## Source Registry
 
@@ -25,12 +25,16 @@
 - `rxnorm_prescribable_2026_06_01`: RxNorm Current Prescribable Content Monthly Release June 1 2026 | access=open_with_terms | version=2026-06-01 | license=nlm_rxnorm_terms | use=phase1_rxnorm_primary_drug_codes
 - `seed`: Local seed curation | access=local | version=repo-local | license=project | use=runtime_seed
 - `synthea`: Synthea synthetic patient generator | access=open | version=upstream-unpinned | license=apache-2.0 | use=synthetic_patient_records
+- `vn_clinical_lexicon_reviewed_2026_07_05`: Reviewed Vietnamese clinical LOCAL lexicon | access=local_reviewed | version=reviewed snapshot 2026-07-05 | license=project | use=reviewed_vietnamese_symptom_lab_procedure_aliases
 - `who_icd10_2019`: WHO ICD-10 2019 ClaML and browser | access=open | version=2019 | license=who_terms_apply | use=icd10_hierarchy_reference_not_vietnamese_primary
 
 ## Files
 
 - `seed` `data/dictionaries/seed_concepts.jsonl`: ok, required
 - `seed` `data/dictionaries/vietnamese_medical_alias.jsonl`: ok, required
+- `vn_clinical_lexicon_reviewed_2026_07_05` `data/standards/vn_clinical_lexicon/raw/reviewed_terms.tsv`: ok, required
+- `vn_clinical_lexicon_reviewed_2026_07_05` `data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl`: ok, required
+- `vn_clinical_lexicon_reviewed_2026_07_05` `data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_import_manifest.json`: ok, required
 - `icd10_vn_tt06_2026` `data/standards/icd10_vn/raw/06-byt-kem.pdf`: ok, required
 - `icd10_vn_tt06_2026` `data/standards/icd10_vn/processed/06-byt-kem.tsv`: ok, required
 - `icd10_vn_tt06_2026` `data/standards/icd10_vn/processed/tt06_icd10_extract.jsonl`: ok, required
@@ -59,14 +63,14 @@
 
 ### `data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl`
 
-- Rows: 296
-- Code systems: {'ICD-10': 146, 'LOCAL': 31, 'RxNorm': 119}
-- Semantic types: {'DISEASE': 146, 'DRUG': 119, 'LAB_TEST': 14, 'SYMPTOM': 17}
+- Rows: 316
+- Code systems: {'ICD-10': 146, 'LOCAL': 51, 'RxNorm': 119}
+- Semantic types: {'DISEASE': 146, 'DRUG': 119, 'LAB_TEST': 21, 'SYMPTOM': 30}
 - ICD hierarchy: {'rows': 146, 'with_parent_code': 131, 'with_block': 130, 'with_chapter': 146, 'by_chapter': {'I': 10, 'II': 13, 'III': 5, 'IV': 11, 'IX': 32, 'V': 11, 'VI': 7, 'VII': 5, 'X': 10, 'XI': 17, 'XII': 2, 'XIII': 5, 'XIV': 9, 'XIX': 2, 'XVII': 4, 'XVIII': 3}}
 - RxNorm enrichment: {'rows': 119, 'with_ingredient': 119, 'with_brand_name': 108, 'with_dose_form': 113, 'with_strength': 16, 'with_status': 116, 'inactive_or_obsolete': 1}
-- Sources: {'cdc_icd10cm_2026': 94, 'icd10_vn_tt06_2026': 112, 'icd_kcb_vn': 41, 'medlineplus_xml': 51, 'rxnav_rest_2026_07_04': 54, 'rxnorm_current': 70, 'rxnorm_prescribable_2026_06_01': 116, 'seed': 39, 'who_icd10_2019': 76}
+- Sources: {'cdc_icd10cm_2026': 94, 'icd10_vn_tt06_2026': 112, 'icd_kcb_vn': 41, 'medlineplus_xml': 51, 'rxnav_rest_2026_07_04': 54, 'rxnorm_current': 70, 'rxnorm_prescribable_2026_06_01': 116, 'seed': 39, 'vn_clinical_lexicon_reviewed_2026_07_05': 21, 'who_icd10_2019': 76}
 - Ambiguous aliases: 23
-- Broad/blocked review aliases: 100
+- Broad/blocked review aliases: 103
 - Missing source rows: 0
 
 ## RxNorm Releases

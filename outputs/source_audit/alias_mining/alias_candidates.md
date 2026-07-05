@@ -1,7 +1,7 @@
 # Vietnamese Alias Mining Candidates
 
 - Total candidates: 169
-- By proposal type: {'abbreviation_candidate': 28, 'standard_exact_missing_runtime': 21, 'unknown_phrase': 120}
+- By proposal type: {'abbreviation_candidate': 26, 'standard_exact_missing_runtime': 23, 'unknown_phrase': 120}
 
 ## Top Candidates
 
@@ -32,14 +32,9 @@
 - 55 `unknown_phrase` `viện đau` count=25 target= action=review_classify_as_alias_section_or_ignore
 - 54 `standard_exact_missing_runtime` `Gãy cổ` count=4 target=ICD10:S12 action=review_add_alias_or_concept
 - 54 `standard_exact_missing_runtime` `Gãy cổ xương đùi` count=4 target=ICD10:S72.0 action=review_add_alias_or_concept
-- 54 `standard_exact_missing_runtime` `Ho ra máu` count=4 target=ICD10:R04.2 action=review_add_alias_or_concept
 - 54 `standard_exact_missing_runtime` `Hạ thân nhiệt` count=4 target=ICD10:T68 action=review_add_alias_or_concept
 - 54 `unknown_phrase` `nhập viện đau` count=24 target= action=review_classify_as_alias_section_or_ignore
-- 53 `standard_exact_missing_runtime` `Đau họng` count=3 target=ICD10:R07.0 action=review_add_alias_or_concept
-- 52 `unknown_phrase` `chụp ct` count=22 target= action=review_classify_as_alias_section_or_ignore
-- 52 `standard_exact_missing_runtime` `Khó nuốt` count=2 target=ICD10:R13 action=review_add_alias_or_concept
 - 52 `unknown_phrase` `tháo đường` count=22 target= action=review_classify_as_alias_section_or_ignore
-- 52 `standard_exact_missing_runtime` `Thở khò khè` count=2 target=ICD10:R06.2 action=review_add_alias_or_concept
 - 52 `unknown_phrase` `ảnh chụp` count=22 target= action=review_classify_as_alias_section_or_ignore
 - 52 `standard_exact_missing_runtime` `Ảo thanh` count=2 target=ICD10:R44.0 action=review_add_alias_or_concept
 - 51 `standard_exact_missing_runtime` `Kháng vancomycin` count=1 target=ICD10:U83.0 action=review_add_alias_or_concept
@@ -50,29 +45,26 @@
 - 51 `standard_exact_missing_runtime` `Đau khi giao hợp` count=1 target=ICD10:N94.1 action=review_add_alias_or_concept
 - 51 `unknown_phrase` `động mạch vành` count=21 target= action=review_classify_as_alias_section_or_ignore
 - 50 `unknown_phrase` `hình ảnh chụp` count=20 target= action=review_classify_as_alias_section_or_ignore
+- 50 `standard_exact_missing_runtime` `Phẫu thuật` count=79 target=LOCAL:PROC_SURGERY action=review_add_alias_or_concept
+- 50 `standard_exact_missing_runtime` `Thủ thuật` count=86 target=LOCAL:PROC_PROCEDURE action=review_add_alias_or_concept
 - 50 `unknown_phrase` `trống ngực` count=20 target= action=review_classify_as_alias_section_or_ignore
 - 49 `unknown_phrase` `chụp cắt` count=19 target= action=review_classify_as_alias_section_or_ignore
-- 49 `unknown_phrase` `chụp cắt lớp` count=19 target= action=review_classify_as_alias_section_or_ignore
 - 49 `standard_exact_missing_runtime` `guaiac` count=4 target=RXNORM:1373150 action=review_add_alias_or_concept
-- 48 `unknown_phrase` `chụp x-quang` count=18 target= action=review_classify_as_alias_section_or_ignore
 - 47 `standard_exact_missing_runtime` `dobutamine` count=2 target=RXNORM:3616 action=review_add_alias_or_concept
 - 47 `standard_exact_missing_runtime` `dobutamine` count=2 target=RXNORM:1812167 action=review_add_alias_or_concept
 - 47 `unknown_phrase` `làm giảm` count=17 target= action=review_classify_as_alias_section_or_ignore
 - 47 `unknown_phrase` `máu cơ` count=17 target= action=review_classify_as_alias_section_or_ignore
 - 47 `unknown_phrase` `ngực không` count=17 target= action=review_classify_as_alias_section_or_ignore
 - 47 `unknown_phrase` `tim mạch` count=17 target= action=review_classify_as_alias_section_or_ignore
-- 46 `unknown_phrase` `chụp x-quang ngực` count=16 target= action=review_classify_as_alias_section_or_ignore
 - 46 `unknown_phrase` `cơ tim` count=16 target= action=review_classify_as_alias_section_or_ignore
 - 46 `unknown_phrase` `mạch chủ` count=16 target= action=review_classify_as_alias_section_or_ignore
 - 46 `unknown_phrase` `mạch máu` count=16 target= action=review_classify_as_alias_section_or_ignore
-- 46 `unknown_phrase` `nước tiểu` count=16 target= action=review_classify_as_alias_section_or_ignore
 - 46 `standard_exact_missing_runtime` `succinate` count=1 target=RXNORM:1307106 action=review_add_alias_or_concept
 - 46 `standard_exact_missing_runtime` `talc` count=1 target=RXNORM:10323 action=review_add_alias_or_concept
 - 46 `standard_exact_missing_runtime` `talc` count=1 target=RXNORM:313192 action=review_add_alias_or_concept
 - 46 `standard_exact_missing_runtime` `talc` count=1 target=RXNORM:546476 action=review_add_alias_or_concept
 - 46 `unknown_phrase` `tăng dần` count=16 target= action=review_classify_as_alias_section_or_ignore
 - 46 `unknown_phrase` `tố làm giảm` count=16 target= action=review_classify_as_alias_section_or_ignore
-- 46 `unknown_phrase` `x-quang ngực` count=16 target= action=review_classify_as_alias_section_or_ignore
 - 45 `unknown_phrase` `máu cơ tim` count=15 target= action=review_classify_as_alias_section_or_ignore
 - 44 `unknown_phrase` `hiện tại đau` count=14 target= action=review_classify_as_alias_section_or_ignore
 - 44 `unknown_phrase` `trị bằng` count=14 target= action=review_classify_as_alias_section_or_ignore
@@ -81,7 +73,15 @@
 - 44 `unknown_phrase` `điều trị bằng` count=14 target= action=review_classify_as_alias_section_or_ignore
 - 43 `unknown_phrase` `giảm đau` count=13 target= action=review_classify_as_alias_section_or_ignore
 - 43 `unknown_phrase` `hạ huyết` count=13 target= action=review_classify_as_alias_section_or_ignore
-- 43 `unknown_phrase` `nôn ra máu` count=13 target= action=review_classify_as_alias_section_or_ignore
 - 43 `unknown_phrase` `đau khi` count=13 target= action=review_classify_as_alias_section_or_ignore
 - 43 `unknown_phrase` `đường tiết` count=13 target= action=review_classify_as_alias_section_or_ignore
 - 43 `unknown_phrase` `đường tiết niệu` count=13 target= action=review_classify_as_alias_section_or_ignore
+- 43 `unknown_phrase` `động mạch chủ` count=13 target= action=review_classify_as_alias_section_or_ignore
+- 42 `unknown_phrase` `cơn đau` count=12 target= action=review_classify_as_alias_section_or_ignore
+- 42 `unknown_phrase` `máu không` count=12 target= action=review_classify_as_alias_section_or_ignore
+- 41 `unknown_phrase` `chụp ct sọ` count=11 target= action=review_classify_as_alias_section_or_ignore
+- 41 `unknown_phrase` `phẫu thuật cắt` count=11 target= action=review_classify_as_alias_section_or_ignore
+- 41 `unknown_phrase` `âm tim` count=11 target= action=review_classify_as_alias_section_or_ignore
+- 41 `unknown_phrase` `đi tiểu` count=11 target= action=review_classify_as_alias_section_or_ignore
+- 41 `unknown_phrase` `để điều trị` count=11 target= action=review_classify_as_alias_section_or_ignore
+- 40 `unknown_phrase` `khuẩn đường` count=10 target= action=review_classify_as_alias_section_or_ignore
