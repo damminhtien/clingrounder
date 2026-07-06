@@ -1099,7 +1099,7 @@
       "unknown_source_ids": {}
     },
     {
-      "alias_count": 1360,
+      "alias_count": 1366,
       "ambiguous_alias_count": 23,
       "ambiguous_aliases": [
         {
@@ -1894,7 +1894,7 @@
         }
       ],
       "blocked_alias_count": 1,
-      "broad_alias_count": 106,
+      "broad_alias_count": 107,
       "broad_aliases": [
         {
           "alias": "sepsis",
@@ -2449,6 +2449,12 @@
           "reason": "ascii_single_token_icd_alias"
         },
         {
+          "alias": "Hypothermia",
+          "concept_id": "ICD10:T68",
+          "normalized_alias": "hypothermia",
+          "reason": "ascii_single_token_icd_alias"
+        },
+        {
           "alias": "CP",
           "concept_id": "LOCAL:SYMPTOM_CHEST_PAIN",
           "normalized_alias": "cp",
@@ -2489,28 +2495,22 @@
           "concept_id": "LOCAL:TEST_CT",
           "normalized_alias": "ct",
           "reason": "too_short"
-        },
-        {
-          "alias": "BG",
-          "concept_id": "LOCAL:TEST_GLUCOSE",
-          "normalized_alias": "bg",
-          "reason": "too_short"
         }
       ],
       "by_code_system": {
-        "ICD-10": 146,
+        "ICD-10": 149,
         "LOCAL": 56,
         "RxNorm": 119
       },
       "by_semantic_type": {
-        "DISEASE": 146,
+        "DISEASE": 149,
         "DRUG": 119,
         "LAB_TEST": 26,
         "SYMPTOM": 30
       },
       "by_source": {
         "cdc_icd10cm_2026": 94,
-        "icd10_vn_tt06_2026": 112,
+        "icd10_vn_tt06_2026": 115,
         "icd_kcb_vn": 41,
         "medlineplus_xml": 51,
         "rxnav_rest_2026_07_04": 54,
@@ -2537,18 +2537,18 @@
           "XII": 2,
           "XIII": 5,
           "XIV": 9,
-          "XIX": 2,
+          "XIX": 4,
           "XVII": 4,
-          "XVIII": 3
+          "XVIII": 4
         },
-        "rows": 146,
-        "with_block": 130,
-        "with_chapter": 146,
-        "with_parent_code": 131
+        "rows": 149,
+        "with_block": 132,
+        "with_chapter": 149,
+        "with_parent_code": 133
       },
       "missing_source_rows": 0,
       "path": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
-      "row_count": 321,
+      "row_count": 324,
       "rxnorm_enrichment": {
         "inactive_or_obsolete": 1,
         "rows": 119,
@@ -2558,9 +2558,9 @@
         "with_status": 116,
         "with_strength": 16
       },
-      "unique_alias_count": 1303,
-      "unique_codes": 321,
-      "unique_concept_ids": 321,
+      "unique_alias_count": 1309,
+      "unique_codes": 324,
+      "unique_concept_ids": 324,
       "unknown_mention_candidates": [
         {
           "count": 86,
@@ -3886,6 +3886,20 @@
       "severity": "medium"
     },
     {
+      "alias": "Hypothermia",
+      "concept_id": "ICD10:T68",
+      "dictionaries": [
+        "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "false_positive_alias_candidate",
+      "normalized_alias": "hypothermia",
+      "notes": "Single-token English ICD aliases frequently create false positives in clinical prose.",
+      "reason": "ascii_single_token_icd_alias",
+      "recommended_action": "review_block_alias_or_require_disease_context",
+      "severity": "medium"
+    },
+    {
       "alias": "ILD",
       "concept_id": "ICD10:J84.9",
       "dictionaries": [
@@ -4396,8 +4410,7 @@
       "alias": "BG",
       "concept_id": "LOCAL:TEST_GLUCOSE",
       "dictionaries": [
-        "data/dictionaries/seed_concepts.jsonl",
-        "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
+        "data/dictionaries/seed_concepts.jsonl"
       ],
       "dictionary": "data/dictionaries/seed_concepts.jsonl",
       "issue_type": "false_positive_alias_candidate",
@@ -4634,6 +4647,16 @@
       "sha256": "eb3c0b8fbe87ef83316b3bc9380cfe75133bc470debe133f1af0b9caecb6566e",
       "size_bytes": 588,
       "source_id": "vn_clinical_lexicon_reviewed_2026_07_05"
+    },
+    {
+      "exists": true,
+      "md5": "cb4e15f3eff6578e15305c28cc27f907",
+      "path": "data/standards/phase1_reviewed/allowed_standard_concepts.tsv",
+      "required": true,
+      "role": "reviewed_allowlist_tsv",
+      "sha256": "4d24b5da9f0d1d302940c3170507ccb72d23a134b983ed069a3bc05c64fb5b38",
+      "size_bytes": 510,
+      "source_id": "phase1_reviewed_standard_allowlist_2026_07_06"
     },
     {
       "exists": true,
@@ -7438,7 +7461,7 @@
   "registry": {
     "issues": [],
     "path": "data/sources/medical_resource_registry.yaml",
-    "resource_count": 18,
+    "resource_count": 19,
     "resources": [
       {
         "access": "open",
@@ -7590,6 +7613,25 @@
         "url": "https://pubmed.ncbi.nlm.nih.gov/12123149/",
         "use": "negation_cue_design",
         "version": "publication 2001"
+      },
+      {
+        "access": "local_reviewed",
+        "category": "curation",
+        "id": "phase1_reviewed_standard_allowlist_2026_07_06",
+        "license": "project",
+        "local_files": [
+          {
+            "path": "data/standards/phase1_reviewed/allowed_standard_concepts.tsv",
+            "required": true,
+            "role": "reviewed_allowlist_tsv"
+          }
+        ],
+        "name": "Reviewed Phase 1 standard concept allowlist",
+        "notes": "Exact-match standard concept exceptions for conservative runtime merge guards; every row requires manual review.",
+        "release_date": "2026-07-06",
+        "url": "docs/dictionaries.md",
+        "use": "controlled_phase1_standard_exception_allowlist",
+        "version": "reviewed snapshot 2026-07-06"
       },
       {
         "access": "open_with_terms",
@@ -7761,6 +7803,7 @@
       "mimic_iv_note",
       "nbme_kaggle",
       "negex",
+      "phase1_reviewed_standard_allowlist_2026_07_06",
       "rxnav_rest_2026_07_04",
       "rxnorm_current",
       "rxnorm_full_2026_06_01",
@@ -7925,6 +7968,13 @@
         "source": "TT 06/2026/TT-BYT",
         "source_id": "icd10_vn_tt06_2026"
       },
+      "phase1_reviewed_standard_allowlist": {
+        "notes": "Manually reviewed exact-match standard concept exceptions for controlled runtime merge guards.",
+        "raw_file": "data/standards/phase1_reviewed/allowed_standard_concepts.tsv",
+        "release_date": "2026-07-06",
+        "source": "Reviewed Phase 1 standard concept allowlist",
+        "source_id": "phase1_reviewed_standard_allowlist_2026_07_06"
+      },
       "rxnorm": {
         "fallback_file": "RxNorm_full_06012026.zip",
         "fallback_source_id": "rxnorm_full_2026_06_01",
@@ -7963,12 +8013,12 @@
   },
   "summary": {
     "dictionary_count": 2,
-    "false_positive_blocklist_count": 102,
-    "file_count": 16,
+    "false_positive_blocklist_count": 103,
+    "file_count": 17,
     "manual_review_item_count": 223,
     "missing_required_file_count": 0,
     "registry_issue_count": 0,
-    "registry_resource_count": 18,
+    "registry_resource_count": 19,
     "rxnorm_release_profile_count": 1
   }
 }

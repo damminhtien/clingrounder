@@ -1,7 +1,7 @@
 # False-Positive Blocklist Candidates
 
-- Total candidates: 102
-- By reason: {'ascii_single_token_icd_alias': 88, 'too_short': 14}
+- Total candidates: 103
+- By reason: {'ascii_single_token_icd_alias': 89, 'too_short': 14}
 
 These rows are review candidates. They are not automatically applied to the runtime dictionary.
 
@@ -62,6 +62,7 @@ These rows are review candidates. They are not automatically applied to the runt
 - medium `ascii_single_token_icd_alias` `Hypokalaemia` -> ICD10:E87.6 action=review_block_alias_or_require_disease_context
 - medium `ascii_single_token_icd_alias` `hypokalemia` -> ICD10:E87.6 action=review_block_alias_or_require_disease_context
 - medium `ascii_single_token_icd_alias` `hypotension` -> ICD10:I95.9 action=review_block_alias_or_require_disease_context
+- medium `ascii_single_token_icd_alias` `Hypothermia` -> ICD10:T68 action=review_block_alias_or_require_disease_context
 - medium `ascii_single_token_icd_alias` `ILD` -> ICD10:J84.9 action=review_block_alias_or_require_disease_context
 - medium `ascii_single_token_icd_alias` `infection` -> ICD10:B99.9 action=review_block_alias_or_require_disease_context
 - medium `ascii_single_token_icd_alias` `malignancy` -> ICD10:C80.1 action=review_block_alias_or_require_disease_context
@@ -106,4 +107,3 @@ These rows are review candidates. They are not automatically applied to the runt
 - medium `too_short` `Ho` -> LOCAL:SYMPTOM_COUGH action=review_block_alias_or_require_type_context
 - medium `too_short` `K` -> LOCAL:TEST_POTASSIUM action=review_block_alias_or_require_type_context
 - medium `too_short` `K+` -> LOCAL:TEST_POTASSIUM action=review_block_alias_or_require_type_context
-- medium `too_short` `MI` -> ICD10:I21.9 action=review_block_alias_or_require_type_context

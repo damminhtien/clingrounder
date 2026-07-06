@@ -1,7 +1,7 @@
 # Vietnamese Alias Mining Candidates
 
-- Total candidates: 169
-- By proposal type: {'abbreviation_candidate': 26, 'standard_exact_missing_runtime': 23, 'unknown_phrase': 120}
+- Total candidates: 166
+- By proposal type: {'abbreviation_candidate': 26, 'standard_exact_missing_runtime': 20, 'unknown_phrase': 120}
 
 ## Top Candidates
 
@@ -30,12 +30,9 @@
 - 55 `unknown_phrase` `ra máu` count=25 target= action=review_classify_as_alias_section_or_ignore
 - 55 `unknown_phrase` `viện đau` count=25 target= action=review_classify_as_alias_section_or_ignore
 - 54 `standard_exact_missing_runtime` `Gãy cổ` count=4 target=ICD10:S12 action=review_add_alias_or_concept
-- 54 `standard_exact_missing_runtime` `Gãy cổ xương đùi` count=4 target=ICD10:S72.0 action=review_add_alias_or_concept
-- 54 `standard_exact_missing_runtime` `Hạ thân nhiệt` count=4 target=ICD10:T68 action=review_add_alias_or_concept
 - 54 `unknown_phrase` `nhập viện đau` count=24 target= action=review_classify_as_alias_section_or_ignore
 - 52 `unknown_phrase` `tháo đường` count=22 target= action=review_classify_as_alias_section_or_ignore
 - 52 `unknown_phrase` `ảnh chụp` count=22 target= action=review_classify_as_alias_section_or_ignore
-- 52 `standard_exact_missing_runtime` `Ảo thanh` count=2 target=ICD10:R44.0 action=review_add_alias_or_concept
 - 51 `standard_exact_missing_runtime` `Kháng vancomycin` count=1 target=ICD10:U83.0 action=review_add_alias_or_concept
 - 51 `standard_exact_missing_runtime` `Sử dụng rượu` count=1 target=ICD10:Z72.1 action=review_add_alias_or_concept
 - 51 `standard_exact_missing_runtime` `Sử dụng thuốc lá` count=1 target=ICD10:Z72.0 action=review_add_alias_or_concept
@@ -85,3 +82,6 @@
 - 41 `unknown_phrase` `để điều trị` count=11 target= action=review_classify_as_alias_section_or_ignore
 - 40 `unknown_phrase` `khuẩn đường` count=10 target= action=review_classify_as_alias_section_or_ignore
 - 40 `unknown_phrase` `khuẩn đường tiết` count=10 target= action=review_classify_as_alias_section_or_ignore
+- 40 `unknown_phrase` `mạch do` count=10 target= action=review_classify_as_alias_section_or_ignore
+- 40 `unknown_phrase` `nhiễm khuẩn đường` count=10 target= action=review_classify_as_alias_section_or_ignore
+- 40 `unknown_phrase` `nhồi máu` count=10 target= action=review_classify_as_alias_section_or_ignore

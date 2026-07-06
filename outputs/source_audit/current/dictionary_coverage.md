@@ -1,11 +1,11 @@
 # Medical Source Audit
 
-- Registry resources: 18
+- Registry resources: 19
 - Registry issues: 0
 - Missing required local files: 0
 - Dictionary profiles: 2
 - Manual review items: 223
-- False-positive blocklist candidates: 102
+- False-positive blocklist candidates: 103
 
 ## Source Registry
 
@@ -19,6 +19,7 @@
 - `mimic_iv_note`: MIMIC-IV-Note | access=credentialed | version=credentialed local copy required | license=physionet_credentialed_health_data | use=local_private_evaluation_only
 - `nbme_kaggle`: NBME Score Clinical Patient Notes | access=platform_terms | version=competition snapshot | license=kaggle_competition_terms | use=local_span_extraction_benchmark
 - `negex`: NegEx | access=paper_reference | version=publication 2001 | license=cite_paper | use=negation_cue_design
+- `phase1_reviewed_standard_allowlist_2026_07_06`: Reviewed Phase 1 standard concept allowlist | access=local_reviewed | version=reviewed snapshot 2026-07-06 | license=project | use=controlled_phase1_standard_exception_allowlist
 - `rxnav_rest_2026_07_04`: RxNav REST API lookups on 2026-07-04 | access=open_with_terms | version=manual lookup snapshot 2026-07-04 | license=nlm_rxnorm_terms | use=phase1_drug_alias_rxcui_curation
 - `rxnorm_current`: RxNorm current release and RxNav API | access=open_with_terms | version=current pointer resolved by locked source_versions.json | license=nlm_rxnorm_terms | use=rxnorm_generic_current_pointer
 - `rxnorm_full_2026_06_01`: RxNorm Full Monthly Release June 1 2026 | access=open_with_terms_or_umls | version=2026-06-01 | license=nlm_rxnorm_terms | use=phase1_rxnorm_fallback_drug_codes
@@ -35,6 +36,7 @@
 - `vn_clinical_lexicon_reviewed_2026_07_05` `data/standards/vn_clinical_lexicon/raw/reviewed_terms.tsv`: ok, required
 - `vn_clinical_lexicon_reviewed_2026_07_05` `data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl`: ok, required
 - `vn_clinical_lexicon_reviewed_2026_07_05` `data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_import_manifest.json`: ok, required
+- `phase1_reviewed_standard_allowlist_2026_07_06` `data/standards/phase1_reviewed/allowed_standard_concepts.tsv`: ok, required
 - `icd10_vn_tt06_2026` `data/standards/icd10_vn/raw/06-byt-kem.pdf`: ok, required
 - `icd10_vn_tt06_2026` `data/standards/icd10_vn/processed/06-byt-kem.tsv`: ok, required
 - `icd10_vn_tt06_2026` `data/standards/icd10_vn/processed/tt06_icd10_extract.jsonl`: ok, required
@@ -63,14 +65,14 @@
 
 ### `data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl`
 
-- Rows: 321
-- Code systems: {'ICD-10': 146, 'LOCAL': 56, 'RxNorm': 119}
-- Semantic types: {'DISEASE': 146, 'DRUG': 119, 'LAB_TEST': 26, 'SYMPTOM': 30}
-- ICD hierarchy: {'rows': 146, 'with_parent_code': 131, 'with_block': 130, 'with_chapter': 146, 'by_chapter': {'I': 10, 'II': 13, 'III': 5, 'IV': 11, 'IX': 32, 'V': 11, 'VI': 7, 'VII': 5, 'X': 10, 'XI': 17, 'XII': 2, 'XIII': 5, 'XIV': 9, 'XIX': 2, 'XVII': 4, 'XVIII': 3}}
+- Rows: 324
+- Code systems: {'ICD-10': 149, 'LOCAL': 56, 'RxNorm': 119}
+- Semantic types: {'DISEASE': 149, 'DRUG': 119, 'LAB_TEST': 26, 'SYMPTOM': 30}
+- ICD hierarchy: {'rows': 149, 'with_parent_code': 133, 'with_block': 132, 'with_chapter': 149, 'by_chapter': {'I': 10, 'II': 13, 'III': 5, 'IV': 11, 'IX': 32, 'V': 11, 'VI': 7, 'VII': 5, 'X': 10, 'XI': 17, 'XII': 2, 'XIII': 5, 'XIV': 9, 'XIX': 4, 'XVII': 4, 'XVIII': 4}}
 - RxNorm enrichment: {'rows': 119, 'with_ingredient': 119, 'with_brand_name': 108, 'with_dose_form': 113, 'with_strength': 16, 'with_status': 116, 'inactive_or_obsolete': 1}
-- Sources: {'cdc_icd10cm_2026': 94, 'icd10_vn_tt06_2026': 112, 'icd_kcb_vn': 41, 'medlineplus_xml': 51, 'rxnav_rest_2026_07_04': 54, 'rxnorm_current': 70, 'rxnorm_prescribable_2026_06_01': 116, 'seed': 39, 'vn_clinical_lexicon_reviewed_2026_07_05': 26, 'who_icd10_2019': 76}
+- Sources: {'cdc_icd10cm_2026': 94, 'icd10_vn_tt06_2026': 115, 'icd_kcb_vn': 41, 'medlineplus_xml': 51, 'rxnav_rest_2026_07_04': 54, 'rxnorm_current': 70, 'rxnorm_prescribable_2026_06_01': 116, 'seed': 39, 'vn_clinical_lexicon_reviewed_2026_07_05': 26, 'who_icd10_2019': 76}
 - Ambiguous aliases: 23
-- Broad/blocked review aliases: 106
+- Broad/blocked review aliases: 107
 - Missing source rows: 0
 
 ## RxNorm Releases
