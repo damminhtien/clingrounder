@@ -1,0 +1,32 @@
+input_dir: data/raw/input
+output_dir: phase1/output
+zip: phase1/output.zip
+run_root: outputs/phase1
+run_label: phase1
+dictionary: data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
+abbreviations: data/dictionaries/abbreviations.jsonl
+strict_validation: true
+expected_count: 100
+max_candidates: 1
+
+parallel:
+  backend: process
+  workers: 4
+  chunksize: 4
+  fail_fast: true
+
+pipeline:
+  max_candidates: 20
+  context_window: 80
+  candidate_sources:
+    - exact
+    - abbreviation
+    - fuzzy
+    - char_ngram
+    - bm25
+  enable_context: true
+  enable_linking: true
+  enable_candidate_reranking: true
+  enable_entity_kg_validation: true
+  enable_relations: false
+  enable_relation_kg_validation: false

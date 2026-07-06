@@ -458,6 +458,9 @@ def test_phase1_submission_cli_validates_zip(tmp_path: Path) -> None:
     output_dir = Path(summary["output_dir"])
     zip_path = Path(summary["zip"])
     assert Path(summary["run_dir"]).parent == tmp_path / "runs"
+    assert summary["strict_validation"] is True
+    assert summary["relations_enabled"] is False
+    assert summary["relation_validation_enabled"] is False
 
     subprocess.run(
         [
@@ -474,6 +477,69 @@ def test_phase1_submission_cli_validates_zip(tmp_path: Path) -> None:
         ],
         check=True,
     )
+
+
+def test_phase1_submission_cli_can_read_config_defaults(tmp_path: Path) -> None:
+    input_dir = tmp_path / "input"
+    input_dir.mkdir()
+    (input_dir / "1.txt").write_text("Bệnh nhân ho.", encoding="utf-8")
+    pred_path = tmp_path / "predictions.jsonl"
+    text = (input_dir / "1.txt").read_text(encoding="utf-8")
+    prediction = ClinicalPrediction.from_text(
+        "1",
+        text,
+        [_entity("E1", text, "ho", EntityType.SYMPTOM)],
+        [],
+        "test",
+    )
+    pred_path.write_text(json.dumps(prediction.to_json(), ensure_ascii=False) + "\n", encoding="utf-8")
+    config_path = tmp_path / "phase1.yaml"
+    config_path.write_text(
+        "\n".join(
+            [
+                f"input_dir: {input_dir}",
+                "output_dir: phase1/output",
+                "zip: phase1/output.zip",
+                f"run_root: {tmp_path / 'runs'}",
+                "run_label: config-smoke",
+                "dictionary: data/dictionaries/seed_concepts.jsonl",
+                "abbreviations: data/dictionaries/abbreviations.jsonl",
+                "strict_validation: true",
+                "expected_count: 1",
+                "max_candidates: 1",
+                "parallel:",
+                "  backend: serial",
+                "  workers: 1",
+                "  chunksize: 1",
+                "  fail_fast: true",
+                "pipeline:",
+                "  enable_relations: false",
+                "  enable_relation_kg_validation: false",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/build_phase1_submission.py",
+            "--config",
+            str(config_path),
+            "--pred",
+            str(pred_path),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    summary = json.loads(result.stdout)
+
+    assert summary["issue_count"] == 0
+    assert summary["strict_validation"] is True
+    assert summary["relations_enabled"] is False
+    assert Path(summary["zip"]).exists()
 
 
 def test_phase1_pre_submit_gate_writes_analysis_and_loop_artifacts(tmp_path: Path) -> None:

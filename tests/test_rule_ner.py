@@ -1,3 +1,6 @@
+import time
+from pathlib import Path
+
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
 from medical_kg_nlp.schema.types import EntityType
@@ -168,3 +171,20 @@ def test_rule_ner_recovers_concatenated_drug_aliases_with_source_offsets() -> No
         assert expected in [item.lower() for item in drug_texts]
     for entity in entities:
         assert text[entity.span[0] : entity.span[1]] == entity.text
+
+
+def test_rule_ner_phase1_latency_under_100ms_per_note() -> None:
+    store = DictionaryStore.from_jsonl("data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
+    ner = RuleBasedNER(store)
+    texts = [
+        path.read_text(encoding="utf-8")
+        for path in sorted(Path("data/raw/input").glob("*.txt"), key=lambda item: int(item.stem))
+    ]
+
+    started = time.perf_counter()
+    entity_count = sum(len(ner.extract(text)) for text in texts)
+    elapsed_ms = (time.perf_counter() - started) * 1000.0
+    average_ms = elapsed_ms / len(texts)
+
+    assert entity_count > 0
+    assert average_ms < 100.0

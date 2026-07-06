@@ -62,12 +62,8 @@ python scripts/evaluate_pipeline_steps.py \
   --output-dir evaluation/sample
 
 python scripts/build_phase1_submission.py \
-  --input-dir data/raw/input \
-  --run-root outputs/runs \
-  --output-dir phase1/output \
-  --zip phase1/output.zip \
-  --workers 4 \
-  --expected-count 100
+  --config configs/phase1_submission.yaml \
+  --run-label phase1
 ```
 
 The profiler output is intended to be a cacheable experiment artifact. Use it to compare train/dev
@@ -135,10 +131,12 @@ issues, no offset mismatches, no invalid candidates, and a correct ZIP layout. `
 available for labeled regression data and synthetic samples so the loop engine can still optimize the
 official 0.3/0.3/0.4 objective before submitting.
 
-Use `--run-root outputs/runs` for submission and experiment commands when you do not want to
-overwrite previous artifacts. The command creates a timestamped hash directory, writes
-`run_manifest.json`, and prints the concrete `output_dir` and `zip` paths for optional follow-up
-validation.
+Use `configs/phase1_submission.yaml` as the default source of truth for Phase 1 submission paths,
+dictionary, parallelism, and pipeline options. The default config writes to a timestamped hash
+directory under `outputs/phase1`, validates the output directory before creating the ZIP, validates
+the ZIP payload against source TXT offsets and dictionary candidates, and disables relation
+extraction/validation because Phase 1 exports only flat entities. CLI flags override config values
+for one-off runs.
 
 ## Loop Engineering
 
