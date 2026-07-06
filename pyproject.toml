@@ -63,7 +63,7 @@ ml = [
   "accelerate>=1.14.0; sys_platform != 'darwin' or platform_machine != 'x86_64'",
   "datasets>=5.0.0",
   "scikit-learn>=1.9.0",
-  "tokenizers>=0.22.2,<0.23.0",
+  "tokenizers>=0.22.2,<0.24.0",
   "torch>=2.12.1; sys_platform != 'darwin' or platform_machine != 'x86_64'",
   "transformers>=5.12.1",
 ]
