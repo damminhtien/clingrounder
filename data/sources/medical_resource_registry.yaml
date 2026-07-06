@@ -35,6 +35,20 @@ resources:
         path: data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_import_manifest.json
         required: true
     notes: Source-backed local curation for Vietnamese symptoms, lab names, and future procedure terms.
+  - id: phase1_reviewed_standard_allowlist_2026_07_06
+    name: Reviewed Phase 1 standard concept allowlist
+    category: curation
+    access: local_reviewed
+    url: docs/dictionaries.md
+    version: reviewed snapshot 2026-07-06
+    release_date: "2026-07-06"
+    license: project
+    use: controlled_phase1_standard_exception_allowlist
+    local_files:
+      - role: reviewed_allowlist_tsv
+        path: data/standards/phase1_reviewed/allowed_standard_concepts.tsv
+        required: true
+    notes: Exact-match standard concept exceptions for conservative runtime merge guards; every row requires manual review.
   - id: icd10_vn_tt06_2026
     name: ICD-10 tiếng Việt theo TT 06/2026/TT-BYT
     category: terminology

@@ -231,3 +231,46 @@ def test_merge_standard_rows_can_gate_new_rows_by_semantic_type() -> None:
     assert summary["allowed_new_semantic_types"] == ["LAB_TEST", "SYMPTOM"]
     assert "LOCAL:SYMPTOM_HEMOPTYSIS" in by_id
     assert "LOCAL:PROC_PROCEDURE" not in by_id
+
+
+def test_merge_standard_rows_allows_reviewed_blocked_icd_only_with_input_match() -> None:
+    standards = [
+        {
+            "concept_id": "ICD10:T68",
+            "code": "T68",
+            "code_system": "ICD-10",
+            "canonical_name": "Hạ thân nhiệt",
+            "official_name_vi": "Hạ thân nhiệt",
+            "semantic_type": "DISEASE",
+            "source": "icd10_vn_tt06_2026",
+        }
+    ]
+
+    blocked_rows, blocked_summary = merge_standard_rows(
+        [],
+        standards,
+        normalized_input_text=" bệnh nhân hạ thân nhiệt ",
+        allowed_new_semantic_types={"DISEASE"},
+    )
+    allowed_rows, allowed_summary = merge_standard_rows(
+        [],
+        standards,
+        normalized_input_text=" bệnh nhân hạ thân nhiệt ",
+        allowed_new_semantic_types={"DISEASE"},
+        allowed_new_concept_ids={"ICD10:T68"},
+    )
+    no_evidence_rows, no_evidence_summary = merge_standard_rows(
+        [],
+        standards,
+        normalized_input_text=" bệnh nhân tụt huyết áp ",
+        allowed_new_semantic_types={"DISEASE"},
+        allowed_new_concept_ids={"ICD10:T68"},
+    )
+
+    assert blocked_summary["added_rows"] == 0
+    assert blocked_rows == []
+    assert allowed_summary["added_rows"] == 1
+    assert allowed_summary["allowed_new_concept_ids"] == ["ICD10:T68"]
+    assert allowed_rows[0]["code"] == "T68"
+    assert no_evidence_summary["added_rows"] == 0
+    assert no_evidence_rows == []

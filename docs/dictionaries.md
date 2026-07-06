@@ -198,6 +198,7 @@ python scripts/merge_standard_dictionaries.py \
   --allow-new-semantic-type DRUG \
   --allow-new-semantic-type SYMPTOM \
   --allow-new-semantic-type LAB_TEST \
+  --allow-new-concept-file data/standards/phase1_reviewed/allowed_standard_concepts.tsv \
   --output data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
 
 python scripts/build_indexes.py \
@@ -215,6 +216,9 @@ Keep full standards separate from runtime dictionaries:
   imported RxNorm prescribable layer.
 - `data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl` is the
   reviewed Vietnamese LOCAL symptom, lab, and procedure layer.
+- `data/standards/phase1_reviewed/allowed_standard_concepts.tsv` is a reviewed exception list for
+  exact-match standard concepts that may bypass conservative runtime guards while still requiring
+  input evidence and semantic-type gates.
 - `data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl` is a runtime-controlled
   dictionary built from seed plus reviewed/input-gated standard rows.
 

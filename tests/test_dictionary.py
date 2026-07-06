@@ -249,6 +249,22 @@ def test_phase1_controlled_dictionary_includes_reviewed_vietnamese_symptom_and_l
     assert all(candidate.code_system == CodeSystem.LOCAL for candidate in ct)
 
 
+def test_phase1_controlled_dictionary_includes_reviewed_standard_allowlist() -> None:
+    store = DictionaryStore.from_jsonl("data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
+    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+
+    expected = {
+        "gãy cổ xương đùi": "S72.0",
+        "hạ thân nhiệt": "T68",
+        "ảo thanh": "R44.0",
+    }
+
+    for mention, code in expected.items():
+        candidates = generator.generate(mention, EntityType.DISEASE)
+        assert candidates[0].code == code
+        assert candidates[0].code_system == CodeSystem.ICD10
+
+
 def test_phase1_missed_terms_expand_ner_and_candidate_recall() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")

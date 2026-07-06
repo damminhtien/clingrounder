@@ -305,6 +305,9 @@
   "atrovent": [
     "RXNORM:7213"
   ],
+  "auditory hallucinations": [
+    "ICD10:R44.0"
+  ],
   "augmentin": [
     "RXNORM:723",
     "RXNORM:151392"
@@ -1290,6 +1293,9 @@
   "fortaz": [
     "RXNORM:2191"
   ],
+  "fracture of neck of femur": [
+    "ICD10:S72.0"
+  ],
   "frusemide": [
     "RXNORM:4603"
   ],
@@ -1380,6 +1386,9 @@
   ],
   "guaifenesin": [
     "RXNORM:5032"
+  ],
+  "gãy cổ xương đùi": [
+    "ICD10:S72.0"
   ],
   "gãy xương sườn": [
     "ICD10:S22.42"
@@ -1579,6 +1588,9 @@
   "hypotension unspecified": [
     "ICD10:I95.9"
   ],
+  "hypothermia": [
+    "ICD10:T68"
+  ],
   "hypoxia": [
     "LOCAL:SYMPTOM_HYPOXIA"
   ],
@@ -1590,6 +1602,9 @@
   ],
   "hạ kali máu": [
     "ICD10:E87.6"
+  ],
+  "hạ thân nhiệt": [
+    "ICD10:T68"
   ],
   "hẹp lỗ liên hợp": [
     "ICD10:M48.00"
@@ -3961,6 +3976,9 @@
   ],
   "động kinh": [
     "ICD10:G40"
+  ],
+  "ảo thanh": [
+    "ICD10:R44.0"
   ],
   "ớn lạnh": [
     "LOCAL:SYMPTOM_CHILLS"

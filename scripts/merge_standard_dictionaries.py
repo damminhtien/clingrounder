@@ -125,6 +125,24 @@ def main() -> None:
             "Existing rows are still enriched by concept_id/code."
         ),
     )
+    parser.add_argument(
+        "--allow-new-concept-id",
+        action="append",
+        default=[],
+        help=(
+            "Reviewed standard concept_id allowed to bypass conservative new-code guards. "
+            "Repeatable; still requires semantic type gates and input alias match."
+        ),
+    )
+    parser.add_argument(
+        "--allow-new-concept-file",
+        action="append",
+        default=[],
+        help=(
+            "TSV/CSV/text file of reviewed concept ids allowed to bypass conservative new-code guards. "
+            "Uses a concept_id header when present, otherwise the first column."
+        ),
+    )
     args = parser.parse_args()
 
     base_rows = read_jsonl(args.base)
@@ -137,6 +155,7 @@ def main() -> None:
         min_match_chars=args.min_match_chars,
         include_unmatched_standard=args.include_unmatched_standard,
         allowed_new_semantic_types=set(args.allow_new_semantic_type) or None,
+        allowed_new_concept_ids=_allowed_new_concept_ids(args.allow_new_concept_id, args.allow_new_concept_file),
     )
     write_jsonl(args.output, merged_rows)
     summary["base"] = args.base
@@ -153,6 +172,7 @@ def merge_standard_rows(
     min_match_chars: int = 5,
     include_unmatched_standard: bool = False,
     allowed_new_semantic_types: set[str] | None = None,
+    allowed_new_concept_ids: set[str] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     merged = {str(row["concept_id"]): dict(row) for row in base_rows}
     merged_by_code = _concept_ids_by_code(merged.values())
@@ -163,6 +183,7 @@ def merge_standard_rows(
     code_matched_enriched = 0
     skipped = 0
     matched_alias_examples: list[dict[str, str]] = []
+    allowed_new_concept_ids = allowed_new_concept_ids or set()
 
     for row in standard_rows:
         concept_id = str(row.get("concept_id", "")).strip()
@@ -183,7 +204,13 @@ def merge_standard_rows(
         if allowed_new_semantic_types is not None and str(row.get("semantic_type", "")) not in allowed_new_semantic_types:
             skipped += 1
             continue
-        matched_alias = _matched_alias(row, normalized_input_text, min_match_chars, base_alias_keys)
+        matched_alias = _matched_alias(
+            row,
+            normalized_input_text,
+            min_match_chars,
+            base_alias_keys,
+            allow_blocked_icd=concept_id in allowed_new_concept_ids,
+        )
         if not include_unmatched_standard and matched_alias is None:
             skipped += 1
             continue
@@ -212,6 +239,7 @@ def merge_standard_rows(
         "skipped_rows": skipped,
         "matched_alias_examples": matched_alias_examples,
         "allowed_new_semantic_types": sorted(allowed_new_semantic_types) if allowed_new_semantic_types else None,
+        "allowed_new_concept_ids": sorted(allowed_new_concept_ids) if allowed_new_concept_ids else [],
         "by_code_system": _count_by(rows, "code_system"),
         "by_semantic_type": _count_by(rows, "semantic_type"),
     }
@@ -307,6 +335,8 @@ def _matched_alias(
     normalized_input_text: str | None,
     min_match_chars: int,
     base_alias_keys: set[str],
+    *,
+    allow_blocked_icd: bool = False,
 ) -> str | None:
     if normalized_input_text is None:
         return None
@@ -314,7 +344,11 @@ def _matched_alias(
     code_system = str(row.get("code_system", ""))
     if code_system == CodeSystem.ICD10.value and entity_type != EntityType.DISEASE.value:
         return None
-    if code_system == CodeSystem.ICD10.value and _blocked_new_icd_code(str(row.get("code", ""))):
+    if (
+        code_system == CodeSystem.ICD10.value
+        and _blocked_new_icd_code(str(row.get("code", "")))
+        and not allow_blocked_icd
+    ):
         return None
     if code_system == CodeSystem.RXNORM.value and entity_type != EntityType.DRUG.value:
         return None
@@ -391,6 +425,37 @@ def _normalized_input_text(input_dir: Path) -> str:
     for path in sorted(input_dir.glob("*.txt"), key=lambda item: int(item.stem) if item.stem.isdigit() else item.stem):
         chunks.append(normalize_for_match(path.read_text(encoding="utf-8")))
     return f" {' '.join(chunks)} "
+
+
+def _allowed_new_concept_ids(inline_ids: list[str], files: list[str]) -> set[str]:
+    concept_ids = {concept_id.strip() for concept_id in inline_ids if concept_id.strip()}
+    for path in files:
+        concept_ids.update(_allowed_concept_ids_from_file(Path(path)))
+    return concept_ids
+
+
+def _allowed_concept_ids_from_file(path: Path) -> set[str]:
+    concept_ids: set[str] = set()
+    concept_id_column = 0
+    header_seen = False
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        delimiter = "\t" if "\t" in stripped else ","
+        columns = [column.strip() for column in stripped.split(delimiter)]
+        if not header_seen:
+            header_seen = True
+            normalized_columns = [column.casefold() for column in columns]
+            if "concept_id" in normalized_columns:
+                concept_id_column = normalized_columns.index("concept_id")
+                continue
+        if len(columns) <= concept_id_column:
+            continue
+        concept_id = columns[concept_id_column].strip()
+        if concept_id:
+            concept_ids.add(concept_id)
+    return concept_ids
 
 
 def _source_ids(row: dict[str, Any]) -> set[str]:

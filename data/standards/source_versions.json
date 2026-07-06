@@ -29,5 +29,12 @@
     "processed_file": "data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl",
     "phase1_allowed_new_semantic_types": ["DISEASE", "DRUG", "SYMPTOM", "LAB_TEST"],
     "notes": "Reviewed LOCAL symptom and lab aliases can be merged into Phase 1 runtime; procedure rows are kept for later phases until export support exists."
+  },
+  "phase1_reviewed_standard_allowlist": {
+    "source": "Reviewed Phase 1 standard concept allowlist",
+    "source_id": "phase1_reviewed_standard_allowlist_2026_07_06",
+    "release_date": "2026-07-06",
+    "raw_file": "data/standards/phase1_reviewed/allowed_standard_concepts.tsv",
+    "notes": "Manually reviewed exact-match standard concept exceptions for controlled runtime merge guards."
   }
 }
