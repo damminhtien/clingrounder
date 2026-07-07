@@ -12,7 +12,7 @@ Rules:
 - Keep drug mentions on RxNorm and disease mentions on ICD-10.
 - Preserve original spans and offsets; this pass only changes candidate lists.
 
-## Files 1-13
+## Files 1-14
 
 - `1.json`: filled `viêm tuyến mồ hôi` with ICD-10 `L73.2` after adding the TT06/ICD concept alias.
 - `2.json`: no candidate changes. Existing `K70.3` and `K76.82` remain as controlled-dictionary candidates.
@@ -27,6 +27,7 @@ Rules:
 - `11.json`: filled historical chronic diagnoses with controlled ICD-10 candidates `I10`, `M10.9`, `N18.9`, `C18.9`, `E66.9`, `K74.6`, `K76.6`, `R18`, and `J90`. Kept `liệu pháp lợi tiểu` as `THUỐC` with `[]` because no safe RxNorm active ingredient/class candidate is available in the controlled dictionary.
 - `12.json`: used small high-confidence candidates `D86.8`, `J40`, `J18.9`, `J81`, RxNorm `82122`, and RxNorm `161`. Kept symptoms, tests, and lab-result values candidate-free; did not annotate `Lấy mẫu` separately from `cấy máu`.
 - `13.json`: used compact candidates `J70.3`, `M35.8`, `E66.9`, `I10`, `D84.8`, `L03.9`, `B00.9`, `B01.9`, `B02.9`, RxNorm `10831`, and RxNorm `3640`. Kept oxygen therapy and corticosteroid class mentions as `THUỐC` with `[]`; split glued `doxycyclinebactrim` into adjacent drug spans.
+- `14.json`: used compact cardiovascular/allergy candidates `J30.2`, `J30.1`, `I25.9`, and `I25.1`. Kept stress test, perfusion scan, coronary angiography, and generic abnormal result candidate-free; did not annotate planned CABG/procedure wording.
 
 Controlled dictionary additions in this pass:
 
@@ -49,3 +50,6 @@ Controlled dictionary additions in this pass:
 - `D84.8` Other specified immunodeficiencies / Suy giảm miễn dịch xác định khác
 - `L03.9` Cellulitis, unspecified / Viêm mô tế bào không đặc hiệu
 - `M35.8` Other specified systemic involvement of connective tissue
+- `J30.1` Allergic rhinitis due to pollen / Viêm mũi dị ứng do phấn hoa
+- `J30.2` Other seasonal allergic rhinitis / Viêm mũi dị ứng theo mùa khác
+- `I25.9` Chronic ischaemic heart disease, unspecified / Bệnh tim thiếu máu cục bộ mạn tính, không xác định

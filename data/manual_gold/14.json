@@ -1,0 +1,128 @@
+[
+  {
+    "text": "đau ngực trái",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [69, 82]
+  },
+  {
+    "text": "khó thở",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [92, 99]
+  },
+  {
+    "text": "đau ngực trái",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [123, 136]
+  },
+  {
+    "text": "khó thở",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [139, 146]
+  },
+  {
+    "text": "chóng mặt",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [149, 158]
+  },
+  {
+    "text": "đau ngực trái",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [182, 195]
+  },
+  {
+    "text": "khó thở",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [239, 246]
+  },
+  {
+    "text": "dị ứng theo mùa",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["J30.2"],
+    "position": [293, 308]
+  },
+  {
+    "text": "dị ứng phấn hoa",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["J30.1"],
+    "position": [312, 327]
+  },
+  {
+    "text": "chóng mặt",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [330, 339]
+  },
+  {
+    "text": "nghiệm pháp gắng sức",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [416, 436]
+  },
+  {
+    "text": "bất thường",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [459, 469]
+  },
+  {
+    "text": "Xạ hình tưới máu cơ tim",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [472, 495]
+  },
+  {
+    "text": "thiếu máu cơ tim vùng dưới và thành bên",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["I25.9"],
+    "position": [513, 552]
+  },
+  {
+    "text": "Chụp động mạch vành",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [553, 572]
+  },
+  {
+    "text": "hẹp 60% đoạn gần động mạch liên thất trước trái",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["I25.1"],
+    "position": [574, 621]
+  },
+  {
+    "text": "Bệnh động mạch vành mạn tính có thiếu máu cơ tim",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["I25.1"],
+    "position": [699, 747]
+  },
+  {
+    "text": "hẹp 60% đoạn gần động mạch liên thất trước trái",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["I25.1"],
+    "position": [749, 796]
+  }
+]
