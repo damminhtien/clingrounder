@@ -10,7 +10,7 @@ def test_validate_manual_gold_allows_incomplete_review_batch() -> None:
             "scripts/validate_manual_gold.py",
             "--allow-incomplete",
             "--expected-count",
-            "7",
+            "8",
             "--input-dir",
             "data/raw/input",
             "--gold-dir",
@@ -25,6 +25,15 @@ def test_validate_manual_gold_allows_incomplete_review_batch() -> None:
     summary = json.loads(result.stdout)
 
     assert summary["valid"] is True
-    assert summary["reviewed_count"] == 7
-    assert summary["entity_count"] == 267
-    assert summary["reviewed_files"] == ["1.json", "2.json", "3.json", "4.json", "5.json", "6.json", "7.json"]
+    assert summary["reviewed_count"] == 8
+    assert summary["entity_count"] == 286
+    assert summary["reviewed_files"] == [
+        "1.json",
+        "2.json",
+        "3.json",
+        "4.json",
+        "5.json",
+        "6.json",
+        "7.json",
+        "8.json",
+    ]

@@ -21,6 +21,7 @@ Rules:
 - `5.json`: filled `tắc nghẽn đường mật` with `K83.1`.
 - `6.json`: no candidate changes. Existing `I65.29` remains for carotid artery occlusion/stenosis wording.
 - `7.json`: filled `hội chứng nghiện rượu` with `F10.2`, `Ảo giác do rượu` with `F10.5`, and negated `loạn thần` with `F29`.
+- `8.json`: filled every `nốt tuyến giáp...` occurrence with `E04.1`; did not add neoplasm or malignancy candidates because the text does not confirm those diagnoses.
 
 Controlled dictionary additions in this pass:
 
@@ -31,3 +32,4 @@ Controlled dictionary additions in this pass:
 - `F10.2` Alcohol dependence syndrome
 - `F10.5` Alcohol-related psychotic disorder
 - `F29` Unspecified nonorganic psychosis
+- `E04.1` Nontoxic single thyroid nodule / Bướu giáp đơn nhân không độc

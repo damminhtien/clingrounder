@@ -1,0 +1,135 @@
+[
+  {
+    "text": "kết quả chọc hút bất thường",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [76, 103]
+  },
+  {
+    "text": "nốt tuyến giáp thùy trái",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["E04.1"],
+    "position": [108, 132]
+  },
+  {
+    "text": "nốt tuyến giáp thùy trái",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["E04.1"],
+    "position": [190, 214]
+  },
+  {
+    "text": "kích thước khoảng 1 cm",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [215, 237]
+  },
+  {
+    "text": "chọc hút bằng kim nhỏ",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [278, 299]
+  },
+  {
+    "text": "xét nghiệm tế bào học từ dịch chọc hút",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [334, 372]
+  },
+  {
+    "text": "bất thường",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [382, 392]
+  },
+  {
+    "text": "khó nuốt",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isNegated"],
+    "candidates": [],
+    "position": [568, 576]
+  },
+  {
+    "text": "khó thở",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isNegated"],
+    "candidates": [],
+    "position": [578, 585]
+  },
+  {
+    "text": "khàn tiếng",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isNegated"],
+    "candidates": [],
+    "position": [591, 601]
+  },
+  {
+    "text": "kết quả chọc hút bất thường",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [651, 678]
+  },
+  {
+    "text": "nốt tuyến giáp trái",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["E04.1"],
+    "position": [683, 702]
+  },
+  {
+    "text": "tế bào học từ dịch chọc hút",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [759, 786]
+  },
+  {
+    "text": "nốt tuyến giáp trái",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["E04.1"],
+    "position": [787, 806]
+  },
+  {
+    "text": "bất thường",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [816, 826]
+  },
+  {
+    "text": "Chọc hút bằng kim nhỏ",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [852, 873]
+  },
+  {
+    "text": "nốt tuyến giáp trái",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["E04.1"],
+    "position": [875, 894]
+  },
+  {
+    "text": "Nốt tuyến giáp thùy trái",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["E04.1"],
+    "position": [916, 940]
+  },
+  {
+    "text": "kích thước khoảng 1 cm",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [941, 963]
+  }
+]
