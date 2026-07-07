@@ -28,7 +28,7 @@
   {"text": "cấy máu", "type": "TÊN_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [1008, 1015]},
   {"text": "Siêu âm gan mật", "type": "TÊN_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [1046, 1061]},
   {"text": "giãn đường mật", "type": "KẾT_QUẢ_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [1083, 1097]},
-  {"text": "tắc nghẽn đường mật", "type": "CHẨN_ĐOÁN", "assertions": [], "candidates": [], "position": [1105, 1124]},
+  {"text": "tắc nghẽn đường mật", "type": "CHẨN_ĐOÁN", "assertions": [], "candidates": ["K83.1"], "position": [1105, 1124]},
   {"text": "levophed", "type": "THUỐC", "assertions": [], "candidates": ["7512"], "position": [1360, 1368]},
   {"text": "propofol", "type": "THUỐC", "assertions": [], "candidates": ["8782"], "position": [1375, 1383]},
   {"text": "phentolamine", "type": "THUỐC", "assertions": [], "candidates": ["8153"], "position": [1408, 1420]}

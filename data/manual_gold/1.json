@@ -17,7 +17,7 @@
     "text": "viêm tuyến mồ hôi",
     "type": "CHẨN_ĐOÁN",
     "assertions": ["isHistorical"],
-    "candidates": [],
+    "candidates": ["L73.2"],
     "position": [98, 115]
   },
   {

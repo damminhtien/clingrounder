@@ -1,12 +1,12 @@
 [
   {"text": "Rối loạn cảm xúc (trầm cảm)", "type": "CHẨN_ĐOÁN", "assertions": ["isHistorical"], "candidates": ["F39"], "position": [51, 78]},
   {"text": "giai đoạn trầm cảm không đặc hiệu", "type": "CHẨN_ĐOÁN", "assertions": ["isHistorical"], "candidates": ["F32.9"], "position": [88, 121]},
-  {"text": "hội chứng nghiện rượu", "type": "CHẨN_ĐOÁN", "assertions": ["isHistorical"], "candidates": [], "position": [129, 150]},
+  {"text": "hội chứng nghiện rượu", "type": "CHẨN_ĐOÁN", "assertions": ["isHistorical"], "candidates": ["F10.2"], "position": [129, 150]},
   {"text": "seroquel", "type": "THUỐC", "assertions": ["isHistorical"], "candidates": ["51272"], "position": [190, 198]},
   {"text": "lú lẫn", "type": "TRIỆU_CHỨNG", "assertions": [], "candidates": [], "position": [229, 235]},
   {"text": "chóng mặt", "type": "TRIỆU_CHỨNG", "assertions": [], "candidates": [], "position": [237, 246]},
   {"text": "khó nhìn gần", "type": "TRIỆU_CHỨNG", "assertions": [], "candidates": [], "position": [248, 260]},
-  {"text": "hội chứng nghiện rượu", "type": "CHẨN_ĐOÁN", "assertions": ["isHistorical"], "candidates": [], "position": [323, 344]},
+  {"text": "hội chứng nghiện rượu", "type": "CHẨN_ĐOÁN", "assertions": ["isHistorical"], "candidates": ["F10.2"], "position": [323, 344]},
   {"text": "tự tử", "type": "TRIỆU_CHỨNG", "assertions": [], "candidates": [], "position": [400, 405]},
   {"text": "tự tử", "type": "TRIỆU_CHỨNG", "assertions": [], "candidates": [], "position": [465, 470]},
   {"text": "Lú lẫn từng đợt gần đây", "type": "TRIỆU_CHỨNG", "assertions": [], "candidates": [], "position": [477, 500]},
@@ -42,6 +42,6 @@
   {"text": "các băng nhóm oligoclonal", "type": "TÊN_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [2048, 2073]},
   {"text": "đang chờ kết quả", "type": "KẾT_QUẢ_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [2074, 2090]},
   {"text": "bệnh lý chất trắng", "type": "CHẨN_ĐOÁN", "assertions": [], "candidates": ["R90.82"], "position": [2136, 2154]},
-  {"text": "Ảo giác do rượu", "type": "CHẨN_ĐOÁN", "assertions": [], "candidates": [], "position": [2240, 2255]},
-  {"text": "loạn thần", "type": "CHẨN_ĐOÁN", "assertions": ["isNegated"], "candidates": [], "position": [2299, 2308]}
+  {"text": "Ảo giác do rượu", "type": "CHẨN_ĐOÁN", "assertions": [], "candidates": ["F10.5"], "position": [2240, 2255]},
+  {"text": "loạn thần", "type": "CHẨN_ĐOÁN", "assertions": ["isNegated"], "candidates": ["F29"], "position": [2299, 2308]}
 ]
