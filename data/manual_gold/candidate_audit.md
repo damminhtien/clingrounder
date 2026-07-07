@@ -12,7 +12,7 @@ Rules:
 - Keep drug mentions on RxNorm and disease mentions on ICD-10.
 - Preserve original spans and offsets; this pass only changes candidate lists.
 
-## Files 1-9
+## Files 1-11
 
 - `1.json`: filled `viêm tuyến mồ hôi` with ICD-10 `L73.2` after adding the TT06/ICD concept alias.
 - `2.json`: no candidate changes. Existing `K70.3` and `K76.82` remain as controlled-dictionary candidates.
@@ -23,6 +23,8 @@ Rules:
 - `7.json`: filled `hội chứng nghiện rượu` with `F10.2`, `Ảo giác do rượu` with `F10.5`, and negated `loạn thần` with `F29`.
 - `8.json`: filled every `nốt tuyến giáp...` occurrence with `E04.1`; did not add neoplasm or malignancy candidates because the text does not confirm those diagnoses.
 - `9.json`: used existing controlled candidates `D25.9` for non-specific uterine leiomyoma/fibroid mentions and RxNorm `90176` for bare `iron`.
+- `10.json`: filled malignant rectal tumor context with `C20`; filled rectal biopsy adenoma context with `D12.8`. Kept all tests, lab results, imaging findings, and symptoms candidate-free.
+- `11.json`: filled historical chronic diagnoses with controlled ICD-10 candidates `I10`, `M10.9`, `N18.9`, `C18.9`, `E66.9`, `K74.6`, `K76.6`, `R18`, and `J90`. Kept `liệu pháp lợi tiểu` as `THUỐC` with `[]` because no safe RxNorm active ingredient/class candidate is available in the controlled dictionary.
 
 Controlled dictionary additions in this pass:
 
@@ -34,3 +36,9 @@ Controlled dictionary additions in this pass:
 - `F10.5` Alcohol-related psychotic disorder
 - `F29` Unspecified nonorganic psychosis
 - `E04.1` Nontoxic single thyroid nodule / Bướu giáp đơn nhân không độc
+- `C20` Malignant neoplasm of rectum / U ác tính ở trực tràng
+- `D12.8` Benign neoplasm of rectum / U lành ở trực tràng
+- `M10.9` Gout, unspecified / Bệnh gút không đặc hiệu
+- `K74.6` Other and unspecified cirrhosis of liver / Xơ gan khác và không xác định
+- `K76.6` Portal hypertension / Tăng áp lực tĩnh mạch cửa
+- `R18` Ascites / Chứng cổ trướng
