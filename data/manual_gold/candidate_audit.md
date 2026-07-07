@@ -12,7 +12,7 @@ Rules:
 - Keep drug mentions on RxNorm and disease mentions on ICD-10.
 - Preserve original spans and offsets; this pass only changes candidate lists.
 
-## Files 1-7
+## Files 1-9
 
 - `1.json`: filled `viêm tuyến mồ hôi` with ICD-10 `L73.2` after adding the TT06/ICD concept alias.
 - `2.json`: no candidate changes. Existing `K70.3` and `K76.82` remain as controlled-dictionary candidates.
@@ -22,6 +22,7 @@ Rules:
 - `6.json`: no candidate changes. Existing `I65.29` remains for carotid artery occlusion/stenosis wording.
 - `7.json`: filled `hội chứng nghiện rượu` with `F10.2`, `Ảo giác do rượu` with `F10.5`, and negated `loạn thần` with `F29`.
 - `8.json`: filled every `nốt tuyến giáp...` occurrence with `E04.1`; did not add neoplasm or malignancy candidates because the text does not confirm those diagnoses.
+- `9.json`: used existing controlled candidates `D25.9` for non-specific uterine leiomyoma/fibroid mentions and RxNorm `90176` for bare `iron`.
 
 Controlled dictionary additions in this pass:
 
