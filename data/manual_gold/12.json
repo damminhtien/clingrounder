@@ -1,0 +1,198 @@
+[
+  {
+    "text": "U Sacoit tổn thương chủ yếu tại tim",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["D86.8"],
+    "position": [48, 83]
+  },
+  {
+    "text": "ho",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [133, 135]
+  },
+  {
+    "text": "ho ra máu cỡ đồng xu x3 đêm qua",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [156, 187]
+  },
+  {
+    "text": "ho",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [230, 232]
+  },
+  {
+    "text": "ho ra máu x3 đêm qua",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [247, 267]
+  },
+  {
+    "text": "ho",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [321, 323]
+  },
+  {
+    "text": "mệt mỏi",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [327, 334]
+  },
+  {
+    "text": "ho",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [372, 374]
+  },
+  {
+    "text": "đờm có màu hồng",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [415, 430]
+  },
+  {
+    "text": "sốt đến 38.8°C",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [461, 475]
+  },
+  {
+    "text": "ho ra máu",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isNegated"],
+    "candidates": [],
+    "position": [506, 515]
+  },
+  {
+    "text": "ho",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [562, 564]
+  },
+  {
+    "text": "mệt mỏi",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [571, 578]
+  },
+  {
+    "text": "ho ra máu cỡ đồng xu x3 đêm qua",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [585, 616]
+  },
+  {
+    "text": "Đờm pha màu hồng",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [623, 639]
+  },
+  {
+    "text": "fever",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [646, 651]
+  },
+  {
+    "text": "sốt đến 38.8°C",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [663, 677]
+  },
+  {
+    "text": "Đau bụng  âm ỉ",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [685, 699]
+  },
+  {
+    "text": "levofloxacin",
+    "type": "THUỐC",
+    "assertions": ["isHistorical"],
+    "candidates": ["82122"],
+    "position": [876, 888]
+  },
+  {
+    "text": "viêm phế quản",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["J40"],
+    "position": [901, 914]
+  },
+  {
+    "text": "viêm phổi mắc phải cộng đồng",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["J18.9"],
+    "position": [918, 946]
+  },
+  {
+    "text": "tylenol",
+    "type": "THUỐC",
+    "assertions": ["isHistorical"],
+    "candidates": ["161"],
+    "position": [975, 982]
+  },
+  {
+    "text": "công thức máu (cbc)",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [1035, 1054]
+  },
+  {
+    "text": "11.3",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [1068, 1072]
+  },
+  {
+    "text": "chụp x-quang ngực",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [1105, 1122]
+  },
+  {
+    "text": "viêm phổi",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isNegated"],
+    "candidates": ["J18.9"],
+    "position": [1139, 1148]
+  },
+  {
+    "text": "phù phổi",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isNegated"],
+    "candidates": ["J81"],
+    "position": [1154, 1162]
+  },
+  {
+    "text": "cấy máu",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [1203, 1210]
+  }
+]
