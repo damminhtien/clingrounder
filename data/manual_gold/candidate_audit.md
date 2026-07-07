@@ -12,7 +12,7 @@ Rules:
 - Keep drug mentions on RxNorm and disease mentions on ICD-10.
 - Preserve original spans and offsets; this pass only changes candidate lists.
 
-## Files 1-15
+## Files 1-15, 100
 
 - `1.json`: filled `viêm tuyến mồ hôi` with ICD-10 `L73.2` after adding the TT06/ICD concept alias.
 - `2.json`: no candidate changes. Existing `K70.3` and `K76.82` remain as controlled-dictionary candidates.
@@ -29,6 +29,7 @@ Rules:
 - `13.json`: used compact candidates `J70.3`, `M35.8`, `E66.9`, `I10`, `D84.8`, `L03.9`, `B00.9`, `B01.9`, `B02.9`, RxNorm `10831`, and RxNorm `3640`. Kept oxygen therapy and corticosteroid class mentions as `THUỐC` with `[]`; split glued `doxycyclinebactrim` into adjacent drug spans.
 - `14.json`: used compact cardiovascular/allergy candidates `J30.2`, `J30.1`, `I25.9`, and `I25.1`. Kept stress test, perfusion scan, coronary angiography, and generic abnormal result candidate-free; did not annotate planned CABG/procedure wording.
 - `15.json`: used existing controlled `I62.9` for nontraumatic intracranial hemorrhage and added RxNorm `221099` for `yếu tố IX đậm đặc`. Kept `Điều trị chống đông` as `THUỐC` with `[]` because no specific anticoagulant ingredient is named.
+- `100.json`: used compact candidates `E83.5`, `C18.9`, `E21.0`, `I70.9`, `I20.8`, `G40.9`, `I63.9`, RxNorm `4917`, `1719290`, and `313002`. Kept labs, symptoms, and imaging-test names candidate-free; did not annotate generic outpatient test wording, vague acute process wording, fall event, or standalone `Truyền dịch`.
 
 Controlled dictionary additions in this pass:
 
@@ -55,3 +56,10 @@ Controlled dictionary additions in this pass:
 - `J30.2` Other seasonal allergic rhinitis / Viêm mũi dị ứng theo mùa khác
 - `I25.9` Chronic ischaemic heart disease, unspecified / Bệnh tim thiếu máu cục bộ mạn tính, không xác định
 - `221099` RxNorm coagulation factor IX, human
+- `E83.5` Disorders of calcium metabolism / Rối loạn chuyển hóa calci
+- `I70.9` Generalized and unspecified atherosclerosis / Xơ vữa động mạch không xác định
+- `I20.8` Other forms of angina pectoris / Cơn đau thắt ngực thể khác
+- `G40.9` Epilepsy, unspecified / Bệnh động kinh, không xác định
+- `I63.9` Cerebral infarction, unspecified / Nhồi máu não, không xác định
+- `1719290` RxNorm 2 ML furosemide 10 MG/ML Injection
+- `313002` RxNorm sodium chloride 9 MG/ML Injectable Solution
