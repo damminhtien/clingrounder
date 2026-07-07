@@ -1,0 +1,51 @@
+[
+  {
+    "text": "Nghẽn tắc và hẹp động mạch cảnh",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["I65.29"],
+    "position": [50, 81]
+  },
+  {
+    "text": "siêu âm Doppler",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [235, 250]
+  },
+  {
+    "text": "nghẽn tắc và hẹp động mạch cảnh",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["I65.29"],
+    "position": [264, 295]
+  },
+  {
+    "text": "siêu âm doppler hai chiều",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [320, 345]
+  },
+  {
+    "text": "hẹp nặng",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [357, 365]
+  },
+  {
+    "text": "tỷ số PSV/EDV > 7",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [367, 384]
+  },
+  {
+    "text": "vận tốc dòng chảy tăng rõ",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [386, 411]
+  }
+]
