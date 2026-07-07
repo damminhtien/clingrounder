@@ -12,7 +12,7 @@ Rules:
 - Keep drug mentions on RxNorm and disease mentions on ICD-10.
 - Preserve original spans and offsets; this pass only changes candidate lists.
 
-## Files 1-12
+## Files 1-13
 
 - `1.json`: filled `viêm tuyến mồ hôi` with ICD-10 `L73.2` after adding the TT06/ICD concept alias.
 - `2.json`: no candidate changes. Existing `K70.3` and `K76.82` remain as controlled-dictionary candidates.
@@ -26,6 +26,7 @@ Rules:
 - `10.json`: filled malignant rectal tumor context with `C20`; filled rectal biopsy adenoma context with `D12.8`. Kept all tests, lab results, imaging findings, and symptoms candidate-free.
 - `11.json`: filled historical chronic diagnoses with controlled ICD-10 candidates `I10`, `M10.9`, `N18.9`, `C18.9`, `E66.9`, `K74.6`, `K76.6`, `R18`, and `J90`. Kept `liệu pháp lợi tiểu` as `THUỐC` with `[]` because no safe RxNorm active ingredient/class candidate is available in the controlled dictionary.
 - `12.json`: used small high-confidence candidates `D86.8`, `J40`, `J18.9`, `J81`, RxNorm `82122`, and RxNorm `161`. Kept symptoms, tests, and lab-result values candidate-free; did not annotate `Lấy mẫu` separately from `cấy máu`.
+- `13.json`: used compact candidates `J70.3`, `M35.8`, `E66.9`, `I10`, `D84.8`, `L03.9`, `B00.9`, `B01.9`, `B02.9`, RxNorm `10831`, and RxNorm `3640`. Kept oxygen therapy and corticosteroid class mentions as `THUỐC` with `[]`; split glued `doxycyclinebactrim` into adjacent drug spans.
 
 Controlled dictionary additions in this pass:
 
@@ -44,3 +45,7 @@ Controlled dictionary additions in this pass:
 - `K76.6` Portal hypertension / Tăng áp lực tĩnh mạch cửa
 - `R18` Ascites / Chứng cổ trướng
 - `D86.8` Sarcoidosis of other and combined sites / Bệnh u hạt vị trí khác và/hoặc vị trí kết hợp
+- `J70.3` Chronic drug-induced interstitial lung disorders / Rối loạn phổi mô kẽ mạn tính do thuốc
+- `D84.8` Other specified immunodeficiencies / Suy giảm miễn dịch xác định khác
+- `L03.9` Cellulitis, unspecified / Viêm mô tế bào không đặc hiệu
+- `M35.8` Other specified systemic involvement of connective tissue

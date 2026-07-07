@@ -1,0 +1,275 @@
+[
+  {
+    "text": "Bệnh phổi kẽ do sử dụng corticoid liều cao kéo dài",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["J70.3"],
+    "position": [44, 94]
+  },
+  {
+    "text": "Thở oxy tại nhà",
+    "type": "THUỐC",
+    "assertions": ["isHistorical"],
+    "candidates": [],
+    "position": [102, 117]
+  },
+  {
+    "text": "Hội chứng kháng enzym tổng hợp protein",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["M35.8"],
+    "position": [124, 162]
+  },
+  {
+    "text": "béo phì",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["E66.9"],
+    "position": [170, 177]
+  },
+  {
+    "text": "Tăng huyết áp nguyên phát",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["I10"],
+    "position": [184, 209]
+  },
+  {
+    "text": "Corticoid liều cao kéo dài",
+    "type": "THUỐC",
+    "assertions": ["isHistorical"],
+    "candidates": [],
+    "position": [317, 343]
+  },
+  {
+    "text": "Thở oxy tại nhà",
+    "type": "THUỐC",
+    "assertions": ["isHistorical"],
+    "candidates": [],
+    "position": [350, 365]
+  },
+  {
+    "text": "bactrim",
+    "type": "THUỐC",
+    "assertions": ["isHistorical"],
+    "candidates": ["10831"],
+    "position": [382, 389]
+  },
+  {
+    "text": "doxycycline",
+    "type": "THUỐC",
+    "assertions": ["isHistorical"],
+    "candidates": ["3640"],
+    "position": [430, 441]
+  },
+  {
+    "text": "Suy giảm miễn dịch do sử dụng corticoid kéo dài",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["D84.8"],
+    "position": [478, 525]
+  },
+  {
+    "text": "tổn thương vùng âm hộ và mông bên phải",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [584, 622]
+  },
+  {
+    "text": "tổn thương vùng âm hộ phải lan rộng sang mông phải",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [682, 732]
+  },
+  {
+    "text": "tổn thương đơn độc vùng âm hộ phải",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [839, 873]
+  },
+  {
+    "text": "cotrimoxazol",
+    "type": "THUỐC",
+    "assertions": ["isHistorical"],
+    "candidates": ["10831"],
+    "position": [921, 933]
+  },
+  {
+    "text": "doxycyclin",
+    "type": "THUỐC",
+    "assertions": ["isHistorical"],
+    "candidates": ["3640"],
+    "position": [953, 963]
+  },
+  {
+    "text": "viêm mô tế bào",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["L03.9"],
+    "position": [976, 990]
+  },
+  {
+    "text": "ban đỏ quanh tổn thương",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [1008, 1031]
+  },
+  {
+    "text": "tổn thương tiếp tục tiến triển",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [1066, 1096]
+  },
+  {
+    "text": "nhiều bọng nước",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [1108, 1123]
+  },
+  {
+    "text": "đau nhiều",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [1150, 1159]
+  },
+  {
+    "text": "rỉ dịch vàng đục giống mủ",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [1175, 1200]
+  },
+  {
+    "text": "tổn thương vùng âm hộ và mông bên phải",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [1344, 1382]
+  },
+  {
+    "text": "Tổn thương cực kỳ đau đớn",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [1389, 1414]
+  },
+  {
+    "text": "Tình trạng tổn thương dạng bóng nước ngày càng nặng",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [1421, 1472]
+  },
+  {
+    "text": "dịch giống mủ có màu vàng",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [1510, 1535]
+  },
+  {
+    "text": "cực kỳ đau đớn",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [1659, 1673]
+  },
+  {
+    "text": "ban đỏ",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [1763, 1769]
+  },
+  {
+    "text": "chảy mủ",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [1771, 1778]
+  },
+  {
+    "text": "bactrim",
+    "type": "THUỐC",
+    "assertions": ["isHistorical"],
+    "candidates": ["10831"],
+    "position": [1887, 1894]
+  },
+  {
+    "text": "doxycycline",
+    "type": "THUỐC",
+    "assertions": ["isHistorical"],
+    "candidates": ["3640"],
+    "position": [1898, 1909]
+  },
+  {
+    "text": "Viêm mô tế bào",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["L03.9"],
+    "position": [1932, 1946]
+  },
+  {
+    "text": "ban đỏ",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [1986, 1992]
+  },
+  {
+    "text": "dịch tiết có vẻ như mủ",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isHistorical"],
+    "candidates": [],
+    "position": [1999, 2021]
+  },
+  {
+    "text": "doxycycline",
+    "type": "THUỐC",
+    "assertions": [],
+    "candidates": ["3640"],
+    "position": [2235, 2246]
+  },
+  {
+    "text": "bactrim",
+    "type": "THUỐC",
+    "assertions": [],
+    "candidates": ["10831"],
+    "position": [2246, 2253]
+  },
+  {
+    "text": "Viêm mô tế bào",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["L03.9"],
+    "position": [2267, 2281]
+  },
+  {
+    "text": "Nhiễm virus Herpes simplex (HSV)",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["B00.9"],
+    "position": [2488, 2520]
+  },
+  {
+    "text": "Bệnh thủy đậu",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["B01.9"],
+    "position": [2526, 2539]
+  },
+  {
+    "text": "Zona",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["B02.9"],
+    "position": [2540, 2544]
+  }
+]
