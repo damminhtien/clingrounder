@@ -12,7 +12,7 @@ Rules:
 - Keep drug mentions on RxNorm and disease mentions on ICD-10.
 - Preserve original spans and offsets; this pass only changes candidate lists.
 
-## Files 1-18, 21, 100
+## Files 1-19, 21-22, 99-100
 
 - `1.json`: filled `viêm tuyến mồ hôi` with ICD-10 `L73.2` after adding the TT06/ICD concept alias.
 - `2.json`: no candidate changes. Existing `K70.3` and `K76.82` remain as controlled-dictionary candidates.
@@ -32,7 +32,10 @@ Rules:
 - `16.json`: used compact ICD candidates `C18.9`, `J44.9`, `E14.9`, `K70.3`, `I95.9`, `J18.9`, `I48.9`, `I47.1`, `J98.1`, and `J90`. Kept symptoms, physical findings, tests, and result values candidate-free; excluded procedure/treatment-method spans such as IV fluids and nebulization.
 - `17.json`: used compact candidates `K21.9`, RxNorm `161`, RxNorm `5640`, `L02.9`, `M00.9`, `L03.9`, and `B99`. Kept symptoms, tests, lab/imaging result values, and generic `kháng sinh tĩnh mạch` candidate-free; excluded procedure, admin, and travel context spans.
 - `18.json`: used compact ICD candidates `I80.2`, `I26.9`, and `I71.0`. Kept chest-pain symptoms and CT angiography test names candidate-free; excluded patient sex, CT indication-only pulmonary embolism wording, generic result lead-in, and section/admin headings.
+- `19.json`: used compact candidates `C34.9`, `C79.3`, `I82.2`, `I10`, `I34.1`, and RxNorm `214182`. Kept symptom mentions candidate-free, including negated neurologic symptoms; did not mark Vicodin as negated when the text only says it did not relieve pain.
 - `21.json`: used compact ICD candidates `I10`, `I50.9`, `N18.9`, `I71.6`, and `Z72.0`. Kept stent graft/device wording and planned phase-2 surgery wording review-only because Phase 1 has no procedure/device type.
+- `22.json`: used compact candidates `I99`, RxNorm `212033`, and `I62.0`. Corrected supplied aspirin candidate `211033` to controlled/local RxNorm `212033` for `aspirin 325 MG Oral Tablet`; kept CT test names and negated neurologic symptom candidate-free.
+- `99.json`: used existing controlled `F41.9` for historical unspecified anxiety disorder. Kept repeated current symptoms candidate-free and excluded prostate surgery wording.
 - `100.json`: used compact candidates `E83.5`, `C18.9`, `E21.0`, `I70.9`, `I20.8`, `G40.9`, `I63.9`, RxNorm `4917`, `1719290`, and `313002`. Kept labs, symptoms, and imaging-test names candidate-free; did not annotate generic outpatient test wording, vague acute process wording, fall event, or standalone `Truyền dịch`.
 
 Controlled dictionary additions in this pass:
@@ -78,3 +81,9 @@ Controlled dictionary additions in this pass:
 - `I80.2` Phlebitis and thrombophlebitis of other deep vessels of lower extremities / Viêm tĩnh mạch và/hoặc viêm [tắc] tĩnh mạch huyết khối của tĩnh mạch sâu khác ở chi dưới
 - `I26.9` Pulmonary embolism without mention of acute cor pulmonale / Thuyên tắc mạch phổi không có tâm phế cấp tính
 - `I71.0` Dissection of aorta [any part] / Tách thành động mạch chủ [bất kỳ đoạn nào]
+- `C34.9` Bronchus or lung, unspecified / U ác tính ở phế quản hoặc phổi, không xác định
+- `C79.3` Secondary malignant neoplasm of brain and cerebral meninges / U ác tính thứ phát ở não và/hoặc màng não
+- `I82.2` Embolism and thrombosis of vena cava / Thuyên tắc và/hoặc huyết khối tĩnh mạch chủ
+- `I99` Other and unspecified disorders of circulatory system / Rối loạn hệ tuần hoàn khác và/hoặc không xác định
+- `I62.0` Nontraumatic subdural haemorrhage / Xuất huyết dưới màng cứng không do chấn thương
+- `212033` RxNorm aspirin 325 MG Oral Tablet
