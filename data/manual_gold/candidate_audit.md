@@ -12,7 +12,7 @@ Rules:
 - Keep drug mentions on RxNorm and disease mentions on ICD-10.
 - Preserve original spans and offsets; this pass only changes candidate lists.
 
-## Files 1-15, 17, 100
+## Files 1-17, 21, 100
 
 - `1.json`: filled `viêm tuyến mồ hôi` with ICD-10 `L73.2` after adding the TT06/ICD concept alias.
 - `2.json`: no candidate changes. Existing `K70.3` and `K76.82` remain as controlled-dictionary candidates.
@@ -29,7 +29,9 @@ Rules:
 - `13.json`: used compact candidates `J70.3`, `M35.8`, `E66.9`, `I10`, `D84.8`, `L03.9`, `B00.9`, `B01.9`, `B02.9`, RxNorm `10831`, and RxNorm `3640`. Kept oxygen therapy and corticosteroid class mentions as `THUỐC` with `[]`; split glued `doxycyclinebactrim` into adjacent drug spans.
 - `14.json`: used compact cardiovascular/allergy candidates `J30.2`, `J30.1`, `I25.9`, and `I25.1`. Kept stress test, perfusion scan, coronary angiography, and generic abnormal result candidate-free; did not annotate planned CABG/procedure wording.
 - `15.json`: used existing controlled `I62.9` for nontraumatic intracranial hemorrhage and added RxNorm `221099` for `yếu tố IX đậm đặc`. Kept `Điều trị chống đông` as `THUỐC` with `[]` because no specific anticoagulant ingredient is named.
+- `16.json`: used compact ICD candidates `C18.9`, `J44.9`, `E14.9`, `K70.3`, `I95.9`, `J18.9`, `I48.9`, `I47.1`, `J98.1`, and `J90`. Kept symptoms, physical findings, tests, and result values candidate-free; excluded procedure/treatment-method spans such as IV fluids and nebulization.
 - `17.json`: used compact candidates `K21.9`, RxNorm `161`, RxNorm `5640`, `L02.9`, `M00.9`, `L03.9`, and `B99`. Kept symptoms, tests, lab/imaging result values, and generic `kháng sinh tĩnh mạch` candidate-free; excluded procedure, admin, and travel context spans.
+- `21.json`: used compact ICD candidates `I10`, `I50.9`, `N18.9`, `I71.6`, and `Z72.0`. Kept stent graft/device wording and planned phase-2 surgery wording review-only because Phase 1 has no procedure/device type.
 - `100.json`: used compact candidates `E83.5`, `C18.9`, `E21.0`, `I70.9`, `I20.8`, `G40.9`, `I63.9`, RxNorm `4917`, `1719290`, and `313002`. Kept labs, symptoms, and imaging-test names candidate-free; did not annotate generic outpatient test wording, vague acute process wording, fall event, or standalone `Truyền dịch`.
 
 Controlled dictionary additions in this pass:
@@ -67,3 +69,8 @@ Controlled dictionary additions in this pass:
 - `B99` Other and unspecified infectious diseases / Bệnh truyền nhiễm khác và/hoặc không xác định
 - `L02.9` Cutaneous abscess, furuncle and carbuncle, unspecified / Áp xe da, nhọt và cụm nhọt không đặc hiệu
 - `M00.9` Pyogenic arthritis, unspecified / Viêm khớp mủ không đặc hiệu
+- `E14.9` Unspecified diabetes mellitus, without complications / Đái tháo đường không xác định, không kèm biến chứng
+- `I48.9` Atrial fibrillation and atrial flutter, unspecified / Rung nhĩ và/hoặc cuồng nhĩ, không xác định
+- `J98.1` Pulmonary collapse / Xẹp phổi
+- `I71.6` Thoracoabdominal aortic aneurysm, without mention of rupture / Phình động mạch chủ ngực - bụng, không vỡ
+- `Z72.0` Tobacco use / Sử dụng thuốc lá
