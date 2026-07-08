@@ -1,0 +1,177 @@
+[
+  {
+    "text": "hội chứng turner, không đặc hiệu",
+    "position": [48, 80],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["Q96.9"]
+  },
+  {
+    "text": "Tăng huyết áp",
+    "position": [87, 100],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["I10"]
+  },
+  {
+    "text": "Ung thư đại tràng",
+    "position": [146, 163],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["C18.9"]
+  },
+  {
+    "text": "Thuyên tắc phổi",
+    "position": [178, 193],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["I26.9"]
+  },
+  {
+    "text": "coumadin",
+    "position": [204, 212],
+    "type": "THUỐC",
+    "assertions": ["isHistorical"],
+    "candidates": ["11289"]
+  },
+  {
+    "text": "Thuyên tắc phổi",
+    "position": [222, 237],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["I26.9"]
+  },
+  {
+    "text": "coumadin",
+    "position": [248, 256],
+    "type": "THUỐC",
+    "assertions": ["isHistorical"],
+    "candidates": ["11289"]
+  },
+  {
+    "text": "coumadin",
+    "position": [355, 363],
+    "type": "THUỐC",
+    "assertions": ["isHistorical"],
+    "candidates": ["11289"]
+  },
+  {
+    "text": "khó thở",
+    "position": [412, 419],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "khó thở",
+    "position": [455, 462],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "Cảm giác có đờm ở cổ họng",
+    "position": [470, 495],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "ho",
+    "position": [511, 513],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "sốt",
+    "position": [532, 535],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isNegated"],
+    "candidates": []
+  },
+  {
+    "text": "ớn lạnh",
+    "position": [548, 555],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isNegated"],
+    "candidates": []
+  },
+  {
+    "text": "đau ngực",
+    "position": [568, 576],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isNegated"],
+    "candidates": []
+  },
+  {
+    "text": "khó thở",
+    "position": [590, 597],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isNegated"],
+    "candidates": []
+  },
+  {
+    "text": "thay đổi tính chất cơn đau khi thay đổi tư thế",
+    "position": [610, 656],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isNegated"],
+    "candidates": []
+  },
+  {
+    "text": "khó thở khi gắng sức",
+    "position": [669, 689],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isNegated"],
+    "candidates": []
+  },
+  {
+    "text": "đánh trống ngực",
+    "position": [702, 717],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isNegated"],
+    "candidates": []
+  },
+  {
+    "text": "khó thở tăng lên",
+    "position": [730, 746],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isNegated"],
+    "candidates": []
+  },
+  {
+    "text": "Cơn nhịp nhanh",
+    "position": [762, 776],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "đau ngực",
+    "position": [789, 797],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isNegated"],
+    "candidates": []
+  },
+  {
+    "text": "khó nuốt",
+    "position": [945, 953],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isHistorical"],
+    "candidates": []
+  },
+  {
+    "text": "albuterolipratropium nebs x2",
+    "position": [1018, 1046],
+    "type": "THUỐC",
+    "assertions": [],
+    "candidates": ["214199"]
+  },
+  {
+    "text": "metoprolol 5mg iv x2",
+    "position": [1053, 1073],
+    "type": "THUỐC",
+    "assertions": [],
+    "candidates": ["866508"]
+  }
+]

@@ -1,0 +1,37 @@
+[
+  {
+    "text": "béo phì",
+    "position": [52, 59],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["E66.9"]
+  },
+  {
+    "text": "giảm cân",
+    "position": [202, 210],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isHistorical"],
+    "candidates": []
+  },
+  {
+    "text": "tăng cân trở lại",
+    "position": [214, 230],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isHistorical"],
+    "candidates": []
+  },
+  {
+    "text": "giảm cân",
+    "position": [293, 301],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isHistorical"],
+    "candidates": []
+  },
+  {
+    "text": "tăng cân trở lại",
+    "position": [335, 351],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isHistorical"],
+    "candidates": []
+  }
+]

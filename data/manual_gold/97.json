@@ -1,0 +1,254 @@
+[
+  {
+    "text": "viêm tủy xương",
+    "position": [52, 66],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["M86.9"]
+  },
+  {
+    "text": "bàng quang thần kinh",
+    "position": [70, 90],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["N31.9"]
+  },
+  {
+    "text": "liệt hai chi dưới",
+    "position": [105, 122],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["G82.2"]
+  },
+  {
+    "text": "biến đổi ý thức",
+    "position": [166, 181],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "hạ thân nhiệt",
+    "position": [191, 204],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["R68.0"]
+  },
+  {
+    "text": "hạ huyết áp",
+    "position": [208, 219],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["I95.9"]
+  },
+  {
+    "text": "biến đổi ý thức",
+    "position": [378, 393],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "hạ thân nhiệt",
+    "position": [395, 408],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["R68.0"]
+  },
+  {
+    "text": "hạ huyết áp",
+    "position": [410, 421],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["I95.9"]
+  },
+  {
+    "text": "biến đổi ý thức",
+    "position": [484, 499],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "hạ thân nhiệt",
+    "position": [506, 519],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["R68.0"]
+  },
+  {
+    "text": "hạ huyết áp",
+    "position": [526, 537],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["I95.9"]
+  },
+  {
+    "text": "đau toàn thân ít",
+    "position": [544, 560],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "đau ngực ít",
+    "position": [567, 578],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "đau bụng",
+    "position": [586, 594],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "hạ huyết áp",
+    "position": [646, 657],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["I95.9"]
+  },
+  {
+    "text": "hạ thân nhiệt",
+    "position": [664, 677],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["R68.0"]
+  },
+  {
+    "text": "kali",
+    "position": [730, 734],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "6.6 mmol/l",
+    "position": [738, 748],
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "creatinin",
+    "position": [755, 764],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "1.9 mmol/l",
+    "position": [768, 778],
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "tiểu cầu",
+    "position": [785, 793],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "81 G/L",
+    "position": [797, 803],
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "bạch cầu",
+    "position": [810, 818],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "10.9 G/L",
+    "position": [822, 830],
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "tổng phân tích nước tiểu",
+    "position": [837, 861],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "nhiễm trùng đường tiết niệu",
+    "position": [862, 889],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["N39.0"]
+  },
+  {
+    "text": "chụp x-quang ngực",
+    "position": [947, 964],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "tổn thương viêm cấp tính",
+    "position": [992, 1016],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isNegated"],
+    "candidates": ["J18.9"]
+  },
+  {
+    "text": "chụp x-quang ngực",
+    "position": [1024, 1041],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "xét nghiệm máu",
+    "position": [1119, 1133],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "cấy nước tiểu",
+    "position": [1137, 1150],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "điện tâm đồ",
+    "position": [1179, 1190],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "nhịp chậm xoang",
+    "position": [1200, 1215],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["R00.1"]
+  },
+  {
+    "text": "đường huyết lúc đói",
+    "position": [1219, 1238],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "đường huyết thấp",
+    "position": [1238, 1254],
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  }
+]
