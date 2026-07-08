@@ -1,0 +1,191 @@
+[
+  {
+    "text": "nhiễm trùng tụ cầu",
+    "position": [94, 112],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["A49.0"]
+  },
+  {
+    "text": "cảm giác như vòi nước",
+    "position": [219, 240],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "cảm giác như bị xịt nước bắt đầu ở ngực trái lan sang ngực phải",
+    "position": [267, 330],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "nhồi máu cơ tim",
+    "position": [391, 406],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isNegated", "isHistorical"],
+    "candidates": ["I21.9"]
+  },
+  {
+    "text": "siêu âm tim",
+    "position": [426, 437],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "hẹp van động mạch chủ nghiêm trọng",
+    "position": [447, 481],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["I35.0"]
+  },
+  {
+    "text": "siêu âm tim gắng sức dobutamine",
+    "position": [628, 659],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "hẹp van động mạch chủ nghiêm trọng",
+    "position": [669, 703],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isHistorical"],
+    "candidates": ["I35.0"]
+  },
+  {
+    "text": "thông tim",
+    "position": [732, 741],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "thông tim trái",
+    "position": [777, 791],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "hẹp gây hạn chế dòng chảy",
+    "position": [807, 832],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isNegated", "isHistorical"],
+    "candidates": []
+  },
+  {
+    "text": "chụp tim trái",
+    "position": [921, 934],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "khó thở",
+    "position": [977, 984],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isNegated"],
+    "candidates": []
+  },
+  {
+    "text": "đau ngực",
+    "position": [986, 994],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isNegated"],
+    "candidates": []
+  },
+  {
+    "text": "khó thở khi nằm",
+    "position": [996, 1011],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isNegated"],
+    "candidates": []
+  },
+  {
+    "text": "khó thở khi ngủ",
+    "position": [1013, 1028],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isNegated"],
+    "candidates": []
+  },
+  {
+    "text": "ngất xỉu",
+    "position": [1034, 1042],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": ["isNegated"],
+    "candidates": []
+  },
+  {
+    "text": "cảm giác tương tự ở ngực",
+    "position": [1057, 1081],
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "siêu âm tim",
+    "position": [1191, 1202],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "hẹp van động mạch chủ nghiêm trọng",
+    "position": [1212, 1246],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["I35.0"]
+  },
+  {
+    "text": "siêu âm tim gắng sức dobutamine",
+    "position": [1253, 1284],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "hẹp van động mạch chủ nghiêm trọng",
+    "position": [1294, 1328],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["I35.0"]
+  },
+  {
+    "text": "chụp tim mạch",
+    "position": [1362, 1375],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "LHC",
+    "position": [1382, 1385],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "hẹp van động mạch chủ nghiêm trọng",
+    "position": [1423, 1457],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": ["I35.0"]
+  },
+  {
+    "text": "LHC",
+    "position": [1464, 1467],
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": []
+  },
+  {
+    "text": "hẹp gây hạn chế dòng chảy",
+    "position": [1483, 1508],
+    "type": "CHẨN_ĐOÁN",
+    "assertions": ["isNegated"],
+    "candidates": []
+  }
+]

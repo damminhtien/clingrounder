@@ -12,7 +12,7 @@ Rules:
 - Keep drug mentions on RxNorm and disease mentions on ICD-10.
 - Preserve original spans and offsets; this pass only changes candidate lists.
 
-## Files 1-27, 31-34, 41-42, 96-100
+## Files 1-35, 41-45, 94-100
 
 - `1.json`: filled `viêm tuyến mồ hôi` with ICD-10 `L73.2` after adding the TT06/ICD concept alias.
 - `2.json`: no candidate changes. Existing `K70.3` and `K76.82` remain as controlled-dictionary candidates.
@@ -41,12 +41,19 @@ Rules:
 - `25.json`: used compact ICD candidates `I71.0`, `G82.2`, and `I77.0`. Kept endovascular intervention and vascular access wording review-only because Phase 1 has no procedure type.
 - `26.json`: used compact ICD candidate `E66.9` for historical obesity. Kept weight-change symptoms candidate-free and excluded diet/surgery context.
 - `27.json`: used compact candidates `Q96.9`, `I10`, `C18.9`, `I26.9`, RxNorm `11289`, RxNorm `214199`, and RxNorm `866508`. Corrected supplied Coumadin candidate `202421` to controlled RxNorm `11289`; kept procedure and generic GI-evaluation wording review-only.
+- `28.json`: used compact candidates `K85.9`, `I48`, `C61`, `F31.8`, RxNorm `1364445`, `K81.0`, `K80.2`, `K81.9`, and `K80.5`. Kept symptoms, tests, and result values candidate-free; excluded prostatectomy/procedure, location, and AMA/admin spans.
 - `31.json`: used compact ICD candidate `O48` for `Thai 41 tuần`. Kept obstetric symptoms candidate-free and excluded labor-induction wording.
 - `32.json`: used compact candidates `C92.1`, `I10`, `E11.9`, `I48.9`, `N18.9`, `J96.9`, `A41.0`, `I82.9`, `I26.9`, RxNorm `435`, `5032`, and `313988`. Kept leading `ho` history artifacts out of symptom gold.
 - `33.json`: used compact candidates `E66.9`, `E11.9`, `G47.3`, `I50.9`, `R09.0`, RxNorm `4603`, `1808`, `1807513`, `1665515`, `212033`, `1437702`, and `1743704`. Kept oxygen mask, EMS logistics, and diuresis-volume wording review-only.
 - `34.json`: used compact ICD candidates `K51.9` and `K70.9`. Kept opioid analgesic class mentions as `THUỐC` with `[]`, and excluded surgery/procedure plus LLQ/anatomic location spans.
+- `35.json`: used compact candidates `C92.1`, RxNorm `282388`, `I10`, `E78.5`, `E11.9`, `M48.0`, `M11.2`, `N18.4`, `N40`, and `R74.0`. Kept symptoms, tests, result values, and nonspecific negated `biến đổi cấp tính` candidate-free; skipped standalone duplicate `Ngã` after the fuller fall-history span.
 - `41.json`: used compact GI candidates `A08.4`, `K58.9`, `K26.9`, `K63.3`, `K20`, `K22.1`, and RxNorm `7646`. Did not split `cryptosporidium` or `h. pylori` into diagnoses because they appear only as test target/result context.
 - `42.json`: used compact candidates `I51.9`, `N28.9`, and RxNorm `6813`. Kept current symptoms candidate-free, marked explicit `phủ nhận` symptoms negated, and did not treat `không thể tỉnh táo đủ lâu` as negation.
+- `43.json`: used compact candidates `A49.0`, `I21.9`, and `I35.0`. Kept cardiac tests/procedures candidate-free, retained negated flow-limiting stenosis without a candidate, and excluded surgical recommendation/referral spans.
+- `44.json`: used compact candidates `I48.9`, `I10`, `I50.9`, `E66.9`, RxNorm `4603`, `4917`, `1191`, `7052`, `3423`, `6918`, and `3443`. Kept all symptom mentions candidate-free; did not turn memory uncertainty or treatment non-response phrases into negation.
+- `45.json`: used compact candidates `E11.9`, `I10`, `I67.1`, `I64`, `I65.2`, and `I70.8`. Kept angiography test names candidate-free; excluded elective procedure, stent-assisted coiling/procedure wording, and planned endovascular carotid treatment wording.
+- `94.json`: used compact candidates `C50.9`, RxNorm `56946`, `282357`, `203546`, `215101`, `7052`, and `6470`. Corrected supplied Taxol candidate `196466` to controlled/current RxNorm `56946`, and supplied fulvestrant candidate `727954` to controlled ingredient RxNorm `282357`; kept symptoms candidate-free and excluded vital signs, VAS score, normal/typo mucosa wording, and generic care context.
+- `95.json`: all reviewed entities are symptoms/signs with empty candidates. Kept historical abdominal pain and current abdominal symptoms/signs; marked explicit `không`/`không có` symptom mentions negated; excluded milk intake, normal exam/function descriptions, and nonspecific abnormality wording.
 - `96.json`: used compact candidates `M86.6`, `N31.9`, `G82.2`, `L89.3`, `N39.0`, RxNorm `11124`/`74169` for glued `vancozosyn`, RxNorm `10831` for `bactrim`, `I95.9`, `A41.9`, `M86.9`, `R91.8`, RxNorm `313002`, `20481`, and `11124`. Corrected supplied Bactrim candidate `151399` to controlled RxNorm `10831`; kept devices, procedures, generic antibiotics, normal exam phrases, and standalone temperature review-only.
 - `97.json`: used compact candidates `M86.9`, `N31.9`, `G82.2`, `R68.0`, `I95.9`, `N39.0`, `J18.9`, and `R00.1`. Kept labs/tests candidate-free and excluded catheter/device and vital-sign wording.
 - `98.json`: used compact candidates `I10`, `M89.50`, and `C90.0`. Kept CT/IgA test and result mentions candidate-free; excluded stem-cell mobilization chemotherapy as treatment/procedure context.
@@ -143,3 +150,19 @@ Controlled dictionary additions in this pass:
 - `1665515` RxNorm 150 ML levofloxacin 5 MG/ML Injection
 - `1743704` RxNorm methylprednisolone 125 MG Injection
 - `1807513` RxNorm vancomycin 1000 MG Injection
+- `A49.0` Staphylococcal infection, unspecified site / Nhiễm khuẩn do tụ cầu, vị trí không xác định
+- `M48.0` Spinal stenosis / Hẹp ống sống
+- `M11.2` Other chondrocalcinosis / Bệnh giả gout
+- `N18.4` Chronic kidney disease, stage 4 / Bệnh thận mạn tính, giai đoạn 4
+- `R74.0` Elevation of levels of transaminase and lactic acid dehydrogenase / Tăng nồng độ enzyme tranzaminase và/hoặc LDH
+- `K85.9` Acute pancreatitis, unspecified / Viêm tụy cấp, không xác định
+- `I48` Atrial fibrillation and flutter / Rung nhĩ và/hoặc cuồng nhĩ
+- `K80.2` Calculus of gallbladder without cholecystitis / Sỏi túi mật không kèm viêm túi mật
+- `K80.5` Calculus of bile duct without cholangitis or cholecystitis / Sỏi ống mật không kèm viêm đường mật hoặc viêm túi mật
+- `I64` Stroke, not specified as haemorrhage or infarction / Đột quỵ, không xác định do xuất huyết hoặc nhồi máu
+- `I65.2` Occlusion and stenosis of carotid artery / Tắc và/hoặc hẹp động mạch cảnh
+- `I67.1` Cerebral aneurysm, nonruptured / Phình động mạch não, không vỡ
+- `I70.8` Atherosclerosis of other arteries / Xơ vữa [xơ cứng] động mạch khác
+- `1364445` RxNorm apixaban 5 MG Oral Tablet
+- `203546` RxNorm Compazine brand name
+- `215101` RxNorm Aleve brand name
