@@ -12,7 +12,7 @@ Rules:
 - Keep drug mentions on RxNorm and disease mentions on ICD-10.
 - Preserve original spans and offsets; this pass only changes candidate lists.
 
-## Files 1-19, 21-22, 99-100
+## Files 1-24, 32, 41, 98-100
 
 - `1.json`: filled `viêm tuyến mồ hôi` with ICD-10 `L73.2` after adding the TT06/ICD concept alias.
 - `2.json`: no candidate changes. Existing `K70.3` and `K76.82` remain as controlled-dictionary candidates.
@@ -33,8 +33,14 @@ Rules:
 - `17.json`: used compact candidates `K21.9`, RxNorm `161`, RxNorm `5640`, `L02.9`, `M00.9`, `L03.9`, and `B99`. Kept symptoms, tests, lab/imaging result values, and generic `kháng sinh tĩnh mạch` candidate-free; excluded procedure, admin, and travel context spans.
 - `18.json`: used compact ICD candidates `I80.2`, `I26.9`, and `I71.0`. Kept chest-pain symptoms and CT angiography test names candidate-free; excluded patient sex, CT indication-only pulmonary embolism wording, generic result lead-in, and section/admin headings.
 - `19.json`: used compact candidates `C34.9`, `C79.3`, `I82.2`, `I10`, `I34.1`, and RxNorm `214182`. Kept symptom mentions candidate-free, including negated neurologic symptoms; did not mark Vicodin as negated when the text only says it did not relieve pain.
+- `20.json`: used compact candidates for historical cardiometabolic disease, hip/lower-extremity injury, cardiopulmonary imaging diagnoses, valve insufficiency, metoprolol, and desmopressin. Corrected supplied desmopressin candidate `3264` to controlled/local RxNorm `3251` because `3264` is dexamethasone.
 - `21.json`: used compact ICD candidates `I10`, `I50.9`, `N18.9`, `I71.6`, and `Z72.0`. Kept stent graft/device wording and planned phase-2 surgery wording review-only because Phase 1 has no procedure/device type.
 - `22.json`: used compact candidates `I99`, RxNorm `212033`, and `I62.0`. Corrected supplied aspirin candidate `211033` to controlled/local RxNorm `212033` for `aspirin 325 MG Oral Tablet`; kept CT test names and negated neurologic symptom candidate-free.
+- `23.json`: used compact ICD candidates `I25.1`, `I10`, `E78.5`, `E14.9`, `S06.6`, `S06.3`, `G93.0`, `S06.5`, and `S06.4`. Kept raw typo span `ăng huyết áp` unchanged for offset safety; symptoms and CT/test names remain candidate-free.
+- `24.json`: used compact candidates `C50.9`, RxNorm `82122`, RxNorm `2231`, and RxNorm `11124`. Kept breast surgery, lymph-node surgery, JP drain, and aspiration procedure review-only because Phase 1 has no procedure/device type.
+- `32.json`: used compact candidates `C92.1`, `I10`, `E11.9`, `I48.9`, `N18.9`, `J96.9`, `A41.0`, `I82.9`, `I26.9`, RxNorm `435`, `5032`, and `313988`. Kept leading `ho` history artifacts out of symptom gold.
+- `41.json`: used compact GI candidates `A08.4`, `K58.9`, `K26.9`, `K63.3`, `K20`, `K22.1`, and RxNorm `7646`. Did not split `cryptosporidium` or `h. pylori` into diagnoses because they appear only as test target/result context.
+- `98.json`: used compact candidates `I10`, `M89.50`, and `C90.0`. Kept CT/IgA test and result mentions candidate-free; excluded stem-cell mobilization chemotherapy as treatment/procedure context.
 - `99.json`: used existing controlled `F41.9` for historical unspecified anxiety disorder. Kept repeated current symptoms candidate-free and excluded prostate surgery wording.
 - `100.json`: used compact candidates `E83.5`, `C18.9`, `E21.0`, `I70.9`, `I20.8`, `G40.9`, `I63.9`, RxNorm `4917`, `1719290`, and `313002`. Kept labs, symptoms, and imaging-test names candidate-free; did not annotate generic outpatient test wording, vague acute process wording, fall event, or standalone `Truyền dịch`.
 
@@ -87,3 +93,27 @@ Controlled dictionary additions in this pass:
 - `I99` Other and unspecified disorders of circulatory system / Rối loạn hệ tuần hoàn khác và/hoặc không xác định
 - `I62.0` Nontraumatic subdural haemorrhage / Xuất huyết dưới màng cứng không do chấn thương
 - `212033` RxNorm aspirin 325 MG Oral Tablet
+- `R26.9` Unspecified abnormalities of gait and mobility / Rối loạn dáng đi không xác định
+- `I31.3` Pericardial effusion (noninflammatory) / Tràn dịch màng ngoài tim (không do viêm)
+- `I35.1` Aortic (valve) insufficiency / Hở van động mạch chủ
+- `I36.1` Nonrheumatic tricuspid (valve) insufficiency / Hở van ba lá không do bệnh thấp
+- `J43.9` Emphysema, unspecified / Khí phế thũng không xác định
+- `K44.9` Diaphragmatic hernia without obstruction or gangrene / Thoát vị cơ hoành
+- `G93.0` Cerebral cysts / Bệnh u nang não
+- `S06.3` Focal brain injury / Tổn thương não khu trú
+- `S06.4` Epidural haemorrhage / Xuất huyết ngoài màng cứng
+- `S06.5` Traumatic subdural haemorrhage / Xuất huyết dưới màng cứng do chấn thương
+- `S06.6` Traumatic subarachnoid haemorrhage / Xuất huyết dưới màng nhện do chấn thương
+- `S09.9` Unspecified injury of head / Tổn thương không xác định ở đầu
+- `S81.8` Open wound of other parts of lower leg / Vết thương hở ở phần khác của chi dưới
+- `S89.9` Unspecified injury of lower leg / Tổn thương không xác định ở cẳng chân
+- `A41.0` Sepsis due to Staphylococcus aureus / Nhiễm trùng hệ thống do tụ cầu vàng
+- `C50.9` Breast, unspecified / U ác tính ở vú, không xác định
+- `E11.9` Type 2 diabetes mellitus, without complications / Bệnh đái tháo đường típ 2, không kèm biến chứng
+- `I82.9` Embolism and thrombosis of unspecified vein / Thuyên tắc và/hoặc huyết khối, không xác định tĩnh mạch
+- `J96.9` Respiratory failure, unspecified / Suy hô hấp, không xác định
+- `M89.50` Osteolysis, multiple sites / Bệnh tiêu xương, nhiều vị trí
+- `313988` RxNorm furosemide 40 MG Oral Tablet
+- `K26.9` Duodenal ulcer, unspecified / Loét tá tràng, không xác định
+- `K58.9` Irritable bowel syndrome, unspecified
+- `K63.3` Ulcer of intestine / Loét ruột
