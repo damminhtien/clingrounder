@@ -12,7 +12,7 @@ Rules:
 - Keep drug mentions on RxNorm and disease mentions on ICD-10.
 - Preserve original spans and offsets; this pass only changes candidate lists.
 
-## Files 1-37, 41-47, 91-100
+## Files 1-39, 41-47, 91-100
 
 - `1.json`: filled `viêm tuyến mồ hôi` with ICD-10 `L73.2` after adding the TT06/ICD concept alias.
 - `2.json`: no candidate changes. Existing `K70.3` and `K76.82` remain as controlled-dictionary candidates.
@@ -49,6 +49,8 @@ Rules:
 - `35.json`: used compact candidates `C92.1`, RxNorm `282388`, `I10`, `E78.5`, `E11.9`, `M48.0`, `M11.2`, `N18.4`, `N40`, and `R74.0`. Kept symptoms, tests, result values, and nonspecific negated `biến đổi cấp tính` candidate-free; skipped standalone duplicate `Ngã` after the fuller fall-history span.
 - `36.json`: used compact candidates `Q61.3`, `N19`, `B33.8`, `T86.1`, RxNorm `1256`, `42316`, and `68149`. Kept symptoms, tests, and test results candidate-free; excluded procedure-only kidney/ureter reconstruction and biopsy wording.
 - `37.json`: used compact candidates `I10`, `E11.4`, `G62.9`, `I50.9`, `N18.9`, `E87.5`, `J90`, `I51.7`, RxNorm `38413`, `274783`, `6057`, `301542`, `20352`, `4850`, and `4603`. Kept `ngã gần đây` as a historical symptom per revised manual guidance, merged `Creatinine tăng` and fuller potassium result spans, kept `Tăng gánh nhẹ tuần hoàn phổi` as imaging-result text with `[]`, left generic hospital `insulin` candidate-free because RxNorm `5856` is absent from the local June source, and retained malformed lab value `.8` with exact raw offset.
+- `38.json`: used compact candidates `E11.9`, `I25.1`, `I50.9`, and `J02.0`. Kept symptoms, glucose/BUN/creatinine/anion-gap tests, and result values candidate-free; marked family sore-throat context with `isFamily`; marked family streptococcal pharyngitis as both `isFamily` and `isNegated`; excluded standalone stent procedure, throat location, cold drink, and temperature wording.
+- `39.json`: used compact candidates `N17.9`, `E87.8`, `K81.0`, and `K82.2`. Kept symptoms, CBC/CT names, and lab values candidate-free; marked no-nausea/no-vomiting spans negated; excluded abdominal-location wording and gallbladder drain procedure.
 - `41.json`: used compact GI candidates `A08.4`, `K58.9`, `K26.9`, `K63.3`, `K20`, `K22.1`, and RxNorm `7646`. Did not split `cryptosporidium` or `h. pylori` into diagnoses because they appear only as test target/result context.
 - `42.json`: used compact candidates `I51.9`, `N28.9`, and RxNorm `6813`. Kept current symptoms candidate-free, marked explicit `phủ nhận` symptoms negated, and did not treat `không thể tỉnh táo đủ lâu` as negation.
 - `43.json`: used compact candidates `A49.0`, `I21.9`, and `I35.0`. Kept cardiac tests/procedures candidate-free, retained negated flow-limiting stenosis without a candidate, and excluded surgical recommendation/referral spans.
@@ -186,3 +188,6 @@ Controlled dictionary additions in this pass:
 - `I38` Endocarditis, valve unspecified / Viêm nội tâm mạc, không xác định van
 - `N18.5` Chronic kidney disease, stage 5 / Bệnh thận mạn tính, giai đoạn 5
 - `855318` RxNorm warfarin sodium 3 MG Oral Tablet
+- `J02.0` Streptococcal pharyngitis / Viêm họng do liên cầu khuẩn [Streptococcus]
+- `E87.8` Other disorders of electrolyte and fluid balance / Rối loạn khác về cân bằng điện giải và/hoặc nước
+- `K82.2` Perforation of gallbladder / Thủng túi mật
