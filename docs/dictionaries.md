@@ -149,13 +149,19 @@ indexed with `scripts/build_indexes.py`.
 ## RxNorm Source Import
 
 Use `scripts/import_rxnorm_dictionary.py` when local NLM RxNorm release files are available. The
-locked Phase 1 version is:
+reproducible Phase 1 baseline remains locked to:
 
 - primary: `RxNorm_full_prescribe_06012026.zip`;
 - fallback: `RxNorm_full_06012026.zip`.
 
+The July 6 full bundle is imported as a versioned promotion candidate, not silently substituted
+into that baseline. Its root `rrf/` subtree contains the full release and `prescribe/rrf/` contains
+Current Prescribable Content. The importer detects and isolates the requested subtree so rows from
+the two products are never mixed by filename alone.
+
 The importer reads `RXNCONSO.RRF`, filters to active `SAB=RXNORM` terms, and prefers TTY values in
-this order: `SCD`, `SBD`, `IN`, `PIN`, `MIN`, `SCDF`, `SBDF`, `GPCK`, `BPCK`. It also profiles and
+this order: `SCD`, `SBD`, `IN`, `PIN`, `MIN`, `SCDF`, `SBDF`, `GPCK`, `BPCK`. Full-release fallback
+also accepts active `BN` rows when Prescribable Content omits a legitimate brand concept. It profiles and
 uses `RXNREL.RRF` and `RXNSAT.RRF` when present to enrich rows with ingredient, brand, dose-form,
 strength, activation, and obsoletion metadata. Strength/status metadata is stored on the JSONL rows
 for ontology and QA use; it is not added to alias matching.
@@ -167,6 +173,34 @@ python scripts/import_rxnorm_dictionary.py \
   --output data/standards/rxnorm/processed/rxnorm_concepts.jsonl \
   --manifest data/standards/rxnorm/processed/rxnorm_import_manifest.json
 ```
+
+Import the July bundle into separate candidate layers:
+
+```bash
+python scripts/import_rxnorm_dictionary.py \
+  --prescribable-rxnorm data/standards/rxnorm/raw/RxNorm_full_07062026.zip \
+  --prescribable-source-id rxnorm_prescribable_2026_07_06 \
+  --full-source-id rxnorm_full_2026_07_06 \
+  --release-date 2026-07-06 \
+  --primary-file RxNorm_full_07062026.zip \
+  --fallback-file RxNorm_full_07062026.zip \
+  --output data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl \
+  --manifest data/standards/rxnorm/processed/rxnorm_prescribable_07062026_import_manifest.json
+
+python scripts/import_rxnorm_dictionary.py \
+  --full-rxnorm data/standards/rxnorm/raw/RxNorm_full_07062026.zip \
+  --prescribable-source-id rxnorm_prescribable_2026_07_06 \
+  --full-source-id rxnorm_full_2026_07_06 \
+  --release-date 2026-07-06 \
+  --primary-file RxNorm_full_07062026.zip \
+  --fallback-file RxNorm_full_07062026.zip \
+  --output data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl \
+  --manifest data/standards/rxnorm/processed/rxnorm_full_07062026_import_manifest.json
+```
+
+`rxnorm data.csv` was profiled but not imported. Its two columns (`RXCUI`, `STR`) omit `SAB`, `TTY`,
+`SUPPRESS`, relations, and status attributes, so it cannot enforce the runtime dictionary invariants.
+See `data/standards/rxnorm/processed/rxnorm_data_csv_profile.json`.
 
 ## Vietnamese Clinical Lexicon Import
 
@@ -213,7 +247,9 @@ Keep full standards separate from runtime dictionaries:
 
 - `data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl` is the full TT06 ICD layer.
 - `data/standards/rxnorm/processed/rxnorm_prescribable_06012026_concepts.jsonl` is the full
-  imported RxNorm prescribable layer.
+  imported June RxNorm prescribable layer and locked Phase 1 baseline.
+- `data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl` and
+  `rxnorm_full_07062026_concepts.jsonl` are audited July promotion candidates.
 - `data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl` is the
   reviewed Vietnamese LOCAL symptom, lab, and procedure layer.
 - `data/standards/phase1_reviewed/allowed_standard_concepts.tsv` is a reviewed exception list for
@@ -242,10 +278,11 @@ The report writes:
   for aliases that should be blocked or context-gated, including short aliases, English single-token
   ICD aliases, and lab/metabolite RxNorm aliases that should require explicit drug context.
 
-The full RxNorm monthly release is registered as `rxnorm_full_2026_06_01`, but the official NLM
-download redirects to UMLS login without local credentials. The current local source audit therefore
-marks `data/standards/rxnorm/raw/RxNorm_full_06012026.zip` as optional missing until a licensed UTS
-download is provided.
+The June full RxNorm fallback remains registered as optional missing. A licensed July full bundle is
+available locally and has been imported into separate Full and Prescribable Content layers. The raw
+247 MB bundle is intentionally ignored by Git because it exceeds GitHub's per-file limit; its SHA-256
+is retained in the comparison artifact and the generated source audit. Promotion remains a separate
+ablation decision recorded in `data/standards/source_versions.json`.
 
 Mine Vietnamese alias candidates without mutating the runtime dictionary:
 

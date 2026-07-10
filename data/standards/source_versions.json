@@ -19,7 +19,18 @@
     "fallback_source_id": "rxnorm_full_2026_06_01",
     "fallback_file": "RxNorm_full_06012026.zip",
     "tty_priority": ["SCD", "SBD", "IN", "PIN", "MIN", "SCDF", "SBDF", "GPCK", "BPCK"],
-    "notes": "Use prescribable RxNorm as the primary drug dictionary and full monthly release as fallback coverage."
+    "notes": "Use prescribable RxNorm as the primary drug dictionary and full monthly release as fallback coverage.",
+    "candidate_release": {
+      "status": "imported_not_promoted",
+      "release_date": "2026-07-06",
+      "primary_source_id": "rxnorm_prescribable_2026_07_06",
+      "fallback_source_id": "rxnorm_full_2026_07_06",
+      "raw_file": "data/standards/rxnorm/raw/RxNorm_full_07062026.zip",
+      "primary_file": "data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl",
+      "fallback_file": "data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl",
+      "comparison_file": "data/standards/rxnorm/processed/rxnorm_06012026_to_07062026_comparison.json",
+      "notes": "July is imported and audited as a promotion candidate; the reproducible Phase 1 baseline remains locked to June until an ablation approves the switch."
+    }
   },
   "vn_clinical_lexicon": {
     "source": "Reviewed Vietnamese LOCAL clinical lexicon",

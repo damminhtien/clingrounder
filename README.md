@@ -142,7 +142,7 @@ AGENTS.md                  Repo instructions for coding agents
 
 ## Current Limitations
 
-- Dictionaries are seed dictionaries, not full ICD-10/RxNorm releases.
+- Runtime dictionaries are conservative reviewed subsets; full TT06 and versioned RxNorm source layers remain separate from runtime promotion.
 - Transformer NER, context, and relation classifiers are placeholders.
 - Public dataset adapters are schema-compatible placeholders until local dataset paths are supplied.
 - Hidden Phase 1 test data has no gold labels, so official-style `phase1_score` is only local on

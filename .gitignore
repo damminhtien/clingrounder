@@ -105,6 +105,8 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+# Local licensed RxNorm bundle exceeds GitHub's per-file size limit; keep its checksum in manifests.
+data/standards/rxnorm/raw/RxNorm_full_07062026.zip
 *.duckdb
 *.sqlite
 *.sqlite3

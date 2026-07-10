@@ -150,6 +150,46 @@ resources:
         path: data/standards/rxnorm/raw/RxNorm_full_06012026.zip
         required: false
     notes: Fallback coverage when prescribable content misses a legitimate medication mention.
+  - id: rxnorm_prescribable_2026_07_06
+    name: RxNorm Current Prescribable Content Monthly Release July 6 2026
+    category: terminology
+    access: local_licensed_copy
+    url: https://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html
+    version: "2026-07-06"
+    release_date: "2026-07-06"
+    license: nlm_rxnorm_terms
+    use: candidate_update_not_locked_phase1
+    local_files:
+      - role: bundled_raw_zip
+        path: data/standards/rxnorm/raw/RxNorm_full_07062026.zip
+        required: false
+      - role: concept_rows_jsonl
+        path: data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl
+        required: true
+      - role: import_manifest
+        path: data/standards/rxnorm/processed/rxnorm_prescribable_07062026_import_manifest.json
+        required: true
+    notes: Imported from the prescribe/rrf subtree of the July full bundle; pending ablation before promotion.
+  - id: rxnorm_full_2026_07_06
+    name: RxNorm Full Monthly Release July 6 2026
+    category: terminology
+    access: local_licensed_copy
+    url: https://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html
+    version: "2026-07-06"
+    release_date: "2026-07-06"
+    license: nlm_rxnorm_terms
+    use: candidate_fallback_not_locked_phase1
+    local_files:
+      - role: bundled_raw_zip
+        path: data/standards/rxnorm/raw/RxNorm_full_07062026.zip
+        required: false
+      - role: concept_rows_jsonl
+        path: data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
+        required: true
+      - role: import_manifest
+        path: data/standards/rxnorm/processed/rxnorm_full_07062026_import_manifest.json
+        required: true
+    notes: Imported from the root rrf subtree; includes active BN fallback terms absent from Prescribable Content.
   - id: rxnorm_current
     name: RxNorm current release and RxNav API
     category: terminology
@@ -159,7 +199,7 @@ resources:
     release_date: "2026-06-01"
     license: nlm_rxnorm_terms
     use: rxnorm_generic_current_pointer
-    notes: Generic current-release pointer; Phase 1 locked source is June 1 2026 in data/standards/source_versions.json.
+    notes: Generic current-release pointer; Phase 1 remains locked to June 1 2026 while the imported July 6 candidate is evaluated.
   - id: rxnav_rest_2026_07_04
     name: RxNav REST API lookups on 2026-07-04
     category: terminology
