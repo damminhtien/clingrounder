@@ -1,0 +1,136 @@
+[
+  {
+    "text": "bệnh tim mạch do xơ vữa động mạch",
+    "type": "CHẨN_ĐOÁN",
+    "candidates": [
+      "I25.0"
+    ],
+    "assertions": [
+      "isHistorical"
+    ],
+    "position": [
+      131,
+      164
+    ]
+  },
+  {
+    "text": "blốc nhĩ thất, hoàn toàn",
+    "type": "CHẨN_ĐOÁN",
+    "candidates": [
+      "I44.2"
+    ],
+    "assertions": [
+      "isHistorical"
+    ],
+    "position": [
+      171,
+      195
+    ]
+  },
+  {
+    "text": "bệnh thận mạn, không đặc hiệu",
+    "type": "CHẨN_ĐOÁN",
+    "candidates": [
+      "N18.9"
+    ],
+    "assertions": [
+      "isHistorical"
+    ],
+    "position": [
+      233,
+      262
+    ]
+  },
+  {
+    "text": "Suy giảm nhận thức nhẹ",
+    "type": "CHẨN_ĐOÁN",
+    "candidates": [
+      "F06.7"
+    ],
+    "assertions": [
+      "isHistorical"
+    ],
+    "position": [
+      269,
+      291
+    ]
+  },
+  {
+    "text": "suy giảm nhận thức",
+    "type": "CHẨN_ĐOÁN",
+    "candidates": [
+      "R41.8"
+    ],
+    "assertions": [
+      "isHistorical"
+    ],
+    "position": [
+      292,
+      310
+    ]
+  },
+  {
+    "text": "Cảm giác thắt chặt ngực",
+    "type": "TRIỆU_CHỨNG",
+    "candidates": [],
+    "assertions": [],
+    "position": [
+      451,
+      474
+    ]
+  },
+  {
+    "text": "Cảm giác thắt chặt ngực dưới xương ức nghiêm trọng",
+    "type": "TRIỆU_CHỨNG",
+    "candidates": [],
+    "assertions": [],
+    "position": [
+      622,
+      672
+    ]
+  },
+  {
+    "text": "khó thở",
+    "type": "TRIỆU_CHỨNG",
+    "candidates": [],
+    "assertions": [],
+    "position": [
+      679,
+      686
+    ]
+  },
+  {
+    "text": "khó thở",
+    "type": "TRIỆU_CHỨNG",
+    "candidates": [],
+    "assertions": [],
+    "position": [
+      952,
+      959
+    ]
+  },
+  {
+    "text": "Cơn đau thắt ngực không ổn định",
+    "type": "CHẨN_ĐOÁN",
+    "candidates": [
+      "I20.0"
+    ],
+    "assertions": [],
+    "position": [
+      1048,
+      1079
+    ]
+  },
+  {
+    "text": "Cơn đau thắt ngực không ổn định",
+    "type": "CHẨN_ĐOÁN",
+    "candidates": [
+      "I20.0"
+    ],
+    "assertions": [],
+    "position": [
+      1174,
+      1205
+    ]
+  }
+]
