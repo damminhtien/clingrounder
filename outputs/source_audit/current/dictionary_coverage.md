@@ -1,10 +1,10 @@
 # Medical Source Audit
 
-- Registry resources: 19
+- Registry resources: 21
 - Registry issues: 0
 - Missing required local files: 0
 - Dictionary profiles: 2
-- Manual review items: 223
+- Manual review items: 250
 - False-positive blocklist candidates: 103
 
 ## Source Registry
@@ -23,7 +23,9 @@
 - `rxnav_rest_2026_07_04`: RxNav REST API lookups on 2026-07-04 | access=open_with_terms | version=manual lookup snapshot 2026-07-04 | license=nlm_rxnorm_terms | use=phase1_drug_alias_rxcui_curation
 - `rxnorm_current`: RxNorm current release and RxNav API | access=open_with_terms | version=current pointer resolved by locked source_versions.json | license=nlm_rxnorm_terms | use=rxnorm_generic_current_pointer
 - `rxnorm_full_2026_06_01`: RxNorm Full Monthly Release June 1 2026 | access=open_with_terms_or_umls | version=2026-06-01 | license=nlm_rxnorm_terms | use=phase1_rxnorm_fallback_drug_codes
+- `rxnorm_full_2026_07_06`: RxNorm Full Monthly Release July 6 2026 | access=local_licensed_copy | version=2026-07-06 | license=nlm_rxnorm_terms | use=candidate_fallback_not_locked_phase1
 - `rxnorm_prescribable_2026_06_01`: RxNorm Current Prescribable Content Monthly Release June 1 2026 | access=open_with_terms | version=2026-06-01 | license=nlm_rxnorm_terms | use=phase1_rxnorm_primary_drug_codes
+- `rxnorm_prescribable_2026_07_06`: RxNorm Current Prescribable Content Monthly Release July 6 2026 | access=local_licensed_copy | version=2026-07-06 | license=nlm_rxnorm_terms | use=candidate_update_not_locked_phase1
 - `seed`: Local seed curation | access=local | version=repo-local | license=project | use=runtime_seed
 - `synthea`: Synthea synthetic patient generator | access=open | version=upstream-unpinned | license=apache-2.0 | use=synthetic_patient_records
 - `vn_clinical_lexicon_reviewed_2026_07_05`: Reviewed Vietnamese clinical LOCAL lexicon | access=local_reviewed | version=reviewed snapshot 2026-07-05 | license=project | use=reviewed_vietnamese_symptom_lab_procedure_aliases
@@ -45,6 +47,12 @@
 - `rxnorm_prescribable_2026_06_01` `data/standards/rxnorm/processed/rxnorm_prescribable_06012026_concepts.jsonl`: ok, required
 - `rxnorm_prescribable_2026_06_01` `data/standards/rxnorm/processed/rxnorm_prescribable_06012026_import_manifest.json`: ok, required
 - `rxnorm_full_2026_06_01` `data/standards/rxnorm/raw/RxNorm_full_06012026.zip`: missing, optional
+- `rxnorm_prescribable_2026_07_06` `data/standards/rxnorm/raw/RxNorm_full_07062026.zip`: ok, optional
+- `rxnorm_prescribable_2026_07_06` `data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl`: ok, required
+- `rxnorm_prescribable_2026_07_06` `data/standards/rxnorm/processed/rxnorm_prescribable_07062026_import_manifest.json`: ok, required
+- `rxnorm_full_2026_07_06` `data/standards/rxnorm/raw/RxNorm_full_07062026.zip`: ok, optional
+- `rxnorm_full_2026_07_06` `data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl`: ok, required
+- `rxnorm_full_2026_07_06` `data/standards/rxnorm/processed/rxnorm_full_07062026_import_manifest.json`: ok, required
 - `icd10_vn_tt06_2026` `data/standards/icd10_vn/processed/tt06_icd10_extract.jsonl`: ok, required
 - `icd10_vn_tt06_2026` `data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl`: ok, required
 - `rxnorm_prescribable_2026_06_01` `data/standards/rxnorm/processed/rxnorm_prescribable_06012026_concepts.jsonl`: ok, required
@@ -65,14 +73,14 @@
 
 ### `data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl`
 
-- Rows: 324
-- Code systems: {'ICD-10': 149, 'LOCAL': 56, 'RxNorm': 119}
-- Semantic types: {'DISEASE': 149, 'DRUG': 119, 'LAB_TEST': 26, 'SYMPTOM': 30}
-- ICD hierarchy: {'rows': 149, 'with_parent_code': 133, 'with_block': 132, 'with_chapter': 149, 'by_chapter': {'I': 10, 'II': 13, 'III': 5, 'IV': 11, 'IX': 32, 'V': 11, 'VI': 7, 'VII': 5, 'X': 10, 'XI': 17, 'XII': 2, 'XIII': 5, 'XIV': 9, 'XIX': 4, 'XVII': 4, 'XVIII': 4}}
-- RxNorm enrichment: {'rows': 119, 'with_ingredient': 119, 'with_brand_name': 108, 'with_dose_form': 113, 'with_strength': 16, 'with_status': 116, 'inactive_or_obsolete': 1}
-- Sources: {'cdc_icd10cm_2026': 94, 'icd10_vn_tt06_2026': 115, 'icd_kcb_vn': 41, 'medlineplus_xml': 51, 'rxnav_rest_2026_07_04': 54, 'rxnorm_current': 70, 'rxnorm_prescribable_2026_06_01': 116, 'seed': 39, 'vn_clinical_lexicon_reviewed_2026_07_05': 26, 'who_icd10_2019': 76}
-- Ambiguous aliases: 23
-- Broad/blocked review aliases: 107
+- Rows: 470
+- Code systems: {'ICD-10': 275, 'LOCAL': 56, 'RxNorm': 139}
+- Semantic types: {'DISEASE': 275, 'DRUG': 139, 'LAB_TEST': 26, 'SYMPTOM': 30}
+- ICD hierarchy: {'rows': 275, 'with_parent_code': 252, 'with_block': 251, 'with_chapter': 275, 'by_chapter': {'I': 14, 'II': 23, 'III': 7, 'IV': 19, 'IX': 59, 'V': 15, 'VI': 13, 'VII': 5, 'X': 21, 'XI': 33, 'XII': 6, 'XIII': 14, 'XIV': 14, 'XIX': 13, 'XV': 1, 'XVII': 4, 'XVIII': 13, 'XXI': 1}}
+- RxNorm enrichment: {'rows': 139, 'with_ingredient': 132, 'with_brand_name': 116, 'with_dose_form': 125, 'with_strength': 28, 'with_status': 135, 'inactive_or_obsolete': 1}
+- Sources: {'cdc_icd10cm_2026': 178, 'icd10_vn_tt06_2026': 226, 'icd_kcb_vn': 41, 'medlineplus_xml': 51, 'rxnav_rest_2026_07_04': 55, 'rxnorm_current': 71, 'rxnorm_prescribable_2026_06_01': 135, 'seed': 39, 'vn_clinical_lexicon_reviewed_2026_07_05': 26, 'who_icd10_2019': 157}
+- Ambiguous aliases: 124
+- Broad/blocked review aliases: 168
 - Missing source rows: 0
 
 ## RxNorm Releases
@@ -84,6 +92,22 @@
 - RXNCONSO accepted concepts: 40667
 - RXNREL active rows: 613324
 - RXNSAT active rows: 467328
+
+### `data/standards/rxnorm/raw/RxNorm_full_07062026.zip`
+
+- Required files: {'RXNCONSO.RRF': True, 'RXNREL.RRF': True, 'RXNSAT.RRF': True}
+- RXNCONSO active concepts: 81377
+- RXNCONSO accepted concepts: 40675
+- RXNREL active rows: 612826
+- RXNSAT active rows: 468682
+
+### `data/standards/rxnorm/raw/RxNorm_full_07062026.zip`
+
+- Required files: {'RXNCONSO.RRF': True, 'RXNREL.RRF': True, 'RXNSAT.RRF': True}
+- RXNCONSO active concepts: 128694
+- RXNCONSO accepted concepts: 73912
+- RXNREL active rows: 2259114
+- RXNSAT active rows: 817115
 
 ## Top Manual Review Items
 

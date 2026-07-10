@@ -73,7 +73,7 @@ def main() -> None:
         "--rxnorm-release",
         action="append",
         default=[],
-        help="RxNorm release ZIP/RRF to profile for RXNCONSO/RXNREL/RXNSAT.",
+        help="RxNorm ZIP/RRF to profile as path[::archive/member/root[::prescribable|full]].",
     )
     parser.add_argument("--input-dir", help="Optional TXT folder for unknown mention candidate mining.")
     parser.add_argument("--output-dir", default="outputs/source_audit/current")
@@ -84,7 +84,11 @@ def main() -> None:
         "data/dictionaries/seed_concepts.jsonl",
         "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
     ]
-    rxnorm_releases = args.rxnorm_release or ["data/standards/rxnorm/raw/RxNorm_full_prescribe_06012026.zip"]
+    rxnorm_releases = (
+        [_parse_rxnorm_release(item) for item in args.rxnorm_release]
+        if args.rxnorm_release
+        else _default_rxnorm_releases()
+    )
     local_files = [*_DEFAULT_LOCAL_FILES, *[_parse_raw_file(item) for item in args.raw_file]]
     report = build_source_audit_report(
         registry_path=args.registry,
@@ -125,6 +129,44 @@ def _parse_raw_file(value: str) -> dict[str, Any]:
     else:
         path = ":".join(parts[2:])
     return {"source_id": source_id, "role": role, "path": path, "required": required}
+
+
+def _parse_rxnorm_release(value: str) -> str | dict[str, str]:
+    parts = value.split("::", maxsplit=2)
+    if len(parts) == 1:
+        return parts[0]
+    path, member_root = parts[:2]
+    content = parts[2] if len(parts) == 3 else "prescribable"
+    if not path or not member_root or content not in {"prescribable", "full"}:
+        raise ValueError(f"Expected path::archive/member/root[::prescribable|full], got {value!r}")
+    return {"path": path, "archive_member_root": member_root, "content": content}
+
+
+def _default_rxnorm_releases() -> list[dict[str, str]]:
+    releases = [
+        {
+            "path": "data/standards/rxnorm/raw/RxNorm_full_prescribe_06012026.zip",
+            "archive_member_root": "rrf",
+            "content": "prescribable",
+        }
+    ]
+    july_bundle = Path("data/standards/rxnorm/raw/RxNorm_full_07062026.zip")
+    if july_bundle.exists():
+        releases.extend(
+            [
+                {
+                    "path": str(july_bundle),
+                    "archive_member_root": "prescribe/rrf",
+                    "content": "prescribable",
+                },
+                {
+                    "path": str(july_bundle),
+                    "archive_member_root": "rrf",
+                    "content": "full",
+                },
+            ]
+        )
+    return releases
 
 
 if __name__ == "__main__":

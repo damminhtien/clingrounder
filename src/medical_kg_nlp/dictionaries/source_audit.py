@@ -8,7 +8,11 @@ from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-from medical_kg_nlp.dictionaries.rxnorm_sources import profile_rxnorm_release
+from medical_kg_nlp.dictionaries.rxnorm_sources import (
+    RXNORM_DEFAULT_TTYS,
+    RXNORM_FULL_FALLBACK_TTYS,
+    profile_rxnorm_release,
+)
 from medical_kg_nlp.utils.io import read_jsonl, read_yaml, write_jsonl
 from medical_kg_nlp.utils.text import normalize_for_match
 
@@ -142,7 +146,7 @@ def build_source_audit_report(
     standard_versions_path: str | Path | None = None,
     dictionary_paths: Sequence[str | Path] = (),
     local_files: Sequence[Mapping[str, Any]] = (),
-    rxnorm_release_paths: Sequence[str | Path] = (),
+    rxnorm_release_paths: Sequence[str | Path | Mapping[str, Any]] = (),
     input_dir: str | Path | None = None,
     unknown_top_k: int = 100,
 ) -> dict[str, Any]:
@@ -154,7 +158,21 @@ def build_source_audit_report(
         profile_dictionary(path, known_source_ids=source_ids, input_dir=input_dir, unknown_top_k=unknown_top_k)
         for path in dictionary_paths
     ]
-    rxnorm_profiles = [profile_rxnorm_release(path) for path in rxnorm_release_paths]
+    rxnorm_profiles = []
+    for release in rxnorm_release_paths:
+        if isinstance(release, Mapping):
+            content = str(release.get("content") or "prescribable").lower()
+            if content not in {"full", "prescribable"}:
+                raise ValueError(f"Unsupported RxNorm release content: {content!r}")
+            profile = profile_rxnorm_release(
+                release["path"],
+                archive_member_root=str(release.get("archive_member_root") or "") or None,
+                allowed_ttys=RXNORM_FULL_FALLBACK_TTYS if content == "full" else RXNORM_DEFAULT_TTYS,
+            )
+            profile["content"] = content
+            rxnorm_profiles.append(profile)
+        else:
+            rxnorm_profiles.append(profile_rxnorm_release(release))
     standard_versions = _standard_versions_summary(standard_versions_path) if standard_versions_path else {}
     manual_review_queue = _manual_review_queue(dictionary_profiles)
     false_positive_blocklist = false_positive_blocklist_candidates(dictionary_profiles)

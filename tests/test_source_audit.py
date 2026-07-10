@@ -165,7 +165,12 @@ resources:
     )
     rxnorm_zip = tmp_path / "rxnorm.zip"
     with zipfile.ZipFile(rxnorm_zip, "w") as archive:
-        archive.writestr("rrf/RXNCONSO.RRF", _rxnconso_line("308135", "SCD", "Amlodipine 10 MG Oral Tablet"))
+        archive.writestr(
+            "rrf/RXNCONSO.RRF",
+            _rxnconso_line("308135", "SCD", "Amlodipine 10 MG Oral Tablet")
+            + "\n"
+            + _rxnconso_line("42844", "BN", "Percocet"),
+        )
         archive.writestr("rrf/RXNREL.RRF", _rxnrel_line("308135", "6809"))
         archive.writestr("rrf/RXNSAT.RRF", _rxnsat_line("308135", "TTY", "SCD"))
 
@@ -173,7 +178,7 @@ resources:
         registry_path=registry,
         standard_versions_path=versions,
         dictionary_paths=[dictionary],
-        rxnorm_release_paths=[rxnorm_zip],
+        rxnorm_release_paths=[{"path": rxnorm_zip, "archive_member_root": "rrf", "content": "full"}],
     )
     output_dir = tmp_path / "audit"
     write_source_audit_report(report, output_dir)
@@ -184,6 +189,9 @@ resources:
     assert resources["rxnorm_prescribable_2026_06_01"]["license"] == "nlm_rxnorm_terms"
     assert resources["seed"]["local_files"][0]["path"] == str(raw)
     assert report["rxnorm_release_profiles"][0]["rxnrel"]["active_rows"] == 1
+    assert report["rxnorm_release_profiles"][0]["archive_member_root"] == "rrf"
+    assert report["rxnorm_release_profiles"][0]["content"] == "full"
+    assert report["rxnorm_release_profiles"][0]["rxnconso"]["accepted_concepts"] == 2
     assert report["false_positive_blocklist"][0]["concept_id"] == "RXNORM:61"
     assert (output_dir / "source_manifest.json").exists()
     assert (output_dir / "dictionary_coverage.md").exists()

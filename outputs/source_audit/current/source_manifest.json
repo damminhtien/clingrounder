@@ -1099,8 +1099,8 @@
       "unknown_source_ids": {}
     },
     {
-      "alias_count": 1366,
-      "ambiguous_alias_count": 23,
+      "alias_count": 2181,
+      "ambiguous_alias_count": 124,
       "ambiguous_aliases": [
         {
           "alias": "Ativan",
@@ -1447,6 +1447,68 @@
           "normalized_alias": "phentolamine"
         },
         {
+          "alias": "AF",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 3,
+          "concepts": [
+            {
+              "alias": "AF",
+              "code": "I48",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I48",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "AF",
+              "code": "I48.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I48.9",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "AF",
+              "code": "I48.91",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I48.91",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "af"
+        },
+        {
+          "alias": "atrial fibrillation",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 3,
+          "concepts": [
+            {
+              "alias": "atrial fibrillation",
+              "code": "I48",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I48",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "atrial fibrillation",
+              "code": "I48.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I48.9",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "atrial fibrillation",
+              "code": "I48.91",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I48.91",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "atrial fibrillation"
+        },
+        {
           "alias": "Levophed",
           "code_systems": [
             "RxNorm"
@@ -1509,6 +1571,123 @@
           "normalized_alias": "propofol"
         },
         {
+          "alias": "Rung nhĩ",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 3,
+          "concepts": [
+            {
+              "alias": "rung nhĩ",
+              "code": "I48",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I48",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "rung nhĩ",
+              "code": "I48.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I48.9",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "Rung nhĩ",
+              "code": "I48.91",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I48.91",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "rung nhĩ"
+        },
+        {
+          "alias": "subdural hematoma",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 3,
+          "concepts": [
+            {
+              "alias": "subdural hematoma",
+              "code": "I62.0",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I62.0",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "subdural hematoma",
+              "code": "I62.00",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I62.00",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "subdural hematoma",
+              "code": "S06.5",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:S06.5",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "subdural hematoma"
+        },
+        {
+          "alias": "Xơ vữa động mạch",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 3,
+          "concepts": [
+            {
+              "alias": "xơ vữa động mạch",
+              "code": "I70.8",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I70.8",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "xơ vữa động mạch",
+              "code": "I70.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I70.9",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "Xơ vữa động mạch",
+              "code": "I70.90",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I70.90",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "xơ vữa động mạch"
+        },
+        {
+          "alias": "Albuterol / ipratropium",
+          "code_systems": [
+            "RxNorm"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "albuterol / ipratropium",
+              "code": "1437702",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:1437702",
+              "semantic_type": "DRUG"
+            },
+            {
+              "alias": "Albuterol / ipratropium",
+              "code": "214199",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:214199",
+              "semantic_type": "DRUG"
+            }
+          ],
+          "normalized_alias": "albuterol / ipratropium"
+        },
+        {
           "alias": "Alka-Seltzer",
           "code_systems": [
             "RxNorm"
@@ -1531,6 +1710,150 @@
             }
           ],
           "normalized_alias": "alka-seltzer"
+        },
+        {
+          "alias": "Angina pectoris",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Angina pectoris",
+              "code": "I20",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I20",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "angina pectoris",
+              "code": "I20.8",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I20.8",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "angina pectoris"
+        },
+        {
+          "alias": "aortic dissection",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "aortic dissection",
+              "code": "I71.0",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I71.0",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "aortic dissection",
+              "code": "I71.00",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I71.00",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "aortic dissection"
+        },
+        {
+          "alias": "Apixaban",
+          "code_systems": [
+            "RxNorm"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Apixaban",
+              "code": "1364430",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:1364430",
+              "semantic_type": "DRUG"
+            },
+            {
+              "alias": "apixaban",
+              "code": "1364445",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:1364445",
+              "semantic_type": "DRUG"
+            }
+          ],
+          "normalized_alias": "apixaban"
+        },
+        {
+          "alias": "Aspirin",
+          "code_systems": [
+            "RxNorm"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Aspirin",
+              "code": "1191",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:1191",
+              "semantic_type": "DRUG"
+            },
+            {
+              "alias": "aspirin",
+              "code": "212033",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:212033",
+              "semantic_type": "DRUG"
+            }
+          ],
+          "normalized_alias": "aspirin"
+        },
+        {
+          "alias": "Atelectasis",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "atelectasis",
+              "code": "J98.1",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:J98.1",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "Atelectasis",
+              "code": "J98.11",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:J98.11",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "atelectasis"
+        },
+        {
+          "alias": "atherosclerosis",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "atherosclerosis",
+              "code": "I70.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I70.9",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "atherosclerosis",
+              "code": "I70.90",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I70.90",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "atherosclerosis"
         },
         {
           "alias": "Atherosclerotic heart disease",
@@ -1557,6 +1880,30 @@
           "normalized_alias": "atherosclerotic heart disease"
         },
         {
+          "alias": "atrial flutter",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "atrial flutter",
+              "code": "I48",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I48",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "atrial flutter",
+              "code": "I48.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I48.9",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "atrial flutter"
+        },
+        {
           "alias": "Augmentin",
           "code_systems": [
             "RxNorm"
@@ -1565,9 +1912,9 @@
           "concepts": [
             {
               "alias": "Augmentin",
-              "code": "151392",
+              "code": "19711",
               "code_system": "RxNorm",
-              "concept_id": "RXNORM:151392",
+              "concept_id": "RXNORM:19711",
               "semantic_type": "DRUG"
             },
             {
@@ -1603,6 +1950,54 @@
             }
           ],
           "normalized_alias": "bipolar affective disorder"
+        },
+        {
+          "alias": "breast cancer",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "breast cancer",
+              "code": "C50.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:C50.9",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "breast cancer",
+              "code": "C50.919",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:C50.919",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "breast cancer"
+        },
+        {
+          "alias": "Bronchiectasis",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Bronchiectasis",
+              "code": "J47",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:J47",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "bronchiectasis",
+              "code": "J47.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:J47.9",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "bronchiectasis"
         },
         {
           "alias": "Bệnh bạch cầu dòng tủy",
@@ -1653,6 +2048,253 @@
           "normalized_alias": "bệnh gan do rượu"
         },
         {
+          "alias": "Bệnh rễ thần kinh",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "bệnh rễ thần kinh",
+              "code": "M54.1",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:M54.1",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "Bệnh rễ thần kinh",
+              "code": "M54.10",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:M54.10",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "bệnh rễ thần kinh"
+        },
+        {
+          "alias": "bệnh rễ thần kinh tuỷ sống",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "bệnh rễ thần kinh tuỷ sống",
+              "code": "M54.1",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:M54.1",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "bệnh rễ thần kinh tuỷ sống",
+              "code": "M54.10",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:M54.10",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "bệnh rễ thần kinh tuỷ sống"
+        },
+        {
+          "alias": "bệnh tim mạch do xơ vữa động mạch",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "bệnh tim mạch do xơ vữa động mạch",
+              "code": "I25.0",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I25.0",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "Bệnh tim mạch do xơ vữa động mạch",
+              "code": "I25.1",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I25.1",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "bệnh tim mạch do xơ vữa động mạch"
+        },
+        {
+          "alias": "cellulitis",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "cellulitis",
+              "code": "L03.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:L03.9",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "cellulitis",
+              "code": "L03.90",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:L03.90",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "cellulitis"
+        },
+        {
+          "alias": "Cellulitis, unspecified",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Cellulitis, unspecified",
+              "code": "L03.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:L03.9",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "cellulitis unspecified",
+              "code": "L03.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:L03.9",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "Cellulitis, unspecified",
+              "code": "L03.90",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:L03.90",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "cellulitis unspecified"
+        },
+        {
+          "alias": "choledocholithiasis",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "choledocholithiasis",
+              "code": "K80.5",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K80.5",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "choledocholithiasis",
+              "code": "K80.50",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K80.50",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "choledocholithiasis"
+        },
+        {
+          "alias": "cholelithiasis",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "cholelithiasis",
+              "code": "K80.2",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K80.2",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "cholelithiasis",
+              "code": "K80.20",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K80.20",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "cholelithiasis"
+        },
+        {
+          "alias": "Compazine",
+          "code_systems": [
+            "RxNorm"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Compazine",
+              "code": "203546",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:203546",
+              "semantic_type": "DRUG"
+            },
+            {
+              "alias": "Compazine",
+              "code": "8704",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:8704",
+              "semantic_type": "DRUG"
+            }
+          ],
+          "normalized_alias": "compazine"
+        },
+        {
+          "alias": "Coumadin",
+          "code_systems": [
+            "RxNorm"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Coumadin",
+              "code": "11289",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:11289",
+              "semantic_type": "DRUG"
+            },
+            {
+              "alias": "Coumadin",
+              "code": "855318",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:855318",
+              "semantic_type": "DRUG"
+            }
+          ],
+          "normalized_alias": "coumadin"
+        },
+        {
+          "alias": "cuồng nhĩ",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "cuồng nhĩ",
+              "code": "I48",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I48",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "cuồng nhĩ",
+              "code": "I48.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I48.9",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "cuồng nhĩ"
+        },
+        {
           "alias": "Cơn đau thắt ngực",
           "code_systems": [
             "ICD-10"
@@ -1675,6 +2317,198 @@
             }
           ],
           "normalized_alias": "cơn đau thắt ngực"
+        },
+        {
+          "alias": "deep vein thrombosis",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "deep vein thrombosis",
+              "code": "I80.2",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I80.2",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "deep vein thrombosis",
+              "code": "I82.40",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I82.40",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "deep vein thrombosis"
+        },
+        {
+          "alias": "dissection of aorta",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "dissection of aorta",
+              "code": "I71.0",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I71.0",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "dissection of aorta",
+              "code": "I71.00",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I71.00",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "dissection of aorta"
+        },
+        {
+          "alias": "Duodenal ulcer",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Duodenal ulcer",
+              "code": "K26",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K26",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "duodenal ulcer",
+              "code": "K26.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K26.9",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "duodenal ulcer"
+        },
+        {
+          "alias": "DVT",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "DVT",
+              "code": "I80.2",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I80.2",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "DVT",
+              "code": "I82.40",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I82.40",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "dvt"
+        },
+        {
+          "alias": "Eliquis",
+          "code_systems": [
+            "RxNorm"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Eliquis",
+              "code": "1364430",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:1364430",
+              "semantic_type": "DRUG"
+            },
+            {
+              "alias": "eliquis",
+              "code": "1364445",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:1364445",
+              "semantic_type": "DRUG"
+            }
+          ],
+          "normalized_alias": "eliquis"
+        },
+        {
+          "alias": "Epilepsy",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Epilepsy",
+              "code": "G40",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:G40",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "epilepsy",
+              "code": "G40.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:G40.9",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "epilepsy"
+        },
+        {
+          "alias": "Furosemide",
+          "code_systems": [
+            "RxNorm"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "furosemide",
+              "code": "1719290",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:1719290",
+              "semantic_type": "DRUG"
+            },
+            {
+              "alias": "Furosemide",
+              "code": "4603",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:4603",
+              "semantic_type": "DRUG"
+            }
+          ],
+          "normalized_alias": "furosemide"
+        },
+        {
+          "alias": "gallstone",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "gallstone",
+              "code": "K80.2",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K80.2",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "gallstone",
+              "code": "K80.20",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K80.20",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "gallstone"
         },
         {
           "alias": "Giai đoạn trầm cảm",
@@ -1701,6 +2535,247 @@
           "normalized_alias": "giai đoạn trầm cảm"
         },
         {
+          "alias": "Giãn phế quản",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Giãn phế quản",
+              "code": "J47",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:J47",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "Giãn phế quản",
+              "code": "J47.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:J47.9",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "giãn phế quản"
+        },
+        {
+          "alias": "Glucose",
+          "code_systems": [
+            "LOCAL",
+            "RxNorm"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Glucose",
+              "code": "GLUCOSE",
+              "code_system": "LOCAL",
+              "concept_id": "LOCAL:TEST_GLUCOSE",
+              "semantic_type": "LAB_TEST"
+            },
+            {
+              "alias": "glucose",
+              "code": "4850",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:4850",
+              "semantic_type": "DRUG"
+            }
+          ],
+          "normalized_alias": "glucose"
+        },
+        {
+          "alias": "Huyết khối tĩnh mạch sâu",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "huyết khối tĩnh mạch sâu",
+              "code": "I80.2",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I80.2",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "Huyết khối tĩnh mạch sâu",
+              "code": "I82.40",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I82.40",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "huyết khối tĩnh mạch sâu"
+        },
+        {
+          "alias": "Hypercalcemia",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "hypercalcemia",
+              "code": "E83.5",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:E83.5",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "Hypercalcemia",
+              "code": "E83.52",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:E83.52",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "hypercalcemia"
+        },
+        {
+          "alias": "Hypothermia",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "hypothermia",
+              "code": "R68.0",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:R68.0",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "Hypothermia",
+              "code": "T68",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:T68",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "hypothermia"
+        },
+        {
+          "alias": "Hạ thân nhiệt",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "hạ thân nhiệt",
+              "code": "R68.0",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:R68.0",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "Hạ thân nhiệt",
+              "code": "T68",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:T68",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "hạ thân nhiệt"
+        },
+        {
+          "alias": "hẹp lỗ liên hợp",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "hẹp lỗ liên hợp",
+              "code": "M48.00",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:M48.00",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "hẹp lỗ liên hợp",
+              "code": "M99.7",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:M99.7",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "hẹp lỗ liên hợp"
+        },
+        {
+          "alias": "hẹp động mạch cảnh",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "hẹp động mạch cảnh",
+              "code": "I65.2",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I65.2",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "hẹp động mạch cảnh",
+              "code": "I65.29",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I65.29",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "hẹp động mạch cảnh"
+        },
+        {
+          "alias": "Hẹp ống sống",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Hẹp ống sống",
+              "code": "M48.0",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:M48.0",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "Hẹp ống sống",
+              "code": "M48.00",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:M48.00",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "hẹp ống sống"
+        },
+        {
+          "alias": "Hội chứng ruột kích thích",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Hội chứng ruột kích thích",
+              "code": "K58",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K58",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "hội chứng ruột kích thích",
+              "code": "K58.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K58.9",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "hội chứng ruột kích thích"
+        },
+        {
           "alias": "Hội chứng Turner",
           "code_systems": [
             "ICD-10"
@@ -1723,6 +2798,174 @@
             }
           ],
           "normalized_alias": "hội chứng turner"
+        },
+        {
+          "alias": "Hở van ba lá",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Hở van ba lá",
+              "code": "I07.1",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I07.1",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "hở van ba lá",
+              "code": "I36.1",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I36.1",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "hở van ba lá"
+        },
+        {
+          "alias": "infection",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "infection",
+              "code": "B99",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:B99",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "infection",
+              "code": "B99.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:B99.9",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "infection"
+        },
+        {
+          "alias": "Irritable bowel syndrome",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Irritable bowel syndrome",
+              "code": "K58",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K58",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "irritable bowel syndrome",
+              "code": "K58.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K58.9",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "irritable bowel syndrome"
+        },
+        {
+          "alias": "khối máu tụ dưới màng cứng",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "khối máu tụ dưới màng cứng",
+              "code": "I62.0",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I62.0",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "khối máu tụ dưới màng cứng",
+              "code": "I62.00",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I62.00",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "khối máu tụ dưới màng cứng"
+        },
+        {
+          "alias": "Laxis",
+          "code_systems": [
+            "RxNorm"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Laxis",
+              "code": "1719290",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:1719290",
+              "semantic_type": "DRUG"
+            },
+            {
+              "alias": "Laxis",
+              "code": "4603",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:4603",
+              "semantic_type": "DRUG"
+            }
+          ],
+          "normalized_alias": "laxis"
+        },
+        {
+          "alias": "Levofloxacin",
+          "code_systems": [
+            "RxNorm"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "levofloxacin",
+              "code": "1665515",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:1665515",
+              "semantic_type": "DRUG"
+            },
+            {
+              "alias": "Levofloxacin",
+              "code": "82122",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:82122",
+              "semantic_type": "DRUG"
+            }
+          ],
+          "normalized_alias": "levofloxacin"
+        },
+        {
+          "alias": "Liệt hai chân",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "liệt hai chân",
+              "code": "G82.2",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:G82.2",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "Liệt hai chân",
+              "code": "G82.20",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:G82.20",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "liệt hai chân"
         },
         {
           "alias": "lorazepam Injectable Solution [Ativan]",
@@ -1797,6 +3040,342 @@
           "normalized_alias": "lorazepam oral tablet ativan"
         },
         {
+          "alias": "Loét tá tràng",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Loét tá tràng",
+              "code": "K26",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K26",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "loét tá tràng",
+              "code": "K26.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K26.9",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "loét tá tràng"
+        },
+        {
+          "alias": "lung cancer",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "lung cancer",
+              "code": "C34",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:C34",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "lung cancer",
+              "code": "C34.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:C34.9",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "lung cancer"
+        },
+        {
+          "alias": "malignant neoplasm of breast",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "malignant neoplasm of breast",
+              "code": "C50.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:C50.9",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "malignant neoplasm of breast",
+              "code": "C50.919",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:C50.919",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "malignant neoplasm of breast"
+        },
+        {
+          "alias": "Methylprednisolone",
+          "code_systems": [
+            "RxNorm"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "methylprednisolone",
+              "code": "1743704",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:1743704",
+              "semantic_type": "DRUG"
+            },
+            {
+              "alias": "Methylprednisolone",
+              "code": "6902",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:6902",
+              "semantic_type": "DRUG"
+            }
+          ],
+          "normalized_alias": "methylprednisolone"
+        },
+        {
+          "alias": "Metoprolol",
+          "code_systems": [
+            "RxNorm"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Metoprolol",
+              "code": "6918",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:6918",
+              "semantic_type": "DRUG"
+            },
+            {
+              "alias": "metoprolol",
+              "code": "866508",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:866508",
+              "semantic_type": "DRUG"
+            }
+          ],
+          "normalized_alias": "metoprolol"
+        },
+        {
+          "alias": "metoprolol tartrate",
+          "code_systems": [
+            "RxNorm"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "metoprolol tartrate",
+              "code": "6918",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:6918",
+              "semantic_type": "DRUG"
+            },
+            {
+              "alias": "metoprolol tartrate",
+              "code": "866508",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:866508",
+              "semantic_type": "DRUG"
+            }
+          ],
+          "normalized_alias": "metoprolol tartrate"
+        },
+        {
+          "alias": "ngưng thở khi ngủ",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Ngưng thở khi ngủ",
+              "code": "G47.3",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:G47.3",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "ngưng thở khi ngủ",
+              "code": "G47.30",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:G47.30",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "ngưng thở khi ngủ"
+        },
+        {
+          "alias": "ngừng thở khi ngủ",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "ngừng thở khi ngủ",
+              "code": "G47.3",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:G47.3",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "ngừng thở khi ngủ",
+              "code": "G47.30",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:G47.30",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "ngừng thở khi ngủ"
+        },
+        {
+          "alias": "nhiễm khuẩn",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "nhiễm khuẩn",
+              "code": "B99",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:B99",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "nhiễm khuẩn",
+              "code": "B99.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:B99.9",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "nhiễm khuẩn"
+        },
+        {
+          "alias": "nhiễm trùng",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "nhiễm trùng",
+              "code": "B99",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:B99",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "nhiễm trùng",
+              "code": "B99.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:B99.9",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "nhiễm trùng"
+        },
+        {
+          "alias": "não úng thủy",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "não úng thủy",
+              "code": "G91",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:G91",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "não úng thủy",
+              "code": "G91.8",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:G91.8",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "não úng thủy"
+        },
+        {
+          "alias": "paraplegia",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "paraplegia",
+              "code": "G82.2",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:G82.2",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "paraplegia",
+              "code": "G82.20",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:G82.20",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "paraplegia"
+        },
+        {
+          "alias": "Paraplegia, unspecified",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Paraplegia, unspecified",
+              "code": "G82.2",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:G82.2",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "Paraplegia, unspecified",
+              "code": "G82.20",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:G82.20",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "paraplegia unspecified"
+        },
+        {
+          "alias": "PE",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "PE",
+              "code": "I26.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I26.9",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "PE",
+              "code": "I26.99",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I26.99",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "pe"
+        },
+        {
           "alias": "Percocet",
           "code_systems": [
             "RxNorm"
@@ -1819,6 +3398,102 @@
             }
           ],
           "normalized_alias": "percocet"
+        },
+        {
+          "alias": "piperacillin / tazobactam",
+          "code_systems": [
+            "RxNorm"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "piperacillin / tazobactam",
+              "code": "74169",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:74169",
+              "semantic_type": "DRUG"
+            },
+            {
+              "alias": "piperacillin / tazobactam",
+              "code": "74170",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:74170",
+              "semantic_type": "DRUG"
+            }
+          ],
+          "normalized_alias": "piperacillin / tazobactam"
+        },
+        {
+          "alias": "Prochlorperazine",
+          "code_systems": [
+            "RxNorm"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "prochlorperazine",
+              "code": "203546",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:203546",
+              "semantic_type": "DRUG"
+            },
+            {
+              "alias": "Prochlorperazine",
+              "code": "8704",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:8704",
+              "semantic_type": "DRUG"
+            }
+          ],
+          "normalized_alias": "prochlorperazine"
+        },
+        {
+          "alias": "pulmonary embolism",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "pulmonary embolism",
+              "code": "I26.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I26.9",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "pulmonary embolism",
+              "code": "I26.99",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I26.99",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "pulmonary embolism"
+        },
+        {
+          "alias": "radiculopathy",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Radiculopathy",
+              "code": "M54.1",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:M54.1",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "radiculopathy",
+              "code": "M54.10",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:M54.10",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "radiculopathy"
         },
         {
           "alias": "Rối loạn cảm xúc lưỡng cực",
@@ -1869,32 +3544,248 @@
           "normalized_alias": "rối loạn thị giác"
         },
         {
-          "alias": "Tâm thần phân liệt",
+          "alias": "SDH",
           "code_systems": [
             "ICD-10"
           ],
           "concept_count": 2,
           "concepts": [
             {
-              "alias": "Tâm thần phân liệt",
-              "code": "F20",
+              "alias": "SDH",
+              "code": "I62.0",
               "code_system": "ICD-10",
-              "concept_id": "ICD10:F20",
+              "concept_id": "ICD10:I62.0",
               "semantic_type": "DISEASE"
             },
             {
-              "alias": "Tâm thần phân liệt",
-              "code": "F20.9",
+              "alias": "SDH",
+              "code": "S06.5",
               "code_system": "ICD-10",
-              "concept_id": "ICD10:F20.9",
+              "concept_id": "ICD10:S06.5",
               "semantic_type": "DISEASE"
             }
           ],
-          "normalized_alias": "tâm thần phân liệt"
+          "normalized_alias": "sdh"
+        },
+        {
+          "alias": "sleep apnea",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "sleep apnea",
+              "code": "G47.3",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:G47.3",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "sleep apnea",
+              "code": "G47.30",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:G47.30",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "sleep apnea"
+        },
+        {
+          "alias": "Solu-Medrol",
+          "code_systems": [
+            "RxNorm"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Solu-Medrol",
+              "code": "1743704",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:1743704",
+              "semantic_type": "DRUG"
+            },
+            {
+              "alias": "Solu-Medrol",
+              "code": "6902",
+              "code_system": "RxNorm",
+              "concept_id": "RXNORM:6902",
+              "semantic_type": "DRUG"
+            }
+          ],
+          "normalized_alias": "solu-medrol"
+        },
+        {
+          "alias": "spinal stenosis",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Spinal stenosis",
+              "code": "M48.0",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:M48.0",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "spinal stenosis",
+              "code": "M48.00",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:M48.00",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "spinal stenosis"
+        },
+        {
+          "alias": "subdural hemorrhage",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "subdural hemorrhage",
+              "code": "I62.0",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I62.0",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "subdural hemorrhage",
+              "code": "I62.00",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:I62.00",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "subdural hemorrhage"
+        },
+        {
+          "alias": "Suy giảm miễn dịch",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "suy giảm miễn dịch",
+              "code": "D84.8",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:D84.8",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "Suy giảm miễn dịch",
+              "code": "D84.9",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:D84.9",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "suy giảm miễn dịch"
+        },
+        {
+          "alias": "suy giảm miễn dịch do sử dụng corticoid kéo dài",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "Suy giảm miễn dịch do sử dụng corticoid kéo dài",
+              "code": "D84.8",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:D84.8",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "suy giảm miễn dịch do sử dụng corticoid kéo dài",
+              "code": "D84.821",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:D84.821",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "suy giảm miễn dịch do sử dụng corticoid kéo dài"
+        },
+        {
+          "alias": "sỏi mật",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "sỏi mật",
+              "code": "K80.2",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K80.2",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "sỏi mật",
+              "code": "K80.20",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K80.20",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "sỏi mật"
+        },
+        {
+          "alias": "sỏi túi mật",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "sỏi túi mật",
+              "code": "K80.2",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K80.2",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "sỏi túi mật",
+              "code": "K80.20",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K80.20",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "sỏi túi mật"
+        },
+        {
+          "alias": "sỏi ống mật",
+          "code_systems": [
+            "ICD-10"
+          ],
+          "concept_count": 2,
+          "concepts": [
+            {
+              "alias": "sỏi ống mật",
+              "code": "K80.5",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K80.5",
+              "semantic_type": "DISEASE"
+            },
+            {
+              "alias": "sỏi ống mật",
+              "code": "K80.50",
+              "code_system": "ICD-10",
+              "concept_id": "ICD10:K80.50",
+              "semantic_type": "DISEASE"
+            }
+          ],
+          "normalized_alias": "sỏi ống mật"
         }
       ],
       "blocked_alias_count": 1,
-      "broad_alias_count": 107,
+      "broad_alias_count": 168,
       "broad_aliases": [
         {
           "alias": "sepsis",
@@ -2498,69 +4389,71 @@
         }
       ],
       "by_code_system": {
-        "ICD-10": 149,
+        "ICD-10": 275,
         "LOCAL": 56,
-        "RxNorm": 119
+        "RxNorm": 139
       },
       "by_semantic_type": {
-        "DISEASE": 149,
-        "DRUG": 119,
+        "DISEASE": 275,
+        "DRUG": 139,
         "LAB_TEST": 26,
         "SYMPTOM": 30
       },
       "by_source": {
-        "cdc_icd10cm_2026": 94,
-        "icd10_vn_tt06_2026": 115,
+        "cdc_icd10cm_2026": 178,
+        "icd10_vn_tt06_2026": 226,
         "icd_kcb_vn": 41,
         "medlineplus_xml": 51,
-        "rxnav_rest_2026_07_04": 54,
-        "rxnorm_current": 70,
-        "rxnorm_prescribable_2026_06_01": 116,
+        "rxnav_rest_2026_07_04": 55,
+        "rxnorm_current": 71,
+        "rxnorm_prescribable_2026_06_01": 135,
         "seed": 39,
         "vn_clinical_lexicon_reviewed_2026_07_05": 26,
-        "who_icd10_2019": 76
+        "who_icd10_2019": 157
       },
       "duplicate_codes": [],
       "duplicate_concept_ids": [],
       "icd10_hierarchy": {
         "by_chapter": {
-          "I": 10,
-          "II": 13,
-          "III": 5,
-          "IV": 11,
-          "IX": 32,
-          "V": 11,
-          "VI": 7,
+          "I": 14,
+          "II": 23,
+          "III": 7,
+          "IV": 19,
+          "IX": 59,
+          "V": 15,
+          "VI": 13,
           "VII": 5,
-          "X": 10,
-          "XI": 17,
-          "XII": 2,
-          "XIII": 5,
-          "XIV": 9,
-          "XIX": 4,
+          "X": 21,
+          "XI": 33,
+          "XII": 6,
+          "XIII": 14,
+          "XIV": 14,
+          "XIX": 13,
+          "XV": 1,
           "XVII": 4,
-          "XVIII": 4
+          "XVIII": 13,
+          "XXI": 1
         },
-        "rows": 149,
-        "with_block": 132,
-        "with_chapter": 149,
-        "with_parent_code": 133
+        "rows": 275,
+        "with_block": 251,
+        "with_chapter": 275,
+        "with_parent_code": 252
       },
       "missing_source_rows": 0,
       "path": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
-      "row_count": 324,
+      "row_count": 470,
       "rxnorm_enrichment": {
         "inactive_or_obsolete": 1,
-        "rows": 119,
-        "with_brand_name": 108,
-        "with_dose_form": 113,
-        "with_ingredient": 119,
-        "with_status": 116,
-        "with_strength": 16
+        "rows": 139,
+        "with_brand_name": 116,
+        "with_dose_form": 125,
+        "with_ingredient": 132,
+        "with_status": 135,
+        "with_strength": 28
       },
-      "unique_alias_count": 1309,
-      "unique_codes": 324,
-      "unique_concept_ids": 324,
+      "unique_alias_count": 2002,
+      "unique_codes": 470,
+      "unique_concept_ids": 470,
       "unknown_mention_candidates": [
         {
           "count": 86,
@@ -2994,11 +4887,6 @@
         },
         {
           "count": 9,
-          "normalized": "bệnh thận",
-          "term": "bệnh thận"
-        },
-        {
-          "count": 9,
           "normalized": "thận mạn",
           "term": "thận mạn"
         },
@@ -3061,6 +4949,11 @@
           "count": 8,
           "normalized": "huyết áp không",
           "term": "huyết áp không"
+        },
+        {
+          "count": 8,
+          "normalized": "màng phổi",
+          "term": "màng phổi"
         }
       ],
       "unknown_source_ids": {}
@@ -4737,6 +6630,66 @@
     },
     {
       "exists": true,
+      "md5": "33acdc0176af35808f91b3fc74ff2bb4",
+      "path": "data/standards/rxnorm/raw/RxNorm_full_07062026.zip",
+      "required": false,
+      "role": "bundled_raw_zip",
+      "sha256": "53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c",
+      "size_bytes": 259313098,
+      "source_id": "rxnorm_prescribable_2026_07_06"
+    },
+    {
+      "exists": true,
+      "md5": "09abf4a696a3c2bc5a2b63edff1dabe3",
+      "path": "data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl",
+      "required": true,
+      "role": "concept_rows_jsonl",
+      "sha256": "a24997240080023175b7b662d272fa869bee82e12eae5e5c01488384b98ce69a",
+      "size_bytes": 28798243,
+      "source_id": "rxnorm_prescribable_2026_07_06"
+    },
+    {
+      "exists": true,
+      "md5": "3c0f3efb0ff2805fead5961b288d39f5",
+      "path": "data/standards/rxnorm/processed/rxnorm_prescribable_07062026_import_manifest.json",
+      "required": true,
+      "role": "import_manifest",
+      "sha256": "b0f2d5020a049899ed7cb8a4ddc97d935d8678a8339e44efce7fbe1b08e93b82",
+      "size_bytes": 5271,
+      "source_id": "rxnorm_prescribable_2026_07_06"
+    },
+    {
+      "exists": true,
+      "md5": "33acdc0176af35808f91b3fc74ff2bb4",
+      "path": "data/standards/rxnorm/raw/RxNorm_full_07062026.zip",
+      "required": false,
+      "role": "bundled_raw_zip",
+      "sha256": "53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c",
+      "size_bytes": 259313098,
+      "source_id": "rxnorm_full_2026_07_06"
+    },
+    {
+      "exists": true,
+      "md5": "c93a40b1de76a07fdc16aefaa4c7c2ae",
+      "path": "data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl",
+      "required": true,
+      "role": "concept_rows_jsonl",
+      "sha256": "42faaadeb12222ec099f05c398f3ff858866cb694cbb6dc0cb193f0ea23359cb",
+      "size_bytes": 46502437,
+      "source_id": "rxnorm_full_2026_07_06"
+    },
+    {
+      "exists": true,
+      "md5": "05a859c1f61274fbf6d0becc455e389a",
+      "path": "data/standards/rxnorm/processed/rxnorm_full_07062026_import_manifest.json",
+      "required": true,
+      "role": "import_manifest",
+      "sha256": "1681c1750cd8b9af56a4a12476e8d7d2920260f6da9c51ec7dcc8cb1a07a6ebc",
+      "size_bytes": 5446,
+      "source_id": "rxnorm_full_2026_07_06"
+    },
+    {
+      "exists": true,
       "md5": "143cd8ddb3eff83ad991e3f436f9f0f2",
       "path": "data/standards/icd10_vn/processed/tt06_icd10_extract.jsonl",
       "required": true,
@@ -6062,6 +8015,68 @@
       "severity": "high"
     },
     {
+      "alias": "AF",
+      "concepts": [
+        {
+          "alias": "AF",
+          "code": "I48",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I48",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "AF",
+          "code": "I48.9",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I48.9",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "AF",
+          "code": "I48.91",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I48.91",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "af",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "atrial fibrillation",
+      "concepts": [
+        {
+          "alias": "atrial fibrillation",
+          "code": "I48",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I48",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "atrial fibrillation",
+          "code": "I48.9",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I48.9",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "atrial fibrillation",
+          "code": "I48.91",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I48.91",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "atrial fibrillation",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
       "alias": "Levophed",
       "concepts": [
         {
@@ -6124,6 +8139,123 @@
       "severity": "high"
     },
     {
+      "alias": "Rung nhĩ",
+      "concepts": [
+        {
+          "alias": "rung nhĩ",
+          "code": "I48",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I48",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "rung nhĩ",
+          "code": "I48.9",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I48.9",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "Rung nhĩ",
+          "code": "I48.91",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I48.91",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "rung nhĩ",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "subdural hematoma",
+      "concepts": [
+        {
+          "alias": "subdural hematoma",
+          "code": "I62.0",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I62.0",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "subdural hematoma",
+          "code": "I62.00",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I62.00",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "subdural hematoma",
+          "code": "S06.5",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:S06.5",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "subdural hematoma",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "Xơ vữa động mạch",
+      "concepts": [
+        {
+          "alias": "xơ vữa động mạch",
+          "code": "I70.8",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I70.8",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "xơ vữa động mạch",
+          "code": "I70.9",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I70.9",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "Xơ vữa động mạch",
+          "code": "I70.90",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I70.90",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "xơ vữa động mạch",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "Albuterol / ipratropium",
+      "concepts": [
+        {
+          "alias": "albuterol / ipratropium",
+          "code": "1437702",
+          "code_system": "RxNorm",
+          "concept_id": "RXNORM:1437702",
+          "semantic_type": "DRUG"
+        },
+        {
+          "alias": "Albuterol / ipratropium",
+          "code": "214199",
+          "code_system": "RxNorm",
+          "concept_id": "RXNORM:214199",
+          "semantic_type": "DRUG"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "albuterol / ipratropium",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
       "alias": "Alka-Seltzer",
       "concepts": [
         {
@@ -6144,6 +8276,150 @@
       "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
       "issue_type": "ambiguous_alias",
       "normalized_alias": "alka-seltzer",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "Angina pectoris",
+      "concepts": [
+        {
+          "alias": "Angina pectoris",
+          "code": "I20",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I20",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "angina pectoris",
+          "code": "I20.8",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I20.8",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "angina pectoris",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "aortic dissection",
+      "concepts": [
+        {
+          "alias": "aortic dissection",
+          "code": "I71.0",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I71.0",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "aortic dissection",
+          "code": "I71.00",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I71.00",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "aortic dissection",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "Apixaban",
+      "concepts": [
+        {
+          "alias": "Apixaban",
+          "code": "1364430",
+          "code_system": "RxNorm",
+          "concept_id": "RXNORM:1364430",
+          "semantic_type": "DRUG"
+        },
+        {
+          "alias": "apixaban",
+          "code": "1364445",
+          "code_system": "RxNorm",
+          "concept_id": "RXNORM:1364445",
+          "semantic_type": "DRUG"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "apixaban",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "Aspirin",
+      "concepts": [
+        {
+          "alias": "Aspirin",
+          "code": "1191",
+          "code_system": "RxNorm",
+          "concept_id": "RXNORM:1191",
+          "semantic_type": "DRUG"
+        },
+        {
+          "alias": "aspirin",
+          "code": "212033",
+          "code_system": "RxNorm",
+          "concept_id": "RXNORM:212033",
+          "semantic_type": "DRUG"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "aspirin",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "Atelectasis",
+      "concepts": [
+        {
+          "alias": "atelectasis",
+          "code": "J98.1",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:J98.1",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "Atelectasis",
+          "code": "J98.11",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:J98.11",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "atelectasis",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "atherosclerosis",
+      "concepts": [
+        {
+          "alias": "atherosclerosis",
+          "code": "I70.9",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I70.9",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "atherosclerosis",
+          "code": "I70.90",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I70.90",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "atherosclerosis",
       "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
       "severity": "high"
     },
@@ -6172,13 +8448,37 @@
       "severity": "high"
     },
     {
+      "alias": "atrial flutter",
+      "concepts": [
+        {
+          "alias": "atrial flutter",
+          "code": "I48",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I48",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "atrial flutter",
+          "code": "I48.9",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I48.9",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "atrial flutter",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
       "alias": "Augmentin",
       "concepts": [
         {
           "alias": "Augmentin",
-          "code": "151392",
+          "code": "19711",
           "code_system": "RxNorm",
-          "concept_id": "RXNORM:151392",
+          "concept_id": "RXNORM:19711",
           "semantic_type": "DRUG"
         },
         {
@@ -6216,6 +8516,54 @@
       "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
       "issue_type": "ambiguous_alias",
       "normalized_alias": "bipolar affective disorder",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "breast cancer",
+      "concepts": [
+        {
+          "alias": "breast cancer",
+          "code": "C50.9",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:C50.9",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "breast cancer",
+          "code": "C50.919",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:C50.919",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "breast cancer",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "Bronchiectasis",
+      "concepts": [
+        {
+          "alias": "Bronchiectasis",
+          "code": "J47",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:J47",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "bronchiectasis",
+          "code": "J47.9",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:J47.9",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "bronchiectasis",
       "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
       "severity": "high"
     },
@@ -6268,6 +8616,253 @@
       "severity": "high"
     },
     {
+      "alias": "Bệnh rễ thần kinh",
+      "concepts": [
+        {
+          "alias": "bệnh rễ thần kinh",
+          "code": "M54.1",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:M54.1",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "Bệnh rễ thần kinh",
+          "code": "M54.10",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:M54.10",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "bệnh rễ thần kinh",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "bệnh rễ thần kinh tuỷ sống",
+      "concepts": [
+        {
+          "alias": "bệnh rễ thần kinh tuỷ sống",
+          "code": "M54.1",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:M54.1",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "bệnh rễ thần kinh tuỷ sống",
+          "code": "M54.10",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:M54.10",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "bệnh rễ thần kinh tuỷ sống",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "bệnh tim mạch do xơ vữa động mạch",
+      "concepts": [
+        {
+          "alias": "bệnh tim mạch do xơ vữa động mạch",
+          "code": "I25.0",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I25.0",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "Bệnh tim mạch do xơ vữa động mạch",
+          "code": "I25.1",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I25.1",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "bệnh tim mạch do xơ vữa động mạch",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "cellulitis",
+      "concepts": [
+        {
+          "alias": "cellulitis",
+          "code": "L03.9",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:L03.9",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "cellulitis",
+          "code": "L03.90",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:L03.90",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "cellulitis",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "Cellulitis, unspecified",
+      "concepts": [
+        {
+          "alias": "Cellulitis, unspecified",
+          "code": "L03.9",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:L03.9",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "cellulitis unspecified",
+          "code": "L03.9",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:L03.9",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "Cellulitis, unspecified",
+          "code": "L03.90",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:L03.90",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "cellulitis unspecified",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "choledocholithiasis",
+      "concepts": [
+        {
+          "alias": "choledocholithiasis",
+          "code": "K80.5",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:K80.5",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "choledocholithiasis",
+          "code": "K80.50",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:K80.50",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "choledocholithiasis",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "cholelithiasis",
+      "concepts": [
+        {
+          "alias": "cholelithiasis",
+          "code": "K80.2",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:K80.2",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "cholelithiasis",
+          "code": "K80.20",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:K80.20",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "cholelithiasis",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "Compazine",
+      "concepts": [
+        {
+          "alias": "Compazine",
+          "code": "203546",
+          "code_system": "RxNorm",
+          "concept_id": "RXNORM:203546",
+          "semantic_type": "DRUG"
+        },
+        {
+          "alias": "Compazine",
+          "code": "8704",
+          "code_system": "RxNorm",
+          "concept_id": "RXNORM:8704",
+          "semantic_type": "DRUG"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "compazine",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "Coumadin",
+      "concepts": [
+        {
+          "alias": "Coumadin",
+          "code": "11289",
+          "code_system": "RxNorm",
+          "concept_id": "RXNORM:11289",
+          "semantic_type": "DRUG"
+        },
+        {
+          "alias": "Coumadin",
+          "code": "855318",
+          "code_system": "RxNorm",
+          "concept_id": "RXNORM:855318",
+          "semantic_type": "DRUG"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "coumadin",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "cuồng nhĩ",
+      "concepts": [
+        {
+          "alias": "cuồng nhĩ",
+          "code": "I48",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I48",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "cuồng nhĩ",
+          "code": "I48.9",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I48.9",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "cuồng nhĩ",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
       "alias": "Cơn đau thắt ngực",
       "concepts": [
         {
@@ -6288,6 +8883,198 @@
       "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
       "issue_type": "ambiguous_alias",
       "normalized_alias": "cơn đau thắt ngực",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "deep vein thrombosis",
+      "concepts": [
+        {
+          "alias": "deep vein thrombosis",
+          "code": "I80.2",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I80.2",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "deep vein thrombosis",
+          "code": "I82.40",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I82.40",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "deep vein thrombosis",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "dissection of aorta",
+      "concepts": [
+        {
+          "alias": "dissection of aorta",
+          "code": "I71.0",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I71.0",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "dissection of aorta",
+          "code": "I71.00",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I71.00",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "dissection of aorta",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "Duodenal ulcer",
+      "concepts": [
+        {
+          "alias": "Duodenal ulcer",
+          "code": "K26",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:K26",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "duodenal ulcer",
+          "code": "K26.9",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:K26.9",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "duodenal ulcer",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "DVT",
+      "concepts": [
+        {
+          "alias": "DVT",
+          "code": "I80.2",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I80.2",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "DVT",
+          "code": "I82.40",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:I82.40",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "dvt",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "Eliquis",
+      "concepts": [
+        {
+          "alias": "Eliquis",
+          "code": "1364430",
+          "code_system": "RxNorm",
+          "concept_id": "RXNORM:1364430",
+          "semantic_type": "DRUG"
+        },
+        {
+          "alias": "eliquis",
+          "code": "1364445",
+          "code_system": "RxNorm",
+          "concept_id": "RXNORM:1364445",
+          "semantic_type": "DRUG"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "eliquis",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "Epilepsy",
+      "concepts": [
+        {
+          "alias": "Epilepsy",
+          "code": "G40",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:G40",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "epilepsy",
+          "code": "G40.9",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:G40.9",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "epilepsy",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "Furosemide",
+      "concepts": [
+        {
+          "alias": "furosemide",
+          "code": "1719290",
+          "code_system": "RxNorm",
+          "concept_id": "RXNORM:1719290",
+          "semantic_type": "DRUG"
+        },
+        {
+          "alias": "Furosemide",
+          "code": "4603",
+          "code_system": "RxNorm",
+          "concept_id": "RXNORM:4603",
+          "semantic_type": "DRUG"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "furosemide",
+      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
+      "severity": "high"
+    },
+    {
+      "alias": "gallstone",
+      "concepts": [
+        {
+          "alias": "gallstone",
+          "code": "K80.2",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:K80.2",
+          "semantic_type": "DISEASE"
+        },
+        {
+          "alias": "gallstone",
+          "code": "K80.20",
+          "code_system": "ICD-10",
+          "concept_id": "ICD10:K80.20",
+          "semantic_type": "DISEASE"
+        }
+      ],
+      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "issue_type": "ambiguous_alias",
+      "normalized_alias": "gallstone",
       "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
       "severity": "high"
     },
@@ -6316,194 +9103,50 @@
       "severity": "high"
     },
     {
-      "alias": "Hội chứng Turner",
+      "alias": "Giãn phế quản",
       "concepts": [
         {
-          "alias": "Hội chứng Turner",
-          "code": "Q96",
+          "alias": "Giãn phế quản",
+          "code": "J47",
           "code_system": "ICD-10",
-          "concept_id": "ICD10:Q96",
+          "concept_id": "ICD10:J47",
           "semantic_type": "DISEASE"
         },
         {
-          "alias": "Hội chứng Turner",
-          "code": "Q96.9",
+          "alias": "Giãn phế quản",
+          "code": "J47.9",
           "code_system": "ICD-10",
-          "concept_id": "ICD10:Q96.9",
+          "concept_id": "ICD10:J47.9",
           "semantic_type": "DISEASE"
         }
       ],
       "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
       "issue_type": "ambiguous_alias",
-      "normalized_alias": "hội chứng turner",
+      "normalized_alias": "giãn phế quản",
       "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
       "severity": "high"
     },
     {
-      "alias": "lorazepam Injectable Solution [Ativan]",
+      "alias": "Glucose",
       "concepts": [
         {
-          "alias": "lorazepam Injectable Solution [Ativan]",
-          "code": "372645",
-          "code_system": "RxNorm",
-          "concept_id": "RXNORM:372645",
-          "semantic_type": "DRUG"
+          "alias": "Glucose",
+          "code": "GLUCOSE",
+          "code_system": "LOCAL",
+          "concept_id": "LOCAL:TEST_GLUCOSE",
+          "semantic_type": "LAB_TEST"
         },
         {
-          "alias": "lorazepam Injectable Solution [Ativan]",
-          "code": "91878",
+          "alias": "glucose",
+          "code": "4850",
           "code_system": "RxNorm",
-          "concept_id": "RXNORM:91878",
+          "concept_id": "RXNORM:4850",
           "semantic_type": "DRUG"
         }
       ],
       "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
       "issue_type": "ambiguous_alias",
-      "normalized_alias": "lorazepam injectable solution ativan",
-      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
-      "severity": "high"
-    },
-    {
-      "alias": "lorazepam Injection [Ativan]",
-      "concepts": [
-        {
-          "alias": "lorazepam Injection [Ativan]",
-          "code": "1665187",
-          "code_system": "RxNorm",
-          "concept_id": "RXNORM:1665187",
-          "semantic_type": "DRUG"
-        },
-        {
-          "alias": "lorazepam Injection [Ativan]",
-          "code": "1665189",
-          "code_system": "RxNorm",
-          "concept_id": "RXNORM:1665189",
-          "semantic_type": "DRUG"
-        }
-      ],
-      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
-      "issue_type": "ambiguous_alias",
-      "normalized_alias": "lorazepam injection ativan",
-      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
-      "severity": "high"
-    },
-    {
-      "alias": "lorazepam Oral Tablet [Ativan]",
-      "concepts": [
-        {
-          "alias": "lorazepam Oral Tablet [Ativan]",
-          "code": "372647",
-          "code_system": "RxNorm",
-          "concept_id": "RXNORM:372647",
-          "semantic_type": "DRUG"
-        },
-        {
-          "alias": "lorazepam Oral Tablet [Ativan]",
-          "code": "91879",
-          "code_system": "RxNorm",
-          "concept_id": "RXNORM:91879",
-          "semantic_type": "DRUG"
-        }
-      ],
-      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
-      "issue_type": "ambiguous_alias",
-      "normalized_alias": "lorazepam oral tablet ativan",
-      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
-      "severity": "high"
-    },
-    {
-      "alias": "Percocet",
-      "concepts": [
-        {
-          "alias": "Percocet",
-          "code": "161",
-          "code_system": "RxNorm",
-          "concept_id": "RXNORM:161",
-          "semantic_type": "DRUG"
-        },
-        {
-          "alias": "Percocet",
-          "code": "42844",
-          "code_system": "RxNorm",
-          "concept_id": "RXNORM:42844",
-          "semantic_type": "DRUG"
-        }
-      ],
-      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
-      "issue_type": "ambiguous_alias",
-      "normalized_alias": "percocet",
-      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
-      "severity": "high"
-    },
-    {
-      "alias": "Rối loạn cảm xúc lưỡng cực",
-      "concepts": [
-        {
-          "alias": "Rối loạn cảm xúc lưỡng cực",
-          "code": "F31",
-          "code_system": "ICD-10",
-          "concept_id": "ICD10:F31",
-          "semantic_type": "DISEASE"
-        },
-        {
-          "alias": "Rối loạn cảm xúc lưỡng cực",
-          "code": "F31.9",
-          "code_system": "ICD-10",
-          "concept_id": "ICD10:F31.9",
-          "semantic_type": "DISEASE"
-        }
-      ],
-      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
-      "issue_type": "ambiguous_alias",
-      "normalized_alias": "rối loạn cảm xúc lưỡng cực",
-      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
-      "severity": "high"
-    },
-    {
-      "alias": "Rối loạn thị giác",
-      "concepts": [
-        {
-          "alias": "Rối loạn thị giác",
-          "code": "H53",
-          "code_system": "ICD-10",
-          "concept_id": "ICD10:H53",
-          "semantic_type": "DISEASE"
-        },
-        {
-          "alias": "Rối loạn thị giác",
-          "code": "H53.9",
-          "code_system": "ICD-10",
-          "concept_id": "ICD10:H53.9",
-          "semantic_type": "DISEASE"
-        }
-      ],
-      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
-      "issue_type": "ambiguous_alias",
-      "normalized_alias": "rối loạn thị giác",
-      "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
-      "severity": "high"
-    },
-    {
-      "alias": "Tâm thần phân liệt",
-      "concepts": [
-        {
-          "alias": "Tâm thần phân liệt",
-          "code": "F20",
-          "code_system": "ICD-10",
-          "concept_id": "ICD10:F20",
-          "semantic_type": "DISEASE"
-        },
-        {
-          "alias": "Tâm thần phân liệt",
-          "code": "F20.9",
-          "code_system": "ICD-10",
-          "concept_id": "ICD10:F20.9",
-          "semantic_type": "DISEASE"
-        }
-      ],
-      "dictionary": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
-      "issue_type": "ambiguous_alias",
-      "normalized_alias": "tâm thần phân liệt",
+      "normalized_alias": "glucose",
       "notes": "Alias maps to multiple concepts; decide blocklist, type-specific rule, or preferred concept.",
       "severity": "high"
     },
@@ -7461,7 +10104,7 @@
   "registry": {
     "issues": [],
     "path": "data/sources/medical_resource_registry.yaml",
-    "resource_count": 19,
+    "resource_count": 21,
     "resources": [
       {
         "access": "open",
@@ -7651,7 +10294,7 @@
         "id": "rxnorm_current",
         "license": "nlm_rxnorm_terms",
         "name": "RxNorm current release and RxNav API",
-        "notes": "Generic current-release pointer; Phase 1 locked source is June 1 2026 in data/standards/source_versions.json.",
+        "notes": "Generic current-release pointer; Phase 1 remains locked to June 1 2026 while the imported July 6 candidate is evaluated.",
         "release_date": "2026-06-01",
         "url": "https://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html",
         "use": "rxnorm_generic_current_pointer",
@@ -7678,6 +10321,35 @@
         "url": "https://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html",
         "use": "phase1_rxnorm_fallback_drug_codes",
         "version": "2026-06-01"
+      },
+      {
+        "access": "local_licensed_copy",
+        "category": "terminology",
+        "id": "rxnorm_full_2026_07_06",
+        "license": "nlm_rxnorm_terms",
+        "local_files": [
+          {
+            "path": "data/standards/rxnorm/raw/RxNorm_full_07062026.zip",
+            "required": false,
+            "role": "bundled_raw_zip"
+          },
+          {
+            "path": "data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl",
+            "required": true,
+            "role": "concept_rows_jsonl"
+          },
+          {
+            "path": "data/standards/rxnorm/processed/rxnorm_full_07062026_import_manifest.json",
+            "required": true,
+            "role": "import_manifest"
+          }
+        ],
+        "name": "RxNorm Full Monthly Release July 6 2026",
+        "notes": "Imported from the root rrf subtree; includes active BN fallback terms absent from Prescribable Content.",
+        "release_date": "2026-07-06",
+        "url": "https://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html",
+        "use": "candidate_fallback_not_locked_phase1",
+        "version": "2026-07-06"
       },
       {
         "access": "open_with_terms",
@@ -7710,6 +10382,35 @@
         "url": "https://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html",
         "use": "phase1_rxnorm_primary_drug_codes",
         "version": "2026-06-01"
+      },
+      {
+        "access": "local_licensed_copy",
+        "category": "terminology",
+        "id": "rxnorm_prescribable_2026_07_06",
+        "license": "nlm_rxnorm_terms",
+        "local_files": [
+          {
+            "path": "data/standards/rxnorm/raw/RxNorm_full_07062026.zip",
+            "required": false,
+            "role": "bundled_raw_zip"
+          },
+          {
+            "path": "data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl",
+            "required": true,
+            "role": "concept_rows_jsonl"
+          },
+          {
+            "path": "data/standards/rxnorm/processed/rxnorm_prescribable_07062026_import_manifest.json",
+            "required": true,
+            "role": "import_manifest"
+          }
+        ],
+        "name": "RxNorm Current Prescribable Content Monthly Release July 6 2026",
+        "notes": "Imported from the prescribe/rrf subtree of the July full bundle; pending ablation before promotion.",
+        "release_date": "2026-07-06",
+        "url": "https://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html",
+        "use": "candidate_update_not_locked_phase1",
+        "version": "2026-07-06"
       },
       {
         "access": "local",
@@ -7807,7 +10508,9 @@
       "rxnav_rest_2026_07_04",
       "rxnorm_current",
       "rxnorm_full_2026_06_01",
+      "rxnorm_full_2026_07_06",
       "rxnorm_prescribable_2026_06_01",
+      "rxnorm_prescribable_2026_07_06",
       "seed",
       "synthea",
       "vn_clinical_lexicon_reviewed_2026_07_05",
@@ -7816,6 +10519,8 @@
   },
   "rxnorm_release_profiles": [
     {
+      "archive_member_root": "rrf",
+      "content": "prescribable",
       "path": "data/standards/rxnorm/raw/RxNorm_full_prescribe_06012026.zip",
       "required_files": {
         "RXNCONSO.RRF": true,
@@ -7944,6 +10649,276 @@
         },
         "total_rows": 3319887
       }
+    },
+    {
+      "archive_member_root": "prescribe/rrf",
+      "content": "prescribable",
+      "path": "data/standards/rxnorm/raw/RxNorm_full_07062026.zip",
+      "required_files": {
+        "RXNCONSO.RRF": true,
+        "RXNREL.RRF": true,
+        "RXNSAT.RRF": true
+      },
+      "rxnconso": {
+        "accepted_concepts": 40675,
+        "accepted_term_rows": 40675,
+        "active_concepts": 81377,
+        "active_rxnorm_rows": 140721,
+        "language_counts": {
+          "ENG": 245401
+        },
+        "malformed_rows": 0,
+        "rxnorm_rows": 140721,
+        "suppress_counts": {
+          "N": 140721
+        },
+        "total_rows": 245401,
+        "tty_counts": {
+          "BN": 4139,
+          "BPCK": 701,
+          "DF": 121,
+          "DFG": 43,
+          "GPCK": 601,
+          "IN": 5820,
+          "MIN": 962,
+          "PIN": 1924,
+          "PSN": 21273,
+          "SBD": 8083,
+          "SBDC": 7015,
+          "SBDF": 4974,
+          "SBDFP": 1767,
+          "SBDG": 6691,
+          "SCD": 12055,
+          "SCDC": 10149,
+          "SCDF": 5555,
+          "SCDFP": 2023,
+          "SCDG": 6265,
+          "SCDGP": 2489,
+          "SY": 28302,
+          "TMSY": 9769
+        }
+      },
+      "rxnrel": {
+        "active_rows": 612826,
+        "malformed_rows": 0,
+        "rel_counts": {
+          "RB": 129949,
+          "RN": 129949,
+          "RO": 293566,
+          "SY": 59362
+        },
+        "rela_counts": {
+          "<blank>": 59362,
+          "BOSS_OF": 3357,
+          "CONSISTS_OF": 35614,
+          "CONSTITUTES": 35614,
+          "CONTAINED_IN": 2157,
+          "CONTAINS": 2157,
+          "DOSEFORMGROUP_OF": 12956,
+          "DOSE_FORM_OF": 31969,
+          "FORM_OF": 7910,
+          "HAS_BOSS": 3357,
+          "HAS_DOSEFORMGROUP": 12956,
+          "HAS_DOSE_FORM": 31969,
+          "HAS_FORM": 7910,
+          "HAS_INGREDIENT": 54788,
+          "HAS_INGREDIENTS": 2551,
+          "HAS_PART": 3053,
+          "HAS_PRECISE_INGREDIENT": 4706,
+          "HAS_QUANTIFIED_FORM": 6,
+          "HAS_TRADENAME": 40064,
+          "INGREDIENTS_OF": 2551,
+          "INGREDIENT_OF": 54788,
+          "INVERSE_ISA": 77600,
+          "ISA": 77600,
+          "PART_OF": 3053,
+          "PRECISE_INGREDIENT_OF": 4706,
+          "QUANTIFIED_FORM_OF": 6,
+          "REFORMULATED_TO": 1,
+          "REFORMULATION_OF": 1,
+          "TRADENAME_OF": 40064
+        },
+        "rxnorm_rows": 612826,
+        "suppress_counts": {
+          "<blank>": 612826
+        },
+        "total_rows": 2563978
+      },
+      "rxnsat": {
+        "active_rows": 468682,
+        "attribute_counts": {
+          "NDC": 237678,
+          "ORIG_CODE": 67,
+          "ORIG_SOURCE": 67,
+          "RXN_ACTIVATED": 1873,
+          "RXN_AI": 27420,
+          "RXN_AM": 27420,
+          "RXN_AVAILABLE_STRENGTH": 49030,
+          "RXN_BN_CARDINALITY": 4139,
+          "RXN_BOSS_FROM": 27420,
+          "RXN_BOSS_STRENGTH_DENOM_UNIT": 9573,
+          "RXN_BOSS_STRENGTH_DENOM_VALUE": 9573,
+          "RXN_BOSS_STRENGTH_NUM_UNIT": 9573,
+          "RXN_BOSS_STRENGTH_NUM_VALUE": 9573,
+          "RXN_HUMAN_DRUG": 21434,
+          "RXN_IN_EXPRESSED_FLAG": 2337,
+          "RXN_OBSOLETED": 1888,
+          "RXN_QUALITATIVE_DISTINCTION": 310,
+          "RXN_QUANTITY": 5141,
+          "RXN_STRENGTH": 10149,
+          "RXN_VET_DRUG": 224,
+          "RXTERM_FORM": 13793
+        },
+        "malformed_rows": 0,
+        "rxnorm_rows": 468682,
+        "status_attribute_counts": {
+          "RXN_ACTIVATED": 1873,
+          "RXN_OBSOLETED": 1888,
+          "RXN_QUANTITY": 5141
+        },
+        "suppress_counts": {
+          "N": 468682
+        },
+        "total_rows": 3340763
+      }
+    },
+    {
+      "archive_member_root": "rrf",
+      "content": "full",
+      "path": "data/standards/rxnorm/raw/RxNorm_full_07062026.zip",
+      "required_files": {
+        "RXNCONSO.RRF": true,
+        "RXNREL.RRF": true,
+        "RXNSAT.RRF": true
+      },
+      "rxnconso": {
+        "accepted_concepts": 73912,
+        "accepted_term_rows": 73912,
+        "active_concepts": 128694,
+        "active_rxnorm_rows": 209650,
+        "language_counts": {
+          "ENG": 1202603
+        },
+        "malformed_rows": 0,
+        "rxnorm_rows": 362409,
+        "suppress_counts": {
+          "E": 7155,
+          "N": 202495,
+          "O": 152759
+        },
+        "total_rows": 1202603,
+        "tty_counts": {
+          "BN": 11892,
+          "BPCK": 1008,
+          "DF": 191,
+          "DFG": 47,
+          "ET": 11,
+          "GPCK": 925,
+          "IN": 14648,
+          "MIN": 3841,
+          "PIN": 3643,
+          "PSN": 38936,
+          "SBD": 24060,
+          "SBDC": 19514,
+          "SBDF": 14605,
+          "SBDFP": 5165,
+          "SBDG": 20254,
+          "SCD": 40027,
+          "SCDC": 28326,
+          "SCDF": 15179,
+          "SCDFP": 4542,
+          "SCDG": 16443,
+          "SCDGP": 4816,
+          "SY": 67101,
+          "TMSY": 27235
+        }
+      },
+      "rxnrel": {
+        "active_rows": 2259114,
+        "malformed_rows": 0,
+        "rel_counts": {
+          "RB": 393603,
+          "RN": 393603,
+          "RO": 901920,
+          "SY": 569988
+        },
+        "rela_counts": {
+          "<blank>": 569988,
+          "BOSS_OF": 8774,
+          "CONSISTS_OF": 116818,
+          "CONSTITUTES": 116818,
+          "CONTAINED_IN": 3338,
+          "CONTAINS": 3338,
+          "DOSEFORMGROUP_OF": 36697,
+          "DOSE_FORM_OF": 95804,
+          "FORM_OF": 18169,
+          "HAS_BOSS": 8774,
+          "HAS_DOSEFORMGROUP": 36697,
+          "HAS_DOSE_FORM": 95804,
+          "HAS_FORM": 18169,
+          "HAS_INGREDIENT": 158909,
+          "HAS_INGREDIENTS": 11967,
+          "HAS_PART": 10549,
+          "HAS_PRECISE_INGREDIENT": 12287,
+          "HAS_QUANTIFIED_FORM": 6834,
+          "HAS_TRADENAME": 118543,
+          "INCLUDED_IN": 6267,
+          "INCLUDES": 6267,
+          "INGREDIENTS_OF": 11967,
+          "INGREDIENT_OF": 158909,
+          "INVERSE_ISA": 239554,
+          "ISA": 239554,
+          "PART_OF": 10549,
+          "PRECISE_INGREDIENT_OF": 12287,
+          "QUANTIFIED_FORM_OF": 6834,
+          "REFORMULATED_TO": 53,
+          "REFORMULATION_OF": 53,
+          "TRADENAME_OF": 118543
+        },
+        "rxnorm_rows": 2259114,
+        "suppress_counts": {
+          "<blank>": 2259114
+        },
+        "total_rows": 7423180
+      },
+      "rxnsat": {
+        "active_rows": 817115,
+        "attribute_counts": {
+          "AMBIGUITY_FLAG": 8744,
+          "NDC": 249706,
+          "ORIG_CODE": 135,
+          "ORIG_SOURCE": 135,
+          "RXN_ACTIVATED": 7649,
+          "RXN_AI": 70868,
+          "RXN_AM": 70868,
+          "RXN_AVAILABLE_STRENGTH": 52532,
+          "RXN_BN_CARDINALITY": 11882,
+          "RXN_BOSS_FROM": 70868,
+          "RXN_BOSS_STRENGTH_DENOM_UNIT": 16483,
+          "RXN_BOSS_STRENGTH_DENOM_VALUE": 16483,
+          "RXN_BOSS_STRENGTH_NUM_UNIT": 16483,
+          "RXN_BOSS_STRENGTH_NUM_VALUE": 16483,
+          "RXN_HUMAN_DRUG": 23879,
+          "RXN_IN_EXPRESSED_FLAG": 4518,
+          "RXN_OBSOLETED": 92535,
+          "RXN_QUALITATIVE_DISTINCTION": 377,
+          "RXN_QUANTITY": 7066,
+          "RXN_STRENGTH": 28326,
+          "RXN_VET_DRUG": 1898,
+          "RXTERM_FORM": 49197
+        },
+        "malformed_rows": 0,
+        "rxnorm_rows": 817115,
+        "status_attribute_counts": {
+          "RXN_ACTIVATED": 7649,
+          "RXN_OBSOLETED": 92535,
+          "RXN_QUANTITY": 7066
+        },
+        "suppress_counts": {
+          "N": 817115
+        },
+        "total_rows": 7687120
+      }
     }
   ],
   "schema_version": "medical-source-audit.v1",
@@ -7976,6 +10951,17 @@
         "source_id": "phase1_reviewed_standard_allowlist_2026_07_06"
       },
       "rxnorm": {
+        "candidate_release": {
+          "comparison_file": "data/standards/rxnorm/processed/rxnorm_06012026_to_07062026_comparison.json",
+          "fallback_file": "data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl",
+          "fallback_source_id": "rxnorm_full_2026_07_06",
+          "notes": "July is imported and audited as a promotion candidate; the reproducible Phase 1 baseline remains locked to June until an ablation approves the switch.",
+          "primary_file": "data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl",
+          "primary_source_id": "rxnorm_prescribable_2026_07_06",
+          "raw_file": "data/standards/rxnorm/raw/RxNorm_full_07062026.zip",
+          "release_date": "2026-07-06",
+          "status": "imported_not_promoted"
+        },
         "fallback_file": "RxNorm_full_06012026.zip",
         "fallback_source_id": "rxnorm_full_2026_06_01",
         "notes": "Use prescribable RxNorm as the primary drug dictionary and full monthly release as fallback coverage.",
@@ -8014,11 +11000,11 @@
   "summary": {
     "dictionary_count": 2,
     "false_positive_blocklist_count": 103,
-    "file_count": 17,
-    "manual_review_item_count": 223,
+    "file_count": 23,
+    "manual_review_item_count": 250,
     "missing_required_file_count": 0,
     "registry_issue_count": 0,
-    "registry_resource_count": 19,
-    "rxnorm_release_profile_count": 1
+    "registry_resource_count": 21,
+    "rxnorm_release_profile_count": 3
   }
 }
