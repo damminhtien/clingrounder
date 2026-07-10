@@ -25,8 +25,8 @@ def test_validate_manual_gold_allows_incomplete_review_batch() -> None:
     summary = json.loads(result.stdout)
 
     assert summary["valid"] is True
-    assert summary["reviewed_count"] == 65
-    assert summary["entity_count"] == 1936
+    assert summary["reviewed_count"] == 75
+    assert summary["entity_count"] == 2244
     assert summary["reviewed_files"] == [
         "1.json",
         "2.json",
@@ -80,9 +80,19 @@ def test_validate_manual_gold_allows_incomplete_review_batch() -> None:
         "51.json",
         "52.json",
         "53.json",
+        "54.json",
+        "55.json",
+        "56.json",
+        "57.json",
+        "58.json",
+        "59.json",
+        "60.json",
         "61.json",
         "62.json",
         "63.json",
+        "64.json",
+        "65.json",
+        "66.json",
         "91.json",
         "92.json",
         "93.json",
