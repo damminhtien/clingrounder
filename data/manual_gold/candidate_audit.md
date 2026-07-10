@@ -12,7 +12,7 @@ Rules:
 - Keep drug mentions on RxNorm and disease mentions on ICD-10.
 - Preserve original spans and offsets; this pass only changes candidate lists.
 
-## Files 1-36, 41-45, 93-100
+## Files 1-37, 41-47, 91-100
 
 - `1.json`: filled `viêm tuyến mồ hôi` with ICD-10 `L73.2` after adding the TT06/ICD concept alias.
 - `2.json`: no candidate changes. Existing `K70.3` and `K76.82` remain as controlled-dictionary candidates.
@@ -48,11 +48,16 @@ Rules:
 - `34.json`: used compact ICD candidates `K51.9` and `K70.9`. Kept opioid analgesic class mentions as `THUỐC` with `[]`, and excluded surgery/procedure plus LLQ/anatomic location spans.
 - `35.json`: used compact candidates `C92.1`, RxNorm `282388`, `I10`, `E78.5`, `E11.9`, `M48.0`, `M11.2`, `N18.4`, `N40`, and `R74.0`. Kept symptoms, tests, result values, and nonspecific negated `biến đổi cấp tính` candidate-free; skipped standalone duplicate `Ngã` after the fuller fall-history span.
 - `36.json`: used compact candidates `Q61.3`, `N19`, `B33.8`, `T86.1`, RxNorm `1256`, `42316`, and `68149`. Kept symptoms, tests, and test results candidate-free; excluded procedure-only kidney/ureter reconstruction and biopsy wording.
+- `37.json`: used compact candidates `I10`, `E11.4`, `G62.9`, `I50.9`, `N18.9`, `E87.5`, `J90`, `I51.7`, RxNorm `38413`, `274783`, `6057`, `301542`, `20352`, `4850`, and `4603`. Kept `ngã gần đây` as a historical symptom per revised manual guidance, merged `Creatinine tăng` and fuller potassium result spans, kept `Tăng gánh nhẹ tuần hoàn phổi` as imaging-result text with `[]`, left generic hospital `insulin` candidate-free because RxNorm `5856` is absent from the local June source, and retained malformed lab value `.8` with exact raw offset.
 - `41.json`: used compact GI candidates `A08.4`, `K58.9`, `K26.9`, `K63.3`, `K20`, `K22.1`, and RxNorm `7646`. Did not split `cryptosporidium` or `h. pylori` into diagnoses because they appear only as test target/result context.
 - `42.json`: used compact candidates `I51.9`, `N28.9`, and RxNorm `6813`. Kept current symptoms candidate-free, marked explicit `phủ nhận` symptoms negated, and did not treat `không thể tỉnh táo đủ lâu` as negation.
 - `43.json`: used compact candidates `A49.0`, `I21.9`, and `I35.0`. Kept cardiac tests/procedures candidate-free, retained negated flow-limiting stenosis without a candidate, and excluded surgical recommendation/referral spans.
 - `44.json`: used compact candidates `I48.9`, `I10`, `I50.9`, `E66.9`, RxNorm `4603`, `4917`, `1191`, `7052`, `3423`, `6918`, and `3443`. Kept all symptom mentions candidate-free; did not turn memory uncertainty or treatment non-response phrases into negation.
 - `45.json`: used compact candidates `E11.9`, `I10`, `I67.1`, `I64`, `I65.2`, and `I70.8`. Kept angiography test names candidate-free; excluded elective procedure, stent-assisted coiling/procedure wording, and planned endovascular carotid treatment wording.
+- `46.json`: used compact candidates `I10`, `I95.9`, and `I70.1`. Kept CT and renal angiography names candidate-free, retained intermittent claudication/blood-pressure control symptoms with empty candidates, and excluded bypass/stent procedure wording.
+- `47.json`: used compact candidates `C24.0`, `K83.1`, and `C80`. Kept cholangiogram, biopsy, and brush sampling as test names; kept abnormal-cell phrases as lab results; scoped symptom negation to `phủ nhận` lists; and excluded stent/hepatobiliary procedure wording.
+- `91.json`: used compact candidates `I38`, `I51.9`, `I48.9`, `N18.5`, `T86.1`, RxNorm `855318`, and RxNorm `5224`. Corrected supplied Coumadin candidate `855320` to local RxNorm June SCD `855318` for `warfarin sodium 3 MG Oral Tablet`; kept INR/coagulation tests and results candidate-free; marked current negative symptom review spans as negated; excluded valve surgery, dialysis, vital signs, and generic abnormality wording.
+- `92.json`: used compact candidates `N39.0` for historical drug-resistant UTI and `K59.3` for repeated monitored colonic dilation/megacolon wording. Kept blood tests, CT names, leukocyte-result words, and mental-status symptoms candidate-free; excluded fall-recovery context and generic negative `bất thường` imaging wording.
 - `93.json`: used compact candidates `C50.9`, `J90`, `I31.3`, and `C78.0`. Kept dyspnea candidate-free; excluded pericardial drainage, negated talc pleurodesis, and standalone talc material wording.
 - `94.json`: used compact candidates `C50.9`, RxNorm `56946`, `282357`, `203546`, `215101`, `7052`, and `6470`. Corrected supplied Taxol candidate `196466` to controlled/current RxNorm `56946`, and supplied fulvestrant candidate `727954` to controlled ingredient RxNorm `282357`; kept symptoms candidate-free and excluded vital signs, VAS score, normal/typo mucosa wording, and generic care context.
 - `95.json`: all reviewed entities are symptoms/signs with empty candidates. Kept historical abdominal pain and current abdominal symptoms/signs; marked explicit `không`/`không có` symptom mentions negated; excluded milk intake, normal exam/function descriptions, and nonspecific abnormality wording.
@@ -172,3 +177,12 @@ Controlled dictionary additions in this pass:
 - `1364445` RxNorm apixaban 5 MG Oral Tablet
 - `203546` RxNorm Compazine brand name
 - `215101` RxNorm Aleve brand name
+- `E11.4` Type 2 diabetes mellitus with neurological complications / Bệnh đái tháo đường típ 2, kèm biến chứng thần kinh
+- `4850` RxNorm glucose / dextrose
+- `K59.3` Megacolon, not elsewhere classified / Phình đại tràng, không phân loại mục khác
+- `I70.1` Atherosclerosis of renal artery / Xơ vữa [xơ cứng] động mạch thận
+- `C24.0` Extrahepatic bile duct / U ác tính ở ống mật ngoài gan
+- `C80` Malignant neoplasm, without specification of site / U ác tính, vị trí không xác định
+- `I38` Endocarditis, valve unspecified / Viêm nội tâm mạc, không xác định van
+- `N18.5` Chronic kidney disease, stage 5 / Bệnh thận mạn tính, giai đoạn 5
+- `855318` RxNorm warfarin sodium 3 MG Oral Tablet
