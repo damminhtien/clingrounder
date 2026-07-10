@@ -12,7 +12,7 @@ Rules:
 - Keep drug mentions on RxNorm and disease mentions on ICD-10.
 - Preserve original spans and offsets; this pass only changes candidate lists.
 
-## Files 1-39, 41-47, 91-100
+## Files 1-28, 30-49, 91-100
 
 - `1.json`: filled `viêm tuyến mồ hôi` with ICD-10 `L73.2` after adding the TT06/ICD concept alias.
 - `2.json`: no candidate changes. Existing `K70.3` and `K76.82` remain as controlled-dictionary candidates.
@@ -42,6 +42,7 @@ Rules:
 - `26.json`: used compact ICD candidate `E66.9` for historical obesity. Kept weight-change symptoms candidate-free and excluded diet/surgery context.
 - `27.json`: used compact candidates `Q96.9`, `I10`, `C18.9`, `I26.9`, RxNorm `11289`, RxNorm `214199`, and RxNorm `866508`. Corrected supplied Coumadin candidate `202421` to controlled RxNorm `11289`; kept procedure and generic GI-evaluation wording review-only.
 - `28.json`: used compact candidates `K85.9`, `I48`, `C61`, `F31.8`, RxNorm `1364445`, `K81.0`, `K80.2`, `K81.9`, and `K80.5`. Kept symptoms, tests, and result values candidate-free; excluded prostatectomy/procedure, location, and AMA/admin spans.
+- `30.json`: used compact candidates `C92.1`, `E78.0`, `I10`, `N39.0`, RxNorm `282388`, and RxNorm `519`. Kept generic analgesic mentions as `THUỐC` with `[]`; kept hallucination/perceptual symptoms candidate-free; treated UTI and stopped pre-admission medications as historical; did not mark `Ảo giác không mang tính chất ra lệnh` as negated.
 - `31.json`: used compact ICD candidate `O48` for `Thai 41 tuần`. Kept obstetric symptoms candidate-free and excluded labor-induction wording.
 - `32.json`: used compact candidates `C92.1`, `I10`, `E11.9`, `I48.9`, `N18.9`, `J96.9`, `A41.0`, `I82.9`, `I26.9`, RxNorm `435`, `5032`, and `313988`. Kept leading `ho` history artifacts out of symptom gold.
 - `33.json`: used compact candidates `E66.9`, `E11.9`, `G47.3`, `I50.9`, `R09.0`, RxNorm `4603`, `1808`, `1807513`, `1665515`, `212033`, `1437702`, and `1743704`. Kept oxygen mask, EMS logistics, and diuresis-volume wording review-only.
@@ -51,6 +52,7 @@ Rules:
 - `37.json`: used compact candidates `I10`, `E11.4`, `G62.9`, `I50.9`, `N18.9`, `E87.5`, `J90`, `I51.7`, RxNorm `38413`, `274783`, `6057`, `301542`, `20352`, `4850`, and `4603`. Kept `ngã gần đây` as a historical symptom per revised manual guidance, merged `Creatinine tăng` and fuller potassium result spans, kept `Tăng gánh nhẹ tuần hoàn phổi` as imaging-result text with `[]`, left generic hospital `insulin` candidate-free because RxNorm `5856` is absent from the local June source, and retained malformed lab value `.8` with exact raw offset.
 - `38.json`: used compact candidates `E11.9`, `I25.1`, `I50.9`, and `J02.0`. Kept symptoms, glucose/BUN/creatinine/anion-gap tests, and result values candidate-free; marked family sore-throat context with `isFamily`; marked family streptococcal pharyngitis as both `isFamily` and `isNegated`; excluded standalone stent procedure, throat location, cold drink, and temperature wording.
 - `39.json`: used compact candidates `N17.9`, `E87.8`, `K81.0`, and `K82.2`. Kept symptoms, CBC/CT names, and lab values candidate-free; marked no-nausea/no-vomiting spans negated; excluded abdominal-location wording and gallbladder drain procedure.
+- `40.json`: used compact candidates `E11.9`, `I10`, `E66.9`, `G47.3`, `R09.0`, `J47.9`, `J18.1`, RxNorm `161`, RxNorm `1305603`, and RxNorm `18631`. Corrected supplied `mucinex d` candidate `603849` to local RxNorm June SCD `1305603`; kept symptom/test/result spans candidate-free; treated wife bronchiectasis and azithromycin as `isFamily`; excluded history-artifact `ho` in `ho đái tháo đường`.
 - `41.json`: used compact GI candidates `A08.4`, `K58.9`, `K26.9`, `K63.3`, `K20`, `K22.1`, and RxNorm `7646`. Did not split `cryptosporidium` or `h. pylori` into diagnoses because they appear only as test target/result context.
 - `42.json`: used compact candidates `I51.9`, `N28.9`, and RxNorm `6813`. Kept current symptoms candidate-free, marked explicit `phủ nhận` symptoms negated, and did not treat `không thể tỉnh táo đủ lâu` as negation.
 - `43.json`: used compact candidates `A49.0`, `I21.9`, and `I35.0`. Kept cardiac tests/procedures candidate-free, retained negated flow-limiting stenosis without a candidate, and excluded surgical recommendation/referral spans.
@@ -58,6 +60,8 @@ Rules:
 - `45.json`: used compact candidates `E11.9`, `I10`, `I67.1`, `I64`, `I65.2`, and `I70.8`. Kept angiography test names candidate-free; excluded elective procedure, stent-assisted coiling/procedure wording, and planned endovascular carotid treatment wording.
 - `46.json`: used compact candidates `I10`, `I95.9`, and `I70.1`. Kept CT and renal angiography names candidate-free, retained intermittent claudication/blood-pressure control symptoms with empty candidates, and excluded bypass/stent procedure wording.
 - `47.json`: used compact candidates `C24.0`, `K83.1`, and `C80`. Kept cholangiogram, biopsy, and brush sampling as test names; kept abnormal-cell phrases as lab results; scoped symptom negation to `phủ nhận` lists; and excluded stent/hepatobiliary procedure wording.
+- `48.json`: used compact candidates `R55`, `S09.9`, and `I62.0`. Kept repeated neurologic symptom occurrences at span level, CT names and normal CT results candidate-free, treated family observations as patient symptoms rather than `isFamily`, and marked older/no-head-trauma mentions historical and negated where stated.
+- `49.json`: used compact candidates `N81.9`, `N39.0`, `N20.0`, and `N12`. Kept prolapse, urinary, constipation, vaginal dryness, dyspareunia, and spotting symptoms candidate-free; scoped final `không`/`Phủ nhận` disease and urinary symptoms as `isNegated`; excluded pessary, specialty exam, additional evaluation, and hygiene-device wording.
 - `91.json`: used compact candidates `I38`, `I51.9`, `I48.9`, `N18.5`, `T86.1`, RxNorm `855318`, and RxNorm `5224`. Corrected supplied Coumadin candidate `855320` to local RxNorm June SCD `855318` for `warfarin sodium 3 MG Oral Tablet`; kept INR/coagulation tests and results candidate-free; marked current negative symptom review spans as negated; excluded valve surgery, dialysis, vital signs, and generic abnormality wording.
 - `92.json`: used compact candidates `N39.0` for historical drug-resistant UTI and `K59.3` for repeated monitored colonic dilation/megacolon wording. Kept blood tests, CT names, leukocyte-result words, and mental-status symptoms candidate-free; excluded fall-recovery context and generic negative `bất thường` imaging wording.
 - `93.json`: used compact candidates `C50.9`, `J90`, `I31.3`, and `C78.0`. Kept dyspnea candidate-free; excluded pericardial drainage, negated talc pleurodesis, and standalone talc material wording.
@@ -191,3 +195,7 @@ Controlled dictionary additions in this pass:
 - `J02.0` Streptococcal pharyngitis / Viêm họng do liên cầu khuẩn [Streptococcus]
 - `E87.8` Other disorders of electrolyte and fluid balance / Rối loạn khác về cân bằng điện giải và/hoặc nước
 - `K82.2` Perforation of gallbladder / Thủng túi mật
+- `R55` Syncope and collapse / Ngất và/hoặc ngã quỵ
+- `J47.9` Bronchiectasis, uncomplicated / Giãn phế quản
+- `J18.1` Lobar pneumonia, unspecified / Viêm phổi thùy, không xác định vi sinh vật
+- `1305603` RxNorm 12 HR guaifenesin 600 MG / pseudoephedrine hydrochloride 60 MG Extended Release Oral Tablet
