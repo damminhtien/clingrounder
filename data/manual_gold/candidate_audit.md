@@ -12,7 +12,7 @@ Rules:
 - Keep drug mentions on RxNorm and disease mentions on ICD-10.
 - Preserve original spans and offsets; this pass only changes candidate lists.
 
-## Files 1-28, 30-53, 61-62, 91-100
+## Files 1-28, 30-53, 61-63, 91-100
 
 - `1.json`: filled `viêm tuyến mồ hôi` with ICD-10 `L73.2` after adding the TT06/ICD concept alias.
 - `2.json`: no candidate changes. Existing `K70.3` and `K76.82` remain as controlled-dictionary candidates.
@@ -68,6 +68,7 @@ Rules:
 - `53.json`: used compact TT06 candidates `I25.0`, `I44.2`, `N18.9`, `F06.7`, `R41.8`, and `I20.0`. Kept the adjacent specific `Suy giảm nhận thức nhẹ` and general `suy giảm nhận thức` spans as separate historical diagnoses; retained current chest-tightness/dyspnea symptoms and both current unstable-angina concern mentions. `Lo ngại` is uncertainty rather than negation, and pacemaker/coronary-intervention wording remains procedure-only context.
 - `61.json`: kept five knee/patellofemoral pain symptom occurrences plus two imaging findings candidate-free. Added `x-quang` and `chụp cắt lớp vi tính` as `TÊN_XÉT_NGHIỆM`; diagnostic imaging names are valid Phase 1 tests and are not excluded as treatment procedures. Marked only the remote-history and explicitly months-old symptom mentions historical; retained current/recurrent pain and imaging findings with empty assertions.
 - `62.json`: kept the full new right fifth-toe ulcer complaint plus three non-overlapping `loét` occurrences and separate adjacent `đau`, `đỏ`, and `sưng` symptom spans. All mentions are current and candidate-free; no ICD diagnosis is inferred from an ulcer/lesion described only as a current complaint. Historical bypass and renal-artery stent wording remains review-only because Phase 1 has no procedure/device type.
+- `63.json`: used TT06 `K57.5` for historical small- and large-intestinal diverticular disease and `K81.0` for both current acute-cholecystitis mentions. Corrected supplied ICD-10-CM `K57.50` to TT06 `K57.5`, Colace `82000` to controlled RxNorm `82003`, and every Tylenol `202433` to controlled ingredient RxNorm `161`. Restored `chụp ct bụng, chậu, không thuốc cản quang` as a diagnostic test name; retained current GI symptoms, vital/test pairs, microcytic-anemia result wording, and CT finding without extra candidates.
 - `91.json`: used compact candidates `I38`, `I51.9`, `I48.9`, `N18.5`, `T86.1`, RxNorm `855318`, and RxNorm `5224`. Corrected supplied Coumadin candidate `855320` to local RxNorm June SCD `855318` for `warfarin sodium 3 MG Oral Tablet`; kept INR/coagulation tests and results candidate-free; marked current negative symptom review spans as negated; excluded valve surgery, dialysis, vital signs, and generic abnormality wording.
 - `92.json`: used compact candidates `N39.0` for historical drug-resistant UTI and `K59.3` for repeated monitored colonic dilation/megacolon wording. Kept blood tests, CT names, leukocyte-result words, and mental-status symptoms candidate-free; excluded fall-recovery context and generic negative `bất thường` imaging wording.
 - `93.json`: used compact candidates `C50.9`, `J90`, `I31.3`, and `C78.0`. Kept dyspnea candidate-free; excluded pericardial drainage, negated talc pleurodesis, and standalone talc material wording.
@@ -217,3 +218,4 @@ Controlled dictionary additions in this pass:
 - `I25.0` Atherosclerotic cardiovascular disease, so described / Bệnh tim mạch do xơ vữa động mạch vành, như đã mô tả
 - `F06.7` Mild cognitive disorder / Rối loạn nhận thức nhẹ
 - `R41.8` Other and unspecified cognitive-function symptoms and signs
+- `K57.5` Diverticular disease of both small and large intestine without perforation or abscess
