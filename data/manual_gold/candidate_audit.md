@@ -12,7 +12,7 @@ Rules:
 - Keep drug mentions on RxNorm and disease mentions on ICD-10.
 - Preserve original spans and offsets; this pass only changes candidate lists.
 
-## Files 1-28, 30-52, 91-100
+## Files 1-28, 30-52, 61, 91-100
 
 - `1.json`: filled `viêm tuyến mồ hôi` with ICD-10 `L73.2` after adding the TT06/ICD concept alias.
 - `2.json`: no candidate changes. Existing `K70.3` and `K76.82` remain as controlled-dictionary candidates.
@@ -65,6 +65,7 @@ Rules:
 - `50.json`: used compact candidates `J45.9`, `J18.9`, RxNorm `435`, `750149`, `8640`, `723`, `18631`, `214199`, and `6585`. Corrected supplied Combivent candidate `1190220` (metered inhalation spray) to controlled multi-ingredient RxNorm `214199` because the raw mention says `nebs` without product strength; retained exact Z-PAK pack `750149` and source-backed magnesium sulfate `6585`. Kept current-episode respiratory/GI symptoms, chest X-ray/peak-flow names, and peak-flow value candidate-free; scoped negative imaging findings for pneumonia/opacities as `isNegated`.
 - `51.json`: used compact candidates `E11.9`, `I10`, `E87.6`, `J06.9`, RxNorm `8591`, and RxNorm `18631`. Kept repeated diarrhea, upper-respiratory symptoms, vital signs, potassium tests, and potassium values span-level; retained raw `14279` blood-pressure value; marked pre-admission potassium and azithromycin as historical; scoped no-black-stool/mucus/bright-red-blood/mucus discharge as negated.
 - `52.json`: used compact candidates `C24.9`, `K65.0`, `K86.2`, and RxNorm `19711`. Moved the generic `ung thư đường mật` alias from extrahepatic `C24.0` to unspecified biliary tract `C24.9`; replaced controlled Augmentin code `151392` with June RxNorm multi-ingredient `19711`; kept the generic IV-antibiotic span, symptoms, imaging-test names, and MRCP findings without safe codes candidate-free. Historical scope covers prior surgery-associated cancer context, prior fever/abdominal abscess admission, and pre-admission antibiotics.
+- `61.json`: kept five knee/patellofemoral pain symptom occurrences plus two imaging findings candidate-free. Added `x-quang` and `chụp cắt lớp vi tính` as `TÊN_XÉT_NGHIỆM`; diagnostic imaging names are valid Phase 1 tests and are not excluded as treatment procedures. Marked only the remote-history and explicitly months-old symptom mentions historical; retained current/recurrent pain and imaging findings with empty assertions.
 - `91.json`: used compact candidates `I38`, `I51.9`, `I48.9`, `N18.5`, `T86.1`, RxNorm `855318`, and RxNorm `5224`. Corrected supplied Coumadin candidate `855320` to local RxNorm June SCD `855318` for `warfarin sodium 3 MG Oral Tablet`; kept INR/coagulation tests and results candidate-free; marked current negative symptom review spans as negated; excluded valve surgery, dialysis, vital signs, and generic abnormality wording.
 - `92.json`: used compact candidates `N39.0` for historical drug-resistant UTI and `K59.3` for repeated monitored colonic dilation/megacolon wording. Kept blood tests, CT names, leukocyte-result words, and mental-status symptoms candidate-free; excluded fall-recovery context and generic negative `bất thường` imaging wording.
 - `93.json`: used compact candidates `C50.9`, `J90`, `I31.3`, and `C78.0`. Kept dyspnea candidate-free; excluded pericardial drainage, negated talc pleurodesis, and standalone talc material wording.
