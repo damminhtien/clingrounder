@@ -7,6 +7,7 @@ from pathlib import Path
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.rxnorm_sources import (
     RXNORM_ENRICHMENT_TTYS,
+    RXNORM_FULL_FALLBACK_TTYS,
     RXNORM_FULL_2026_06_01_SOURCE_ID,
     RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID,
     build_rxnorm_concept_rows,
@@ -14,6 +15,7 @@ from medical_kg_nlp.dictionaries.rxnorm_sources import (
     parse_rxnorm_rxnrel,
     parse_rxnorm_rxnsat,
     profile_rxnorm_release,
+    resolve_rxnorm_archive_member_root,
 )
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 
@@ -59,6 +61,7 @@ def test_build_rxnorm_rows_enriches_relations_and_attributes(tmp_path: Path) -> 
                     _rxnconso_line("17767", "IN", "Amlodipine"),
                     _rxnconso_line("316049", "DF", "Oral Tablet"),
                     _rxnconso_line("999001", "SBD", "Norvasc 10 MG Oral Tablet"),
+                    _rxnconso_line("999002", "SBD", "Reactivated Brand Drug"),
                     _rxnconso_line("555001", "BN", "Norvasc"),
                 ]
             ),
@@ -80,6 +83,8 @@ def test_build_rxnorm_rows_enriches_relations_and_attributes(tmp_path: Path) -> 
                     _rxnsat_line("308135", "RXN_STRENGTH", "10 MG"),
                     _rxnsat_line("308135", "RXN_ACTIVATED", "20100101"),
                     _rxnsat_line("999001", "RXN_OBSOLETED", "20200101"),
+                    _rxnsat_line("999002", "RXN_OBSOLETED", "11/26/2008"),
+                    _rxnsat_line("999002", "RXN_ACTIVATED", "01/28/2010"),
                 ]
             ),
         )
@@ -102,6 +107,7 @@ def test_build_rxnorm_rows_enriches_relations_and_attributes(tmp_path: Path) -> 
     assert branded["brand_name"] == "Norvasc 10 MG Oral Tablet"
     assert branded["brand_names"] == ["Norvasc"]
     assert branded["rxnorm_status"] == "inactive"
+    assert by_code["999002"]["rxnorm_status"] == "active"
 
 
 def test_import_rxnorm_dictionary_cli_accepts_prescribable_and_full_sources(tmp_path: Path) -> None:
@@ -196,6 +202,45 @@ def test_profile_rxnorm_release_counts_conso_rel_and_sat(tmp_path: Path) -> None
     assert profile["rxnrel"]["rela_counts"]["HAS_INGREDIENT"] == 1
     assert profile["rxnsat"]["rxnorm_rows"] == 2
     assert profile["rxnsat"]["status_attribute_counts"]["RXN_ACTIVATED"] == 1
+
+
+def test_bundle_selects_full_and_prescribable_rrf_subtrees(tmp_path: Path) -> None:
+    zip_path = tmp_path / "RxNorm_full_07062026.zip"
+    with zipfile.ZipFile(zip_path, "w") as archive:
+        archive.writestr(
+            "rrf/RXNCONSO.RRF",
+            "\n".join(
+                [
+                    _rxnconso_line("100", "IN", "Full Drug"),
+                    _rxnconso_line("101", "BN", "Full Brand"),
+                ]
+            ),
+        )
+        archive.writestr("rrf/RXNREL.RRF", _rxnrel_line("100", "200"))
+        archive.writestr("rrf/RXNSAT.RRF", _rxnsat_line("100", "TTY", "IN"))
+        archive.writestr("prescribe/rrf/RXNCONSO.RRF", _rxnconso_line("300", "IN", "Prescribable Drug"))
+        archive.writestr("prescribe/rrf/RXNREL.RRF", _rxnrel_line("300", "400"))
+        archive.writestr("prescribe/rrf/RXNSAT.RRF", _rxnsat_line("300", "TTY", "IN"))
+
+    full_root = resolve_rxnorm_archive_member_root(zip_path, content="full")
+    prescribe_root = resolve_rxnorm_archive_member_root(zip_path, content="prescribable")
+
+    assert full_root == "rrf"
+    assert prescribe_root == "prescribe/rrf"
+    full_terms = parse_rxnorm_rxnconso(
+        zip_path,
+        allowed_ttys=RXNORM_FULL_FALLBACK_TTYS,
+        archive_member_root=full_root,
+    )
+    assert [term.rxcui for term in full_terms] == ["100", "101"]
+    assert [term.rxcui for term in parse_rxnorm_rxnconso(zip_path, archive_member_root=prescribe_root)] == ["300"]
+    full_profile = profile_rxnorm_release(
+        zip_path,
+        allowed_ttys=RXNORM_FULL_FALLBACK_TTYS,
+        archive_member_root=full_root,
+    )
+    assert full_profile["rxnconso"]["accepted_concepts"] == 2
+    assert profile_rxnorm_release(zip_path, archive_member_root=prescribe_root)["rxnconso"]["accepted_concepts"] == 1
 
 
 def _rxnconso_line(

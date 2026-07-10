@@ -5,6 +5,7 @@ import zipfile
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +24,7 @@ RXNORM_2026_SOURCE = {
     "fallback_file": "RxNorm_full_06012026.zip",
 }
 RXNORM_DEFAULT_TTYS = frozenset({"SCD", "SBD", "IN", "PIN", "MIN", "SCDF", "SBDF", "GPCK", "BPCK"})
+RXNORM_FULL_FALLBACK_TTYS = frozenset({*RXNORM_DEFAULT_TTYS, "BN"})
 RXNORM_ENRICHMENT_TTYS = frozenset(
     {
         *RXNORM_DEFAULT_TTYS,
@@ -91,10 +93,11 @@ def parse_rxnorm_rxnconso(
     *,
     source_id: str = RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID,
     allowed_ttys: Iterable[str] = RXNORM_DEFAULT_TTYS,
+    archive_member_root: str | None = None,
 ) -> list[RxNormSourceTerm]:
     allowed = {tty.upper() for tty in allowed_ttys}
     terms: dict[tuple[str, str, str], RxNormSourceTerm] = {}
-    for line in _iter_rxnconso_lines(path):
+    for line in _iter_rxnconso_lines(path, archive_member_root=archive_member_root):
         term = _parse_rxnconso_line(line, source_id=source_id)
         if term is None or term.tty not in allowed:
             continue
@@ -106,9 +109,10 @@ def parse_rxnorm_rxnrel(
     path: str | Path,
     *,
     source_id: str = RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID,
+    archive_member_root: str | None = None,
 ) -> list[RxNormSourceRelation]:
     relations: dict[tuple[str, str, str], RxNormSourceRelation] = {}
-    for line in _iter_rrf_lines(path, "RXNREL.RRF"):
+    for line in _iter_rrf_lines(path, "RXNREL.RRF", archive_member_root=archive_member_root):
         relation = _parse_rxnrel_line(line, source_id=source_id)
         if relation is None:
             continue
@@ -120,9 +124,10 @@ def parse_rxnorm_rxnsat(
     path: str | Path,
     *,
     source_id: str = RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID,
+    archive_member_root: str | None = None,
 ) -> list[RxNormSourceAttribute]:
     attributes: dict[tuple[str, str, str], RxNormSourceAttribute] = {}
-    for line in _iter_rrf_lines(path, "RXNSAT.RRF"):
+    for line in _iter_rrf_lines(path, "RXNSAT.RRF", archive_member_root=archive_member_root):
         attribute = _parse_rxnsat_line(line, source_id=source_id)
         if attribute is None:
             continue
@@ -190,6 +195,7 @@ def write_rxnorm_import_manifest(
     source_inputs: Sequence[str],
     source_parse_counts: Sequence[Mapping[str, Any]] = (),
     release_profiles: Sequence[Mapping[str, Any]] = (),
+    source_policy: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     source_counts: dict[str, int] = defaultdict(int)
     for row in rows:
@@ -197,7 +203,7 @@ def write_rxnorm_import_manifest(
             source_counts[source_id] += 1
     manifest = {
         "concepts": len(rows),
-        "source_policy": rxnorm_source_policy(),
+        "source_policy": dict(source_policy or rxnorm_source_policy()),
         "source_parse_counts": [dict(count) for count in source_parse_counts],
         "source_inputs": list(source_inputs),
         "source_counts": dict(sorted(source_counts.items())),
@@ -210,10 +216,28 @@ def write_rxnorm_import_manifest(
     return manifest
 
 
-def rxnorm_source_policy() -> dict[str, Any]:
+def rxnorm_source_policy(
+    *,
+    primary_source_id: str = RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID,
+    fallback_source_id: str = RXNORM_FULL_2026_06_01_SOURCE_ID,
+    release_date: str = "2026-06-01",
+    primary_file: str = "RxNorm_full_prescribe_06012026.zip",
+    fallback_file: str = "RxNorm_full_06012026.zip",
+) -> dict[str, Any]:
+    source = dict(RXNORM_2026_SOURCE)
+    source.update(
+        {
+            "primary_source_id": primary_source_id,
+            "fallback_source_id": fallback_source_id,
+            "release_date": release_date,
+            "primary_file": primary_file,
+            "fallback_file": fallback_file,
+        }
+    )
     return {
-        "source": dict(RXNORM_2026_SOURCE),
+        "source": source,
         "preferred_tty_order": list(RXNORM_TTY_PRIORITY),
+        "fallback_ttys": [*RXNORM_TTY_PRIORITY, "BN"],
         "notes": (
             "Use Current Prescribable Content as the primary Phase 1 drug dictionary and the "
             "full monthly release as fallback coverage. "
@@ -238,6 +262,7 @@ def profile_rxnorm_release(
     path: str | Path,
     *,
     allowed_ttys: Iterable[str] = RXNORM_DEFAULT_TTYS,
+    archive_member_root: str | None = None,
 ) -> dict[str, Any]:
     """Return reproducibility/QA counters for a local RxNorm RRF release.
 
@@ -248,27 +273,63 @@ def profile_rxnorm_release(
     allowed = {tty.upper() for tty in allowed_ttys}
     return {
         "path": str(path),
+        "archive_member_root": archive_member_root,
         "required_files": {
-            "RXNCONSO.RRF": _rrf_file_exists(path, "RXNCONSO.RRF"),
-            "RXNREL.RRF": _rrf_file_exists(path, "RXNREL.RRF"),
-            "RXNSAT.RRF": _rrf_file_exists(path, "RXNSAT.RRF"),
+            "RXNCONSO.RRF": _rrf_file_exists(path, "RXNCONSO.RRF", archive_member_root=archive_member_root),
+            "RXNREL.RRF": _rrf_file_exists(path, "RXNREL.RRF", archive_member_root=archive_member_root),
+            "RXNSAT.RRF": _rrf_file_exists(path, "RXNSAT.RRF", archive_member_root=archive_member_root),
         },
-        "rxnconso": _profile_rxnconso(path, allowed_ttys=allowed),
-        "rxnrel": _profile_rxnrel(path),
-        "rxnsat": _profile_rxnsat(path),
+        "rxnconso": _profile_rxnconso(path, allowed_ttys=allowed, archive_member_root=archive_member_root),
+        "rxnrel": _profile_rxnrel(path, archive_member_root=archive_member_root),
+        "rxnsat": _profile_rxnsat(path, archive_member_root=archive_member_root),
     }
 
 
-def _iter_rxnconso_lines(path: str | Path) -> Iterator[str]:
-    yield from _iter_rrf_lines(path, "RXNCONSO.RRF")
+def resolve_rxnorm_archive_member_root(
+    path: str | Path,
+    *,
+    content: str,
+) -> str | None:
+    """Choose the RRF subtree for a bundled RxNorm archive.
+
+    NLM full archives can include both the root full release (``rrf``) and a
+    ``prescribe/rrf`` subtree.  Reading by basename alone mixes both releases.
+    Standalone archives retain the backward-compatible ``None`` result.
+    """
+
+    if content not in {"full", "prescribable"}:
+        raise ValueError("content must be 'full' or 'prescribable'")
+    input_path = Path(path)
+    if input_path.suffix.lower() != ".zip":
+        return None
+    preferred_roots = ("prescribe/rrf", "rrf", "") if content == "prescribable" else ("rrf", "prescribe/rrf", "")
+    with zipfile.ZipFile(input_path) as archive:
+        names = archive.namelist()
+        for root in preferred_roots:
+            if all(_archive_member_exists(names, root, target) for target in ("RXNCONSO.RRF", "RXNREL.RRF", "RXNSAT.RRF")):
+                return root
+    return None
 
 
-def _iter_rrf_lines(path: str | Path, target_name: str) -> Iterator[str]:
+def _iter_rxnconso_lines(
+    path: str | Path,
+    *,
+    archive_member_root: str | None = None,
+) -> Iterator[str]:
+    yield from _iter_rrf_lines(path, "RXNCONSO.RRF", archive_member_root=archive_member_root)
+
+
+def _iter_rrf_lines(
+    path: str | Path,
+    target_name: str,
+    *,
+    archive_member_root: str | None = None,
+) -> Iterator[str]:
     input_path = Path(path)
     if input_path.suffix.lower() == ".zip":
         with zipfile.ZipFile(input_path) as archive:
             for name in sorted(archive.namelist()):
-                if Path(name).name.upper() == target_name.upper():
+                if _archive_member_matches(name, target_name, archive_member_root):
                     with archive.open(name) as handle:
                         for raw_line in handle:
                             yield raw_line.decode("utf-8", errors="replace").rstrip("\n")
@@ -277,15 +338,42 @@ def _iter_rrf_lines(path: str | Path, target_name: str) -> Iterator[str]:
         yield from handle
 
 
-def _rrf_file_exists(path: str | Path, target_name: str) -> bool:
+def _archive_member_exists(names: Iterable[str], root: str, target_name: str) -> bool:
+    return any(_archive_member_matches(name, target_name, root) for name in names)
+
+
+def _archive_member_matches(name: str, target_name: str, archive_member_root: str | None) -> bool:
+    member = Path(name)
+    if member.name.upper() != target_name.upper():
+        return False
+    if archive_member_root is None:
+        return True
+    normalized_root = archive_member_root.strip("/")
+    parent = member.parent.as_posix().strip("/")
+    if parent == ".":
+        parent = ""
+    return parent.casefold() == normalized_root.casefold()
+
+
+def _rrf_file_exists(
+    path: str | Path,
+    target_name: str,
+    *,
+    archive_member_root: str | None = None,
+) -> bool:
     input_path = Path(path)
     if input_path.suffix.lower() == ".zip":
         with zipfile.ZipFile(input_path) as archive:
-            return any(Path(name).name.upper() == target_name.upper() for name in archive.namelist())
+            return any(_archive_member_matches(name, target_name, archive_member_root) for name in archive.namelist())
     return input_path.name.upper() == target_name.upper() and input_path.exists()
 
 
-def _profile_rxnconso(path: str | Path, *, allowed_ttys: set[str]) -> dict[str, Any]:
+def _profile_rxnconso(
+    path: str | Path,
+    *,
+    allowed_ttys: set[str],
+    archive_member_root: str | None = None,
+) -> dict[str, Any]:
     total_rows = 0
     malformed_rows = 0
     rxnorm_rows = 0
@@ -296,7 +384,7 @@ def _profile_rxnconso(path: str | Path, *, allowed_ttys: set[str]) -> dict[str, 
     tty_counts: Counter[str] = Counter()
     suppress_counts: Counter[str] = Counter()
     language_counts: Counter[str] = Counter()
-    for line in _iter_rxnconso_lines(path):
+    for line in _iter_rxnconso_lines(path, archive_member_root=archive_member_root):
         total_rows += 1
         fields = line.rstrip("\n").split("|")
         if len(fields) < 18:
@@ -333,7 +421,7 @@ def _profile_rxnconso(path: str | Path, *, allowed_ttys: set[str]) -> dict[str, 
     }
 
 
-def _profile_rxnrel(path: str | Path) -> dict[str, Any]:
+def _profile_rxnrel(path: str | Path, *, archive_member_root: str | None = None) -> dict[str, Any]:
     total_rows = 0
     malformed_rows = 0
     rxnorm_rows = 0
@@ -341,7 +429,7 @@ def _profile_rxnrel(path: str | Path) -> dict[str, Any]:
     rel_counts: Counter[str] = Counter()
     rela_counts: Counter[str] = Counter()
     suppress_counts: Counter[str] = Counter()
-    for line in _iter_rrf_lines(path, "RXNREL.RRF"):
+    for line in _iter_rrf_lines(path, "RXNREL.RRF", archive_member_root=archive_member_root):
         total_rows += 1
         fields = line.rstrip("\n").split("|")
         if len(fields) < 16:
@@ -370,7 +458,7 @@ def _profile_rxnrel(path: str | Path) -> dict[str, Any]:
     }
 
 
-def _profile_rxnsat(path: str | Path) -> dict[str, Any]:
+def _profile_rxnsat(path: str | Path, *, archive_member_root: str | None = None) -> dict[str, Any]:
     total_rows = 0
     malformed_rows = 0
     rxnorm_rows = 0
@@ -378,7 +466,7 @@ def _profile_rxnsat(path: str | Path) -> dict[str, Any]:
     attr_counts: Counter[str] = Counter()
     suppress_counts: Counter[str] = Counter()
     status_attr_counts: Counter[str] = Counter()
-    for line in _iter_rrf_lines(path, "RXNSAT.RRF"):
+    for line in _iter_rrf_lines(path, "RXNSAT.RRF", archive_member_root=archive_member_root):
         total_rows += 1
         fields = line.rstrip("\n").split("|")
         if len(fields) < 13:
@@ -542,7 +630,21 @@ def _apply_rxnorm_enrichment(row: dict[str, Any], enrichment: Mapping[str, Any])
         values = _unique(str(value) for value in enrichment.get(key, []) if str(value).strip())
         if values:
             row[key] = values
-    row["rxnorm_status"] = "inactive" if row.get("rxnorm_obsoleted") else "active"
+    activated = _latest_rxnorm_event_date(row.get("rxnorm_activated", []))
+    obsoleted = _latest_rxnorm_event_date(row.get("rxnorm_obsoleted", []))
+    row["rxnorm_status"] = "inactive" if obsoleted and (not activated or obsoleted > activated) else "active"
+
+
+def _latest_rxnorm_event_date(values: Iterable[str]) -> date | None:
+    parsed: list[date] = []
+    for value in values:
+        for date_format in ("%Y%m%d", "%m/%d/%Y", "%Y-%m-%d"):
+            try:
+                parsed.append(datetime.strptime(value, date_format).date())
+                break
+            except ValueError:
+                continue
+    return max(parsed, default=None)
 
 
 def _term_sort_key(term: RxNormSourceTerm) -> tuple[tuple[int, str], int, str]:
