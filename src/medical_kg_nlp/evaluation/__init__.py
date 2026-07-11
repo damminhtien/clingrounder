@@ -22,6 +22,12 @@ from medical_kg_nlp.evaluation.phase1 import (
     write_phase1_output_dir,
     zip_phase1_output_dir,
 )
+from medical_kg_nlp.evaluation.phase1_candidate_overlay import (
+    Phase1CandidateIndex,
+    Phase1CandidateOverlayConfig,
+    apply_phase1_candidate_overlay,
+    candidate_ablation_passes,
+)
 from medical_kg_nlp.evaluation.phase1_ensemble import (
     expand_repeated_phase1_mentions,
     load_phase1_output_source,
@@ -37,12 +43,16 @@ from medical_kg_nlp.evaluation.pipeline_report import build_pipeline_report, wri
 
 __all__ = [
     "AblationVariantResult",
+    "Phase1CandidateIndex",
+    "Phase1CandidateOverlayConfig",
     "StageAggregate",
     "aggregate_traces",
+    "apply_phase1_candidate_overlay",
     "build_loop_engineering_report",
     "build_phase1_report",
     "build_phase1_submission_analysis",
     "build_pipeline_report",
+    "candidate_ablation_passes",
     "evaluate_predictions",
     "expand_repeated_phase1_mentions",
     "flatten_metrics",

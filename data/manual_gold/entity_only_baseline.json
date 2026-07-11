@@ -34,6 +34,16 @@
       "submission_id": "019f4f18-5d91-717f-b107-0295299574f5",
       "submitted_at": "2026-07-11T09:53:44.737+07:00",
       "wer": 51.6594
+    },
+    {
+      "artifact_sha256_prefix": "4eed2a1a4bb7",
+      "assertions_score": 40.9174,
+      "candidates_score": 28.6287,
+      "decision": "reject",
+      "label": "c3_tt06_rxnorm_candidate_overlay",
+      "score": 38.2289,
+      "submitted_at": "2026-07-11T10:28:00+07:00",
+      "wer": 51.6594
     }
   ],
   "local": {
@@ -55,6 +65,6 @@
       "text_score": 0.488388
     }
   },
-  "notes": "Current public best is the Qwen plus pipeline non-overlap ensemble. Assertions and candidates remain empty. Public results show recall-heavy output can win despite exceeding the previous local spurious cap.",
+  "notes": "Current public best is the Qwen plus pipeline non-overlap ensemble with empty assertions and candidates. The C3 exact-unique candidate overlay won local holdout but lost 0.5686 public points, so manual-gold candidate gates are pre-submit diagnostics only.",
   "schema_version": "phase1-entity-only-baseline.v1"
 }

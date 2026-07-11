@@ -174,6 +174,29 @@ Without explicit `--source` flags, the command searches source-per-type combinat
 train split. It reports the frozen 15-file holdout only after selecting the best train strategy,
 writes `strategy_search.json`, validates offsets/schema, and creates `output.zip`.
 
+Run dictionary-constrained candidate overlays without changing entities or assertions:
+
+```bash
+python scripts/run_phase1_candidate_ablation.py \
+  --base outputs/phase1/<entity-run>/output.zip \
+  --dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl \
+  --gold-dir data/manual_gold \
+  --input-dir data/raw/input \
+  --output-dir outputs/phase1/<candidate-ablation-run>
+```
+
+`C1` uses exact unique TT06 ICD aliases, `C2` adds exact unique RxNorm names, and `C3` adds the
+longest unique embedded drug alias for spans containing dose/route text. A stage is accepted only
+when both holdout Phase 1 score and holdout candidate score increase. Ambiguous aliases, fuzzy
+matches, toneless matches, and multi-code output remain disabled.
+
+This is a local pre-submit gate, not a promotion gate. The July 11 C3 run increased holdout score
+from `53.3426` to `62.4051` but decreased the public score from `38.7975` to `38.2289` because public
+J_candidates fell from `30.0503` to `28.6287`. The reviewed manual gold has candidate labels on
+almost every aligned diagnosis/drug and is not representative of hidden candidate prevalence or
+code specificity. Keep candidate output empty by default until a narrower public-validated policy
+wins; exact uniqueness within the local dictionary alone is insufficient.
+
 ## Loop Engineering
 
 Use the loop engine after a stage-wise report exists. It turns metrics and error rows into an
