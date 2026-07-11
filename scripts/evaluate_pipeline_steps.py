@@ -11,7 +11,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.evaluation.pipeline_report import build_pipeline_report, write_pipeline_report
-from medical_kg_nlp.pipeline.parallel_batch import ParallelBatchOptions, run_batch_with_trace_parallel
+from medical_kg_nlp.pipeline.parallel_batch import (
+    ParallelBatchOptions,
+    run_batch_with_trace_parallel,
+)
 from medical_kg_nlp.utils.io import write_jsonl
 from medical_kg_nlp.utils.run_output import create_hashed_run_dir, path_in_run
 
@@ -21,7 +24,9 @@ def main() -> None:
         description="Build stage-wise metrics, validation, trace, and error-analysis reports.",
     )
     parser.add_argument("--documents", required=True, help="Source documents JSONL.")
-    parser.add_argument("--gold", required=True, help="Gold annotations in internal prediction JSONL.")
+    parser.add_argument(
+        "--gold", required=True, help="Gold annotations in internal prediction JSONL."
+    )
     parser.add_argument(
         "--dictionary",
         default="data/dictionaries/seed_concepts.jsonl",
@@ -37,7 +42,9 @@ def main() -> None:
         "--run-root",
         help="Optional root for hashed run directories. Relative output paths are written under it.",
     )
-    parser.add_argument("--run-label", default="pipeline-report", help="Label embedded in the hashed run directory.")
+    parser.add_argument(
+        "--run-label", default="pipeline-report", help="Label embedded in the hashed run directory."
+    )
     parser.add_argument("--pred", help="Optional existing prediction JSONL to evaluate.")
     parser.add_argument(
         "--reference-gold",
@@ -51,7 +58,9 @@ def main() -> None:
         help="Pipeline execution backend when --pred is omitted.",
     )
     parser.add_argument("--workers", type=int, default=1, help="Number of document workers.")
-    parser.add_argument("--chunksize", type=int, default=4, help="Document chunksize for process workers.")
+    parser.add_argument(
+        "--chunksize", type=int, default=4, help="Document chunksize for process workers."
+    )
     parser.add_argument(
         "--no-fail-fast",
         action="store_true",
@@ -69,6 +78,7 @@ def main() -> None:
             args.run_root,
             label=args.run_label,
             inputs=[args.documents, args.gold, args.pred or "pipeline", args.dictionary],
+            resolved_config=vars(args),
         )
         if args.run_root
         else None
@@ -92,7 +102,9 @@ def main() -> None:
         )
         predictions = [result.prediction for result in run_results]
         traces = [result.trace for result in run_results]
-        write_jsonl(output_dir / "predictions.jsonl", [prediction.to_json() for prediction in predictions])
+        write_jsonl(
+            output_dir / "predictions.jsonl", [prediction.to_json() for prediction in predictions]
+        )
 
     report = build_pipeline_report(
         documents=documents,

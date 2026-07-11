@@ -19,13 +19,19 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Turn pipeline metrics into an experiment decision and next-step loop report.",
     )
-    parser.add_argument("--current-report", required=True, help="Current metrics.json from stage report.")
-    parser.add_argument("--output-dir", required=True, help="Directory for loop-engineering artifacts.")
+    parser.add_argument(
+        "--current-report", required=True, help="Current metrics.json from stage report."
+    )
+    parser.add_argument(
+        "--output-dir", required=True, help="Directory for loop-engineering artifacts."
+    )
     parser.add_argument(
         "--run-root",
         help="Optional root for hashed run directories. Relative output paths are written under it.",
     )
-    parser.add_argument("--run-label", default="loop", help="Label embedded in the hashed run directory.")
+    parser.add_argument(
+        "--run-label", default="loop", help="Label embedded in the hashed run directory."
+    )
     parser.add_argument("--experiment-id", required=True, help="Stable experiment id, e.g. N006.")
     parser.add_argument("--module", required=True, help="Target module, e.g. normalization.")
     parser.add_argument("--hypothesis", required=True, help="One concrete experiment hypothesis.")
@@ -63,7 +69,9 @@ def main() -> None:
     )
     parser.add_argument("--keep-delta", type=float, default=0.001)
     parser.add_argument("--revert-delta", type=float, default=0.001)
-    parser.add_argument("--top-k", type=int, default=30, help="Maximum top errors/cases to include.")
+    parser.add_argument(
+        "--top-k", type=int, default=30, help="Maximum top errors/cases to include."
+    )
     args = parser.parse_args()
 
     current_report = _read_json(args.current_report)
@@ -73,6 +81,7 @@ def main() -> None:
             args.run_root,
             label=args.run_label,
             inputs=[args.current_report, args.baseline_report or "none", args.experiment_id],
+            resolved_config=vars(args),
         )
         if args.run_root
         else None

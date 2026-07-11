@@ -8,7 +8,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
-from medical_kg_nlp.pipeline.parallel_batch import ParallelBatchOptions, run_batch_with_trace_parallel
+from medical_kg_nlp.pipeline.parallel_batch import (
+    ParallelBatchOptions,
+    run_batch_with_trace_parallel,
+)
 from medical_kg_nlp.utils.io import write_jsonl
 from medical_kg_nlp.utils.run_output import create_hashed_run_dir, path_in_run
 
@@ -21,7 +24,9 @@ def main() -> None:
         "--run-root",
         help="Optional root for hashed run directories. Relative output paths are written under it.",
     )
-    parser.add_argument("--run-label", default="pipeline", help="Label embedded in the hashed run directory.")
+    parser.add_argument(
+        "--run-label", default="pipeline", help="Label embedded in the hashed run directory."
+    )
     parser.add_argument("--dictionary", default="data/dictionaries/seed_concepts.jsonl")
     parser.add_argument("--abbreviations", default="data/dictionaries/abbreviations.jsonl")
     parser.add_argument(
@@ -31,7 +36,9 @@ def main() -> None:
         help="Batch execution backend. With --workers 1 this still runs serially.",
     )
     parser.add_argument("--workers", type=int, default=1, help="Number of document workers.")
-    parser.add_argument("--chunksize", type=int, default=4, help="Document chunksize for process workers.")
+    parser.add_argument(
+        "--chunksize", type=int, default=4, help="Document chunksize for process workers."
+    )
     parser.add_argument(
         "--no-fail-fast",
         action="store_true",
@@ -58,6 +65,7 @@ def main() -> None:
             args.run_root,
             label=args.run_label,
             inputs=[args.input, args.dictionary, args.abbreviations],
+            resolved_config=vars(args),
         )
         if args.run_root
         else None

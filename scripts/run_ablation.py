@@ -26,25 +26,36 @@ from medical_kg_nlp.utils.run_output import create_hashed_run_dir, path_in_run
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run configured pipeline ablations with timing traces.")
+    parser = argparse.ArgumentParser(
+        description="Run configured pipeline ablations with timing traces."
+    )
     parser.add_argument("--config", default="configs/ablations.yaml", help="Ablation YAML config.")
     parser.add_argument("--output-dir", help="Override output_dir from the config.")
     parser.add_argument(
         "--run-root",
         help="Optional root for hashed run directories. Relative output paths are written under it.",
     )
-    parser.add_argument("--run-label", default="ablation", help="Label embedded in the hashed run directory.")
+    parser.add_argument(
+        "--run-label", default="ablation", help="Label embedded in the hashed run directory."
+    )
     args = parser.parse_args()
 
     config = read_yaml(args.config)
     run_output = (
-        create_hashed_run_dir(args.run_root, label=args.run_label, inputs=[args.config])
+        create_hashed_run_dir(
+            args.run_root,
+            label=args.run_label,
+            inputs=[args.config],
+            resolved_config=config,
+        )
         if args.run_root
         else None
     )
     output_dir_override = args.output_dir
     if run_output is not None:
-        output_dir_override = str(path_in_run(args.output_dir or _required_str(config, "output_dir"), run_output))
+        output_dir_override = str(
+            path_in_run(args.output_dir or _required_str(config, "output_dir"), run_output)
+        )
 
     results = run_ablation(config, output_dir_override=output_dir_override)
     summary: Any = _console_summary(results)
