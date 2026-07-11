@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
@@ -39,12 +40,26 @@ def load_assertion_cues(path: str | Path = DEFAULT_ASSERTION_CUE_PATH) -> list[A
 
 
 def load_default_assertion_cues() -> list[AssertionCue]:
-    if not DEFAULT_ASSERTION_CUE_PATH.exists():
-        return []
-    return load_assertion_cues(DEFAULT_ASSERTION_CUE_PATH)
+    if DEFAULT_ASSERTION_CUE_PATH.exists():
+        return load_assertion_cues(DEFAULT_ASSERTION_CUE_PATH)
+    resource = files("medical_kg_nlp").joinpath("resources/assertion_cues.jsonl")
+    if not resource.is_file():
+        raise FileNotFoundError("Packaged assertion cue resource is missing.")
+    cues: list[AssertionCue] = []
+    with resource.open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            if not isinstance(row, dict):
+                raise ValueError(f"{resource}:{line_number}: expected JSON object.")
+            cues.append(_cue_from_row(row, Path(str(resource)), line_number))
+    return cues
 
 
-def cues_by_assertion(cues: list[AssertionCue], *, scope: str | None = None) -> dict[AssertionStatus, tuple[str, ...]]:
+def cues_by_assertion(
+    cues: list[AssertionCue], *, scope: str | None = None
+) -> dict[AssertionStatus, tuple[str, ...]]:
     grouped: dict[AssertionStatus, list[str]] = {}
     for cue in cues:
         if scope is not None and cue.scope != scope:

@@ -96,14 +96,69 @@ _FALLBACK_SECTION_PRIORS = {
 
 
 _SOURCE_CUES = load_default_assertion_cues()
-_LEFT_CUES_BY_ASSERTION = cues_by_assertion(_SOURCE_CUES)
+_LEFT_CUES_BY_ASSERTION = cues_by_assertion(_SOURCE_CUES, scope="left")
+_RIGHT_CUES_BY_ASSERTION = cues_by_assertion(_SOURCE_CUES, scope="right")
+_BIDIRECTIONAL_CUES_BY_ASSERTION = cues_by_assertion(_SOURCE_CUES, scope="bidirectional")
 
-POSSIBLE_CUES = _LEFT_CUES_BY_ASSERTION.get(AssertionStatus.POSSIBLE, _FALLBACK_POSSIBLE_CUES)
-NEGATION_CUES = _LEFT_CUES_BY_ASSERTION.get(AssertionStatus.NEGATED, _FALLBACK_NEGATION_CUES)
-HISTORICAL_CUES = _LEFT_CUES_BY_ASSERTION.get(AssertionStatus.HISTORICAL, _FALLBACK_HISTORICAL_CUES)
-FAMILY_CUES = _LEFT_CUES_BY_ASSERTION.get(AssertionStatus.FAMILY, _FALLBACK_FAMILY_CUES)
-PLANNED_CUES = _LEFT_CUES_BY_ASSERTION.get(AssertionStatus.PLANNED, _FALLBACK_PLANNED_CUES)
-RESOLVED_CUES = _LEFT_CUES_BY_ASSERTION.get(AssertionStatus.RESOLVED, _FALLBACK_RESOLVED_CUES)
+
+def _directional_cues(
+    assertion: AssertionStatus,
+    *,
+    direction: str,
+    fallback: tuple[str, ...] = (),
+) -> tuple[str, ...]:
+    scoped = _LEFT_CUES_BY_ASSERTION if direction == "left" else _RIGHT_CUES_BY_ASSERTION
+    values = (*scoped.get(assertion, ()), *_BIDIRECTIONAL_CUES_BY_ASSERTION.get(assertion, ()))
+    if not values and direction == "left":
+        values = fallback
+    return tuple(dict.fromkeys(values))
+
+
+POSSIBLE_LEFT_CUES = _directional_cues(
+    AssertionStatus.POSSIBLE,
+    direction="left",
+    fallback=_FALLBACK_POSSIBLE_CUES,
+)
+POSSIBLE_RIGHT_CUES = _directional_cues(AssertionStatus.POSSIBLE, direction="right")
+NEGATION_LEFT_CUES = _directional_cues(
+    AssertionStatus.NEGATED,
+    direction="left",
+    fallback=_FALLBACK_NEGATION_CUES,
+)
+NEGATION_RIGHT_CUES = _directional_cues(AssertionStatus.NEGATED, direction="right")
+HISTORICAL_LEFT_CUES = _directional_cues(
+    AssertionStatus.HISTORICAL,
+    direction="left",
+    fallback=_FALLBACK_HISTORICAL_CUES,
+)
+HISTORICAL_RIGHT_CUES = _directional_cues(AssertionStatus.HISTORICAL, direction="right")
+FAMILY_LEFT_CUES = _directional_cues(
+    AssertionStatus.FAMILY,
+    direction="left",
+    fallback=_FALLBACK_FAMILY_CUES,
+)
+FAMILY_RIGHT_CUES = _directional_cues(AssertionStatus.FAMILY, direction="right")
+PLANNED_LEFT_CUES = _directional_cues(
+    AssertionStatus.PLANNED,
+    direction="left",
+    fallback=_FALLBACK_PLANNED_CUES,
+)
+PLANNED_RIGHT_CUES = _directional_cues(AssertionStatus.PLANNED, direction="right")
+RESOLVED_LEFT_CUES = _directional_cues(
+    AssertionStatus.RESOLVED,
+    direction="left",
+    fallback=_FALLBACK_RESOLVED_CUES,
+)
+RESOLVED_RIGHT_CUES = _directional_cues(AssertionStatus.RESOLVED, direction="right")
+
+# Aggregate exports remain useful for dataset profiling, but classification uses
+# the directional constants above.
+POSSIBLE_CUES = tuple(dict.fromkeys((*POSSIBLE_LEFT_CUES, *POSSIBLE_RIGHT_CUES)))
+NEGATION_CUES = tuple(dict.fromkeys((*NEGATION_LEFT_CUES, *NEGATION_RIGHT_CUES)))
+HISTORICAL_CUES = tuple(dict.fromkeys((*HISTORICAL_LEFT_CUES, *HISTORICAL_RIGHT_CUES)))
+FAMILY_CUES = tuple(dict.fromkeys((*FAMILY_LEFT_CUES, *FAMILY_RIGHT_CUES)))
+PLANNED_CUES = tuple(dict.fromkeys((*PLANNED_LEFT_CUES, *PLANNED_RIGHT_CUES)))
+RESOLVED_CUES = tuple(dict.fromkeys((*RESOLVED_LEFT_CUES, *RESOLVED_RIGHT_CUES)))
 
 SECTION_PRIORS = {
     **_FALLBACK_SECTION_PRIORS,

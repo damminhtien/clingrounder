@@ -2,17 +2,23 @@ from __future__ import annotations
 import re
 
 from medical_kg_nlp.context.rules import (
-    FAMILY_CUES,
-    HISTORICAL_CUES,
-    NEGATION_CUES,
-    PLANNED_CUES,
-    POSSIBLE_CUES,
-    RESOLVED_CUES,
+    FAMILY_LEFT_CUES,
+    FAMILY_RIGHT_CUES,
+    HISTORICAL_LEFT_CUES,
+    HISTORICAL_RIGHT_CUES,
+    NEGATION_LEFT_CUES,
+    NEGATION_RIGHT_CUES,
+    PLANNED_LEFT_CUES,
+    PLANNED_RIGHT_CUES,
+    POSSIBLE_LEFT_CUES,
+    POSSIBLE_RIGHT_CUES,
+    RESOLVED_LEFT_CUES,
+    RESOLVED_RIGHT_CUES,
     SECTION_PRIORS,
 )
-from medical_kg_nlp.schema.annotation import EntityAnnotation
+from medical_kg_nlp.schema.annotation import AssertionFeatures, EntityAnnotation
 from medical_kg_nlp.schema.document import Sentence
-from medical_kg_nlp.schema.types import AssertionStatus, EntityType
+from medical_kg_nlp.schema.types import AssertionStatus
 
 
 _CLAUSE_BOUNDARY_RE = re.compile(r"[\n.;:!?]|,\s+")
@@ -31,7 +37,9 @@ _NEGATION_FALSE_POSITIVE_PATTERNS = (
     re.compile(r"(?<!\w)không\s+loại\s+trừ(?!\w)", flags=re.IGNORECASE | re.UNICODE),
     re.compile(r"(?<!\w)không\s+thuốc\s+cản\s+quang(?!\w)", flags=re.IGNORECASE | re.UNICODE),
     re.compile(r"(?<!\w)không\s+thể\s+giữ\s+được(?!\w)", flags=re.IGNORECASE | re.UNICODE),
-    re.compile(r"(?<!\w)không\s+nghĩ.{0,100}có\s+khả\s+năng(?!\w)", flags=re.IGNORECASE | re.UNICODE),
+    re.compile(
+        r"(?<!\w)không\s+nghĩ.{0,100}có\s+khả\s+năng(?!\w)", flags=re.IGNORECASE | re.UNICODE
+    ),
 )
 _NEGATION_COORDINATION_BOUNDARY_RE = re.compile(r"[\n.;!?]", flags=re.UNICODE)
 _NEGATION_COORDINATION_BREAK_RE = re.compile(
@@ -41,8 +49,12 @@ _NEGATION_COORDINATION_BREAK_RE = re.compile(
     flags=re.IGNORECASE | re.UNICODE,
 )
 _FAMILY_FALSE_POSITIVE_PATTERNS = (
-    re.compile(r"(?<!\w)con\s+trai\s+phát\s+hiện\s+bệnh\s+nhân(?!\w)", flags=re.IGNORECASE | re.UNICODE),
-    re.compile(r"(?<!\w)con\s+gái\s+phát\s+hiện\s+bệnh\s+nhân(?!\w)", flags=re.IGNORECASE | re.UNICODE),
+    re.compile(
+        r"(?<!\w)con\s+trai\s+phát\s+hiện\s+bệnh\s+nhân(?!\w)", flags=re.IGNORECASE | re.UNICODE
+    ),
+    re.compile(
+        r"(?<!\w)con\s+gái\s+phát\s+hiện\s+bệnh\s+nhân(?!\w)", flags=re.IGNORECASE | re.UNICODE
+    ),
 )
 _FAMILY_MEMBER_CUES = frozenset(
     {
@@ -68,9 +80,16 @@ _FAMILY_PREDICATE_RE = re.compile(
 
 
 class AssertionClassifier:
-    def classify(self, entity: EntityAnnotation, sentence: Sentence | None = None) -> AssertionStatus:
-        if entity.type in {EntityType.LAB_RESULT, EntityType.LAB_TEST}:
-            return AssertionStatus.PRESENT
+    def classify(
+        self, entity: EntityAnnotation, sentence: Sentence | None = None
+    ) -> AssertionStatus:
+        return self.classify_features(entity, sentence).primary()
+
+    def classify_features(
+        self,
+        entity: EntityAnnotation,
+        sentence: Sentence | None = None,
+    ) -> AssertionFeatures:
         sentence_text = sentence.text.lower() if sentence else ""
         entity_start = entity.span[0] - sentence.span[0] if sentence else 0
         entity_end = entity.span[1] - sentence.span[0] if sentence else entity_start
@@ -78,23 +97,36 @@ class AssertionClassifier:
         right_context = self._local_right_context(sentence_text, max(entity_end, 0))
         section_prior = self._section_prior(sentence)
 
-        if self._contains_family(left_context, right_context):
-            return AssertionStatus.FAMILY
-        if self._contains_negation(left_context):
-            return AssertionStatus.NEGATED
+        statuses: set[AssertionStatus] = set()
+        if self._contains_family(left_context, right_context) or self._contains(
+            right_context, FAMILY_RIGHT_CUES
+        ):
+            statuses.add(AssertionStatus.FAMILY)
+        if self._contains_negation(left_context) or self._contains(
+            right_context, NEGATION_RIGHT_CUES
+        ):
+            statuses.add(AssertionStatus.NEGATED)
         if self._contains_coordinated_negation(sentence_text, max(entity_start, 0)):
-            return AssertionStatus.NEGATED
-        if self._contains(left_context, HISTORICAL_CUES):
-            return AssertionStatus.HISTORICAL
-        if self._contains(left_context, PLANNED_CUES):
-            return AssertionStatus.PLANNED
-        if self._contains(left_context, RESOLVED_CUES):
-            return AssertionStatus.RESOLVED
+            statuses.add(AssertionStatus.NEGATED)
+        if self._contains(left_context, HISTORICAL_LEFT_CUES) or self._contains(
+            right_context, HISTORICAL_RIGHT_CUES
+        ):
+            statuses.add(AssertionStatus.HISTORICAL)
+        if self._contains(left_context, PLANNED_LEFT_CUES) or self._contains(
+            right_context, PLANNED_RIGHT_CUES
+        ):
+            statuses.add(AssertionStatus.PLANNED)
+        if self._contains(left_context, RESOLVED_LEFT_CUES) or self._contains(
+            right_context, RESOLVED_RIGHT_CUES
+        ):
+            statuses.add(AssertionStatus.RESOLVED)
         if section_prior is not None:
-            return section_prior
-        if self._contains(left_context, POSSIBLE_CUES) or self._contains(right_context, POSSIBLE_CUES):
-            return AssertionStatus.POSSIBLE
-        return AssertionStatus.PRESENT
+            statuses.add(section_prior)
+        if self._contains(left_context, POSSIBLE_LEFT_CUES) or self._contains(
+            right_context, POSSIBLE_RIGHT_CUES
+        ):
+            statuses.add(AssertionStatus.POSSIBLE)
+        return AssertionFeatures.from_statuses(statuses)
 
     @staticmethod
     def _section_prior(sentence: Sentence | None) -> AssertionStatus | None:
@@ -135,7 +167,7 @@ class AssertionClassifier:
 
     def _contains_negation(self, left_context: str) -> bool:
         blocked_spans = self._pattern_spans(left_context, _NEGATION_FALSE_POSITIVE_PATTERNS)
-        return self._contains_outside_spans(left_context, NEGATION_CUES, blocked_spans)
+        return self._contains_outside_spans(left_context, NEGATION_LEFT_CUES, blocked_spans)
 
     def _contains_coordinated_negation(self, sentence_text: str, entity_start: int) -> bool:
         segment_start = 0
@@ -144,7 +176,7 @@ class AssertionClassifier:
         segment = sentence_text[segment_start:entity_start]
         blocked_spans = self._pattern_spans(segment, _NEGATION_FALSE_POSITIVE_PATTERNS)
         best_match: re.Match[str] | None = None
-        for cue in NEGATION_CUES:
+        for cue in NEGATION_LEFT_CUES:
             normalized_cue = cue.strip()
             if not normalized_cue:
                 continue
@@ -167,7 +199,7 @@ class AssertionClassifier:
 
     def _contains_family(self, left_context: str, right_context: str) -> bool:
         blocked_spans = self._pattern_spans(left_context, _FAMILY_FALSE_POSITIVE_PATTERNS)
-        for cue in FAMILY_CUES:
+        for cue in FAMILY_LEFT_CUES:
             normalized_cue = cue.strip()
             if not normalized_cue:
                 continue
@@ -206,4 +238,7 @@ class AssertionClassifier:
 
     @staticmethod
     def _is_inside_spans(span: tuple[int, int], blocked_spans: list[tuple[int, int]]) -> bool:
-        return any(blocked_start <= span[0] and span[1] <= blocked_end for blocked_start, blocked_end in blocked_spans)
+        return any(
+            blocked_start <= span[0] and span[1] <= blocked_end
+            for blocked_start, blocked_end in blocked_spans
+        )

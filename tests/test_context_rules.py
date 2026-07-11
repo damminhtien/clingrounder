@@ -1,4 +1,5 @@
 from medical_kg_nlp.context.assertion import AssertionClassifier
+from medical_kg_nlp.context.rules import PLANNED_LEFT_CUES, POSSIBLE_LEFT_CUES, POSSIBLE_RIGHT_CUES
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.document import Sentence
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
@@ -44,6 +45,18 @@ def test_source_backed_negation_cue() -> None:
 def test_possible_rule_overrides_negation_phrase() -> None:
     entity, sentence = _entity("Không loại trừ viêm phổi.", "viêm phổi")
     assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.POSSIBLE
+
+
+def test_bidirectional_possible_cue_is_applied_on_the_right() -> None:
+    entity, sentence = _entity("Viêm phổi không loại trừ", "Viêm phổi")
+
+    assert "không loại trừ" in POSSIBLE_LEFT_CUES
+    assert "không loại trừ" in POSSIBLE_RIGHT_CUES
+    assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.POSSIBLE
+
+
+def test_section_prior_cue_is_not_loaded_as_left_context_cue() -> None:
+    assert "plan" not in PLANNED_LEFT_CUES
 
 
 def test_vietnamese_ruled_out_cue_is_negated_but_not_khong_loai_tru() -> None:
@@ -207,4 +220,53 @@ def test_negation_still_overrides_historical_section_prior() -> None:
     sentence = Sentence(span=(0, len(text)), text=text, section_title="Các bệnh lý mạn tính")
     entity = _entity_in_sentence(text, "viêm phổi")
 
-    assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.NEGATED
+    classifier = AssertionClassifier()
+    features = classifier.classify_features(entity, sentence)
+
+    assert classifier.classify(entity, sentence) == AssertionStatus.NEGATED
+    assert features.negated is True
+    assert features.historical is True
+
+
+def test_lab_test_can_be_negated_or_planned() -> None:
+    negated, negated_sentence = _typed_entity(
+        "Chưa thực hiện xét nghiệm CRP.",
+        "CRP",
+        EntityType.LAB_TEST,
+    )
+    planned, planned_sentence = _typed_entity(
+        "Dự kiến xét nghiệm CRP ngày mai.",
+        "CRP",
+        EntityType.LAB_TEST,
+    )
+
+    classifier = AssertionClassifier()
+    assert classifier.classify(negated, negated_sentence) == AssertionStatus.NEGATED
+    assert classifier.classify(planned, planned_sentence) == AssertionStatus.PLANNED
+
+
+def test_lab_result_can_be_negated_or_historical() -> None:
+    negated, negated_sentence = _typed_entity(
+        "Không ghi nhận glucose tăng.",
+        "tăng",
+        EntityType.LAB_RESULT,
+    )
+    historical, historical_sentence = _typed_entity(
+        "Tiền sử HbA1c tăng.",
+        "tăng",
+        EntityType.LAB_RESULT,
+    )
+
+    classifier = AssertionClassifier()
+    assert classifier.classify(negated, negated_sentence) == AssertionStatus.NEGATED
+    assert classifier.classify(historical, historical_sentence) == AssertionStatus.HISTORICAL
+
+
+def _typed_entity(
+    text: str,
+    mention: str,
+    entity_type: EntityType,
+) -> tuple[EntityAnnotation, Sentence]:
+    entity, sentence = _entity(text, mention)
+    entity.type = entity_type
+    return entity, sentence
