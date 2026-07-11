@@ -1,0 +1,30 @@
+{
+  "external": {
+    "candidates_score": 27.0515,
+    "score": 36.8242,
+    "assertions_score": 39.5152,
+    "text_score": 47.1633,
+    "wer": 52.8367
+  },
+  "local": {
+    "all": {
+      "score": 36.961232,
+      "text_score": 0.489649
+    },
+    "holdout": {
+      "error_counts": {
+        "phase1_missing_entity": 185,
+        "phase1_spurious_entity": 23,
+        "phase1_text_boundary": 68
+      },
+      "score": 35.893679,
+      "text_score": 0.494593
+    },
+    "train": {
+      "score": 37.233475,
+      "text_score": 0.488388
+    }
+  },
+  "notes": "Entity predictions are retained while assertions and candidates are always empty.",
+  "schema_version": "phase1-entity-only-baseline.v1"
+}

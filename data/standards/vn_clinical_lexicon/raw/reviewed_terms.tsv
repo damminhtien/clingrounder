@@ -30,6 +30,13 @@ HEART_RATE	LAB_TEST	Heart rate	Nhịp tim	Heart rate	nhịp tim|tần số tim	h
 RESPIRATORY_RATE	LAB_TEST	Respiratory rate	Nhịp thở	Respiratory rate	nhịp thở|tần số thở	respiratory rate	RR		Vital-sign lab name alias.
 TEMPERATURE	LAB_TEST	Temperature	Nhiệt độ	Temperature	nhiệt độ	temperature	Temp		Vital-sign lab name alias.
 OXYGEN_SATURATION	LAB_TEST	Oxygen saturation	Độ bão hòa oxy	Oxygen saturation	SpO2|độ bão hòa oxy|bão hòa oxy|độ bão hoà oxy	oxygen saturation	SpO2		Vital-sign lab name alias.
+ENDOSCOPY	LAB_TEST	Endoscopy	Nội soi	Endoscopy	nội soi|nội soi thực quản - dạ dày - tá tràng	endoscopy			Reviewed from Phase 1 manual-gold train split.
+LUMBAR_PUNCTURE	LAB_TEST	Lumbar puncture	Chọc dò dịch não tủy	Lumbar puncture	chọc dò dịch não tủy|chọc dò dịch não tuỷ	lumbar puncture|spinal tap	LP		Reviewed from Phase 1 manual-gold train split.
+BLOOD_CULTURE	LAB_TEST	Blood culture	Cấy máu	Blood culture	cấy máu	blood culture			Reviewed from Phase 1 manual-gold train split.
+BIOPSY	LAB_TEST	Biopsy	Sinh thiết	Biopsy	sinh thiết|sinh thiết ghép thận	biopsy			Reviewed from Phase 1 manual-gold train split.
+PCR	LAB_TEST	Polymerase chain reaction	PCR	Polymerase chain reaction	PCR|xét nghiệm PCR	polymerase chain reaction	PCR		Reviewed from Phase 1 manual-gold train split.
+H_PYLORI_BREATH_TEST	LAB_TEST	Helicobacter pylori breath test	Test hơi thở H. pylori	Helicobacter pylori breath test	test hơi thở H. pylori|test hơi thở h pylori	H. pylori breath test			Reviewed from Phase 1 manual-gold train split.
+BRUSH_CYTOLOGY	LAB_TEST	Brush cytology	Lấy mẫu bằng bàn chải	Brush cytology	lấy mẫu bằng bàn chải	brush sampling|brush cytology			Reviewed from Phase 1 manual-gold train split.
 PROC_SURGERY	PROCEDURE	Surgery	Phẫu thuật	Surgery	phẫu thuật|mổ		surgery		Future phase procedure lexicon; not merged into Phase 1 runtime by default.
 PROC_PROCEDURE	PROCEDURE	Procedure	Thủ thuật	Procedure	thủ thuật|can thiệp	procedure			Future phase procedure lexicon; not merged into Phase 1 runtime by default.
 PROC_CARDIAC_CATH	PROCEDURE	Cardiac catheterization	Thông tim	Cardiac catheterization	thông tim|chụp mạch vành|can thiệp mạch vành		cath		Future phase procedure lexicon; not merged into Phase 1 runtime by default.

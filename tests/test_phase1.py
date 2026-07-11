@@ -79,6 +79,38 @@ def test_prediction_to_phase1_entities_exports_flat_official_schema() -> None:
     assert all(set(row) == {"text", "type", "assertions", "candidates", "position"} for row in rows)
 
 
+def test_prediction_to_phase1_entities_supports_entity_only_abstention() -> None:
+    text = "Tiền sử tăng huyết áp."
+    prediction = ClinicalPrediction.from_text(
+        document_id="1",
+        text=text,
+        entities=[
+            _entity(
+                "E1",
+                text,
+                "tăng huyết áp",
+                EntityType.DISEASE,
+                assertion=AssertionStatus.HISTORICAL,
+                code_system=CodeSystem.ICD10,
+                code="I10",
+                candidates=[_candidate(CodeSystem.ICD10, "I10")],
+            )
+        ],
+        relations=[],
+        pipeline_version="test",
+    )
+
+    rows = prediction_to_phase1_entities(
+        prediction,
+        assertion_policy="empty",
+        candidate_policy="empty",
+    )
+
+    assert rows[0]["text"] == "tăng huyết áp"
+    assert rows[0]["assertions"] == []
+    assert rows[0]["candidates"] == []
+
+
 def test_prediction_to_phase1_entities_can_expand_drug_dose_span_from_source_text() -> None:
     text = "Bệnh nhân dùng metoprolol 25mg po bid, không cải thiện."
     prediction = ClinicalPrediction.from_text(
@@ -507,6 +539,8 @@ def test_phase1_submission_cli_can_read_config_defaults(tmp_path: Path) -> None:
                 "strict_validation: true",
                 "expected_count: 1",
                 "max_candidates: 1",
+                "assertion_policy: empty",
+                "candidate_policy: empty",
                 "parallel:",
                 "  backend: serial",
                 "  workers: 1",
@@ -539,6 +573,8 @@ def test_phase1_submission_cli_can_read_config_defaults(tmp_path: Path) -> None:
     assert summary["issue_count"] == 0
     assert summary["strict_validation"] is True
     assert summary["relations_enabled"] is False
+    assert summary["assertion_policy"] == "empty"
+    assert summary["candidate_policy"] == "empty"
     assert Path(summary["zip"]).exists()
 
 

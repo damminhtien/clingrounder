@@ -227,7 +227,9 @@ def merge_standard_rows(
                 }
             )
 
-    rows = [_apply_derived_metadata(merged[concept_id]) for concept_id in _sort_concept_ids(merged)]
+    # Base order is part of deterministic tie-breaking in the current lexical retriever.
+    # Preserve it and append newly admitted concepts in standard-source order.
+    rows = [_apply_derived_metadata(row) for row in merged.values()]
     summary = {
         "base_rows": len(base_rows),
         "standard_rows": len(standard_rows),
@@ -492,15 +494,6 @@ def _unique_strings(values: list[str]) -> list[str]:
         seen.add(key)
         unique.append(cleaned)
     return unique
-
-
-def _sort_concept_ids(rows: dict[str, dict[str, Any]]) -> list[str]:
-    def key(concept_id: str) -> tuple[str, int, str]:
-        prefix, _, code = concept_id.partition(":")
-        numeric = int(code) if code.isdigit() else 10**12
-        return (prefix, numeric, code)
-
-    return sorted(rows, key=key)
 
 
 def _count_by(rows: list[dict[str, Any]], key: str) -> dict[str, int]:

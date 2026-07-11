@@ -138,6 +138,26 @@ the ZIP payload against source TXT offsets and dictionary candidates, and disabl
 extraction/validation because Phase 1 exports only flat entities. CLI flags override config values
 for one-off runs.
 
+The current competition baseline is entity-only. `assertion_policy: empty` and
+`candidate_policy: empty` preserve entity text/type/offsets while deliberately abstaining on the two
+high-risk fields. The pipeline still computes assertion and linking traces internally. Python export
+APIs remain backward-compatible with `pipeline` defaults; the submission config opts into `empty`
+explicitly.
+
+Evaluate reviewed Phase 1 files without converting them to the internal schema:
+
+```bash
+python scripts/evaluate_phase1_manual_gold.py \
+  --gold-dir data/manual_gold \
+  --pred-dir outputs/phase1/<run>/phase1/output \
+  --output-dir outputs/evaluation/manual_gold
+```
+
+The evaluator locks a deterministic 60/15 train/holdout split, reports entity errors by type, and
+separates null accuracy, positive precision/recall, and prediction coverage for assertions and
+candidates. Its gate compares holdout score, text score, missing, spurious, and boundary errors with
+`data/manual_gold/entity_only_baseline.json`.
+
 ## Loop Engineering
 
 Use the loop engine after a stage-wise report exists. It turns metrics and error rows into an

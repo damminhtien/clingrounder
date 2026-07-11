@@ -6,7 +6,7 @@ import zipfile
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.ontology.phase1_assertions import (
@@ -84,6 +84,8 @@ _DRUG_EXTENSION_PATTERNS: tuple[tuple[re.Pattern[str], bool], ...] = (
     (re.compile(r"\s*\([^)\n\r]{1,50}\)"), True),
 )
 
+Phase1ExportPolicy = Literal["empty", "pipeline"]
+
 
 @dataclass(frozen=True)
 class Phase1ValidationIssue:
@@ -113,6 +115,8 @@ def prediction_to_phase1_entities(
     *,
     max_candidates: int = 1,
     source_text: str | None = None,
+    assertion_policy: Phase1ExportPolicy = "pipeline",
+    candidate_policy: Phase1ExportPolicy = "pipeline",
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for entity in prediction.entities:
@@ -125,6 +129,8 @@ def prediction_to_phase1_entities(
                 phase1_type=phase1_type,
                 max_candidates=max_candidates,
                 source_text=source_text,
+                assertion_policy=assertion_policy,
+                candidate_policy=candidate_policy,
             )
         )
     return rows
@@ -136,13 +142,25 @@ def entity_to_phase1(
     phase1_type: str,
     max_candidates: int = 1,
     source_text: str | None = None,
+    assertion_policy: Phase1ExportPolicy = "pipeline",
+    candidate_policy: Phase1ExportPolicy = "pipeline",
 ) -> dict[str, Any]:
+    _validate_export_policy(assertion_policy, "assertion_policy")
+    _validate_export_policy(candidate_policy, "candidate_policy")
     text, span = _phase1_text_and_span(entity, phase1_type, source_text)
     return {
         "text": text,
         "type": phase1_type,
-        "assertions": _phase1_assertions(entity, source_text) if phase1_type in PHASE1_ASSERTABLE_TYPES else [],
-        "candidates": _phase1_candidates(entity, phase1_type, max_candidates=max_candidates),
+        "assertions": (
+            _phase1_assertions(entity, source_text)
+            if assertion_policy == "pipeline" and phase1_type in PHASE1_ASSERTABLE_TYPES
+            else []
+        ),
+        "candidates": (
+            _phase1_candidates(entity, phase1_type, max_candidates=max_candidates)
+            if candidate_policy == "pipeline"
+            else []
+        ),
         "position": [span[0], span[1]],
     }
 
@@ -423,6 +441,8 @@ def write_phase1_output_dir(
     max_candidates: int = 1,
     clean: bool = True,
     source_text_by_document: Mapping[str, str] | None = None,
+    assertion_policy: Phase1ExportPolicy = "pipeline",
+    candidate_policy: Phase1ExportPolicy = "pipeline",
 ) -> None:
     path = Path(output_dir)
     path.mkdir(parents=True, exist_ok=True)
@@ -434,6 +454,8 @@ def write_phase1_output_dir(
             prediction,
             max_candidates=max_candidates,
             source_text=source_text_by_document.get(prediction.document_id) if source_text_by_document else None,
+            assertion_policy=assertion_policy,
+            candidate_policy=candidate_policy,
         )
         (path / f"{prediction.document_id}.json").write_text(
             json.dumps(rows, ensure_ascii=False, indent=2) + "\n",
@@ -682,6 +704,11 @@ def _phase1_candidates(entity: EntityAnnotation, phase1_type: str, *, max_candid
 
 def _expected_code_system(phase1_type: str) -> CodeSystem | None:
     return expected_code_system(phase1_type)
+
+
+def _validate_export_policy(value: str, field: str) -> None:
+    if value not in {"empty", "pipeline"}:
+        raise ValueError(f"{field} must be one of: empty, pipeline.")
 
 
 def _allowed_codes(dictionary: DictionaryStore | None) -> tuple[set[str], set[str]]:

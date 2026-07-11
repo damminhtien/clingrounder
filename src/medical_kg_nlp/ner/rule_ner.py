@@ -4,6 +4,7 @@ from pathlib import Path
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatch, DictionaryMatcher
+from medical_kg_nlp.ner.lab_observation_extractor import LabObservationExtractor
 from medical_kg_nlp.ontology.false_positive import DEFAULT_FALSE_POSITIVE_PATH, FalsePositiveRule, load_false_positive_rules
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
@@ -47,6 +48,7 @@ class RuleBasedNER:
         self.store = store
         self.aliases = store.aliases_for_ner()
         self.matcher = DictionaryMatcher(self.aliases)
+        self.lab_observations = LabObservationExtractor()
         self._drug_alias_lowers = tuple(
             alias.lower()
             for alias, entry in self.aliases
@@ -77,6 +79,9 @@ class RuleBasedNER:
                 )
             )
         self._extract_concatenated_drugs(text, occupied, spans)
+        for entity in self.lab_observations.extract(text, spans, occupied=occupied):
+            occupied.append(entity.span)
+            spans.append(entity)
         for regex in (_HBA1C_RE, _BP_RE, _VITAL_VALUE_RE, _LAB_VALUE_RE):
             for regex_match in regex.finditer(text):
                 span = _lab_result_span(regex_match)

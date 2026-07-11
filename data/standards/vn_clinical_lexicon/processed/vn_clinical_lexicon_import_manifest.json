@@ -1,15 +1,15 @@
 {
-  "alias_count": 154,
+  "alias_count": 177,
   "ambiguous_aliases": [],
   "by_code_system": {
-    "LOCAL": 34
+    "LOCAL": 41
   },
   "by_semantic_type": {
-    "LAB_TEST": 16,
+    "LAB_TEST": 23,
     "PROCEDURE": 3,
     "SYMPTOM": 15
   },
-  "concepts": 34,
+  "concepts": 41,
   "duplicate_codes": [],
   "duplicate_concept_ids": [],
   "parse_warning_count": 0,
@@ -19,7 +19,7 @@
   "source_inputs": [
     "data/standards/vn_clinical_lexicon/raw/reviewed_terms.tsv"
   ],
-  "unique_alias_count": 154,
-  "unique_codes": 34,
-  "unique_concept_ids": 34
+  "unique_alias_count": 177,
+  "unique_codes": 41,
+  "unique_concept_ids": 41
 }

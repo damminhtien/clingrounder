@@ -8,6 +8,8 @@ abbreviations: data/dictionaries/abbreviations.jsonl
 strict_validation: true
 expected_count: 100
 max_candidates: 1
+assertion_policy: empty
+candidate_policy: empty
 
 parallel:
   backend: process

@@ -76,6 +76,26 @@ def test_merge_standard_rows_enriches_seed_and_adds_only_input_matched_new_rows(
     assert "ICD10:R06.0" not in by_id
 
 
+def test_merge_standard_rows_preserves_base_order_and_appends_new_rows() -> None:
+    base = [
+        {"concept_id": "LOCAL:Z", "code": "Z", "code_system": "LOCAL", "semantic_type": "SYMPTOM"},
+        {"concept_id": "LOCAL:A", "code": "A", "code_system": "LOCAL", "semantic_type": "SYMPTOM"},
+    ]
+    standards = [
+        {
+            "concept_id": "LOCAL:M",
+            "code": "M",
+            "code_system": "LOCAL",
+            "canonical_name": "Mới",
+            "semantic_type": "SYMPTOM",
+        }
+    ]
+
+    rows, _ = merge_standard_rows(base, standards, include_unmatched_standard=True)
+
+    assert [row["concept_id"] for row in rows] == ["LOCAL:Z", "LOCAL:A", "LOCAL:M"]
+
+
 def test_merge_standard_rows_adds_new_rxnorm_terms_only_in_drug_context() -> None:
     standards = [
         {

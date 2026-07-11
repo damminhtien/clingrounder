@@ -55,6 +55,46 @@ def test_rule_ner_extracts_vietnamese_vital_sign_names_and_value_spans() -> None
         assert text[entity.span[0] : entity.span[1]] == entity.text
 
 
+def test_rule_ner_extracts_bare_and_qualitative_results_only_after_lab_anchors() -> None:
+    store = DictionaryStore.from_jsonl("data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
+    text = "Kali: 2.4; creatinine (serum) = 1.3. Chụp CT không ghi nhận gì bất thường. Số trần 42."
+
+    entities = RuleBasedNER(store).extract(text)
+    lab_results = [entity for entity in entities if entity.type == EntityType.LAB_RESULT]
+    result_texts = [entity.text for entity in lab_results]
+
+    assert "2.4" in result_texts
+    assert "1.3" in result_texts
+    assert "không ghi nhận gì bất thường" in result_texts
+    assert "42" not in result_texts
+    for entity in lab_results:
+        assert text[entity.span[0] : entity.span[1]] == entity.text
+
+
+def test_rule_ner_does_not_treat_dates_or_drug_doses_as_anchored_lab_results() -> None:
+    store = DictionaryStore.from_jsonl("data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
+    text = "Creatinine ngày 12/07/2026. Dùng metoprolol 25 mg. Kali được bổ sung 40 mg."
+
+    entities = RuleBasedNER(store).extract(text)
+    lab_result_texts = [entity.text for entity in entities if entity.type == EntityType.LAB_RESULT]
+
+    assert "12/07/2026" not in lab_result_texts
+    assert "25" not in lab_result_texts
+    assert "40" not in lab_result_texts
+
+
+def test_rule_ner_extracts_qualitative_results_before_or_after_lab_anchor() -> None:
+    store = DictionaryStore.from_jsonl("data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
+    text = "Glucose là thấp. tăng Cr theo phòng cấp cứu. Kali tăng cao."
+
+    entities = RuleBasedNER(store).extract(text)
+    lab_result_texts = [entity.text for entity in entities if entity.type == EntityType.LAB_RESULT]
+
+    assert "thấp" in lab_result_texts
+    assert "tăng" in lab_result_texts
+    assert "tăng cao" in lab_result_texts
+
+
 def test_rule_ner_blocks_ambiguous_yeu_to_and_chu_yeu_contexts() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     entities = RuleBasedNER(store).extract(

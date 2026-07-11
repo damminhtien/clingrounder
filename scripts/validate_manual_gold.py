@@ -70,7 +70,9 @@ def main() -> None:
             )
         )
 
-    extra_files = sorted(path.name for path in gold_path.glob("*.json") if path.stem not in set(expected_ids))
+    extra_files = sorted(
+        path.name for path in gold_path.glob("*.json") if path.stem.isdigit() and path.stem not in set(expected_ids)
+    )
     for name in extra_files:
         issues.append(_issue("extra_gold", str(gold_path / name), "Manual gold file has no matching expected input id.", Path(name).stem))
 

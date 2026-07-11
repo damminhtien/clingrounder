@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.evaluation.phase1 import (
+    Phase1ExportPolicy,
     load_phase1_text_documents,
     validate_phase1_submission_dir,
     validate_phase1_submission_zip,
@@ -54,6 +55,16 @@ def main() -> None:
         "--max-candidates",
         type=int,
         help="Max candidates exported per codable Phase 1 entity. Default keeps candidate sets precise.",
+    )
+    parser.add_argument(
+        "--assertion-policy",
+        choices=("empty", "pipeline"),
+        help="Export assertions from the pipeline or abstain with empty lists.",
+    )
+    parser.add_argument(
+        "--candidate-policy",
+        choices=("empty", "pipeline"),
+        help="Export candidates from the pipeline or abstain with empty lists.",
     )
     parser.add_argument(
         "--expected-count",
@@ -99,6 +110,8 @@ def main() -> None:
         parser,
     )
     max_candidates = _int_setting(args.max_candidates, config.get("max_candidates"), 1, "max_candidates")
+    assertion_policy = _export_policy(args.assertion_policy or config.get("assertion_policy"), "assertion_policy")
+    candidate_policy = _export_policy(args.candidate_policy or config.get("candidate_policy"), "candidate_policy")
     expected_count = _int_setting(args.expected_count, config.get("expected_count"), 100, "expected_count")
     parallel_backend = str(args.parallel_backend or parallel_config.get("backend") or "process")
     if parallel_backend not in {"serial", "thread", "process"}:
@@ -117,7 +130,13 @@ def main() -> None:
         create_hashed_run_dir(
             run_root,
             label=run_label,
-            inputs=[input_dir, dictionary_path, pred_path or "pipeline"],
+            inputs=[
+                input_dir,
+                dictionary_path,
+                pred_path or "pipeline",
+                f"assertions={assertion_policy}",
+                f"candidates={candidate_policy}",
+            ],
         )
         if run_root
         else None
@@ -149,6 +168,8 @@ def main() -> None:
         output_dir,
         max_candidates=max_candidates,
         source_text_by_document=source_text_by_document,
+        assertion_policy=assertion_policy,
+        candidate_policy=candidate_policy,
     )
     dictionary = DictionaryStore.from_jsonl(dictionary_path)
     issues = [
@@ -170,6 +191,8 @@ def main() -> None:
         issues=issues,
         strict_validation=strict_validation,
         pipeline_options=pipeline_options,
+        assertion_policy=assertion_policy,
+        candidate_policy=candidate_policy,
     )
     if issues and strict_validation:
         print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
@@ -197,6 +220,8 @@ def main() -> None:
         issues=issues,
         strict_validation=strict_validation,
         pipeline_options=pipeline_options,
+        assertion_policy=assertion_policy,
+        candidate_policy=candidate_policy,
     )
     print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
     if issues and strict_validation:
@@ -214,6 +239,8 @@ def _summary(
     issues: list[dict[str, str]],
     strict_validation: bool,
     pipeline_options: PipelineOptions,
+    assertion_policy: Phase1ExportPolicy,
+    candidate_policy: Phase1ExportPolicy,
 ) -> dict[str, Any]:
     return {
         "run_id": run_output.run_id if run_output else None,
@@ -227,6 +254,8 @@ def _summary(
         "strict_validation": strict_validation,
         "relations_enabled": pipeline_options.enable_relations,
         "relation_validation_enabled": pipeline_options.enable_relation_kg_validation,
+        "assertion_policy": assertion_policy,
+        "candidate_policy": candidate_policy,
         "issue_count": len(issues),
         "issues": issues[:20],
     }
@@ -259,6 +288,13 @@ def _int_setting(cli_value: int | None, config_value: Any, default: int, key: st
     if isinstance(value, bool) or not isinstance(value, int):
         raise ValueError(f"{key} must be an integer.")
     return value
+
+
+def _export_policy(value: Any, key: str) -> Phase1ExportPolicy:
+    policy = str(value or "pipeline").strip().lower()
+    if policy not in {"empty", "pipeline"}:
+        raise ValueError(f"{key} must be one of: empty, pipeline.")
+    return cast(Phase1ExportPolicy, policy)
 
 
 def _bool_setting(value: Any, default: bool, key: str) -> bool:

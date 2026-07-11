@@ -39,6 +39,19 @@ uv run python scripts/run_ablation.py --config configs/ablations.yaml --run-root
 uv run pytest tests/
 ```
 
+The default Phase 1 config uses the validated entity-only policy: entities are exported while
+`assertions` and `candidates` remain empty. Override `--assertion-policy pipeline` or
+`--candidate-policy pipeline` only for a controlled selective-prediction experiment.
+
+Evaluate a flat output directory against the reviewed manual-gold split:
+
+```bash
+uv run python scripts/evaluate_phase1_manual_gold.py \
+  --gold-dir data/manual_gold \
+  --pred-dir outputs/phase1/<run>/phase1/output \
+  --output-dir outputs/evaluation/manual_gold
+```
+
 Fallback without `uv`:
 
 ```bash
