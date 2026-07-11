@@ -30,7 +30,11 @@
 - `HAS_SYMPTOM` requires a disease head and symptom tail.
 - `HAS_TEST` requires a disease or finding head and lab test tail.
 - `HAS_VALUE` requires a lab test head and lab result tail.
-- `HAS_DOSE` requires a drug head and lab result tail.
+- `HAS_DOSE` requires a drug head and dosage or strength tail.
+- `HAS_ROUTE` requires a drug head and route tail.
+- `HAS_FREQUENCY` requires a drug head and frequency tail.
+- `HAS_DURATION` requires a drug head and duration tail.
+- `HAS_DOSAGE_FORM` requires a drug head and dosage-form tail.
 - `SUGGESTS` requires a lab test or finding head and disease or finding tail.
 - Relation types not explicitly allowed by KG constraints must be rejected.
 

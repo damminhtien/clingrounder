@@ -13,12 +13,22 @@ ENTITY_CODE_SYSTEMS: dict[EntityType, frozenset[CodeSystem]] = {
     EntityType.DRUG: frozenset({CodeSystem.RXNORM, CodeSystem.NONE}),
     EntityType.LAB_TEST: frozenset({CodeSystem.LOCAL, CodeSystem.NONE}),
     EntityType.LAB_RESULT: frozenset({CodeSystem.LOCAL, CodeSystem.NONE}),
+    EntityType.DOSAGE: frozenset({CodeSystem.NONE}),
+    EntityType.STRENGTH: frozenset({CodeSystem.NONE}),
+    EntityType.FREQUENCY: frozenset({CodeSystem.NONE}),
+    EntityType.ROUTE: frozenset({CodeSystem.NONE}),
+    EntityType.DURATION: frozenset({CodeSystem.NONE}),
+    EntityType.DOSAGE_FORM: frozenset({CodeSystem.NONE}),
     EntityType.PROCEDURE: frozenset(
         {CodeSystem.ICD10, CodeSystem.UMLS, CodeSystem.SNOMED, CodeSystem.LOCAL, CodeSystem.NONE}
     ),
     EntityType.PATIENT_INFO: frozenset({CodeSystem.LOCAL, CodeSystem.NONE}),
-    EntityType.ANATOMY: frozenset({CodeSystem.UMLS, CodeSystem.SNOMED, CodeSystem.LOCAL, CodeSystem.NONE}),
-    EntityType.FINDING: frozenset({CodeSystem.UMLS, CodeSystem.SNOMED, CodeSystem.LOCAL, CodeSystem.NONE}),
+    EntityType.ANATOMY: frozenset(
+        {CodeSystem.UMLS, CodeSystem.SNOMED, CodeSystem.LOCAL, CodeSystem.NONE}
+    ),
+    EntityType.FINDING: frozenset(
+        {CodeSystem.UMLS, CodeSystem.SNOMED, CodeSystem.LOCAL, CodeSystem.NONE}
+    ),
     EntityType.OTHER: frozenset({CodeSystem.LOCAL, CodeSystem.NONE}),
 }
 
@@ -31,29 +41,51 @@ def entity_code_system_valid(entity: EntityAnnotation) -> bool:
     return code_system_valid_for_entity_type(entity.type, entity.code_system)
 
 
-def relation_type_valid(relation: RelationAnnotation, entities_by_id: dict[str, EntityAnnotation]) -> bool:
+def relation_type_valid(
+    relation: RelationAnnotation, entities_by_id: dict[str, EntityAnnotation]
+) -> bool:
     head = entities_by_id.get(relation.head)
     tail = entities_by_id.get(relation.tail)
     if head is None or tail is None:
         return False
     if relation.type == RelationType.TREATS:
-        return head.type == EntityType.DRUG and tail.type in {EntityType.DISEASE, EntityType.SYMPTOM}
+        return head.type == EntityType.DRUG and tail.type in {
+            EntityType.DISEASE,
+            EntityType.SYMPTOM,
+        }
     if relation.type == RelationType.HAS_SYMPTOM:
         return head.type == EntityType.DISEASE and tail.type == EntityType.SYMPTOM
     if relation.type == RelationType.HAS_VALUE:
         return head.type == EntityType.LAB_TEST and tail.type == EntityType.LAB_RESULT
     if relation.type == RelationType.HAS_DOSE:
-        return head.type == EntityType.DRUG and tail.type == EntityType.LAB_RESULT
+        return head.type == EntityType.DRUG and tail.type in {
+            EntityType.DOSAGE,
+            EntityType.STRENGTH,
+        }
     if relation.type == RelationType.HAS_ROUTE:
-        return head.type == EntityType.DRUG and tail.type == EntityType.LAB_RESULT
+        return head.type == EntityType.DRUG and tail.type == EntityType.ROUTE
     if relation.type == RelationType.HAS_FREQUENCY:
-        return head.type == EntityType.DRUG and tail.type == EntityType.LAB_RESULT
+        return head.type == EntityType.DRUG and tail.type == EntityType.FREQUENCY
+    if relation.type == RelationType.HAS_DURATION:
+        return head.type == EntityType.DRUG and tail.type == EntityType.DURATION
+    if relation.type == RelationType.HAS_DOSAGE_FORM:
+        return head.type == EntityType.DRUG and tail.type == EntityType.DOSAGE_FORM
     if relation.type == RelationType.SUGGESTS:
-        return head.type in {EntityType.LAB_TEST, EntityType.FINDING} and tail.type in {EntityType.DISEASE, EntityType.FINDING}
+        return head.type in {EntityType.LAB_TEST, EntityType.FINDING} and tail.type in {
+            EntityType.DISEASE,
+            EntityType.FINDING,
+        }
     if relation.type == RelationType.HAS_TEST:
-        return head.type in {EntityType.DISEASE, EntityType.FINDING} and tail.type == EntityType.LAB_TEST
+        return (
+            head.type in {EntityType.DISEASE, EntityType.FINDING}
+            and tail.type == EntityType.LAB_TEST
+        )
     if relation.type == RelationType.CAUSED_BY:
-        return head.type in {EntityType.DISEASE, EntityType.SYMPTOM, EntityType.FINDING} and tail.type in {
+        return head.type in {
+            EntityType.DISEASE,
+            EntityType.SYMPTOM,
+            EntityType.FINDING,
+        } and tail.type in {
             EntityType.DISEASE,
             EntityType.DRUG,
             EntityType.FINDING,
@@ -66,13 +98,22 @@ def relation_type_valid(relation: RelationAnnotation, entities_by_id: dict[str, 
             EntityType.DRUG,
             EntityType.LAB_TEST,
             EntityType.LAB_RESULT,
+            EntityType.DOSAGE,
+            EntityType.STRENGTH,
+            EntityType.FREQUENCY,
+            EntityType.ROUTE,
+            EntityType.DURATION,
+            EntityType.DOSAGE_FORM,
             EntityType.PROCEDURE,
             EntityType.ANATOMY,
             EntityType.FINDING,
         }
         return head.type in clinical_types and tail.type in clinical_types
     if relation.type == RelationType.IS_A:
-        return head.type == tail.type and head.type not in {EntityType.PATIENT_INFO, EntityType.OTHER}
+        return head.type == tail.type and head.type not in {
+            EntityType.PATIENT_INFO,
+            EntityType.OTHER,
+        }
     if relation.type == RelationType.PART_OF:
         return head.type == EntityType.ANATOMY and tail.type == EntityType.ANATOMY
     if relation.type == RelationType.NEGATES:

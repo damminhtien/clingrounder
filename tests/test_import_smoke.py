@@ -13,6 +13,8 @@ import pytest
     [
         "medical_kg_nlp.kg.validator",
         "medical_kg_nlp.kg.constraints",
+        "medical_kg_nlp.kg.ontology_reasoner",
+        "medical_kg_nlp.ner.medication_attribute_extractor",
         "medical_kg_nlp.schema.validator",
         "medical_kg_nlp.ontology.phase1",
         "medical_kg_nlp.evaluation.phase1",

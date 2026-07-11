@@ -51,17 +51,34 @@ def test_kg_validator_resets_invalid_code_system_to_none() -> None:
 
 def test_treats_requires_drug_head() -> None:
     drug = EntityAnnotation("E1", (0, 9), "metformin", "metformin", EntityType.DRUG)
-    disease = EntityAnnotation("E2", (20, 41), "đái tháo đường type 2", "đái tháo đường type 2", EntityType.DISEASE)
+    disease = EntityAnnotation(
+        "E2", (20, 41), "đái tháo đường type 2", "đái tháo đường type 2", EntityType.DISEASE
+    )
     relation = RelationAnnotation("R1", "E1", "E2", RelationType.TREATS, 0.9)
     assert relation_type_valid(relation, {"E1": drug, "E2": disease})
 
 
 def test_has_test_rejects_drug_to_disease_pair() -> None:
     drug = EntityAnnotation("E1", (0, 9), "metformin", "metformin", EntityType.DRUG)
-    disease = EntityAnnotation("E2", (20, 41), "đái tháo đường type 2", "đái tháo đường type 2", EntityType.DISEASE)
+    disease = EntityAnnotation(
+        "E2", (20, 41), "đái tháo đường type 2", "đái tháo đường type 2", EntityType.DISEASE
+    )
     relation = RelationAnnotation("R1", "E1", "E2", RelationType.HAS_TEST, 0.9)
 
     assert not relation_type_valid(relation, {"E1": drug, "E2": disease})
+
+
+def test_has_dose_requires_dedicated_medication_attribute() -> None:
+    drug = EntityAnnotation("E1", (0, 9), "metformin", "metformin", EntityType.DRUG)
+    strength = EntityAnnotation("E2", (10, 14), "25mg", "25mg", EntityType.STRENGTH)
+    lab_result = EntityAnnotation("E3", (20, 23), "120", "120", EntityType.LAB_RESULT)
+
+    valid = RelationAnnotation("R1", "E1", "E2", RelationType.HAS_DOSE, 0.9)
+    invalid = RelationAnnotation("R2", "E1", "E3", RelationType.HAS_DOSE, 0.9)
+
+    entities = {entity.id: entity for entity in (drug, strength, lab_result)}
+    assert relation_type_valid(valid, entities)
+    assert not relation_type_valid(invalid, entities)
 
 
 def test_unknown_relation_type_is_rejected() -> None:
@@ -73,7 +90,9 @@ def test_unknown_relation_type_is_rejected() -> None:
 
 
 def test_only_present_assertion_is_confirmed_patient_condition() -> None:
-    present = EntityAnnotation("E1", (0, 5), "dummy", "dummy", EntityType.DISEASE, assertion=AssertionStatus.PRESENT)
+    present = EntityAnnotation(
+        "E1", (0, 5), "dummy", "dummy", EntityType.DISEASE, assertion=AssertionStatus.PRESENT
+    )
     historical = EntityAnnotation(
         "E2",
         (10, 15),
@@ -82,9 +101,15 @@ def test_only_present_assertion_is_confirmed_patient_condition() -> None:
         EntityType.DISEASE,
         assertion=AssertionStatus.HISTORICAL,
     )
-    possible = EntityAnnotation("E3", (20, 25), "dummy", "dummy", EntityType.DISEASE, assertion=AssertionStatus.POSSIBLE)
-    family = EntityAnnotation("E4", (30, 35), "dummy", "dummy", EntityType.DISEASE, assertion=AssertionStatus.FAMILY)
-    negated = EntityAnnotation("E5", (40, 45), "dummy", "dummy", EntityType.DISEASE, assertion=AssertionStatus.NEGATED)
+    possible = EntityAnnotation(
+        "E3", (20, 25), "dummy", "dummy", EntityType.DISEASE, assertion=AssertionStatus.POSSIBLE
+    )
+    family = EntityAnnotation(
+        "E4", (30, 35), "dummy", "dummy", EntityType.DISEASE, assertion=AssertionStatus.FAMILY
+    )
+    negated = EntityAnnotation(
+        "E5", (40, 45), "dummy", "dummy", EntityType.DISEASE, assertion=AssertionStatus.NEGATED
+    )
 
     assert is_confirmed_patient_condition(present)
     assert not is_confirmed_patient_condition(historical)
