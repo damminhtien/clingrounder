@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import threading
 import traceback
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -39,7 +39,9 @@ class ParallelBatchError(RuntimeError):
         self.errors = errors
         summary = ", ".join(f"{error.document_id}: {error.message}" for error in errors[:5])
         suffix = f" and {len(errors) - 5} more" if len(errors) > 5 else ""
-        super().__init__(f"{len(errors)} document(s) failed during parallel batch: {summary}{suffix}")
+        super().__init__(
+            f"{len(errors)} document(s) failed during parallel batch: {summary}{suffix}"
+        )
 
 
 _WORKER_RUNNER: PipelineRunner | None = None
@@ -55,6 +57,7 @@ def run_batch_with_trace_parallel(
     pipeline_options: PipelineOptions | None = None,
     parallel_options: ParallelBatchOptions | None = None,
 ) -> list[PipelineRunResult]:
+    global _WORKER_RUNNER
     options = parallel_options or ParallelBatchOptions()
     pipeline_options = pipeline_options or PipelineOptions()
     worker_count = _effective_worker_count(options, len(documents))
@@ -76,17 +79,30 @@ def run_batch_with_trace_parallel(
         pipeline_version,
         pipeline_options,
     )
-    executor_cls = ThreadPoolExecutor if options.backend == "thread" else ProcessPoolExecutor
     worker_fn = _process_indexed_document if options.fail_fast else _process_indexed_document_safe
     results: list[PipelineRunResult | None] = [None] * len(documents)
     errors: list[DocumentProcessingError] = []
 
-    with executor_cls(
-        max_workers=worker_count,
-        initializer=_init_worker,
-        initargs=initializer_args,
-    ) as executor:
-        for index, payload in executor.map(worker_fn, indexed_documents, chunksize=max(1, options.chunksize)):
+    executor_context: Executor
+    if options.backend == "thread":
+        _WORKER_RUNNER = PipelineRunner(
+            dictionary_path=dictionary_path,
+            abbreviation_path=abbreviation_path,
+            pipeline_version=pipeline_version,
+            options=pipeline_options,
+        )
+        executor_context = ThreadPoolExecutor(max_workers=worker_count)
+    else:
+        executor_context = ProcessPoolExecutor(
+            max_workers=worker_count,
+            initializer=_init_worker,
+            initargs=initializer_args,
+        )
+
+    with executor_context as executor:
+        for index, payload in executor.map(
+            worker_fn, indexed_documents, chunksize=max(1, options.chunksize)
+        ):
             if isinstance(payload, DocumentProcessingError):
                 errors.append(payload)
             else:

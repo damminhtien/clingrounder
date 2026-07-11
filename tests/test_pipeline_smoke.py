@@ -1,6 +1,6 @@
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
 from medical_kg_nlp.pipeline.runner import PipelineRunner
-from medical_kg_nlp.schema.types import AssertionStatus, RelationType
+from medical_kg_nlp.schema.types import AssertionStatus, EntityType, RelationType
 
 
 def test_pipeline_smoke_sample_note() -> None:
@@ -41,7 +41,14 @@ def test_pipeline_phase1_sections_drive_historical_context_and_skip_dose_result(
 
     assert by_text["metoprolol"].assertion == AssertionStatus.HISTORICAL
     assert by_text["đánh trống ngực"].assertion == AssertionStatus.PRESENT
-    assert "25mg" not in by_text
+    assert by_text["25mg"].type == EntityType.STRENGTH
+    assert by_text["25mg"].assertion == AssertionStatus.HISTORICAL
+    assert any(
+        relation.type == RelationType.HAS_DOSE
+        and relation.head == by_text["metoprolol"].id
+        and relation.tail == by_text["25mg"].id
+        for relation in prediction.relations
+    )
 
 
 def test_pipeline_phase1_preadmission_status_section_is_historical() -> None:

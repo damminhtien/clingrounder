@@ -187,9 +187,15 @@ def validate_phase1_entities(
     for index, item in enumerate(rows):
         path = f"$[{index}]"
         if not isinstance(item, dict):
-            issues.append(_issue("phase1_schema", path, "Each Phase 1 item must be an object.", document_id))
+            issues.append(
+                _issue("phase1_schema", path, "Each Phase 1 item must be an object.", document_id)
+            )
             continue
-        issues.extend(_validate_phase1_item(item, source_text, path, document_id, allowed_icd10, allowed_rxnorm))
+        issues.extend(
+            _validate_phase1_item(
+                item, source_text, path, document_id, allowed_icd10, allowed_rxnorm
+            )
+        )
     return issues
 
 
@@ -403,7 +409,9 @@ def score_phase1_documents(
             text_scores.append(0.0)
             assertion_scores.append(0.0)
             candidate_scores.append(0.0)
-            errors.append(_phase1_error(document_id, "phase1_missing_entity", gold=row, prediction=None))
+            errors.append(
+                _phase1_error(document_id, "phase1_missing_entity", gold=row, prediction=None)
+            )
 
         for index, row in enumerate(pred_rows):
             if index in matched_pred:
@@ -411,7 +419,9 @@ def score_phase1_documents(
             text_scores.append(0.0)
             assertion_scores.append(0.0)
             candidate_scores.append(0.0)
-            errors.append(_phase1_error(document_id, "phase1_spurious_entity", gold=None, prediction=row))
+            errors.append(
+                _phase1_error(document_id, "phase1_spurious_entity", gold=None, prediction=row)
+            )
 
     if denominator == 0:
         text_score = assertion_score = candidate_score = 1.0
@@ -453,7 +463,9 @@ def write_phase1_output_dir(
         rows = prediction_to_phase1_entities(
             prediction,
             max_candidates=max_candidates,
-            source_text=source_text_by_document.get(prediction.document_id) if source_text_by_document else None,
+            source_text=source_text_by_document.get(prediction.document_id)
+            if source_text_by_document
+            else None,
             assertion_policy=assertion_policy,
             candidate_policy=candidate_policy,
         )
@@ -468,7 +480,9 @@ def zip_phase1_output_dir(output_dir: str | Path, zip_path: str | Path) -> None:
     archive_path = Path(zip_path)
     archive_path.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-        for json_path in sorted(output_path.glob("*.json"), key=lambda item: _numeric_stem(item.stem)):
+        for json_path in sorted(
+            output_path.glob("*.json"), key=lambda item: _numeric_stem(item.stem)
+        ):
             archive.write(json_path, arcname=f"output/{json_path.name}")
 
 
@@ -507,9 +521,13 @@ def _validate_phase1_item(
     extra = sorted(set(item) - required)
     missing = sorted(required - set(item))
     for key in missing:
-        issues.append(_issue("phase1_schema", f"{path}.{key}", "Missing required field.", document_id))
+        issues.append(
+            _issue("phase1_schema", f"{path}.{key}", "Missing required field.", document_id)
+        )
     for key in extra:
-        issues.append(_issue("phase1_extra_field", f"{path}.{key}", "Unexpected Phase 1 field.", document_id))
+        issues.append(
+            _issue("phase1_extra_field", f"{path}.{key}", "Unexpected Phase 1 field.", document_id)
+        )
     if missing:
         return issues
 
@@ -520,15 +538,36 @@ def _validate_phase1_item(
     position = item.get("position")
 
     if not isinstance(text, str) or not text:
-        issues.append(_issue("phase1_schema", f"{path}.text", "text must be a non-empty string.", document_id))
+        issues.append(
+            _issue("phase1_schema", f"{path}.text", "text must be a non-empty string.", document_id)
+        )
     if phase1_type not in PHASE1_ALLOWED_TYPES:
-        issues.append(_issue("phase1_invalid_type", f"{path}.type", f"Invalid type {phase1_type!r}.", document_id))
-    if not isinstance(position, list) or len(position) != 2 or not all(isinstance(value, int) for value in position):
-        issues.append(_issue("phase1_offset", f"{path}.position", "position must be [start, end].", document_id))
+        issues.append(
+            _issue(
+                "phase1_invalid_type", f"{path}.type", f"Invalid type {phase1_type!r}.", document_id
+            )
+        )
+    if (
+        not isinstance(position, list)
+        or len(position) != 2
+        or not all(isinstance(value, int) for value in position)
+    ):
+        issues.append(
+            _issue(
+                "phase1_offset", f"{path}.position", "position must be [start, end].", document_id
+            )
+        )
     else:
         start, end = position
         if start < 0 or end <= start or end > len(source_text):
-            issues.append(_issue("phase1_offset", f"{path}.position", f"Invalid position {position}.", document_id))
+            issues.append(
+                _issue(
+                    "phase1_offset",
+                    f"{path}.position",
+                    f"Invalid position {position}.",
+                    document_id,
+                )
+            )
         elif isinstance(text, str) and source_text[start:end] != text:
             issues.append(
                 _issue(
@@ -540,7 +579,14 @@ def _validate_phase1_item(
             )
 
     if not isinstance(assertions, list):
-        issues.append(_issue("phase1_invalid_assertion", f"{path}.assertions", "assertions must be a list.", document_id))
+        issues.append(
+            _issue(
+                "phase1_invalid_assertion",
+                f"{path}.assertions",
+                "assertions must be a list.",
+                document_id,
+            )
+        )
     else:
         if phase1_type not in PHASE1_ASSERTABLE_TYPES and assertions:
             issues.append(
@@ -553,7 +599,12 @@ def _validate_phase1_item(
             )
         if len(assertions) > 3:
             issues.append(
-                _issue("phase1_invalid_assertion", f"{path}.assertions", "assertions may contain at most 3 items.", document_id)
+                _issue(
+                    "phase1_invalid_assertion",
+                    f"{path}.assertions",
+                    "assertions may contain at most 3 items.",
+                    document_id,
+                )
             )
         for assertion in assertions:
             if assertion not in PHASE1_ALLOWED_ASSERTIONS:
@@ -567,9 +618,20 @@ def _validate_phase1_item(
                 )
 
     if not isinstance(candidates, list):
-        issues.append(_issue("phase1_invalid_candidates", f"{path}.candidates", "candidates must be a list.", document_id))
+        issues.append(
+            _issue(
+                "phase1_invalid_candidates",
+                f"{path}.candidates",
+                "candidates must be a list.",
+                document_id,
+            )
+        )
     else:
-        issues.extend(_candidate_validation_issues(candidates, phase1_type, path, document_id, allowed_icd10, allowed_rxnorm))
+        issues.extend(
+            _candidate_validation_issues(
+                candidates, phase1_type, path, document_id, allowed_icd10, allowed_rxnorm
+            )
+        )
     return issues
 
 
@@ -593,12 +655,33 @@ def _candidate_validation_issues(
         )
     for candidate in candidates:
         if not isinstance(candidate, str) or not candidate:
-            issues.append(_issue("phase1_invalid_candidates", f"{path}.candidates", "Candidate codes must be strings.", document_id))
+            issues.append(
+                _issue(
+                    "phase1_invalid_candidates",
+                    f"{path}.candidates",
+                    "Candidate codes must be strings.",
+                    document_id,
+                )
+            )
             continue
         if phase1_type == "CHẨN_ĐOÁN" and allowed_icd10 and candidate not in allowed_icd10:
-            issues.append(_issue("phase1_unknown_candidate", f"{path}.candidates", f"Unknown ICD-10 code {candidate!r}.", document_id))
+            issues.append(
+                _issue(
+                    "phase1_unknown_candidate",
+                    f"{path}.candidates",
+                    f"Unknown ICD-10 code {candidate!r}.",
+                    document_id,
+                )
+            )
         if phase1_type == "THUỐC" and allowed_rxnorm and candidate not in allowed_rxnorm:
-            issues.append(_issue("phase1_unknown_candidate", f"{path}.candidates", f"Unknown RxNorm code {candidate!r}.", document_id))
+            issues.append(
+                _issue(
+                    "phase1_unknown_candidate",
+                    f"{path}.candidates",
+                    f"Unknown RxNorm code {candidate!r}.",
+                    document_id,
+                )
+            )
     return issues
 
 
@@ -618,9 +701,11 @@ def _phase1_by_document(
 
 def _phase1_assertions(entity: EntityAnnotation, source_text: str | None) -> list[str]:
     labels: set[str] = set()
-    value = _PHASE1_ASSERTION_BY_STATUS.get(entity.assertion)
-    if value:
-        labels.add(value)
+    statuses = set(entity.assertion_features.statuses()) or {entity.assertion}
+    for status in statuses:
+        value = _PHASE1_ASSERTION_BY_STATUS.get(status)
+        if value:
+            labels.add(value)
     if source_text is not None:
         for overlay in _PHASE1_ASSERTION_OVERLAYS:
             if overlay.matches(source_text, entity.span, entity_type=entity.type.value):
@@ -638,7 +723,9 @@ def _phase1_text_and_span(
     return entity.text, entity.span
 
 
-def _phase1_drug_text_and_span(entity: EntityAnnotation, source_text: str) -> tuple[str, tuple[int, int]]:
+def _phase1_drug_text_and_span(
+    entity: EntityAnnotation, source_text: str
+) -> tuple[str, tuple[int, int]]:
     start, end = entity.span
     if start < 0 or end <= start or end > len(source_text):
         return entity.text, entity.span
@@ -685,7 +772,9 @@ def _phase1_drug_expanded_end(source_text: str, end: int) -> int:
     return expanded_end
 
 
-def _phase1_candidates(entity: EntityAnnotation, phase1_type: str, *, max_candidates: int) -> list[str]:
+def _phase1_candidates(
+    entity: EntityAnnotation, phase1_type: str, *, max_candidates: int
+) -> list[str]:
     expected_system = _expected_code_system(phase1_type)
     if expected_system is None:
         return []
@@ -714,13 +803,26 @@ def _validate_export_policy(value: str, field: str) -> None:
 def _allowed_codes(dictionary: DictionaryStore | None) -> tuple[set[str], set[str]]:
     if dictionary is None:
         return set(), set()
-    icd10 = {entry.code for entry in dictionary.entries if entry.code_system == CodeSystem.ICD10 and entry.code}
-    rxnorm = {entry.code for entry in dictionary.entries if entry.code_system == CodeSystem.RXNORM and entry.code}
+    icd10 = {
+        entry.code
+        for entry in dictionary.entries
+        if entry.code_system == CodeSystem.ICD10 and entry.code
+    }
+    rxnorm = {
+        entry.code
+        for entry in dictionary.entries
+        if entry.code_system == CodeSystem.RXNORM and entry.code
+    }
     return icd10, rxnorm
 
 
-def _match_phase1_rows(gold_rows: list[dict[str, Any]], pred_rows: list[dict[str, Any]]) -> list[Phase1Match]:
-    candidates: list[tuple[float, int, int, Phase1Match]] = []
+def _match_phase1_rows(
+    gold_rows: list[dict[str, Any]], pred_rows: list[dict[str, Any]]
+) -> list[Phase1Match]:
+    if not gold_rows or not pred_rows:
+        return []
+    weights = [[0.0 for _ in pred_rows] for _ in gold_rows]
+    candidates: dict[tuple[int, int], Phase1Match] = {}
     for gold_index, gold in enumerate(gold_rows):
         for pred_index, pred in enumerate(pred_rows):
             if gold.get("type") != pred.get("type"):
@@ -729,33 +831,96 @@ def _match_phase1_rows(gold_rows: list[dict[str, Any]], pred_rows: list[dict[str
             span_overlap = _span_overlap(gold.get("position"), pred.get("position"))
             if text_score <= 0.0 and span_overlap <= 0.0:
                 continue
-            assertions_score = _jaccard(_string_set(gold.get("assertions")), _string_set(pred.get("assertions")))
-            candidates_score = _jaccard(_string_set(gold.get("candidates")), _string_set(pred.get("candidates")))
-            score = (2.0 if _positions_equal(gold.get("position"), pred.get("position")) else 0.0) + text_score + span_overlap
-            candidates.append(
-                (
-                    score,
-                    gold_index,
-                    pred_index,
-                    Phase1Match(
-                        gold_index=gold_index,
-                        pred_index=pred_index,
-                        text_score=text_score,
-                        assertions_score=assertions_score,
-                        candidates_score=candidates_score,
-                    ),
-                )
+            assertions_score = _jaccard(
+                _string_set(gold.get("assertions")), _string_set(pred.get("assertions"))
             )
-    matches: list[Phase1Match] = []
-    used_gold: set[int] = set()
-    used_pred: set[int] = set()
-    for _, gold_index, pred_index, match in sorted(candidates, key=lambda row: row[0], reverse=True):
-        if gold_index in used_gold or pred_index in used_pred:
-            continue
-        used_gold.add(gold_index)
-        used_pred.add(pred_index)
-        matches.append(match)
-    return matches
+            candidates_score = _jaccard(
+                _string_set(gold.get("candidates")), _string_set(pred.get("candidates"))
+            )
+            score = (
+                (2.0 if _positions_equal(gold.get("position"), pred.get("position")) else 0.0)
+                + text_score
+                + span_overlap
+            )
+            weights[gold_index][pred_index] = score
+            candidates[(gold_index, pred_index)] = Phase1Match(
+                gold_index=gold_index,
+                pred_index=pred_index,
+                text_score=text_score,
+                assertions_score=assertions_score,
+                candidates_score=candidates_score,
+            )
+    return [
+        candidates[(gold_index, pred_index)]
+        for gold_index, pred_index in _maximum_weight_assignment(weights)
+        if weights[gold_index][pred_index] > 0.0 and (gold_index, pred_index) in candidates
+    ]
+
+
+def _maximum_weight_assignment(weights: list[list[float]]) -> list[tuple[int, int]]:
+    """Hungarian assignment with zero-weight dummy columns for abstention."""
+
+    row_count = len(weights)
+    real_column_count = len(weights[0]) if weights else 0
+    if row_count == 0 or real_column_count == 0:
+        return []
+    column_count = real_column_count + row_count
+    max_weight = max((max(row, default=0.0) for row in weights), default=0.0)
+    costs = [
+        [max_weight - weight for weight in row] + [max_weight for _ in range(row_count)]
+        for row in weights
+    ]
+
+    row_potential = [0.0] * (row_count + 1)
+    column_potential = [0.0] * (column_count + 1)
+    matched_row = [0] * (column_count + 1)
+    predecessor = [0] * (column_count + 1)
+    for row in range(1, row_count + 1):
+        matched_row[0] = row
+        column = 0
+        minimum = [float("inf")] * (column_count + 1)
+        used = [False] * (column_count + 1)
+        while True:
+            used[column] = True
+            current_row = matched_row[column]
+            delta = float("inf")
+            next_column = 0
+            for candidate_column in range(1, column_count + 1):
+                if used[candidate_column]:
+                    continue
+                reduced_cost = (
+                    costs[current_row - 1][candidate_column - 1]
+                    - row_potential[current_row]
+                    - column_potential[candidate_column]
+                )
+                if reduced_cost < minimum[candidate_column]:
+                    minimum[candidate_column] = reduced_cost
+                    predecessor[candidate_column] = column
+                if minimum[candidate_column] < delta:
+                    delta = minimum[candidate_column]
+                    next_column = candidate_column
+            for candidate_column in range(column_count + 1):
+                if used[candidate_column]:
+                    row_potential[matched_row[candidate_column]] += delta
+                    column_potential[candidate_column] -= delta
+                else:
+                    minimum[candidate_column] -= delta
+            column = next_column
+            if matched_row[column] == 0:
+                break
+        while True:
+            previous_column = predecessor[column]
+            matched_row[column] = matched_row[previous_column]
+            column = previous_column
+            if column == 0:
+                break
+
+    assignment = [
+        (matched_row[column] - 1, column - 1)
+        for column in range(1, real_column_count + 1)
+        if matched_row[column] > 0
+    ]
+    return sorted(assignment)
 
 
 def _phase1_match_errors(
@@ -765,12 +930,24 @@ def _phase1_match_errors(
     match: Phase1Match,
 ) -> list[dict[str, Any]]:
     errors: list[dict[str, Any]] = []
-    if not _positions_equal(gold.get("position"), prediction.get("position")) or gold.get("text") != prediction.get("text"):
-        errors.append(_phase1_error(document_id, "phase1_text_boundary", gold=gold, prediction=prediction))
+    if not _positions_equal(gold.get("position"), prediction.get("position")) or gold.get(
+        "text"
+    ) != prediction.get("text"):
+        errors.append(
+            _phase1_error(document_id, "phase1_text_boundary", gold=gold, prediction=prediction)
+        )
     if match.assertions_score < 1.0:
-        errors.append(_phase1_error(document_id, "phase1_assertion_confusion", gold=gold, prediction=prediction))
+        errors.append(
+            _phase1_error(
+                document_id, "phase1_assertion_confusion", gold=gold, prediction=prediction
+            )
+        )
     if match.candidates_score < 1.0:
-        errors.append(_phase1_error(document_id, "phase1_candidate_confusion", gold=gold, prediction=prediction))
+        errors.append(
+            _phase1_error(
+                document_id, "phase1_candidate_confusion", gold=gold, prediction=prediction
+            )
+        )
     return errors
 
 
@@ -863,7 +1040,9 @@ def _span_overlap(left: Any, right: Any) -> float:
 
 
 def _valid_position(value: Any) -> bool:
-    return isinstance(value, list) and len(value) == 2 and all(isinstance(item, int) for item in value)
+    return (
+        isinstance(value, list) and len(value) == 2 and all(isinstance(item, int) for item in value)
+    )
 
 
 def _mean(values: list[float]) -> float:

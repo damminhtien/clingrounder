@@ -31,8 +31,8 @@ def test_pipeline_trace_records_algorithm_stages() -> None:
     by_stage = {stage.name: stage for stage in result.trace.stages}
     assert by_stage["offset_preserving_preprocessing"].counters["offset_map_entries"] > 0
     assert by_stage["offset_preserving_preprocessing"].counters["diagnostic_only"] == 1
-    assert by_stage["candidate_generation"].counters["generated_candidates"] > 0
-    assert by_stage["candidate_reranking"].counters["reranked_candidates"] > 0
+    candidate_counters = by_stage["candidate_generation"].counters
+    assert candidate_counters["generated_candidates"] + candidate_counters["pinned_entities"] > 0
     assert by_stage["normalization_assignment"].counters["assigned_codes"] > 0
 
 
@@ -44,7 +44,9 @@ def test_pipeline_options_can_disable_context_and_relations() -> None:
     by_text = {entity.text: entity for entity in result.prediction.entities}
     assert by_text["viêm phổi"].assertion == AssertionStatus.UNKNOWN
     assert result.prediction.relations == []
-    relation_stage = next(stage for stage in result.trace.stages if stage.name == "relation_extraction")
+    relation_stage = next(
+        stage for stage in result.trace.stages if stage.name == "relation_extraction"
+    )
     assert relation_stage.counters["skipped_entities"] == len(result.prediction.entities)
 
 
@@ -55,5 +57,25 @@ def test_pipeline_can_process_raw_text_and_skip_reranking() -> None:
 
     by_stage = {stage.name: stage for stage in result.trace.stages}
     assert by_stage["document_loader"].counters["documents"] == 1
-    assert by_stage["candidate_reranking"].counters["skipped_reranking"] > 0
+    skipped = by_stage["candidate_reranking"].counters["skipped_reranking"]
+    pinned = by_stage["candidate_generation"].counters["pinned_entities"]
+    assert skipped + pinned > 0
     assert result.prediction.document_id == document.document_id
+
+
+def test_entity_only_runner_does_not_build_linking_indexes() -> None:
+    runner = PipelineRunner(
+        options=PipelineOptions(
+            enable_context=False,
+            enable_linking=False,
+            enable_candidate_reranking=False,
+            enable_entity_kg_validation=False,
+            enable_relations=False,
+            enable_relation_kg_validation=False,
+        )
+    )
+
+    assert runner.linker is None
+    result = runner.process_text_with_trace("entity-only", "Bệnh nhân ho.")
+    by_stage = {stage.name: stage for stage in result.trace.stages}
+    assert by_stage["candidate_generation"].counters["skipped_entities"] > 0

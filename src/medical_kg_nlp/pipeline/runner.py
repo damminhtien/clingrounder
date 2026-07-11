@@ -39,19 +39,32 @@ class PipelineRunner:
         options: PipelineOptions | None = None,
     ) -> None:
         self.options = options or PipelineOptions()
-        self.store = DictionaryStore.from_jsonl(dictionary_path, alias_overlay_path=alias_overlay_path)
+        self.store = DictionaryStore.from_jsonl(
+            dictionary_path, alias_overlay_path=alias_overlay_path
+        )
         self.ner = RuleBasedNER(self.store)
-        self.linker = EntityLinker(
-            CandidateGenerator(
-                self.store,
-                abbreviation_path=abbreviation_path,
-                max_candidates=self.options.max_candidates,
-                retrieval_sources=self.options.candidate_sources,
+        self.linker = (
+            EntityLinker(
+                CandidateGenerator(
+                    self.store,
+                    abbreviation_path=abbreviation_path,
+                    max_candidates=self.options.max_candidates,
+                    retrieval_sources=self.options.candidate_sources,
+                ),
+                assignment_threshold=self.options.link_assignment_threshold,
+                assignment_margin=self.options.link_assignment_margin,
             )
+            if self.options.enable_linking
+            else None
         )
         self.assertion = AssertionClassifier()
         self.relations = RuleRelationExtractor()
-        self.validator = KGValidator()
+        self.validator = KGValidator(
+            self.store
+            if self.options.enable_entity_kg_validation
+            or self.options.enable_relation_kg_validation
+            else None
+        )
         self.pipeline_version = pipeline_version
 
     def process_text(
@@ -106,7 +119,8 @@ class PipelineRunner:
             if self.options.enable_context:
                 for entity in entities:
                     sentence = self._find_sentence(entity, sentences)
-                    entity.assertion = self.assertion.classify(entity, sentence)
+                    entity.assertion_features = self.assertion.classify_features(entity, sentence)
+                    entity.assertion = entity.assertion_features.primary()
                 counters["classified_entities"] = len(entities)
             else:
                 counters["skipped_entities"] = len(entities)
@@ -115,20 +129,28 @@ class PipelineRunner:
         generated_candidates: dict[str, list[Candidate]] = {}
         with trace.stage("candidate_generation") as counters:
             if self.options.enable_linking:
+                linker = self._require_linker()
                 generated_total = 0
                 entities_with_candidates = 0
+                pinned_entities = 0
                 for entity in entities:
                     if entity.code_system == CodeSystem.NONE:
-                        context = text_window(loaded_document.text, entity.span, radius=self.options.context_window)
+                        context = text_window(
+                            loaded_document.text, entity.span, radius=self.options.context_window
+                        )
                         contexts_by_entity[entity.id] = context
-                        candidates = self.linker.generate_candidates(entity, context)
+                        candidates = linker.generate_candidates(entity, context)
                         generated_candidates[entity.id] = candidates
                         generated_total += len(candidates)
                         entities_with_candidates += int(bool(candidates))
                         for candidate in candidates:
-                            key = f"source_{candidate.source}"
-                            counters[key] = counters.get(key, 0) + 1
+                            for source in candidate.sources:
+                                key = f"source_{source}"
+                                counters[key] = counters.get(key, 0) + 1
+                    else:
+                        pinned_entities += 1
                 counters["candidate_entities"] = len(generated_candidates)
+                counters["pinned_entities"] = pinned_entities
                 counters["entities_with_candidates"] = entities_with_candidates
                 counters["generated_candidates"] = generated_total
                 counters["candidate_sources"] = len(self.options.candidate_sources)
@@ -136,35 +158,40 @@ class PipelineRunner:
                 counters["skipped_entities"] = len(entities)
 
         reranked_candidates: dict[str, list[Candidate]] = {}
+        entities_by_id = {entity.id: entity for entity in entities}
         with trace.stage("candidate_reranking") as counters:
             if self.options.enable_linking:
+                linker = self._require_linker()
                 for entity_id, candidates in generated_candidates.items():
                     if self.options.enable_candidate_reranking:
-                        ranked = self.linker.rerank_candidates(candidates, contexts_by_entity.get(entity_id, ""))
+                        ranked = linker.rerank_candidates(
+                            candidates,
+                            contexts_by_entity.get(entity_id, ""),
+                            entities_by_id[entity_id].text,
+                        )
                     else:
                         ranked = candidates
                     reranked_candidates[entity_id] = ranked
                 counters["reranked_entities"] = len(reranked_candidates)
-                counters["reranked_candidates"] = sum(len(candidates) for candidates in reranked_candidates.values())
-                counters["skipped_reranking"] = 0 if self.options.enable_candidate_reranking else len(reranked_candidates)
+                counters["reranked_candidates"] = sum(
+                    len(candidates) for candidates in reranked_candidates.values()
+                )
+                counters["skipped_reranking"] = (
+                    0 if self.options.enable_candidate_reranking else len(reranked_candidates)
+                )
             else:
                 counters["skipped_entities"] = len(entities)
 
         with trace.stage("normalization_assignment") as counters:
             if self.options.enable_linking:
-                assigned_codes = 0
-                unlinked_entities = 0
+                linker = self._require_linker()
                 for entity in entities:
                     assigned_candidates = reranked_candidates.get(entity.id)
                     if assigned_candidates is None:
                         continue
-                    self.linker.apply_candidates(entity, assigned_candidates)
-                    if entity.code is None:
-                        unlinked_entities += 1
-                    else:
-                        assigned_codes += 1
-                counters["assigned_codes"] = assigned_codes
-                counters["unlinked_entities"] = unlinked_entities
+                    linker.apply_candidates(entity, assigned_candidates)
+                counters["assigned_codes"] = sum(entity.code is not None for entity in entities)
+                counters["unlinked_entities"] = sum(entity.code is None for entity in entities)
             else:
                 counters["skipped_entities"] = len(entities)
 
@@ -220,7 +247,11 @@ class PipelineRunner:
     def _sentences_from_sections(sections: list[Section], source_text: str) -> list[Sentence]:
         sentences: list[Sentence] = []
         for section in sections:
-            sentences.extend(split_sentences(section.text, section_title=section.title, base_offset=section.span[0]))
+            sentences.extend(
+                split_sentences(
+                    section.text, section_title=section.title, base_offset=section.span[0]
+                )
+            )
         return sentences or [Sentence(span=(0, len(source_text)), text=source_text)]
 
     @staticmethod
@@ -229,3 +260,8 @@ class PipelineRunner:
             if sentence.span[0] <= entity.span[0] and entity.span[1] <= sentence.span[1]:
                 return sentence
         return None
+
+    def _require_linker(self) -> EntityLinker:
+        if self.linker is None:
+            raise RuntimeError("Linker is unavailable when enable_linking is false.")
+        return self.linker

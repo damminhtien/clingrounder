@@ -7,6 +7,7 @@ from pathlib import Path
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.evaluation.phase1 import (
+    _maximum_weight_assignment,
     build_phase1_report,
     load_phase1_text_documents,
     prediction_to_phase1_entities,
@@ -18,10 +19,11 @@ from medical_kg_nlp.evaluation.phase1 import (
     zip_phase1_output_dir,
 )
 from medical_kg_nlp.evaluation.phase1_submission_analysis import build_phase1_submission_analysis
-from medical_kg_nlp.schema.annotation import CandidateConcept, EntityAnnotation
+from medical_kg_nlp.schema.annotation import AssertionFeatures, CandidateConcept, EntityAnnotation
 from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
+from medical_kg_nlp.utils.io import read_yaml
 
 
 def test_prediction_to_phase1_entities_exports_flat_official_schema() -> None:
@@ -52,7 +54,10 @@ def test_prediction_to_phase1_entities_exports_flat_official_schema() -> None:
                 assertion=AssertionStatus.HISTORICAL,
                 code_system=CodeSystem.RXNORM,
                 code="6809",
-                candidates=[_candidate(CodeSystem.ICD10, "E11"), _candidate(CodeSystem.RXNORM, "6809")],
+                candidates=[
+                    _candidate(CodeSystem.ICD10, "E11"),
+                    _candidate(CodeSystem.RXNORM, "6809"),
+                ],
             ),
             _entity(
                 "E4",
@@ -111,6 +116,23 @@ def test_prediction_to_phase1_entities_supports_entity_only_abstention() -> None
     assert rows[0]["candidates"] == []
 
 
+def test_phase1_export_preserves_supported_multi_label_assertions() -> None:
+    text = "Tiền sử không có viêm phổi."
+    entity = _entity(
+        "E1",
+        text,
+        "viêm phổi",
+        EntityType.DISEASE,
+        assertion=AssertionStatus.NEGATED,
+    )
+    entity.assertion_features = AssertionFeatures(negated=True, historical=True)
+    prediction = ClinicalPrediction.from_text("1", text, [entity], [], "test")
+
+    rows = prediction_to_phase1_entities(prediction, source_text=text)
+
+    assert rows[0]["assertions"] == ["isNegated", "isHistorical"]
+
+
 def test_prediction_to_phase1_entities_can_expand_drug_dose_span_from_source_text() -> None:
     text = "Bệnh nhân dùng metoprolol 25mg po bid, không cải thiện."
     prediction = ClinicalPrediction.from_text(
@@ -139,10 +161,24 @@ def test_prediction_to_phase1_entities_can_expand_drug_dose_span_from_source_tex
             "type": "THUỐC",
             "assertions": [],
             "candidates": ["6918"],
-            "position": [text.index("metoprolol"), text.index("metoprolol 25mg po bid") + len("metoprolol 25mg po bid")],
+            "position": [
+                text.index("metoprolol"),
+                text.index("metoprolol 25mg po bid") + len("metoprolol 25mg po bid"),
+            ],
         }
     ]
     assert validate_phase1_entities(rows, text) == []
+
+
+def test_phase1_entity_matching_uses_maximum_weight_assignment() -> None:
+    assignment = _maximum_weight_assignment(
+        [
+            [10.0, 9.0],
+            [9.0, 0.0],
+        ]
+    )
+
+    assert assignment == [(0, 1), (1, 0)]
 
 
 def test_prediction_to_phase1_entities_does_not_expand_drug_into_reason_clause() -> None:
@@ -158,7 +194,10 @@ def test_prediction_to_phase1_entities_does_not_expand_drug_into_reason_clause()
     rows = prediction_to_phase1_entities(prediction, source_text=text)
 
     assert rows[0]["text"] == "doxycycline"
-    assert rows[0]["position"] == [text.index("doxycycline"), text.index("doxycycline") + len("doxycycline")]
+    assert rows[0]["position"] == [
+        text.index("doxycycline"),
+        text.index("doxycycline") + len("doxycycline"),
+    ]
     assert validate_phase1_entities(rows, text) == []
 
 
@@ -202,7 +241,11 @@ def test_prediction_to_phase1_entities_exports_negated_historical_multilabel() -
     prediction = ClinicalPrediction.from_text(
         "1",
         text,
-        [_entity("E1", text, "hen phế quản", EntityType.DISEASE, assertion=AssertionStatus.NEGATED)],
+        [
+            _entity(
+                "E1", text, "hen phế quản", EntityType.DISEASE, assertion=AssertionStatus.NEGATED
+            )
+        ],
         [],
         "test",
     )
@@ -218,7 +261,11 @@ def test_prediction_to_phase1_entities_exports_negated_family_history_multilabel
     prediction = ClinicalPrediction.from_text(
         "1",
         text,
-        [_entity("E1", text, "ung thư phổi", EntityType.DISEASE, assertion=AssertionStatus.NEGATED)],
+        [
+            _entity(
+                "E1", text, "ung thư phổi", EntityType.DISEASE, assertion=AssertionStatus.NEGATED
+            )
+        ],
         [],
         "test",
     )
@@ -229,7 +276,9 @@ def test_prediction_to_phase1_entities_exports_negated_family_history_multilabel
     assert validate_phase1_entities(rows, text) == []
 
 
-def test_prediction_to_phase1_entities_does_not_treat_current_history_header_as_historical() -> None:
+def test_prediction_to_phase1_entities_does_not_treat_current_history_header_as_historical() -> (
+    None
+):
     text = "Tiền sử bệnh hiện tại Lý do nhập viện: đau bụng."
     prediction = ClinicalPrediction.from_text(
         "1",
@@ -429,12 +478,15 @@ def test_phase1_output_dir_and_zip_validation(tmp_path: Path) -> None:
 
     assert not (output_dir / "999.json").exists()
     assert validate_phase1_submission_dir(input_dir, output_dir, dictionary=dictionary) == []
-    assert validate_phase1_submission_zip(
-        zip_path,
-        input_dir=input_dir,
-        dictionary=dictionary,
-        expected_count=2,
-    ) == []
+    assert (
+        validate_phase1_submission_zip(
+            zip_path,
+            input_dir=input_dir,
+            dictionary=dictionary,
+            expected_count=2,
+        )
+        == []
+    )
 
 
 def test_phase1_zip_structure_validation_is_order_independent(tmp_path: Path) -> None:
@@ -463,7 +515,9 @@ def test_phase1_submission_cli_validates_zip(tmp_path: Path) -> None:
         [],
         "test",
     )
-    pred_path.write_text(json.dumps(prediction.to_json(), ensure_ascii=False) + "\n", encoding="utf-8")
+    pred_path.write_text(
+        json.dumps(prediction.to_json(), ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
     result = subprocess.run(
         [
@@ -492,6 +546,7 @@ def test_phase1_submission_cli_validates_zip(tmp_path: Path) -> None:
     assert Path(summary["run_dir"]).parent == tmp_path / "runs"
     assert summary["strict_validation"] is True
     assert summary["relations_enabled"] is False
+    assert summary["mode"] == "entity_only"
     assert summary["relation_validation_enabled"] is False
 
     subprocess.run(
@@ -524,7 +579,9 @@ def test_phase1_submission_cli_can_read_config_defaults(tmp_path: Path) -> None:
         [],
         "test",
     )
-    pred_path.write_text(json.dumps(prediction.to_json(), ensure_ascii=False) + "\n", encoding="utf-8")
+    pred_path.write_text(
+        json.dumps(prediction.to_json(), ensure_ascii=False) + "\n", encoding="utf-8"
+    )
     config_path = tmp_path / "phase1.yaml"
     config_path.write_text(
         "\n".join(
@@ -575,7 +632,32 @@ def test_phase1_submission_cli_can_read_config_defaults(tmp_path: Path) -> None:
     assert summary["relations_enabled"] is False
     assert summary["assertion_policy"] == "empty"
     assert summary["candidate_policy"] == "empty"
+    assert summary["mode"] == "custom"
     assert Path(summary["zip"]).exists()
+
+
+def test_phase1_configs_separate_entity_only_and_full_execution() -> None:
+    entity_only = read_yaml("configs/phase1_submission.yaml")
+    full = read_yaml("configs/phase1_full.yaml")
+
+    assert entity_only["mode"] == "entity_only"
+    assert entity_only["assertion_policy"] == "empty"
+    assert entity_only["candidate_policy"] == "empty"
+    assert not any(
+        entity_only["pipeline"][key] for key in entity_only["pipeline"] if key.startswith("enable_")
+    )
+
+    assert full["mode"] == "full"
+    assert full["assertion_policy"] == "pipeline"
+    assert full["candidate_policy"] == "pipeline"
+    for key in (
+        "enable_context",
+        "enable_linking",
+        "enable_candidate_reranking",
+        "enable_entity_kg_validation",
+    ):
+        assert full["pipeline"][key] is True
+    assert full["pipeline"]["enable_relations"] is False
 
 
 def test_phase1_pre_submit_gate_writes_analysis_and_loop_artifacts(tmp_path: Path) -> None:
@@ -645,7 +727,9 @@ def test_phase1_pre_submit_gate_writes_analysis_and_loop_artifacts(tmp_path: Pat
     assert (tmp_path / "journal" / "experiment_notebook.md").exists()
 
 
-def test_phase1_submission_analysis_uses_word_boundaries_for_possible_markers(tmp_path: Path) -> None:
+def test_phase1_submission_analysis_uses_word_boundaries_for_possible_markers(
+    tmp_path: Path,
+) -> None:
     input_dir = tmp_path / "input"
     output_dir = tmp_path / "output"
     input_dir.mkdir()
