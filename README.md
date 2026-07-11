@@ -5,7 +5,7 @@ Prototype system for clinical entity extraction, dictionary-constrained normaliz
 The internal schema stays rich for debugging, while the Phase 1 exporter writes the official flat
 entity JSON files for `input/1.txt` through `input/100.txt`.
 
-Target runtime: Python 3.14+ with latest compatible library lower bounds in `pyproject.toml`.
+Supported runtime: Python 3.11–3.14, matching `pyproject.toml` and the CI matrix.
 
 ## What Works Now
 
@@ -40,8 +40,9 @@ uv run pytest tests/
 ```
 
 The default Phase 1 config uses the validated entity-only policy: entities are exported while
-`assertions` and `candidates` remain empty. Override `--assertion-policy pipeline` or
-`--candidate-policy pipeline` only for a controlled selective-prediction experiment.
+`assertions` and `candidates` remain empty, and context/linking/KG stages that cannot affect the
+submission are not constructed. Use `--config configs/phase1_full.yaml` for a controlled
+assertion/candidate experiment; the CLI validates both mode contracts.
 
 Evaluate a flat output directory against the reviewed manual-gold split:
 
@@ -94,7 +95,9 @@ or a source install.
 
 Use `--run-root outputs/runs` on long-running commands to avoid overwriting old results. Each run
 creates a directory like `outputs/runs/20260702T143000Z_phase1_a1b2c3d4e5/` with a
-`run_manifest.json`; relative output paths are written inside that directory.
+`run_manifest.json`; relative output paths are written inside that directory. The timestamp keeps
+runs unique, while the digest and manifest record content hashes, Git state, resolved config,
+Python version, dependency lock hash, random seed, and command.
 
 ```bash
 uv run python scripts/build_phase1_submission.py \
@@ -126,6 +129,10 @@ Raw clinical text
   -> prediction validation
   -> evaluation and error analysis
 ```
+
+`configs/phase1_submission.yaml` stops after entity extraction for official entity-only runs.
+`configs/phase1_full.yaml` enables the context, calibrated candidate fusion, medication-aware
+reranking, confidence-margin abstention, and KG validation stages shown above.
 
 ## Repository Layout
 

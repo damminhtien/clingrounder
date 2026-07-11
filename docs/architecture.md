@@ -18,7 +18,7 @@ retrieval, and experiment-analysis ecosystem is stronger in Python for this proj
 
 ## Stack
 
-- Language: Python 3.14 target.
+- Language: Python 3.11–3.14; CI verifies every declared minor version.
 - Package/project: `uv` with `pyproject.toml` as the source of truth.
 - Code quality: ruff, mypy, pytest, pre-commit.
 - Schema: Pydantic v2 is available for external schemas; internal baseline schemas use dataclasses
