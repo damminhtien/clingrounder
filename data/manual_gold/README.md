@@ -35,3 +35,15 @@ Final validation, after all 100 files exist:
 ```bash
 uv run python scripts/validate_manual_gold.py
 ```
+
+Compile reviewed labels, guideline notes, and rejected mentions into concept-level knowledge:
+
+```bash
+uv run python scripts/build_phase1_annotation_knowledge.py
+```
+
+This writes `compiled/phase1_annotation_policy.yaml`, `annotation_knowledge.json`,
+`policy_conflicts.csv`, `conflict_summary.json`, and `report.md`. Strict aliases require support
+from at least two reviewed documents and cannot have a type or accepted-vs-rejected conflict.
+Document identifiers are retained only as audit provenance; the runtime policy contains no
+document-specific output rules.

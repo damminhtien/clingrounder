@@ -174,6 +174,28 @@ Without explicit `--source` flags, the command searches source-per-type combinat
 train split. It reports the frozen 15-file holdout only after selecting the best train strategy,
 writes `strategy_search.json`, validates offsets/schema, and creates `output.zip`.
 
+Analyze entity-only WER, source lineage, and span boundaries:
+
+```bash
+uv run python scripts/analyze_phase1_entity_wer.py \
+  --gold-dir data/manual_gold \
+  --pred outputs/phase1/<final-run>/output.zip \
+  --documents data/raw/input \
+  --policy data/manual_gold/compiled/phase1_annotation_policy.yaml \
+  --stage type_selected=outputs/phase1/<type-run>/output \
+  --stage repeat_recovery=outputs/phase1/<repeat-run>/output \
+  --final-source-name pipeline_nonoverlap \
+  --public-wer 51.6594 \
+  --output-dir outputs/evaluation/<wer-analysis-run>
+```
+
+The report writes micro and macro-document WER proxies, per-type/source/document metrics,
+source-by-type precision diagnostics, leave-one-source-out WER ablations, boundary kinds and
+missing/extra fragments, stage deltas, and error rates by compiled knowledge status. WER proxy is
+`100 * (1 - local text_score)` and is reported separately from the external public WER. WER uses
+the existing Phase 1 text scorer; missing/spurious/boundary taxonomy uses same-type raw-span
+overlap so repeated mentions at distant offsets cannot be paired as a fake boundary error.
+
 Run dictionary-constrained candidate overlays without changing entities or assertions:
 
 ```bash

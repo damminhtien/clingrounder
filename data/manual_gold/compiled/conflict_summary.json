@@ -1,0 +1,15 @@
+{
+  "blocking": [],
+  "by_severity": {
+    "high": 20,
+    "medium": 68,
+    "warning": 35
+  },
+  "by_type": {
+    "positive_negative_same_mention": 15,
+    "positive_type_disagreement": 5,
+    "review_offset_mismatch": 68,
+    "unstable_policy_evidence": 35
+  },
+  "conflict_count": 123
+}

@@ -18,3 +18,8 @@ codiesp:
   enabled: false
   note: "Spanish ICD coding adapter placeholder."
 
+phase1_manual:
+  gold_dir: "data/manual_gold"
+  review_manifest: "data/manual_gold/review_manifest.jsonl"
+  compiled_policy: "data/manual_gold/compiled/phase1_annotation_policy.yaml"
+  conflict_report: "data/manual_gold/compiled/policy_conflicts.csv"
