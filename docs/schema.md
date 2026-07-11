@@ -6,7 +6,8 @@ Internal schemas live under `src/medical_kg_nlp/schema/` and use typed dataclass
 
 - `ClinicalDocument`: `document_id`, source `text`, and string metadata.
 - `EntityAnnotation`: stable `id`, source `span`, source `text`, normalized text, entity type,
-  assertion, code system, code, confidence, and candidate list.
+  primary assertion, multi-label assertion features, code system, code, confidence, and candidate
+  list.
 - `CandidateConcept`: dictionary candidate metadata for debugging and recall evaluation.
 - `RelationAnnotation`: typed edge between entity ids with optional evidence span.
 - `ClinicalPrediction`: exported prediction object with `document_id`, `text_hash`, entities,
@@ -14,13 +15,13 @@ Internal schemas live under `src/medical_kg_nlp/schema/` and use typed dataclass
 
 ## Enum Sets
 
-- `EntityType`: disease, symptom, drug, lab test, lab result, procedure, patient info, anatomy,
-  finding, other.
+- `EntityType`: disease, symptom, drug, lab test, lab result, dosage, strength, frequency, route,
+  duration, dosage form, procedure, patient info, anatomy, finding, other.
 - `AssertionStatus`: present, negated, historical, family, possible, conditional, planned,
   resolved, unknown.
 - `CodeSystem`: ICD-10, RxNorm, UMLS, SNOMED, LOCAL, NONE.
-- `RelationType`: treatment, symptom, test/value/dose links, causal/associative links, ontology
-  edges, and unknown.
+- `RelationType`: treatment, symptom, test/value links, medication dose/route/frequency/duration/
+  dosage-form links, causal/associative links, ontology edges, and unknown.
 
 ## JSON Validation
 

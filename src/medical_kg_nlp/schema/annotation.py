@@ -28,6 +28,56 @@ class CandidateConcept:
 
 
 @dataclass
+class AssertionFeatures:
+    negated: bool = False
+    historical: bool = False
+    family: bool = False
+    possible: bool = False
+    conditional: bool = False
+    planned: bool = False
+    resolved: bool = False
+
+    @classmethod
+    def from_statuses(cls, statuses: set[AssertionStatus]) -> "AssertionFeatures":
+        return cls(
+            negated=AssertionStatus.NEGATED in statuses,
+            historical=AssertionStatus.HISTORICAL in statuses,
+            family=AssertionStatus.FAMILY in statuses,
+            possible=AssertionStatus.POSSIBLE in statuses,
+            conditional=AssertionStatus.CONDITIONAL in statuses,
+            planned=AssertionStatus.PLANNED in statuses,
+            resolved=AssertionStatus.RESOLVED in statuses,
+        )
+
+    def statuses(self) -> tuple[AssertionStatus, ...]:
+        values = (
+            (self.family, AssertionStatus.FAMILY),
+            (self.negated, AssertionStatus.NEGATED),
+            (self.historical, AssertionStatus.HISTORICAL),
+            (self.planned, AssertionStatus.PLANNED),
+            (self.resolved, AssertionStatus.RESOLVED),
+            (self.conditional, AssertionStatus.CONDITIONAL),
+            (self.possible, AssertionStatus.POSSIBLE),
+        )
+        return tuple(status for enabled, status in values if enabled)
+
+    def primary(self) -> AssertionStatus:
+        statuses = self.statuses()
+        return statuses[0] if statuses else AssertionStatus.PRESENT
+
+    def to_json(self) -> dict[str, bool]:
+        return {
+            "negated": self.negated,
+            "historical": self.historical,
+            "family": self.family,
+            "possible": self.possible,
+            "conditional": self.conditional,
+            "planned": self.planned,
+            "resolved": self.resolved,
+        }
+
+
+@dataclass
 class EntityAnnotation:
     id: str
     span: tuple[int, int]
@@ -39,6 +89,7 @@ class EntityAnnotation:
     code: str | None = None
     confidence: float = 0.0
     candidates: list[CandidateConcept] = field(default_factory=list)
+    assertion_features: AssertionFeatures = field(default_factory=AssertionFeatures)
 
     def validate_offsets(self, source_text: str) -> None:
         start, end = self.span
@@ -58,6 +109,7 @@ class EntityAnnotation:
             "normalized_text": self.normalized_text,
             "type": self.type.value,
             "assertion": self.assertion.value,
+            "assertion_features": self.assertion_features.to_json(),
             "code_system": self.code_system.value,
             "code": self.code,
             "confidence": round(self.confidence, 6),
@@ -85,4 +137,3 @@ class RelationAnnotation:
         if self.evidence_span is not None:
             payload["evidence_span"] = [self.evidence_span[0], self.evidence_span[1]]
         return payload
-

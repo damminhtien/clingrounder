@@ -1,7 +1,12 @@
 from __future__ import annotations
 from pathlib import Path
 
-from medical_kg_nlp.schema.annotation import CandidateConcept, EntityAnnotation, RelationAnnotation
+from medical_kg_nlp.schema.annotation import (
+    AssertionFeatures,
+    CandidateConcept,
+    EntityAnnotation,
+    RelationAnnotation,
+)
 from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.output import ClinicalPrediction, PredictionMetadata
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType, RelationType
@@ -45,6 +50,7 @@ class SyntheticDatasetAdapter:
                         )
                         for candidate in entity.get("candidates", [])
                     ],
+                    assertion_features=_assertion_features(entity.get("assertion_features")),
                 )
                 for entity in row.get("entities", [])
             ]
@@ -55,7 +61,9 @@ class SyntheticDatasetAdapter:
                     tail=str(relation["tail"]),
                     type=RelationType(relation["type"]),
                     confidence=float(relation.get("confidence", 1.0)),
-                    evidence_span=tuple(relation["evidence_span"]) if "evidence_span" in relation else None,
+                    evidence_span=tuple(relation["evidence_span"])
+                    if "evidence_span" in relation
+                    else None,
                 )
                 for relation in row.get("relations", [])
             ]
@@ -66,10 +74,27 @@ class SyntheticDatasetAdapter:
                     entities=entities,
                     relations=relations,
                     metadata=PredictionMetadata(
-                        pipeline_version=str(row.get("metadata", {}).get("pipeline_version", "gold")),
-                        created_at=str(row.get("metadata", {}).get("created_at", "1970-01-01T00:00:00+00:00")),
+                        pipeline_version=str(
+                            row.get("metadata", {}).get("pipeline_version", "gold")
+                        ),
+                        created_at=str(
+                            row.get("metadata", {}).get("created_at", "1970-01-01T00:00:00+00:00")
+                        ),
                     ),
                 )
             )
         return predictions
 
+
+def _assertion_features(payload: object) -> AssertionFeatures:
+    if not isinstance(payload, dict):
+        return AssertionFeatures()
+    return AssertionFeatures(
+        negated=payload.get("negated") is True,
+        historical=payload.get("historical") is True,
+        family=payload.get("family") is True,
+        possible=payload.get("possible") is True,
+        conditional=payload.get("conditional") is True,
+        planned=payload.get("planned") is True,
+        resolved=payload.get("resolved") is True,
+    )

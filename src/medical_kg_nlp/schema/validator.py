@@ -9,7 +9,12 @@ from medical_kg_nlp.kg.constraints import (
     entity_code_system_valid,
     relation_type_valid,
 )
-from medical_kg_nlp.schema.annotation import CandidateConcept, EntityAnnotation, RelationAnnotation
+from medical_kg_nlp.schema.annotation import (
+    AssertionFeatures,
+    CandidateConcept,
+    EntityAnnotation,
+    RelationAnnotation,
+)
 from medical_kg_nlp.schema.output import ClinicalPrediction, PredictionMetadata
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType, RelationType
 from medical_kg_nlp.utils.hashing import sha256_text
@@ -224,8 +229,13 @@ def _entity_from_json(payload: Any, path: str) -> EntityAnnotation:
         confidence=_number(row, "confidence", f"{path}.confidence"),
         candidates=[
             _candidate_from_json(candidate, f"{path}.candidates[{index}]")
-            for index, candidate in enumerate(_optional_sequence(row, "candidates", f"{path}.candidates"))
+            for index, candidate in enumerate(
+                _optional_sequence(row, "candidates", f"{path}.candidates")
+            )
         ],
+        assertion_features=_assertion_features(
+            row.get("assertion_features"), f"{path}.assertion_features"
+        ),
     )
 
 
@@ -244,6 +254,27 @@ def _candidate_from_json(payload: Any, path: str) -> CandidateConcept:
         source=_optional_string(row.get("source"), f"{path}.source"),
         matched_alias=_optional_string(row.get("matched_alias"), f"{path}.matched_alias"),
     )
+
+
+def _assertion_features(payload: Any, path: str) -> AssertionFeatures:
+    if payload is None:
+        return AssertionFeatures()
+    row = _ensure_mapping(payload, path)
+    values: dict[str, bool] = {}
+    for key in (
+        "negated",
+        "historical",
+        "family",
+        "possible",
+        "conditional",
+        "planned",
+        "resolved",
+    ):
+        value = row.get(key, False)
+        if not isinstance(value, bool):
+            raise ValueError(f"{path}.{key}: expected boolean")
+        values[key] = value
+    return AssertionFeatures(**values)
 
 
 def _relation_from_json(payload: Any, path: str) -> RelationAnnotation:
