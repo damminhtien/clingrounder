@@ -94,9 +94,17 @@ def compare_manual_gold_gate(
         "spurious": spurious <= maximum_spurious,
         "boundary_increase": boundary_increase <= maximum_boundary_increase,
     }
+    blocking_checks = {
+        "score_gain": checks["score_gain"],
+        "text_gain": checks["text_gain"],
+    }
     return {
-        "passed": all(checks.values()),
+        "passed": all(blocking_checks.values()),
         "checks": checks,
+        "blocking_checks": blocking_checks,
+        "diagnostic_checks": {
+            key: checks[key] for key in ("missing_reduction", "spurious", "boundary_increase")
+        },
         "deltas": {
             "score_gain": round(score_gain, 6),
             "text_gain": round(text_gain, 6),

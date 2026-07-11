@@ -61,6 +61,28 @@ def test_manual_gold_gate_applies_holdout_thresholds() -> None:
     assert gate["passed"] is True
 
 
+def test_manual_gold_gate_treats_error_caps_as_diagnostics() -> None:
+    report = {
+        "splits": {
+            "holdout": {
+                "metrics": {"score": 46.2, "text_score": 0.5557},
+                "error_counts": {
+                    "phase1_missing_entity": 110,
+                    "phase1_spurious_entity": 115,
+                    "phase1_text_boundary": 54,
+                },
+            }
+        }
+    }
+    baseline = json.loads(Path("data/manual_gold/entity_only_baseline.json").read_text(encoding="utf-8"))
+
+    gate = compare_manual_gold_gate(report, baseline)
+
+    assert gate["passed"] is True
+    assert gate["blocking_checks"] == {"score_gain": True, "text_gain": True}
+    assert gate["diagnostic_checks"]["spurious"] is False
+
+
 def test_manual_gold_cli_smoke(tmp_path: Path) -> None:
     gold_dir = tmp_path / "gold"
     pred_dir = tmp_path / "pred"

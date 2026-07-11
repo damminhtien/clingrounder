@@ -1,11 +1,41 @@
 {
   "external": {
-    "candidates_score": 27.0515,
-    "score": 36.8242,
-    "assertions_score": 39.5152,
-    "text_score": 47.1633,
-    "wer": 52.8367
+    "candidates_score": 30.0503,
+    "score": 38.7975,
+    "assertions_score": 40.9174,
+    "text_score": 48.3406,
+    "wer": 51.6594
   },
+  "submissions": [
+    {
+      "artifact_sha256_prefix": "c4eddd1bd016",
+      "assertions_score": 39.5152,
+      "candidates_score": 27.0515,
+      "label": "qwen_entity_only_reference",
+      "score": 36.8242,
+      "submitted_at": "2026-07-10T18:25:00+07:00",
+      "wer": 52.8367
+    },
+    {
+      "artifact_sha256_prefix": "9be868f30677",
+      "assertions_score": 33.1758,
+      "candidates_score": 29.5546,
+      "label": "pipeline_entity_only_e2",
+      "score": 34.3027,
+      "submitted_at": "2026-07-11T01:37:00+07:00",
+      "wer": 58.2396
+    },
+    {
+      "artifact_sha256": "32ba4aec46b7e568b9f31a5a8d838f8347e84db9ebf67ce39d926c51e772ac03",
+      "assertions_score": 40.9174,
+      "candidates_score": 30.0503,
+      "label": "qwen_pipeline_nonoverlap_ensemble",
+      "score": 38.7975,
+      "submission_id": "019f4f18-5d91-717f-b107-0295299574f5",
+      "submitted_at": "2026-07-11T09:53:44.737+07:00",
+      "wer": 51.6594
+    }
+  ],
   "local": {
     "all": {
       "score": 36.961232,
@@ -25,6 +55,6 @@
       "text_score": 0.488388
     }
   },
-  "notes": "Entity predictions are retained while assertions and candidates are always empty.",
+  "notes": "Current public best is the Qwen plus pipeline non-overlap ensemble. Assertions and candidates remain empty. Public results show recall-heavy output can win despite exceeding the previous local spurious cap.",
   "schema_version": "phase1-entity-only-baseline.v1"
 }

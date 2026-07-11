@@ -155,8 +155,24 @@ python scripts/evaluate_phase1_manual_gold.py \
 
 The evaluator locks a deterministic 60/15 train/holdout split, reports entity errors by type, and
 separates null accuracy, positive precision/recall, and prediction coverage for assertions and
-candidates. Its gate compares holdout score, text score, missing, spurious, and boundary errors with
-`data/manual_gold/entity_only_baseline.json`.
+candidates. Its blocking gate uses holdout Phase 1 score and text score. Missing, spurious, and
+boundary thresholds remain diagnostics because the public scorer has shown that a recall-heavy
+output can win while exceeding the old local false-positive cap.
+
+Compare two complete entity outputs by selecting a source independently for each Phase 1 type:
+
+```bash
+python scripts/ensemble_phase1_outputs.py \
+  --primary-dir outputs/phase1/<pipeline-run>/phase1/output \
+  --secondary-dir /path/to/qwen-output.zip \
+  --gold-dir data/manual_gold \
+  --input-dir data/raw/input \
+  --output-dir outputs/phase1/<ensemble-run>
+```
+
+Without explicit `--source` flags, the command searches source-per-type combinations on the 60-file
+train split. It reports the frozen 15-file holdout only after selecting the best train strategy,
+writes `strategy_search.json`, validates offsets/schema, and creates `output.zip`.
 
 ## Loop Engineering
 

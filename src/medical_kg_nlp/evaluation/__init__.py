@@ -22,6 +22,12 @@ from medical_kg_nlp.evaluation.phase1 import (
     write_phase1_output_dir,
     zip_phase1_output_dir,
 )
+from medical_kg_nlp.evaluation.phase1_ensemble import (
+    expand_repeated_phase1_mentions,
+    load_phase1_output_source,
+    merge_phase1_outputs,
+    rank_phase1_source_strategies,
+)
 from medical_kg_nlp.evaluation.phase1_submission_analysis import (
     build_phase1_submission_analysis,
     render_phase1_submission_analysis,
@@ -38,11 +44,15 @@ __all__ = [
     "build_phase1_submission_analysis",
     "build_pipeline_report",
     "evaluate_predictions",
+    "expand_repeated_phase1_mentions",
     "flatten_metrics",
     "load_phase1_text_documents",
+    "load_phase1_output_source",
+    "merge_phase1_outputs",
     "prediction_to_phase1_entities",
     "profile_dataset",
     "profile_paths",
+    "rank_phase1_source_strategies",
     "render_markdown",
     "render_phase1_submission_analysis",
     "score_phase1_documents",
