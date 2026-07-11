@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from collections import Counter
+from collections import Counter, defaultdict
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.linking.candidate import Candidate
@@ -23,12 +23,18 @@ class CharNgramRetriever:
         self.min_score = min_score
         self.docs: list[Counter[str]] = []
         self.df: Counter[str] = Counter()
+        self.postings: dict[str, set[int]] = defaultdict(set)
         for entry in store.entries:
             ngrams: Counter[str] = Counter()
             for alias in entry.all_names:
                 ngrams.update(self._ngrams(alias))
             self.docs.append(ngrams)
             self.df.update(set(ngrams))
+        for index, ngrams in enumerate(self.docs):
+            for ngram in ngrams:
+                self.postings[ngram].add(index)
+        self.doc_weights = [self._tfidf(doc) for doc in self.docs]
+        self.doc_norms = [self._norm(weights) for weights in self.doc_weights]
 
     def retrieve(
         self,
@@ -44,13 +50,14 @@ class CharNgramRetriever:
         if query_norm == 0.0:
             return []
 
+        candidate_indices = set().union(*(self.postings.get(ngram, set()) for ngram in query))
         scored: list[tuple[float, int]] = []
-        for index, doc in enumerate(self.docs):
+        for index in candidate_indices:
             entry = self.store.entries[index]
             if entity_type is not None and entry.semantic_type != entity_type:
                 continue
-            doc_weights = self._tfidf(doc)
-            doc_norm = self._norm(doc_weights)
+            doc_weights = self.doc_weights[index]
+            doc_norm = self.doc_norms[index]
             if doc_norm == 0.0:
                 continue
             score = self._dot(query_weights, doc_weights) / (query_norm * doc_norm)

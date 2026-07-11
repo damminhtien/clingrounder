@@ -10,7 +10,7 @@ class ExactMatcher:
     def retrieve(self, mention: str) -> list[Candidate]:
         candidates: list[Candidate] = []
         seen: set[str] = set()
-        for entry in [*self.store.exact_lookup(mention), *self.store.toneless_lookup(mention)]:
+        for entry in self.store.exact_lookup(mention):
             if entry.concept_id in seen:
                 continue
             seen.add(entry.concept_id)
@@ -26,5 +26,20 @@ class ExactMatcher:
                     matched_alias=mention,
                 )
             )
+        for entry in self.store.toneless_lookup(mention):
+            if entry.concept_id in seen:
+                continue
+            seen.add(entry.concept_id)
+            candidates.append(
+                Candidate(
+                    concept_id=entry.concept_id,
+                    code=entry.code,
+                    code_system=entry.code_system,
+                    canonical_name=entry.canonical_name,
+                    semantic_type=entry.semantic_type,
+                    score=0.92,
+                    source="toneless",
+                    matched_alias=mention,
+                )
+            )
         return candidates
-

@@ -2,6 +2,8 @@ pipeline:
   version: "0.1.0"
   max_candidates: 20
   context_window: 80
+  link_assignment_threshold: 0.75
+  link_assignment_margin: 0.05
 
 dictionaries:
   seed_dictionary: "data/dictionaries/seed_concepts.jsonl"

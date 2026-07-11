@@ -10,6 +10,8 @@ DEFAULT_CANDIDATE_SOURCES = ("exact", "abbreviation", "fuzzy", "char_ngram", "bm
 class PipelineOptions:
     max_candidates: int = 20
     context_window: int = 80
+    link_assignment_threshold: float = 0.75
+    link_assignment_margin: float = 0.05
     candidate_sources: tuple[str, ...] = DEFAULT_CANDIDATE_SOURCES
     enable_context: bool = True
     enable_linking: bool = True
@@ -26,6 +28,16 @@ class PipelineOptions:
         return cls(
             max_candidates=_int_value(payload, "max_candidates", cls.max_candidates),
             context_window=_int_value(payload, "context_window", cls.context_window),
+            link_assignment_threshold=_probability_value(
+                payload,
+                "link_assignment_threshold",
+                cls.link_assignment_threshold,
+            ),
+            link_assignment_margin=_probability_value(
+                payload,
+                "link_assignment_margin",
+                cls.link_assignment_margin,
+            ),
             candidate_sources=tuple(str(source) for source in sources),
             enable_context=_bool_value(payload, "enable_context", cls.enable_context),
             enable_linking=_bool_value(payload, "enable_linking", cls.enable_linking),
@@ -60,3 +72,13 @@ def _int_value(payload: dict[str, object], key: str, default: int) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
         raise ValueError(f"{key} must be an integer")
     return value
+
+
+def _probability_value(payload: dict[str, object], key: str, default: float) -> float:
+    value = payload.get(key, default)
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise ValueError(f"{key} must be a number")
+    result = float(value)
+    if not 0.0 <= result <= 1.0:
+        raise ValueError(f"{key} must be between 0 and 1")
+    return result

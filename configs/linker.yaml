@@ -2,11 +2,13 @@ candidate_generation:
   max_candidates: 20
   weights:
     exact: 1.0
-    alias: 0.95
-    abbreviation: 0.9
+    toneless: 0.92
+    abbreviation: 0.92
     fuzzy: 0.72
-    bm25: 0.55
-    kg: 0.15
+    char_ngram: 0.62
+    bm25: 0.50
+  assignment_threshold: 0.75
+  assignment_margin: 0.05
 
 type_constraints:
   DRUG: ["RxNorm"]
@@ -14,6 +16,11 @@ type_constraints:
   SYMPTOM: ["UMLS", "SNOMED", "LOCAL"]
   LAB_TEST: ["LOCAL"]
   LAB_RESULT: ["NONE", "LOCAL"]
+  DOSAGE: ["NONE"]
+  STRENGTH: ["NONE"]
+  FREQUENCY: ["NONE"]
+  ROUTE: ["NONE"]
+  DURATION: ["NONE"]
+  DOSAGE_FORM: ["NONE"]
   PROCEDURE: ["ICD-10", "UMLS", "SNOMED", "LOCAL"]
   FINDING: ["UMLS", "SNOMED", "LOCAL"]
-
