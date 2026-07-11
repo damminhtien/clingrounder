@@ -5,7 +5,9 @@ from medical_kg_nlp.schema.types import CodeSystem, EntityType
 
 def test_dictionary_matcher_uses_toneless_matching_and_original_offsets() -> None:
     hypertension = _entry("ICD10:I10", "Tăng huyết áp", EntityType.DISEASE, "I10")
-    abdominal_pain = _entry("LOCAL:SYMPTOM_ABDOMINAL_PAIN", "Đau bụng", EntityType.SYMPTOM, "SYMPTOM_ABDOMINAL_PAIN")
+    abdominal_pain = _entry(
+        "LOCAL:SYMPTOM_ABDOMINAL_PAIN", "Đau bụng", EntityType.SYMPTOM, "SYMPTOM_ABDOMINAL_PAIN"
+    )
     pain = _entry("LOCAL:SYMPTOM_PAIN", "Đau", EntityType.SYMPTOM, "SYMPTOM_PAIN")
     prostate_cancer = _entry(
         "ICD10:C61",
@@ -52,7 +54,9 @@ def test_dictionary_matcher_blocks_lowercase_in_word_boundary() -> None:
 
 
 def test_dictionary_matcher_does_not_merge_mentions_across_comma() -> None:
-    difficult_swallowing = _entry("LOCAL:SYMPTOM_DYSPHAGIA", "nuốt khó", EntityType.SYMPTOM, "SYMPTOM_DYSPHAGIA")
+    difficult_swallowing = _entry(
+        "LOCAL:SYMPTOM_DYSPHAGIA", "nuốt khó", EntityType.SYMPTOM, "SYMPTOM_DYSPHAGIA"
+    )
     matcher = DictionaryMatcher([("nuốt khó", difficult_swallowing)])
 
     matches = matcher.resolve_longest(matcher.find_candidates("Không khó nuốt, khó thở."))
@@ -74,6 +78,26 @@ def test_dictionary_matcher_preserves_trailing_alias_parenthesis() -> None:
 
     assert matches[0].text == "tăng huyết áp vô căn (nguyên phát)"
     assert text[matches[0].span[0] : matches[0].span[1]] == matches[0].text
+
+
+def test_dictionary_matcher_uses_weighted_interval_selection_for_two_concepts() -> None:
+    broad = _entry("LOCAL:BROAD", "đau ngực khó thở", EntityType.SYMPTOM, "BROAD")
+    chest_pain = _entry("LOCAL:CHEST_PAIN", "đau ngực", EntityType.SYMPTOM, "CHEST_PAIN")
+    dyspnea = _entry("LOCAL:DYSPNEA", "khó thở", EntityType.SYMPTOM, "DYSPNEA")
+    matcher = DictionaryMatcher(
+        [
+            ("đau ngực khó thở", broad),
+            ("đau ngực", chest_pain),
+            ("khó thở", dyspnea),
+        ]
+    )
+
+    matches = matcher.resolve_longest(matcher.find_candidates("đau ngực khó thở"))
+
+    assert [match.entry.concept_id for match in matches] == [
+        "LOCAL:CHEST_PAIN",
+        "LOCAL:DYSPNEA",
+    ]
 
 
 def _entry(concept_id: str, name: str, semantic_type: EntityType, code: str) -> ConceptEntry:

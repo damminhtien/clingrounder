@@ -3,10 +3,16 @@ import re
 from pathlib import Path
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatch, DictionaryMatcher
 from medical_kg_nlp.ner.lab_observation_extractor import LabObservationExtractor
-from medical_kg_nlp.ontology.false_positive import DEFAULT_FALSE_POSITIVE_PATH, FalsePositiveRule, load_false_positive_rules
-from medical_kg_nlp.schema.annotation import EntityAnnotation
+from medical_kg_nlp.ner.medication_attribute_extractor import MedicationAttributeExtractor
+from medical_kg_nlp.ontology.false_positive import (
+    DEFAULT_FALSE_POSITIVE_PATH,
+    FalsePositiveRule,
+    load_false_positive_rules,
+)
+from medical_kg_nlp.schema.annotation import CandidateConcept, EntityAnnotation
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
 from medical_kg_nlp.utils.text import normalize_for_match
 
@@ -49,36 +55,43 @@ class RuleBasedNER:
         self.aliases = store.aliases_for_ner()
         self.matcher = DictionaryMatcher(self.aliases)
         self.lab_observations = LabObservationExtractor()
+        self.medication_attributes = MedicationAttributeExtractor()
         self._drug_alias_lowers = tuple(
             alias.lower()
             for alias, entry in self.aliases
             if entry.semantic_type == EntityType.DRUG and len(alias.strip()) >= 4
         )
-        self.false_positive_rules: tuple[FalsePositiveRule, ...] = load_false_positive_rules(false_positive_path)
+        self.false_positive_rules: tuple[FalsePositiveRule, ...] = load_false_positive_rules(
+            false_positive_path
+        )
 
     def extract(self, text: str) -> list[EntityAnnotation]:
         spans: list[EntityAnnotation] = []
         occupied: list[tuple[int, int]] = []
+        raw_dictionary_matches = [
+            match
+            for match in self.matcher.find_candidates(
+                text, require_boundaries=True, min_alias_chars=2
+            )
+            if not self._blocked_contextual_alias(match.alias, text, match.span)
+        ]
+        semantic_types_by_span: dict[tuple[int, int], set[EntityType]] = {}
+        for match in raw_dictionary_matches:
+            semantic_types_by_span.setdefault(match.span, set()).add(match.entry.semantic_type)
+        selected_type_by_span = {
+            span: self._disambiguated_semantic_type(text, span, entity_types)
+            for span, entity_types in semantic_types_by_span.items()
+        }
         dictionary_matches = self.matcher.resolve_longest(
             match
-            for match in self.matcher.find_candidates(text, require_boundaries=True, min_alias_chars=2)
-            if not self._blocked_contextual_alias(match.alias, text, match.span)
+            for match in raw_dictionary_matches
+            if match.entry.semantic_type == selected_type_by_span[match.span]
         )
         for match in dictionary_matches:
             occupied.append(match.span)
-            spans.append(
-                EntityAnnotation(
-                    id="",
-                    span=match.span,
-                    text=match.text,
-                    normalized_text=match.normalized_text,
-                    type=match.entry.semantic_type,
-                    assertion=AssertionStatus.UNKNOWN,
-                    code_system=CodeSystem.NONE,
-                    confidence=0.78 if match.match_kind == "exact" else 0.76,
-                )
-            )
+            spans.append(self._entity_from_dictionary_match(match))
         self._extract_concatenated_drugs(text, occupied, spans)
+        spans.extend(self.medication_attributes.extract(text, spans, occupied=occupied))
         for entity in self.lab_observations.extract(text, spans, occupied=occupied):
             occupied.append(entity.span)
             spans.append(entity)
@@ -110,21 +123,43 @@ class RuleBasedNER:
         return any(span[0] < old_end and old_start < span[1] for old_start, old_end in occupied)
 
     def _blocked_contextual_alias(self, alias: str, text: str, span: tuple[int, int]) -> bool:
-        if any(rule.blocks(alias, text, span) for rule in self.false_positive_rules):
-            return True
-        normalized_alias = normalize_for_match(alias)
-        if normalized_alias == "ho":
-            right = text[span[1] : min(len(text), span[1] + 12)]
-            right_token = right.lstrip()
-            return bool(right_token and right_token[0].isalpha() and right_token[0].isupper())
-        if normalized_alias.startswith("ung thư"):
-            context = text[max(0, span[0] - 20) : min(len(text), span[1] + 20)].lower()
-            return bool(re.search(r"kháng\s+nguyên\s+ung\s+thư\s+phôi", context, flags=re.UNICODE))
-        if normalized_alias != "yếu":
-            return False
-        left = text[max(0, span[0] - 8) : span[0]].lower()
-        right = text[span[1] : min(len(text), span[1] + 8)].lower()
-        return bool(re.search(r"chủ\s*$", left, flags=re.UNICODE) or re.match(r"\s*tố(?!\w)", right, flags=re.UNICODE))
+        return any(rule.blocks(alias, text, span) for rule in self.false_positive_rules)
+
+    @staticmethod
+    def _disambiguated_semantic_type(
+        text: str,
+        span: tuple[int, int],
+        entity_types: set[EntityType],
+    ) -> EntityType | None:
+        if len(entity_types) == 1:
+            return next(iter(entity_types))
+        if entity_types == {EntityType.DISEASE, EntityType.SYMPTOM}:
+            # The controlled dictionary uses this overlap for ICD-coded clinical
+            # signs such as hypoxia; retain the codable disease interpretation.
+            return EntityType.DISEASE
+        left = text[max(0, span[0] - 32) : span[0]]
+        right = text[span[1] : min(len(text), span[1] + 48)]
+        if EntityType.DRUG in entity_types and re.search(
+            r"(?<!\w)(?:dùng|uống|tiêm|truyền|thuốc|điều\s+trị\s+bằng)\s*$",
+            left,
+            flags=re.IGNORECASE | re.UNICODE,
+        ):
+            return EntityType.DRUG
+        if EntityType.LAB_TEST in entity_types and (
+            re.search(
+                r"(?:là|:|=)?\s*(?:âm\s+tính|dương\s+tính|bình\s+thường|bất\s+thường|"
+                r"tăng|giảm|cao|thấp|\d)",
+                right,
+                flags=re.IGNORECASE | re.UNICODE,
+            )
+            or re.search(
+                r"(?<!\w)(?:xét\s+nghiệm|định\s+lượng)\s*$",
+                left,
+                flags=re.IGNORECASE | re.UNICODE,
+            )
+        ):
+            return EntityType.LAB_TEST
+        return None
 
     def _extract_concatenated_drugs(
         self,
@@ -156,26 +191,74 @@ class RuleBasedNER:
             if self._overlaps(match.span, occupied):
                 continue
             occupied.append(match.span)
-            spans.append(
-                EntityAnnotation(
-                    id="",
-                    span=match.span,
-                    text=match.text,
-                    normalized_text=match.normalized_text,
-                    type=match.entry.semantic_type,
-                    assertion=AssertionStatus.UNKNOWN,
-                    code_system=CodeSystem.NONE,
-                    confidence=0.74,
-                )
+            spans.append(self._entity_from_dictionary_match(match, confidence=0.74))
+
+    def _entity_from_dictionary_match(
+        self,
+        match: DictionaryMatch,
+        *,
+        confidence: float | None = None,
+    ) -> EntityAnnotation:
+        entry = self._unique_output_entry(match)
+        score = 1.0 if match.match_kind == "exact" else 0.92
+        candidate = (
+            CandidateConcept(
+                concept_id=entry.concept_id,
+                code_system=entry.code_system,
+                code=entry.code,
+                name=entry.canonical_name,
+                score=score,
+                source=f"dictionary_{match.match_kind}",
+                matched_alias=match.alias,
             )
+            if entry is not None
+            else None
+        )
+        return EntityAnnotation(
+            id="",
+            span=match.span,
+            text=match.text,
+            normalized_text=match.normalized_text,
+            type=match.entry.semantic_type,
+            assertion=AssertionStatus.UNKNOWN,
+            code_system=entry.code_system if entry is not None else CodeSystem.NONE,
+            code=entry.code if entry is not None else None,
+            confidence=(0.78 if match.match_kind == "exact" else 0.76)
+            if confidence is None
+            else confidence,
+            candidates=[candidate] if candidate is not None else [],
+        )
+
+    def _unique_output_entry(self, match: DictionaryMatch) -> ConceptEntry | None:
+        entries = (
+            self.store.exact_lookup(match.alias)
+            if match.match_kind == "exact"
+            else self.store.toneless_lookup(match.alias)
+        )
+        compatible = [
+            entry
+            for entry in entries
+            if entry.semantic_type == match.entry.semantic_type
+            and entry.code is not None
+            and entry.code_system != CodeSystem.NONE
+        ]
+        by_output = {(entry.code_system, entry.code): entry for entry in compatible}
+        if len(by_output) != 1:
+            return None
+        return next(iter(by_output.values()))
 
     def _has_concatenated_drug_left_boundary(self, lowered: str, start: int) -> bool:
         left = lowered[max(0, start - 32) : start]
-        return left.endswith(self._drug_alias_lowers) or left.endswith(_CONCATENATED_DRUG_LEFT_PREFIXES)
+        return left.endswith(self._drug_alias_lowers) or left.endswith(
+            _CONCATENATED_DRUG_LEFT_PREFIXES
+        )
 
     def _has_concatenated_drug_right_boundary(self, lowered: str, end: int) -> bool:
         right = lowered[end : end + 32]
-        return right.startswith(self._drug_alias_lowers) or right.startswith(_CONCATENATED_DRUG_RIGHT_SUFFIXES)
+        return right.startswith(self._drug_alias_lowers) or right.startswith(
+            _CONCATENATED_DRUG_RIGHT_SUFFIXES
+        )
+
 
 def _lab_result_span(match: re.Match[str]) -> tuple[int, int]:
     if "value" in match.re.groupindex:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from bisect import bisect_right
 from collections import deque
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -91,7 +92,9 @@ class _AhoCorasick:
                 while fail_state and char not in self.nodes[fail_state].transitions:
                     fail_state = self.nodes[fail_state].fail
                 self.nodes[next_state].fail = self.nodes[fail_state].transitions.get(char, 0)
-                self.nodes[next_state].outputs.extend(self.nodes[self.nodes[next_state].fail].outputs)
+                self.nodes[next_state].outputs.extend(
+                    self.nodes[self.nodes[next_state].fail].outputs
+                )
 
 
 class DictionaryMatcher:
@@ -171,23 +174,42 @@ class DictionaryMatcher:
 
     @staticmethod
     def resolve_longest(matches: Iterable[DictionaryMatch]) -> list[DictionaryMatch]:
-        selected: list[DictionaryMatch] = []
-        occupied: list[tuple[int, int]] = []
+        """Select the maximum-weight non-overlapping match set.
+
+        A small per-entity utility lets two independently useful concepts beat
+        one broad overlapping alias, while covered characters and exact-match
+        priority preserve the usual longest-match behavior for nested aliases.
+        """
+
         ordered = sorted(
             matches,
             key=lambda match: (
-                -(match.span[1] - match.span[0]),
+                match.span[1],
                 match.span[0],
                 match.priority,
                 match.entry.concept_id,
             ),
         )
-        for match in ordered:
-            if _overlaps(match.span, occupied):
-                continue
-            occupied.append(match.span)
-            selected.append(match)
-        return sorted(selected, key=lambda match: (match.span[0], match.span[1], match.entry.concept_id))
+        if not ordered:
+            return []
+        ends = [match.span[1] for match in ordered]
+        predecessors = [
+            bisect_right(ends, match.span[0], hi=index) - 1 for index, match in enumerate(ordered)
+        ]
+        states: list[tuple[int, int, tuple[int, ...]]] = [(0, 0, ())]
+        for index, match in enumerate(ordered):
+            previous = states[predecessors[index] + 1]
+            length = match.span[1] - match.span[0]
+            weight = length + 4 + (2 if match.match_kind == "exact" else 0)
+            include = (previous[0] + weight, previous[1] + length, (*previous[2], index))
+            exclude = states[-1]
+            include_key = (include[0], include[1], -len(include[2]))
+            exclude_key = (exclude[0], exclude[1], -len(exclude[2]))
+            states.append(include if include_key > exclude_key else exclude)
+        selected = [ordered[index] for index in states[-1][2]]
+        return sorted(
+            selected, key=lambda match: (match.span[0], match.span[1], match.entry.concept_id)
+        )
 
     def _matches_for_normalized_text(
         self,
@@ -251,7 +273,9 @@ def normalize_text_with_offsets(text: str, *, strip_diacritics: bool = False) ->
     return _NormalizedText(text="".join(chars), original_offsets=tuple(offsets))
 
 
-def _original_span(normalized_text: _NormalizedText, start: int, end: int) -> tuple[int, int] | None:
+def _original_span(
+    normalized_text: _NormalizedText, start: int, end: int
+) -> tuple[int, int] | None:
     if start < 0 or end <= start or end > len(normalized_text.original_offsets):
         return None
     start_original = normalized_text.original_offsets[start]
@@ -261,7 +285,9 @@ def _original_span(normalized_text: _NormalizedText, start: int, end: int) -> tu
     return start_original, end_original
 
 
-def _extend_trailing_alias_punctuation(alias: str, text: str, span: tuple[int, int]) -> tuple[int, int]:
+def _extend_trailing_alias_punctuation(
+    alias: str, text: str, span: tuple[int, int]
+) -> tuple[int, int]:
     end = span[1]
     stripped_alias = alias.rstrip()
     for punctuation in (")", "]"):
@@ -271,7 +297,9 @@ def _extend_trailing_alias_punctuation(alias: str, text: str, span: tuple[int, i
 
 
 def _crosses_disallowed_separator(alias: str, mention: str) -> bool:
-    return any(separator in mention and separator not in alias for separator in (",", ";", "\n", "\r"))
+    return any(
+        separator in mention and separator not in alias for separator in (",", ";", "\n", "\r")
+    )
 
 
 def _deduplicate_matches(matches: Iterable[DictionaryMatch]) -> list[DictionaryMatch]:
@@ -301,7 +329,3 @@ def _compact_alias_is_upper(alias: str) -> bool:
 
 def _is_word_char(char: str) -> bool:
     return char == "_" or char.isalnum()
-
-
-def _overlaps(span: tuple[int, int], occupied: list[tuple[int, int]]) -> bool:
-    return any(span[0] < old_end and old_start < span[1] for old_start, old_end in occupied)

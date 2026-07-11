@@ -2,8 +2,64 @@ import time
 from pathlib import Path
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
-from medical_kg_nlp.schema.types import EntityType
+from medical_kg_nlp.schema.types import CodeSystem, EntityType
+
+
+def test_rule_ner_pins_unique_exact_dictionary_code() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    entity = next(
+        item for item in RuleBasedNER(store).extract("Dùng metformin.") if item.text == "metformin"
+    )
+
+    assert entity.code_system == CodeSystem.RXNORM
+    assert entity.code == "6809"
+    assert entity.candidates[0].source == "dictionary_exact"
+
+
+def test_rule_ner_abstains_when_exact_alias_maps_to_multiple_codes() -> None:
+    entries = [
+        ConceptEntry(
+            concept_id=f"D:{code}",
+            code=code,
+            code_system=CodeSystem.ICD10,
+            canonical_name=name,
+            semantic_type=EntityType.DISEASE,
+            aliases=("bệnh mơ hồ",),
+        )
+        for code, name in (("A00", "Disease A"), ("B00", "Disease B"))
+    ]
+    entity = RuleBasedNER(DictionaryStore(entries)).extract("Có bệnh mơ hồ.")[0]
+
+    assert entity.code_system == CodeSystem.NONE
+    assert entity.code is None
+    assert entity.candidates == []
+
+
+def test_rule_ner_skips_exact_alias_with_cross_type_ambiguity() -> None:
+    entries = [
+        ConceptEntry(
+            concept_id="D:A00",
+            code="A00",
+            code_system=CodeSystem.ICD10,
+            canonical_name="Disease ambiguous",
+            semantic_type=EntityType.DISEASE,
+            aliases=("khái niệm mơ hồ",),
+        ),
+        ConceptEntry(
+            concept_id="RX:1",
+            code="1",
+            code_system=CodeSystem.RXNORM,
+            canonical_name="Drug ambiguous",
+            semantic_type=EntityType.DRUG,
+            aliases=("khái niệm mơ hồ",),
+        ),
+    ]
+
+    entities = RuleBasedNER(DictionaryStore(entries)).extract("Có khái niệm mơ hồ.")
+
+    assert entities == []
 
 
 def test_rule_ner_applies_data_driven_false_positive_blacklist(tmp_path) -> None:
@@ -13,7 +69,9 @@ def test_rule_ner_applies_data_driven_false_positive_blacklist(tmp_path) -> None
         encoding="utf-8",
     )
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    entities = RuleBasedNER(store, false_positive_path=blacklist_path).extract("mẫu đau bụng. Đau bụng thật.")
+    entities = RuleBasedNER(store, false_positive_path=blacklist_path).extract(
+        "mẫu đau bụng. Đau bụng thật."
+    )
 
     abdominal_pain = [entity for entity in entities if entity.normalized_text == "đau bụng"]
 
@@ -21,18 +79,22 @@ def test_rule_ner_applies_data_driven_false_positive_blacklist(tmp_path) -> None
     assert abdominal_pain[0].text == "Đau bụng"
 
 
-def test_rule_ner_does_not_export_medication_dose_as_lab_result() -> None:
+def test_rule_ner_classifies_medication_strength_separately_from_lab_result() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    entities = RuleBasedNER(store).extract("Dùng metoprolol 25mg. HbA1c 7.2%. Creatinine 1.4 mg/dL.")
+    entities = RuleBasedNER(store).extract(
+        "Dùng metoprolol 25mg. HbA1c 7.2%. Creatinine 1.4 mg/dL."
+    )
     by_text = {entity.text: entity for entity in entities}
 
-    assert "25mg" not in by_text
+    assert by_text["25mg"].type == EntityType.STRENGTH
     assert by_text["7.2%"].type == EntityType.LAB_RESULT
     assert by_text["1.4 mg/dL"].type == EntityType.LAB_RESULT
 
 
 def test_rule_ner_extracts_vietnamese_vital_sign_names_and_value_spans() -> None:
-    store = DictionaryStore.from_jsonl("data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
+    store = DictionaryStore.from_jsonl(
+        "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
+    )
     text = (
         "Dấu hiệu sinh tồn: huyết áp 159/72, nhịp thở 20, nhịp tim 84, "
         "SpO2 96%, nhiệt độ 36.7°c. Tăng huyết áp đang điều trị."
@@ -56,7 +118,9 @@ def test_rule_ner_extracts_vietnamese_vital_sign_names_and_value_spans() -> None
 
 
 def test_rule_ner_extracts_bare_and_qualitative_results_only_after_lab_anchors() -> None:
-    store = DictionaryStore.from_jsonl("data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
+    store = DictionaryStore.from_jsonl(
+        "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
+    )
     text = "Kali: 2.4; creatinine (serum) = 1.3. Chụp CT không ghi nhận gì bất thường. Số trần 42."
 
     entities = RuleBasedNER(store).extract(text)
@@ -72,7 +136,9 @@ def test_rule_ner_extracts_bare_and_qualitative_results_only_after_lab_anchors()
 
 
 def test_rule_ner_does_not_treat_dates_or_drug_doses_as_anchored_lab_results() -> None:
-    store = DictionaryStore.from_jsonl("data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
+    store = DictionaryStore.from_jsonl(
+        "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
+    )
     text = "Creatinine ngày 12/07/2026. Dùng metoprolol 25 mg. Kali được bổ sung 40 mg."
 
     entities = RuleBasedNER(store).extract(text)
@@ -84,7 +150,9 @@ def test_rule_ner_does_not_treat_dates_or_drug_doses_as_anchored_lab_results() -
 
 
 def test_rule_ner_extracts_qualitative_results_before_or_after_lab_anchor() -> None:
-    store = DictionaryStore.from_jsonl("data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
+    store = DictionaryStore.from_jsonl(
+        "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
+    )
     text = "Glucose là thấp. tăng Cr theo phòng cấp cứu. Kali tăng cao."
 
     entities = RuleBasedNER(store).extract(text)
@@ -123,10 +191,16 @@ def test_rule_ner_blocks_phase1_history_of_ho_artifact_before_disease_name() -> 
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     text = "Các bệnh lý mạn tính - ho Rung nhĩ. Triệu chứng hiện tại - ho khan, ho đánh thức và ho mạn tính."
     entities = RuleBasedNER(store).extract(text)
-    cough_spans = [entity.span for entity in entities if entity.text.lower() == "ho" and entity.type == EntityType.SYMPTOM]
+    cough_spans = [
+        entity.span
+        for entity in entities
+        if entity.text.lower() == "ho" and entity.type == EntityType.SYMPTOM
+    ]
 
     assert cough_spans == [(59, 61), (68, 70), (84, 86)]
-    assert any(entity.text == "Rung nhĩ" and entity.type == EntityType.DISEASE for entity in entities)
+    assert any(
+        entity.text == "Rung nhĩ" and entity.type == EntityType.DISEASE for entity in entities
+    )
 
 
 def test_rule_ner_blocks_cancer_inside_cea_lab_name_but_keeps_real_cancer_mentions() -> None:
@@ -134,7 +208,9 @@ def test_rule_ner_blocks_cancer_inside_cea_lab_name_but_keeps_real_cancer_mentio
     text = "CEA (kháng nguyên ung thư phôi) tăng nhẹ. Tiền sử ung thư đại tràng."
     entities = RuleBasedNER(store).extract(text)
     cancer_spans = [
-        entity.span for entity in entities if entity.text.lower() == "ung thư đại tràng" and entity.type == EntityType.DISEASE
+        entity.span
+        for entity in entities
+        if entity.text.lower() == "ung thư đại tràng" and entity.type == EntityType.DISEASE
     ]
 
     assert cancer_spans == [(50, 67)]
@@ -159,16 +235,22 @@ def test_rule_ner_allows_alias_boundary_before_concatenated_uppercase_sentence()
     entities = RuleBasedNER(store).extract(text)
 
     prostate_cancer = [
-        entity for entity in entities if entity.type == EntityType.DISEASE and entity.text == "u ác của tuyến tiền liệt"
+        entity
+        for entity in entities
+        if entity.type == EntityType.DISEASE and entity.text == "u ác của tuyến tiền liệt"
     ]
 
     assert len(prostate_cancer) == 1
-    assert text[prostate_cancer[0].span[0] : prostate_cancer[0].span[1]] == "u ác của tuyến tiền liệt"
+    assert (
+        text[prostate_cancer[0].span[0] : prostate_cancer[0].span[1]] == "u ác của tuyến tiền liệt"
+    )
 
 
 def test_rule_ner_does_not_allow_alias_boundary_inside_lowercase_word() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    entities = RuleBasedNER(store).extract("Chẩn đoán u ác của tuyến tiền liệtanh ấy đang chờ ghép thận.")
+    entities = RuleBasedNER(store).extract(
+        "Chẩn đoán u ác của tuyến tiền liệtanh ấy đang chờ ghép thận."
+    )
 
     assert all(entity.text != "u ác của tuyến tiền liệt" for entity in entities)
 
@@ -214,7 +296,9 @@ def test_rule_ner_recovers_concatenated_drug_aliases_with_source_offsets() -> No
 
 
 def test_rule_ner_phase1_latency_under_100ms_per_note() -> None:
-    store = DictionaryStore.from_jsonl("data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
+    store = DictionaryStore.from_jsonl(
+        "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
+    )
     ner = RuleBasedNER(store)
     texts = [
         path.read_text(encoding="utf-8")
