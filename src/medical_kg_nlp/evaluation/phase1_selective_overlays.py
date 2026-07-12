@@ -38,12 +38,13 @@ _HISTORY_SECTION_RE = re.compile(
 _FAMILY_SECTION_RE = re.compile(r"(?i)\b(?:tiền sử gia đình|bệnh sử gia đình)\b")
 _GENERIC_SECTION_RE = re.compile(
     r"(?i)\b(?:lý do nhập viện|bệnh sử|triệu chứng hiện tại|khám|cận lâm sàng|"
-    r"đánh giá tại bệnh viện|chẩn đoán|điều trị|thủ thuật đã thực hiện)\b"
+    r"tình trạng ngay trước khi nhập viện|đánh giá tại bệnh viện|chẩn đoán|điều trị|"
+    r"các phát hiện chẩn đoán khác|thủ thuật đã thực hiện)\b"
 )
 _HISTORY_LOCAL_RE = re.compile(
-    r"(?i)(?:\bcách đây\b|\btrước đây\b|\bđã từng\b|\blần nhập viện trước\b|"
-    r"\bđợt (?:điều trị|nằm viện|nhập viện) trước\b|\btrước khi nhập viện\b|"
-    r"\bgần đây nhập viện vì\b)"
+    r"(?i)(?:\bcách đây\s+(?:(?:khoảng|hơn|gần)\s+)?(?:vài|\d+)\s+(?:tháng|năm)\b|"
+    r"\btrước đây\b|\bđã từng\b|\blần nhập viện trước\b|"
+    r"\bđợt (?:điều trị|nằm viện|nhập viện) trước\b|\bgần đây nhập viện vì\b)"
 )
 _NEGATION_RE = re.compile(
     r"(?i)(?:\bkhông có\b|\bkhông ghi nhận\b|\bphủ nhận\b|\bchưa\b|"
@@ -406,7 +407,6 @@ def _builtin_assertion_rule(
 
 def _current_section(source_text: str, start: int) -> str | None:
     section: str | None = None
-    offset = 0
     for line in source_text[:start].splitlines(keepends=True):
         stripped = line.strip().rstrip(":")
         if _FAMILY_SECTION_RE.search(stripped):
@@ -415,7 +415,6 @@ def _current_section(source_text: str, start: int) -> str | None:
             section = "history"
         elif _GENERIC_SECTION_RE.search(stripped):
             section = None
-        offset += len(line)
     return section
 
 

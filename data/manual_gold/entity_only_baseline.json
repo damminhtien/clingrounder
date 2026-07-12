@@ -1,10 +1,10 @@
 {
   "external": {
-    "candidates_score": 30.0503,
-    "score": 38.7975,
-    "assertions_score": 40.9174,
-    "text_score": 48.3406,
-    "wer": 51.6594
+    "candidates_score": 30.4634,
+    "score": 39.2092,
+    "assertions_score": 40.8962,
+    "text_score": 49.1833,
+    "wer": 50.8167
   },
   "submissions": [
     {
@@ -44,6 +44,26 @@
       "score": 38.2289,
       "submitted_at": "2026-07-11T10:28:00+07:00",
       "wer": 51.6594
+    },
+    {
+      "artifact_sha256": "102f2a149595f4c04b5a6a296a855398cd5c10274c7e02617ba8d2df99f0cf90",
+      "assertions_score": 40.8962,
+      "candidates_score": 30.4634,
+      "decision": "keep",
+      "label": "e_overlap_longest_type_priority",
+      "score": 39.2092,
+      "submitted_at": "2026-07-12T11:00:00+07:00",
+      "wer": 50.8167
+    },
+    {
+      "artifact_sha256": "9c3d7540159f7bf6a31a971f071b224966cedebbf9a264788ed6c9166fda61d0",
+      "assertions_score": 40.8374,
+      "candidates_score": 29.7662,
+      "decision": "reject",
+      "label": "e_exclusion_train_strict",
+      "score": 38.753,
+      "submitted_at": "2026-07-12T21:55:00+07:00",
+      "wer": 51.349
     }
   ],
   "local": {
@@ -65,6 +85,6 @@
       "text_score": 0.488388
     }
   },
-  "notes": "Current public best is the Qwen plus pipeline non-overlap ensemble with empty assertions and candidates. The C3 exact-unique candidate overlay won local holdout but lost 0.5686 public points, so manual-gold candidate gates are pre-submit diagnostics only.",
+  "notes": "Current public best is the E_OVERLAP longest-span/type-priority resolver over the Qwen plus pipeline ensemble. It improved score by 0.4117 and reduced WER by 0.8427. Train-compiled strict exclusions reduced WER but lost 0.0445 total and 0.2841 J_candidates, so that regime is rejected. Candidate overlays remain blocked until a three-source public probe is available.",
   "schema_version": "phase1-entity-only-baseline.v1"
 }

@@ -66,6 +66,36 @@ def test_negation_exceptions_do_not_invert_positive_inability_or_disease_modifie
     assert [row["assertions"] for row in output["1"]] == [[], []]
 
 
+def test_history_scope_stops_at_current_preadmission_state_and_ignores_recent_onset() -> None:
+    text = (
+        "Tiền sử bệnh:\nTăng huyết áp\n"
+        "Tình trạng ngay trước khi nhập viện:\nho\n"
+        "Bệnh sử hiện tại: cách đây 1 tuần khó thở. "
+        "Cách đây vài năm đau đầu."
+    )
+    rows = {
+        "1": [
+            _row("Tăng huyết áp", "CHẨN_ĐOÁN", text.index("Tăng huyết áp")),
+            _row("ho", "TRIỆU_CHỨNG", text.index("ho\n")),
+            _row("khó thở", "TRIỆU_CHỨNG", text.index("khó thở")),
+            _row("đau đầu", "TRIỆU_CHỨNG", text.index("đau đầu")),
+        ]
+    }
+
+    output, _, _ = apply_selective_assertions(
+        rows,
+        {"1": text},
+        regimes=("history",),
+    )
+
+    assert [row["assertions"] for row in output["1"]] == [
+        ["isHistorical"],
+        [],
+        [],
+        ["isHistorical"],
+    ]
+
+
 def test_candidate_registry_uses_train_review_tt06_and_source_consensus(tmp_path: Path) -> None:
     dictionary = tmp_path / "dictionary.jsonl"
     concepts = [
