@@ -73,10 +73,19 @@ def compile_annotation_knowledge(
     gold_dir: str | Path,
     manifest_path: str | Path,
     strict_document_support: int = 2,
+    document_ids: Iterable[str] | None = None,
 ) -> dict[str, Any]:
     gold_root = Path(gold_dir)
     manifest_file = Path(manifest_path)
-    manifest_rows = read_jsonl(manifest_file)
+    all_manifest_rows = read_jsonl(manifest_file)
+    selected_document_ids = (
+        {str(document_id) for document_id in document_ids} if document_ids is not None else None
+    )
+    manifest_rows = [
+        row
+        for row in all_manifest_rows
+        if selected_document_ids is None or str(row.get("document_id", "")) in selected_document_ids
+    ]
     conflicts: list[dict[str, Any]] = []
     accepted_mentions: list[dict[str, Any]] = []
     rejected_mentions: list[dict[str, Any]] = []
@@ -177,6 +186,8 @@ def compile_annotation_knowledge(
             "review_manifest": str(manifest_file),
             "review_manifest_sha256": _sha256_file(manifest_file),
             "gold_files_sha256": _sha256_paths(loaded_gold_paths),
+            "selected_document_ids": sorted(seen_documents, key=_document_sort_key),
+            "excluded_manifest_document_count": len(all_manifest_rows) - len(manifest_rows),
         },
         "compiler_config": {"strict_document_support": strict_document_support},
         "summary": summary,

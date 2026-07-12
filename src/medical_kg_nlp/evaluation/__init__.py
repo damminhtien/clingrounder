@@ -44,6 +44,29 @@ from medical_kg_nlp.evaluation.phase1_ensemble import (
     merge_phase1_outputs,
     rank_phase1_source_strategies,
 )
+from medical_kg_nlp.evaluation.phase1_entity_gates import (
+    Phase1EntityGateConfig,
+    apply_phase1_entity_gates,
+    compile_boundary_rule_candidates,
+)
+from medical_kg_nlp.evaluation.phase1_probe_gate import evaluate_public_probe_promotion
+from medical_kg_nlp.evaluation.phase1_probe_suite import (
+    Phase1Top10ProbeConfig,
+    build_phase1_top10_probe_suite,
+)
+from medical_kg_nlp.evaluation.phase1_proposals import (
+    build_phase1_proposal_matrix,
+    write_phase1_proposal_matrix,
+)
+from medical_kg_nlp.evaluation.phase1_rule_registry import (
+    Phase1RuleRegistry,
+    load_phase1_rule_registry,
+)
+from medical_kg_nlp.evaluation.phase1_selective_overlays import (
+    apply_selective_assertions,
+    apply_selective_candidates,
+    compile_reviewed_candidate_registry,
+)
 from medical_kg_nlp.evaluation.phase1_submission_analysis import (
     build_phase1_submission_analysis,
     render_phase1_submission_analysis,
@@ -55,21 +78,33 @@ __all__ = [
     "AblationVariantResult",
     "Phase1CandidateIndex",
     "Phase1CandidateOverlayConfig",
+    "Phase1EntityGateConfig",
+    "Phase1RuleRegistry",
+    "Phase1Top10ProbeConfig",
     "StageAggregate",
     "aggregate_traces",
     "apply_phase1_candidate_overlay",
+    "apply_phase1_entity_gates",
+    "apply_selective_assertions",
+    "apply_selective_candidates",
     "build_loop_engineering_report",
     "build_phase1_report",
+    "build_phase1_proposal_matrix",
+    "build_phase1_top10_probe_suite",
     "build_phase1_submission_analysis",
     "build_pipeline_report",
     "build_entity_wer_report",
     "candidate_ablation_passes",
     "compile_annotation_knowledge",
+    "compile_boundary_rule_candidates",
+    "compile_reviewed_candidate_registry",
+    "evaluate_public_probe_promotion",
     "evaluate_predictions",
     "expand_repeated_phase1_mentions",
     "flatten_metrics",
     "load_phase1_text_documents",
     "load_phase1_output_source",
+    "load_phase1_rule_registry",
     "merge_phase1_outputs",
     "prediction_to_phase1_entities",
     "profile_dataset",
@@ -87,6 +122,7 @@ __all__ = [
     "write_annotation_knowledge",
     "write_entity_wer_report",
     "write_phase1_output_dir",
+    "write_phase1_proposal_matrix",
     "write_phase1_submission_analysis",
     "write_pipeline_report",
     "zip_phase1_output_dir",

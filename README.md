@@ -44,6 +44,11 @@ The default Phase 1 config uses the validated entity-only policy: entities are e
 submission are not constructed. Use `--config configs/phase1_full.yaml` for a controlled
 assertion/candidate experiment; the CLI validates both mode contracts.
 
+For controlled Top 10 experiments, use `scripts/run_phase1_top10_probes.py`. It builds
+content-hashed, strict-validated ZIPs for lab precision, strict exclusions, overlap resolution,
+selective assertions, and reviewed candidate tiers while keeping holdout sealed by default. See
+[`docs/evaluation.md`](docs/evaluation.md#top-10-probe-suite).
+
 Evaluate a flat output directory against the reviewed manual-gold split:
 
 ```bash

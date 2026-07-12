@@ -118,6 +118,8 @@ def test_annotation_knowledge_cli_smoke(tmp_path: Path) -> None:
             str(output_dir),
             "--strict-document-support",
             "1",
+            "--split",
+            "all",
         ],
         check=True,
         capture_output=True,
@@ -149,6 +151,32 @@ def test_numeric_lab_result_is_context_required_not_strict(tmp_path: Path) -> No
     aliases = report["policy"]["aliases"]
     assert "17" in aliases["context_required"]["KẾT_QUẢ_XÉT_NGHIỆM"]
     assert "17" not in aliases["strict"]["KẾT_QUẢ_XÉT_NGHIỆM"]
+
+
+def test_compiler_can_seal_documents_out_of_runtime_policy(tmp_path: Path) -> None:
+    gold_dir = tmp_path / "gold"
+    gold_dir.mkdir()
+    manifest_rows: list[dict[str, object]] = []
+    for document_id, mention in (("1", "ho"), ("2", "sốt")):
+        source = tmp_path / f"{document_id}.txt"
+        source.write_text(mention, encoding="utf-8")
+        gold = gold_dir / f"{document_id}.json"
+        _write_gold(gold, [_row(mention, "TRIỆU_CHỨNG", 0)])
+        manifest_rows.append(_manifest_row(document_id, gold, source))
+    manifest = tmp_path / "review_manifest.jsonl"
+    _write_manifest(manifest, manifest_rows)
+
+    report = compile_annotation_knowledge(
+        gold_dir=gold_dir,
+        manifest_path=manifest,
+        strict_document_support=1,
+        document_ids={"1"},
+    )
+
+    aliases = report["policy"]["aliases"]["strict"]["TRIỆU_CHỨNG"]
+    assert aliases == ["ho"]
+    assert report["inputs"]["selected_document_ids"] == ["1"]
+    assert report["inputs"]["excluded_manifest_document_count"] == 1
 
 
 def _row(text: str, entity_type: str, start: int) -> dict[str, object]:

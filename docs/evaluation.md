@@ -219,6 +219,70 @@ almost every aligned diagnosis/drug and is not representative of hidden candidat
 code specificity. Keep candidate output empty by default until a narrower public-validated policy
 wins; exact uniqueness within the local dictionary alone is insufficient.
 
+## Top 10 Probe Suite
+
+Build isolated entity, assertion, and candidate probes from a frozen Phase 1 artifact:
+
+```bash
+uv run python scripts/run_phase1_top10_probes.py \
+  --base outputs/phase1/<best-run>/output.zip \
+  --source pipeline=outputs/phase1/<pipeline-run>/output.zip \
+  --source qwen=/path/to/qwen-output.zip \
+  --source codex=/path/to/blind-codex-output.zip \
+  --input-dir data/raw/input \
+  --gold-dir data/manual_gold \
+  --review-manifest data/manual_gold/review_manifest.jsonl \
+  --dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl \
+  --output-root outputs/phase1/top10_probes
+```
+
+The default run keeps the deterministic 15-document holdout sealed. Use `--open-holdout` only for
+the planned day-6 checkpoint. The runner creates a content-hashed directory and never overwrites an
+existing run. Each variant has its own `output/`, `output.zip`, SHA, train-only metrics, decision
+trace, strict schema/offset/dictionary validation, and module-isolation report. Every suite run is
+also appended to `outputs/loops/journal/phase1_top10_probe_runs.jsonl` and its Markdown index.
+
+Entity execution order is fixed:
+
+```text
+lab-result precision/retyping
+-> train-compiled strict exclusions
+-> reviewed boundary expansion
+-> overlap resolution
+```
+
+`review` exclusions never run. Numeric or qualitative lab results require a test/vital anchor in
+the same clause. Medication dose/strength/route/frequency values are traced as internal medication
+attributes and omitted from Phase 1 lab-result output. Boundary discovery uses only train documents,
+requires repeated document support, rejects punctuation crossing, and writes draft rules to
+`boundary_rule_candidates.yaml`; drafts do not execute. Review and promote general rules by changing
+`review_status` in a registry such as `configs/phase1_top10_rule_registry.yaml`, then pass it through
+`--rule-registry`.
+
+Candidate probes remain empty unless the exact entity span/type is agreed by at least two of three
+independent proposal sources. Candidate rules are compiled only from reviewed train labels, permit
+one dictionary-valid code, require TT06 provenance for ICD, and separate RxNorm ingredient/brand
+from SCD/SBD. Two-source or derived-source runs are useful for entity review but are explicitly
+blocked from candidate promotion.
+
+Record every external grader result and keep/reject decision:
+
+```bash
+uv run python scripts/record_phase1_public_probe.py \
+  --baseline baseline_grader.json \
+  --trial trial_grader.json \
+  --module entity \
+  --probe-name E-OVERLAP \
+  --artifact outputs/phase1/top10_probes/<run>/variants/E_OVERLAP/output.zip \
+  --policy-diff '{"resolve_overlaps": true}'
+```
+
+The public gate requires final score improvement and target-metric improvement. Assertion/candidate
+probes require non-target metrics to remain unchanged because entity identity is frozen. Entity
+probes allow non-target metrics to improve, but never regress, because changing the matched entity
+set also changes the grader denominator even when assertion/candidate fields remain frozen. The gate
+appends JSONL and Markdown under `outputs/loops/journal`.
+
 ## Loop Engineering
 
 Use the loop engine after a stage-wise report exists. It turns metrics and error rows into an

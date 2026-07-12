@@ -12,6 +12,8 @@ from medical_kg_nlp.evaluation.annotation_knowledge import (
     compile_annotation_knowledge,
     write_annotation_knowledge,
 )
+from medical_kg_nlp.evaluation.manual_gold import manual_gold_split
+from medical_kg_nlp.utils.io import read_jsonl
 
 
 def main() -> None:
@@ -27,14 +29,29 @@ def main() -> None:
         default=2,
         help="Minimum distinct reviewed documents required for a strict positive alias.",
     )
+    parser.add_argument(
+        "--split",
+        choices=("all", "train", "holdout"),
+        default="train",
+        help="Compile runtime knowledge from train by default; holdout remains sealed.",
+    )
     args = parser.parse_args()
     if args.strict_document_support < 1:
         parser.error("--strict-document-support must be at least 1")
 
+    manifest_rows = read_jsonl(args.manifest)
+    document_ids = None
+    if args.split != "all":
+        document_ids = [
+            str(row.get("document_id", ""))
+            for row in manifest_rows
+            if manual_gold_split(str(row.get("document_id", ""))) == args.split
+        ]
     report = compile_annotation_knowledge(
         gold_dir=args.gold_dir,
         manifest_path=args.manifest,
         strict_document_support=args.strict_document_support,
+        document_ids=document_ids,
     )
     write_annotation_knowledge(report, args.output_dir)
     summary = report["summary"]
