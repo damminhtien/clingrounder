@@ -100,7 +100,14 @@ def apply_selective_assertions(
             for regime in regime_order:
                 stage = _ASSERTION_STAGE[regime]
                 assertion = _ASSERTION_VALUE[regime]
-                rule_id = _builtin_assertion_rule(regime, source_text, start, end, str(row["text"]))
+                rule_id = _builtin_assertion_rule(
+                    regime,
+                    source_text,
+                    start,
+                    end,
+                    str(row["text"]),
+                    str(row["type"]),
+                )
                 rule_source = "builtin_selective"
                 if rule_id is None:
                     rule = _first_rule(
@@ -374,10 +381,13 @@ def _builtin_assertion_rule(
     start: int,
     end: int,
     mention: str,
+    entity_type: str,
 ) -> str | None:
     section = _current_section(source_text, start)
     left_scope = _left_scope(source_text, start)
     if regime == "history":
+        if entity_type == "TRIỆU_CHỨNG":
+            return None
         if section == "history":
             return "builtin.assertion.history_section"
         if _HISTORY_LOCAL_RE.search(left_scope):

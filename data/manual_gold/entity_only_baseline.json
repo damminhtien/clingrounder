@@ -1,8 +1,8 @@
 {
   "external": {
     "candidates_score": 30.4634,
-    "score": 39.2092,
-    "assertions_score": 40.8962,
+    "score": 39.8463,
+    "assertions_score": 43.02,
     "text_score": 49.1833,
     "wer": 50.8167
   },
@@ -64,6 +64,16 @@
       "score": 38.753,
       "submitted_at": "2026-07-12T21:55:00+07:00",
       "wer": 51.349
+    },
+    {
+      "artifact_sha256": "a5a61ba0259a9d42c23b30c2e21d6e4e77940437a1608110566addadfe6c42b9",
+      "assertions_score": 43.02,
+      "candidates_score": 30.4634,
+      "decision": "keep",
+      "label": "a_neg_on_e_overlap",
+      "score": 39.8463,
+      "submitted_at": "2026-07-12T22:06:00+07:00",
+      "wer": 50.8167
     }
   ],
   "local": {
@@ -85,6 +95,6 @@
       "text_score": 0.488388
     }
   },
-  "notes": "Current public best is the E_OVERLAP longest-span/type-priority resolver over the Qwen plus pipeline ensemble. It improved score by 0.4117 and reduced WER by 0.8427. Train-compiled strict exclusions reduced WER but lost 0.0445 total and 0.2841 J_candidates, so that regime is rejected. Candidate overlays remain blocked until a three-source public probe is available.",
+  "notes": "Current public best is A_NEG on top of E_OVERLAP. E_OVERLAP improved score by 0.4117 and reduced WER by 0.8427; selective negation then added 0.6371 score and 2.1238 J_assertion with WER and J_candidates unchanged. Train-compiled strict exclusions remain rejected. Candidate overlays remain blocked until a three-source public probe is available.",
   "schema_version": "phase1-entity-only-baseline.v1"
 }

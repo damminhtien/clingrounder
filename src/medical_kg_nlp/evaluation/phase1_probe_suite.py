@@ -212,6 +212,7 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
     assertion_variants: tuple[tuple[str, tuple[AssertionRegime, ...]], ...] = (
         ("A_HIST", ("history",)),
         ("A_NEG", ("negation",)),
+        ("A_NEG_HIST", ("negation", "history")),
         ("A_FAM", ("family",)),
     )
     for name, regimes in assertion_variants:

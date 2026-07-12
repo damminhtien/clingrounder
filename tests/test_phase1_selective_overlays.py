@@ -71,14 +71,14 @@ def test_history_scope_stops_at_current_preadmission_state_and_ignores_recent_on
         "Tiền sử bệnh:\nTăng huyết áp\n"
         "Tình trạng ngay trước khi nhập viện:\nho\n"
         "Bệnh sử hiện tại: cách đây 1 tuần khó thở. "
-        "Cách đây vài năm đau đầu."
+        "Cách đây vài năm thoái hóa khớp."
     )
     rows = {
         "1": [
             _row("Tăng huyết áp", "CHẨN_ĐOÁN", text.index("Tăng huyết áp")),
             _row("ho", "TRIỆU_CHỨNG", text.index("ho\n")),
             _row("khó thở", "TRIỆU_CHỨNG", text.index("khó thở")),
-            _row("đau đầu", "TRIỆU_CHỨNG", text.index("đau đầu")),
+            _row("thoái hóa khớp", "CHẨN_ĐOÁN", text.index("thoái hóa khớp")),
         ]
     }
 
@@ -94,6 +94,24 @@ def test_history_scope_stops_at_current_preadmission_state_and_ignores_recent_on
         [],
         ["isHistorical"],
     ]
+
+
+def test_history_policy_abstains_on_symptoms_even_inside_history_section() -> None:
+    text = "Tiền sử bệnh:\nđau đầu\nTăng huyết áp"
+    rows = {
+        "1": [
+            _row("đau đầu", "TRIỆU_CHỨNG", text.index("đau đầu")),
+            _row("Tăng huyết áp", "CHẨN_ĐOÁN", text.index("Tăng huyết áp")),
+        ]
+    }
+
+    output, _, _ = apply_selective_assertions(
+        rows,
+        {"1": text},
+        regimes=("history",),
+    )
+
+    assert [row["assertions"] for row in output["1"]] == [[], ["isHistorical"]]
 
 
 def test_candidate_registry_uses_train_review_tt06_and_source_consensus(tmp_path: Path) -> None:
