@@ -11,6 +11,7 @@ from typing import Any
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.evaluation.phase1 import validate_phase1_submission_zip
+from medical_kg_nlp.utils.io import read_source_text
 
 _CODABLE_TYPES = {"CHẨN_ĐOÁN", "THUỐC"}
 _ASSERTABLE_TYPES = {"CHẨN_ĐOÁN", "THUỐC", "TRIỆU_CHỨNG"}
@@ -206,7 +207,7 @@ def render_phase1_submission_analysis(report: dict[str, Any]) -> str:
 
 
 def _load_texts(input_dir: Path) -> dict[str, str]:
-    return {path.stem: path.read_text(encoding="utf-8") for path in input_dir.glob("*.txt")}
+    return {path.stem: read_source_text(path) for path in input_dir.glob("*.txt")}
 
 
 def _load_zip_rows(zip_path: Path) -> dict[str, list[dict[str, Any]]]:

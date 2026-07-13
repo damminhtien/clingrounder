@@ -14,6 +14,7 @@ from medical_kg_nlp.ontology.phase1_assertions import (
 )
 from medical_kg_nlp.ontology.phase1 import (
     PHASE1_ALLOWED_ASSERTIONS,
+    PHASE1_ALLOWED_KEYS,
     PHASE1_ALLOWED_TYPES,
     PHASE1_ASSERTABLE_TYPES,
     PHASE1_CODABLE_TYPES,
@@ -26,6 +27,7 @@ from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem
 from medical_kg_nlp.utils.text import normalize_for_match
+from medical_kg_nlp.utils.io import read_source_text
 
 
 _PHASE1_ASSERTION_BY_STATUS = {
@@ -289,7 +291,7 @@ def validate_phase1_submission_dir(
         issues.extend(
             validate_phase1_entities(
                 payload,
-                txt_path.read_text(encoding="utf-8"),
+                read_source_text(txt_path),
                 document_id=document_id,
                 dictionary=dictionary,
             )
@@ -367,7 +369,7 @@ def _zip_payload_issues(
         issues.extend(
             validate_phase1_entities(
                 payload,
-                txt_path.read_text(encoding="utf-8"),
+                read_source_text(txt_path),
                 document_id=document_id,
                 dictionary=dictionary,
             )
@@ -379,7 +381,7 @@ def load_phase1_text_documents(input_dir: str | Path) -> list[ClinicalDocument]:
     return [
         ClinicalDocument(
             document_id=txt_path.stem,
-            text=txt_path.read_text(encoding="utf-8"),
+            text=read_source_text(txt_path),
             metadata={"source_path": str(txt_path)},
         )
         for txt_path in _phase1_input_files(Path(input_dir))
@@ -568,7 +570,7 @@ def _validate_phase1_item(
 ) -> list[Phase1ValidationIssue]:
     issues: list[Phase1ValidationIssue] = []
     required = set(PHASE1_REQUIRED_KEYS)
-    extra = sorted(set(item) - required)
+    extra = sorted(set(item) - set(PHASE1_ALLOWED_KEYS))
     missing = sorted(required - set(item))
     for key in missing:
         issues.append(
@@ -584,8 +586,18 @@ def _validate_phase1_item(
     text = item.get("text")
     phase1_type = item.get("type")
     assertions = item.get("assertions")
-    candidates = item.get("candidates")
+    candidates = item.get("candidates", [])
     position = item.get("position")
+
+    if phase1_type in PHASE1_CODABLE_TYPES and "candidates" not in item:
+        issues.append(
+            _issue(
+                "phase1_schema",
+                f"{path}.candidates",
+                "candidates is required for CHẨN_ĐOÁN and THUỐC.",
+                document_id,
+            )
+        )
 
     if not isinstance(text, str) or not text:
         issues.append(
@@ -887,7 +899,7 @@ def _has_structured_medication_mention(entity: EntityAnnotation) -> bool:
     if medication is None:
         return False
     return any(
-        component.kind in {"strength", "dose_form", "dosage"}
+        component.kind in {"administered_dose", "strength", "dose_form", "dosage"}
         for component in medication.components
     )
 

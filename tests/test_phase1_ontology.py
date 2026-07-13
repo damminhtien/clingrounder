@@ -20,7 +20,7 @@ def test_phase1_operational_ontology_code_system_constraints() -> None:
         "CHẨN_ĐOÁN",
         "THUỐC",
     }
-    assert PHASE1_REQUIRED_KEYS == {"text", "type", "assertions", "candidates", "position"}
+    assert PHASE1_REQUIRED_KEYS == {"text", "type", "assertions", "position"}
     assert PHASE1_ALLOWED_ASSERTIONS == ("isNegated", "isFamily", "isHistorical")
 
     assert expected_code_system("CHẨN_ĐOÁN") == CodeSystem.ICD10

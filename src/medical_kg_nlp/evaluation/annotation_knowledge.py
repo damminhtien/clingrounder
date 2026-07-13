@@ -10,7 +10,7 @@ from typing import Any
 
 import yaml
 
-from medical_kg_nlp.utils.io import read_jsonl
+from medical_kg_nlp.utils.io import read_jsonl, read_source_text
 from medical_kg_nlp.utils.text import normalize_for_match
 
 
@@ -124,7 +124,7 @@ def compile_annotation_knowledge(
             _add_missing_file_conflict(conflicts, document_id, "source", source_path)
             continue
         loaded_gold_paths.append(gold_path)
-        source_text = source_path.read_text(encoding="utf-8")
+        source_text = read_source_text(source_path)
         gold_rows = _load_gold_rows(gold_path, document_id, conflicts)
         expected_count = manifest.get("entity_count")
         if isinstance(expected_count, int) and expected_count != len(gold_rows):

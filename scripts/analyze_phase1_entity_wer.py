@@ -14,7 +14,7 @@ from medical_kg_nlp.evaluation.entity_wer_report import (
 )
 from medical_kg_nlp.evaluation.manual_gold import load_phase1_directory
 from medical_kg_nlp.evaluation.phase1_ensemble import load_phase1_output_source
-from medical_kg_nlp.utils.io import read_yaml
+from medical_kg_nlp.utils.io import read_source_text, read_yaml
 
 
 def main() -> None:
@@ -42,7 +42,7 @@ def main() -> None:
     policy_path = Path(args.policy)
     policy = read_yaml(policy_path) if policy_path.exists() else {}
     documents = {
-        path.stem: path.read_text(encoding="utf-8") for path in Path(args.documents).glob("*.txt")
+        path.stem: read_source_text(path) for path in Path(args.documents).glob("*.txt")
     }
     report = build_entity_wer_report(
         gold_by_doc=load_phase1_directory(args.gold_dir),

@@ -13,6 +13,7 @@ from medical_kg_nlp.evaluation.phase1_proposals import (
     build_phase1_proposal_matrix,
     write_phase1_proposal_matrix,
 )
+from medical_kg_nlp.utils.io import read_source_text
 
 
 def main() -> None:
@@ -31,7 +32,7 @@ def main() -> None:
     source_paths = _parse_sources(args.source, parser)
     sources = {name: load_phase1_output_source(path) for name, path in source_paths.items()}
     source_text_by_doc = {
-        path.stem: path.read_text(encoding="utf-8") for path in Path(args.input_dir).glob("*.txt")
+        path.stem: read_source_text(path) for path in Path(args.input_dir).glob("*.txt")
     }
     report = build_phase1_proposal_matrix(sources, source_text_by_doc)
     write_phase1_proposal_matrix(report, args.output_dir)

@@ -38,6 +38,7 @@ from medical_kg_nlp.evaluation.phase1_rule_registry import (
     load_phase1_rule_registry,
     write_phase1_rule_registry,
 )
+from medical_kg_nlp.utils.io import read_source_text
 from medical_kg_nlp.evaluation.phase1_selective_overlays import (
     AssertionRegime,
     CandidateRegime,
@@ -87,7 +88,7 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
     run_dir.mkdir(parents=True, exist_ok=True)
 
     source_text_by_doc = {
-        path.stem: path.read_text(encoding="utf-8") for path in config.input_dir.glob("*.txt")
+        path.stem: read_source_text(path) for path in config.input_dir.glob("*.txt")
     }
     base = load_phase1_output_source(config.base)
     gold = load_phase1_directory(config.gold_dir)

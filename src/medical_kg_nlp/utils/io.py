@@ -1,7 +1,9 @@
 from __future__ import annotations
+
 import json
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 
 def read_jsonl(path: str | Path) -> list[dict[str, Any]]:
@@ -30,3 +32,7 @@ def read_yaml(path: str | Path) -> dict[str, Any]:
         raise ValueError(f"Expected mapping YAML at {path}")
     return data
 
+
+def read_source_text(path: str | Path) -> str:
+    """Read source text without Python's universal-newline translation."""
+    return Path(path).read_bytes().decode("utf-8-sig")

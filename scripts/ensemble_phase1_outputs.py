@@ -23,6 +23,7 @@ from medical_kg_nlp.evaluation.phase1_ensemble import (
     merge_phase1_outputs,
     rank_phase1_source_strategies,
 )
+from medical_kg_nlp.utils.io import read_source_text
 
 
 def main() -> None:
@@ -64,7 +65,7 @@ def main() -> None:
     secondary = load_phase1_output_source(args.secondary_dir)
     if args.expand_secondary_repeats:
         source_text_by_doc = {
-            path.stem: path.read_text(encoding="utf-8") for path in Path(args.input_dir).glob("*.txt")
+            path.stem: read_source_text(path) for path in Path(args.input_dir).glob("*.txt")
         }
         secondary = expand_repeated_phase1_mentions(secondary, source_text_by_doc)
     gold = load_phase1_directory(args.gold_dir)

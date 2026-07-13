@@ -6,7 +6,8 @@ from typing import Any, cast
 from medical_kg_nlp.schema.types import CodeSystem, EntityType, RelationType
 
 
-PHASE1_REQUIRED_KEYS = frozenset({"text", "type", "assertions", "candidates", "position"})
+PHASE1_REQUIRED_KEYS = frozenset({"text", "type", "assertions", "position"})
+PHASE1_ALLOWED_KEYS = PHASE1_REQUIRED_KEYS | {"candidates"}
 PHASE1_ALLOWED_ASSERTIONS = ("isNegated", "isFamily", "isHistorical")
 PHASE1_TYPE_PRIORITY = {
     "THUỐC": 5,
@@ -117,7 +118,13 @@ PHASE1_SECTION_RULES = (
     ),
     Phase1SectionRule(
         label="MEDICATION_HISTORY",
-        headings=("thuốc trước khi nhập viện", "thuốc đang dùng trước khi nhập viện", "tiền sử dùng thuốc"),
+        headings=(
+            "danh sách thuốc trước nhập viện",
+            "danh sách thuốc trước khi nhập viện",
+            "thuốc trước khi nhập viện",
+            "thuốc đang dùng trước khi nhập viện",
+            "tiền sử dùng thuốc",
+        ),
         assertion_priors=("isHistorical",),
         type_prior="THUỐC",
     ),

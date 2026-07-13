@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.evaluation.phase1 import validate_phase1_entities
+from medical_kg_nlp.utils.io import read_source_text
 
 
 def main() -> None:
@@ -64,7 +65,7 @@ def main() -> None:
             issue.to_json()
             for issue in validate_phase1_entities(
                 payload,
-                txt_path.read_text(encoding="utf-8"),
+                read_source_text(txt_path),
                 document_id=document_id,
                 dictionary=dictionary,
             )
