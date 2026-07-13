@@ -12,7 +12,7 @@ from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
             "Dùng amoxicillin/clavulanate 875 mg tablet po bid.",
             "amoxicillin/clavulanate",
             "amoxicillin/clavulanate 875 mg tablet po bid",
-            ("strength", "dose_form", "route", "frequency"),
+            ("administered_dose", "dose_form", "route", "frequency"),
         ),
         (
             "Điều trị albuterolipratropium nebs x3 every 20 minutes.",
@@ -24,13 +24,13 @@ from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
             "Uống sulfamethoxazole-trimethoprim 800/160 mg tablet.",
             "sulfamethoxazole-trimethoprim",
             "sulfamethoxazole-trimethoprim 800/160 mg tablet",
-            ("strength", "dose_form"),
+            ("administered_dose", "dose_form"),
         ),
         (
             "Tiêm methylprednisolone sodium succinate 125 mg IV.",
             "methylprednisolone sodium succinate",
             "methylprednisolone sodium succinate 125 mg IV",
-            ("strength", "route"),
+            ("administered_dose", "route"),
         ),
     ],
 )
@@ -68,3 +68,37 @@ def test_medication_parser_does_not_treat_prior_duration_as_medication_component
     mention = MedicationMentionParser().parse(text, (start, start + len("suboxone")))
 
     assert mention.full_span == mention.drug_span
+
+
+@pytest.mark.parametrize(
+    ("text", "drug", "expected"),
+    [
+        (
+            "metoprolol succinate xl 50 mg po daily điều trị tăng huyết áp",
+            "metoprolol succinate",
+            "metoprolol succinate xl 50 mg po daily",
+        ),
+        (
+            "nystatin oral suspension 5 ml po qid:prn điều trị đau nhức",
+            "nystatin",
+            "nystatin oral suspension 5 ml po qid:prn",
+        ),
+        (
+            "acetaminophen 325-650 mg po q6h:prn điều trị sốt đau",
+            "acetaminophen",
+            "acetaminophen 325-650 mg po q6h:prn",
+        ),
+        (
+            "guaifenesin ml po q6h:prn điều trị ho",
+            "guaifenesin",
+            "guaifenesin ml po q6h:prn",
+        ),
+    ],
+)
+def test_medication_parser_supports_btc_sig_grammar(
+    text: str, drug: str, expected: str
+) -> None:
+    start = text.index(drug)
+    mention = MedicationMentionParser().parse(text, (start, start + len(drug)))
+
+    assert text[mention.full_span[0] : mention.full_span[1]] == expected

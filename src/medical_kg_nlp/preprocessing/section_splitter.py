@@ -9,7 +9,17 @@ _NUMBER_PREFIX_RE = re.compile(r"^\s*\d+\s*[\.)]\s*")
 _SEPARATOR_RE = re.compile(r"\s*(?::|：)\s*")
 
 _HEADING_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("Thuốc trước khi nhập viện", ("thuốc trước khi nhập viện lần này", "thuốc trước khi nhập viện")),
+    (
+        "Thuốc trước khi nhập viện",
+        (
+            "danh sách thuốc trước nhập viện chính xác và đầy đủ",
+            "danh sách thuốc trước khi nhập viện chính xác và đầy đủ",
+            "danh sách thuốc trước nhập viện",
+            "danh sách thuốc trước khi nhập viện",
+            "thuốc trước khi nhập viện lần này",
+            "thuốc trước khi nhập viện",
+        ),
+    ),
     ("Các bệnh lý mạn tính", ("các bệnh lý mãn tính", "các bệnh lý mạn tính", "bệnh lý mãn tính", "bệnh lý mạn tính")),
     ("Tiền sử bệnh nội khoa", ("tiền sử bệnh nội khoa",)),
     ("Tiền sử bệnh hiện tại", ("tiền sử bệnh hiện tại",)),

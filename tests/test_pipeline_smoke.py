@@ -42,7 +42,7 @@ def test_pipeline_phase1_sections_drive_historical_context_and_skip_dose_result(
     assert by_text["metoprolol"].assertion == AssertionStatus.HISTORICAL
     assert by_text["đánh trống ngực"].assertion == AssertionStatus.PRESENT
     assert by_text["25mg"].type == EntityType.STRENGTH
-    assert by_text["25mg"].assertion == AssertionStatus.HISTORICAL
+    assert by_text["25mg"].assertion == AssertionStatus.PRESENT
     assert any(
         relation.type == RelationType.HAS_DOSE
         and relation.head == by_text["metoprolol"].id

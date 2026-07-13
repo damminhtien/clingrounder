@@ -10,11 +10,13 @@ from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType,
 MEDICATION_COMPONENT_KINDS = frozenset(
     {
         "strength",
+        "administered_dose",
         "dosage",
         "route",
         "frequency",
         "duration",
         "dose_form",
+        "release",
         "transition",
         "context",
     }

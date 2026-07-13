@@ -8,7 +8,7 @@ from medical_kg_nlp.schema.annotation import MedicationComponent, MedicationMent
 
 _MAX_EXTENSION_CHARS = 128
 _STOP_RE = re.compile(
-    r"\s*(?:cho|vì|do|để|không|nhưng|tuy nhiên|with|for|due\s+to|because)\b",
+    r"\s*(?:điều\s+trị|cho|vì|do|để|không|nhưng|tuy nhiên|with|for|due\s+to|because)\b",
     re.IGNORECASE | re.UNICODE,
 )
 
@@ -22,11 +22,19 @@ class _ComponentPattern:
 
 _COMPONENT_PATTERNS = (
     _ComponentPattern(
-        "strength",
+        "administered_dose",
         re.compile(
-            r"\s*(?:,?\s*)?\d+(?:[.,]\d+)?(?:\s*/\s*\d+(?:[.,]\d+)?)?\s*"
+            r"\s*(?:,?\s*)?\d+(?:[.,]\d+)?(?:\s*-\s*\d+(?:[.,]\d+)?)?"
+            r"(?:\s*/\s*\d+(?:[.,]\d+)?)?\s*"
             r"(?:mg|g|gram|mcg|microgram|ml|m[eE]q|iu|u|đơn\s+vị|units?)"
             r"(?:\s*/\s*(?:ml|l|kg|ngày|day|lần|dose))?",
+            re.IGNORECASE | re.UNICODE,
+        ),
+    ),
+    _ComponentPattern(
+        "release",
+        re.compile(
+            r"\s*(?:xl|xr|er|sr|cr|ir|extended\s+release|sustained\s+release)\b",
             re.IGNORECASE | re.UNICODE,
         ),
     ),
@@ -34,7 +42,8 @@ _COMPONENT_PATTERNS = (
         "dose_form",
         re.compile(
             r"\s*(?:viên\s+nang|viên\s+nén|dung\s+dịch|khí\s+dung|"
-            r"capsules?|tablets?|injections?|solutions?|inhalers?|nebulizers?|nebs?)\b",
+            r"oral\s+suspension|suspensions?|capsules?|tablets?|injections?|"
+            r"solutions?|inhalers?|nebulizers?|nebs?)\b",
             re.IGNORECASE | re.UNICODE,
         ),
     ),
@@ -49,11 +58,15 @@ _COMPONENT_PATTERNS = (
     _ComponentPattern(
         "frequency",
         re.compile(
-            r"\s*(?:bid|tid|qid|qhs|qd|q\s*\d+\s*h|daily|once|prn|hằng\s+ngày|"
+            r"\s*(?::?\s*)?(?:bid|tid|qid|qhs|qam|qd|q\s*\d+\s*h|daily|once|prn|hằng\s+ngày|"
             r"hàng\s+ngày|mỗi\s+ngày|mỗi\s+\d+\s*(?:giờ|phút)|"
             r"every\s+\d+\s*(?:hours?|minutes?)|\d+\s*lần\s*/\s*ngày)\b",
             re.IGNORECASE | re.UNICODE,
         ),
+    ),
+    _ComponentPattern(
+        "dosage",
+        re.compile(r"\s+(?:ml|m[eE]q|iu|u)\b", re.IGNORECASE | re.UNICODE),
     ),
     _ComponentPattern("dosage", re.compile(r"\s*x\s*\d+\b", re.IGNORECASE)),
     _ComponentPattern(

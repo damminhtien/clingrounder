@@ -8,6 +8,7 @@ from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatch, DictionaryMat
 from medical_kg_nlp.ner.lab_observation_extractor import LabObservationExtractor
 from medical_kg_nlp.ner.medication_attribute_extractor import MedicationAttributeExtractor
 from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
+from medical_kg_nlp.ner.medication_list_parser import MedicationListParser
 from medical_kg_nlp.ontology.false_positive import (
     DEFAULT_FALSE_POSITIVE_PATH,
     FalsePositiveRule,
@@ -60,6 +61,7 @@ class RuleBasedNER:
         self.lab_observations = LabObservationExtractor()
         self.medication_attributes = MedicationAttributeExtractor()
         self.medication_mentions = MedicationMentionParser()
+        self.medication_lists = MedicationListParser()
         self._drug_alias_lowers = tuple(
             alias.lower()
             for alias, entry in self.aliases
@@ -99,6 +101,7 @@ class RuleBasedNER:
         for entity in spans:
             if entity.type == EntityType.DRUG:
                 entity.medication_mention = self.medication_mentions.parse(text, entity.span)
+        spans = self.medication_lists.adjudicate(text, spans)
         for entity in self.lab_observations.extract(text, spans, occupied=occupied):
             occupied.append(entity.span)
             spans.append(entity)
