@@ -10,9 +10,12 @@ from medical_kg_nlp.kg.constraints import (
     relation_type_valid,
 )
 from medical_kg_nlp.schema.annotation import (
+    MEDICATION_COMPONENT_KINDS,
     AssertionFeatures,
     CandidateConcept,
     EntityAnnotation,
+    MedicationComponent,
+    MedicationMention,
     RelationAnnotation,
 )
 from medical_kg_nlp.schema.output import ClinicalPrediction, PredictionMetadata
@@ -236,6 +239,10 @@ def _entity_from_json(payload: Any, path: str) -> EntityAnnotation:
         assertion_features=_assertion_features(
             row.get("assertion_features"), f"{path}.assertion_features"
         ),
+        medication_mention=_medication_mention(
+            row.get("medication_mention"),
+            f"{path}.medication_mention",
+        ),
     )
 
 
@@ -253,6 +260,10 @@ def _candidate_from_json(payload: Any, path: str) -> CandidateConcept:
         concept_id=_optional_string(row.get("concept_id"), f"{path}.concept_id"),
         source=_optional_string(row.get("source"), f"{path}.source"),
         matched_alias=_optional_string(row.get("matched_alias"), f"{path}.matched_alias"),
+        qualified=_optional_bool(row, "qualified", f"{path}.qualified", default=False),
+        qualification_reason=_optional_string(
+            row.get("qualification_reason"), f"{path}.qualification_reason"
+        ),
     )
 
 
@@ -275,6 +286,32 @@ def _assertion_features(payload: Any, path: str) -> AssertionFeatures:
             raise ValueError(f"{path}.{key}: expected boolean")
         values[key] = value
     return AssertionFeatures(**values)
+
+
+def _medication_mention(payload: Any, path: str) -> MedicationMention | None:
+    if payload is None:
+        return None
+    row = _ensure_mapping(payload, path)
+    components: list[MedicationComponent] = []
+    for index, component_payload in enumerate(_optional_sequence(row, "components", path)):
+        component_path = f"{path}.components[{index}]"
+        component = _ensure_mapping(component_payload, component_path)
+        kind = _string(component, "kind", f"{component_path}.kind")
+        if kind not in MEDICATION_COMPONENT_KINDS:
+            raise ValueError(
+                f"Unknown medication component kind {kind!r} at {component_path}.kind."
+            )
+        components.append(
+            MedicationComponent(
+                kind=kind,
+                span=_span(component, "span", f"{component_path}.span"),
+            )
+        )
+    return MedicationMention(
+        drug_span=_span(row, "drug_span", f"{path}.drug_span"),
+        full_span=_span(row, "full_span", f"{path}.full_span"),
+        components=tuple(components),
+    )
 
 
 def _relation_from_json(payload: Any, path: str) -> RelationAnnotation:
@@ -324,6 +361,17 @@ def _optional_string(value: Any, path: str) -> str | None:
         return None
     if not isinstance(value, str):
         raise ValueError(f"Expected string or null at {path}.")
+    return value
+
+
+def _optional_bool(
+    payload: Mapping[str, Any], key: str, path: str, *, default: bool
+) -> bool:
+    if key not in payload:
+        return default
+    value = payload[key]
+    if not isinstance(value, bool):
+        raise ValueError(f"Expected boolean at {path}.")
     return value
 
 

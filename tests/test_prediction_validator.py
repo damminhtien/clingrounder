@@ -94,6 +94,67 @@ def test_prediction_validator_reports_invalid_candidate_code_system() -> None:
     assert any(issue.kind == "invalid_candidate_code_system" for issue in issues)
 
 
+def test_prediction_validator_defaults_legacy_candidates_to_unqualified() -> None:
+    payload = _sample_prediction_payload()
+    payload["entities"][0]["candidates"] = [_valid_candidate_payload()]
+    validator = PredictionValidator()
+
+    prediction, issues = validator.validate_payload(payload, source_text=_sample_source_text())
+
+    assert issues == []
+    assert prediction is not None
+    assert all(
+        not candidate.qualified
+        for entity in prediction.entities
+        for candidate in entity.candidates
+    )
+
+
+def test_prediction_validator_rejects_non_boolean_candidate_qualification() -> None:
+    payload = _sample_prediction_payload()
+    payload["entities"][0]["candidates"] = [_valid_candidate_payload()]
+    payload["entities"][0]["candidates"][0]["qualified"] = "yes"
+    validator = PredictionValidator()
+
+    prediction, issues = validator.validate_payload(payload, source_text=_sample_source_text())
+
+    assert prediction is None
+    assert [issue.kind for issue in issues] == ["schema"]
+
+
+def test_prediction_validator_round_trips_structured_medication_mention() -> None:
+    payload = _sample_prediction_payload()
+    payload["entities"][7]["medication_mention"] = {
+        "drug_span": [160, 169],
+        "full_span": [160, 175],
+        "components": [{"kind": "strength", "span": [170, 175]}],
+    }
+    validator = PredictionValidator()
+
+    prediction, issues = validator.validate_payload(payload, source_text=_sample_source_text())
+
+    assert issues == []
+    assert prediction is not None
+    medication = prediction.entities[7].medication_mention
+    assert medication is not None
+    assert medication.full_span == (160, 175)
+
+
+def test_prediction_validator_rejects_unknown_medication_component_kind() -> None:
+    payload = _sample_prediction_payload()
+    payload["entities"][7]["medication_mention"] = {
+        "drug_span": [160, 169],
+        "full_span": [160, 175],
+        "components": [{"kind": "unknown", "span": [170, 175]}],
+    }
+    validator = PredictionValidator()
+
+    prediction, issues = validator.validate_payload(payload, source_text=_sample_source_text())
+
+    assert prediction is None
+    assert [issue.kind for issue in issues] == ["schema"]
+
+
 def test_prediction_validator_reports_invalid_relation_reference() -> None:
     payload = _sample_prediction_payload()
     payload["relations"][0]["tail"] = "NO_SUCH_ENTITY"
@@ -121,3 +182,15 @@ def _sample_prediction_payload() -> dict[str, Any]:
 
 def _sample_source_text() -> str:
     return str(read_jsonl("data/samples/sample_notes.jsonl")[0]["text"])
+
+
+def _valid_candidate_payload() -> dict[str, object]:
+    return {
+        "concept_id": "ICD10:E11",
+        "code_system": "ICD-10",
+        "code": "E11",
+        "name": "Type 2 diabetes mellitus",
+        "score": 0.9,
+        "source": "test",
+        "matched_alias": "đái tháo đường type 2",
+    }

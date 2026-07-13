@@ -5,6 +5,8 @@ from medical_kg_nlp.schema.annotation import (
     AssertionFeatures,
     CandidateConcept,
     EntityAnnotation,
+    MedicationComponent,
+    MedicationMention,
     RelationAnnotation,
 )
 from medical_kg_nlp.schema.document import ClinicalDocument
@@ -47,10 +49,13 @@ class SyntheticDatasetAdapter:
                             concept_id=candidate.get("concept_id"),
                             source=candidate.get("source"),
                             matched_alias=candidate.get("matched_alias"),
+                            qualified=bool(candidate.get("qualified", False)),
+                            qualification_reason=candidate.get("qualification_reason"),
                         )
                         for candidate in entity.get("candidates", [])
                     ],
                     assertion_features=_assertion_features(entity.get("assertion_features")),
+                    medication_mention=_medication_mention(entity.get("medication_mention")),
                 )
                 for entity in row.get("entities", [])
             ]
@@ -98,3 +103,40 @@ def _assertion_features(payload: object) -> AssertionFeatures:
         planned=payload.get("planned") is True,
         resolved=payload.get("resolved") is True,
     )
+
+
+def _medication_mention(payload: object) -> MedicationMention | None:
+    if not isinstance(payload, dict):
+        return None
+    drug_span = _two_int_span(payload.get("drug_span"))
+    full_span = _two_int_span(payload.get("full_span"))
+    components: list[MedicationComponent] = []
+    raw_components = payload.get("components", [])
+    if isinstance(raw_components, list):
+        for component in raw_components:
+            if not isinstance(component, dict):
+                continue
+            span = _two_int_span(component.get("span"))
+            kind = str(component.get("kind", ""))
+            if span is not None and kind:
+                components.append(MedicationComponent(kind=kind, span=span))
+    if drug_span is None or full_span is None:
+        return None
+    return MedicationMention(
+        drug_span=drug_span,
+        full_span=full_span,
+        components=tuple(components),
+    )
+
+
+def _two_int_span(payload: object) -> tuple[int, int] | None:
+    if (
+        not isinstance(payload, list | tuple)
+        or len(payload) != 2
+        or isinstance(payload[0], bool)
+        or isinstance(payload[1], bool)
+        or not isinstance(payload[0], int)
+        or not isinstance(payload[1], int)
+    ):
+        return None
+    return payload[0], payload[1]

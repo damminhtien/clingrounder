@@ -5,6 +5,56 @@ from typing import Any
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType, RelationType
 
 
+MEDICATION_COMPONENT_KINDS = frozenset(
+    {
+        "strength",
+        "dosage",
+        "route",
+        "frequency",
+        "duration",
+        "dose_form",
+        "transition",
+        "context",
+    }
+)
+
+
+@dataclass(frozen=True)
+class MedicationComponent:
+    kind: str
+    span: tuple[int, int]
+
+    def to_json(self) -> dict[str, Any]:
+        return {"kind": self.kind, "span": [self.span[0], self.span[1]]}
+
+
+@dataclass(frozen=True)
+class MedicationMention:
+    drug_span: tuple[int, int]
+    full_span: tuple[int, int]
+    components: tuple[MedicationComponent, ...] = ()
+
+    def validate_offsets(self, source_text: str, entity_span: tuple[int, int]) -> None:
+        if self.drug_span != entity_span:
+            raise ValueError("Medication drug_span must equal the entity span.")
+        start, end = self.full_span
+        if start != entity_span[0] or end < entity_span[1] or end > len(source_text):
+            raise ValueError(f"Invalid medication full_span {self.full_span}.")
+        for component in self.components:
+            component_start, component_end = component.span
+            if component.kind not in MEDICATION_COMPONENT_KINDS:
+                raise ValueError(f"Unknown medication component kind {component.kind!r}.")
+            if not start <= component_start < component_end <= end:
+                raise ValueError(f"Invalid medication component span {component.span}.")
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "drug_span": [self.drug_span[0], self.drug_span[1]],
+            "full_span": [self.full_span[0], self.full_span[1]],
+            "components": [component.to_json() for component in self.components],
+        }
+
+
 @dataclass(frozen=True)
 class CandidateConcept:
     code_system: CodeSystem
@@ -14,6 +64,8 @@ class CandidateConcept:
     concept_id: str | None = None
     source: str | None = None
     matched_alias: str | None = None
+    qualified: bool = False
+    qualification_reason: str | None = None
 
     def to_json(self) -> dict[str, Any]:
         return {
@@ -24,6 +76,8 @@ class CandidateConcept:
             "score": round(self.score, 6),
             "source": self.source,
             "matched_alias": self.matched_alias,
+            "qualified": self.qualified,
+            "qualification_reason": self.qualification_reason,
         }
 
 
@@ -90,6 +144,7 @@ class EntityAnnotation:
     confidence: float = 0.0
     candidates: list[CandidateConcept] = field(default_factory=list)
     assertion_features: AssertionFeatures = field(default_factory=AssertionFeatures)
+    medication_mention: MedicationMention | None = None
 
     def validate_offsets(self, source_text: str) -> None:
         start, end = self.span
@@ -100,9 +155,11 @@ class EntityAnnotation:
                 f"Offset mismatch for {self.id}: expected {self.text!r}, "
                 f"got {source_text[start:end]!r}"
             )
+        if self.medication_mention is not None:
+            self.medication_mention.validate_offsets(source_text, self.span)
 
     def to_json(self) -> dict[str, Any]:
-        return {
+        payload = {
             "id": self.id,
             "span": [self.span[0], self.span[1]],
             "text": self.text,
@@ -115,6 +172,9 @@ class EntityAnnotation:
             "confidence": round(self.confidence, 6),
             "candidates": [candidate.to_json() for candidate in self.candidates],
         }
+        if self.medication_mention is not None:
+            payload["medication_mention"] = self.medication_mention.to_json()
+        return payload
 
 
 @dataclass
