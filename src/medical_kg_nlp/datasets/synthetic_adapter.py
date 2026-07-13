@@ -2,6 +2,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from medical_kg_nlp.schema.annotation import (
+    AssertionEvidence,
     AssertionFeatures,
     CandidateConcept,
     EntityAnnotation,
@@ -42,19 +43,32 @@ class SyntheticDatasetAdapter:
                     confidence=float(entity.get("confidence", 1.0)),
                     candidates=[
                         CandidateConcept(
-                            code_system=CodeSystem(candidate.get("code_system", "NONE")),
+                            code_system=CodeSystem(candidate["code_system"]),
                             code=candidate.get("code"),
-                            name=str(candidate.get("name", "")),
-                            score=float(candidate.get("score", 0.0)),
-                            concept_id=candidate.get("concept_id"),
-                            source=candidate.get("source"),
-                            matched_alias=candidate.get("matched_alias"),
-                            qualified=bool(candidate.get("qualified", False)),
-                            qualification_reason=candidate.get("qualification_reason"),
+                            name=str(candidate["name"]),
+                            retrieval_score=float(candidate["retrieval_score"]),
+                            emit_probability=float(candidate["emit_probability"]),
+                            concept_id=str(candidate["concept_id"]),
+                            source=str(candidate["source"]),
+                            evidence_sources=tuple(
+                                str(source) for source in candidate["evidence_sources"]
+                            ),
+                            matched_alias=str(candidate["matched_alias"]),
+                            qualified=_required_bool(candidate, "qualified"),
+                            qualification_reason=str(candidate["qualification_reason"]),
                         )
                         for candidate in entity.get("candidates", [])
                     ],
                     assertion_features=_assertion_features(entity.get("assertion_features")),
+                    assertion_evidence=tuple(
+                        AssertionEvidence(
+                            rule_id=str(item["rule_id"]),
+                            assertion=AssertionStatus(item["assertion"]),
+                            cue=str(item["cue"]),
+                            scope=str(item["scope"]),
+                        )
+                        for item in entity["assertion_evidence"]
+                    ),
                     medication_mention=_medication_mention(entity.get("medication_mention")),
                 )
                 for entity in row.get("entities", [])
@@ -103,6 +117,13 @@ def _assertion_features(payload: object) -> AssertionFeatures:
         planned=payload.get("planned") is True,
         resolved=payload.get("resolved") is True,
     )
+
+
+def _required_bool(payload: dict[str, object], key: str) -> bool:
+    value = payload[key]
+    if not isinstance(value, bool):
+        raise ValueError(f"{key} must be a boolean")
+    return value
 
 
 def _medication_mention(payload: object) -> MedicationMention | None:

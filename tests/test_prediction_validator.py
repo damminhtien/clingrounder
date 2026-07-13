@@ -58,9 +58,13 @@ def test_prediction_validator_reports_unknown_candidate_dictionary_code() -> Non
             "code_system": "ICD-10",
             "code": "MISSING",
             "name": "Missing disease",
-            "score": 0.9,
+            "retrieval_score": 0.9,
+            "emit_probability": 0.9,
             "source": "test",
+            "evidence_sources": ["test"],
             "matched_alias": "missing",
+            "qualified": True,
+            "qualification_reason": "test_candidate",
         }
     ]
     validator = PredictionValidator(DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl"))
@@ -82,9 +86,13 @@ def test_prediction_validator_reports_invalid_candidate_code_system() -> None:
             "code_system": "ICD-10",
             "code": "E11",
             "name": "Type 2 diabetes mellitus",
-            "score": 0.9,
+            "retrieval_score": 0.9,
+            "emit_probability": 0.9,
             "source": "test",
+            "evidence_sources": ["test"],
             "matched_alias": "metformin",
+            "qualified": True,
+            "qualification_reason": "test_candidate",
         }
     ]
     validator = PredictionValidator(DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl"))
@@ -94,20 +102,17 @@ def test_prediction_validator_reports_invalid_candidate_code_system() -> None:
     assert any(issue.kind == "invalid_candidate_code_system" for issue in issues)
 
 
-def test_prediction_validator_defaults_legacy_candidates_to_unqualified() -> None:
+def test_prediction_validator_requires_candidate_qualification_metadata() -> None:
     payload = _sample_prediction_payload()
-    payload["entities"][0]["candidates"] = [_valid_candidate_payload()]
+    candidate = _valid_candidate_payload()
+    del candidate["qualified"]
+    payload["entities"][0]["candidates"] = [candidate]
     validator = PredictionValidator()
 
     prediction, issues = validator.validate_payload(payload, source_text=_sample_source_text())
 
-    assert issues == []
-    assert prediction is not None
-    assert all(
-        not candidate.qualified
-        for entity in prediction.entities
-        for candidate in entity.candidates
-    )
+    assert prediction is None
+    assert [issue.kind for issue in issues] == ["schema"]
 
 
 def test_prediction_validator_rejects_non_boolean_candidate_qualification() -> None:
@@ -120,6 +125,55 @@ def test_prediction_validator_rejects_non_boolean_candidate_qualification() -> N
 
     assert prediction is None
     assert [issue.kind for issue in issues] == ["schema"]
+
+
+def test_prediction_validator_rejects_legacy_candidate_score() -> None:
+    payload = _sample_prediction_payload()
+    candidate = _valid_candidate_payload()
+    candidate["score"] = candidate.pop("retrieval_score")
+    payload["entities"][0]["candidates"] = [candidate]
+
+    prediction, issues = PredictionValidator().validate_payload(
+        payload,
+        source_text=_sample_source_text(),
+    )
+
+    assert prediction is None
+    assert [issue.kind for issue in issues] == ["schema"]
+
+
+def test_prediction_validator_requires_assertion_evidence_field() -> None:
+    payload = _sample_prediction_payload()
+    del payload["entities"][0]["assertion_evidence"]
+
+    prediction, issues = PredictionValidator().validate_payload(
+        payload,
+        source_text=_sample_source_text(),
+    )
+
+    assert prediction is None
+    assert [issue.kind for issue in issues] == ["schema"]
+
+
+def test_prediction_validator_round_trips_assertion_evidence() -> None:
+    payload = _sample_prediction_payload()
+    payload["entities"][0]["assertion_evidence"] = [
+        {
+            "rule_id": "neg.no_evidence",
+            "assertion": "NEGATED",
+            "cue": "không có",
+            "scope": "left",
+        }
+    ]
+
+    prediction, issues = PredictionValidator().validate_payload(
+        payload,
+        source_text=_sample_source_text(),
+    )
+
+    assert issues == []
+    assert prediction is not None
+    assert prediction.entities[0].assertion_evidence[0].rule_id == "neg.no_evidence"
 
 
 def test_prediction_validator_round_trips_structured_medication_mention() -> None:
@@ -190,7 +244,11 @@ def _valid_candidate_payload() -> dict[str, object]:
         "code_system": "ICD-10",
         "code": "E11",
         "name": "Type 2 diabetes mellitus",
-        "score": 0.9,
+        "retrieval_score": 0.9,
+        "emit_probability": 0.9,
         "source": "test",
+        "evidence_sources": ["test"],
         "matched_alias": "đái tháo đường type 2",
+        "qualified": True,
+        "qualification_reason": "test_candidate",
     }

@@ -245,7 +245,10 @@ def _candidate_metrics(
                 if candidate.qualified:
                     qualified_source_counts[candidate.source or "UNKNOWN"] += 1
             if len(entity.candidates) >= 2:
-                margins.append(entity.candidates[0].score - entity.candidates[1].score)
+                margins.append(
+                    entity.candidates[0].retrieval_score
+                    - entity.candidates[1].retrieval_score
+                )
 
     gold_ranks: list[float] = []
     exact_gold_coded = 0

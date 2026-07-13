@@ -10,11 +10,17 @@ def test_pipeline_options_parse_candidate_calibration_thresholds() -> None:
         {
             "link_candidate_thresholds_by_type": {"DISEASE": 0.82},
             "link_candidate_thresholds_by_source": {"exact": 0.65, "fuzzy": 0.88},
+            "link_emit_probabilities_by_source": {
+                "ICD-10:dictionary_exact": 0.99505,
+            },
         }
     )
 
     assert options.link_candidate_thresholds_by_type == (("DISEASE", 0.82),)
     assert options.link_candidate_thresholds_by_source == (("exact", 0.65), ("fuzzy", 0.88))
+    assert options.link_emit_probabilities_by_source == (
+        ("ICD-10:dictionary_exact", 0.99505),
+    )
 
 
 @pytest.mark.parametrize(

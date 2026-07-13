@@ -7,6 +7,7 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
+from medical_kg_nlp.schema.annotation import AssertionEvidence
 from medical_kg_nlp.schema.types import AssertionStatus
 
 
@@ -27,14 +28,6 @@ class AssertionCue:
     notes: str = ""
     priority: int = 100
     max_distance: int = 120
-
-
-@dataclass(frozen=True)
-class AssertionEvidence:
-    rule_id: str
-    assertion: AssertionStatus
-    cue: str
-    scope: str
 
 
 class AssertionRuleRegistry:

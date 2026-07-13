@@ -33,7 +33,14 @@ def _entity(
                 code_system=CodeSystem.ICD10,
                 code=candidate_code,
                 name=candidate_code or "",
-                score=candidate_score,
+                retrieval_score=candidate_score,
+                emit_probability=candidate_score,
+                concept_id=f"ICD-10:{candidate_code}",
+                source="test",
+                evidence_sources=("test",),
+                matched_alias=entity_id,
+                qualified=True,
+                qualification_reason="test_candidate",
             )
         ]
         if candidate_code is not None

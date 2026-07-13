@@ -19,6 +19,8 @@ class PipelineOptions:
     link_max_qualified_candidates: int = 5
     link_candidate_thresholds_by_type: tuple[tuple[str, float], ...] = ()
     link_candidate_thresholds_by_source: tuple[tuple[str, float], ...] = ()
+    link_emit_probabilities_by_source: tuple[tuple[str, float], ...] = ()
+    link_enforce_rxnorm_structure: bool = True
     candidate_sources: tuple[str, ...] = DEFAULT_CANDIDATE_SOURCES
     enable_context: bool = True
     enable_linking: bool = True
@@ -69,6 +71,15 @@ class PipelineOptions:
             link_candidate_thresholds_by_source=_threshold_items(
                 payload,
                 "link_candidate_thresholds_by_source",
+            ),
+            link_emit_probabilities_by_source=_threshold_items(
+                payload,
+                "link_emit_probabilities_by_source",
+            ),
+            link_enforce_rxnorm_structure=_bool_value(
+                payload,
+                "link_enforce_rxnorm_structure",
+                cls.link_enforce_rxnorm_structure,
             ),
             candidate_sources=tuple(str(source) for source in sources),
             enable_context=_bool_value(payload, "enable_context", cls.enable_context),

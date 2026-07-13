@@ -2,7 +2,6 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 
-from medical_kg_nlp.context.cue_loader import AssertionEvidence
 from medical_kg_nlp.context.rules import (
     ASSERTION_RULE_REGISTRY,
     FAMILY_LEFT_CUES,
@@ -19,7 +18,11 @@ from medical_kg_nlp.context.rules import (
     RESOLVED_RIGHT_CUES,
     SECTION_PRIORS,
 )
-from medical_kg_nlp.schema.annotation import AssertionFeatures, EntityAnnotation
+from medical_kg_nlp.schema.annotation import (
+    AssertionEvidence,
+    AssertionFeatures,
+    EntityAnnotation,
+)
 from medical_kg_nlp.schema.document import Sentence
 from medical_kg_nlp.schema.types import AssertionStatus
 

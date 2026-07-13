@@ -35,7 +35,14 @@ def test_kg_validator_resets_invalid_code_system_to_none() -> None:
                 code_system=CodeSystem.ICD10,
                 code="E11",
                 name="Type 2 diabetes mellitus",
-                score=0.9,
+                retrieval_score=0.9,
+                emit_probability=0.9,
+                concept_id="ICD-10:E11",
+                source="test",
+                evidence_sources=("test",),
+                matched_alias="metformin",
+                qualified=True,
+                qualification_reason="test_candidate",
             )
         ],
     )

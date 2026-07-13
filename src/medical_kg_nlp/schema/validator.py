@@ -11,6 +11,7 @@ from medical_kg_nlp.kg.constraints import (
 )
 from medical_kg_nlp.schema.annotation import (
     MEDICATION_COMPONENT_KINDS,
+    AssertionEvidence,
     AssertionFeatures,
     CandidateConcept,
     EntityAnnotation,
@@ -239,6 +240,12 @@ def _entity_from_json(payload: Any, path: str) -> EntityAnnotation:
         assertion_features=_assertion_features(
             row.get("assertion_features"), f"{path}.assertion_features"
         ),
+        assertion_evidence=tuple(
+            _assertion_evidence(item, f"{path}.assertion_evidence[{index}]")
+            for index, item in enumerate(
+                _sequence(row, "assertion_evidence", f"{path}.assertion_evidence")
+            )
+        ),
         medication_mention=_medication_mention(
             row.get("medication_mention"),
             f"{path}.medication_mention",
@@ -256,14 +263,35 @@ def _candidate_from_json(payload: Any, path: str) -> CandidateConcept:
         ),
         code=_optional_string(row.get("code"), f"{path}.code"),
         name=_string(row, "name", f"{path}.name"),
-        score=_number(row, "score", f"{path}.score"),
-        concept_id=_optional_string(row.get("concept_id"), f"{path}.concept_id"),
-        source=_optional_string(row.get("source"), f"{path}.source"),
-        matched_alias=_optional_string(row.get("matched_alias"), f"{path}.matched_alias"),
-        qualified=_optional_bool(row, "qualified", f"{path}.qualified", default=False),
-        qualification_reason=_optional_string(
-            row.get("qualification_reason"), f"{path}.qualification_reason"
+        retrieval_score=_number(row, "retrieval_score", f"{path}.retrieval_score"),
+        emit_probability=_number(row, "emit_probability", f"{path}.emit_probability"),
+        concept_id=_string(row, "concept_id", f"{path}.concept_id"),
+        source=_string(row, "source", f"{path}.source"),
+        evidence_sources=tuple(
+            _string_value(item, f"{path}.evidence_sources[{index}]")
+            for index, item in enumerate(
+                _sequence(row, "evidence_sources", f"{path}.evidence_sources")
+            )
         ),
+        matched_alias=_string(row, "matched_alias", f"{path}.matched_alias"),
+        qualified=_boolean(row, "qualified", f"{path}.qualified"),
+        qualification_reason=_string(
+            row, "qualification_reason", f"{path}.qualification_reason"
+        ),
+    )
+
+
+def _assertion_evidence(payload: Any, path: str) -> AssertionEvidence:
+    row = _ensure_mapping(payload, path)
+    return AssertionEvidence(
+        rule_id=_string(row, "rule_id", f"{path}.rule_id"),
+        assertion=_enum(
+            AssertionStatus,
+            _string(row, "assertion", f"{path}.assertion"),
+            f"{path}.assertion",
+        ),
+        cue=_string(row, "cue", f"{path}.cue"),
+        scope=_string(row, "scope", f"{path}.scope"),
     )
 
 
@@ -364,11 +392,15 @@ def _optional_string(value: Any, path: str) -> str | None:
     return value
 
 
-def _optional_bool(
-    payload: Mapping[str, Any], key: str, path: str, *, default: bool
-) -> bool:
+def _string_value(value: Any, path: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"Expected string at {path}.")
+    return value
+
+
+def _boolean(payload: Mapping[str, Any], key: str, path: str) -> bool:
     if key not in payload:
-        return default
+        raise ValueError(f"Missing required field {path}.")
     value = payload[key]
     if not isinstance(value, bool):
         raise ValueError(f"Expected boolean at {path}.")

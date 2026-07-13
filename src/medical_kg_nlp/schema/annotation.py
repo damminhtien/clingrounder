@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import math
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -60,12 +62,34 @@ class CandidateConcept:
     code_system: CodeSystem
     code: str | None
     name: str
-    score: float
-    concept_id: str | None = None
-    source: str | None = None
-    matched_alias: str | None = None
-    qualified: bool = False
-    qualification_reason: str | None = None
+    retrieval_score: float
+    emit_probability: float
+    concept_id: str
+    source: str
+    evidence_sources: tuple[str, ...]
+    matched_alias: str
+    qualified: bool
+    qualification_reason: str
+
+    def __post_init__(self) -> None:
+        for field_name, value in (
+            ("retrieval_score", self.retrieval_score),
+            ("emit_probability", self.emit_probability),
+        ):
+            if not math.isfinite(value) or not 0.0 <= value <= 1.0:
+                raise ValueError(f"{field_name} must be finite and between 0 and 1")
+        for field_name, text_value in (
+            ("concept_id", self.concept_id),
+            ("source", self.source),
+            ("matched_alias", self.matched_alias),
+            ("qualification_reason", self.qualification_reason),
+        ):
+            if not text_value.strip():
+                raise ValueError(f"{field_name} must be non-empty")
+        if not self.evidence_sources or any(not item.strip() for item in self.evidence_sources):
+            raise ValueError("evidence_sources must contain non-empty source names")
+        if self.source not in self.evidence_sources:
+            raise ValueError("source must be included in evidence_sources")
 
     def to_json(self) -> dict[str, Any]:
         return {
@@ -73,11 +97,29 @@ class CandidateConcept:
             "code_system": self.code_system.value,
             "code": self.code,
             "name": self.name,
-            "score": round(self.score, 6),
+            "retrieval_score": round(self.retrieval_score, 6),
+            "emit_probability": round(self.emit_probability, 6),
             "source": self.source,
+            "evidence_sources": list(self.evidence_sources),
             "matched_alias": self.matched_alias,
             "qualified": self.qualified,
             "qualification_reason": self.qualification_reason,
+        }
+
+
+@dataclass(frozen=True)
+class AssertionEvidence:
+    rule_id: str
+    assertion: AssertionStatus
+    cue: str
+    scope: str
+
+    def to_json(self) -> dict[str, str]:
+        return {
+            "rule_id": self.rule_id,
+            "assertion": self.assertion.value,
+            "cue": self.cue,
+            "scope": self.scope,
         }
 
 
@@ -144,6 +186,7 @@ class EntityAnnotation:
     confidence: float = 0.0
     candidates: list[CandidateConcept] = field(default_factory=list)
     assertion_features: AssertionFeatures = field(default_factory=AssertionFeatures)
+    assertion_evidence: tuple[AssertionEvidence, ...] = ()
     medication_mention: MedicationMention | None = None
 
     def validate_offsets(self, source_text: str) -> None:
@@ -167,6 +210,7 @@ class EntityAnnotation:
             "type": self.type.value,
             "assertion": self.assertion.value,
             "assertion_features": self.assertion_features.to_json(),
+            "assertion_evidence": [item.to_json() for item in self.assertion_evidence],
             "code_system": self.code_system.value,
             "code": self.code,
             "confidence": round(self.confidence, 6),

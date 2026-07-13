@@ -3,6 +3,7 @@ from collections.abc import Mapping
 
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.linking.reranker import HeuristicReranker
+from medical_kg_nlp.linking.structured_rxnorm import rxnorm_structure_conflict
 from medical_kg_nlp.retrieval.candidate_generator import CandidateGenerator
 from medical_kg_nlp.schema.annotation import CandidateConcept, EntityAnnotation
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
@@ -20,6 +21,8 @@ class EntityLinker:
         max_qualified_candidates: int = 5,
         candidate_thresholds_by_entity_type: Mapping[EntityType, float] | None = None,
         candidate_thresholds_by_source: Mapping[str, float] | None = None,
+        emit_probabilities_by_source: Mapping[str, float] | None = None,
+        enforce_rxnorm_structure: bool = True,
     ) -> None:
         effective_candidate_threshold = (
             assignment_threshold if candidate_threshold is None else candidate_threshold
@@ -37,10 +40,13 @@ class EntityLinker:
             raise ValueError("max_qualified_candidates must be between 1 and 5")
         type_thresholds = dict(candidate_thresholds_by_entity_type or {})
         source_thresholds = dict(candidate_thresholds_by_source or {})
+        emit_probabilities = dict(emit_probabilities_by_source or {})
         if any(not 0.0 <= threshold <= 1.0 for threshold in type_thresholds.values()):
             raise ValueError("candidate type thresholds must be between 0 and 1")
         if any(not 0.0 <= threshold <= 1.0 for threshold in source_thresholds.values()):
             raise ValueError("candidate source thresholds must be between 0 and 1")
+        if any(not 0.0 <= value <= 1.0 for value in emit_probabilities.values()):
+            raise ValueError("candidate emit probabilities must be between 0 and 1")
         self.generator = generator
         self.reranker = HeuristicReranker(generator.store)
         self.assignment_threshold = assignment_threshold
@@ -50,11 +56,13 @@ class EntityLinker:
         self.max_qualified_candidates = max_qualified_candidates
         self.candidate_thresholds_by_entity_type = type_thresholds
         self.candidate_thresholds_by_source = source_thresholds
+        self.emit_probabilities_by_source = emit_probabilities
+        self.enforce_rxnorm_structure = enforce_rxnorm_structure
 
     def link_entity(self, entity: EntityAnnotation, context_window: str = "") -> EntityAnnotation:
         generated = self.generate_candidates(entity, context_window)
         candidates = self.rerank_candidates(generated, context_window, entity.text)
-        return self.apply_candidates(entity, candidates)
+        return self.apply_candidates(entity, candidates, mention=entity.text)
 
     def generate_candidates(
         self, entity: EntityAnnotation, context_window: str = ""
@@ -70,9 +78,17 @@ class EntityLinker:
         return self.reranker.rerank(candidates, context_window, mention)
 
     def apply_candidates(
-        self, entity: EntityAnnotation, candidates: list[Candidate]
+        self,
+        entity: EntityAnnotation,
+        candidates: list[Candidate],
+        *,
+        mention: str | None = None,
     ) -> EntityAnnotation:
-        entity.candidates = self._qualify_candidates(entity.type, candidates)
+        entity.candidates = self._qualify_candidates(
+            entity,
+            candidates,
+            mention=mention or entity.text,
+        )
         if self._should_assign(candidates, entity.candidates):
             top = candidates[0]
             entity.code_system = top.code_system
@@ -101,8 +117,10 @@ class EntityLinker:
 
     def _qualify_candidates(
         self,
-        entity_type: EntityType,
+        entity: EntityAnnotation,
         candidates: list[Candidate],
+        *,
+        mention: str,
     ) -> list[CandidateConcept]:
         if not candidates:
             return []
@@ -112,7 +130,8 @@ class EntityLinker:
         for candidate in candidates:
             qualified, reason = self._qualification(
                 candidate,
-                entity_type=entity_type,
+                entity_type=entity.type,
+                mention=mention,
                 top_score=top_score,
                 qualified_count=qualified_count,
             )
@@ -132,11 +151,22 @@ class EntityLinker:
         candidate: Candidate,
         *,
         entity_type: EntityType,
+        mention: str,
         top_score: float,
         qualified_count: int,
     ) -> tuple[bool, str]:
         if candidate.code is None:
             return False, "missing_code"
+        if (
+            self.enforce_rxnorm_structure
+            and entity_type == EntityType.DRUG
+            and candidate.code_system == CodeSystem.RXNORM
+        ):
+            entry = self.generator.store.by_concept_id.get(candidate.concept_id)
+            if entry is not None:
+                conflict = rxnorm_structure_conflict(mention, entry)
+                if conflict is not None:
+                    return False, conflict
         threshold = self.candidate_thresholds_by_source.get(
             candidate.source,
             self.candidate_thresholds_by_entity_type.get(
@@ -152,8 +182,8 @@ class EntityLinker:
             return False, "beyond_max_candidates"
         return True, "qualified"
 
-    @staticmethod
     def _to_schema(
+        self,
         candidate: Candidate,
         *,
         qualified: bool,
@@ -164,9 +194,18 @@ class EntityLinker:
             code_system=candidate.code_system,
             code=candidate.code,
             name=candidate.canonical_name,
-            score=candidate.score,
-            source="+".join(candidate.sources),
-            matched_alias=candidate.matched_alias,
+            retrieval_score=candidate.score,
+            emit_probability=(
+                self.emit_probabilities_by_source.get(
+                    f"{candidate.code_system.value}:{candidate.source}",
+                    self.emit_probabilities_by_source.get(candidate.source, 0.0),
+                )
+                if qualified
+                else 0.0
+            ),
+            source=candidate.source,
+            evidence_sources=candidate.sources,
+            matched_alias=candidate.matched_alias or candidate.canonical_name,
             qualified=qualified,
             qualification_reason=qualification_reason,
         )

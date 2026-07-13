@@ -42,7 +42,12 @@ class PipelineRunner:
         self.store = DictionaryStore.from_jsonl(
             dictionary_path, alias_overlay_path=alias_overlay_path
         )
-        self.ner = RuleBasedNER(self.store)
+        self.ner = RuleBasedNER(
+            self.store,
+            emit_probabilities_by_source=dict(
+                self.options.link_emit_probabilities_by_source
+            ),
+        )
         self.linker = (
             EntityLinker(
                 CandidateGenerator(
@@ -63,6 +68,10 @@ class PipelineRunner:
                 candidate_thresholds_by_source=dict(
                     self.options.link_candidate_thresholds_by_source
                 ),
+                emit_probabilities_by_source=dict(
+                    self.options.link_emit_probabilities_by_source
+                ),
+                enforce_rxnorm_structure=self.options.link_enforce_rxnorm_structure,
             )
             if self.options.enable_linking
             else None
@@ -135,6 +144,7 @@ class PipelineRunner:
                     )
                     entity.assertion_features = features
                     entity.assertion = entity.assertion_features.primary()
+                    entity.assertion_evidence = evidence
                     for item in evidence:
                         key = f"rule_{item.rule_id}"
                         counters[key] = counters.get(key, 0) + 1
@@ -187,7 +197,7 @@ class PipelineRunner:
                         ranked = linker.rerank_candidates(
                             candidates,
                             contexts_by_entity.get(entity_id, ""),
-                            entities_by_id[entity_id].text,
+                            _linking_mention(loaded_document.text, entities_by_id[entity_id]),
                         )
                     else:
                         ranked = candidates
@@ -209,7 +219,11 @@ class PipelineRunner:
                     assigned_candidates = reranked_candidates.get(entity.id)
                     if assigned_candidates is None:
                         continue
-                    linker.apply_candidates(entity, assigned_candidates)
+                    linker.apply_candidates(
+                        entity,
+                        assigned_candidates,
+                        mention=_linking_mention(loaded_document.text, entity),
+                    )
                 counters["assigned_codes"] = sum(entity.code is not None for entity in entities)
                 counters["unlinked_entities"] = sum(entity.code is None for entity in entities)
                 counters["qualified_candidates"] = sum(
@@ -299,3 +313,11 @@ class PipelineRunner:
         if self.linker is None:
             raise RuntimeError("Linker is unavailable when enable_linking is false.")
         return self.linker
+
+
+def _linking_mention(source_text: str, entity: EntityAnnotation) -> str:
+    medication = entity.medication_mention
+    if medication is None:
+        return entity.text
+    start, end = medication.full_span
+    return source_text[start:end]

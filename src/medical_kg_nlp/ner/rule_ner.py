@@ -51,8 +51,10 @@ class RuleBasedNER:
         store: DictionaryStore,
         *,
         false_positive_path: str | Path | None = DEFAULT_FALSE_POSITIVE_PATH,
+        emit_probabilities_by_source: dict[str, float] | None = None,
     ) -> None:
         self.store = store
+        self.emit_probabilities_by_source = emit_probabilities_by_source or {}
         self.aliases = store.aliases_for_ner()
         self.matcher = DictionaryMatcher(self.aliases)
         self.lab_observations = LabObservationExtractor()
@@ -206,14 +208,20 @@ class RuleBasedNER:
     ) -> EntityAnnotation:
         entry = self._unique_output_entry(match)
         score = 1.0 if match.match_kind == "exact" else 0.92
+        source = f"dictionary_{match.match_kind}"
         candidate = (
             CandidateConcept(
                 concept_id=entry.concept_id,
                 code_system=entry.code_system,
                 code=entry.code,
                 name=entry.canonical_name,
-                score=score,
-                source=f"dictionary_{match.match_kind}",
+                retrieval_score=score,
+                emit_probability=self.emit_probabilities_by_source.get(
+                    f"{entry.code_system.value}:{source}",
+                    self.emit_probabilities_by_source.get(source, 0.0),
+                ),
+                source=source,
+                evidence_sources=(source,),
                 matched_alias=match.alias,
                 qualified=True,
                 qualification_reason="pinned_unique_dictionary_match",

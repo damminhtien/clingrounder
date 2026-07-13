@@ -1,25 +1,14 @@
 from __future__ import annotations
 
-import re
 from dataclasses import replace
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.linking.candidate import Candidate
+from medical_kg_nlp.linking.structured_rxnorm import parse_medication_structure
 from medical_kg_nlp.schema.types import EntityType
 from medical_kg_nlp.utils.text import normalize_for_match, token_set
 
 
-_STRENGTH_RE = re.compile(
-    r"(?<!\w)\d+(?:[.,]\d+)?\s*(?:mcg|µg|μg|mg|g|kg|ml|l|meq|iu|u)(?!\w)",
-    flags=re.IGNORECASE | re.UNICODE,
-)
-_FORM_CUES = {
-    "capsule": frozenset({"capsule", "viên nang"}),
-    "inhaler": frozenset({"inhaler", "hít", "nebs", "nebulizer", "khí dung"}),
-    "injection": frozenset({"injection", "injectable", "iv", "tiêm", "tĩnh mạch"}),
-    "solution": frozenset({"solution", "syrup", "dung dịch", "dịch"}),
-    "tablet": frozenset({"tablet", "viên", "po", "oral", "uống"}),
-}
 _STRUCTURED_PRODUCT_TTYS = frozenset({"SCD", "SBD", "SCDF", "SBDF", "GPCK", "BPCK"})
 _INGREDIENT_TTYS = frozenset({"IN", "PIN", "MIN"})
 
@@ -112,16 +101,8 @@ class HeuristicReranker:
 
 
 def _strengths(text: str) -> frozenset[str]:
-    return frozenset(
-        re.sub(r"\s+", "", match.group(0)).replace(",", ".").casefold()
-        for match in _STRENGTH_RE.finditer(text)
-    )
+    return parse_medication_structure(text).strengths
 
 
 def _forms(text: str) -> frozenset[str]:
-    normalized = normalize_for_match(text)
-    return frozenset(
-        form
-        for form, cues in _FORM_CUES.items()
-        if any(re.search(rf"(?<!\w){re.escape(cue)}(?!\w)", normalized) for cue in cues)
-    )
+    return parse_medication_structure(text).dose_forms

@@ -65,7 +65,7 @@ def coverage_accuracy_curve(
             if prediction is None or not prediction.candidates:
                 continue
             top = prediction.candidates[0]
-            if top.code is None or top.score < threshold:
+            if top.code is None or top.retrieval_score < threshold:
                 continue
             covered += 1
             correct += int(top.code == gold_entity.code)

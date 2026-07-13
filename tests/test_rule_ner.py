@@ -10,12 +10,27 @@ from medical_kg_nlp.schema.types import CodeSystem, EntityType
 def test_rule_ner_pins_unique_exact_dictionary_code() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     entity = next(
-        item for item in RuleBasedNER(store).extract("Dùng metformin.") if item.text == "metformin"
+        item
+        for item in RuleBasedNER(
+            store,
+            emit_probabilities_by_source={"RxNorm:dictionary_exact": 0.97},
+        ).extract("Dùng metformin.")
+        if item.text == "metformin"
     )
 
     assert entity.code_system == CodeSystem.RXNORM
     assert entity.code == "6809"
     assert entity.candidates[0].source == "dictionary_exact"
+    assert entity.candidates[0].emit_probability == 0.97
+
+
+def test_rule_ner_abstains_from_uncalibrated_dictionary_candidate() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    entity = next(
+        item for item in RuleBasedNER(store).extract("Dùng metformin.") if item.text == "metformin"
+    )
+
+    assert entity.candidates[0].emit_probability == 0.0
 
 
 def test_rule_ner_abstains_when_exact_alias_maps_to_multiple_codes() -> None:
