@@ -38,6 +38,12 @@ def main() -> None:
     parser.add_argument("--journal-dir", default="outputs/loops/journal")
     parser.add_argument("--minimum-boundary-document-support", type=int, default=2)
     parser.add_argument(
+        "--minimum-candidate-proposal-sources",
+        type=int,
+        default=2,
+        help="Exact agreeing proposal sources required before a candidate can be emitted.",
+    )
+    parser.add_argument(
         "--open-holdout",
         action="store_true",
         help="Day-6-only switch: include the sealed holdout metrics in reports.",
@@ -45,6 +51,8 @@ def main() -> None:
     args = parser.parse_args()
     if args.minimum_boundary_document_support < 1:
         parser.error("--minimum-boundary-document-support must be at least 1")
+    if args.minimum_candidate_proposal_sources < 2:
+        parser.error("--minimum-candidate-proposal-sources must be at least 2")
     sources = _parse_sources(args.source, parser)
     config = Phase1Top10ProbeConfig(
         base=Path(args.base),
@@ -57,6 +65,7 @@ def main() -> None:
         journal_dir=Path(args.journal_dir),
         rule_registry=Path(args.rule_registry) if args.rule_registry else None,
         minimum_boundary_document_support=args.minimum_boundary_document_support,
+        minimum_candidate_proposal_sources=args.minimum_candidate_proposal_sources,
         open_holdout=args.open_holdout,
     )
     manifest = build_phase1_top10_probe_suite(config)
@@ -67,6 +76,8 @@ def main() -> None:
                 "run_hash": manifest["run_hash"],
                 "holdout_status": manifest["holdout_status"],
                 "tri_source_ready": manifest["tri_source_ready"],
+                "candidate_consensus_ready": manifest["candidate_consensus_ready"],
+                "candidate_consensus_key_count": manifest["candidate_consensus_key_count"],
                 "probe_ready": [
                     row["name"] for row in manifest["variants"] if row["probe_ready"]
                 ],

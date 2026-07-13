@@ -5,8 +5,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 
-def test_top10_probe_suite_cli_builds_isolated_validated_artifacts(tmp_path: Path) -> None:
+
+@pytest.mark.parametrize("source_count", [2, 3])
+def test_top10_probe_suite_cli_builds_isolated_validated_artifacts(
+    tmp_path: Path,
+    source_count: int,
+) -> None:
     input_dir = tmp_path / "input"
     gold_dir = tmp_path / "gold"
     base_dir = tmp_path / "base"
@@ -91,18 +97,20 @@ def test_top10_probe_suite_cli_builds_isolated_validated_artifacts(tmp_path: Pat
     )
     output_root = tmp_path / "runs"
 
-    result = subprocess.run(
+    command = [
+        sys.executable,
+        "scripts/run_phase1_top10_probes.py",
+        "--base",
+        str(base_dir),
+        "--source",
+        f"qwen={qwen_dir}",
+        "--source",
+        f"pipeline={pipeline_dir}",
+    ]
+    if source_count == 3:
+        command.extend(["--source", f"codex={codex_dir}"])
+    command.extend(
         [
-            sys.executable,
-            "scripts/run_phase1_top10_probes.py",
-            "--base",
-            str(base_dir),
-            "--source",
-            f"qwen={qwen_dir}",
-            "--source",
-            f"pipeline={pipeline_dir}",
-            "--source",
-            f"codex={codex_dir}",
             "--input-dir",
             str(input_dir),
             "--gold-dir",
@@ -115,7 +123,10 @@ def test_top10_probe_suite_cli_builds_isolated_validated_artifacts(tmp_path: Pat
             str(output_root),
             "--journal-dir",
             str(tmp_path / "journal"),
-        ],
+        ]
+    )
+    result = subprocess.run(
+        command,
         check=True,
         capture_output=True,
         text=True,
@@ -126,11 +137,16 @@ def test_top10_probe_suite_cli_builds_isolated_validated_artifacts(tmp_path: Pat
     manifest_payload = json.loads((run_dir / "run_manifest.json").read_text(encoding="utf-8"))
     variants = {row["name"]: row for row in manifest_payload["variants"]}
     assert manifest_payload["holdout_status"] == "sealed"
-    assert manifest_payload["tri_source_ready"] is True
+    assert manifest_payload["tri_source_ready"] is (source_count == 3)
+    assert manifest_payload["candidate_consensus_ready"] is True
+    assert manifest_payload["candidate_consensus_key_count"] > 0
+    assert manifest_payload["minimum_candidate_proposal_sources"] == 2
+    assert manifest_payload["candidate_probe_blocked_reason"] is None
     assert variants["E_LAB"]["changed"]["entity_removed"] == 1
     assert variants["E_LAB"]["probe_ready"] is True
     assert variants["A_HIST"]["changed"]["assertion_changed"] == 1
     assert variants["C_ICD20"]["changed"]["candidate_changed"] == 2
+    assert variants["C_ICD20"]["probe_ready"] is True
     assert (run_dir / "variants" / "E_LAB" / "output.zip").exists()
     assert (run_dir / "boundary_rule_candidates.yaml").exists()
     assert (run_dir / "proposals" / "review_queue.csv").exists()

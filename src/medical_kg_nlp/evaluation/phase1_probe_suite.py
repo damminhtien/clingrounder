@@ -60,12 +60,15 @@ class Phase1Top10ProbeConfig:
     journal_dir: Path = Path("outputs/loops/journal")
     rule_registry: Path | None = None
     minimum_boundary_document_support: int = 2
+    minimum_candidate_proposal_sources: int = 2
     open_holdout: bool = False
 
 
 def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, Any]:
     if len(config.proposal_sources) < 2:
         raise ValueError("At least two independent proposal sources are required.")
+    if config.minimum_candidate_proposal_sources < 2:
+        raise ValueError("Candidate consensus requires at least two independent sources.")
     input_hashes = _input_hashes(config)
     run_hash = hashlib.sha256(
         json.dumps(input_hashes, sort_keys=True).encode("utf-8")
@@ -100,9 +103,15 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
     proposal_report = build_phase1_proposal_matrix(proposal_sources, source_text_by_doc)
     write_phase1_proposal_matrix(proposal_report, run_dir / "proposals")
     tri_source_ready = len(config.proposal_sources) >= 3
+    candidate_consensus_ready = (
+        len(config.proposal_sources) >= config.minimum_candidate_proposal_sources
+    )
     consensus = (
-        proposal_consensus_keys(proposal_report, minimum_sources=2)
-        if tri_source_ready
+        proposal_consensus_keys(
+            proposal_report,
+            minimum_sources=config.minimum_candidate_proposal_sources,
+        )
+        if candidate_consensus_ready
         else set()
     )
 
@@ -283,12 +292,31 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
             for document_id in missing_gold_ids
         ],
     )
+    candidate_probe_ready = any(
+        row["module"] == "candidate" and row["probe_ready"] for row in variants
+    )
+    if not candidate_consensus_ready:
+        candidate_probe_blocked_reason = (
+            "Candidate assignment requires exact agreement from at least "
+            f"{config.minimum_candidate_proposal_sources} independent proposal sources; "
+            f"only {len(config.proposal_sources)} supplied."
+        )
+    elif not candidate_probe_ready:
+        candidate_probe_blocked_reason = (
+            "Candidate consensus is available, but no candidate regime emitted a changed row."
+        )
+    else:
+        candidate_probe_blocked_reason = None
+
     manifest = {
         "schema_version": "phase1-top10-probe-suite.v1",
         "run_hash": run_hash,
         "run_dir": str(run_dir),
         "holdout_status": "opened" if config.open_holdout else "sealed",
         "tri_source_ready": tri_source_ready,
+        "candidate_consensus_ready": candidate_consensus_ready,
+        "minimum_candidate_proposal_sources": config.minimum_candidate_proposal_sources,
+        "candidate_consensus_key_count": len(consensus),
         "proposal_source_count": len(config.proposal_sources),
         "missing_gold_document_ids": missing_gold_ids,
         "input_hashes": input_hashes,
@@ -299,9 +327,7 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
             "candidate_rules": candidate_audit,
         },
         "proposal_summary": proposal_report["summary"],
-        "candidate_probe_blocked_reason": None
-        if tri_source_ready
-        else "Candidate assignment requires exact agreement from at least 2 of 3 independent sources.",
+        "candidate_probe_blocked_reason": candidate_probe_blocked_reason,
         "variants": variants,
         "public_probe_order": [
             "E_LAB",
@@ -380,7 +406,11 @@ def _materialize_variant(
         "validation_issue_count": 0,
         "train": train_report,
         "holdout": holdout_report,
-        "probe_ready": not isolation_issues and changed["changed_row_count"] > 0,
+        "probe_ready": (
+            not isolation_issues
+            and changed["changed_row_count"] > 0
+            and (module != "candidate" or int(counters.get("decision_total", 0)) > 0)
+        ),
         "zip": str(zip_path),
         "zip_sha256": _path_sha256(zip_path),
     }
@@ -457,6 +487,7 @@ def _input_hashes(config: Phase1Top10ProbeConfig) -> dict[str, Any]:
         if config.rule_registry is not None
         else None,
         "minimum_boundary_document_support": config.minimum_boundary_document_support,
+        "minimum_candidate_proposal_sources": config.minimum_candidate_proposal_sources,
         "open_holdout": config.open_holdout,
         "implementation": {
             str(path.name): _path_sha256(path) for path in implementation_paths
@@ -520,6 +551,9 @@ def _render_summary(manifest: Mapping[str, Any]) -> str:
         f"- Holdout: **{manifest['holdout_status']}**",
         f"- Proposal sources: {manifest['proposal_source_count']}",
         f"- Tri-source ready: {manifest['tri_source_ready']}",
+        f"- Candidate consensus ready: {manifest['candidate_consensus_ready']}",
+        f"- Candidate consensus keys: {manifest['candidate_consensus_key_count']}",
+        f"- Candidate minimum sources: {manifest['minimum_candidate_proposal_sources']}",
         f"- Missing manual gold: {len(manifest['missing_gold_document_ids'])}",
         "",
         "## Variants",
@@ -556,6 +590,11 @@ def _append_suite_journal(manifest: Mapping[str, Any], journal_dir: Path) -> Non
         "run_dir": manifest["run_dir"],
         "holdout_status": manifest["holdout_status"],
         "tri_source_ready": manifest["tri_source_ready"],
+        "candidate_consensus_ready": manifest["candidate_consensus_ready"],
+        "minimum_candidate_proposal_sources": manifest[
+            "minimum_candidate_proposal_sources"
+        ],
+        "candidate_consensus_key_count": manifest["candidate_consensus_key_count"],
         "proposal_source_count": manifest["proposal_source_count"],
         "input_hashes": manifest["input_hashes"],
         "variants": [

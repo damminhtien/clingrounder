@@ -7,6 +7,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Iterable, Literal, Mapping
 
+from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.evaluation.manual_gold import manual_gold_split
 from medical_kg_nlp.evaluation.phase1_candidate_overlay import TT06_SOURCE_ID
 from medical_kg_nlp.evaluation.phase1_rule_registry import (
@@ -14,7 +15,11 @@ from medical_kg_nlp.evaluation.phase1_rule_registry import (
     Phase1RuleRegistry,
     phase1_rule_registry_from_data,
 )
-from medical_kg_nlp.ontology.phase1 import PHASE1_ASSERTABLE_TYPES, PHASE1_CODABLE_TYPES
+from medical_kg_nlp.ontology.phase1 import (
+    PHASE1_ASSERTABLE_TYPES,
+    PHASE1_CODABLE_TYPES,
+    PHASE1_RULE_BY_TYPE,
+)
 from medical_kg_nlp.utils.text import normalize_for_match
 
 
@@ -148,6 +153,7 @@ def compile_reviewed_candidate_registry(
     split: Literal["train", "holdout", "all"] = "train",
 ) -> tuple[Phase1RuleRegistry, dict[str, Any]]:
     code_metadata = _load_code_metadata(dictionary_path)
+    dictionary = DictionaryStore.from_jsonl(dictionary_path)
     groups: dict[tuple[str, str], dict[str, Any]] = {}
     rejected: Counter[str] = Counter()
     selected_documents = 0
@@ -171,6 +177,20 @@ def compile_reviewed_candidate_registry(
                 continue
             if expected_system == "ICD-10" and not metadata["tt06"]:
                 rejected["icd_not_tt06"] += 1
+                continue
+            expected_type = PHASE1_RULE_BY_TYPE[entity_type].internal_type
+            exact_codes = {
+                entry.code
+                for entry in dictionary.exact_lookup(str(row.get("text", "")))
+                if entry.code is not None
+                and entry.semantic_type == expected_type
+                and entry.code_system.value == expected_system
+            }
+            if len(exact_codes) != 1:
+                rejected["not_exact_unique_dictionary_match"] += 1
+                continue
+            if code not in exact_codes:
+                rejected["reviewed_code_disagrees_with_exact_dictionary"] += 1
                 continue
             normalized = normalize_for_match(str(row.get("text", "")))
             if not normalized:
@@ -235,6 +255,7 @@ def compile_reviewed_candidate_registry(
         "selected_document_count": selected_documents,
         "reviewed_group_count": len(groups),
         "compiled_rule_count": len(rules),
+        "exact_unique_required": True,
         "compiled_rule_count_by_stage": dict(sorted(Counter(rule["stage"] for rule in rules).items())),
         "rejected_counts": dict(sorted(rejected.items())),
     }

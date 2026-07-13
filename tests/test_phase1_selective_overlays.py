@@ -117,9 +117,26 @@ def test_history_policy_abstains_on_symptoms_even_inside_history_section() -> No
 def test_candidate_registry_uses_train_review_tt06_and_source_consensus(tmp_path: Path) -> None:
     dictionary = tmp_path / "dictionary.jsonl"
     concepts = [
-        _concept("I10", "ICD-10", source_ids=["icd10_vn_tt06_2026"]),
-        _concept("4603", "RxNorm", tty="IN", source_ids=["rxnorm_full_2026_07_06"]),
-        _concept("999", "RxNorm", tty="SCD", source_ids=["rxnorm_full_2026_07_06"]),
+        _concept(
+            "I10",
+            "ICD-10",
+            canonical_name="tăng huyết áp",
+            source_ids=["icd10_vn_tt06_2026"],
+        ),
+        _concept(
+            "4603",
+            "RxNorm",
+            canonical_name="lasix",
+            tty="IN",
+            source_ids=["rxnorm_full_2026_07_06"],
+        ),
+        _concept(
+            "999",
+            "RxNorm",
+            canonical_name="drug 20mg tablet",
+            tty="SCD",
+            source_ids=["rxnorm_full_2026_07_06"],
+        ),
     ]
     dictionary.write_text(
         "".join(json.dumps(row) + "\n" for row in concepts),
@@ -164,7 +181,15 @@ def test_candidate_registry_uses_train_review_tt06_and_source_consensus(tmp_path
 def test_candidate_overlay_requires_exact_two_source_consensus(tmp_path: Path) -> None:
     dictionary = tmp_path / "dictionary.jsonl"
     dictionary.write_text(
-        json.dumps(_concept("I10", "ICD-10", source_ids=["icd10_vn_tt06_2026"])) + "\n",
+        json.dumps(
+            _concept(
+                "I10",
+                "ICD-10",
+                canonical_name="tăng huyết áp",
+                source_ids=["icd10_vn_tt06_2026"],
+            )
+        )
+        + "\n",
         encoding="utf-8",
     )
     gold = {"1": [_row("tăng huyết áp", "CHẨN_ĐOÁN", 0, candidates=["I10"])]}
@@ -181,6 +206,58 @@ def test_candidate_overlay_requires_exact_two_source_consensus(tmp_path: Path) -
     assert output["1"][0]["candidates"] == []
     assert decisions == []
     assert counts["blocked_without_two_source_consensus"] == 1
+
+
+def test_candidate_registry_rejects_ambiguous_and_dictionary_disagreeing_mentions(
+    tmp_path: Path,
+) -> None:
+    dictionary = tmp_path / "dictionary.jsonl"
+    concepts = [
+        _concept(
+            "R68.0",
+            "ICD-10",
+            canonical_name="hạ thân nhiệt",
+            source_ids=["icd10_vn_tt06_2026"],
+        ),
+        _concept(
+            "T68",
+            "ICD-10",
+            canonical_name="hạ thân nhiệt do môi trường",
+            aliases=["hạ thân nhiệt"],
+            source_ids=["icd10_vn_tt06_2026"],
+        ),
+        _concept(
+            "K65.0",
+            "ICD-10",
+            canonical_name="áp xe phúc mạc",
+            source_ids=["icd10_vn_tt06_2026"],
+        ),
+        _concept(
+            "L02.9",
+            "ICD-10",
+            canonical_name="áp xe",
+            source_ids=["icd10_vn_tt06_2026"],
+        ),
+    ]
+    dictionary.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in concepts),
+        encoding="utf-8",
+    )
+    gold = {
+        "1": [
+            _row("hạ thân nhiệt", "CHẨN_ĐOÁN", 0, candidates=["R68.0"]),
+            _row("áp xe", "CHẨN_ĐOÁN", 20, candidates=["K65.0"]),
+        ]
+    }
+
+    registry, audit = compile_reviewed_candidate_registry(gold, dictionary, split="all")
+
+    assert registry.rules == ()
+    assert audit["compiled_rule_count"] == 0
+    assert audit["rejected_counts"] == {
+        "not_exact_unique_dictionary_match": 1,
+        "reviewed_code_disagrees_with_exact_dictionary": 1,
+    }
 
 
 def _row(
@@ -203,12 +280,18 @@ def _concept(
     code: str,
     code_system: str,
     *,
+    canonical_name: str,
     tty: str | None = None,
     source_ids: list[str],
+    aliases: list[str] | None = None,
 ) -> dict[str, object]:
     row: dict[str, object] = {
+        "concept_id": f"{code_system}:{code}",
         "code": code,
         "code_system": code_system,
+        "canonical_name": canonical_name,
+        "semantic_type": "DISEASE" if code_system == "ICD-10" else "DRUG",
+        "aliases": aliases or [],
         "source_ids": source_ids,
     }
     if tty:
