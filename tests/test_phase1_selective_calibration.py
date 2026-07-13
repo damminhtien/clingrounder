@@ -1,0 +1,178 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from medical_kg_nlp.evaluation.phase1_selective_calibration import (
+    CandidateCalibrationOptions,
+    build_assertion_calibration_report,
+    build_candidate_calibration_report,
+    write_candidate_calibration_report,
+    write_calibrated_assertion_map,
+)
+from medical_kg_nlp.evaluation.phase1 import load_calibrated_assertion_map
+from medical_kg_nlp.schema.annotation import (
+    AssertionEvidence,
+    CandidateConcept,
+    EntityAnnotation,
+)
+from medical_kg_nlp.schema.output import ClinicalPrediction
+from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
+
+
+def test_candidate_calibration_promotes_exact_and_rejects_harmful_fuzzy() -> None:
+    predictions: list[ClinicalPrediction] = []
+    gold: dict[str, list[dict[str, object]]] = {}
+    reviewed = frozenset({("tăng huyết áp", "CHẨN_ĐOÁN", "I10")})
+    for index in range(1, 21):
+        document_id = str(index)
+        exact = index <= 10
+        mention = "tăng huyết áp" if exact else "bệnh mạch"
+        code = "I10" if exact else "I99"
+        source = "exact" if exact else "fuzzy"
+        predictions.append(_prediction(document_id, mention, code, source))
+        gold[document_id] = [
+            _gold_row(mention, candidates=["I10"] if exact else [])
+        ]
+
+    report = build_candidate_calibration_report(
+        predictions,
+        gold,
+        reviewed_candidates=reviewed,
+        options=CandidateCalibrationOptions(
+            minimum_support=5,
+            minimum_train_support=4,
+            abstention_margin=0.05,
+        ),
+    )
+
+    groups = {
+        (row["code_system"], row["source"]): row for row in report["source_groups"]
+    }
+    assert groups[("ICD-10", "exact")]["recommended"] is True
+    assert groups[("ICD-10", "exact")]["mean_emitted_jaccard"] == 1.0
+    assert groups[("ICD-10", "fuzzy")]["recommended"] is False
+    assert groups[("ICD-10", "fuzzy")]["mean_abstained_jaccard"] == 1.0
+    assert report["recommended_link_emit_probabilities_by_source"] == {
+        "ICD-10:exact": groups[("ICD-10", "exact")][
+            "smoothed_correct_probability"
+        ]
+    }
+
+
+def test_candidate_calibration_report_writes_machine_readable_artifacts(
+    tmp_path: Path,
+) -> None:
+    predictions = [_prediction(str(index), "tăng huyết áp", "I10", "exact") for index in range(8)]
+    gold = {
+        str(index): [_gold_row("tăng huyết áp", candidates=["I10"])]
+        for index in range(8)
+    }
+    report = build_candidate_calibration_report(
+        predictions,
+        gold,
+        options=CandidateCalibrationOptions(minimum_support=3, minimum_train_support=2),
+    )
+
+    write_candidate_calibration_report(report, tmp_path)
+
+    payload = json.loads((tmp_path / "candidate_calibration.json").read_text(encoding="utf-8"))
+    rows = (tmp_path / "candidate_calibration.jsonl").read_text(encoding="utf-8").splitlines()
+    assert payload["schema_version"] == "phase1-candidate-calibration.v1"
+    assert len(rows) == len(report["policy_groups"])
+
+
+def test_assertion_calibration_promotes_precise_rule_and_rejects_false_rule(
+    tmp_path: Path,
+) -> None:
+    predictions: list[ClinicalPrediction] = []
+    gold: dict[str, list[dict[str, object]]] = {}
+    for index in range(1, 21):
+        document_id = str(index)
+        correct = index <= 10
+        assertion = AssertionStatus.NEGATED if correct else AssertionStatus.FAMILY
+        rule_id = "neg.no" if correct else "family.noise"
+        label = "isNegated" if correct else "isFamily"
+        entity = EntityAnnotation(
+            id="E1",
+            span=(0, len("viêm phổi")),
+            text="viêm phổi",
+            normalized_text="viêm phổi",
+            type=EntityType.DISEASE,
+            assertion_evidence=(
+                AssertionEvidence(rule_id, assertion, "cue", "left"),
+            ),
+        )
+        predictions.append(
+            ClinicalPrediction.from_text(
+                document_id,
+                "viêm phổi",
+                [entity],
+                [],
+                "test",
+            )
+        )
+        row = _gold_row("viêm phổi", candidates=[])
+        row["assertions"] = [label] if correct else []
+        gold[document_id] = [row]
+
+    report = build_assertion_calibration_report(
+        predictions,
+        gold,
+        options=CandidateCalibrationOptions(
+            minimum_support=5,
+            minimum_train_support=4,
+        ),
+    )
+
+    groups = {row["rule_id"]: row for row in report["evidence_groups"]}
+    assert groups["neg.no"]["recommended"] is True
+    assert groups["family.noise"]["recommended"] is False
+    assert report["recommended_rule_ids"] == ["neg.no"]
+    map_path = tmp_path / "assertion_evidence_map.jsonl"
+    rows = write_calibrated_assertion_map(report, map_path)
+    assert len(rows) == 1
+    assert load_calibrated_assertion_map(map_path) == frozenset(
+        {("neg.no", "isNegated", "CHẨN_ĐOÁN")}
+    )
+
+
+def _prediction(
+    document_id: str,
+    mention: str,
+    code: str,
+    source: str,
+) -> ClinicalPrediction:
+    entity = EntityAnnotation(
+        id="E1",
+        span=(0, len(mention)),
+        text=mention,
+        normalized_text=mention,
+        type=EntityType.DISEASE,
+        candidates=[
+            CandidateConcept(
+                code_system=CodeSystem.ICD10,
+                code=code,
+                name=mention,
+                retrieval_score=0.95,
+                emit_probability=0.0,
+                concept_id=f"ICD-10:{code}",
+                source=source,
+                evidence_sources=(source,),
+                matched_alias=mention,
+                qualified=True,
+                qualification_reason="test_candidate",
+            )
+        ],
+    )
+    return ClinicalPrediction.from_text(document_id, mention, [entity], [], "test")
+
+
+def _gold_row(mention: str, *, candidates: list[str]) -> dict[str, object]:
+    return {
+        "text": mention,
+        "type": "CHẨN_ĐOÁN",
+        "assertions": [],
+        "candidates": candidates,
+        "position": [0, len(mention)],
+    }
