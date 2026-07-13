@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any, Iterable, Mapping
+
+from medical_kg_nlp.utils.io import read_source_text
 
 
 DEFAULT_CANDIDATE_POLICY = (
@@ -63,6 +66,10 @@ def sync_manual_gold_manifest(
                 "entity_count": len(entities),
             }
         )
+        source_path = input_root / f"{document_id}.txt"
+        if not source_path.exists():
+            raise FileNotFoundError(f"Missing raw source for manifest row {document_id}: {source_path}")
+        _repair_review_candidate_positions(row, read_source_text(source_path))
         if refresh_candidate_policy:
             # Candidate details belong to generated standards-backed resources. Keeping code
             # inventories in prose made the manifest stale whenever a reviewed mapping changed.
@@ -111,6 +118,75 @@ def validate_manual_gold_manifest(
                         "field": field,
                     }
                 )
+        source_file = Path(str(row.get("source_file", "")))
+        if not source_file.exists():
+            issues.append(
+                {
+                    "kind": "review_manifest_source_file",
+                    "document_id": document_id,
+                    "path": str(source_file),
+                }
+            )
+            continue
+        source_text = read_source_text(source_file)
+        review_candidates = row.get("review_candidates", [])
+        if not isinstance(review_candidates, list):
+            issues.append(
+                {
+                    "kind": "review_manifest_candidates_schema",
+                    "document_id": document_id,
+                }
+            )
+            continue
+        for index, candidate in enumerate(review_candidates):
+            if not isinstance(candidate, Mapping):
+                issues.append(
+                    {
+                        "kind": "review_manifest_candidate_schema",
+                        "document_id": document_id,
+                        "index": index,
+                    }
+                )
+                continue
+            scope = str(candidate.get("scope", "entity")).strip()
+            if scope not in {"entity", "candidate_mapping", "annotation_note"}:
+                issues.append(
+                    {
+                        "kind": "review_manifest_candidate_scope",
+                        "document_id": document_id,
+                        "index": index,
+                        "scope": scope,
+                    }
+                )
+            position = candidate.get("position")
+            if position is None:
+                continue
+            if not _valid_position(position):
+                issues.append(
+                    {
+                        "kind": "review_manifest_candidate_position",
+                        "document_id": document_id,
+                        "index": index,
+                        "position": position,
+                    }
+                )
+                continue
+            start, end = position
+            text = str(candidate.get("text", ""))
+            if (
+                end > len(source_text)
+                or source_text[start:end] != text
+                or not _has_surface_boundaries(source_text, start, end, text)
+            ):
+                issues.append(
+                    {
+                        "kind": "review_manifest_candidate_offset",
+                        "document_id": document_id,
+                        "index": index,
+                        "position": position,
+                        "text": text,
+                    }
+                )
     for document_id in sorted(set(rows) - set(gold_by_id), key=_document_sort_key):
         issues.append(
             {
@@ -134,6 +210,99 @@ def write_manual_gold_manifest(rows: Iterable[dict[str, Any]], path: str | Path)
         encoding="utf-8",
     )
     return len(materialized)
+
+
+def _repair_review_candidate_positions(row: dict[str, Any], source_text: str) -> None:
+    """Realign review evidence to raw text without inventing an approximate offset."""
+    candidates = row.get("review_candidates")
+    if not isinstance(candidates, list):
+        return
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        text = str(candidate.get("text", ""))
+        position = candidate.get("position")
+        if not text or position is None:
+            continue
+        if _valid_position(position):
+            start, end = position
+            if (
+                end <= len(source_text)
+                and source_text[start:end] == text
+                and _has_surface_boundaries(source_text, start, end, text)
+            ):
+                continue
+            expected_start: int | None = start
+        else:
+            expected_start = None
+
+        matches = _surface_matches(source_text, text)
+        selected = _nearest_unambiguous_match(matches, expected_start)
+        if selected is None:
+            # Review candidates are negative/audit evidence, not gold entities. A null position is
+            # safer than silently binding that evidence to the wrong occurrence after source edits.
+            candidate["position"] = None
+            continue
+        start, end = selected
+        candidate["text"] = source_text[start:end]
+        candidate["position"] = [start, end]
+
+
+def _surface_matches(source_text: str, text: str) -> list[tuple[int, int]]:
+    exact = _literal_matches(source_text, text)
+    # Human review notes commonly normalize capitalization or repeated whitespace. Capture the
+    # exact raw surface once aligned so all persisted offsets remain executable specifications.
+    tokens = text.split()
+    if not tokens:
+        return exact
+    pattern = re.compile(r"\s+".join(re.escape(token) for token in tokens), re.IGNORECASE)
+    relaxed = [
+        (match.start(), match.end())
+        for match in pattern.finditer(source_text)
+        if _has_surface_boundaries(source_text, match.start(), match.end(), text)
+    ]
+    return sorted(set(exact) | set(relaxed))
+
+
+def _literal_matches(source_text: str, text: str) -> list[tuple[int, int]]:
+    matches: list[tuple[int, int]] = []
+    start = source_text.find(text)
+    while start >= 0:
+        end = start + len(text)
+        if _has_surface_boundaries(source_text, start, end, text):
+            matches.append((start, end))
+        start = source_text.find(text, start + 1)
+    return matches
+
+
+def _has_surface_boundaries(source_text: str, start: int, end: int, text: str) -> bool:
+    if text[0].isalnum() and start > 0 and source_text[start - 1].isalnum():
+        return False
+    return not (text[-1].isalnum() and end < len(source_text) and source_text[end].isalnum())
+
+
+def _nearest_unambiguous_match(
+    matches: list[tuple[int, int]], expected_start: int | None
+) -> tuple[int, int] | None:
+    if not matches:
+        return None
+    if expected_start is None:
+        return matches[0] if len(matches) == 1 else None
+    ranked = sorted(matches, key=lambda span: (abs(span[0] - expected_start), span[0]))
+    if len(ranked) > 1 and abs(ranked[0][0] - expected_start) == abs(
+        ranked[1][0] - expected_start
+    ):
+        return None
+    return ranked[0]
+
+
+def _valid_position(value: Any) -> bool:
+    return (
+        isinstance(value, list)
+        and len(value) == 2
+        and all(isinstance(item, int) for item in value)
+        and 0 <= value[0] < value[1]
+    )
 
 
 def _load_manifest(path: Path) -> dict[str, dict[str, Any]]:

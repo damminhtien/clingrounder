@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -32,8 +32,12 @@ def audit_manual_gold_convention(
     )
     issues: list[dict[str, Any]] = []
     resolutions: list[dict[str, Any]] = []
+    used_decisions: set[tuple[str, str, str]] = set()
     reviewed_ids: list[str] = []
     entity_count = 0
+    candidate_evidence: dict[
+        tuple[str, str], dict[tuple[str, ...], set[str]]
+    ] = defaultdict(lambda: defaultdict(set))
 
     for index in range(1, expected_count + 1):
         document_id = str(index)
@@ -139,13 +143,23 @@ def audit_manual_gold_convention(
                     "review",
                     message,
                 )
-                decision = active_decisions.get(
-                    ("multi_candidate_review", entity_type, normalize_for_match(str(row.get("text", ""))))
+                decision_key = (
+                    "multi_candidate_review",
+                    entity_type,
+                    normalize_for_match(str(row.get("text", ""))),
                 )
+                decision = active_decisions.get(decision_key)
                 if decision is None:
                     issues.append(review_issue)
                 else:
+                    used_decisions.add(decision_key)
                     resolutions.append({**review_issue, "decision": decision})
+            if entity_type in PHASE1_CODABLE_TYPES and isinstance(candidates, list):
+                mention = normalize_for_match(str(row.get("text", "")))
+                if mention:
+                    # Candidate order is irrelevant to Jaccard; sort before comparing mappings.
+                    signature = tuple(sorted(str(candidate) for candidate in candidates))
+                    candidate_evidence[(entity_type, mention)][signature].add(document_id)
 
             if entity_type == "THUỐC":
                 parsed = medication_mentions.parse(source_text, (start, end))
@@ -214,6 +228,26 @@ def audit_manual_gold_convention(
                         )
                     )
 
+        _audit_overlapping_entities(document_id, rows, entity_spans, issues)
+
+    _audit_candidate_mapping_consistency(
+        candidate_evidence,
+        active_decisions,
+        used_decisions,
+        issues,
+        resolutions,
+    )
+    for decision_key in sorted(set(active_decisions) - used_decisions):
+        issues.append(
+            _issue(
+                "",
+                "unused_convention_decision",
+                "review",
+                "Convention decision no longer matches any current manual-gold issue.",
+                decision_key=list(decision_key),
+            )
+        )
+
     severity_counts = Counter(str(issue["severity"]) for issue in issues)
     kind_counts = Counter(str(issue["kind"]) for issue in issues)
     return {
@@ -270,6 +304,82 @@ def _overlaps_other_entity(
         other_index != row_index and span[0] < other_end and other_start < span[1]
         for other_index, other_start, other_end in entity_spans
     )
+
+
+def _audit_overlapping_entities(
+    document_id: str,
+    rows: list[dict[str, Any]],
+    entity_spans: list[tuple[int, int, int]],
+    issues: list[dict[str, Any]],
+) -> None:
+    ordered = sorted(entity_spans, key=lambda item: (item[1], item[2], item[0]))
+    for offset, (left_index, left_start, left_end) in enumerate(ordered):
+        for right_index, right_start, right_end in ordered[offset + 1 :]:
+            if right_start >= left_end:
+                break
+            left = rows[left_index]
+            right = rows[right_index]
+            if (left_start, left_end, left.get("type")) == (
+                right_start,
+                right_end,
+                right.get("type"),
+            ):
+                # duplicate_span_type already reports the exact duplicate with a clearer kind.
+                continue
+            issues.append(
+                _issue(
+                    document_id,
+                    "overlapping_entities",
+                    "blocking",
+                    "BTC-style output uses one longest non-overlapping entity for nested spans.",
+                    left={
+                        "row_index": left_index,
+                        "text": left.get("text"),
+                        "type": left.get("type"),
+                        "position": [left_start, left_end],
+                    },
+                    right={
+                        "row_index": right_index,
+                        "text": right.get("text"),
+                        "type": right.get("type"),
+                        "position": [right_start, right_end],
+                    },
+                )
+            )
+
+
+def _audit_candidate_mapping_consistency(
+    evidence: dict[tuple[str, str], dict[tuple[str, ...], set[str]]],
+    decisions: dict[tuple[str, str, str], dict[str, Any]],
+    used_decisions: set[tuple[str, str, str]],
+    issues: list[dict[str, Any]],
+    resolutions: list[dict[str, Any]],
+) -> None:
+    for (entity_type, mention), mappings in sorted(evidence.items()):
+        if len(mappings) <= 1:
+            continue
+        review_issue = _issue(
+            "",
+            "candidate_mapping_conflict",
+            "review",
+            "The same normalized mention has multiple candidate sets; standardize it or document a contextual mapping rule.",
+            entity_type=entity_type,
+            normalized_mention=mention,
+            mappings=[
+                {
+                    "candidates": list(candidates),
+                    "document_ids": sorted(document_ids, key=_document_sort_key),
+                }
+                for candidates, document_ids in sorted(mappings.items())
+            ],
+        )
+        decision_key = ("candidate_mapping_conflict", entity_type, mention)
+        decision = decisions.get(decision_key)
+        if decision is None:
+            issues.append(review_issue)
+            continue
+        used_decisions.add(decision_key)
+        resolutions.append({**review_issue, "decision": decision})
 
 
 def _load_decisions(path: Path) -> dict[tuple[str, str, str], dict[str, Any]]:
@@ -342,3 +452,7 @@ def _row_issue(
         position=row.get("position"),
         **details,
     )
+
+
+def _document_sort_key(document_id: str) -> tuple[int, int | str]:
+    return (0, int(document_id)) if document_id.isdigit() else (1, document_id)

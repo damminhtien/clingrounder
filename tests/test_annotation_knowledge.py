@@ -147,6 +147,87 @@ def test_compiler_records_concept_level_conflict_resolution(tmp_path: Path) -> N
     assert "ho" in report["policy"]["unstable_mentions"]
 
 
+def test_compiler_keeps_candidate_mapping_notes_out_of_entity_conflicts(tmp_path: Path) -> None:
+    gold_dir = tmp_path / "gold"
+    gold_dir.mkdir()
+    source = tmp_path / "1.txt"
+    source.write_text("insulin", encoding="utf-8")
+    _write_gold(gold_dir / "1.json", [_row("insulin", "THUỐC", 0)])
+    manifest = tmp_path / "review_manifest.jsonl"
+    _write_manifest(
+        manifest,
+        [
+            _manifest_row(
+                "1",
+                gold_dir / "1.json",
+                source,
+                review_candidates=[
+                    {
+                        "text": "insulin",
+                        "position": [0, len("insulin")],
+                        "scope": "candidate_mapping",
+                        "reason": "Entity retained, but no exact product candidate is justified.",
+                    }
+                ],
+            )
+        ],
+    )
+
+    report = compile_annotation_knowledge(gold_dir=gold_dir, manifest_path=manifest)
+
+    assert report["conflicts"] == []
+    assert report["knowledge"]["rejected_mentions"] == []
+
+
+def test_compiler_records_confirmed_runtime_exclusion_resolution(tmp_path: Path) -> None:
+    gold_dir = tmp_path / "gold"
+    gold_dir.mkdir()
+    source = tmp_path / "1.txt"
+    source.write_text("nghi ngờ", encoding="utf-8")
+    _write_gold(gold_dir / "1.json", [])
+    manifest = tmp_path / "review_manifest.jsonl"
+    _write_manifest(
+        manifest,
+        [
+            _manifest_row(
+                "1",
+                gold_dir / "1.json",
+                source,
+                review_candidates=[
+                    {
+                        "text": "nghi ngờ",
+                        "position": [0, len("nghi ngờ")],
+                        "reason": "Uncertainty cue; review separately before promotion.",
+                    }
+                ],
+            )
+        ],
+    )
+    decisions = tmp_path / "conflict_decisions.jsonl"
+    decisions.write_text(
+        json.dumps(
+            {
+                "conflict_type": "unstable_policy_evidence",
+                "normalized_text": "nghi ngờ",
+                "action": "exclude_from_runtime",
+                "reason": "The uncertainty cue is not a Phase 1 entity.",
+            },
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    report = compile_annotation_knowledge(
+        gold_dir=gold_dir,
+        manifest_path=manifest,
+        conflict_decisions_path=decisions,
+    )
+
+    assert report["conflicts"] == []
+    assert report["conflict_resolutions"][0]["resolution_action"] == "exclude_from_runtime"
+
+
 def test_annotation_knowledge_cli_smoke(tmp_path: Path) -> None:
     gold_dir = tmp_path / "gold"
     gold_dir.mkdir()
@@ -182,6 +263,56 @@ def test_annotation_knowledge_cli_smoke(tmp_path: Path) -> None:
     assert payload["strict_alias_count"] == 1
     assert (output_dir / "report.md").exists()
     assert (output_dir / "conflict_summary.json").exists()
+
+
+def test_annotation_knowledge_cli_fails_on_unresolved_conflict(tmp_path: Path) -> None:
+    gold_dir = tmp_path / "gold"
+    gold_dir.mkdir()
+    source = tmp_path / "1.txt"
+    source.write_text("nghi ngờ", encoding="utf-8")
+    _write_gold(gold_dir / "1.json", [])
+    manifest = tmp_path / "review_manifest.jsonl"
+    _write_manifest(
+        manifest,
+        [
+            _manifest_row(
+                "1",
+                gold_dir / "1.json",
+                source,
+                review_candidates=[
+                    {
+                        "text": "nghi ngờ",
+                        "position": [0, len("nghi ngờ")],
+                        "reason": "Uncertainty cue; review separately before promotion.",
+                    }
+                ],
+            )
+        ],
+    )
+    decisions = tmp_path / "empty_conflict_decisions.jsonl"
+    decisions.write_text("", encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/build_phase1_annotation_knowledge.py",
+            "--gold-dir",
+            str(gold_dir),
+            "--manifest",
+            str(manifest),
+            "--output-dir",
+            str(tmp_path / "compiled"),
+            "--conflict-decisions",
+            str(decisions),
+            "--split",
+            "all",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert "unresolved conflicts" in result.stderr
 
 
 def test_numeric_lab_result_is_context_required_not_strict(tmp_path: Path) -> None:
@@ -248,6 +379,7 @@ def _manifest_row(
     review_candidates: list[dict[str, object]] | None = None,
     guideline_notes: list[str] | None = None,
 ) -> dict[str, object]:
+    entity_count = len(json.loads(gold_file.read_text(encoding="utf-8")))
     return {
         "document_id": document_id,
         "gold_file": str(gold_file),
@@ -255,7 +387,7 @@ def _manifest_row(
         "status": "strict_v0_reviewed",
         "reviewed_by": "test",
         "review_date": "2026-07-11",
-        "entity_count": 1,
+        "entity_count": entity_count,
         "candidate_policy": "test",
         "draft_policy": "test",
         "guideline_notes": guideline_notes or [],

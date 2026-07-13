@@ -40,6 +40,11 @@ def main() -> None:
         default="train",
         help="Compile runtime knowledge from train by default; holdout remains sealed.",
     )
+    parser.add_argument(
+        "--allow-unresolved-conflicts",
+        action="store_true",
+        help="Write exploratory reports without failing when the conflict queue is non-empty.",
+    )
     args = parser.parse_args()
     if args.strict_document_support < 1:
         parser.error("--strict-document-support must be at least 1")
@@ -79,6 +84,11 @@ def main() -> None:
             sort_keys=True,
         )
     )
+    if summary["conflict_count"] and not args.allow_unresolved_conflicts:
+        raise SystemExit(
+            "Annotation knowledge contains unresolved conflicts; review policy_conflicts.csv "
+            "or rerun explicitly with --allow-unresolved-conflicts."
+        )
 
 
 if __name__ == "__main__":

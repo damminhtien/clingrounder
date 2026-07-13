@@ -383,6 +383,7 @@ def _compile_review_candidates(
             continue
         text = str(candidate.get("text", "")).strip()
         reason = str(candidate.get("reason", "")).strip()
+        scope = str(candidate.get("scope", "entity")).strip()
         normalized = normalize_for_match(text)
         category = _classify_review_reason(reason)
         position = candidate.get("position")
@@ -411,6 +412,22 @@ def _compile_review_candidates(
                     details=f"Review candidate {index} does not match its raw-text position.",
                     recommended_action="repair_or_null_review_position",
                 )
+        if scope not in {"entity", "candidate_mapping", "annotation_note"}:
+            _add_conflict(
+                conflicts,
+                conflict_type="review_invalid_scope",
+                severity="medium",
+                normalized_text=normalized,
+                document_ids=[document_id],
+                rejected_count=1,
+                details=f"Review candidate {index} has unsupported scope {scope!r}.",
+                recommended_action="repair_review_candidate_scope",
+            )
+            continue
+        if scope != "entity":
+            # Candidate-mapping and annotation notes explain accepted labels. Treating those notes
+            # as rejected entity evidence creates false positive/negative policy conflicts.
+            continue
         rejected_mentions.append(
             {
                 "document_id": document_id,
@@ -915,7 +932,7 @@ def _load_conflict_decisions(
             normalized_text = normalize_for_match(str(row.get("normalized_text", "")))
             action = str(row.get("action", "")).strip()
             reason = str(row.get("reason", "")).strip()
-            if action not in {"context_required", "type_by_context"}:
+            if action not in {"context_required", "exclude_from_runtime", "type_by_context"}:
                 raise ValueError(f"{path}:{line_number}: unsupported resolution action {action!r}.")
             if not conflict_type or not normalized_text or not reason:
                 raise ValueError(
@@ -946,7 +963,8 @@ def _apply_conflict_decisions(
             continue
         used.add(key)
         # A resolution keeps the original evidence for audit while removing it from the
-        # unresolved queue. Runtime policy still treats the mention as context-sensitive.
+        # unresolved queue. `exclude_from_runtime` confirms only this review evidence; it does
+        # not promote a global strict exclusion that could suppress valid contextual mentions.
         resolutions.append(
             {
                 **conflict,

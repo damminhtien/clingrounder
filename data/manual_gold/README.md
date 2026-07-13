@@ -23,7 +23,10 @@ Review rules:
 - Leave `candidates: []` when no exact code can be justified. A non-empty code must exist in the
   locked TT06 or RxNorm release; rebuild the reviewed candidate dictionary after changing it.
 
-Progress is tracked in `review_manifest.jsonl`.
+Progress is tracked in `review_manifest.jsonl`. A `review_candidates` item defaults to
+`scope: entity`; use `candidate_mapping` or `annotation_note` when the note explains an accepted
+label rather than rejecting an entity proposal. The synchronizer realigns stale review positions
+to exact raw surfaces and nulls evidence that cannot be bound unambiguously.
 
 Validation during review:
 
@@ -39,7 +42,7 @@ only codes used by reviewed labels and is deliberately not the NER recognition d
 Audit against conventions demonstrated by official BTC samples:
 
 ```bash
-uv run python scripts/audit_manual_gold_convention.py
+uv run python scripts/audit_manual_gold_convention.py --strict
 ```
 
 The audit is intentionally non-mutating. `blocking` findings must be resolved before completion;
@@ -65,3 +68,15 @@ This writes `compiled/phase1_annotation_policy.yaml`, `annotation_knowledge.json
 from at least two reviewed documents and cannot have a type or accepted-vs-rejected conflict.
 Document identifiers are retained only as audit provenance; the runtime policy contains no
 document-specific output rules.
+
+The runtime build uses the train split by default. Audit all 100 reviewed documents separately so
+holdout problems cannot be hidden while holdout labels remain excluded from runtime rule discovery:
+
+```bash
+uv run python scripts/build_phase1_annotation_knowledge.py \
+  --split all \
+  --output-dir outputs/evaluation/manual_gold_annotation_all
+```
+
+The command fails when any conflict remains. Use `--allow-unresolved-conflicts` only while producing
+an exploratory queue for review, never for the final compiled policy.

@@ -144,3 +144,88 @@ def test_audit_rejects_document_specific_convention_decision(tmp_path: Path) -> 
 
     with pytest.raises(ValueError, match="document-specific"):
         audit_manual_gold_convention(input_dir, gold_dir, expected_count=1)
+
+
+def test_audit_blocks_nested_overlapping_entities(tmp_path: Path) -> None:
+    input_dir = tmp_path / "input"
+    gold_dir = tmp_path / "gold"
+    input_dir.mkdir()
+    gold_dir.mkdir()
+    text = "Viêm gan virus C và B"
+    (input_dir / "1.txt").write_text(text, encoding="utf-8")
+    (gold_dir / "1.json").write_text(
+        json.dumps(
+            [
+                {
+                    "text": "Viêm gan virus C",
+                    "type": "CHẨN_ĐOÁN",
+                    "assertions": [],
+                    "candidates": ["B18.2"],
+                    "position": [0, len("Viêm gan virus C")],
+                },
+                {
+                    "text": text,
+                    "type": "CHẨN_ĐOÁN",
+                    "assertions": [],
+                    "candidates": ["B18.2", "B18.1"],
+                    "position": [0, len(text)],
+                },
+            ],
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    report = audit_manual_gold_convention(input_dir, gold_dir, expected_count=1)
+
+    assert report["blocking_count"] == 1
+    assert report["by_kind"]["overlapping_entities"] == 1
+
+
+def test_audit_requires_reviewed_decision_for_contextual_candidate_mapping(
+    tmp_path: Path,
+) -> None:
+    input_dir = tmp_path / "input"
+    gold_dir = tmp_path / "gold"
+    input_dir.mkdir()
+    gold_dir.mkdir()
+    for document_id, candidate in (("1", "I21.9"), ("2", "I25.2")):
+        text = "nhồi máu cơ tim"
+        (input_dir / f"{document_id}.txt").write_text(text, encoding="utf-8")
+        (gold_dir / f"{document_id}.json").write_text(
+            json.dumps(
+                [
+                    {
+                        "text": text,
+                        "type": "CHẨN_ĐOÁN",
+                        "assertions": [],
+                        "candidates": [candidate],
+                        "position": [0, len(text)],
+                    }
+                ],
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+
+    unresolved = audit_manual_gold_convention(input_dir, gold_dir, expected_count=2)
+    assert unresolved["by_kind"] == {"candidate_mapping_conflict": 1}
+
+    (gold_dir / "convention_decisions.jsonl").write_text(
+        json.dumps(
+            {
+                "kind": "candidate_mapping_conflict",
+                "entity_type": "CHẨN_ĐOÁN",
+                "normalized_mention": "nhồi máu cơ tim",
+                "decision": "allow",
+                "reason": "The code depends on whether the context states an acute or old infarction.",
+            },
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    resolved = audit_manual_gold_convention(input_dir, gold_dir, expected_count=2)
+    assert resolved["review_count"] == 0
+    assert resolved["resolved_count"] == 1
