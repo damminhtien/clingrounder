@@ -265,6 +265,21 @@ one dictionary-valid code, require TT06 provenance for ICD, and separate RxNorm 
 from SCD/SBD. Two-source or derived-source runs are useful for entity review but are explicitly
 blocked from candidate promotion.
 
+For full-pipeline candidate experiments, generated and exported sets are deliberately separate:
+
+```text
+generated candidates
+-> absolute score threshold (global, type, or source calibrated)
+-> relative margin from top score
+-> at most five qualified candidates
+-> Phase 1 export
+```
+
+`pipeline_report.py` reports generated count, qualified count, entities without a qualified
+candidate, qualification reasons, and source counts for both sets. Legacy candidate JSON without a
+`qualified` field defaults to unqualified, so old low-confidence traces cannot silently become a
+submission candidate list.
+
 Record every external grader result and keep/reject decision:
 
 ```bash
@@ -282,6 +297,12 @@ probes require non-target metrics to remain unchanged because entity identity is
 probes allow non-target metrics to improve, but never regress, because changing the matched entity
 set also changes the grader denominator even when assertion/candidate fields remain frozen. The gate
 appends JSONL and Markdown under `outputs/loops/journal`.
+
+Candidate probe suites accept `--minimum-candidate-proposal-sources` (default `2`). Agreement means
+an exact raw span and type emitted independently by at least that many configured proposal sources;
+with two sources, this is strict 2-of-2 agreement, and with three sources it is 2-of-3 by default.
+A candidate variant with zero emit decisions is never marked `probe_ready`, even if another candidate
+field happened to change while materializing the ablation.
 
 ## Loop Engineering
 

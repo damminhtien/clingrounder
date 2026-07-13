@@ -258,6 +258,33 @@ Keep full standards separate from runtime dictionaries:
 - `data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl` is a runtime-controlled
   dictionary built from seed plus reviewed/input-gated standard rows.
 
+### RxNorm Target Level
+
+Phase 1 uses a conservative concept-level policy:
+
+- bare generic or reviewed bare brand mentions without strength/form map to an ingredient-level
+  `IN`, `PIN`, or `MIN` target;
+- generic mentions with explicit matching strength and dose form may map to `SCD`;
+- branded mentions with explicit matching strength and dose form may map to `SBD`;
+- `SCDF`, `SBDF`, `GPCK`, and `BPCK` require the corresponding form/package evidence;
+- ambiguous or incomplete mentions abstain instead of assuming a strength or form.
+
+Structured product rows retain ingredient and brand metadata, but underspecified names are written
+to `blocked_aliases`. This prevents a bare brand such as `Eliquis` from matching every strength-specific
+product while preserving `apixaban 5 mg oral tablet -> 1364445`. Run the policy sanitizer after
+manual runtime promotions, then rebuild the index:
+
+```bash
+python scripts/merge_standard_dictionaries.py \
+  --base data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl \
+  --output data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
+
+python scripts/build_indexes.py \
+  --dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl \
+  --alias-overlay data/dictionaries/vietnamese_medical_alias.jsonl \
+  --output data/standards/phase1_seed_tt06_rxnorm_controlled_lexical_index.json
+```
+
 Run the audit report after adding or regenerating sources:
 
 ```bash

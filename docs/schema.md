@@ -8,7 +8,12 @@ Internal schemas live under `src/medical_kg_nlp/schema/` and use typed dataclass
 - `EntityAnnotation`: stable `id`, source `span`, source `text`, normalized text, entity type,
   primary assertion, multi-label assertion features, code system, code, confidence, and candidate
   list.
-- `CandidateConcept`: dictionary candidate metadata for debugging and recall evaluation.
+- `MedicationMention`: original drug span, validated full medication span, and typed component spans
+  for strength, form, route, frequency, duration, transition, and context text. Phase 1 export reads
+  this structure and does not apply a second regex span patch.
+- `CandidateConcept`: dictionary candidate metadata for debugging and recall evaluation. It records
+  `qualified` and `qualification_reason`; unqualified candidates remain available in traces but are
+  not eligible for Phase 1 export.
 - `RelationAnnotation`: typed edge between entity ids with optional evidence span.
 - `ClinicalPrediction`: exported prediction object with `document_id`, `text_hash`, entities,
   relations, and metadata.
@@ -35,6 +40,7 @@ issues instead of silently accepting invalid output. It checks:
 - entity/code-system compatibility;
 - entity and candidate dictionary membership when a dictionary is supplied;
 - candidate code-system compatibility with the parent entity type;
+- structured medication spans and component kinds when present;
 - relation endpoint existence and type compatibility.
 
 Command:

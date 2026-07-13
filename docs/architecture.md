@@ -42,6 +42,7 @@ Raw clinical text
   -> section_detection
   -> sentence_splitting
   -> entity_extraction
+     -> structured medication mention parsing
   -> context_assertion_classification
   -> candidate_generation
   -> candidate_reranking
@@ -70,6 +71,7 @@ Candidate generation must avoid brute-force mention-to-dictionary comparison. Th
 ```text
 mention
   -> exact lookup
+  -> return immediately when exact/type-compatible output has one unique code
   -> abbreviation lookup
   -> fuzzy top-k
   -> character n-gram top-k
@@ -78,10 +80,25 @@ mention
   -> merge and deduplicate
   -> type/code-system filter
   -> rerank top-k only
+  -> qualify by absolute threshold and relative top-score margin
+  -> export dynamic top-k, capped at 5
 ```
 
 Dense retrieval and cross-encoder reranking are extension points. The correctness gate is
 candidate recall at 20 before expensive reranking is added.
+
+Generated candidates remain in internal predictions for recall/rank analysis. Only candidates with
+`qualified=true` are eligible for Phase 1 export. Source-specific thresholds override type-specific
+thresholds, which override the global candidate threshold; these calibration hooks must be tuned on
+held-out data rather than changed from public-score intuition.
+
+## Assertion Rules
+
+`data/heuristics/assertion_cues.jsonl` is the source of truth for cue text, direction, section priors,
+provenance, priority, and scope distance. Every loaded cue receives a stable `rule_id` and the same
+resource is packaged under `src/medical_kg_nlp/resources/`. The classifier returns rule evidence and
+`PipelineTrace` counts matched rule IDs, while Python owns only generic scope execution and explicit
+false-positive mechanics. Cue inventories must not be duplicated as fallback lists in Python.
 
 ## Data Storage
 
