@@ -23,7 +23,7 @@ def main() -> None:
     parser.add_argument("--gold-dir", default="data/manual_gold")
     parser.add_argument(
         "--dictionary",
-        default="data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+        default="data/manual_gold/reviewed_candidate_concepts.jsonl",
     )
     parser.add_argument(
         "--output",

@@ -1,0 +1,172 @@
+[
+  {
+    "text": "bệnh động mạch vành",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [
+      "isHistorical"
+    ],
+    "candidates": [
+      "I25.1"
+    ],
+    "position": [
+      34,
+      53
+    ]
+  },
+  {
+    "text": "bệnh lý thần kinh ngoại biên",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [
+      "isHistorical"
+    ],
+    "candidates": [
+      "G62.9"
+    ],
+    "position": [
+      55,
+      83
+    ]
+  },
+  {
+    "text": "mệt mỏi",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      160,
+      167
+    ]
+  },
+  {
+    "text": "khó thở",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      199,
+      206
+    ]
+  },
+  {
+    "text": "mệt mỏi",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      248,
+      255
+    ]
+  },
+  {
+    "text": "Khó thở",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      258,
+      265
+    ]
+  },
+  {
+    "text": "Đi lại khó khăn",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      295,
+      310
+    ]
+  },
+  {
+    "text": "Đau hai bàn chân",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      341,
+      357
+    ]
+  },
+  {
+    "text": "bệnh lý thần kinh ngoại biên",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": [
+      "G62.9"
+    ],
+    "position": [
+      361,
+      389
+    ]
+  },
+  {
+    "text": "Đo sức bền cơ tim bằng đồng vị phóng xạ",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      434,
+      473
+    ]
+  },
+  {
+    "text": "dị tật cố định vùng trước vách",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      485,
+      515
+    ]
+  },
+  {
+    "text": "vách dưới",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      519,
+      528
+    ]
+  },
+  {
+    "text": "giảm chức năng tâm thu thất trái nghiêm trọng",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      534,
+      579
+    ]
+  },
+  {
+    "text": "rối loạn chức năng thất trái",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      589,
+      617
+    ]
+  },
+  {
+    "text": "Chụp động mạch vành",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      621,
+      640
+    ]
+  },
+  {
+    "text": "bệnh ba thân động mạch vành nghiêm trọng",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      650,
+      690
+    ]
+  }
+]

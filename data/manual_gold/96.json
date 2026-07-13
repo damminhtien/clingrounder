@@ -277,7 +277,7 @@
     "position": [1378, 1388],
     "type": "CHẨN_ĐOÁN",
     "assertions": ["isNegated"],
-    "candidates": ["R91.8"]
+    "candidates": ["R91"]
   },
   {
     "text": "svo2",
@@ -336,8 +336,8 @@
     "candidates": ["20481"]
   },
   {
-    "text": "Vancomycin",
-    "position": [1605, 1615],
+    "text": "Vancomycin truyền tĩnh mạch",
+    "position": [1605, 1632],
     "type": "THUỐC",
     "assertions": [],
     "candidates": ["11124"]

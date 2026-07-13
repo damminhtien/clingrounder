@@ -175,8 +175,8 @@
     "candidates": []
   },
   {
-    "text": "albuterol",
-    "position": [1465, 1474],
+    "text": "albuterol 2 lần",
+    "position": [1465, 1480],
     "type": "THUỐC",
     "assertions": [],
     "candidates": ["435"]

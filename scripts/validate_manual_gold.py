@@ -10,6 +10,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.evaluation.manual_gold_manifest import validate_manual_gold_manifest
 from medical_kg_nlp.evaluation.phase1 import validate_phase1_entities
 from medical_kg_nlp.utils.io import read_source_text
 
@@ -22,10 +23,18 @@ def main() -> None:
     parser.add_argument("--gold-dir", default="data/manual_gold", help="Directory containing reviewed gold JSON files.")
     parser.add_argument(
         "--dictionary",
-        default="data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
-        help="Dictionary JSONL used to validate ICD-10/RxNorm candidate codes.",
+        default="data/manual_gold/reviewed_candidate_concepts.jsonl",
+        help=(
+            "Compact standards-backed dictionary generated from reviewed manual-gold codes. "
+            "Rebuild it after changing candidate labels."
+        ),
     )
     parser.add_argument("--expected-count", type=int, default=100)
+    parser.add_argument(
+        "--manifest",
+        default="data/manual_gold/review_manifest.jsonl",
+        help="Review manifest whose coverage and entity counts must match the gold files.",
+    )
     parser.add_argument(
         "--allow-incomplete",
         action="store_true",
@@ -38,6 +47,7 @@ def main() -> None:
     gold_path = Path(args.gold_dir)
     issues: list[dict[str, Any]] = []
     reviewed_files: list[str] = []
+    gold_by_id: dict[str, list[dict[str, Any]]] = {}
     entity_count = 0
 
     expected_ids = [str(index) for index in range(1, args.expected_count + 1)]
@@ -61,6 +71,7 @@ def main() -> None:
             continue
         if isinstance(payload, list):
             entity_count += len(payload)
+            gold_by_id[document_id] = payload
         issues.extend(
             issue.to_json()
             for issue in validate_phase1_entities(
@@ -76,6 +87,8 @@ def main() -> None:
     )
     for name in extra_files:
         issues.append(_issue("extra_gold", str(gold_path / name), "Manual gold file has no matching expected input id.", Path(name).stem))
+
+    issues.extend(validate_manual_gold_manifest(gold_by_id, args.manifest))
 
     by_kind: dict[str, int] = {}
     for issue in issues:

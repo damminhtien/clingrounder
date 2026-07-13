@@ -58,7 +58,7 @@ _COMPONENT_PATTERNS = (
     _ComponentPattern(
         "frequency",
         re.compile(
-            r"\s*(?::?\s*)?(?:bid|tid|qid|qhs|qam|qd|q\s*\d+\s*h|daily|once|prn|hằng\s+ngày|"
+            r"\s*(?::?\s*)?(?:bid|tid|qid|qhs|qam|qd|q\s*\d+\s*h|daily|once|prn|liên\s+tục|hằng\s+ngày|"
             r"hàng\s+ngày|mỗi\s+ngày|mỗi\s+\d+\s*(?:giờ|phút)|"
             r"every\s+\d+\s*(?:hours?|minutes?)|\d+\s*lần\s*/\s*ngày)\b",
             re.IGNORECASE | re.UNICODE,
@@ -113,6 +113,8 @@ class MedicationMentionParser:
         limit = min(len(source_text), end + _MAX_EXTENSION_CHARS)
         cursor = end
         components: list[MedicationComponent] = []
+        # Extend only through contiguous medication attributes. A clinical indication or a new
+        # clause terminates the full mention so exported offsets still point into raw source text.
         while cursor < limit:
             if source_text[cursor : cursor + 1] in {"\n", "\r", ";"}:
                 break

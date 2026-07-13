@@ -32,7 +32,7 @@
   {"text": "NSAIDs", "type": "THUỐC", "assertions": ["isHistorical"], "candidates": [], "position": [1569, 1575]},
   {"text": "omeprazole", "type": "THUỐC", "assertions": ["isHistorical"], "candidates": ["7646"], "position": [1596, 1606]},
   {"text": "Chụp cộng hưởng từ mật tụy", "type": "TÊN_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [1608, 1634]},
-  {"text": "sỏi đoạn cuối ống mật chủ", "type": "CHẨN_ĐOÁN", "assertions": [], "candidates": ["K80.50"], "position": [1645, 1670]},
+  {"text": "sỏi đoạn cuối ống mật chủ", "type": "CHẨN_ĐOÁN", "assertions": [], "candidates": ["K80.5"], "position": [1645, 1670]},
   {"text": "Xét nghiệm chức năng gan", "type": "TÊN_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [1672, 1696]},
   {"text": "men gan tăng", "type": "KẾT_QUẢ_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [1706, 1718]},
   {"text": "Xét nghiệm chức năng gan", "type": "TÊN_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [1823, 1847]},
@@ -40,8 +40,8 @@
   {"text": "Nội soi thực quản - dạ dày - tá tràng", "type": "TÊN_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [1901, 1938]},
   {"text": "viêm dạ dày", "type": "CHẨN_ĐOÁN", "assertions": [], "candidates": ["K29.7"], "position": [1940, 1951]},
   {"text": "Cộng hưởng từ mật tụy", "type": "TÊN_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [1953, 1974]},
-  {"text": "sỏi đoạn cuối ống mật chủ", "type": "CHẨN_ĐOÁN", "assertions": [], "candidates": ["K80.50"], "position": [1977, 2002]},
-  {"text": "sỏi tại đoạn cuối ống mật chủ", "type": "CHẨN_ĐOÁN", "assertions": [], "candidates": ["K80.50"], "position": [2112, 2141]},
+  {"text": "sỏi đoạn cuối ống mật chủ", "type": "CHẨN_ĐOÁN", "assertions": [], "candidates": ["K80.5"], "position": [1977, 2002]},
+  {"text": "sỏi tại đoạn cuối ống mật chủ", "type": "CHẨN_ĐOÁN", "assertions": [], "candidates": ["K80.5"], "position": [2112, 2141]},
   {"text": "chụp cộng hưởng từ mật tụy", "type": "TÊN_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [2155, 2181]},
-  {"text": "sỏi ống dẫn mật chung đoạn cuối", "type": "CHẨN_ĐOÁN", "assertions": [], "candidates": ["K80.50"], "position": [2214, 2245]}
+  {"text": "sỏi ống dẫn mật chung đoạn cuối", "type": "CHẨN_ĐOÁN", "assertions": [], "candidates": ["K80.5"], "position": [2214, 2245]}
 ]

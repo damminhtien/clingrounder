@@ -67,7 +67,7 @@
     "position": [491, 507],
     "type": "CHẨN_ĐOÁN",
     "assertions": ["isHistorical"],
-    "candidates": ["R26.9"]
+    "candidates": ["R26.8"]
   },
   {
     "text": "nhiều lần ngã",

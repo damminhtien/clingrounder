@@ -1,0 +1,360 @@
+[
+  {
+    "text": "Tăng huyết áp",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [
+      "isHistorical"
+    ],
+    "candidates": [
+      "I10"
+    ],
+    "position": [
+      39,
+      52
+    ]
+  },
+  {
+    "text": "Tăng lipid máu",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [
+      "isHistorical"
+    ],
+    "candidates": [
+      "E78.5"
+    ],
+    "position": [
+      55,
+      69
+    ]
+  },
+  {
+    "text": "Đái tháo đường típ 2",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [
+      "isHistorical"
+    ],
+    "candidates": [
+      "E11.9"
+    ],
+    "position": [
+      72,
+      92
+    ]
+  },
+  {
+    "text": "bệnh tim mạch do xơ vữa động mạch",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [
+      "isHistorical"
+    ],
+    "candidates": [
+      "I25.0"
+    ],
+    "position": [
+      95,
+      128
+    ]
+  },
+  {
+    "text": "suy tim, không đặc hiệu",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [
+      "isHistorical"
+    ],
+    "candidates": [
+      "I50.9"
+    ],
+    "position": [
+      140,
+      163
+    ]
+  },
+  {
+    "text": "hệ số tống máu",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      164,
+      178
+    ]
+  },
+  {
+    "text": "50 inch",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      179,
+      186
+    ]
+  },
+  {
+    "text": "Tăng huyết áp phổi",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [
+      "isHistorical"
+    ],
+    "candidates": [
+      "I27.2"
+    ],
+    "position": [
+      189,
+      207
+    ]
+  },
+  {
+    "text": "lasix",
+    "type": "THUỐC",
+    "assertions": [
+      "isHistorical"
+    ],
+    "candidates": [
+      "202991"
+    ],
+    "position": [
+      272,
+      277
+    ]
+  },
+  {
+    "text": "mệt mỏi",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      342,
+      349
+    ]
+  },
+  {
+    "text": "khó thở khi gắng sức nhẹ",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      352,
+      376
+    ]
+  },
+  {
+    "text": "ho khan ho",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      379,
+      389
+    ]
+  },
+  {
+    "text": "sưng phù hai mắt cá chân",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      392,
+      416
+    ]
+  },
+  {
+    "text": "khó thở khi nằm",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      419,
+      434
+    ]
+  },
+  {
+    "text": "phù",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      437,
+      440
+    ]
+  },
+  {
+    "text": "Suy tim sung huyết cấp",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [
+      "isHistorical"
+    ],
+    "candidates": [
+      "I50.9"
+    ],
+    "position": [
+      485,
+      507
+    ]
+  },
+  {
+    "text": "lasix",
+    "type": "THUỐC",
+    "assertions": [
+      "isHistorical"
+    ],
+    "candidates": [
+      "202991"
+    ],
+    "position": [
+      544,
+      549
+    ]
+  },
+  {
+    "text": "mệt mỏi",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      592,
+      599
+    ]
+  },
+  {
+    "text": "khó thở khi gắng sức nhẹ",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      603,
+      627
+    ]
+  },
+  {
+    "text": "ho khan ho",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      630,
+      640
+    ]
+  },
+  {
+    "text": "sưng phù hai mắt cá chân",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      643,
+      667
+    ]
+  },
+  {
+    "text": "thông tim trái và phải",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      724,
+      746
+    ]
+  },
+  {
+    "text": "thông tim trái",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      749,
+      763
+    ]
+  },
+  {
+    "text": "thông tim phải",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      766,
+      780
+    ]
+  },
+  {
+    "text": "graft SVG bị tắc",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      812,
+      828
+    ]
+  },
+  {
+    "text": "graft lima ổn định",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      831,
+      849
+    ]
+  },
+  {
+    "text": "Bệnh động mạch vành phải nặng hơn",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": [
+      "I25.1"
+    ],
+    "position": [
+      852,
+      885
+    ]
+  },
+  {
+    "text": "60 RPL",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      890,
+      896
+    ]
+  },
+  {
+    "text": "40 mid RCA",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      900,
+      910
+    ]
+  },
+  {
+    "text": "áp lực nạp tăng",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      947,
+      962
+    ]
+  },
+  {
+    "text": "áp lực tâm thu phổi",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      965,
+      984
+    ]
+  },
+  {
+    "text": "áp lực tĩnh mạch bít",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      989,
+      1009
+    ]
+  }
+]

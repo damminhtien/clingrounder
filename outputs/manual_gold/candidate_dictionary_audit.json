@@ -1,0 +1,17 @@
+{
+  "compiled_concept_count": 312,
+  "gold_dir": "data/manual_gold",
+  "issue_count": 0,
+  "issues": [],
+  "schema_version": "phase1-manual-gold-candidate-dictionary.v1",
+  "source_counts": {
+    "icd10_vn_tt06_2026": 213,
+    "rxnorm_full_2026_07_06": 99
+  },
+  "source_paths": [
+    "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+    "data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl",
+    "data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl"
+  ],
+  "used_code_count": 312
+}

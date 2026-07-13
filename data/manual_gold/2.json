@@ -10,21 +10,21 @@
     "text": "hội chứng não gan",
     "type": "CHẨN_ĐOÁN",
     "assertions": [],
-    "candidates": ["K76.82"],
+    "candidates": [],
     "position": [191, 208]
   },
   {
     "text": "hội chứng não gan",
     "type": "CHẨN_ĐOÁN",
     "assertions": [],
-    "candidates": ["K76.82"],
+    "candidates": [],
     "position": [270, 287]
   },
   {
     "text": "hội chứng não gan",
     "type": "CHẨN_ĐOÁN",
     "assertions": [],
-    "candidates": ["K76.82"],
+    "candidates": [],
     "position": [338, 355]
   },
   {
@@ -38,7 +38,7 @@
     "text": "hội chứng não gan",
     "type": "CHẨN_ĐOÁN",
     "assertions": [],
-    "candidates": ["K76.82"],
+    "candidates": [],
     "position": [432, 449]
   }
 ]

@@ -1,0 +1,134 @@
+[
+  {
+    "text": "nội soi mật tuỵ ngược dòng (ERCP)",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      53,
+      86
+    ]
+  },
+  {
+    "text": "octreotide",
+    "type": "THUỐC",
+    "assertions": [
+      "isHistorical"
+    ],
+    "candidates": [
+      "7617"
+    ],
+    "position": [
+      206,
+      216
+    ]
+  },
+  {
+    "text": "flagyl",
+    "type": "THUỐC",
+    "assertions": [
+      "isHistorical"
+    ],
+    "candidates": [
+      "202866"
+    ],
+    "position": [
+      223,
+      229
+    ]
+  },
+  {
+    "text": "rò ống tuỵ mật",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      470,
+      484
+    ]
+  },
+  {
+    "text": "nhiễm Clostridioides difficile",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [
+      "isHistorical"
+    ],
+    "candidates": [
+      "A04.7"
+    ],
+    "position": [
+      665,
+      695
+    ]
+  },
+  {
+    "text": "nhiễm trùng vết mổ",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [
+      "isHistorical"
+    ],
+    "candidates": [],
+    "position": [
+      700,
+      718
+    ]
+  },
+  {
+    "text": "flagyl",
+    "type": "THUỐC",
+    "assertions": [
+      "isHistorical"
+    ],
+    "candidates": [
+      "202866"
+    ],
+    "position": [
+      742,
+      748
+    ]
+  },
+  {
+    "text": "sưng nề",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      1171,
+      1178
+    ]
+  },
+  {
+    "text": "đỏ",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      1180,
+      1182
+    ]
+  },
+  {
+    "text": "siêu âm",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      1327,
+      1334
+    ]
+  },
+  {
+    "text": "huyết khối tĩnh mạch sâu",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [
+      "isNegated"
+    ],
+    "candidates": [
+      "I80.2"
+    ],
+    "position": [
+      1353,
+      1377
+    ]
+  }
+]

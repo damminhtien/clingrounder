@@ -1,0 +1,76 @@
+[
+  {
+    "text": "tiểu tiện không tự chủ",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      70,
+      92
+    ]
+  },
+  {
+    "text": "sa âm đạo",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": [
+      "N81.9"
+    ],
+    "position": [
+      96,
+      105
+    ]
+  },
+  {
+    "text": "tiểu tiện không tự chủ",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      177,
+      199
+    ]
+  },
+  {
+    "text": "sa âm đạo",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": [
+      "N81.9"
+    ],
+    "position": [
+      202,
+      211
+    ]
+  },
+  {
+    "text": "bàng quang căng",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      214,
+      229
+    ]
+  },
+  {
+    "text": "cảm giác bí tiếu liên tục",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      233,
+      258
+    ]
+  },
+  {
+    "text": "khối cứng trong âm đạo",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      321,
+      343
+    ]
+  }
+]

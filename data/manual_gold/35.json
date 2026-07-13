@@ -324,9 +324,9 @@
   {
     "text": "Tăng men gan",
     "position": [1381, 1393],
-    "type": "CHẨN_ĐOÁN",
+    "type": "KẾT_QUẢ_XÉT_NGHIỆM",
     "assertions": [],
-    "candidates": ["R74.0"]
+    "candidates": []
   },
   {
     "text": "alt",

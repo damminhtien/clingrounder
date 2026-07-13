@@ -1,0 +1,9 @@
+{"decision":"allow","entity_type":"CHẨN_ĐOÁN","kind":"multi_candidate_review","normalized_mention":"hở van hai lá/van động mạch chủ nhẹ (mild ARMR)","reason":"Một span nêu đồng thời hở van hai lá và hở van động mạch chủ."}
+{"decision":"allow","entity_type":"CHẨN_ĐOÁN","kind":"multi_candidate_review","normalized_mention":"viêm túi mật thủng cấp tính","reason":"Span nêu viêm túi mật cấp và biến chứng thủng."}
+{"decision":"allow","entity_type":"CHẨN_ĐOÁN","kind":"multi_candidate_review","normalized_mention":"loét tá tràng và hồi tràng","reason":"Một span nêu hai vị trí bệnh có mã ICD riêng."}
+{"decision":"allow","entity_type":"CHẨN_ĐOÁN","kind":"multi_candidate_review","normalized_mention":"loét nông sạch đáy ở tá tràng và hồi tràng sớm","reason":"Một span nêu hai vị trí bệnh có mã ICD riêng."}
+{"decision":"allow","entity_type":"CHẨN_ĐOÁN","kind":"multi_candidate_review","normalized_mention":"loét sạch đáy loét ở tá tràng kéo dài từ hành tá tràng đến hồi tràng sớm","reason":"Một span nêu hai vị trí bệnh có mã ICD riêng."}
+{"decision":"allow","entity_type":"THUỐC","kind":"multi_candidate_review","normalized_mention":"ciproflagyl","reason":"Chuỗi nguồn ghép Cipro và Flagyl nhưng không có ranh giới offset để tách."}
+{"decision":"allow","entity_type":"THUỐC","kind":"multi_candidate_review","normalized_mention":"klonopinclonidine","reason":"Chuỗi nguồn ghép Klonopin và clonidine nhưng không có ranh giới offset để tách."}
+{"decision":"allow","entity_type":"CHẨN_ĐOÁN","kind":"multi_candidate_review","normalized_mention":"Viêm gan virus C và B","reason":"Một span nêu rõ đồng thời viêm gan virus C và B."}
+{"decision":"allow","entity_type":"THUỐC","kind":"multi_candidate_review","normalized_mention":"vancozosyn","reason":"Chuỗi nguồn ghép vancomycin và Zosyn nhưng không có ranh giới offset để tách."}

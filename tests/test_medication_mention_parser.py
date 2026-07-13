@@ -32,6 +32,12 @@ from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
             "methylprednisolone sodium succinate 125 mg IV",
             ("administered_dose", "route"),
         ),
+        (
+            "Bắt đầu heparin truyền tĩnh mạch liên tục.",
+            "heparin",
+            "heparin truyền tĩnh mạch liên tục",
+            ("route", "frequency"),
+        ),
     ],
 )
 def test_medication_parser_preserves_compound_strength_form_and_route(

@@ -20,20 +20,38 @@ Review rules:
   `CHẨN_ĐOÁN`, `THUỐC`.
 - Use assertions only for `TRIỆU_CHỨNG`, `CHẨN_ĐOÁN`, and `THUỐC`.
 - Use ICD-10 candidates only for `CHẨN_ĐOÁN` and RxNorm candidates only for `THUỐC`.
-- Leave `candidates: []` when the correct code is not available in the validation dictionary.
+- Leave `candidates: []` when no exact code can be justified. A non-empty code must exist in the
+  locked TT06 or RxNorm release; rebuild the reviewed candidate dictionary after changing it.
 
 Progress is tracked in `review_manifest.jsonl`.
 
 Validation during review:
 
 ```bash
+uv run python scripts/sync_manual_gold_manifest.py
+uv run python scripts/build_manual_gold_candidate_dictionary.py
 uv run python scripts/validate_manual_gold.py --allow-incomplete
 ```
+
+`reviewed_candidate_concepts.jsonl` is a compact normalization/validation resource. It includes
+only codes used by reviewed labels and is deliberately not the NER recognition dictionary.
+
+Audit against conventions demonstrated by official BTC samples:
+
+```bash
+uv run python scripts/audit_manual_gold_convention.py
+```
+
+The audit is intentionally non-mutating. `blocking` findings must be resolved before completion;
+`review` findings require an explicit concept-level decision in `convention_decisions.jsonl`.
+Document ids and absolute offsets are forbidden in that decision file.
 
 Final validation, after all 100 files exist:
 
 ```bash
+uv run python scripts/build_manual_gold_candidate_dictionary.py
 uv run python scripts/validate_manual_gold.py
+uv run python scripts/audit_manual_gold_convention.py --strict
 ```
 
 Compile reviewed labels, guideline notes, and rejected mentions into concept-level knowledge:

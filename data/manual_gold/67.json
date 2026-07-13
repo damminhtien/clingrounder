@@ -1,0 +1,102 @@
+[
+  {
+    "text": "FNA",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      74,
+      77
+    ]
+  },
+  {
+    "text": "nốt sần tuyến giáp phải có cấu trúc vi nang",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": [
+      "E04.1"
+    ],
+    "position": [
+      86,
+      129
+    ]
+  },
+  {
+    "text": "đau vùng hạ sườn phải",
+    "type": "TRIỆU_CHỨNG",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      156,
+      177
+    ]
+  },
+  {
+    "text": "siêu âm",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      220,
+      227
+    ]
+  },
+  {
+    "text": "sỏi mật",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [
+      "isHistorical"
+    ],
+    "candidates": [
+      "K80.2"
+    ],
+    "position": [
+      237,
+      244
+    ]
+  },
+  {
+    "text": "siêu âm",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      389,
+      396
+    ]
+  },
+  {
+    "text": "sỏi mật",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": [
+      "K80.2"
+    ],
+    "position": [
+      406,
+      413
+    ]
+  },
+  {
+    "text": "FNA",
+    "type": "TÊN_XÉT_NGHIỆM",
+    "assertions": [],
+    "candidates": [],
+    "position": [
+      448,
+      451
+    ]
+  },
+  {
+    "text": "nốt sần tuyến giáp phải có cấu trúc vi nang",
+    "type": "CHẨN_ĐOÁN",
+    "assertions": [],
+    "candidates": [
+      "E04.1"
+    ],
+    "position": [
+      460,
+      503
+    ]
+  }
+]

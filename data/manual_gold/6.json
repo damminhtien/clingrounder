@@ -3,7 +3,7 @@
     "text": "Nghẽn tắc và hẹp động mạch cảnh",
     "type": "CHẨN_ĐOÁN",
     "assertions": ["isHistorical"],
-    "candidates": ["I65.29"],
+    "candidates": ["I65.2"],
     "position": [50, 81]
   },
   {
@@ -17,7 +17,7 @@
     "text": "nghẽn tắc và hẹp động mạch cảnh",
     "type": "CHẨN_ĐOÁN",
     "assertions": ["isHistorical"],
-    "candidates": ["I65.29"],
+    "candidates": ["I65.2"],
     "position": [264, 295]
   },
   {
