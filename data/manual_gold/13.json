@@ -52,7 +52,7 @@
     "text": "bactrim",
     "type": "THUỐC",
     "assertions": ["isHistorical"],
-    "candidates": ["10831"],
+    "candidates": ["151399"],
     "position": [382, 389]
   },
   {
@@ -199,7 +199,7 @@
     "text": "bactrim",
     "type": "THUỐC",
     "assertions": ["isHistorical"],
-    "candidates": ["10831"],
+    "candidates": ["151399"],
     "position": [1887, 1894]
   },
   {
@@ -241,7 +241,7 @@
     "text": "bactrim",
     "type": "THUỐC",
     "assertions": [],
-    "candidates": ["10831"],
+    "candidates": ["151399"],
     "position": [2246, 2253]
   },
   {

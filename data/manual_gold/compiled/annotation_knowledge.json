@@ -22,42 +22,6 @@
       "severity": "high"
     },
     {
-      "accepted_count": 1,
-      "conflict_id": "5b3cdc9a5ed1",
-      "conflict_type": "positive_negative_same_mention",
-      "details": "Mention is accepted in gold and also appears in review_candidates.",
-      "document_ids": [
-        "51"
-      ],
-      "entity_types": [
-        "KẾT_QUẢ_XÉT_NGHIỆM"
-      ],
-      "normalized_text": "14279",
-      "recommended_action": "require_context_specific_rule",
-      "rejected_count": 1,
-      "resolution_action": "context_required",
-      "resolution_reason": "Malformed blood-pressure value is accepted only beside an explicit vital-sign anchor.",
-      "severity": "high"
-    },
-    {
-      "accepted_count": 1,
-      "conflict_id": "28f1d740ea47",
-      "conflict_type": "positive_negative_same_mention",
-      "details": "Mention is accepted in gold and also appears in review_candidates.",
-      "document_ids": [
-        "35"
-      ],
-      "entity_types": [
-        "CHẨN_ĐOÁN"
-      ],
-      "normalized_text": "biến đổi cấp tính",
-      "recommended_action": "require_context_specific_rule",
-      "rejected_count": 1,
-      "resolution_action": "context_required",
-      "resolution_reason": "Generic acute-change wording is accepted only when the clause states a concrete diagnostic finding.",
-      "severity": "high"
-    },
-    {
       "accepted_count": 15,
       "conflict_id": "55a15102473e",
       "conflict_type": "positive_negative_same_mention",
@@ -145,24 +109,6 @@
       "severity": "high"
     },
     {
-      "accepted_count": 2,
-      "conflict_id": "3ba433e4996b",
-      "conflict_type": "positive_negative_same_mention",
-      "details": "Mention is accepted in gold and also appears in review_candidates.",
-      "document_ids": [
-        "43"
-      ],
-      "entity_types": [
-        "CHẨN_ĐOÁN"
-      ],
-      "normalized_text": "hẹp gây hạn chế dòng chảy",
-      "recommended_action": "require_context_specific_rule",
-      "rejected_count": 1,
-      "resolution_action": "context_required",
-      "resolution_reason": "The phrase is a diagnosis only when it denotes a documented vascular narrowing finding.",
-      "severity": "high"
-    },
-    {
       "accepted_count": 36,
       "conflict_id": "6fe3a4109428",
       "conflict_type": "positive_negative_same_mention",
@@ -218,26 +164,8 @@
       "severity": "high"
     },
     {
-      "accepted_count": 3,
-      "conflict_id": "3704b42409ce",
-      "conflict_type": "positive_negative_same_mention",
-      "details": "Mention is accepted in gold and also appears in review_candidates.",
-      "document_ids": [
-        "34"
-      ],
-      "entity_types": [
-        "THUỐC"
-      ],
-      "normalized_text": "thuốc giảm đau opioid",
-      "recommended_action": "require_context_specific_rule",
-      "rejected_count": 1,
-      "resolution_action": "context_required",
-      "resolution_reason": "Accept as a drug class only in an explicit medication-use context.",
-      "severity": "high"
-    },
-    {
       "accepted_count": 1,
-      "conflict_id": "20533fb60f3b",
+      "conflict_id": "d905a497faf6",
       "conflict_type": "positive_negative_same_mention",
       "details": "Mention is accepted in gold and also appears in review_candidates.",
       "document_ids": [
@@ -245,31 +173,13 @@
         "77"
       ],
       "entity_types": [
-        "TRIỆU_CHỨNG"
+        "CHẨN_ĐOÁN"
       ],
       "normalized_text": "trầm cảm",
       "recommended_action": "require_context_specific_rule",
       "rejected_count": 1,
       "resolution_action": "context_required",
-      "resolution_reason": "Accept when the note attributes the symptom to the patient; exclude vague non-patient references.",
-      "severity": "high"
-    },
-    {
-      "accepted_count": 1,
-      "conflict_id": "2d8a77c15dda",
-      "conflict_type": "positive_negative_same_mention",
-      "details": "Mention is accepted in gold and also appears in review_candidates.",
-      "document_ids": [
-        "35"
-      ],
-      "entity_types": [
-        "KẾT_QUẢ_XÉT_NGHIỆM"
-      ],
-      "normalized_text": "đái tháo đườngđái tháo đường",
-      "recommended_action": "require_context_specific_rule",
-      "rejected_count": 1,
-      "resolution_action": "context_required",
-      "resolution_reason": "The duplicated token is a result only in the source urinalysis-result clause; otherwise it is noisy text.",
+      "resolution_reason": "Accept as a diagnosis when attributed to the patient; exclude nested duplicate text inside a longer reviewed diagnosis.",
       "severity": "high"
     },
     {
@@ -312,738 +222,6 @@
       "resolution_action": "type_by_context",
       "resolution_reason": "Use TRIỆU_CHỨNG in symptom lists and CHẨN_ĐOÁN when the note states an established hypotension condition.",
       "severity": "high"
-    }
-  ],
-  "conflicts": [
-    {
-      "accepted_count": 2,
-      "conflict_id": "3911c036e923",
-      "conflict_type": "gold_overlapping_entities",
-      "details": "Overlapping spans (115, 131) 'Viêm gan virus C' and (115, 136) 'Viêm gan virus C và B'.",
-      "document_ids": [
-        "88"
-      ],
-      "entity_types": [
-        "CHẨN_ĐOÁN"
-      ],
-      "normalized_text": "viêm gan virus c",
-      "recommended_action": "review_non_overlapping_boundary_policy",
-      "rejected_count": 0,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "a5a15974f161",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 3 does not match its raw-text position.",
-      "document_ids": [
-        "100"
-      ],
-      "entity_types": [],
-      "normalized_text": "bị ngã trong bồn tắm",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "b86ebbb7b35e",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 3 does not match its raw-text position.",
-      "document_ids": [
-        "9"
-      ],
-      "entity_types": [],
-      "normalized_text": "can thiệp x-quang",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "2c685ececb6c",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 2 does not match its raw-text position.",
-      "document_ids": [
-        "10"
-      ],
-      "entity_types": [],
-      "normalized_text": "có thể có một tổn thương t2",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "2a2f3157634a",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 3 does not match its raw-text position.",
-      "document_ids": [
-        "3"
-      ],
-      "entity_types": [],
-      "normalized_text": "cảm thấy khỏe",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "c9c43b04da00",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 0 does not match its raw-text position.",
-      "document_ids": [
-        "17"
-      ],
-      "entity_types": [],
-      "normalized_text": "du lịch",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "d7657147691d",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 1 does not match its raw-text position.",
-      "document_ids": [
-        "17"
-      ],
-      "entity_types": [],
-      "normalized_text": "du thuyền",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "e64610e6929b",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 2 does not match its raw-text position.",
-      "document_ids": [
-        "66"
-      ],
-      "entity_types": [],
-      "normalized_text": "dòng picc đã đặt",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "49d7a6c7461a",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 4 does not match its raw-text position.",
-      "document_ids": [
-        "17"
-      ],
-      "entity_types": [],
-      "normalized_text": "dẫn lưu dịch",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "1e504e712576",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 0 does not match its raw-text position.",
-      "document_ids": [
-        "7"
-      ],
-      "entity_types": [],
-      "normalized_text": "ho",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "6986a34b7a18",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 8 does not match its raw-text position.",
-      "document_ids": [
-        "3"
-      ],
-      "entity_types": [],
-      "normalized_text": "huyết áp 159/72",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "1df18ca86153",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 5 does not match its raw-text position.",
-      "document_ids": [
-        "17"
-      ],
-      "entity_types": [],
-      "normalized_text": "hút 0.5cc dịch mủ",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "8e717c3a2484",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 0 does not match its raw-text position.",
-      "document_ids": [
-        "3"
-      ],
-      "entity_types": [],
-      "normalized_text": "hút thuốc",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "bc2f154a31f6",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 1 does not match its raw-text position.",
-      "document_ids": [
-        "38"
-      ],
-      "entity_types": [],
-      "normalized_text": "họng",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "fc8465368bfd",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 3 does not match its raw-text position.",
-      "document_ids": [
-        "17"
-      ],
-      "entity_types": [],
-      "normalized_text": "khoa cấp cứu",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "2a86933e8975",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 2 does not match its raw-text position.",
-      "document_ids": [
-        "17"
-      ],
-      "entity_types": [],
-      "normalized_text": "khám bác sĩ chăm sóc chính",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "37e5329bf3c8",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 2 does not match its raw-text position.",
-      "document_ids": [
-        "3"
-      ],
-      "entity_types": [],
-      "normalized_text": "không có triệu chứng trước đó",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "b7c6909fe95f",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 2 does not match its raw-text position.",
-      "document_ids": [
-        "19"
-      ],
-      "entity_types": [],
-      "normalized_text": "không thấy giảm đau",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "182af9b8127b",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 1 does not match its raw-text position.",
-      "document_ids": [
-        "3"
-      ],
-      "entity_types": [],
-      "normalized_text": "không tuân thủ điều trị bằng thuốc",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "3cb5a51eea37",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 7 does not match its raw-text position.",
-      "document_ids": [
-        "3"
-      ],
-      "entity_types": [],
-      "normalized_text": "mạch 83",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "e8cc09fa526e",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 3 does not match its raw-text position.",
-      "document_ids": [
-        "10"
-      ],
-      "entity_types": [],
-      "normalized_text": "một số vùng không thể đánh giá tốt",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "909eddf38268",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 1 does not match its raw-text position.",
-      "document_ids": [
-        "12"
-      ],
-      "entity_types": [],
-      "normalized_text": "nghi ngờ",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "336c0486f205",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 9 does not match its raw-text position.",
-      "document_ids": [
-        "3"
-      ],
-      "entity_types": [],
-      "normalized_text": "nhịp thở 20",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "a14e4481f4c3",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 4 does not match its raw-text position.",
-      "document_ids": [
-        "5"
-      ],
-      "entity_types": [],
-      "normalized_text": "nội soi mật tụy ngược dòng",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "f627a7c1adf6",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 3 does not match its raw-text position.",
-      "document_ids": [
-        "19"
-      ],
-      "entity_types": [],
-      "normalized_text": "phòng cấp cứu",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "04d4012ecd37",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 2 does not match its raw-text position.",
-      "document_ids": [
-        "12"
-      ],
-      "entity_types": [],
-      "normalized_text": "phòng cấp cứu khám và điều trị",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "925333b40374",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 0 does not match its raw-text position.",
-      "document_ids": [
-        "16"
-      ],
-      "entity_types": [],
-      "normalized_text": "phẫu thuật mở cắt nối trực tràng/đại tràng sigma",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "e2f0a69025c7",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 0 does not match its raw-text position.",
-      "document_ids": [
-        "99"
-      ],
-      "entity_types": [],
-      "normalized_text": "phẫu thuật nội soi cắt bỏ tuyến tiền liệt bên trái",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "31c66364f27c",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 1 does not match its raw-text position.",
-      "document_ids": [
-        "21"
-      ],
-      "entity_types": [],
-      "normalized_text": "phẫu thuật sửa van tĩnh mạch chủ ngực bụng",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "13325c2e7f8c",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 6 does not match its raw-text position.",
-      "document_ids": [
-        "17"
-      ],
-      "entity_types": [],
-      "normalized_text": "phổi rõ tiếng khi nghe",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "d864eecd376e",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 3 does not match its raw-text position.",
-      "document_ids": [
-        "66"
-      ],
-      "entity_types": [],
-      "normalized_text": "quá trình bệnh lý tim phổi cấp tính",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "c0d084487616",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 2 does not match its raw-text position.",
-      "document_ids": [
-        "100"
-      ],
-      "entity_types": [],
-      "normalized_text": "quá trình cấp tính",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "718d79c5022e",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 10 does not match its raw-text position.",
-      "document_ids": [
-        "3"
-      ],
-      "entity_types": [],
-      "normalized_text": "spo2 độ bão hòa oxy 94-95 ra",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "edf959b5abf4",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 0 does not match its raw-text position.",
-      "document_ids": [
-        "21"
-      ],
-      "entity_types": [],
-      "normalized_text": "stent graft động mạch chủ ngực",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "ab5b9e5cd57f",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 3 does not match its raw-text position.",
-      "document_ids": [
-        "4"
-      ],
-      "entity_types": [],
-      "normalized_text": "thăm khám chẩn đoán và điều trị",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "530fb397ae44",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 7 does not match its raw-text position.",
-      "document_ids": [
-        "17"
-      ],
-      "entity_types": [],
-      "normalized_text": "tim nhịp đều",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "a8353f69c402",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 4 does not match its raw-text position.",
-      "document_ids": [
-        "100"
-      ],
-      "entity_types": [],
-      "normalized_text": "truyền dịch",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "432600b805a7",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 1 does not match its raw-text position.",
-      "document_ids": [
-        "16"
-      ],
-      "entity_types": [],
-      "normalized_text": "truyền dịch tĩnh mạch 750cc",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "4db0194e41aa",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 1 does not match its raw-text position.",
-      "document_ids": [
-        "100"
-      ],
-      "entity_types": [],
-      "normalized_text": "tổn thương cấp tính",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "f3de141d814e",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 1 does not match its raw-text position.",
-      "document_ids": [
-        "8"
-      ],
-      "entity_types": [],
-      "normalized_text": "tổn thương này",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "94b2632882e7",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 0 does not match its raw-text position.",
-      "document_ids": [
-        "100"
-      ],
-      "entity_types": [],
-      "normalized_text": "xét nghiệm ngoại trú",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "cb963c94229f",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 2 does not match its raw-text position.",
-      "document_ids": [
-        "16"
-      ],
-      "entity_types": [],
-      "normalized_text": "xông khí dung",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "53dfb68304bc",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 1 does not match its raw-text position.",
-      "document_ids": [
-        "19"
-      ],
-      "entity_types": [],
-      "normalized_text": "đi lại",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "107c46e597f2",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 1 does not match its raw-text position.",
-      "document_ids": [
-        "9"
-      ],
-      "entity_types": [],
-      "normalized_text": "điều trị bảo tồn",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "2daf5037bc38",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 4 does not match its raw-text position.",
-      "document_ids": [
-        "9"
-      ],
-      "entity_types": [],
-      "normalized_text": "điều trị ngoại khoa",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "fdaccd5a3f05",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 2 does not match its raw-text position.",
-      "document_ids": [
-        "9"
-      ],
-      "entity_types": [],
-      "normalized_text": "điều trị nội khoa",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "f4643da2a4bc",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 7 does not match its raw-text position.",
-      "document_ids": [
-        "5"
-      ],
-      "entity_types": [],
-      "normalized_text": "đặt catheter động mạch",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "1654869cd116",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 6 does not match its raw-text position.",
-      "document_ids": [
-        "5"
-      ],
-      "entity_types": [],
-      "normalized_text": "đặt nội khí quản",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "fbd94fe84ff7",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 0 does not match its raw-text position.",
-      "document_ids": [
-        "38"
-      ],
-      "entity_types": [],
-      "normalized_text": "đặt stent",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "139d5a928569",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 5 does not match its raw-text position.",
-      "document_ids": [
-        "5"
-      ],
-      "entity_types": [],
-      "normalized_text": "đặt stent đường mật",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "85109e1fbb62",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 8 does not match its raw-text position.",
-      "document_ids": [
-        "5"
-      ],
-      "entity_types": [],
-      "normalized_text": "đặt đường truyền tĩnh mạch ngoại vi",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "c692b6dde3e5",
-      "conflict_type": "review_offset_mismatch",
-      "details": "Review candidate 2 does not match its raw-text position.",
-      "document_ids": [
-        "38"
-      ],
-      "entity_types": [],
-      "normalized_text": "đồ uống lạnh",
-      "recommended_action": "repair_or_null_review_position",
-      "rejected_count": 1,
-      "severity": "medium"
     },
     {
       "accepted_count": 0,
@@ -1057,6 +235,8 @@
       "normalized_text": "101.4",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "Standalone temperature values without an explicit local anchor remain excluded from automatic annotation.",
       "severity": "warning"
     },
     {
@@ -1071,6 +251,8 @@
       "normalized_text": "101.8",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "Standalone temperature values without an explicit local anchor remain excluded from automatic annotation.",
       "severity": "warning"
     },
     {
@@ -1085,6 +267,8 @@
       "normalized_text": "39.7 độ c",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "This standalone vital value is excluded; structured vital-sign extraction still requires a named local anchor.",
       "severity": "warning"
     },
     {
@@ -1099,6 +283,8 @@
       "normalized_text": "bệnh đa xơ cứng",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "The soft phrase 'không điển hình cho' does not establish a supported Phase 1 diagnosis or assertion.",
       "severity": "warning"
     },
     {
@@ -1113,6 +299,8 @@
       "normalized_text": "chẩn đoán cho ảo giác bình thường",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "Exclude the noisy discharge phrase and retain only the independently supported symptom span.",
       "severity": "warning"
     },
     {
@@ -1127,6 +315,8 @@
       "normalized_text": "chỉ số huyết áp tâm thu",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "A generic vital-sign label without a paired value is not promoted as an automatic test entity.",
       "severity": "warning"
     },
     {
@@ -1141,6 +331,8 @@
       "normalized_text": "chọc hút",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "The short procedural phrase is excluded when a longer diagnostic-result span carries the clinical meaning.",
       "severity": "warning"
     },
     {
@@ -1155,6 +347,8 @@
       "normalized_text": "chụp cộng hưởng từ mật tụy tụi mật",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "Exclude the typo-expanded duplicate and retain the exact stable imaging-test span.",
       "severity": "warning"
     },
     {
@@ -1169,6 +363,8 @@
       "normalized_text": "có khả năng",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "An uncertainty cue is not itself an entity and Phase 1 exposes no uncertainty assertion.",
       "severity": "warning"
     },
     {
@@ -1183,6 +379,8 @@
       "normalized_text": "da niêm mạc hồngi",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "Exclude the malformed normal-exam phrase because it does not denote a pathological entity.",
       "severity": "warning"
     },
     {
@@ -1197,6 +395,8 @@
       "normalized_text": "dấu hiệu sinh tồn",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "A bare vital-sign header remains excluded; only a structured header-value construction is context-eligible.",
       "severity": "warning"
     },
     {
@@ -1211,6 +411,8 @@
       "normalized_text": "dấu hiệu sinh tồn",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "A bare vital-sign header remains excluded; only a structured header-value construction is context-eligible.",
       "severity": "warning"
     },
     {
@@ -1225,6 +427,8 @@
       "normalized_text": "giãn bể thận",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "The reviewed occurrence remains represented by the full negative imaging result rather than a separate inferred diagnosis.",
       "severity": "warning"
     },
     {
@@ -1239,6 +443,8 @@
       "normalized_text": "ho",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "Exclude the noisy translated prefix in this evidence; valid standalone cough mentions remain context-eligible.",
       "severity": "warning"
     },
     {
@@ -1253,6 +459,8 @@
       "normalized_text": "huyết áp 159/72",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "The unstructured vital phrase remains excluded until a local vital-sign anchor establishes name and value boundaries.",
       "severity": "warning"
     },
     {
@@ -1267,6 +475,8 @@
       "normalized_text": "huyết áp/mạch/nhiệt độ/nhịp thở/spo2",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "A slash-joined vital-sign heading is not emitted without separately recoverable raw spans and values.",
       "severity": "warning"
     },
     {
@@ -1281,6 +491,8 @@
       "normalized_text": "khó thở",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "Exclude this duplicate translation occurrence while preserving valid patient symptom occurrences elsewhere.",
       "severity": "warning"
     },
     {
@@ -1295,6 +507,8 @@
       "normalized_text": "không nhớ bị đánh trống ngực chóng mặt",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "Memory uncertainty is not a negation assertion and the composite wording is not a stable entity boundary.",
       "severity": "warning"
     },
     {
@@ -1309,6 +523,8 @@
       "normalized_text": "mạch 83",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "The unstructured vital phrase remains excluded until a local vital-sign anchor establishes name and value boundaries.",
       "severity": "warning"
     },
     {
@@ -1323,6 +539,8 @@
       "normalized_text": "nghi ngờ",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "A diagnostic uncertainty cue is not an entity and must not be converted to isNegated.",
       "severity": "warning"
     },
     {
@@ -1337,6 +555,8 @@
       "normalized_text": "ngã",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "Exclude the nested duplicate occurrence and retain the longer reviewed fall-event span.",
       "severity": "warning"
     },
     {
@@ -1351,6 +571,8 @@
       "normalized_text": "nhịp thở 20",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "The unstructured vital phrase remains excluded until a local vital-sign anchor establishes name and value boundaries.",
       "severity": "warning"
     },
     {
@@ -1365,6 +587,8 @@
       "normalized_text": "sau cân sau phẫu thuật",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "Exclude the malformed phrase because no stable medical concept or boundary can be recovered.",
       "severity": "warning"
     },
     {
@@ -1379,6 +603,8 @@
       "normalized_text": "siêu âm tim qua thành ngực",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "The reviewed occurrence is a planned future study, while the Phase 1 test type denotes a study the patient performed.",
       "severity": "warning"
     },
     {
@@ -1393,6 +619,8 @@
       "normalized_text": "spo2 độ bão hòa oxy 94-95 ra",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "The unstructured oxygen-saturation phrase is excluded until exact name/value boundaries are recoverable.",
       "severity": "warning"
     },
     {
@@ -1407,6 +635,8 @@
       "normalized_text": "tem",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "The unexplained abbreviation is excluded rather than assigned an unsupported medical type.",
       "severity": "warning"
     },
     {
@@ -1421,6 +651,8 @@
       "normalized_text": "temperate đến tmax 102",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "Exclude the malformed temperature wording and retain the independently supported fever symptom.",
       "severity": "warning"
     },
     {
@@ -1435,6 +667,8 @@
       "normalized_text": "thay đổi sóng t",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "Exclude this noisy duplicate and retain the longer ECG finding with its exact boundary.",
       "severity": "warning"
     },
     {
@@ -1449,6 +683,8 @@
       "normalized_text": "trầm cảm",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "Exclude the nested duplicate occurrence inside the longer mood-disorder diagnosis.",
       "severity": "warning"
     },
     {
@@ -1463,6 +699,8 @@
       "normalized_text": "té ngã",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "This isolated translated event remains excluded because the reviewed evidence lacks a stable Phase 1 boundary policy.",
       "severity": "warning"
     },
     {
@@ -1477,6 +715,8 @@
       "normalized_text": "vs98.3 12987 56 18 99ra",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "The concatenated vital-sign string cannot be split into exact reliable name/value spans and remains excluded.",
       "severity": "warning"
     },
     {
@@ -1491,20 +731,8 @@
       "normalized_text": "xỉu trước",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
-      "severity": "warning"
-    },
-    {
-      "accepted_count": 0,
-      "conflict_id": "201b5971110f",
-      "conflict_type": "unstable_policy_evidence",
-      "details": "Noisy urinalysis result retained as KẾT_QUẢ_XÉT_NGHIỆM but not mapped to diabetes ICD.",
-      "document_ids": [
-        "35"
-      ],
-      "entity_types": [],
-      "normalized_text": "đái tháo đườngđái tháo đường",
-      "recommended_action": "keep_out_of_automatic_runtime_policy",
-      "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "Exclude the malformed translated phrase and retain explicit syncope mentions with stable boundaries.",
       "severity": "warning"
     },
     {
@@ -1519,6 +747,8 @@
       "normalized_text": "đánh giá thần kinh",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "A generic clinical evaluation is not a specific completed Phase 1 test name.",
       "severity": "warning"
     },
     {
@@ -1533,16 +763,19 @@
       "normalized_text": "đột sống thắt lưng",
       "recommended_action": "keep_out_of_automatic_runtime_policy",
       "rejected_count": 1,
+      "resolution_action": "exclude_from_runtime",
+      "resolution_reason": "Exclude the mistranslated parenthetical duplicate and retain the explicit lumbar-puncture test span.",
       "severity": "warning"
     }
   ],
+  "conflicts": [],
   "inputs": {
     "conflict_decisions": "data/manual_gold/conflict_decisions.jsonl",
     "excluded_manifest_document_count": 24,
     "gold_dir": "data/manual_gold",
-    "gold_files_sha256": "f733e3f63969c80d4ca438b3c58529b30718681bfe1a4e7c4b27ddae4f30d7ad",
+    "gold_files_sha256": "3d0cbdeb8cac7b6045e79226acd924ce16791872dcfd19a27c2e89b501865b7f",
     "review_manifest": "data/manual_gold/review_manifest.jsonl",
-    "review_manifest_sha256": "e3371966d7f2eb1782721360fa3bbfe1a3ff758102abcecf3219f2bed5d90ebc",
+    "review_manifest_sha256": "c21235d8e8f5d941a6b9745ad3f6ee55c924ca1ca8e10e7c8e7f5476d27a59eb",
     "selected_document_ids": [
       "1",
       "2",
@@ -1621,8 +854,27 @@
       "99",
       "100"
     ],
-    "unused_conflict_decision_count": 0,
-    "unused_conflict_decisions": []
+    "unused_conflict_decision_count": 3,
+    "unused_conflict_decisions": [
+      {
+        "action": "context_required",
+        "conflict_type": "positive_negative_same_mention",
+        "normalized_text": "chưa phát hiện bất thường",
+        "reason": "Accept as a qualitative result only when the same clause names the completed test or imaging study."
+      },
+      {
+        "action": "context_required",
+        "conflict_type": "positive_negative_same_mention",
+        "normalized_text": "dấu hiệu sinh tồn",
+        "reason": "Accept as a test-name anchor only when it directly introduces structured vital-sign values; exclude a bare section header."
+      },
+      {
+        "action": "context_required",
+        "conflict_type": "positive_negative_same_mention",
+        "normalized_text": "kháng sinh",
+        "reason": "Accept the drug class when the note states actual patient treatment; exclude generic references when specific named drugs are required."
+      }
+    ]
   },
   "knowledge": {
     "accepted_mentions": [
@@ -13787,7 +13039,7 @@
             "value": "Tim to"
           }
         ],
-        "type": "KẾT_QUẢ_XÉT_NGHIỆM"
+        "type": "CHẨN_ĐOÁN"
       },
       {
         "document_support": 7,
@@ -14122,7 +13374,7 @@
             "value": "trầm cảm"
           }
         ],
-        "type": "TRIỆU_CHỨNG"
+        "type": "CHẨN_ĐOÁN"
       },
       {
         "document_support": 4,
@@ -15503,21 +14755,6 @@
           }
         ],
         "type": "KẾT_QUẢ_XÉT_NGHIỆM"
-      },
-      {
-        "document_support": 1,
-        "normalized_text": "viêm gan virus c",
-        "occurrence_count": 1,
-        "supporting_documents": [
-          "88"
-        ],
-        "surface_forms": [
-          {
-            "count": 1,
-            "value": "Viêm gan virus C"
-          }
-        ],
-        "type": "CHẨN_ĐOÁN"
       },
       {
         "document_support": 1,
@@ -21763,110 +21000,6 @@
       },
       {
         "document_support": 1,
-        "normalized_text": "1190220",
-        "occurrence_count": 1,
-        "reason_categories": [
-          {
-            "count": 1,
-            "value": "other"
-          }
-        ],
-        "reasons": [
-          {
-            "count": 1,
-            "value": "Supplied Combivent code is a metered inhalation spray, while the source says nebs without matching product strength; strict v0 uses multi-ingredient RxNorm 214199."
-          }
-        ],
-        "supporting_documents": [
-          "50"
-        ],
-        "surface_forms": [
-          {
-            "count": 1,
-            "value": "1190220"
-          }
-        ]
-      },
-      {
-        "document_support": 1,
-        "normalized_text": "14279",
-        "occurrence_count": 1,
-        "reason_categories": [
-          {
-            "count": 1,
-            "value": "other"
-          }
-        ],
-        "reasons": [
-          {
-            "count": 1,
-            "value": "Raw source value is preserved as a lab/vital result, not normalized to 142/79."
-          }
-        ],
-        "supporting_documents": [
-          "51"
-        ],
-        "surface_forms": [
-          {
-            "count": 1,
-            "value": "14279"
-          }
-        ]
-      },
-      {
-        "document_support": 1,
-        "normalized_text": "151399",
-        "occurrence_count": 1,
-        "reason_categories": [
-          {
-            "count": 1,
-            "value": "other"
-          }
-        ],
-        "reasons": [
-          {
-            "count": 1,
-            "value": "Supplied Bactrim candidate is absent from the controlled dictionary; strict v0 uses controlled RxNorm 10831."
-          }
-        ],
-        "supporting_documents": [
-          "96"
-        ],
-        "surface_forms": [
-          {
-            "count": 1,
-            "value": "151399"
-          }
-        ]
-      },
-      {
-        "document_support": 1,
-        "normalized_text": "196466",
-        "occurrence_count": 1,
-        "reason_categories": [
-          {
-            "count": 1,
-            "value": "other"
-          }
-        ],
-        "reasons": [
-          {
-            "count": 1,
-            "value": "Supplied Taxol candidate is not confirmed by current RxNorm API; strict v0 uses existing controlled RxNorm 56946 for paclitaxel/Taxol."
-          }
-        ],
-        "supporting_documents": [
-          "94"
-        ],
-        "surface_forms": [
-          {
-            "count": 1,
-            "value": "196466"
-          }
-        ]
-      },
-      {
-        "document_support": 1,
         "normalized_text": "2 giờ sáng",
         "occurrence_count": 1,
         "reason_categories": [
@@ -21888,84 +21021,6 @@
           {
             "count": 1,
             "value": "2 giờ sáng"
-          }
-        ]
-      },
-      {
-        "document_support": 1,
-        "normalized_text": "202421",
-        "occurrence_count": 1,
-        "reason_categories": [
-          {
-            "count": 1,
-            "value": "other"
-          }
-        ],
-        "reasons": [
-          {
-            "count": 1,
-            "value": "Supplied Coumadin candidate is absent from the controlled dictionary; strict v0 uses controlled RxNorm 11289."
-          }
-        ],
-        "supporting_documents": [
-          "27"
-        ],
-        "surface_forms": [
-          {
-            "count": 1,
-            "value": "202421"
-          }
-        ]
-      },
-      {
-        "document_support": 1,
-        "normalized_text": "202433",
-        "occurrence_count": 1,
-        "reason_categories": [
-          {
-            "count": 1,
-            "value": "other"
-          }
-        ],
-        "reasons": [
-          {
-            "count": 1,
-            "value": "Supplied Tylenol code is outside the controlled RxNorm dictionary; strict v0 uses acetaminophen RxNorm 161."
-          }
-        ],
-        "supporting_documents": [
-          "63"
-        ],
-        "surface_forms": [
-          {
-            "count": 1,
-            "value": "202433"
-          }
-        ]
-      },
-      {
-        "document_support": 1,
-        "normalized_text": "211033",
-        "occurrence_count": 1,
-        "reason_categories": [
-          {
-            "count": 1,
-            "value": "other"
-          }
-        ],
-        "reasons": [
-          {
-            "count": 1,
-            "value": "Supplied RxNorm candidate was not found in local June RxNorm/controlled dictionary; strict v0 uses controlled RxNorm 212033 instead."
-          }
-        ],
-        "supporting_documents": [
-          "22"
-        ],
-        "surface_forms": [
-          {
-            "count": 1,
-            "value": "211033"
           }
         ]
       },
@@ -21997,110 +21052,6 @@
       },
       {
         "document_support": 1,
-        "normalized_text": "603849",
-        "occurrence_count": 1,
-        "reason_categories": [
-          {
-            "count": 1,
-            "value": "other"
-          }
-        ],
-        "reasons": [
-          {
-            "count": 1,
-            "value": "Supplied Mucinex D candidate is absent from local controlled/raw RxNorm; strict v0 uses source-backed RxNorm 1305603."
-          }
-        ],
-        "supporting_documents": [
-          "40"
-        ],
-        "surface_forms": [
-          {
-            "count": 1,
-            "value": "603849"
-          }
-        ]
-      },
-      {
-        "document_support": 1,
-        "normalized_text": "727954",
-        "occurrence_count": 1,
-        "reason_categories": [
-          {
-            "count": 1,
-            "value": "other"
-          }
-        ],
-        "reasons": [
-          {
-            "count": 1,
-            "value": "Supplied fulvestrant candidate is a branded dose-form syringe concept; strict v0 uses controlled ingredient RxNorm 282357 for bare fulvestrant."
-          }
-        ],
-        "supporting_documents": [
-          "94"
-        ],
-        "surface_forms": [
-          {
-            "count": 1,
-            "value": "727954"
-          }
-        ]
-      },
-      {
-        "document_support": 1,
-        "normalized_text": "82000",
-        "occurrence_count": 1,
-        "reason_categories": [
-          {
-            "count": 1,
-            "value": "other"
-          }
-        ],
-        "reasons": [
-          {
-            "count": 1,
-            "value": "Supplied Colace code is outside the controlled RxNorm dictionary; strict v0 uses controlled docusate RxNorm 82003."
-          }
-        ],
-        "supporting_documents": [
-          "63"
-        ],
-        "surface_forms": [
-          {
-            "count": 1,
-            "value": "82000"
-          }
-        ]
-      },
-      {
-        "document_support": 1,
-        "normalized_text": "855320",
-        "occurrence_count": 1,
-        "reason_categories": [
-          {
-            "count": 1,
-            "value": "other"
-          }
-        ],
-        "reasons": [
-          {
-            "count": 1,
-            "value": "Supplied Coumadin candidate is absent from local RxNorm June sources; strict v0 uses source-backed RxNorm 855318."
-          }
-        ],
-        "supporting_documents": [
-          "91"
-        ],
-        "surface_forms": [
-          {
-            "count": 1,
-            "value": "855320"
-          }
-        ]
-      },
-      {
-        "document_support": 1,
         "normalized_text": "ama",
         "occurrence_count": 1,
         "reason_categories": [
@@ -22122,32 +21073,6 @@
           {
             "count": 1,
             "value": "AMA"
-          }
-        ]
-      },
-      {
-        "document_support": 1,
-        "normalized_text": "biến đổi cấp tính",
-        "occurrence_count": 1,
-        "reason_categories": [
-          {
-            "count": 1,
-            "value": "other"
-          }
-        ],
-        "reasons": [
-          {
-            "count": 1,
-            "value": "Retained as negated nonspecific finding with [] because no safe ICD candidate is stated."
-          }
-        ],
-        "supporting_documents": [
-          "35"
-        ],
-        "surface_forms": [
-          {
-            "count": 1,
-            "value": "biến đổi cấp tính"
           }
         ]
       },
@@ -23566,32 +22491,6 @@
       },
       {
         "document_support": 1,
-        "normalized_text": "hẹp gây hạn chế dòng chảy",
-        "occurrence_count": 1,
-        "reason_categories": [
-          {
-            "count": 1,
-            "value": "other"
-          }
-        ],
-        "reasons": [
-          {
-            "count": 1,
-            "value": "Retained as negated diagnosis/finding but candidate left empty because no safe specific ICD code is stated."
-          }
-        ],
-        "supporting_documents": [
-          "43"
-        ],
-        "surface_forms": [
-          {
-            "count": 1,
-            "value": "hẹp gây hạn chế dòng chảy"
-          }
-        ]
-      },
-      {
-        "document_support": 1,
         "normalized_text": "hệ thống dẫn lưu",
         "occurrence_count": 1,
         "reason_categories": [
@@ -23665,58 +22564,6 @@
           {
             "count": 1,
             "value": "hỗ trợ thở áp lực dương không xâm nhập"
-          }
-        ]
-      },
-      {
-        "document_support": 1,
-        "normalized_text": "i82.4",
-        "occurrence_count": 1,
-        "reason_categories": [
-          {
-            "count": 1,
-            "value": "other"
-          }
-        ],
-        "reasons": [
-          {
-            "count": 1,
-            "value": "ICD-10-CM lower-extremity DVT branch absent from TT06 core; strict v0 uses TT06 I80.2."
-          }
-        ],
-        "supporting_documents": [
-          "66"
-        ],
-        "surface_forms": [
-          {
-            "count": 1,
-            "value": "I82.4"
-          }
-        ]
-      },
-      {
-        "document_support": 1,
-        "normalized_text": "k57.50",
-        "occurrence_count": 1,
-        "reason_categories": [
-          {
-            "count": 1,
-            "value": "other"
-          }
-        ],
-        "reasons": [
-          {
-            "count": 1,
-            "value": "Supplied ICD-10-CM code is outside the TT06-controlled dictionary; strict v0 uses TT06 K57.5."
-          }
-        ],
-        "supporting_documents": [
-          "63"
-        ],
-        "surface_forms": [
-          {
-            "count": 1,
-            "value": "K57.50"
           }
         ]
       },
@@ -24887,7 +23734,7 @@
         "surface_forms": [
           {
             "count": 1,
-            "value": "phẫu thuật mở cắt nối trực tràng/đại tràng sigma"
+            "value": "Phẫu thuật mở cắt nối trực tràng/đại tràng sigma"
           }
         ]
       },
@@ -25647,32 +24494,6 @@
       },
       {
         "document_support": 1,
-        "normalized_text": "thuốc giảm đau opioid",
-        "occurrence_count": 1,
-        "reason_categories": [
-          {
-            "count": 1,
-            "value": "other"
-          }
-        ],
-        "reasons": [
-          {
-            "count": 1,
-            "value": "Drug-class mention retained as THUỐC but candidate is [] because no specific RxNorm ingredient/clinical drug is stated."
-          }
-        ],
-        "supporting_documents": [
-          "34"
-        ],
-        "surface_forms": [
-          {
-            "count": 1,
-            "value": "thuốc giảm đau opioid"
-          }
-        ]
-      },
-      {
-        "document_support": 1,
         "normalized_text": "thăm khám chẩn đoán và điều trị",
         "occurrence_count": 1,
         "reason_categories": [
@@ -25901,7 +24722,7 @@
         "surface_forms": [
           {
             "count": 1,
-            "value": "Truyền dịch"
+            "value": "Truyền  dịch"
           }
         ]
       },
@@ -25927,7 +24748,7 @@
         "surface_forms": [
           {
             "count": 1,
-            "value": "truyền dịch tĩnh mạch 750cc"
+            "value": "Truyền dịch tĩnh mạch 750cc"
           }
         ]
       },
@@ -26395,7 +25216,7 @@
         "surface_forms": [
           {
             "count": 1,
-            "value": "xông khí dung"
+            "value": "Xông khí dung"
           }
         ]
       },
@@ -26630,32 +25451,6 @@
           {
             "count": 1,
             "value": "điều trị nội khoa"
-          }
-        ]
-      },
-      {
-        "document_support": 1,
-        "normalized_text": "đái tháo đườngđái tháo đường",
-        "occurrence_count": 1,
-        "reason_categories": [
-          {
-            "count": 1,
-            "value": "noisy_text"
-          }
-        ],
-        "reasons": [
-          {
-            "count": 1,
-            "value": "Noisy urinalysis result retained as KẾT_QUẢ_XÉT_NGHIỆM but not mapped to diabetes ICD."
-          }
-        ],
-        "supporting_documents": [
-          "35"
-        ],
-        "surface_forms": [
-          {
-            "count": 1,
-            "value": "đái tháo đườngđái tháo đường"
           }
         ]
       },
@@ -27328,6 +26123,7 @@
           "ghép thận thất bại",
           "hạ huyết áp không đặc hiệu",
           "hạ thân nhiệt",
+          "hẹp gây hạn chế dòng chảy",
           "hẹp khoảng 65 của động mạch cảnh chung trái gần gốc",
           "hẹp van động mạch chủ nghiêm trọng",
           "hội chứng nghiện rượu",
@@ -27358,6 +26154,7 @@
           "suy thận ngày càng nặng",
           "sỏi đoạn cuối ống mật chủ",
           "thiếu máu",
+          "tim to",
           "tăng calci máu",
           "tăng nhãn áp",
           "tắc nghẽn kéo dài gần chỗ nối mật tụy ảnh hưởng đến ống dẫn trước và sau bên phải",
@@ -27407,7 +26204,6 @@
           "phân có guaiac dương tính",
           "sóng st chênh xuống ở các chuyển đạo v4 đến v6",
           "thay đổi sóng t không đặc hiệu",
-          "tim to",
           "túi mật căng to",
           "tế bào bất thường",
           "đang chờ kết quả"
@@ -27432,6 +26228,7 @@
           "prograf",
           "suboxone",
           "thuốc giảm đau",
+          "thuốc giảm đau opioid",
           "vancozosyn",
           "vicodin"
         ],
@@ -27806,17 +26603,7 @@
           "temperate đến tmax 102"
         ],
         "other": [
-          "1190220",
-          "151399",
-          "196466",
           "2 giờ sáng",
-          "202421",
-          "202433",
-          "211033",
-          "603849",
-          "727954",
-          "82000",
-          "855320",
           "bệnh nhân tỉnh",
           "bị ngã",
           "bị ngã trong bồn tắm",
@@ -27830,8 +26617,6 @@
           "ho bệnh bạch cầu dòng tủy mãn tính",
           "ho rung nhĩ kèm đáp ứng thất nhanh",
           "họng",
-          "i82.4",
-          "k57.50",
           "khoa cấp cứu",
           "khoa phẫu thuật tim mạch",
           "khoảng một tháng trước",
@@ -28034,55 +26819,44 @@
     "schema_version": "phase1-annotation-policy.v1",
     "unstable_mentions": [
       "1",
-      "14279",
-      "biến đổi cấp tính",
       "bình thường",
       "bất thường",
       "ercp",
       "ho",
       "huyết khối",
       "hạ huyết áp",
-      "hẹp gây hạn chế dòng chảy",
       "khó thở",
       "ngã",
-      "thuốc giảm đau opioid",
-      "trầm cảm",
-      "đái tháo đườngđái tháo đường"
+      "trầm cảm"
     ]
   },
   "schema_version": "phase1-annotation-knowledge.v1",
   "summary": {
-    "accepted_entity_count": 2113,
+    "accepted_entity_count": 2112,
     "accepted_entity_count_by_type": {
-      "CHẨN_ĐOÁN": 446,
-      "KẾT_QUẢ_XÉT_NGHIỆM": 260,
+      "CHẨN_ĐOÁN": 448,
+      "KẾT_QUẢ_XÉT_NGHIỆM": 258,
       "THUỐC": 177,
-      "TRIỆU_CHỨNG": 913,
+      "TRIỆU_CHỨNG": 912,
       "TÊN_XÉT_NGHIỆM": 317
     },
-    "conflict_count": 87,
-    "conflict_count_by_severity": {
-      "medium": 52,
-      "warning": 35
-    },
-    "conflict_count_by_type": {
-      "gold_overlapping_entities": 1,
-      "review_offset_mismatch": 51,
-      "unstable_policy_evidence": 35
-    },
+    "conflict_count": 0,
+    "conflict_count_by_severity": {},
+    "conflict_count_by_type": {},
     "context_required_alias_count": 20,
     "guideline_note_count": 324,
     "manifest_document_count": 76,
-    "rejected_mention_count": 223,
-    "resolved_conflict_count": 15,
+    "rejected_mention_count": 206,
+    "resolved_conflict_count": 44,
     "resolved_conflict_count_by_action": {
-      "context_required": 13,
+      "context_required": 8,
+      "exclude_from_runtime": 34,
       "type_by_context": 2
     },
-    "reviewed_alias_count": 257,
+    "reviewed_alias_count": 259,
     "reviewed_document_count": 76,
     "strict_alias_count": 103,
     "strict_exclusion_count": 106,
-    "unstable_mention_count": 15
+    "unstable_mention_count": 10
   }
 }

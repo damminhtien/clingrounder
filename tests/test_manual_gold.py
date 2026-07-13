@@ -24,5 +24,5 @@ def test_validate_complete_manual_gold_batch() -> None:
     assert summary["valid"] is True
     assert summary["reviewed_count"] == 100
     assert summary["missing_count"] == 0
-    assert summary["entity_count"] == 2779
+    assert summary["entity_count"] == 2777
     assert summary["reviewed_files"] == [f"{index}.json" for index in range(1, 101)]

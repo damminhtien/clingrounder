@@ -18,7 +18,7 @@
     "position": [104, 137],
     "type": "CHẨN_ĐOÁN",
     "assertions": ["isHistorical"],
-    "candidates": ["I25.1"]
+    "candidates": ["I25.0"]
   },
   {
     "text": "Nhồi máu cơ tim",

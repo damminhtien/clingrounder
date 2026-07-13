@@ -11,7 +11,7 @@
     "position": [106, 114],
     "type": "CHẨN_ĐOÁN",
     "assertions": ["isHistorical"],
-    "candidates": ["I48"]
+    "candidates": ["I48.9"]
   },
   {
     "text": "u ác của tuyến tiền liệt",
@@ -46,7 +46,7 @@
     "position": [371, 379],
     "type": "CHẨN_ĐOÁN",
     "assertions": ["isHistorical"],
-    "candidates": ["I48"]
+    "candidates": ["I48.9"]
   },
   {
     "text": "sốt",

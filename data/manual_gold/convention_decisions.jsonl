@@ -7,3 +7,6 @@
 {"decision":"allow","entity_type":"THUỐC","kind":"multi_candidate_review","normalized_mention":"klonopinclonidine","reason":"Chuỗi nguồn ghép Klonopin và clonidine nhưng không có ranh giới offset để tách."}
 {"decision":"allow","entity_type":"CHẨN_ĐOÁN","kind":"multi_candidate_review","normalized_mention":"Viêm gan virus C và B","reason":"Một span nêu rõ đồng thời viêm gan virus C và B."}
 {"decision":"allow","entity_type":"THUỐC","kind":"multi_candidate_review","normalized_mention":"vancozosyn","reason":"Chuỗi nguồn ghép vancomycin và Zosyn nhưng không có ranh giới offset để tách."}
+{"decision":"allow","entity_type":"CHẨN_ĐOÁN","kind":"candidate_mapping_conflict","normalized_mention":"nhồi máu cơ tim","reason":"I21.9 áp dụng cho đợt nhồi máu cấp/gần đây hoặc bị loại trừ; I25.2 chỉ áp dụng khi ngữ cảnh xác nhận nhồi máu cơ tim cũ."}
+{"decision":"allow","entity_type":"CHẨN_ĐOÁN","kind":"candidate_mapping_conflict","normalized_mention":"áp xe","reason":"Mã phụ thuộc vị trí giải phẫu: L02.9 cho áp xe da/mô mềm, K65.0 cho ổ bụng-phúc mạc; để trống khi vị trí chưa đủ chắc chắn."}
+{"decision":"allow","entity_type":"CHẨN_ĐOÁN","kind":"candidate_mapping_conflict","normalized_mention":"đái tháo đường","reason":"Dùng E11.9 khi không nêu biến chứng; dùng E11.4 khi cùng ngữ cảnh xác nhận biến chứng thần kinh."}

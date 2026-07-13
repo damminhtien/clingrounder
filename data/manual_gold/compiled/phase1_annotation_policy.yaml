@@ -319,7 +319,6 @@ aliases:
     - phân có guaiac dương tính
     - sóng st chênh xuống ở các chuyển đạo v4 đến v6
     - thay đổi sóng t không đặc hiệu
-    - tim to
     - túi mật căng to
     - tế bào bất thường
     - đang chờ kết quả
@@ -333,6 +332,7 @@ aliases:
     - ghép thận thất bại
     - hạ huyết áp không đặc hiệu
     - hạ thân nhiệt
+    - hẹp gây hạn chế dòng chảy
     - hẹp khoảng 65 của động mạch cảnh chung trái gần gốc
     - hẹp van động mạch chủ nghiêm trọng
     - hội chứng nghiện rượu
@@ -363,6 +363,7 @@ aliases:
     - suy thận ngày càng nặng
     - sỏi đoạn cuối ống mật chủ
     - thiếu máu
+    - tim to
     - tăng calci máu
     - tăng nhãn áp
     - tắc nghẽn kéo dài gần chỗ nối mật tụy ảnh hưởng đến ống dẫn trước và sau bên
@@ -404,6 +405,7 @@ aliases:
     - prograf
     - suboxone
     - thuốc giảm đau
+    - thuốc giảm đau opioid
     - vancozosyn
     - vicodin
 exclusions:
@@ -535,17 +537,7 @@ exclusions:
     - tem
     - temperate đến tmax 102
     other:
-    - '1190220'
-    - '151399'
-    - '196466'
     - 2 giờ sáng
-    - '202421'
-    - '202433'
-    - '211033'
-    - '603849'
-    - '727954'
-    - '82000'
-    - '855320'
     - bệnh nhân tỉnh
     - bị ngã
     - bị ngã trong bồn tắm
@@ -559,8 +551,6 @@ exclusions:
     - ho bệnh bạch cầu dòng tủy mãn tính
     - ho rung nhĩ kèm đáp ứng thất nhanh
     - họng
-    - i82.4
-    - k57.50
     - khoa cấp cứu
     - khoa phẫu thuật tim mạch
     - khoảng một tháng trước
@@ -625,20 +615,15 @@ exclusions:
     - xỉu trước
 unstable_mentions:
 - '1'
-- '14279'
-- biến đổi cấp tính
 - bình thường
 - bất thường
 - ercp
 - ho
 - huyết khối
 - hạ huyết áp
-- hẹp gây hạn chế dòng chảy
 - khó thở
 - ngã
-- thuốc giảm đau opioid
 - trầm cảm
-- đái tháo đườngđái tháo đường
 boundary_rules:
   global:
     exclude_leading_context:

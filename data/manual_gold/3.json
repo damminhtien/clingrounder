@@ -1,6 +1,6 @@
 [
   {"text": "cơn ngất xỉu", "type": "TRIỆU_CHỨNG", "assertions": ["isHistorical"], "candidates": [], "position": [63, 75]},
-  {"text": "bệnh tim mạch do xơ vữa động mạch", "type": "CHẨN_ĐOÁN", "assertions": ["isHistorical"], "candidates": ["I25.1"], "position": [217, 250]},
+  {"text": "bệnh tim mạch do xơ vữa động mạch", "type": "CHẨN_ĐOÁN", "assertions": ["isHistorical"], "candidates": ["I25.0"], "position": [217, 250]},
   {"text": "tăng huyết áp", "type": "CHẨN_ĐOÁN", "assertions": ["isHistorical"], "candidates": ["I10"], "position": [253, 266]},
   {"text": "phình động mạch chủ nhỏ", "type": "CHẨN_ĐOÁN", "assertions": ["isHistorical"], "candidates": ["I71.9"], "position": [269, 292]},
   {"text": "cơn ngất xỉu", "type": "TRIỆU_CHỨNG", "assertions": [], "candidates": [], "position": [452, 464]},
@@ -52,7 +52,7 @@
   {"text": "troponin", "type": "TÊN_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [3578, 3586]},
   {"text": "0.01", "type": "KẾT_QUẢ_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [3587, 3591]},
   {"text": "chụp x-quang ngực", "type": "TÊN_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [3595, 3612]},
-  {"text": "tim to", "type": "KẾT_QUẢ_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [3622, 3628]},
+  {"text": "tim to", "type": "CHẨN_ĐOÁN", "assertions": [], "candidates": ["I51.7"], "position": [3622, 3628]},
   {"text": "không có bất thường nào khác", "type": "KẾT_QUẢ_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [3635, 3663]},
   {"text": "chụp cắt lớp vi tính sọ não", "type": "TÊN_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [3667, 3694]},
   {"text": "bình thường", "type": "KẾT_QUẢ_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [3695, 3706]},
@@ -72,7 +72,7 @@
   {"text": "điện tâm đồ (ecg)", "type": "TÊN_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [4269, 4286]},
   {"text": "thay đổi sóng t không đặc hiệu", "type": "KẾT_QUẢ_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [4290, 4320]},
   {"text": "điện tâm đồ (ecg)", "type": "TÊN_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [4322, 4339]},
-  {"text": "Tim to", "type": "KẾT_QUẢ_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [4360, 4366]},
+  {"text": "Tim to", "type": "CHẨN_ĐOÁN", "assertions": [], "candidates": ["I51.7"], "position": [4360, 4366]},
   {"text": "chụp x-quang ngực", "type": "TÊN_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [4368, 4385]},
   {"text": "chụp cắt lớp vi tính sọ não", "type": "TÊN_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [4389, 4416]},
   {"text": "bình thường", "type": "KẾT_QUẢ_XÉT_NGHIỆM", "assertions": [], "candidates": [], "position": [4417, 4428]}

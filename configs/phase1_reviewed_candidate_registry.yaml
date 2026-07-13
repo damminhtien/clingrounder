@@ -3027,6 +3027,22 @@ rules:
     document_support: 1
     dictionary_release: rxnorm_full_2026_07_06
   review_status: reviewed
+- rule_id: reviewed.candidate_icd.924e1bb94f2e
+  stage: candidate_icd
+  entity_type: CHẨN_ĐOÁN
+  normalized_mention: rung nhĩ
+  action: emit
+  candidates:
+  - I48.9
+  confidence_tier: high
+  provenance:
+    source: manual_gold_train
+    code_system: ICD-10
+    code_kind: tt06_exact
+    occurrence_support: 6
+    document_support: 4
+    dictionary_release: icd10_vn_tt06_2026
+  review_status: reviewed
 - rule_id: reviewed.candidate_icd.66418a9f2003
   stage: candidate_icd
   entity_type: CHẨN_ĐOÁN
@@ -3699,6 +3715,22 @@ rules:
     document_support: 1
     dictionary_release: icd10_vn_tt06_2026
   review_status: reviewed
+- rule_id: reviewed.candidate_icd.2c932a4cfac5
+  stage: candidate_icd
+  entity_type: CHẨN_ĐOÁN
+  normalized_mention: tim to
+  action: emit
+  candidates:
+  - I51.7
+  confidence_tier: high
+  provenance:
+    source: manual_gold_train
+    code_system: ICD-10
+    code_kind: tt06_exact
+    occurrence_support: 2
+    document_support: 1
+    dictionary_release: icd10_vn_tt06_2026
+  review_status: reviewed
 - rule_id: reviewed.candidate_icd.08f7c6dd8a06
   stage: candidate_icd
   entity_type: CHẨN_ĐOÁN
@@ -3746,6 +3778,22 @@ rules:
     occurrence_support: 1
     document_support: 1
     dictionary_release: icd10_vn_tt06_2026+icd_kcb_vn
+  review_status: reviewed
+- rule_id: reviewed.candidate_icd.4d969b2f6acd
+  stage: candidate_icd
+  entity_type: CHẨN_ĐOÁN
+  normalized_mention: trầm cảm
+  action: emit
+  candidates:
+  - F32.9
+  confidence_tier: high
+  provenance:
+    source: manual_gold_train
+    code_system: ICD-10
+    code_kind: tt06_exact
+    occurrence_support: 1
+    document_support: 1
+    dictionary_release: icd10_vn_tt06_2026
   review_status: reviewed
 - rule_id: reviewed.candidate_rxnorm_ingredient.d1d189882430
   stage: candidate_rxnorm_ingredient

@@ -18,7 +18,7 @@
     "position": [120, 134],
     "type": "CHẨN_ĐOÁN",
     "assertions": ["isHistorical"],
-    "candidates": ["E14.9"]
+    "candidates": ["E11.9"]
   },
   {
     "text": "xơ gan do rượu",

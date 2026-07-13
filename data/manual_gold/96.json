@@ -46,7 +46,7 @@
     "position": [321, 328],
     "type": "THUỐC",
     "assertions": ["isHistorical"],
-    "candidates": ["10831"]
+    "candidates": ["151399"]
   },
   {
     "text": "nhiễm khuẩn đường tiết niệu",
@@ -88,7 +88,7 @@
     "position": [551, 558],
     "type": "THUỐC",
     "assertions": ["isHistorical"],
-    "candidates": ["10831"]
+    "candidates": ["151399"]
   },
   {
     "text": "bệnh viêm tuỷ xương",

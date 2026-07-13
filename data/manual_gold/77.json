@@ -121,9 +121,11 @@
   },
   {
     "text": "trầm cảm",
-    "type": "TRIỆU_CHỨNG",
+    "type": "CHẨN_ĐOÁN",
     "assertions": [],
-    "candidates": [],
+    "candidates": [
+      "F32.9"
+    ],
     "position": [
       726,
       734

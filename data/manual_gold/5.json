@@ -1,5 +1,5 @@
 [
-  {"text": "bệnh tim mạch do xơ vữa động mạch", "type": "CHẨN_ĐOÁN", "assertions": ["isHistorical"], "candidates": ["I25.1"], "position": [57, 90]},
+  {"text": "bệnh tim mạch do xơ vữa động mạch", "type": "CHẨN_ĐOÁN", "assertions": ["isHistorical"], "candidates": ["I25.0"], "position": [57, 90]},
   {"text": "Tăng huyết áp", "type": "CHẨN_ĐOÁN", "assertions": ["isHistorical"], "candidates": ["I10"], "position": [97, 110]},
   {"text": "tăng lipid máu, không đặc hiệu", "type": "CHẨN_ĐOÁN", "assertions": ["isHistorical"], "candidates": ["E78.5"], "position": [117, 147]},
   {"text": "bệnh trào ngược dạ dày- thực quản không có viêm thực quản", "type": "CHẨN_ĐOÁN", "assertions": ["isHistorical"], "candidates": ["K21.9"], "position": [154, 211]},

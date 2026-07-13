@@ -1,13 +1,6 @@
 {
   "blocking": [],
-  "by_severity": {
-    "medium": 52,
-    "warning": 35
-  },
-  "by_type": {
-    "gold_overlapping_entities": 1,
-    "review_offset_mismatch": 51,
-    "unstable_policy_evidence": 35
-  },
-  "conflict_count": 87
+  "by_severity": {},
+  "by_type": {},
+  "conflict_count": 0
 }

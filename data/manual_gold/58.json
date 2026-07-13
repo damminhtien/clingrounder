@@ -151,8 +151,10 @@
   },
   {
     "text": "hạ huyết áp",
-    "type": "TRIỆU_CHỨNG",
-    "candidates": [],
+    "type": "CHẨN_ĐOÁN",
+    "candidates": [
+      "I95.9"
+    ],
     "assertions": [
       "isHistorical"
     ],
@@ -395,8 +397,10 @@
   },
   {
     "text": "hạ huyết áp, không đặc hiệu",
-    "type": "TRIỆU_CHỨNG",
-    "candidates": [],
+    "type": "CHẨN_ĐOÁN",
+    "candidates": [
+      "I95.9"
+    ],
     "assertions": [
       "isHistorical"
     ],
@@ -567,8 +571,10 @@
   },
   {
     "text": "hạ huyết áp, không đặc hiệu",
-    "type": "TRIỆU_CHỨNG",
-    "candidates": [],
+    "type": "CHẨN_ĐOÁN",
+    "candidates": [
+      "I95.9"
+    ],
     "assertions": [],
     "position": [
       2572,
