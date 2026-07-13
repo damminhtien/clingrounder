@@ -173,8 +173,7 @@
     "RXNORM:435"
   ],
   "albuterol / ipratropium": [
-    "RXNORM:214199",
-    "RXNORM:1437702"
+    "RXNORM:214199"
   ],
   "albuterol / ipratropium inhalation solution": [
     "RXNORM:1437702"
@@ -330,8 +329,7 @@
     "RXNORM:161"
   ],
   "apixaban": [
-    "RXNORM:1364430",
-    "RXNORM:1364445"
+    "RXNORM:1364430"
   ],
   "apixaban 5 mg oral tablet": [
     "RXNORM:1364445"
@@ -422,17 +420,7 @@
     "ICD10:I25.10"
   ],
   "ativan": [
-    "RXNORM:6470",
-    "RXNORM:91878",
-    "RXNORM:91879",
-    "RXNORM:104719",
-    "RXNORM:206819",
-    "RXNORM:206820",
-    "RXNORM:206821",
-    "RXNORM:206828",
-    "RXNORM:1665189",
-    "RXNORM:1665190",
-    "RXNORM:1665327"
+    "RXNORM:6470"
   ],
   "atorvastatin": [
     "RXNORM:83367"
@@ -1045,15 +1033,7 @@
     "RXNORM:1886"
   ],
   "caffeine": [
-    "RXNORM:1886",
-    "RXNORM:371181",
-    "RXNORM:371183",
-    "RXNORM:372053",
-    "RXNORM:372054",
-    "RXNORM:605093",
-    "RXNORM:1001436",
-    "RXNORM:1729388",
-    "RXNORM:1729397"
+    "RXNORM:1886"
   ],
   "caffeine / ergotamine oral tablet": [
     "RXNORM:372054"
@@ -1497,8 +1477,7 @@
     "LOCAL:SYMPTOM_COUGH"
   ],
   "coumadin": [
-    "RXNORM:11289",
-    "RXNORM:855318"
+    "RXNORM:11289"
   ],
   "coumadin 3 mg": [
     "RXNORM:855318"
@@ -1813,8 +1792,7 @@
     "ICD10:R74.0"
   ],
   "eliquis": [
-    "RXNORM:1364430",
-    "RXNORM:1364445"
+    "RXNORM:1364430"
   ],
   "embolism and thrombosis of unspecified vein": [
     "ICD10:I82.9"
@@ -2684,8 +2662,7 @@
     "RXNORM:82122"
   ],
   "levofloxacin": [
-    "RXNORM:82122",
-    "RXNORM:1665515"
+    "RXNORM:82122"
   ],
   "levofloxacin 750 mg iv": [
     "RXNORM:1665515"
@@ -2694,9 +2671,7 @@
     "RXNORM:1665515"
   ],
   "levophed": [
-    "RXNORM:7512",
-    "RXNORM:209217",
-    "RXNORM:1745278"
+    "RXNORM:7512"
   ],
   "lft": [
     "LOCAL:TEST_LIVER_ENZYMES"
@@ -2742,13 +2717,7 @@
     "RXNORM:6918"
   ],
   "lorazepam": [
-    "RXNORM:6470",
-    "RXNORM:372644",
-    "RXNORM:372645",
-    "RXNORM:372647",
-    "RXNORM:446182",
-    "RXNORM:1664995",
-    "RXNORM:1665187"
+    "RXNORM:6470"
   ],
   "lorazepam 0.5 mg oral tablet ativan": [
     "RXNORM:206821"
@@ -2805,17 +2774,7 @@
     "RXNORM:52175"
   ],
   "lovenox": [
-    "RXNORM:67108",
-    "RXNORM:362788",
-    "RXNORM:759594",
-    "RXNORM:854232",
-    "RXNORM:854236",
-    "RXNORM:854239",
-    "RXNORM:854242",
-    "RXNORM:854247",
-    "RXNORM:854249",
-    "RXNORM:854253",
-    "RXNORM:854256"
+    "RXNORM:67108"
   ],
   "lower leg injury": [
     "ICD10:S89.9"
@@ -3014,8 +2973,7 @@
     "RXNORM:6813"
   ],
   "methylprednisolone": [
-    "RXNORM:6902",
-    "RXNORM:1743704"
+    "RXNORM:6902"
   ],
   "methylprednisolone 125 mg injection": [
     "RXNORM:1743704"
@@ -3027,8 +2985,7 @@
     "RXNORM:1743704"
   ],
   "metoprolol": [
-    "RXNORM:6918",
-    "RXNORM:866508"
+    "RXNORM:6918"
   ],
   "metoprolol 5 mg iv": [
     "RXNORM:866508"
@@ -3043,8 +3000,7 @@
     "RXNORM:6918"
   ],
   "metoprolol tartrate": [
-    "RXNORM:6918",
-    "RXNORM:866508"
+    "RXNORM:6918"
   ],
   "metronidazole": [
     "RXNORM:6922"
@@ -3075,9 +3031,6 @@
   ],
   "mucinex": [
     "RXNORM:5032"
-  ],
-  "mucinex d": [
-    "RXNORM:1305603"
   ],
   "multiple fractures of ribs left side": [
     "ICD10:S22.42"
@@ -3721,10 +3674,7 @@
     "ICD10:F22"
   ],
   "phentolamine": [
-    "RXNORM:8153",
-    "RXNORM:1856563",
-    "RXNORM:1856566",
-    "RXNORM:2677792"
+    "RXNORM:8153"
   ],
   "phentolamine cartridge": [
     "RXNORM:1856566"
@@ -3940,9 +3890,7 @@
     "ICD10:O48"
   ],
   "propofol": [
-    "RXNORM:8782",
-    "RXNORM:377483",
-    "RXNORM:1808216"
+    "RXNORM:8782"
   ],
   "propofol injectable suspension": [
     "RXNORM:377483"
@@ -5536,8 +5484,7 @@
     "RXNORM:11124"
   ],
   "vancomycin": [
-    "RXNORM:11124",
-    "RXNORM:1807513"
+    "RXNORM:11124"
   ],
   "vancomycin 1 g injection": [
     "RXNORM:1807513"

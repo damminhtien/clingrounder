@@ -203,6 +203,23 @@ def test_phase1_ontology_lite_drug_terms_map_to_rxnorm() -> None:
         assert all(candidate.code_system == CodeSystem.RXNORM for candidate in candidates)
 
 
+def test_phase1_controlled_rxnorm_uses_ingredient_for_bare_brand_and_scd_for_full_product() -> None:
+    store = DictionaryStore.from_jsonl(
+        "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
+    )
+    generator = CandidateGenerator(store)
+
+    bare_brand = generator.generate("eliquis", EntityType.DRUG)
+    full_product = generator.generate("apixaban 5 mg oral tablet", EntityType.DRUG)
+
+    assert [(candidate.code, candidate.source) for candidate in bare_brand] == [
+        ("1364430", "exact")
+    ]
+    assert [(candidate.code, candidate.source) for candidate in full_product] == [
+        ("1364445", "exact")
+    ]
+
+
 def test_phase1_frequent_symptom_and_lab_terms_are_dictionary_constrained() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")

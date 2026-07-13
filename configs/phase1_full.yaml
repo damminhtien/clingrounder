@@ -8,7 +8,7 @@ dictionary: data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
 abbreviations: data/dictionaries/abbreviations.jsonl
 strict_validation: true
 expected_count: 100
-max_candidates: 1
+max_candidates: 5
 assertion_policy: pipeline
 candidate_policy: pipeline
 
@@ -25,6 +25,12 @@ pipeline:
   context_window: 80
   link_assignment_threshold: 0.75
   link_assignment_margin: 0.05
+  link_candidate_threshold: 0.75
+  link_candidate_relative_margin: 0.05
+  link_max_qualified_candidates: 5
+  # Source-specific values override type-specific values, which override the global threshold.
+  link_candidate_thresholds_by_type: {}
+  link_candidate_thresholds_by_source: {}
   candidate_sources:
     - exact
     - abbreviation

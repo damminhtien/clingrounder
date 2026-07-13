@@ -41,7 +41,7 @@ Rules:
 - `25.json`: used compact ICD candidates `I71.0`, `G82.2`, and `I77.0`. Kept endovascular intervention and vascular access wording review-only because Phase 1 has no procedure type.
 - `26.json`: used compact ICD candidate `E66.9` for historical obesity. Kept weight-change symptoms candidate-free and excluded diet/surgery context.
 - `27.json`: used compact candidates `Q96.9`, `I10`, `C18.9`, `I26.9`, RxNorm `11289`, RxNorm `214199`, and RxNorm `866508`. Corrected supplied Coumadin candidate `202421` to controlled RxNorm `11289`; kept procedure and generic GI-evaluation wording review-only.
-- `28.json`: used compact candidates `K85.9`, `I48`, `C61`, `F31.8`, RxNorm `1364445`, `K81.0`, `K80.2`, `K81.9`, and `K80.5`. Kept symptoms, tests, and result values candidate-free; excluded prostatectomy/procedure, location, and AMA/admin spans.
+- `28.json`: used compact candidates `K85.9`, `I48`, `C61`, `F31.8`, RxNorm `1364430`, `K81.0`, `K80.2`, `K81.9`, and `K80.5`. The bare `eliquis` mention has no strength or dose form, so Phase 1 uses the reviewed ingredient-level apixaban target rather than an implicit 5 mg SCD. Kept symptoms, tests, and result values candidate-free; excluded prostatectomy/procedure, location, and AMA/admin spans.
 - `30.json`: used compact candidates `C92.1`, `E78.0`, `I10`, `N39.0`, RxNorm `282388`, and RxNorm `519`. Kept generic analgesic mentions as `THUỐC` with `[]`; kept hallucination/perceptual symptoms candidate-free; treated UTI and stopped pre-admission medications as historical; did not mark `Ảo giác không mang tính chất ra lệnh` as negated.
 - `31.json`: used compact ICD candidate `O48` for `Thai 41 tuần`. Kept obstetric symptoms candidate-free and excluded labor-induction wording.
 - `32.json`: used compact candidates `C92.1`, `I10`, `E11.9`, `I48.9`, `N18.9`, `J96.9`, `A41.0`, `I82.9`, `I26.9`, RxNorm `435`, `5032`, and `313988`. Kept leading `ho` history artifacts out of symptom gold.
@@ -197,7 +197,7 @@ Controlled dictionary additions in this pass:
 - `B33.8` Other specified viral diseases / Bệnh do virus xác định khác
 - `N19` Unspecified kidney failure / Suy thận không xác định
 - `T86.1` Kidney transplant failure and rejection / Thất bại và/hoặc thải ghép thận
-- `1364445` RxNorm apixaban 5 MG Oral Tablet
+- `1364430` RxNorm apixaban ingredient (used for bare apixaban/Eliquis mentions)
 - `203546` RxNorm Compazine brand name
 - `215101` RxNorm Aleve brand name
 - `E11.4` Type 2 diabetes mellitus with neurological complications / Bệnh đái tháo đường típ 2, kèm biến chứng thần kinh

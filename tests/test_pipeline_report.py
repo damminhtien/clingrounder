@@ -57,6 +57,11 @@ def test_pipeline_report_merges_metrics_validation_trace_and_errors(tmp_path: Pa
     assert report["summary"]["document_count"] == 1
     assert report["runtime"]["bottleneck_stage"] == "candidate_generation"
     assert report["candidate_metrics"]["gold_rank"]["min"] == 2
+    assert report["candidate_metrics"]["qualified_candidate_count"]["max"] == 1
+    assert report["candidate_metrics"]["qualification_reason_counts"] == {
+        "test_qualified": 1,
+        "test_rejected": 2,
+    }
     assert report["validation"]["summary"]["by_kind"]["invalid_candidate_code_system"] == 1
     assert "score" in report["phase1"]["metrics"]
     assert report["summary"]["phase1_score"] == report["phase1"]["metrics"]["score"]
@@ -141,6 +146,8 @@ def _inject_report_errors(prediction: ClinicalPrediction) -> None:
             concept_id="ICD10:J18.9",
             source="exact",
             matched_alias="đái tháo đường type 2",
+            qualified=True,
+            qualification_reason="test_qualified",
         ),
         CandidateConcept(
             code_system=CodeSystem.ICD10,
@@ -150,6 +157,7 @@ def _inject_report_errors(prediction: ClinicalPrediction) -> None:
             concept_id="ICD10:E11",
             source="fuzzy",
             matched_alias="đái tháo đường type 2",
+            qualification_reason="test_rejected",
         ),
     ]
 
@@ -163,5 +171,6 @@ def _inject_report_errors(prediction: ClinicalPrediction) -> None:
             concept_id="ICD10:E11",
             source="test",
             matched_alias="metformin",
+            qualification_reason="test_rejected",
         )
     ]

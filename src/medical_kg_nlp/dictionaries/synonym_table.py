@@ -24,6 +24,8 @@ class ConceptEntry:
     brand_name: str | None = None
     generic_name: str | None = None
     dose_form: str | None = None
+    rxnorm_tty: str | None = None
+    strength: str | None = None
     blocked_aliases: tuple[str, ...] = ()
 
     @property

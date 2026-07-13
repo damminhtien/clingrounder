@@ -7,6 +7,7 @@ from medical_kg_nlp.retrieval.bm25_retriever import BM25Retriever
 from medical_kg_nlp.retrieval.candidate_generator import CandidateGenerator
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
+import pytest
 
 
 def test_bm25_uses_fixed_calibration_instead_of_query_maximum() -> None:
@@ -40,6 +41,79 @@ def test_candidate_merge_is_order_independent_and_deduplicates_output_code() -> 
     assert i10.sources == ("exact", "fuzzy")
 
 
+def test_unique_exact_output_short_circuits_approximate_retrieval(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store = DictionaryStore(
+        [
+            ConceptEntry(
+                concept_id="ICD10:I10",
+                code="I10",
+                code_system=CodeSystem.ICD10,
+                canonical_name="tăng huyết áp",
+                semantic_type=EntityType.DISEASE,
+            )
+        ]
+    )
+    generator = CandidateGenerator(store)
+
+    def fail(*args: object, **kwargs: object) -> list[Candidate]:
+        raise AssertionError("approximate retriever should not run")
+
+    monkeypatch.setattr(generator.fuzzy, "retrieve", fail)
+    monkeypatch.setattr(generator.char_ngram, "retrieve", fail)
+    monkeypatch.setattr(generator.bm25, "retrieve", fail)
+
+    candidates = generator.generate("tăng huyết áp", EntityType.DISEASE)
+
+    assert [(candidate.code, candidate.sources) for candidate in candidates] == [
+        ("I10", ("exact",))
+    ]
+    assert candidates[0].score == 1.0
+
+
+def test_ambiguous_exact_output_continues_approximate_retrieval(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store = DictionaryStore(
+        [
+            ConceptEntry(
+                concept_id="RXNORM:IN",
+                code="1",
+                code_system=CodeSystem.RXNORM,
+                canonical_name="test drug",
+                semantic_type=EntityType.DRUG,
+                synonyms=("brand",),
+            ),
+            ConceptEntry(
+                concept_id="RXNORM:SCD",
+                code="2",
+                code_system=CodeSystem.RXNORM,
+                canonical_name="test drug 5 mg tablet",
+                semantic_type=EntityType.DRUG,
+                synonyms=("brand",),
+            ),
+        ]
+    )
+    generator = CandidateGenerator(store, retrieval_sources=("exact", "fuzzy"))
+    called = False
+
+    def retrieve(
+        mention: str,
+        entity_type: EntityType,
+        limit: int,
+    ) -> list[Candidate]:
+        nonlocal called
+        called = True
+        return []
+
+    monkeypatch.setattr(generator.fuzzy, "retrieve", retrieve)
+
+    generator.generate("brand", EntityType.DRUG)
+
+    assert called is True
+
+
 def test_reranker_penalizes_conflicting_rxnorm_strength() -> None:
     entries = [
         _drug_entry("RX:1", "1", "Drug 1 mg tablet"),
@@ -59,6 +133,47 @@ def test_reranker_penalizes_conflicting_rxnorm_strength() -> None:
     assert ranked[0].code == "1"
     assert ranked[0].score > ranked[1].score
     assert ranked[1].score <= 0.2
+
+
+def test_reranker_uses_rxnorm_tty_for_bare_vs_structured_drug_mentions() -> None:
+    entries = [
+        ConceptEntry(
+            concept_id="RXNORM:1364430",
+            code="1364430",
+            code_system=CodeSystem.RXNORM,
+            canonical_name="apixaban",
+            semantic_type=EntityType.DRUG,
+            aliases=("Eliquis",),
+            ingredient="apixaban",
+            brand_name="Eliquis",
+            rxnorm_tty="IN",
+        ),
+        ConceptEntry(
+            concept_id="RXNORM:1364445",
+            code="1364445",
+            code_system=CodeSystem.RXNORM,
+            canonical_name="apixaban 5 MG Oral Tablet",
+            semantic_type=EntityType.DRUG,
+            ingredient="apixaban",
+            brand_name="Eliquis",
+            dose_form="Oral Tablet",
+            rxnorm_tty="SCD",
+            strength="5 MG",
+        ),
+    ]
+    reranker = HeuristicReranker(DictionaryStore(entries))
+    candidates = [
+        _candidate("RXNORM:1364430", "1364430", 0.8, "fuzzy"),
+        _candidate("RXNORM:1364445", "1364445", 0.8, "fuzzy"),
+    ]
+
+    bare = reranker.rerank(candidates, mention="Eliquis")
+    structured = reranker.rerank(candidates, mention="apixaban 5 mg oral tablet")
+
+    assert bare[0].code == "1364430"
+    assert structured[0].code == "1364445"
+    assert bare[1].score < bare[0].score
+    assert structured[1].score < structured[0].score
 
 
 def test_linker_keeps_candidates_but_abstains_without_score_margin() -> None:
@@ -88,6 +203,87 @@ def test_linker_keeps_candidates_but_abstains_without_score_margin() -> None:
     assert entity.code is None
     assert entity.code_system == CodeSystem.NONE
     assert len(entity.candidates) == 2
+    assert [candidate.qualified for candidate in entity.candidates] == [True, True]
+
+
+def test_linker_rejects_candidates_below_absolute_threshold() -> None:
+    linker = _linker()
+    entity = _entity()
+
+    linker.apply_candidates(entity, [_candidate("C1", "I10", 0.61, "fuzzy")])
+
+    assert entity.code is None
+    assert entity.candidates[0].qualified is False
+    assert entity.candidates[0].qualification_reason == "below_absolute_threshold"
+
+
+def test_linker_qualifies_dynamic_top_k_within_relative_margin() -> None:
+    linker = _linker()
+    entity = _entity()
+
+    linker.apply_candidates(
+        entity,
+        [
+            _candidate("C1", "I10", 0.90, "exact"),
+            _candidate("C2", "I11", 0.88, "fuzzy"),
+            _candidate("C3", "I12", 0.80, "fuzzy"),
+        ],
+    )
+
+    assert entity.code is None
+    assert [candidate.qualified for candidate in entity.candidates] == [True, True, False]
+    assert entity.candidates[2].qualification_reason == "outside_relative_margin"
+
+
+def test_linker_caps_qualified_candidates_at_five() -> None:
+    linker = _linker(candidate_relative_margin=0.10)
+    entity = _entity()
+    candidates = [
+        _candidate(f"C{index}", f"I{index:02d}", 0.90 - index / 100, "fuzzy")
+        for index in range(6)
+    ]
+
+    linker.apply_candidates(entity, candidates)
+
+    assert sum(candidate.qualified for candidate in entity.candidates) == 5
+    assert entity.candidates[5].qualification_reason == "beyond_max_candidates"
+
+
+def test_linker_supports_type_and_source_specific_candidate_thresholds() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    linker = EntityLinker(
+        CandidateGenerator(store),
+        candidate_threshold=0.75,
+        candidate_thresholds_by_entity_type={EntityType.DISEASE: 0.85},
+        candidate_thresholds_by_source={"exact": 0.70},
+    )
+
+    exact_entity = _entity()
+    linker.apply_candidates(exact_entity, [_candidate("C1", "I10", 0.80, "exact")])
+    fuzzy_entity = _entity()
+    linker.apply_candidates(fuzzy_entity, [_candidate("C2", "I11", 0.80, "fuzzy")])
+
+    assert exact_entity.candidates[0].qualified is True
+    assert fuzzy_entity.candidates[0].qualified is False
+
+
+def _linker(*, candidate_relative_margin: float = 0.05) -> EntityLinker:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    return EntityLinker(
+        CandidateGenerator(store),
+        candidate_relative_margin=candidate_relative_margin,
+    )
+
+
+def _entity() -> EntityAnnotation:
+    return EntityAnnotation(
+        id="E1",
+        span=(0, 4),
+        text="test",
+        normalized_text="test",
+        type=EntityType.DISEASE,
+        assertion=AssertionStatus.UNKNOWN,
+    )
 
 
 def _candidate(concept_id: str, code: str, score: float, source: str) -> Candidate:

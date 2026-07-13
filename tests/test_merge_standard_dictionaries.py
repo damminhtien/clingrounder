@@ -128,6 +128,38 @@ def test_merge_standard_rows_adds_new_rxnorm_terms_only_in_drug_context() -> Non
     assert "RXNORM:114202" not in by_id
 
 
+def test_merge_standard_rows_does_not_add_bare_aliases_to_structured_rxnorm_products() -> None:
+    standards = [
+        {
+            "concept_id": "RXNORM:1364445",
+            "code": "1364445",
+            "code_system": "RxNorm",
+            "canonical_name": "apixaban 5 MG Oral Tablet",
+            "semantic_type": "DRUG",
+            "ingredient": "apixaban",
+            "brand_name": "Eliquis",
+            "generic_name": "apixaban 5 MG Oral Tablet",
+            "dose_form": "Oral Tablet",
+            "strength": "5 MG",
+            "rxnorm_tty": "SCD",
+            "source": "rxnorm_prescribable_2026_07_06",
+        }
+    ]
+
+    rows, summary = merge_standard_rows(
+        [],
+        standards,
+        normalized_input_text=" bệnh nhân dùng apixaban 5 mg oral tablet ",
+        allowed_new_semantic_types={"DRUG"},
+    )
+
+    assert summary["added_rows"] == 1
+    assert rows[0]["aliases"] == ["apixaban 5 MG Oral Tablet"]
+    assert rows[0]["ingredient"] == "apixaban"
+    assert rows[0]["brand_name"] == "Eliquis"
+    assert rows[0]["blocked_aliases"] == ["apixaban", "Eliquis"]
+
+
 def test_merge_standard_rows_backfills_existing_rows_by_code_without_duplicates() -> None:
     base = [
         {

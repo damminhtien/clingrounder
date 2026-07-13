@@ -4,6 +4,11 @@ pipeline:
   context_window: 80
   link_assignment_threshold: 0.75
   link_assignment_margin: 0.05
+  link_candidate_threshold: 0.75
+  link_candidate_relative_margin: 0.05
+  link_max_qualified_candidates: 5
+  link_candidate_thresholds_by_type: {}
+  link_candidate_thresholds_by_source: {}
 
 dictionaries:
   seed_dictionary: "data/dictionaries/seed_concepts.jsonl"

@@ -72,7 +72,11 @@ class CandidateGenerator:
     ) -> list[Candidate]:
         candidates: list[Candidate] = []
         if "exact" in self.retrieval_sources:
-            candidates.extend(self.exact.retrieve(mention))
+            exact_candidates = self.exact.retrieve(mention)
+            candidates.extend(exact_candidates)
+            unique_exact = self._unique_exact_output(exact_candidates, entity_type)
+            if unique_exact is not None:
+                return [unique_exact]
         normalized = normalize_for_match(mention)
         if "abbreviation" in self.retrieval_sources:
             for expansion in self.abbreviations.get(normalized, []):
@@ -103,6 +107,26 @@ class CandidateGenerator:
         return sorted(merged, key=lambda candidate: candidate.score, reverse=True)[
             : self.max_candidates
         ]
+
+    def _unique_exact_output(
+        self,
+        candidates: list[Candidate],
+        entity_type: EntityType,
+    ) -> Candidate | None:
+        exact = [
+            candidate
+            for candidate in candidates
+            if candidate.source == "exact" and self._allowed(candidate, entity_type)
+        ]
+        if not exact or any(candidate.code is None for candidate in exact):
+            return None
+        output_keys = {self._output_key(candidate) for candidate in exact}
+        if len(output_keys) != 1:
+            return None
+        merged = self._merge(exact)
+        if len(merged) != 1:
+            return None
+        return self._replace(merged[0], score=max(candidate.score for candidate in exact))
 
     def _allowed(self, candidate: Candidate, entity_type: EntityType) -> bool:
         allowed = ALLOWED_CODE_SYSTEMS.get(entity_type)

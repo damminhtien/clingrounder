@@ -57,6 +57,9 @@ _BLOCKED_NEW_RXNORM_ALIAS_KEYS = frozenset(
         "succinate",
     )
 )
+_RXNORM_STRUCTURED_PRODUCT_TTYS = frozenset(
+    {"SCD", "SBD", "SCDF", "SBDF", "GPCK", "BPCK"}
+)
 _STANDARD_SCALAR_ENRICHMENT_FIELDS = (
     "official_name_vi",
     "official_name_en",
@@ -281,7 +284,7 @@ def _new_standard_row(standard: dict[str, Any], *, matched_alias: str | None) ->
 
 
 def _apply_derived_metadata(row: dict[str, Any]) -> dict[str, Any]:
-    enriched = dict(row)
+    enriched = _apply_rxnorm_concept_policy(dict(row))
     if enriched.get("code_system") != CodeSystem.ICD10.value:
         return enriched
     code = str(enriched.get("code", "")).strip()
@@ -301,6 +304,39 @@ def _apply_derived_metadata(row: dict[str, Any]) -> dict[str, Any]:
     return enriched
 
 
+def _apply_rxnorm_concept_policy(row: dict[str, Any]) -> dict[str, Any]:
+    if not _structured_rxnorm_product(row):
+        return row
+    blocked = _string_values(row.get("blocked_aliases"))
+    for key in ("ingredient", "brand_name", "generic_name"):
+        for value in _string_values(row.get(key)):
+            if _underspecified_rxnorm_product_name(value, row):
+                blocked.append(value)
+    if blocked:
+        row["blocked_aliases"] = _unique_strings(blocked)
+    return row
+
+
+def _underspecified_rxnorm_product_name(value: str, row: dict[str, Any]) -> bool:
+    normalized = normalize_for_match(value)
+    canonical = normalize_for_match(str(row.get("canonical_name") or ""))
+    if not normalized or normalized == canonical:
+        return False
+    if any(character.isdigit() for character in normalized):
+        return False
+    dose_forms = [
+        *_string_values(row.get("dose_form")),
+        *_string_values(row.get("dose_forms")),
+    ]
+    if any(
+        normalize_for_match(dose_form) in normalized
+        for dose_form in dose_forms
+        if normalize_for_match(dose_form)
+    ):
+        return False
+    return len(normalized) < len(canonical)
+
+
 def _derived_icd10_block(code: str, parent_code: str) -> str | None:
     if parent_code and "-" in parent_code:
         return parent_code
@@ -311,17 +347,17 @@ def _derived_icd10_block(code: str, parent_code: str) -> str | None:
 
 def _standard_aliases(row: dict[str, Any]) -> list[str]:
     values: list[str] = []
-    for key in (
+    keys = [
         "canonical_name",
         "official_name_vi",
         "official_name_en",
         "aliases",
         "synonyms",
         "abbreviations",
-        "ingredient",
-        "brand_name",
-        "generic_name",
-    ):
+    ]
+    if not _structured_rxnorm_product(row):
+        keys.extend(("ingredient", "brand_name", "generic_name"))
+    for key in keys:
         values.extend(_string_values(row.get(key)))
     official_name_vi = str(row.get("official_name_vi") or "").strip()
     if official_name_vi.casefold().startswith("bệnh "):
@@ -330,6 +366,13 @@ def _standard_aliases(row: dict[str, Any]) -> list[str]:
         if official_name_vi.casefold().endswith(suffix):
             values.append(official_name_vi[: -len(suffix)].strip())
     return _unique_strings(values)
+
+
+def _structured_rxnorm_product(row: dict[str, Any]) -> bool:
+    if row.get("code_system") != CodeSystem.RXNORM.value:
+        return False
+    tty = str(row.get("rxnorm_tty") or "").strip().upper()
+    return tty in _RXNORM_STRUCTURED_PRODUCT_TTYS
 
 
 def _matched_alias(

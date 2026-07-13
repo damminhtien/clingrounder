@@ -20,6 +20,8 @@ _FORM_CUES = {
     "solution": frozenset({"solution", "syrup", "dung dịch", "dịch"}),
     "tablet": frozenset({"tablet", "viên", "po", "oral", "uống"}),
 }
+_STRUCTURED_PRODUCT_TTYS = frozenset({"SCD", "SBD", "SCDF", "SBDF", "GPCK", "BPCK"})
+_INGREDIENT_TTYS = frozenset({"IN", "PIN", "MIN"})
 
 
 class HeuristicReranker:
@@ -71,7 +73,7 @@ class HeuristicReranker:
         if entry is None:
             return candidate.score
         candidate_name_text = " ".join(entry.all_names)
-        candidate_strengths = _strengths(candidate_name_text)
+        candidate_strengths = _strengths(f"{candidate_name_text} {entry.strength or ''}")
         explicit_candidate_forms = _forms(candidate_name_text)
         candidate_forms = _forms(f"{candidate_name_text} {entry.dose_form or ''}")
 
@@ -80,17 +82,27 @@ class HeuristicReranker:
             if mention_strengths.isdisjoint(candidate_strengths):
                 return max(0.0, score * 0.2)
             score += 0.10
+        elif entry.rxnorm_tty in _STRUCTURED_PRODUCT_TTYS and candidate_strengths:
+            score -= 0.24
+        elif mention_strengths and entry.rxnorm_tty in _INGREDIENT_TTYS:
+            score -= 0.08
         if mention_forms and candidate_forms:
             if not mention_forms.isdisjoint(candidate_forms):
                 score += 0.06
             elif explicit_candidate_forms:
                 score -= 0.12
+        elif entry.rxnorm_tty in _STRUCTURED_PRODUCT_TTYS and explicit_candidate_forms:
+            score -= 0.08
 
         normalized_mention = normalize_for_match(mention)
         if entry.semantic_type == EntityType.DRUG and entry.ingredient:
             ingredient = normalize_for_match(entry.ingredient)
             if ingredient and ingredient in normalized_mention:
                 score += 0.06
+        if entry.semantic_type == EntityType.DRUG and entry.brand_name:
+            brand = normalize_for_match(entry.brand_name)
+            if brand and brand in normalized_mention:
+                score += 0.04
 
         candidate_tokens = token_set(candidate.canonical_name)
         if candidate_tokens and context_tokens:

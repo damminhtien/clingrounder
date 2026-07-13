@@ -55,6 +55,8 @@ class DictionaryStore:
                         brand_name=_optional_string(row.get("brand_name")),
                         generic_name=_optional_string(row.get("generic_name")),
                         dose_form=_optional_string(row.get("dose_form")),
+                        rxnorm_tty=_optional_string(row.get("rxnorm_tty")),
+                        strength=_optional_string(row.get("strength")),
                         blocked_aliases=_string_tuple(row, "blocked_aliases"),
                     )
                 )

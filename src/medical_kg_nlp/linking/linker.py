@@ -1,9 +1,11 @@
 from __future__ import annotations
+from collections.abc import Mapping
+
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.linking.reranker import HeuristicReranker
 from medical_kg_nlp.retrieval.candidate_generator import CandidateGenerator
 from medical_kg_nlp.schema.annotation import CandidateConcept, EntityAnnotation
-from medical_kg_nlp.schema.types import CodeSystem
+from medical_kg_nlp.schema.types import CodeSystem, EntityType
 
 
 class EntityLinker:
@@ -13,11 +15,41 @@ class EntityLinker:
         *,
         assignment_threshold: float = 0.75,
         assignment_margin: float = 0.05,
+        candidate_threshold: float | None = None,
+        candidate_relative_margin: float | None = None,
+        max_qualified_candidates: int = 5,
+        candidate_thresholds_by_entity_type: Mapping[EntityType, float] | None = None,
+        candidate_thresholds_by_source: Mapping[str, float] | None = None,
     ) -> None:
+        effective_candidate_threshold = (
+            assignment_threshold if candidate_threshold is None else candidate_threshold
+        )
+        effective_relative_margin = (
+            assignment_margin
+            if candidate_relative_margin is None
+            else candidate_relative_margin
+        )
+        if not 0.0 <= effective_candidate_threshold <= 1.0:
+            raise ValueError("candidate_threshold must be between 0 and 1")
+        if not 0.0 <= effective_relative_margin <= 1.0:
+            raise ValueError("candidate_relative_margin must be between 0 and 1")
+        if not 1 <= max_qualified_candidates <= 5:
+            raise ValueError("max_qualified_candidates must be between 1 and 5")
+        type_thresholds = dict(candidate_thresholds_by_entity_type or {})
+        source_thresholds = dict(candidate_thresholds_by_source or {})
+        if any(not 0.0 <= threshold <= 1.0 for threshold in type_thresholds.values()):
+            raise ValueError("candidate type thresholds must be between 0 and 1")
+        if any(not 0.0 <= threshold <= 1.0 for threshold in source_thresholds.values()):
+            raise ValueError("candidate source thresholds must be between 0 and 1")
         self.generator = generator
         self.reranker = HeuristicReranker(generator.store)
         self.assignment_threshold = assignment_threshold
         self.assignment_margin = assignment_margin
+        self.candidate_threshold = effective_candidate_threshold
+        self.candidate_relative_margin = effective_relative_margin
+        self.max_qualified_candidates = max_qualified_candidates
+        self.candidate_thresholds_by_entity_type = type_thresholds
+        self.candidate_thresholds_by_source = source_thresholds
 
     def link_entity(self, entity: EntityAnnotation, context_window: str = "") -> EntityAnnotation:
         generated = self.generate_candidates(entity, context_window)
@@ -40,8 +72,8 @@ class EntityLinker:
     def apply_candidates(
         self, entity: EntityAnnotation, candidates: list[Candidate]
     ) -> EntityAnnotation:
-        entity.candidates = [self._to_schema(candidate) for candidate in candidates]
-        if self._should_assign(candidates):
+        entity.candidates = self._qualify_candidates(entity.type, candidates)
+        if self._should_assign(candidates, entity.candidates):
             top = candidates[0]
             entity.code_system = top.code_system
             entity.code = top.code
@@ -51,8 +83,14 @@ class EntityLinker:
             entity.confidence = max(entity.confidence, 0.5)
         return entity
 
-    def _should_assign(self, candidates: list[Candidate]) -> bool:
+    def _should_assign(
+        self,
+        candidates: list[Candidate],
+        schema_candidates: list[CandidateConcept],
+    ) -> bool:
         if not candidates or candidates[0].code is None:
+            return False
+        if not schema_candidates or not schema_candidates[0].qualified:
             return False
         top_score = candidates[0].score
         if top_score < self.assignment_threshold:
@@ -61,8 +99,66 @@ class EntityLinker:
             return True
         return top_score - candidates[1].score >= self.assignment_margin
 
+    def _qualify_candidates(
+        self,
+        entity_type: EntityType,
+        candidates: list[Candidate],
+    ) -> list[CandidateConcept]:
+        if not candidates:
+            return []
+        top_score = candidates[0].score
+        qualified_count = 0
+        schema_candidates: list[CandidateConcept] = []
+        for candidate in candidates:
+            qualified, reason = self._qualification(
+                candidate,
+                entity_type=entity_type,
+                top_score=top_score,
+                qualified_count=qualified_count,
+            )
+            if qualified:
+                qualified_count += 1
+            schema_candidates.append(
+                self._to_schema(
+                    candidate,
+                    qualified=qualified,
+                    qualification_reason=reason,
+                )
+            )
+        return schema_candidates
+
+    def _qualification(
+        self,
+        candidate: Candidate,
+        *,
+        entity_type: EntityType,
+        top_score: float,
+        qualified_count: int,
+    ) -> tuple[bool, str]:
+        if candidate.code is None:
+            return False, "missing_code"
+        threshold = self.candidate_thresholds_by_source.get(
+            candidate.source,
+            self.candidate_thresholds_by_entity_type.get(
+                entity_type,
+                self.candidate_threshold,
+            ),
+        )
+        if candidate.score < threshold:
+            return False, "below_absolute_threshold"
+        if top_score - candidate.score > self.candidate_relative_margin:
+            return False, "outside_relative_margin"
+        if qualified_count >= self.max_qualified_candidates:
+            return False, "beyond_max_candidates"
+        return True, "qualified"
+
     @staticmethod
-    def _to_schema(candidate: Candidate) -> CandidateConcept:
+    def _to_schema(
+        candidate: Candidate,
+        *,
+        qualified: bool,
+        qualification_reason: str,
+    ) -> CandidateConcept:
         return CandidateConcept(
             concept_id=candidate.concept_id,
             code_system=candidate.code_system,
@@ -71,4 +167,6 @@ class EntityLinker:
             score=candidate.score,
             source="+".join(candidate.sources),
             matched_alias=candidate.matched_alias,
+            qualified=qualified,
+            qualification_reason=qualification_reason,
         )

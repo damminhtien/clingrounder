@@ -226,12 +226,24 @@ def _candidate_metrics(
         for prediction in predictions
         for entity in prediction.entities
     ]
+    qualified_candidate_lengths = [
+        sum(candidate.qualified for candidate in entity.candidates)
+        for prediction in predictions
+        for entity in prediction.entities
+    ]
     source_counts: Counter[str] = Counter()
+    qualified_source_counts: Counter[str] = Counter()
+    qualification_reason_counts: Counter[str] = Counter()
     margins: list[float] = []
     for prediction in predictions:
         for entity in prediction.entities:
             for candidate in entity.candidates:
                 source_counts[candidate.source or "UNKNOWN"] += 1
+                qualification_reason_counts[
+                    candidate.qualification_reason or "UNSPECIFIED"
+                ] += 1
+                if candidate.qualified:
+                    qualified_source_counts[candidate.source or "UNKNOWN"] += 1
             if len(entity.candidates) >= 2:
                 margins.append(entity.candidates[0].score - entity.candidates[1].score)
 
@@ -262,8 +274,14 @@ def _candidate_metrics(
 
     return {
         "candidate_count": _number_summary(candidate_lengths),
+        "qualified_candidate_count": _number_summary(qualified_candidate_lengths),
         "entities_with_no_candidates": sum(1 for count in candidate_lengths if count == 0),
+        "entities_with_no_qualified_candidates": sum(
+            1 for count in qualified_candidate_lengths if count == 0
+        ),
         "candidate_source_counts": dict(sorted(source_counts.items())),
+        "qualified_candidate_source_counts": dict(sorted(qualified_source_counts.items())),
+        "qualification_reason_counts": dict(sorted(qualification_reason_counts.items())),
         "gold_coded_exact_matches": exact_gold_coded,
         "candidate_empty_gold_coded": empty_for_gold,
         "candidate_missing_gold": missing_gold,
