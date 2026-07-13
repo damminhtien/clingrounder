@@ -1,17 +1,18 @@
 schema_version: phase1-top1-campaign.v1
 
 baseline:
-  artifact: outputs/phase1/top10_probes/top10_a707b01002de/variants/A_NEG_HIST/output.zip
-  sha256: ab9644f4d635132eee6462929461cf0d9b3bd3b9059e5a598704349410b54644
+  artifact: outputs/phase1/20260713_btc_rxnorm_isolated/output.zip
+  sha256: 73321a5332bc15523d49d6df073ea4ea089d4106b2be564766fa30faf1bf4633
   public_metrics:
-    primary_score: 41.8577
+    primary_score: 43.2014
     wer: 50.8167
     j_assertion: 49.7245
-    j_candidates: 30.4634
+    j_candidates: 33.8226
   winning_modules:
     - E_OVERLAP
     - A_NEG
     - A_HIST
+    - C_BTC_RXNORM_EXACT
 
 targets:
   primary_score: 50.5
@@ -52,9 +53,9 @@ public_module_results:
     j_candidates_delta: -2.0166
 
 candidate_probe_ladder:
-  status: full_overlay_rejected
-  next_allowed_probe: C_ICD_ONE
-  stop_after_next_failure: true
+  status: rxnorm_exact_promoted
+  next_allowed_probe: C_BTC_RXNORM_TOP1
+  stop_after_next_failure: false
   rejected_public_artifacts:
     - name: C_ICD20
       primary_score: 41.1189

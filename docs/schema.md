@@ -9,7 +9,8 @@ Internal schemas live under `src/medical_kg_nlp/schema/` and use typed dataclass
   primary assertion, multi-label assertion features, code system, code, confidence, and candidate
   list. `assertion_evidence` records the rule id, cue, assertion, and scope behind each decision.
 - `MedicationMention`: original drug span, validated full medication span, and typed component spans
-  for strength, form, route, frequency, duration, transition, and context text. Phase 1 export reads
+  for administered dose, form, release, route, frequency, duration, transition, and context text.
+  Product strength remains dictionary metadata and is not conflated with administered dose. Phase 1 export reads
   this structure and does not apply a second regex span patch.
 - `CandidateConcept`: dictionary candidate metadata for debugging and selective export. It records
   independent `retrieval_score` and `emit_probability` values, the primary `source`, all
@@ -58,3 +59,14 @@ python scripts/validate_predictions.py \
 The internal prediction schema is intentionally strict and version-forward. Missing
 `assertion_evidence`, legacy candidate `score`, implicit qualification, or missing source provenance
 is a schema error rather than a compatibility fallback.
+
+Phase 1 external JSON has a narrower conditional contract. `text`, `type`, `assertions`, and
+`position` are always required. `candidates` is required for `THUỐC` and `CHẨN_ĐOÁN`; for the
+other three types it may be omitted or emitted as an empty list. Source TXT is decoded from raw
+bytes with UTF-8 BOM handling and without universal-newline translation, so CRLF offsets remain
+stable through inference, validation, ZIP validation, and hashing.
+
+Medication normalization uses two vocabularies in full mode: a small recognition dictionary for
+NER and a larger normalization dictionary for candidate retrieval and validation. Official BTC
+sample mappings are stored as provenance-bearing exact mention memory and are ignored unless the
+target RxCUI exists in the loaded normalization dictionary.

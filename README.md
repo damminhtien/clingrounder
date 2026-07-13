@@ -157,6 +157,7 @@ Raw clinical text
 
 `configs/phase1_submission.yaml` stops after entity extraction for official entity-only runs.
 `configs/phase1_full.yaml` enables context, candidate fusion, medication-aware reranking,
+separates the compact recognition dictionary from the RxNorm Full normalization store,
 confidence-margin qualification, and KG validation, and saves the internal prediction JSONL needed
 for calibration plus per-document trace JSONL. Only a reviewed, cross-fitted selective policy may
 treat retrieval output as submission-ready.
