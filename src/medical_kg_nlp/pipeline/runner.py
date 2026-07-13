@@ -19,7 +19,7 @@ from medical_kg_nlp.retrieval.candidate_generator import CandidateGenerator
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.document import ClinicalDocument, Section, Sentence
 from medical_kg_nlp.schema.output import ClinicalPrediction
-from medical_kg_nlp.schema.types import CodeSystem
+from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.utils.text import text_window
 
 
@@ -53,6 +53,16 @@ class PipelineRunner:
                 ),
                 assignment_threshold=self.options.link_assignment_threshold,
                 assignment_margin=self.options.link_assignment_margin,
+                candidate_threshold=self.options.link_candidate_threshold,
+                candidate_relative_margin=self.options.link_candidate_relative_margin,
+                max_qualified_candidates=self.options.link_max_qualified_candidates,
+                candidate_thresholds_by_entity_type={
+                    EntityType(entity_type): threshold
+                    for entity_type, threshold in self.options.link_candidate_thresholds_by_type
+                },
+                candidate_thresholds_by_source=dict(
+                    self.options.link_candidate_thresholds_by_source
+                ),
             )
             if self.options.enable_linking
             else None
@@ -119,9 +129,19 @@ class PipelineRunner:
             if self.options.enable_context:
                 for entity in entities:
                     sentence = self._find_sentence(entity, sentences)
-                    entity.assertion_features = self.assertion.classify_features(entity, sentence)
+                    features, evidence = self.assertion.classify_features_with_evidence(
+                        entity,
+                        sentence,
+                    )
+                    entity.assertion_features = features
                     entity.assertion = entity.assertion_features.primary()
+                    for item in evidence:
+                        key = f"rule_{item.rule_id}"
+                        counters[key] = counters.get(key, 0) + 1
                 counters["classified_entities"] = len(entities)
+                counters["matched_rule_events"] = sum(
+                    count for key, count in counters.items() if key.startswith("rule_")
+                )
             else:
                 counters["skipped_entities"] = len(entities)
 
@@ -192,6 +212,20 @@ class PipelineRunner:
                     linker.apply_candidates(entity, assigned_candidates)
                 counters["assigned_codes"] = sum(entity.code is not None for entity in entities)
                 counters["unlinked_entities"] = sum(entity.code is None for entity in entities)
+                counters["qualified_candidates"] = sum(
+                    candidate.qualified
+                    for entity in entities
+                    for candidate in entity.candidates
+                )
+                counters["entities_with_qualified_candidates"] = sum(
+                    any(candidate.qualified for candidate in entity.candidates)
+                    for entity in entities
+                )
+                for entity in entities:
+                    for schema_candidate in entity.candidates:
+                        reason = schema_candidate.qualification_reason or "unspecified"
+                        key = f"qualification_{reason}"
+                        counters[key] = counters.get(key, 0) + 1
             else:
                 counters["skipped_entities"] = len(entities)
 

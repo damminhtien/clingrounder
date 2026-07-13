@@ -1,7 +1,10 @@
 from __future__ import annotations
 import re
+from collections.abc import Callable
 
+from medical_kg_nlp.context.cue_loader import AssertionEvidence
 from medical_kg_nlp.context.rules import (
+    ASSERTION_RULE_REGISTRY,
     FAMILY_LEFT_CUES,
     FAMILY_RIGHT_CUES,
     HISTORICAL_LEFT_CUES,
@@ -90,6 +93,14 @@ class AssertionClassifier:
         entity: EntityAnnotation,
         sentence: Sentence | None = None,
     ) -> AssertionFeatures:
+        features, _ = self.classify_features_with_evidence(entity, sentence)
+        return features
+
+    def classify_features_with_evidence(
+        self,
+        entity: EntityAnnotation,
+        sentence: Sentence | None = None,
+    ) -> tuple[AssertionFeatures, tuple[AssertionEvidence, ...]]:
         sentence_text = sentence.text.lower() if sentence else ""
         entity_start = entity.span[0] - sentence.span[0] if sentence else 0
         entity_end = entity.span[1] - sentence.span[0] if sentence else entity_start
@@ -98,35 +109,93 @@ class AssertionClassifier:
         section_prior = self._section_prior(sentence)
 
         statuses: set[AssertionStatus] = set()
-        if self._contains_family(left_context, right_context) or self._contains(
-            right_context, FAMILY_RIGHT_CUES
-        ):
-            statuses.add(AssertionStatus.FAMILY)
-        if self._contains_negation(left_context) or self._contains(
-            right_context, NEGATION_RIGHT_CUES
-        ):
-            statuses.add(AssertionStatus.NEGATED)
-        if self._contains_coordinated_negation(sentence_text, max(entity_start, 0)):
-            statuses.add(AssertionStatus.NEGATED)
-        if self._contains(left_context, HISTORICAL_LEFT_CUES) or self._contains(
-            right_context, HISTORICAL_RIGHT_CUES
-        ):
-            statuses.add(AssertionStatus.HISTORICAL)
-        if self._contains(left_context, PLANNED_LEFT_CUES) or self._contains(
-            right_context, PLANNED_RIGHT_CUES
-        ):
-            statuses.add(AssertionStatus.PLANNED)
-        if self._contains(left_context, RESOLVED_LEFT_CUES) or self._contains(
-            right_context, RESOLVED_RIGHT_CUES
-        ):
-            statuses.add(AssertionStatus.RESOLVED)
+        evidence: list[AssertionEvidence] = []
+
+        def add(assertion: AssertionStatus, cue: str | None, scope: str) -> None:
+            if cue is None:
+                return
+            statuses.add(assertion)
+            evidence.append(
+                ASSERTION_RULE_REGISTRY.evidence(assertion, cue, scope=scope)
+            )
+
+        add(
+            AssertionStatus.FAMILY,
+            self._matching_family(left_context, right_context),
+            "left",
+        )
+        add(
+            AssertionStatus.FAMILY,
+            self._matching_cue(right_context, FAMILY_RIGHT_CUES),
+            "right",
+        )
+        add(AssertionStatus.NEGATED, self._matching_negation(left_context), "left")
+        add(
+            AssertionStatus.NEGATED,
+            self._matching_cue(right_context, NEGATION_RIGHT_CUES),
+            "right",
+        )
+        add(
+            AssertionStatus.NEGATED,
+            self._matching_coordinated_negation(sentence_text, max(entity_start, 0)),
+            "left",
+        )
+        self._add_directional_evidence(
+            add,
+            AssertionStatus.HISTORICAL,
+            left_context,
+            right_context,
+            HISTORICAL_LEFT_CUES,
+            HISTORICAL_RIGHT_CUES,
+        )
+        self._add_directional_evidence(
+            add,
+            AssertionStatus.PLANNED,
+            left_context,
+            right_context,
+            PLANNED_LEFT_CUES,
+            PLANNED_RIGHT_CUES,
+        )
+        self._add_directional_evidence(
+            add,
+            AssertionStatus.RESOLVED,
+            left_context,
+            right_context,
+            RESOLVED_LEFT_CUES,
+            RESOLVED_RIGHT_CUES,
+        )
         if section_prior is not None:
             statuses.add(section_prior)
-        if self._contains(left_context, POSSIBLE_LEFT_CUES) or self._contains(
-            right_context, POSSIBLE_RIGHT_CUES
-        ):
-            statuses.add(AssertionStatus.POSSIBLE)
-        return AssertionFeatures.from_statuses(statuses)
+            section_title = str(sentence.section_title).lower().strip() if sentence else ""
+            evidence.append(
+                ASSERTION_RULE_REGISTRY.evidence(
+                    section_prior,
+                    section_title,
+                    scope="section_prior",
+                )
+            )
+        self._add_directional_evidence(
+            add,
+            AssertionStatus.POSSIBLE,
+            left_context,
+            right_context,
+            POSSIBLE_LEFT_CUES,
+            POSSIBLE_RIGHT_CUES,
+        )
+        unique_evidence = {item.rule_id: item for item in evidence}
+        return AssertionFeatures.from_statuses(statuses), tuple(unique_evidence.values())
+
+    def _add_directional_evidence(
+        self,
+        add: Callable[[AssertionStatus, str | None, str], None],
+        assertion: AssertionStatus,
+        left_context: str,
+        right_context: str,
+        left_cues: tuple[str, ...],
+        right_cues: tuple[str, ...],
+    ) -> None:
+        add(assertion, self._matching_cue(left_context, left_cues), "left")
+        add(assertion, self._matching_cue(right_context, right_cues), "right")
 
     @staticmethod
     def _section_prior(sentence: Sentence | None) -> AssertionStatus | None:
@@ -155,27 +224,34 @@ class AssertionClassifier:
         return right_context[: match.start()]
 
     @staticmethod
-    def _contains(text: str, cues: tuple[str, ...]) -> bool:
+    def _matching_cue(text: str, cues: tuple[str, ...]) -> str | None:
         for cue in cues:
             normalized_cue = cue.strip()
             if not normalized_cue:
                 continue
             pattern = rf"(?<!\w){re.escape(normalized_cue)}(?!\w)"
             if re.search(pattern, text, flags=re.IGNORECASE | re.UNICODE):
-                return True
-        return False
+                return normalized_cue
+        return None
 
-    def _contains_negation(self, left_context: str) -> bool:
+    def _matching_negation(self, left_context: str) -> str | None:
         blocked_spans = self._pattern_spans(left_context, _NEGATION_FALSE_POSITIVE_PATTERNS)
-        return self._contains_outside_spans(left_context, NEGATION_LEFT_CUES, blocked_spans)
+        return self._matching_cue_outside_spans(
+            left_context,
+            NEGATION_LEFT_CUES,
+            blocked_spans,
+        )
 
-    def _contains_coordinated_negation(self, sentence_text: str, entity_start: int) -> bool:
+    def _matching_coordinated_negation(
+        self, sentence_text: str, entity_start: int
+    ) -> str | None:
         segment_start = 0
         for match in _NEGATION_COORDINATION_BOUNDARY_RE.finditer(sentence_text[:entity_start]):
             segment_start = match.end()
         segment = sentence_text[segment_start:entity_start]
         blocked_spans = self._pattern_spans(segment, _NEGATION_FALSE_POSITIVE_PATTERNS)
         best_match: re.Match[str] | None = None
+        best_cue: str | None = None
         for cue in NEGATION_LEFT_CUES:
             normalized_cue = cue.strip()
             if not normalized_cue:
@@ -190,14 +266,17 @@ class AssertionClassifier:
                     or (match.start() == best_match.start() and match.end() > best_match.end())
                 ):
                     best_match = match
+                    best_cue = normalized_cue
         if best_match is None:
-            return False
+            return None
         scope = segment[best_match.end() :]
         if len(scope) > 120:
-            return False
-        return _NEGATION_COORDINATION_BREAK_RE.search(scope) is None
+            return None
+        if _NEGATION_COORDINATION_BREAK_RE.search(scope) is not None:
+            return None
+        return best_cue
 
-    def _contains_family(self, left_context: str, right_context: str) -> bool:
+    def _matching_family(self, left_context: str, right_context: str) -> str | None:
         blocked_spans = self._pattern_spans(left_context, _FAMILY_FALSE_POSITIVE_PATTERNS)
         for cue in FAMILY_LEFT_CUES:
             normalized_cue = cue.strip()
@@ -210,18 +289,18 @@ class AssertionClassifier:
             if self._is_inside_spans(match.span(), blocked_spans):
                 continue
             if normalized_cue.lower() not in _FAMILY_MEMBER_CUES:
-                return True
+                return normalized_cue
             family_scope = left_context[match.end() :] + " " + right_context
             if _FAMILY_PREDICATE_RE.search(family_scope):
-                return True
-        return False
+                return normalized_cue
+        return None
 
-    def _contains_outside_spans(
+    def _matching_cue_outside_spans(
         self,
         text: str,
         cues: tuple[str, ...],
         blocked_spans: list[tuple[int, int]],
-    ) -> bool:
+    ) -> str | None:
         for cue in cues:
             normalized_cue = cue.strip()
             if not normalized_cue:
@@ -229,8 +308,8 @@ class AssertionClassifier:
             pattern = rf"(?<!\w){re.escape(normalized_cue)}(?!\w)"
             for match in re.finditer(pattern, text, flags=re.IGNORECASE | re.UNICODE):
                 if not self._is_inside_spans(match.span(), blocked_spans):
-                    return True
-        return False
+                    return normalized_cue
+        return None
 
     @staticmethod
     def _pattern_spans(text: str, patterns: tuple[re.Pattern[str], ...]) -> list[tuple[int, int]]:

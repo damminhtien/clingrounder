@@ -42,6 +42,20 @@ def test_source_backed_negation_cue() -> None:
     assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.NEGATED
 
 
+def test_assertion_classifier_exposes_stable_rule_evidence() -> None:
+    entity, sentence = _entity("Bệnh nhân phủ nhận đau ngực.", "đau ngực")
+    classifier = AssertionClassifier()
+
+    features, evidence = classifier.classify_features_with_evidence(entity, sentence)
+    _, repeated = classifier.classify_features_with_evidence(entity, sentence)
+
+    assert features.negated is True
+    assert len(evidence) == 1
+    assert evidence[0].rule_id.startswith("CUE_NEGATED_LEFT_")
+    assert evidence[0].cue == "phủ nhận"
+    assert evidence == repeated
+
+
 def test_possible_rule_overrides_negation_phrase() -> None:
     entity, sentence = _entity("Không loại trừ viêm phổi.", "viêm phổi")
     assert AssertionClassifier().classify(entity, sentence) == AssertionStatus.POSSIBLE

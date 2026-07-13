@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from dataclasses import dataclass
 from importlib.resources import files
 from pathlib import Path
@@ -17,12 +18,58 @@ VALID_SCOPES = {"left", "right", "bidirectional", "section_prior"}
 
 @dataclass(frozen=True)
 class AssertionCue:
+    rule_id: str
     cue: str
     assertion: AssertionStatus
     language: str
     scope: str
     source_ids: tuple[str, ...]
     notes: str = ""
+    priority: int = 100
+    max_distance: int = 120
+
+
+@dataclass(frozen=True)
+class AssertionEvidence:
+    rule_id: str
+    assertion: AssertionStatus
+    cue: str
+    scope: str
+
+
+class AssertionRuleRegistry:
+    def __init__(self, cues: list[AssertionCue]) -> None:
+        self.cues = tuple(cues)
+        rule_ids = [cue.rule_id for cue in cues]
+        if len(rule_ids) != len(set(rule_ids)):
+            raise ValueError("Assertion cue rule_id values must be unique.")
+
+    def evidence(
+        self,
+        assertion: AssertionStatus,
+        cue: str,
+        *,
+        scope: str,
+    ) -> AssertionEvidence:
+        candidates = [
+            item
+            for item in self.cues
+            if item.assertion == assertion
+            and item.cue.casefold() == cue.casefold()
+            and (item.scope == scope or item.scope == "bidirectional")
+        ]
+        if not candidates:
+            raise KeyError(f"No assertion rule for {assertion.value}:{scope}:{cue}")
+        selected = sorted(
+            candidates,
+            key=lambda item: (-item.priority, item.scope != scope, item.rule_id),
+        )[0]
+        return AssertionEvidence(
+            rule_id=selected.rule_id,
+            assertion=selected.assertion,
+            cue=selected.cue,
+            scope=scope,
+        )
 
 
 def load_assertion_cues(path: str | Path = DEFAULT_ASSERTION_CUE_PATH) -> list[AssertionCue]:
@@ -89,13 +136,24 @@ def _cue_from_row(row: dict[str, Any], path: Path, line_number: int) -> Assertio
     source_ids = _source_ids(row.get("source_ids"))
     if not source_ids:
         raise ValueError(f"{path}:{line_number}: source_ids must be non-empty.")
+    priority = _integer(row.get("priority", 100), path, line_number, "priority", minimum=0)
+    max_distance = _integer(
+        row.get("max_distance", 120),
+        path,
+        line_number,
+        "max_distance",
+        minimum=0,
+    )
     return AssertionCue(
+        rule_id=str(row.get("rule_id") or _derived_rule_id(assertion, scope, cue)),
         cue=cue,
         assertion=assertion,
         language=str(row.get("language", "")).strip() or "unknown",
         scope=scope,
         source_ids=source_ids,
         notes=str(row.get("notes", "")),
+        priority=priority,
+        max_distance=max_distance,
     )
 
 
@@ -105,3 +163,22 @@ def _source_ids(value: Any) -> tuple[str, ...]:
     if not isinstance(value, list | tuple):
         return ()
     return tuple(str(item) for item in value if str(item).strip())
+
+
+def _derived_rule_id(assertion: AssertionStatus, scope: str, cue: str) -> str:
+    payload = f"{assertion.value}\0{scope}\0{cue.casefold()}".encode()
+    digest = hashlib.sha256(payload).hexdigest()[:12]
+    return f"CUE_{assertion.value}_{scope.upper()}_{digest}"
+
+
+def _integer(
+    value: Any,
+    path: Path,
+    line_number: int,
+    field: str,
+    *,
+    minimum: int,
+) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < minimum:
+        raise ValueError(f"{path}:{line_number}: {field} must be an integer >= {minimum}.")
+    return value
