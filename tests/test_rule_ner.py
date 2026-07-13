@@ -81,14 +81,54 @@ def test_rule_ner_applies_data_driven_false_positive_blacklist(tmp_path) -> None
 
 def test_rule_ner_classifies_medication_strength_separately_from_lab_result() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    entities = RuleBasedNER(store).extract(
-        "Dùng metoprolol 25mg. HbA1c 7.2%. Creatinine 1.4 mg/dL."
-    )
+    text = "Dùng metoprolol 25mg. HbA1c 7.2%. Creatinine 1.4 mg/dL."
+    entities = RuleBasedNER(store).extract(text)
     by_text = {entity.text: entity for entity in entities}
 
     assert by_text["25mg"].type == EntityType.STRENGTH
+    medication = by_text["metoprolol"].medication_mention
+    assert medication is not None
+    assert text[medication.full_span[0] : medication.full_span[1]] == "metoprolol 25mg"
     assert by_text["7.2%"].type == EntityType.LAB_RESULT
     assert by_text["1.4 mg/dL"].type == EntityType.LAB_RESULT
+def test_rule_ner_prefers_combination_drug_over_overlapping_ingredients() -> None:
+    entries = [
+        ConceptEntry(
+            concept_id="RX:AMOX",
+            code="1",
+            code_system=CodeSystem.RXNORM,
+            canonical_name="amoxicillin",
+            semantic_type=EntityType.DRUG,
+        ),
+        ConceptEntry(
+            concept_id="RX:CLAV",
+            code="2",
+            code_system=CodeSystem.RXNORM,
+            canonical_name="clavulanate",
+            semantic_type=EntityType.DRUG,
+        ),
+        ConceptEntry(
+            concept_id="RX:COMBO",
+            code="3",
+            code_system=CodeSystem.RXNORM,
+            canonical_name="amoxicillin / clavulanate",
+            semantic_type=EntityType.DRUG,
+            aliases=("amoxicillin/clavulanate",),
+        ),
+    ]
+    text = "Dùng amoxicillin/clavulanate 875 mg tablet po bid."
+
+    entities = RuleBasedNER(DictionaryStore(entries)).extract(text)
+    drugs = [entity for entity in entities if entity.type == EntityType.DRUG]
+
+    assert [(entity.text, entity.code) for entity in drugs] == [
+        ("amoxicillin/clavulanate", "3")
+    ]
+    medication = drugs[0].medication_mention
+    assert medication is not None
+    assert text[medication.full_span[0] : medication.full_span[1]] == (
+        "amoxicillin/clavulanate 875 mg tablet po bid"
+    )
 
 
 def test_rule_ner_extracts_vietnamese_vital_sign_names_and_value_spans() -> None:

@@ -128,7 +128,7 @@ def main() -> None:
         parser,
     )
     max_candidates = _int_setting(
-        args.max_candidates, config.get("max_candidates"), 1, "max_candidates"
+        args.max_candidates, config.get("max_candidates"), 5, "max_candidates"
     )
     assertion_policy = _export_policy(
         args.assertion_policy or config.get("assertion_policy"), "assertion_policy"

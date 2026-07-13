@@ -7,6 +7,7 @@ from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatch, DictionaryMatcher
 from medical_kg_nlp.ner.lab_observation_extractor import LabObservationExtractor
 from medical_kg_nlp.ner.medication_attribute_extractor import MedicationAttributeExtractor
+from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
 from medical_kg_nlp.ontology.false_positive import (
     DEFAULT_FALSE_POSITIVE_PATH,
     FalsePositiveRule,
@@ -56,6 +57,7 @@ class RuleBasedNER:
         self.matcher = DictionaryMatcher(self.aliases)
         self.lab_observations = LabObservationExtractor()
         self.medication_attributes = MedicationAttributeExtractor()
+        self.medication_mentions = MedicationMentionParser()
         self._drug_alias_lowers = tuple(
             alias.lower()
             for alias, entry in self.aliases
@@ -92,6 +94,9 @@ class RuleBasedNER:
             spans.append(self._entity_from_dictionary_match(match))
         self._extract_concatenated_drugs(text, occupied, spans)
         spans.extend(self.medication_attributes.extract(text, spans, occupied=occupied))
+        for entity in spans:
+            if entity.type == EntityType.DRUG:
+                entity.medication_mention = self.medication_mentions.parse(text, entity.span)
         for entity in self.lab_observations.extract(text, spans, occupied=occupied):
             occupied.append(entity.span)
             spans.append(entity)
@@ -210,6 +215,8 @@ class RuleBasedNER:
                 score=score,
                 source=f"dictionary_{match.match_kind}",
                 matched_alias=match.alias,
+                qualified=True,
+                qualification_reason="pinned_unique_dictionary_match",
             )
             if entry is not None
             else None

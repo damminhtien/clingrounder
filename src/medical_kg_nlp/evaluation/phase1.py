@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import re
 import zipfile
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -34,56 +33,6 @@ _PHASE1_ASSERTION_BY_STATUS = {
     AssertionStatus.HISTORICAL: "isHistorical",
 }
 _PHASE1_ASSERTION_OVERLAYS: tuple[Phase1AssertionOverlay, ...] = load_phase1_assertion_overlays()
-_DRUG_EXTENSION_MAX_CHARS = 96
-_DRUG_EXTENSION_STOP_RE = re.compile(
-    r"\s*(?:cho|vì|do|để|không|nhưng|tuy nhiên|with|for|due\s+to|because)\b",
-    re.IGNORECASE,
-)
-_DRUG_EXTENSION_PATTERNS: tuple[tuple[re.Pattern[str], bool], ...] = (
-    (
-        re.compile(
-            r"\s*(?:,?\s*)?\d+(?:[.,]\d+)?\s*"
-            r"(?:mg|g|gram|mcg|microgram|ml|iu|đơn vị|units?)"
-            r"(?:\s*/\s*(?:ngày|day|lần|dose))?",
-            re.IGNORECASE,
-        ),
-        False,
-    ),
-    (
-        re.compile(
-            r"\s*(?:po|p\.o\.|iv|i\.v\.|im|sc|sl|uống|đường uống|tiêm tĩnh mạch|"
-            r"tĩnh mạch|hít|nebs?|xịt|dán|nhỏ)\b",
-            re.IGNORECASE,
-        ),
-        False,
-    ),
-    (
-        re.compile(
-            r"\s*(?:bid|tid|qid|qhs|q\d+h|q\s*\d+\s*h|daily|once|prn|hằng ngày|"
-            r"hàng ngày|mỗi ngày|lần/ngày|lần mỗi ngày)\b",
-            re.IGNORECASE,
-        ),
-        False,
-    ),
-    (re.compile(r"\s*x\s*\d+\b", re.IGNORECASE), False),
-    (re.compile(r"\s+\d+\s*(?:lần|liều|viên)\b", re.IGNORECASE), False),
-    (
-        re.compile(r"\s+trong\s+\d+(?:[.,]\d+)?\s*(?:ngày|day|days|tuần|weeks?)\b", re.IGNORECASE),
-        True,
-    ),
-    (
-        re.compile(
-            r"\s*,?\s*(?:sau đó|then|rồi)(?:\s+giảm\s+xuống)?\s+\d+(?:[.,]\d+)?\s*"
-            r"(?:mg|g|gram|mcg|microgram|ml|iu|đơn vị|units?)"
-            r"(?:\s*/\s*(?:ngày|day|lần|dose))?",
-            re.IGNORECASE,
-        ),
-        True,
-    ),
-    (re.compile(r"\s+tại nhà\b", re.IGNORECASE), True),
-    (re.compile(r"\s*\([^)\n\r]{1,50}\)"), True),
-)
-
 Phase1ExportPolicy = Literal["empty", "pipeline"]
 
 
@@ -113,7 +62,7 @@ class Phase1Match:
 def prediction_to_phase1_entities(
     prediction: ClinicalPrediction,
     *,
-    max_candidates: int = 1,
+    max_candidates: int = 5,
     source_text: str | None = None,
     assertion_policy: Phase1ExportPolicy = "pipeline",
     candidate_policy: Phase1ExportPolicy = "pipeline",
@@ -140,7 +89,7 @@ def entity_to_phase1(
     entity: EntityAnnotation,
     *,
     phase1_type: str,
-    max_candidates: int = 1,
+    max_candidates: int = 5,
     source_text: str | None = None,
     assertion_policy: Phase1ExportPolicy = "pipeline",
     candidate_policy: Phase1ExportPolicy = "pipeline",
@@ -344,7 +293,7 @@ def build_phase1_report(
     predictions: list[ClinicalPrediction],
     dictionary: DictionaryStore | None = None,
     *,
-    prediction_max_candidates: int = 1,
+    prediction_max_candidates: int = 5,
     gold_max_candidates: int = 50,
 ) -> dict[str, Any]:
     documents_by_id = {document.document_id: document for document in documents}
@@ -448,7 +397,7 @@ def write_phase1_output_dir(
     predictions: list[ClinicalPrediction],
     output_dir: str | Path,
     *,
-    max_candidates: int = 1,
+    max_candidates: int = 5,
     clean: bool = True,
     source_text_by_document: Mapping[str, str] | None = None,
     assertion_policy: Phase1ExportPolicy = "pipeline",
@@ -732,44 +681,15 @@ def _phase1_drug_text_and_span(
     if source_text[start:end] != entity.text:
         return entity.text, entity.span
 
-    expanded_end = _phase1_drug_expanded_end(source_text, end)
-    if expanded_end <= end:
+    medication = entity.medication_mention
+    if medication is None:
         return entity.text, entity.span
-    return source_text[start:expanded_end], (start, expanded_end)
-
-
-def _phase1_drug_expanded_end(source_text: str, end: int) -> int:
-    limit = min(len(source_text), end + _DRUG_EXTENSION_MAX_CHARS)
-    cursor = end
-    expanded_end = end
-    while cursor < limit:
-        tail = source_text[cursor:limit]
-        if "\n" in tail[:1] or "\r" in tail[:1] or ";" in tail[:1]:
-            break
-        if _DRUG_EXTENSION_STOP_RE.match(source_text, cursor):
-            break
-
-        matched_end = None
-        has_extension = expanded_end > end
-        for pattern, requires_prior_extension in _DRUG_EXTENSION_PATTERNS:
-            if requires_prior_extension and not has_extension:
-                continue
-            match = pattern.match(source_text, cursor)
-            if match is None or match.end() <= cursor:
-                continue
-            token = source_text[cursor : match.end()]
-            if not token.strip(" ,"):
-                continue
-            matched_end = match.end()
-            break
-        if matched_end is None:
-            break
-        cursor = matched_end
-        expanded_end = matched_end
-
-    while expanded_end > end and source_text[expanded_end - 1] in " ,":
-        expanded_end -= 1
-    return expanded_end
+    try:
+        medication.validate_offsets(source_text, entity.span)
+    except ValueError:
+        return entity.text, entity.span
+    full_start, full_end = medication.full_span
+    return source_text[full_start:full_end], medication.full_span
 
 
 def _phase1_candidates(
@@ -782,7 +702,11 @@ def _phase1_candidates(
     if entity.code_system == expected_system and entity.code:
         codes.append(entity.code)
     for candidate in entity.candidates:
-        if candidate.code_system != expected_system or candidate.code is None:
+        if (
+            not candidate.qualified
+            or candidate.code_system != expected_system
+            or candidate.code is None
+        ):
             continue
         if candidate.code not in codes:
             codes.append(candidate.code)

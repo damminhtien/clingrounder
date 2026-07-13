@@ -19,6 +19,7 @@ from medical_kg_nlp.evaluation.phase1 import (
     zip_phase1_output_dir,
 )
 from medical_kg_nlp.evaluation.phase1_submission_analysis import build_phase1_submission_analysis
+from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
 from medical_kg_nlp.schema.annotation import AssertionFeatures, CandidateConcept, EntityAnnotation
 from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.output import ClinicalPrediction
@@ -114,6 +115,32 @@ def test_prediction_to_phase1_entities_supports_entity_only_abstention() -> None
     assert rows[0]["text"] == "tăng huyết áp"
     assert rows[0]["assertions"] == []
     assert rows[0]["candidates"] == []
+
+
+def test_prediction_to_phase1_entities_exports_only_qualified_candidates() -> None:
+    text = "Chẩn đoán tăng huyết áp."
+    prediction = ClinicalPrediction.from_text(
+        document_id="1",
+        text=text,
+        entities=[
+            _entity(
+                "E1",
+                text,
+                "tăng huyết áp",
+                EntityType.DISEASE,
+                candidates=[
+                    _candidate(CodeSystem.ICD10, "I10", qualified=True),
+                    _candidate(CodeSystem.ICD10, "I11", qualified=False),
+                ],
+            )
+        ],
+        relations=[],
+        pipeline_version="test",
+    )
+
+    rows = prediction_to_phase1_entities(prediction, max_candidates=5)
+
+    assert rows[0]["candidates"] == ["I10"]
 
 
 def test_phase1_export_preserves_supported_multi_label_assertions() -> None:
@@ -787,7 +814,7 @@ def _entity(
     candidates: list[CandidateConcept] | None = None,
 ) -> EntityAnnotation:
     start = source_text.index(mention)
-    return EntityAnnotation(
+    entity = EntityAnnotation(
         id=entity_id,
         span=(start, start + len(mention)),
         text=mention,
@@ -799,9 +826,17 @@ def _entity(
         confidence=1.0,
         candidates=candidates or [],
     )
+    if entity_type == EntityType.DRUG:
+        entity.medication_mention = MedicationMentionParser().parse(source_text, entity.span)
+    return entity
 
 
-def _candidate(code_system: CodeSystem, code: str) -> CandidateConcept:
+def _candidate(
+    code_system: CodeSystem,
+    code: str,
+    *,
+    qualified: bool = True,
+) -> CandidateConcept:
     return CandidateConcept(
         code_system=code_system,
         code=code,
@@ -810,4 +845,6 @@ def _candidate(code_system: CodeSystem, code: str) -> CandidateConcept:
         concept_id=f"{code_system.value}:{code}",
         source="test",
         matched_alias=code,
+        qualified=qualified,
+        qualification_reason="test_qualified" if qualified else "test_rejected",
     )

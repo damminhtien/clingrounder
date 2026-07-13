@@ -177,8 +177,8 @@ class DictionaryMatcher:
         """Select the maximum-weight non-overlapping match set.
 
         A small per-entity utility lets two independently useful concepts beat
-        one broad overlapping alias, while covered characters and exact-match
-        priority preserve the usual longest-match behavior for nested aliases.
+        one broad overlapping alias. Drug aliases receive a length bonus so a
+        reviewed combination/product name is not split into ingredient matches.
         """
 
         ordered = sorted(
@@ -200,7 +200,15 @@ class DictionaryMatcher:
         for index, match in enumerate(ordered):
             previous = states[predecessors[index] + 1]
             length = match.span[1] - match.span[0]
-            weight = length + 4 + (2 if match.match_kind == "exact" else 0)
+            is_drug = match.entry.semantic_type == EntityType.DRUG
+            drug_length_bonus = length if is_drug else 0
+            per_entity_utility = 0 if is_drug else 4
+            weight = (
+                length
+                + drug_length_bonus
+                + per_entity_utility
+                + (2 if match.match_kind == "exact" else 0)
+            )
             include = (previous[0] + weight, previous[1] + length, (*previous[2], index))
             exclude = states[-1]
             include_key = (include[0], include[1], -len(include[2]))
