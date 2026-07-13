@@ -129,6 +129,7 @@ Example:
 python scripts/extract_tt06_icd10.py \
   --pdf data/standards/icd10_vn/raw/06-byt-kem.pdf \
   --tsv data/standards/icd10_vn/processed/06-byt-kem.tsv \
+  --reuse-tsv \
   --output data/standards/icd10_vn/processed/tt06_icd10_extract.jsonl \
   --manifest data/standards/icd10_vn/processed/tt06_icd10_extract_manifest.json
 
@@ -139,6 +140,10 @@ python scripts/import_icd10_dictionary.py \
   --output data/processed/icd10_concepts.jsonl \
   --manifest data/processed/icd10_import_manifest.json
 ```
+
+The extractor treats the bounded ICD column as the row key because TT06 merges the STT cell across
+multiple code rows. It also parses the `pdftotext` TSV with quoting disabled; raw clinical prose
+can contain unmatched double quotes and must never consume subsequent pages as one CSV field.
 
 The importer is offline and deterministic. It does not download source files, and it does not make
 the runtime pipeline depend on WHO, CDC, or KCB availability. It refuses WHO/CDC-only builds unless

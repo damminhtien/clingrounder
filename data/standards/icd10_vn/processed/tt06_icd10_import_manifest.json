@@ -1,8 +1,8 @@
 {
-  "concepts": 12159,
+  "concepts": 14925,
   "source_counts": {
-    "icd10_vn_tt06_2026": 12159,
-    "icd_kcb_vn": 17
+    "icd10_vn_tt06_2026": 14925,
+    "icd_kcb_vn": 19
   },
   "source_inputs": [
     "data/standards/icd10_vn/processed/tt06_icd10_extract.jsonl",
@@ -10,7 +10,7 @@
   ],
   "source_parse_counts": [
     {
-      "concepts": 12159,
+      "concepts": 14925,
       "parser": "icd10_vn_tt06",
       "path": "data/standards/icd10_vn/processed/tt06_icd10_extract.jsonl"
     }

@@ -78,12 +78,14 @@ def extract_tt06_rows_from_tsv(tsv_path: str | Path) -> list[TT06ExtractedRow]:
         sorted_words = sorted(words, key=lambda word: word[0])
         stt = _first_word_in_range(sorted_words, _STT_X_RANGE, str.isdigit)
         code = _first_word_in_range(sorted_words, _CODE_X_RANGE, _is_icd10_code)
-        if stt is not None and code is not None:
+        if code is not None:
             if current is not None:
                 maybe_row = current.build()
                 if maybe_row is not None:
                     rows.append(maybe_row)
-            current = _RowBuilder(stt=stt, code=code, page=page)
+            # The official PDF merges STT cells across many ICD rows. Requiring STT on every
+            # line silently dropped valid codes; the tightly bounded code column is sufficient.
+            current = _RowBuilder(stt=stt or "", code=code, page=page)
         if current is not None:
             current.official_name_en.extend(_words_in_range(sorted_words, _ENGLISH_NAME_X_RANGE))
             current.official_name_vi.extend(_words_in_range(sorted_words, _VIETNAMESE_NAME_X_RANGE))
@@ -145,7 +147,9 @@ def _load_word_lines(tsv_path: str | Path) -> dict[tuple[int, int], list[tuple[f
     csv.field_size_limit(sys.maxsize)
     lines: dict[tuple[int, int], list[tuple[float, str]]] = defaultdict(list)
     with Path(tsv_path).open("r", encoding="utf-8", newline="") as handle:
-        for row in csv.DictReader(handle, delimiter="\t"):
+        # pdftotext emits raw clinical prose, including unmatched double quotes. TSV has no
+        # quoting contract, so standard CSV quote handling can swallow many subsequent pages.
+        for row in csv.DictReader(handle, delimiter="\t", quoting=csv.QUOTE_NONE):
             if row.get("level") != "5":
                 continue
             text = str(row.get("text", "")).strip()
