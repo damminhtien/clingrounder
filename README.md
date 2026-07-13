@@ -42,7 +42,16 @@ uv run pytest tests/
 The default Phase 1 config uses the validated entity-only policy: entities are exported while
 `assertions` and `candidates` remain empty, and context/linking/KG stages that cannot affect the
 submission are not constructed. Use `--config configs/phase1_full.yaml` for a controlled
-assertion/candidate experiment; the CLI validates both mode contracts.
+assertion/candidate diagnostic. `configs/phase1_selective.yaml` enables evidence-gated assertions
+while retaining candidate abstention. `configs/phase1_selective_candidates.yaml` is a local
+calibration probe for reviewed `dictionary_exact` mappings; it is not promoted until a public probe
+wins.
+
+Internal predictions use the current strict schema only. Candidate rows require separate
+`retrieval_score` and `emit_probability` values plus source/evidence provenance; assertion rows
+require `assertion_evidence`. Legacy prediction JSON is intentionally rejected. Dictionary-pinned
+candidates do not receive an implicit confidence: an unconfigured `(code system, source)` has
+`emit_probability: 0` and therefore abstains under selective export.
 
 For controlled Top 10 experiments, use `scripts/run_phase1_top10_probes.py`. It builds
 content-hashed, strict-validated ZIPs for lab precision, strict exclusions, overlap resolution,
@@ -56,6 +65,17 @@ uv run python scripts/evaluate_phase1_manual_gold.py \
   --gold-dir data/manual_gold \
   --pred-dir outputs/phase1/<run>/phase1/output \
   --output-dir outputs/evaluation/manual_gold
+```
+
+Compile the reviewed exact-unique whitelist and run document-fold candidate calibration:
+
+```bash
+uv run python scripts/build_phase1_reviewed_candidates.py --split train
+uv run python scripts/build_phase1_submission.py --config configs/phase1_full.yaml
+uv run python scripts/calibrate_phase1_candidates.py \
+  --pred outputs/phase1/<full-run>/phase1/full_internal_predictions.jsonl \
+  --reviewed-map data/manual_gold/reviewed_candidate_map.jsonl \
+  --output-dir outputs/phase1/<full-run>/calibration
 ```
 
 Fallback without `uv`:
@@ -136,8 +156,10 @@ Raw clinical text
 ```
 
 `configs/phase1_submission.yaml` stops after entity extraction for official entity-only runs.
-`configs/phase1_full.yaml` enables the context, calibrated candidate fusion, medication-aware
-reranking, confidence-margin abstention, and KG validation stages shown above.
+`configs/phase1_full.yaml` enables context, candidate fusion, medication-aware reranking,
+confidence-margin qualification, and KG validation, and saves the internal prediction JSONL needed
+for calibration plus per-document trace JSONL. Only a reviewed, cross-fitted selective policy may
+treat retrieval output as submission-ready.
 
 ## Repository Layout
 

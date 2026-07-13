@@ -140,9 +140,32 @@ for one-off runs.
 
 The current competition baseline is entity-only. `assertion_policy: empty` and
 `candidate_policy: empty` preserve entity text/type/offsets while deliberately abstaining on the two
-high-risk fields. The pipeline still computes assertion and linking traces internally. Python export
-APIs remain backward-compatible with `pipeline` defaults; the submission config opts into `empty`
-explicitly.
+high-risk fields. The `selective` policy is a third, explicit mode: assertion output requires
+allowed rule evidence, and candidate output requires a qualified candidate, a configured
+`(code system, primary source)` threshold, and optionally a reviewed exact mapping. Internal schema
+compatibility fallbacks are not supported.
+
+Compile reviewed mappings and calibrate emit versus abstain with document-fold cross-validation:
+
+```bash
+uv run python scripts/build_phase1_reviewed_candidates.py --split train
+uv run python scripts/build_phase1_submission.py --config configs/phase1_full.yaml
+uv run python scripts/calibrate_phase1_candidates.py \
+  --pred outputs/phase1/<full-run>/phase1/full_internal_predictions.jsonl \
+  --reviewed-map data/manual_gold/reviewed_candidate_map.jsonl \
+  --output-dir outputs/phase1/<full-run>/calibration
+```
+
+The whitelist compiler requires a single reviewed code, exact unique type-compatible dictionary
+match, TT06 provenance for ICD, and an allowed RxNorm term type. Calibration cross-fits the
+whitelist per document fold and compares actual one-code Jaccard against empty-output Jaccard.
+`candidate_calibration.json` reports source and policy groups; local recommendation is still only a
+pre-submit gate because public candidate prevalence has differed from manual gold.
+Calibrated probabilities must be copied explicitly into
+`pipeline.link_emit_probabilities_by_source`. Missing source entries resolve to probability zero;
+the runtime never substitutes a retrieval score or a hard-coded exact-match confidence.
+The full config also persists internal prediction and trace JSONL files inside the hashed run, so
+every calibration result can be tied to exact candidate provenance and stage counters.
 
 Evaluate reviewed Phase 1 files without converting them to the internal schema:
 
@@ -284,9 +307,9 @@ generated candidates
 ```
 
 `pipeline_report.py` reports generated count, qualified count, entities without a qualified
-candidate, qualification reasons, and source counts for both sets. Legacy candidate JSON without a
-`qualified` field defaults to unqualified, so old low-confidence traces cannot silently become a
-submission candidate list.
+candidate, qualification reasons, and source counts for both sets. Internal candidate JSON must
+provide `retrieval_score`, `emit_probability`, `source`, `evidence_sources`, `qualified`, and a
+qualification reason. Legacy candidate JSON is rejected.
 
 Record every external grader result and keep/reject decision:
 

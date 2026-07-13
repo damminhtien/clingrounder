@@ -36,9 +36,9 @@ below are committed on top of it.
   uses threads to avoid multiplying dictionary/index RAM by worker count.
 - Relation extraction links the nearest eligible entity in a sentence instead of producing the
   full disease-by-symptom/test Cartesian product, and excludes negated/family endpoints.
-- Internal assertion features can represent combinations such as historical+negated. The legacy
-  primary enum remains for backward compatibility, while Phase 1 export emits every supported
-  assertion label.
+- Internal assertion features can represent combinations such as historical+negated. The strict
+  internal schema records the primary status, all feature flags, and mandatory rule evidence;
+  Phase 1 export emits every supported assertion label selected by the active policy.
 - `OntologyReasoner` provides dictionary-backed transitive `is-a` closure, hierarchy distance, and
   reasoning-path provenance. `KGValidator` rejects coded `IS_A` edges that contradict a known
   hierarchy path.

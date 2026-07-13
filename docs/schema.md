@@ -7,13 +7,15 @@ Internal schemas live under `src/medical_kg_nlp/schema/` and use typed dataclass
 - `ClinicalDocument`: `document_id`, source `text`, and string metadata.
 - `EntityAnnotation`: stable `id`, source `span`, source `text`, normalized text, entity type,
   primary assertion, multi-label assertion features, code system, code, confidence, and candidate
-  list.
+  list. `assertion_evidence` records the rule id, cue, assertion, and scope behind each decision.
 - `MedicationMention`: original drug span, validated full medication span, and typed component spans
   for strength, form, route, frequency, duration, transition, and context text. Phase 1 export reads
   this structure and does not apply a second regex span patch.
-- `CandidateConcept`: dictionary candidate metadata for debugging and recall evaluation. It records
-  `qualified` and `qualification_reason`; unqualified candidates remain available in traces but are
-  not eligible for Phase 1 export.
+- `CandidateConcept`: dictionary candidate metadata for debugging and selective export. It records
+  independent `retrieval_score` and `emit_probability` values, the primary `source`, all
+  `evidence_sources`, `matched_alias`, `qualified`, and `qualification_reason`. Unqualified
+  candidates remain available in traces but are not eligible for Phase 1 export. No confidence is
+  inferred from exact matching: sources without an explicit calibrated probability carry `0.0`.
 - `RelationAnnotation`: typed edge between entity ids with optional evidence span.
 - `ClinicalPrediction`: exported prediction object with `document_id`, `text_hash`, entities,
   relations, and metadata.
@@ -40,6 +42,7 @@ issues instead of silently accepting invalid output. It checks:
 - entity/code-system compatibility;
 - entity and candidate dictionary membership when a dictionary is supplied;
 - candidate code-system compatibility with the parent entity type;
+- complete candidate retrieval/emission provenance and assertion evidence;
 - structured medication spans and component kinds when present;
 - relation endpoint existence and type compatibility.
 
@@ -51,3 +54,7 @@ python scripts/validate_predictions.py \
   --documents data/samples/sample_notes.jsonl \
   --dictionary data/dictionaries/seed_concepts.jsonl
 ```
+
+The internal prediction schema is intentionally strict and version-forward. Missing
+`assertion_evidence`, legacy candidate `score`, implicit qualification, or missing source provenance
+is a schema error rather than a compatibility fallback.

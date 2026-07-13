@@ -88,9 +88,14 @@ Dense retrieval and cross-encoder reranking are extension points. The correctnes
 candidate recall at 20 before expensive reranking is added.
 
 Generated candidates remain in internal predictions for recall/rank analysis. Only candidates with
-`qualified=true` are eligible for Phase 1 export. Source-specific thresholds override type-specific
-thresholds, which override the global candidate threshold; these calibration hooks must be tuned on
-held-out data rather than changed from public-score intuition.
+`qualified=true` are eligible for Phase 1 export. `retrieval_score` ranks candidates;
+`emit_probability` is a separate calibrated decision value. The primary source and all fusion
+evidence sources are stored separately. Selective Phase 1 export applies a `(code system, primary
+source)` threshold matrix and an exact reviewed whitelist after qualification.
+
+RxNorm qualification receives the validated full medication span. Explicit strength, release type,
+or dose-form conflicts hard-reject a candidate with a structured reason; the candidate remains in
+the internal list for error analysis rather than being deleted from retrieval traces.
 
 ## Assertion Rules
 
