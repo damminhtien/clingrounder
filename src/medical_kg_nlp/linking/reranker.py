@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import re
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.linking.candidate import Candidate
@@ -11,6 +12,11 @@ from medical_kg_nlp.utils.text import normalize_for_match, token_set
 
 _STRUCTURED_PRODUCT_TTYS = frozenset({"SCD", "SBD", "SCDF", "SBDF", "GPCK", "BPCK"})
 _INGREDIENT_TTYS = frozenset({"IN", "PIN", "MIN"})
+_ADMINISTERED_SIG_RE = re.compile(
+    r"(?<!\w)(?:po|p\.o\.|iv|im|sc|sl|bid|tid|qid|qhs|qam|qd|daily|prn|"
+    r"uống|tiêm|truyền|mỗi\s+ngày|hằng\s+ngày)(?!\w)|\d\s*-\s*\d",
+    flags=re.IGNORECASE | re.UNICODE,
+)
 
 
 class HeuristicReranker:
@@ -68,9 +74,10 @@ class HeuristicReranker:
 
         score = candidate.score
         if mention_strengths and candidate_strengths:
-            if mention_strengths.isdisjoint(candidate_strengths):
+            if not mention_strengths.isdisjoint(candidate_strengths):
+                score += 0.10
+            elif not _ADMINISTERED_SIG_RE.search(mention):
                 return max(0.0, score * 0.2)
-            score += 0.10
         elif entry.rxnorm_tty in _STRUCTURED_PRODUCT_TTYS and candidate_strengths:
             score -= 0.24
         elif mention_strengths and entry.rxnorm_tty in _INGREDIENT_TTYS:

@@ -14,9 +14,7 @@ from medical_kg_nlp.schema.types import CodeSystem, EntityType
 def test_rxnorm_structure_detects_strength_release_and_form_conflicts() -> None:
     entry = _entry()
 
-    assert rxnorm_structure_conflict("metoprolol 50 mg oral tablet", entry) == (
-        "rxnorm_strength_mismatch"
-    )
+    assert rxnorm_structure_conflict("metoprolol 50 mg oral tablet", entry) is None
     assert rxnorm_structure_conflict("metoprolol 25 mg IR tablet", entry) == (
         "rxnorm_release_mismatch"
     )
@@ -34,7 +32,13 @@ def test_rxnorm_strength_normalization_handles_decimal_variants() -> None:
     assert dot.strengths == frozenset({"0.5mg"})
 
 
-def test_linker_keeps_structural_conflict_for_trace_but_disqualifies_it() -> None:
+def test_administered_dose_does_not_hard_reject_rxnorm_product_strength() -> None:
+    entry = _entry()
+
+    assert rxnorm_structure_conflict("metoprolol 50 mg XR tablet", entry) is None
+
+
+def test_linker_does_not_treat_administered_dose_as_product_strength() -> None:
     entry = _entry()
     linker = EntityLinker(
         CandidateGenerator(DictionaryStore([entry])),
@@ -61,11 +65,11 @@ def test_linker_keeps_structural_conflict_for_trace_but_disqualifies_it() -> Non
 
     linker.apply_candidates(entity, [candidate], mention="metoprolol 50 mg tablet")
 
-    assert entity.code is None
+    assert entity.code == "123"
     assert len(entity.candidates) == 1
-    assert entity.candidates[0].qualified is False
-    assert entity.candidates[0].qualification_reason == "rxnorm_strength_mismatch"
-    assert entity.candidates[0].emit_probability == 0.0
+    assert entity.candidates[0].qualified is True
+    assert entity.candidates[0].qualification_reason == "qualified"
+    assert entity.candidates[0].emit_probability == 0.9
 
 
 def _entry() -> ConceptEntry:

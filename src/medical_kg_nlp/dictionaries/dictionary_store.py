@@ -15,6 +15,11 @@ class DictionaryStore:
     def __init__(self, entries: list[ConceptEntry]) -> None:
         self.entries = entries
         self.by_concept_id = {entry.concept_id: entry for entry in entries}
+        self.by_code_system_code = {
+            (entry.code_system, entry.code): entry
+            for entry in entries
+            if entry.code is not None
+        }
         self.alias_index: dict[str, list[ConceptEntry]] = defaultdict(list)
         self.toneless_alias_index: dict[str, list[ConceptEntry]] = defaultdict(list)
         for entry in entries:

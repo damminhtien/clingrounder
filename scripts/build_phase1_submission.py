@@ -146,6 +146,10 @@ def main() -> None:
         "abbreviations",
         parser,
     )
+    normalization_dictionary_path = _optional_str(
+        config.get("normalization_dictionary")
+    )
+    recognition_dictionary_path = _optional_str(config.get("recognition_dictionary"))
     max_candidates = _int_setting(
         args.max_candidates, config.get("max_candidates"), 5, "max_candidates"
     )
@@ -193,6 +197,8 @@ def main() -> None:
             inputs=[
                 input_dir,
                 dictionary_path,
+                recognition_dictionary_path or "",
+                normalization_dictionary_path or dictionary_path,
                 pred_path or "pipeline",
                 f"assertions={assertion_policy}",
                 f"candidates={candidate_policy}",
@@ -211,6 +217,8 @@ def main() -> None:
             documents,
             dictionary_path=dictionary_path,
             abbreviation_path=abbreviation_path,
+            recognition_dictionary_path=recognition_dictionary_path,
+            normalization_dictionary_path=normalization_dictionary_path,
             pipeline_options=pipeline_options,
             parallel_options=ParallelBatchOptions(
                 backend=cast(ParallelBackend, parallel_backend),
@@ -247,7 +255,24 @@ def main() -> None:
         candidate_policy=candidate_policy,
         selective_config=selective_config,
     )
-    dictionary = DictionaryStore.from_jsonl(dictionary_path)
+    primary_dictionary = DictionaryStore.from_jsonl(dictionary_path)
+    if normalization_dictionary_path:
+        normalization_dictionary = DictionaryStore.from_jsonl(
+            normalization_dictionary_path
+        )
+        dictionary = DictionaryStore(
+            list(
+                {
+                    entry.concept_id: entry
+                    for entry in (
+                        *primary_dictionary.entries,
+                        *normalization_dictionary.entries,
+                    )
+                }.values()
+            )
+        )
+    else:
+        dictionary = primary_dictionary
     issues = [
         issue.to_json()
         for issue in validate_phase1_submission_dir(

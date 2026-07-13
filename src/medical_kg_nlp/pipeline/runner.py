@@ -5,6 +5,7 @@ from pathlib import Path
 
 from medical_kg_nlp.context.assertion import AssertionClassifier
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.kg.validator import KGValidator
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.linking.linker import EntityLinker
@@ -35,12 +36,32 @@ class PipelineRunner:
         dictionary_path: str | Path = "data/dictionaries/seed_concepts.jsonl",
         abbreviation_path: str | Path = "data/dictionaries/abbreviations.jsonl",
         alias_overlay_path: str | Path | None = "data/dictionaries/vietnamese_medical_alias.jsonl",
+        recognition_dictionary_path: str | Path | None = None,
+        normalization_dictionary_path: str | Path | None = None,
         pipeline_version: str = "0.1.0",
         options: PipelineOptions | None = None,
     ) -> None:
         self.options = options or PipelineOptions()
-        self.store = DictionaryStore.from_jsonl(
+        primary_store = DictionaryStore.from_jsonl(
             dictionary_path, alias_overlay_path=alias_overlay_path
+        )
+        recognition_entries = list(primary_store.entries)
+        if recognition_dictionary_path is not None:
+            recognition_entries.extend(
+                DictionaryStore.from_jsonl(recognition_dictionary_path).entries
+            )
+        self.store = DictionaryStore(_deduplicate_entries(recognition_entries))
+        self.normalization_store = (
+            DictionaryStore(
+                _deduplicate_entries(
+                    [
+                        *self.store.entries,
+                        *DictionaryStore.from_jsonl(normalization_dictionary_path).entries,
+                    ]
+                )
+            )
+            if normalization_dictionary_path is not None
+            else self.store
         )
         self.ner = RuleBasedNER(
             self.store,
@@ -51,7 +72,7 @@ class PipelineRunner:
         self.linker = (
             EntityLinker(
                 CandidateGenerator(
-                    self.store,
+                    self.normalization_store,
                     abbreviation_path=abbreviation_path,
                     max_candidates=self.options.max_candidates,
                     retrieval_sources=self.options.candidate_sources,
@@ -79,7 +100,7 @@ class PipelineRunner:
         self.assertion = AssertionClassifier()
         self.relations = RuleRelationExtractor()
         self.validator = KGValidator(
-            self.store
+            self.normalization_store
             if self.options.enable_entity_kg_validation
             or self.options.enable_relation_kg_validation
             else None
@@ -164,21 +185,24 @@ class PipelineRunner:
                 entities_with_candidates = 0
                 pinned_entities = 0
                 for entity in entities:
-                    if entity.code_system == CodeSystem.NONE:
-                        context = text_window(
-                            loaded_document.text, entity.span, radius=self.options.context_window
-                        )
-                        contexts_by_entity[entity.id] = context
-                        candidates = linker.generate_candidates(entity, context)
-                        generated_candidates[entity.id] = candidates
-                        generated_total += len(candidates)
-                        entities_with_candidates += int(bool(candidates))
-                        for candidate in candidates:
-                            for source in candidate.sources:
-                                key = f"source_{source}"
-                                counters[key] = counters.get(key, 0) + 1
-                    else:
+                    if entity.code_system != CodeSystem.NONE:
                         pinned_entities += 1
+                    context = text_window(
+                        loaded_document.text, entity.span, radius=self.options.context_window
+                    )
+                    contexts_by_entity[entity.id] = context
+                    candidates = linker.generate_candidates(
+                        entity,
+                        context,
+                        mention=_linking_mention(loaded_document.text, entity),
+                    )
+                    generated_candidates[entity.id] = candidates
+                    generated_total += len(candidates)
+                    entities_with_candidates += int(bool(candidates))
+                    for candidate in candidates:
+                        for source in candidate.sources:
+                            key = f"source_{source}"
+                            counters[key] = counters.get(key, 0) + 1
                 counters["candidate_entities"] = len(generated_candidates)
                 counters["pinned_entities"] = pinned_entities
                 counters["entities_with_candidates"] = entities_with_candidates
@@ -321,3 +345,8 @@ def _linking_mention(source_text: str, entity: EntityAnnotation) -> str:
         return entity.text
     start, end = medication.full_span
     return source_text[start:end]
+
+
+def _deduplicate_entries(entries: list[ConceptEntry]) -> list[ConceptEntry]:
+    by_concept_id = {entry.concept_id: entry for entry in entries}
+    return list(by_concept_id.values())

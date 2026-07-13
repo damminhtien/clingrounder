@@ -1,0 +1,21 @@
+[
+  {"text":"amlodipine 10 mg po daily","type":"THUỐC","candidates":["308135"],"assertions":["isHistorical"],"position":[58,83]},
+  {"text":"aspirin 81 mg po daily","type":"THUỐC","candidates":["243670"],"assertions":["isHistorical"],"position":[89,111]},
+  {"text":"metoprolol succinate xl 50 mg po daily","type":"THUỐC","candidates":["866436"],"assertions":["isHistorical"],"position":[117,155]},
+  {"text":"guaifenesin ml po q6h:prn","type":"THUỐC","candidates":["392085"],"assertions":["isHistorical"],"position":[161,186]},
+  {"text":"ho","type":"TRIỆU_CHỨNG","assertions":[],"position":[196,198]},
+  {"text":"nystatin oral suspension 5 ml po qid:prn","type":"THUỐC","candidates":["7597"],"assertions":["isHistorical"],"position":[204,244]},
+  {"text":"đau nhức","type":"TRIỆU_CHỨNG","assertions":[],"position":[254,262]},
+  {"text":"acetaminophen 325-650 mg po q6h:prn","type":"THUỐC","candidates":["313782"],"assertions":["isHistorical"],"position":[268,303]},
+  {"text":"sốt đau","type":"TRIỆU_CHỨNG","assertions":[],"position":[313,320]},
+  {"text":"pravastatin 40 mg po daily","type":"THUỐC","candidates":["904475"],"assertions":["isHistorical"],"position":[326,352]},
+  {"text":"docusate sodium 100 mg po bid","type":"THUỐC","candidates":["1099279"],"assertions":["isHistorical"],"position":[358,387]},
+  {"text":"táo bón","type":"TRIỆU_CHỨNG","assertions":[],"position":[397,404]},
+  {"text":"senna 8.6 mg po bid:prn","type":"THUỐC","candidates":["312935"],"assertions":["isHistorical"],"position":[410,433]},
+  {"text":"táo bón","type":"TRIỆU_CHỨNG","assertions":[],"position":[443,450]},
+  {"text":"clonazepam 0.5 mg po qam:prn","type":"THUỐC","candidates":["197527"],"assertions":["isHistorical"],"position":[457,485]},
+  {"text":"lo âu","type":"TRIỆU_CHỨNG","assertions":[],"position":[495,500]},
+  {"text":"clonazepam 1.5 mg po qhs","type":"THUỐC","candidates":["197528"],"assertions":["isHistorical"],"position":[507,531]},
+  {"text":"lo âu","type":"TRIỆU_CHỨNG","assertions":[],"position":[541,546]},
+  {"text":"mất ngủ","type":"TRIỆU_CHỨNG","assertions":[],"position":[547,554]}
+]

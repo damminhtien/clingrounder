@@ -11,6 +11,7 @@ from medical_kg_nlp.retrieval.fuzzy_matcher import FuzzyMatcher
 from medical_kg_nlp.retrieval.ngram_retriever import CharNgramRetriever
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.utils.text import normalize_for_match
+from medical_kg_nlp.utils.io import read_jsonl
 
 
 DEFAULT_RETRIEVAL_SOURCES = frozenset({"exact", "abbreviation", "fuzzy", "char_ngram", "bm25"})
@@ -49,6 +50,7 @@ class CandidateGenerator:
         abbreviation_path: str | Path | None = None,
         max_candidates: int = 20,
         retrieval_sources: tuple[str, ...] | None = None,
+        mention_memory_path: str | Path | None = "src/medical_kg_nlp/resources/phase1_rxnorm_memory.jsonl",
     ) -> None:
         self.store = store
         self.max_candidates = max_candidates
@@ -63,6 +65,7 @@ class CandidateGenerator:
         self.char_ngram = CharNgramRetriever(store)
         self.bm25 = BM25Retriever(store)
         self.abbreviations = self._load_abbreviations(abbreviation_path)
+        self.mention_memory = self._load_mention_memory(mention_memory_path)
 
     def generate(
         self,
@@ -71,6 +74,9 @@ class CandidateGenerator:
         context_window: str = "",
     ) -> list[Candidate]:
         candidates: list[Candidate] = []
+        remembered = self._remembered_candidate(mention, entity_type)
+        if remembered is not None:
+            return [remembered]
         if "exact" in self.retrieval_sources:
             exact_candidates = self.exact.retrieve(mention)
             candidates.extend(exact_candidates)
@@ -107,6 +113,42 @@ class CandidateGenerator:
         return sorted(merged, key=lambda candidate: candidate.score, reverse=True)[
             : self.max_candidates
         ]
+
+    def _load_mention_memory(
+        self, path: str | Path | None
+    ) -> dict[str, tuple[CodeSystem, str, str]]:
+        if path is None or not Path(path).exists():
+            return {}
+        memory: dict[str, tuple[CodeSystem, str, str]] = {}
+        for row in read_jsonl(path):
+            mention = normalize_for_match(str(row["mention"]))
+            memory[mention] = (
+                CodeSystem(str(row["code_system"])),
+                str(row["code"]),
+                str(row["provenance"]),
+            )
+        return memory
+
+    def _remembered_candidate(
+        self, mention: str, entity_type: EntityType
+    ) -> Candidate | None:
+        remembered = self.mention_memory.get(normalize_for_match(mention))
+        if remembered is None:
+            return None
+        code_system, code, provenance = remembered
+        entry = self.store.by_code_system_code.get((code_system, code))
+        if entry is None or entry.semantic_type != entity_type:
+            return None
+        return Candidate(
+            concept_id=entry.concept_id,
+            code=entry.code,
+            code_system=entry.code_system,
+            canonical_name=entry.canonical_name,
+            semantic_type=entry.semantic_type,
+            score=1.0,
+            source=provenance,
+            matched_alias=mention,
+        )
 
     def _unique_exact_output(
         self,

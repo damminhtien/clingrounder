@@ -53,6 +53,8 @@ def run_batch_with_trace_parallel(
     *,
     dictionary_path: str | Path = "data/dictionaries/seed_concepts.jsonl",
     abbreviation_path: str | Path = "data/dictionaries/abbreviations.jsonl",
+    recognition_dictionary_path: str | Path | None = None,
+    normalization_dictionary_path: str | Path | None = None,
     pipeline_version: str = "0.1.0",
     pipeline_options: PipelineOptions | None = None,
     parallel_options: ParallelBatchOptions | None = None,
@@ -67,6 +69,8 @@ def run_batch_with_trace_parallel(
         runner = PipelineRunner(
             dictionary_path=dictionary_path,
             abbreviation_path=abbreviation_path,
+            recognition_dictionary_path=recognition_dictionary_path,
+            normalization_dictionary_path=normalization_dictionary_path,
             pipeline_version=pipeline_version,
             options=pipeline_options,
         )
@@ -76,6 +80,8 @@ def run_batch_with_trace_parallel(
     initializer_args = (
         str(dictionary_path),
         str(abbreviation_path),
+        str(recognition_dictionary_path) if recognition_dictionary_path else None,
+        str(normalization_dictionary_path) if normalization_dictionary_path else None,
         pipeline_version,
         pipeline_options,
     )
@@ -88,6 +94,8 @@ def run_batch_with_trace_parallel(
         _WORKER_RUNNER = PipelineRunner(
             dictionary_path=dictionary_path,
             abbreviation_path=abbreviation_path,
+            recognition_dictionary_path=recognition_dictionary_path,
+            normalization_dictionary_path=normalization_dictionary_path,
             pipeline_version=pipeline_version,
             options=pipeline_options,
         )
@@ -118,6 +126,8 @@ def run_batch_parallel(
     *,
     dictionary_path: str | Path = "data/dictionaries/seed_concepts.jsonl",
     abbreviation_path: str | Path = "data/dictionaries/abbreviations.jsonl",
+    recognition_dictionary_path: str | Path | None = None,
+    normalization_dictionary_path: str | Path | None = None,
     pipeline_version: str = "0.1.0",
     pipeline_options: PipelineOptions | None = None,
     parallel_options: ParallelBatchOptions | None = None,
@@ -128,6 +138,8 @@ def run_batch_parallel(
             documents,
             dictionary_path=dictionary_path,
             abbreviation_path=abbreviation_path,
+            recognition_dictionary_path=recognition_dictionary_path,
+            normalization_dictionary_path=normalization_dictionary_path,
             pipeline_version=pipeline_version,
             pipeline_options=pipeline_options,
             parallel_options=parallel_options,
@@ -138,6 +150,8 @@ def run_batch_parallel(
 def _init_worker(
     dictionary_path: str,
     abbreviation_path: str,
+    recognition_dictionary_path: str | None,
+    normalization_dictionary_path: str | None,
     pipeline_version: str,
     pipeline_options: PipelineOptions,
 ) -> None:
@@ -145,6 +159,8 @@ def _init_worker(
     runner = PipelineRunner(
         dictionary_path=dictionary_path,
         abbreviation_path=abbreviation_path,
+        recognition_dictionary_path=recognition_dictionary_path,
+        normalization_dictionary_path=normalization_dictionary_path,
         pipeline_version=pipeline_version,
         options=pipeline_options,
     )

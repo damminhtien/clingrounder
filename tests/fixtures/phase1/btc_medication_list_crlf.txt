@@ -1,0 +1,12 @@
+Danh sách thuốc trước nhập viện chính xác và đầy đủ.
+ 1. amlodipine 10 mg po daily
+ 2. aspirin 81 mg po daily
+ 3. metoprolol succinate xl 50 mg po daily
+ 4. guaifenesin ml po q6h:prn điều trị ho
+ 5. nystatin oral suspension 5 ml po qid:prn điều trị đau nhức
+ 6. acetaminophen 325-650 mg po q6h:prn điều trị sốt đau
+ 7. pravastatin 40 mg po daily
+ 8. docusate sodium 100 mg po bid điều trị táo bón
+ 9. senna 8.6 mg po bid:prn điều trị táo bón
+ 10. clonazepam 0.5 mg po qam:prn điều trị lo âu
+ 11. clonazepam 1.5 mg po qhs điều trị lo âu mất ngủ

@@ -29,6 +29,7 @@ _RELEASE_CUES = {
         "er",
         "sr",
         "cr",
+        "xl",
     ),
     "immediate": ("immediate release", "giải phóng tức thì", "ir"),
 }
@@ -73,12 +74,8 @@ def rxnorm_structure_conflict(
         if value
     )
     candidate_structure = parse_medication_structure(candidate_text)
-    if (
-        mention_structure.strengths
-        and candidate_structure.strengths
-        and mention_structure.strengths.isdisjoint(candidate_structure.strengths)
-    ):
-        return "rxnorm_strength_mismatch"
+    # A medication-list dose can be a range, a total administered dose, or a
+    # volume. It is not necessarily the strength of one RxNorm product unit.
     if (
         mention_structure.release_types
         and candidate_structure.release_types

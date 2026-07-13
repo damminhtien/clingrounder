@@ -1,0 +1,11 @@
+{"concept_id":"RXNORM:308135","code":"308135","code_system":"RxNorm","canonical_name":"amlodipine 10 MG Oral Tablet","semantic_type":"DRUG","aliases":["amlodipine"],"rxnorm_tty":"SCD","source":"btc_sample"}
+{"concept_id":"RXNORM:243670","code":"243670","code_system":"RxNorm","canonical_name":"aspirin 81 MG Oral Tablet","semantic_type":"DRUG","aliases":["aspirin"],"rxnorm_tty":"SCD","source":"btc_sample"}
+{"concept_id":"RXNORM:866436","code":"866436","code_system":"RxNorm","canonical_name":"24 HR metoprolol succinate 50 MG Extended Release Oral Tablet","semantic_type":"DRUG","aliases":["metoprolol succinate"],"rxnorm_tty":"SCD","source":"btc_sample"}
+{"concept_id":"RXNORM:392085","code":"392085","code_system":"RxNorm","canonical_name":"guaifenesin 800 MG Oral Tablet","semantic_type":"DRUG","aliases":["guaifenesin"],"rxnorm_tty":"SCD","source":"btc_sample"}
+{"concept_id":"RXNORM:7597","code":"7597","code_system":"RxNorm","canonical_name":"nystatin","semantic_type":"DRUG","aliases":["nystatin"],"rxnorm_tty":"IN","source":"btc_sample"}
+{"concept_id":"RXNORM:313782","code":"313782","code_system":"RxNorm","canonical_name":"acetaminophen 325 MG Oral Tablet","semantic_type":"DRUG","aliases":["acetaminophen"],"rxnorm_tty":"SCD","source":"btc_sample"}
+{"concept_id":"RXNORM:904475","code":"904475","code_system":"RxNorm","canonical_name":"pravastatin sodium 40 MG Oral Tablet","semantic_type":"DRUG","aliases":["pravastatin"],"rxnorm_tty":"SCD","source":"btc_sample"}
+{"concept_id":"RXNORM:1099279","code":"1099279","code_system":"RxNorm","canonical_name":"docusate sodium 100 MG Oral Tablet","semantic_type":"DRUG","aliases":["docusate sodium"],"rxnorm_tty":"SCD","source":"btc_sample"}
+{"concept_id":"RXNORM:312935","code":"312935","code_system":"RxNorm","canonical_name":"sennosides, USP 8.6 MG Oral Tablet","semantic_type":"DRUG","aliases":["senna"],"rxnorm_tty":"SCD","source":"btc_sample"}
+{"concept_id":"RXNORM:197527","code":"197527","code_system":"RxNorm","canonical_name":"clonazepam 0.5 MG Oral Tablet","semantic_type":"DRUG","aliases":["clonazepam"],"rxnorm_tty":"SCD","source":"btc_sample"}
+{"concept_id":"RXNORM:197528","code":"197528","code_system":"RxNorm","canonical_name":"clonazepam 1 MG Oral Tablet","semantic_type":"DRUG","aliases":["clonazepam"],"rxnorm_tty":"SCD","source":"btc_sample"}

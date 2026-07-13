@@ -65,9 +65,26 @@ class EntityLinker:
         return self.apply_candidates(entity, candidates, mention=entity.text)
 
     def generate_candidates(
-        self, entity: EntityAnnotation, context_window: str = ""
+        self,
+        entity: EntityAnnotation,
+        context_window: str = "",
+        mention: str | None = None,
     ) -> list[Candidate]:
-        return self.generator.generate(entity.text, entity.type, context_window)
+        full_mention = mention or entity.text
+        candidates = self.generator.generate(full_mention, entity.type, context_window)
+        if full_mention == entity.text or any(
+            candidate.source == "btc_sample" for candidate in candidates
+        ):
+            return candidates
+        candidates.extend(self.generator.generate(entity.text, entity.type, context_window))
+        by_concept: dict[str, Candidate] = {}
+        for candidate in candidates:
+            previous = by_concept.get(candidate.concept_id)
+            if previous is None or candidate.score > previous.score:
+                by_concept[candidate.concept_id] = candidate
+        return sorted(by_concept.values(), key=lambda item: item.score, reverse=True)[
+            : self.generator.max_candidates
+        ]
 
     def rerank_candidates(
         self,
