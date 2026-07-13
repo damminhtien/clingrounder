@@ -26,7 +26,11 @@ def test_proposal_matrix_classifies_exact_overlap_type_conflict_and_source_only(
         "qwen": {"1": [_row("đau ngực", "TRIỆU_CHỨNG", 0)]},
     }
 
-    report = build_phase1_proposal_matrix(sources, {"1": text})
+    report = build_phase1_proposal_matrix(
+        sources,
+        {"1": text},
+        source_metadata={"codex": {"model": "codex", "prompt_sha256": "abc"}},
+    )
     rows = report["matrix"]
     exact = next(row for row in rows if row["text"] == "đau ngực" and row["type"] == "TRIỆU_CHỨNG")
     diagnosis = next(row for row in rows if row["type"] == "CHẨN_ĐOÁN")
@@ -40,6 +44,8 @@ def test_proposal_matrix_classifies_exact_overlap_type_conflict_and_source_only(
     assert nested["status"] == "overlap_agreement"
     assert source_only["status"] == "source_only"
     assert proposal_consensus_keys(report) == {("1", 0, 8, "TRIỆU_CHỨNG")}
+    assert report["schema_version"] == "phase1-proposal-matrix.v2"
+    assert report["source_metadata"]["codex"]["prompt_sha256"] == "abc"
 
 
 def test_proposal_matrix_excludes_invalid_offsets_and_writes_artifacts(tmp_path: Path) -> None:
@@ -53,6 +59,7 @@ def test_proposal_matrix_excludes_invalid_offsets_and_writes_artifacts(tmp_path:
     write_phase1_proposal_matrix(report, tmp_path)
     assert (tmp_path / "proposal_matrix.jsonl").exists()
     assert (tmp_path / "review_queue.csv").exists()
+    assert (tmp_path / "source_metadata.json").exists()
     blind = json.loads((tmp_path / "codex_blind_queue.jsonl").read_text(encoding="utf-8"))
     assert "proposal" not in blind
 

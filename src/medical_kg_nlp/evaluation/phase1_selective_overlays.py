@@ -80,6 +80,7 @@ def apply_selective_assertions(
     *,
     regimes: Iterable[AssertionRegime],
     registry: Phase1RuleRegistry | None = None,
+    preserve_existing: bool = False,
 ) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]], dict[str, int]]:
     regime_order = tuple(dict.fromkeys(regimes))
     invalid = set(regime_order) - set(_ASSERTION_STAGE)
@@ -97,7 +98,7 @@ def apply_selective_assertions(
         document_rows: list[dict[str, Any]] = []
         for row in rows:
             result = _copy_row(row)
-            result["assertions"] = []
+            result["assertions"] = list(row.get("assertions", [])) if preserve_existing else []
             if str(row.get("type", "")) not in PHASE1_ASSERTABLE_TYPES:
                 document_rows.append(result)
                 continue
@@ -268,6 +269,7 @@ def apply_selective_candidates(
     regime: CandidateRegime,
     consensus_keys: set[tuple[str, int, int, str]],
     mention_limit: int | None = None,
+    preserve_existing: bool = False,
 ) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]], dict[str, int]]:
     stage = {
         "icd": "candidate_icd",
@@ -301,7 +303,7 @@ def apply_selective_candidates(
         document_rows: list[dict[str, Any]] = []
         for row in rows:
             result = _copy_row(row)
-            result["candidates"] = []
+            result["candidates"] = list(row.get("candidates", [])) if preserve_existing else []
             start, end = _position(row)
             consensus_key = (document_id, start, end, str(row.get("type", "")))
             key = (str(row.get("type", "")), normalize_for_match(str(row.get("text", ""))))
@@ -342,7 +344,7 @@ def validate_probe_isolation(
     baseline: Mapping[str, list[dict[str, Any]]],
     trial: Mapping[str, list[dict[str, Any]]],
     *,
-    module: Literal["entity", "assertion", "candidate"],
+    module: Literal["entity", "assertion", "candidate", "combined"],
 ) -> list[str]:
     issues: list[str] = []
     if set(baseline) != set(trial):
@@ -351,7 +353,7 @@ def validate_probe_isolation(
     for document_id in baseline:
         base_rows = baseline[document_id]
         trial_rows = trial[document_id]
-        if module in {"assertion", "candidate"} and [_identity(row) for row in base_rows] != [
+        if module in {"assertion", "candidate", "combined"} and [_identity(row) for row in base_rows] != [
             _identity(row) for row in trial_rows
         ]:
             issues.append(f"{document_id}:entity_identity_changed")
@@ -415,6 +417,8 @@ def _builtin_assertion_rule(
             return "builtin.assertion.history_local_cue"
         return None
     if regime == "family":
+        if entity_type != "CHẨN_ĐOÁN":
+            return None
         if section == "family":
             return "builtin.assertion.family_section"
         if _FAMILY_OWNERSHIP_RE.search(left_scope):

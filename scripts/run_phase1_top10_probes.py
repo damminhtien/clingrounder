@@ -20,6 +20,10 @@ def main() -> None:
     )
     parser.add_argument("--base", required=True, help="Frozen baseline output directory or ZIP.")
     parser.add_argument(
+        "--expected-base-sha256",
+        help="Fail closed unless the frozen baseline has this SHA-256.",
+    )
+    parser.add_argument(
         "--source",
         action="append",
         required=True,
@@ -40,13 +44,18 @@ def main() -> None:
     parser.add_argument(
         "--minimum-candidate-proposal-sources",
         type=int,
-        default=2,
+        default=3,
         help="Exact agreeing proposal sources required before a candidate can be emitted.",
     )
     parser.add_argument(
         "--open-holdout",
         action="store_true",
         help="Day-6-only switch: include the sealed holdout metrics in reports.",
+    )
+    parser.add_argument(
+        "--full-diagnostic",
+        action="store_true",
+        help="Build full ICD/RxNorm/combined artifacts for local ceiling analysis.",
     )
     args = parser.parse_args()
     if args.minimum_boundary_document_support < 1:
@@ -66,7 +75,9 @@ def main() -> None:
         rule_registry=Path(args.rule_registry) if args.rule_registry else None,
         minimum_boundary_document_support=args.minimum_boundary_document_support,
         minimum_candidate_proposal_sources=args.minimum_candidate_proposal_sources,
+        expected_base_sha256=args.expected_base_sha256,
         open_holdout=args.open_holdout,
+        full_diagnostic=args.full_diagnostic,
     )
     manifest = build_phase1_top10_probe_suite(config)
     print(

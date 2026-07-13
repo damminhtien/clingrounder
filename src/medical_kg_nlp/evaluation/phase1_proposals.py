@@ -13,6 +13,8 @@ from medical_kg_nlp.utils.text import normalize_for_match
 def build_phase1_proposal_matrix(
     sources: Mapping[str, Mapping[str, list[dict[str, Any]]]],
     source_text_by_doc: Mapping[str, str],
+    *,
+    source_metadata: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Align independent Phase 1 proposals without adjudicating them."""
     if len(sources) < 2:
@@ -20,6 +22,7 @@ def build_phase1_proposal_matrix(
     source_names = tuple(sorted(sources))
     if any(not name.strip() for name in source_names):
         raise ValueError("Proposal source names must be non-empty.")
+    metadata = {name: dict((source_metadata or {}).get(name, {})) for name in source_names}
 
     document_ids = sorted(
         set(source_text_by_doc) | {doc_id for rows in sources.values() for doc_id in rows},
@@ -122,8 +125,9 @@ def build_phase1_proposal_matrix(
     status_counts = Counter(str(row["status"]) for row in matrix_rows)
     exact_consensus = sum(1 for row in matrix_rows if int(row["source_count"]) >= 2)
     return {
-        "schema_version": "phase1-proposal-matrix.v1",
+        "schema_version": "phase1-proposal-matrix.v2",
         "source_names": list(source_names),
+        "source_metadata": metadata,
         "summary": {
             "document_count": len(document_ids),
             "proposal_group_count": len(matrix_rows),
@@ -185,6 +189,7 @@ def write_phase1_proposal_matrix(report: Mapping[str, Any], output_dir: str | Pa
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
     _write_json(output / "summary.json", report.get("summary", {}))
+    _write_json(output / "source_metadata.json", report.get("source_metadata", {}))
     _write_jsonl(output / "proposal_matrix.jsonl", report.get("matrix", []))
     _write_jsonl(output / "invalid_proposals.jsonl", report.get("invalid_proposals", []))
     _write_jsonl(output / "codex_blind_queue.jsonl", report.get("blind_documents", []))

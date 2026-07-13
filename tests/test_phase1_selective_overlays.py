@@ -114,6 +114,34 @@ def test_history_policy_abstains_on_symptoms_even_inside_history_section() -> No
     assert [row["assertions"] for row in output["1"]] == [[], ["isHistorical"]]
 
 
+def test_assertion_extension_preserves_winning_baseline_labels() -> None:
+    text = "Tiền sử gia đình:\nMẹ có đái tháo đường\nTriệu chứng hiện tại:\nKhông có sốt"
+    rows = {
+        "1": [
+            {
+                **_row("đái tháo đường", "CHẨN_ĐOÁN", text.index("đái tháo đường")),
+                "assertions": ["isHistorical"],
+            },
+            {
+                **_row("sốt", "TRIỆU_CHỨNG", text.index("sốt")),
+                "assertions": ["isNegated"],
+            },
+        ]
+    }
+
+    output, _, _ = apply_selective_assertions(
+        rows,
+        {"1": text},
+        regimes=("family",),
+        preserve_existing=True,
+    )
+
+    assert [row["assertions"] for row in output["1"]] == [
+        ["isHistorical", "isFamily"],
+        ["isNegated"],
+    ]
+
+
 def test_candidate_registry_uses_train_review_tt06_and_source_consensus(tmp_path: Path) -> None:
     dictionary = tmp_path / "dictionary.jsonl"
     concepts = [
@@ -176,6 +204,60 @@ def test_candidate_registry_uses_train_review_tt06_and_source_consensus(tmp_path
     assert [row["candidates"] for row in clinical["1"]] == [[], [], ["999"]]
     assert audit["compiled_rule_count"] == 3
     assert validate_probe_isolation(rows, clinical, module="candidate") == []
+
+
+def test_candidate_regimes_can_accumulate_in_full_diagnostic_mode(tmp_path: Path) -> None:
+    dictionary = tmp_path / "dictionary.jsonl"
+    dictionary.write_text(
+        "".join(
+            json.dumps(row) + "\n"
+            for row in (
+                _concept(
+                    "I10",
+                    "ICD-10",
+                    canonical_name="tăng huyết áp",
+                    source_ids=["icd10_vn_tt06_2026"],
+                ),
+                _concept(
+                    "4603",
+                    "RxNorm",
+                    canonical_name="lasix",
+                    tty="IN",
+                    source_ids=["rxnorm_full_2026_07_06"],
+                ),
+            )
+        ),
+        encoding="utf-8",
+    )
+    gold = {
+        "1": [
+            _row("tăng huyết áp", "CHẨN_ĐOÁN", 0, candidates=["I10"]),
+            _row("lasix", "THUỐC", 20, candidates=["4603"]),
+        ]
+    }
+    registry, _ = compile_reviewed_candidate_registry(gold, dictionary, split="all")
+    rows = {"1": [_row("tăng huyết áp", "CHẨN_ĐOÁN", 0), _row("lasix", "THUỐC", 20)]}
+    consensus = {
+        ("1", 0, len("tăng huyết áp"), "CHẨN_ĐOÁN"),
+        ("1", 20, 20 + len("lasix"), "THUỐC"),
+    }
+
+    icd, _, _ = apply_selective_candidates(
+        rows,
+        registry,
+        regime="icd",
+        consensus_keys=consensus,
+        preserve_existing=True,
+    )
+    combined, _, _ = apply_selective_candidates(
+        icd,
+        registry,
+        regime="rxnorm_ingredient",
+        consensus_keys=consensus,
+        preserve_existing=True,
+    )
+
+    assert [row["candidates"] for row in combined["1"]] == [["I10"], ["4603"]]
 
 
 def test_candidate_overlay_requires_exact_two_source_consensus(tmp_path: Path) -> None:

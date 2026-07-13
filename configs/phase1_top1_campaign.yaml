@@ -1,0 +1,80 @@
+schema_version: phase1-top1-campaign.v1
+
+baseline:
+  artifact: outputs/phase1/top10_probes/top10_a707b01002de/variants/A_NEG_HIST/output.zip
+  sha256: ab9644f4d635132eee6462929461cf0d9b3bd3b9059e5a598704349410b54644
+  public_metrics:
+    primary_score: 41.8577
+    wer: 50.8167
+    j_assertion: 49.7245
+    j_candidates: 30.4634
+  winning_modules:
+    - E_OVERLAP
+    - A_NEG
+    - A_HIST
+
+targets:
+  primary_score: 50.5
+  wer_max: 38.0
+  j_assertion_min: 57.0
+  j_candidates_min: 39.0
+
+proposal_sources:
+  pipeline: outputs/phase1/20260710T183029Z_entity_only_e2_final_837fe14a67/phase1/output.zip
+  qwen: outputs/phase1/20260711_qwen_pipeline_type_ensemble_4c6bc57e/output.zip
+  codex: null
+  minimum_candidate_sources: 3
+  codex_blind_required: true
+
+promotion_gates:
+  entity:
+    primary_score_must_increase: true
+    wer_must_decrease: true
+    non_target_tolerance: 0.0001
+  assertion:
+    primary_score_must_increase: true
+    minimum_j_assertion_gain: 0.5
+    non_target_tolerance: 0.0001
+  candidate:
+    primary_score_must_increase: true
+    minimum_j_candidates_gain: 0.5
+    non_target_tolerance: 0.0001
+    close_branch_after_c_one_failure: true
+
+public_module_results:
+  A_FAM_EXT:
+    status: rejected_by_orthogonal_metric
+    j_assertion_delta: -0.0189
+    evidence_artifact: FULL_ALL_MODULES_DIAGNOSTIC
+  FULL_ALL_MODULES_DIAGNOSTIC:
+    status: rejected
+    primary_score_delta: -0.8123
+    j_candidates_delta: -2.0166
+
+candidate_probe_ladder:
+  status: full_overlay_rejected
+  next_allowed_probe: C_ICD_ONE
+  stop_after_next_failure: true
+  rejected_public_artifacts:
+    - name: C_ICD20
+      primary_score: 41.1189
+      j_candidates: 28.6164
+    - name: FULL_ALL_MODULES_DIAGNOSTIC
+      primary_score: 41.0454
+      j_candidates: 28.4468
+      sha256: b696bce18181046b81316a30f6fef6e300cbe1ce6817517d55c3afbd699db889
+  icd:
+    - C_ICD_ONE
+    - C_ICD_THREE
+    - C_ICD_TEN
+  rxnorm_ingredient:
+    - C_RX_ING_ONE
+    - C_RX_ING_THREE
+    - C_RX_ING_TEN
+  rxnorm_clinical_drug:
+    - C_RX_SCD_ONE
+
+submission_budget:
+  probes_per_day: 2
+  exploits_per_day: 1
+  hard_limit_per_day: 5

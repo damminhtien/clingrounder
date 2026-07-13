@@ -108,7 +108,7 @@ def test_top10_probe_suite_cli_builds_isolated_validated_artifacts(
         f"pipeline={pipeline_dir}",
     ]
     if source_count == 3:
-        command.extend(["--source", f"codex={codex_dir}"])
+        command.extend(["--source", f"codex={codex_dir}", "--full-diagnostic"])
     command.extend(
         [
             "--input-dir",
@@ -138,19 +138,32 @@ def test_top10_probe_suite_cli_builds_isolated_validated_artifacts(
     variants = {row["name"]: row for row in manifest_payload["variants"]}
     assert manifest_payload["holdout_status"] == "sealed"
     assert manifest_payload["tri_source_ready"] is (source_count == 3)
-    assert manifest_payload["candidate_consensus_ready"] is True
-    assert manifest_payload["candidate_consensus_key_count"] > 0
-    assert manifest_payload["minimum_candidate_proposal_sources"] == 2
-    assert manifest_payload["candidate_probe_blocked_reason"] is None
+    expected_candidate_ready = source_count == 3
+    assert manifest_payload["candidate_consensus_ready"] is expected_candidate_ready
+    assert (manifest_payload["candidate_consensus_key_count"] > 0) is expected_candidate_ready
+    assert manifest_payload["minimum_candidate_proposal_sources"] == 3
+    assert (manifest_payload["candidate_probe_blocked_reason"] is None) is expected_candidate_ready
     assert variants["E_LAB"]["changed"]["entity_removed"] == 1
+    assert variants["E_LAB"]["local_safety_gate_passed"] is True
     assert variants["E_LAB"]["probe_ready"] is True
     assert variants["A_HIST"]["changed"]["assertion_changed"] == 1
-    assert variants["C_ICD20"]["changed"]["candidate_changed"] == 2
-    assert variants["C_ICD20"]["probe_ready"] is True
+    assert "A_FAM_EXT" in variants
+    assert variants["C_ICD_ONE"]["changed"].get("candidate_changed", 0) == (
+        2 if expected_candidate_ready else 0
+    )
+    assert variants["C_ICD_ONE"]["probe_ready"] is expected_candidate_ready
     assert (run_dir / "variants" / "E_LAB" / "output.zip").exists()
     assert (run_dir / "boundary_rule_candidates.yaml").exists()
     assert (run_dir / "proposals" / "review_queue.csv").exists()
     assert (tmp_path / "journal" / "phase1_top10_probe_runs.jsonl").exists()
+    if source_count == 3:
+        assert manifest_payload["best_full_diagnostic"]["name"] in {
+            "FULL_ICD_DIAGNOSTIC",
+            "FULL_RX_DIAGNOSTIC",
+            "FULL_ALL_CANDIDATES_DIAGNOSTIC",
+            "FULL_ALL_MODULES_DIAGNOSTIC",
+        }
+        assert manifest_payload["best_full_diagnostic"]["submission_recommended"] is False
 
 
 def _row(

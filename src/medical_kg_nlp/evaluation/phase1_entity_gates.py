@@ -51,8 +51,8 @@ _QUALITATIVE_RESULTS = frozenset(
 _LAB_ANCHOR_RE = re.compile(
     r"(?i)(?:\b(?:alt|ast|alp|bilirubin|bun|cr|creatinine|crp|esr|glucose|hba1c|hct|"
     r"hematocrit|hgb|hemoglobin|inr|kali|lactate|natri|nitrite|platelets?|plt|"
-    r"troponin|ure|wbc)\b|huyết áp|nhịp tim|nhịp thở|nhiệt độ|mạch|spo2|"
-    r"độ bão hòa oxy|xét nghiệm|định lượng|cấy|pcr|sinh thiết|chụp|nội soi)"
+    r"troponin|ure|wbc|chem\s*7)\b|huyết áp|nhịp tim|nhịp thở|nhiệt độ|mạch|spo2|"
+    r"độ bão hòa oxy|dấu hiệu sinh tồn|xét nghiệm|định lượng|cấy|pcr|sinh thiết|chụp|nội soi)"
 )
 _VALUE_RE = re.compile(
     r"^\s*(?:[<>≤≥]=?\s*)?[+-]?\d+(?:[.,]\d+)?(?:\s*(?:-|đến)\s*[+-]?\d+(?:[.,]\d+)?)?"
@@ -71,7 +71,16 @@ _MEDICATION_ATTRIBUTE_RE = re.compile(
     r")\s*$",
     flags=re.IGNORECASE,
 )
-_CLAUSE_DELIMITER_RE = re.compile(r"[;\n.!?]")
+_SELF_DESCRIBING_VITAL_RE = re.compile(
+    r"^\s*(?:[<>≤≥]=?\s*)?[+-]?\d+(?:[.,]\d+)?\s*"
+    r"(?:°c|mmhg|%|lần/phút)\s*$",
+    flags=re.IGNORECASE,
+)
+_MEDICATION_ANCHOR_RE = re.compile(
+    r"(?i)\b(?:dùng|liều|thuốc|uống|tiêm|truyền|bổ sung|po|iv|im|sc|sl|"
+    r"tablet|capsule|injection)\b"
+)
+_CLAUSE_DELIMITER_RE = re.compile(r"[;\n!?]|(?<!\d)\.(?!\d)")
 _BOUNDARY_PUNCTUATION_RE = re.compile(r"[,;:\n.!?]")
 
 
@@ -108,7 +117,9 @@ def apply_phase1_entity_gates(
     counters: Counter[str] = Counter()
     output_by_doc: dict[str, list[dict[str, Any]]] = {}
     active_registry = registry or Phase1RuleRegistry(())
-    strict_exclusions = _strict_exclusion_index(annotation_policy or {})
+    # Compiled exclusions are discovery evidence only. Runtime blocking requires a reviewed,
+    # type/context-scoped registry rule.
+    strict_exclusions: dict[str, str] = {}
 
     for document_id, input_rows in rows_by_doc.items():
         source_text = source_text_by_doc.get(document_id)
@@ -335,7 +346,9 @@ def _apply_lab_gate(
 
         mention = str(row.get("text", ""))
         normalized = normalize_for_match(mention)
-        if _MEDICATION_ATTRIBUTE_RE.fullmatch(mention) and not _has_lab_anchor(rows, source_text, start, end):
+        if _MEDICATION_ATTRIBUTE_RE.fullmatch(mention) and _has_medication_anchor(
+            source_text, start, end
+        ):
             _builtin_decision(
                 decisions,
                 counters,
@@ -343,7 +356,7 @@ def _apply_lab_gate(
                 "retype",
                 "builtin.lab.medication_attribute",
                 "retype_internal_and_block",
-                "Dose, strength, route, or frequency without a lab anchor.",
+                "Dose, strength, route, or frequency has a medication anchor.",
                 row,
             )
             continue
@@ -359,7 +372,10 @@ def _apply_lab_gate(
                 row,
             )
             continue
-        requires_anchor = bool(_VALUE_RE.fullmatch(mention)) or normalized in _QUALITATIVE_RESULTS
+        requires_anchor = (
+            bool(_VALUE_RE.fullmatch(mention))
+            and _SELF_DESCRIBING_VITAL_RE.fullmatch(mention) is None
+        ) or normalized in _QUALITATIVE_RESULTS
         if requires_anchor and not _has_lab_anchor(rows, source_text, start, end):
             _builtin_decision(
                 decisions,
@@ -523,6 +539,11 @@ def _has_lab_anchor(rows: list[dict[str, Any]], source_text: str, start: int, en
     ):
         return True
     return _LAB_ANCHOR_RE.search(source_text[clause_start:clause_end]) is not None
+
+
+def _has_medication_anchor(source_text: str, start: int, end: int) -> bool:
+    clause_start, clause_end = _clause_bounds(source_text, start, end)
+    return _MEDICATION_ANCHOR_RE.search(source_text[clause_start:clause_end]) is not None
 
 
 def _clause_bounds(source_text: str, start: int, end: int) -> tuple[int, int]:

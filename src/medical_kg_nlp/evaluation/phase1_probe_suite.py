@@ -60,7 +60,9 @@ class Phase1Top10ProbeConfig:
     journal_dir: Path = Path("outputs/loops/journal")
     rule_registry: Path | None = None
     minimum_boundary_document_support: int = 2
-    minimum_candidate_proposal_sources: int = 2
+    minimum_candidate_proposal_sources: int = 3
+    expected_base_sha256: str | None = None
+    full_diagnostic: bool = False
     open_holdout: bool = False
 
 
@@ -70,6 +72,12 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
     if config.minimum_candidate_proposal_sources < 2:
         raise ValueError("Candidate consensus requires at least two independent sources.")
     input_hashes = _input_hashes(config)
+    actual_base_sha256 = str(input_hashes["base"]["sha256"])
+    if config.expected_base_sha256 is not None and actual_base_sha256 != config.expected_base_sha256:
+        raise ValueError(
+            "Frozen baseline SHA-256 mismatch: "
+            f"expected {config.expected_base_sha256}, got {actual_base_sha256}."
+        )
     run_hash = hashlib.sha256(
         json.dumps(input_hashes, sort_keys=True).encode("utf-8")
     ).hexdigest()[:12]
@@ -100,7 +108,14 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
     write_annotation_knowledge(annotation_report, run_dir / "knowledge_train")
     annotation_policy = annotation_report["policy"]
 
-    proposal_report = build_phase1_proposal_matrix(proposal_sources, source_text_by_doc)
+    proposal_report = build_phase1_proposal_matrix(
+        proposal_sources,
+        source_text_by_doc,
+        source_metadata={
+            name: input_hashes["proposal_sources"][name]
+            for name in sorted(proposal_sources)
+        },
+    )
     write_phase1_proposal_matrix(proposal_report, run_dir / "proposals")
     tri_source_ready = len(config.proposal_sources) >= 3
     candidate_consensus_ready = (
@@ -218,18 +233,19 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
             variants=variants,
         )
 
-    assertion_variants: tuple[tuple[str, tuple[AssertionRegime, ...]], ...] = (
-        ("A_HIST", ("history",)),
-        ("A_NEG", ("negation",)),
-        ("A_NEG_HIST", ("negation", "history")),
-        ("A_FAM", ("family",)),
+    assertion_variants: tuple[tuple[str, tuple[AssertionRegime, ...], bool], ...] = (
+        ("A_HIST", ("history",), False),
+        ("A_NEG", ("negation",), False),
+        ("A_NEG_HIST", ("negation", "history"), False),
+        ("A_FAM_EXT", ("family",), True),
     )
-    for name, regimes in assertion_variants:
+    for name, regimes, preserve_existing in assertion_variants:
         rows, decisions, counters = apply_selective_assertions(
             base,
             source_text_by_doc,
             regimes=regimes,
             registry=runtime_registry,
+            preserve_existing=preserve_existing,
         )
         _materialize_variant(
             name=name,
@@ -238,7 +254,10 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
             base=base,
             decisions=decisions,
             counters=counters,
-            policy_diff={"assertion_regimes": list(regimes)},
+            policy_diff={
+                "assertion_regimes": list(regimes),
+                "preserve_existing": preserve_existing,
+            },
             config=config,
             run_dir=run_dir,
             gold=gold,
@@ -248,10 +267,13 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
         )
 
     candidate_variants: tuple[tuple[str, CandidateRegime, int], ...] = (
-        ("C_ICD20", "icd", 20),
-        ("C_ICD100", "icd", 100),
-        ("C_RX_ING", "rxnorm_ingredient", 100),
-        ("C_RX_SCD", "rxnorm_clinical_drug", 100),
+        ("C_ICD_ONE", "icd", 1),
+        ("C_ICD_THREE", "icd", 3),
+        ("C_ICD_TEN", "icd", 10),
+        ("C_RX_ING_ONE", "rxnorm_ingredient", 1),
+        ("C_RX_ING_THREE", "rxnorm_ingredient", 3),
+        ("C_RX_ING_TEN", "rxnorm_ingredient", 10),
+        ("C_RX_SCD_ONE", "rxnorm_clinical_drug", 1),
     )
     for name, regime, limit in candidate_variants:
         rows, decisions, counters = apply_selective_candidates(
@@ -271,8 +293,22 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
             policy_diff={
                 "candidate_regime": regime,
                 "mention_limit": limit,
-                "minimum_exact_proposal_sources": 2,
+                "minimum_exact_proposal_sources": config.minimum_candidate_proposal_sources,
             },
+            config=config,
+            run_dir=run_dir,
+            gold=gold,
+            dictionary=dictionary,
+            expected_count=expected_count,
+            variants=variants,
+        )
+
+    if config.full_diagnostic and candidate_consensus_ready:
+        _materialize_full_diagnostic_variants(
+            base=base,
+            source_text_by_doc=source_text_by_doc,
+            candidate_registry=candidate_registry,
+            consensus=consensus,
             config=config,
             run_dir=run_dir,
             gold=gold,
@@ -308,6 +344,14 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
     else:
         candidate_probe_blocked_reason = None
 
+    diagnostic_variants = [
+        row for row in variants if str(row["name"]).endswith("_DIAGNOSTIC")
+    ]
+    best_diagnostic = (
+        max(diagnostic_variants, key=lambda row: float(row["train"]["metrics"]["score"]))
+        if diagnostic_variants
+        else None
+    )
     manifest = {
         "schema_version": "phase1-top10-probe-suite.v1",
         "run_hash": run_hash,
@@ -328,6 +372,15 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
         },
         "proposal_summary": proposal_report["summary"],
         "candidate_probe_blocked_reason": candidate_probe_blocked_reason,
+        "best_full_diagnostic": {
+            "name": best_diagnostic["name"],
+            "train_metrics": best_diagnostic["train"]["metrics"],
+            "zip": best_diagnostic["zip"],
+            "zip_sha256": best_diagnostic["zip_sha256"],
+            "submission_recommended": False,
+        }
+        if best_diagnostic is not None
+        else None,
         "variants": variants,
         "public_probe_order": [
             "E_LAB",
@@ -336,10 +389,12 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
             "one reviewed boundary family at a time",
             "A_HIST",
             "A_NEG",
-            "C_ICD20",
-            "C_ICD100",
-            "C_RX_ING",
-            "C_RX_SCD",
+            "C_ICD_ONE",
+            "C_ICD_THREE only after C_ICD_ONE wins",
+            "C_ICD_TEN only after C_ICD_THREE wins",
+            "C_RX_ING_ONE",
+            "C_RX_ING_THREE/TEN only after the previous tier wins",
+            "C_RX_SCD_ONE",
         ],
         "promotion_policy": (
             "No variant is auto-promoted from local metrics. Submit isolated probes and record "
@@ -350,6 +405,97 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
     (run_dir / "summary.md").write_text(_render_summary(manifest), encoding="utf-8")
     _append_suite_journal(manifest, config.journal_dir)
     return manifest
+
+
+def _materialize_full_diagnostic_variants(
+    *,
+    base: Mapping[str, list[dict[str, Any]]],
+    source_text_by_doc: Mapping[str, str],
+    candidate_registry: Phase1RuleRegistry,
+    consensus: set[tuple[str, int, int, str]],
+    config: Phase1Top10ProbeConfig,
+    run_dir: Path,
+    gold: Mapping[str, list[dict[str, Any]]],
+    dictionary: DictionaryStore,
+    expected_count: int,
+    variants: list[dict[str, Any]],
+) -> None:
+    candidate_specs: tuple[tuple[str, tuple[CandidateRegime, ...]], ...] = (
+        ("FULL_ICD_DIAGNOSTIC", ("icd",)),
+        ("FULL_RX_DIAGNOSTIC", ("rxnorm_ingredient", "rxnorm_clinical_drug")),
+        (
+            "FULL_ALL_CANDIDATES_DIAGNOSTIC",
+            ("icd", "rxnorm_ingredient", "rxnorm_clinical_drug"),
+        ),
+    )
+    diagnostic_outputs: dict[
+        str,
+        tuple[
+            dict[str, list[dict[str, Any]]],
+            list[dict[str, Any]],
+            Counter[str],
+        ],
+    ] = {}
+    for name, regimes in candidate_specs:
+        rows = {document_id: [dict(row) for row in values] for document_id, values in base.items()}
+        decisions: list[dict[str, Any]] = []
+        counters: Counter[str] = Counter()
+        for regime in regimes:
+            rows, regime_decisions, regime_counters = apply_selective_candidates(
+                rows,
+                candidate_registry,
+                regime=regime,
+                consensus_keys=consensus,
+                mention_limit=None,
+                preserve_existing=True,
+            )
+            decisions.extend(regime_decisions)
+            counters.update(regime_counters)
+        diagnostic_outputs[name] = (rows, decisions, counters)
+        _materialize_variant(
+            name=name,
+            module="candidate",
+            rows=rows,
+            base=base,
+            decisions=decisions,
+            counters=counters,
+            policy_diff={"candidate_regimes": list(regimes), "mention_limit": None},
+            config=config,
+            run_dir=run_dir,
+            gold=gold,
+            dictionary=dictionary,
+            expected_count=expected_count,
+            variants=variants,
+        )
+
+    rows, decisions, counters = diagnostic_outputs["FULL_ALL_CANDIDATES_DIAGNOSTIC"]
+    rows, assertion_decisions, assertion_counters = apply_selective_assertions(
+        rows,
+        source_text_by_doc,
+        regimes=("family",),
+        preserve_existing=True,
+    )
+    decisions = [*decisions, *assertion_decisions]
+    counters.update(assertion_counters)
+    _materialize_variant(
+        name="FULL_ALL_MODULES_DIAGNOSTIC",
+        module="combined",
+        rows=rows,
+        base=base,
+        decisions=decisions,
+        counters=counters,
+        policy_diff={
+            "candidate_regimes": ["icd", "rxnorm_ingredient", "rxnorm_clinical_drug"],
+            "assertion_regimes": ["family"],
+            "preserve_winning_baseline": True,
+        },
+        config=config,
+        run_dir=run_dir,
+        gold=gold,
+        dictionary=dictionary,
+        expected_count=expected_count,
+        variants=variants,
+    )
 
 
 def _materialize_variant(
@@ -392,6 +538,12 @@ def _materialize_variant(
     if zip_issues:
         raise ValueError(f"{name} ZIP validation failed: {[issue.to_json() for issue in zip_issues[:5]]}")
     train_report = _score_split(gold, rows, split="train")
+    baseline_train_report = _score_split(gold, base, split="train")
+    local_score_delta = round(
+        float(train_report["metrics"]["score"])
+        - float(baseline_train_report["metrics"]["score"]),
+        6,
+    )
     holdout_report = _score_split(gold, rows, split="holdout") if config.open_holdout else None
     _write_jsonl(variant_dir / "decisions.jsonl", decisions)
     _write_json(variant_dir / "counters.json", dict(counters))
@@ -405,10 +557,14 @@ def _materialize_variant(
         "isolation_issues": isolation_issues,
         "validation_issue_count": 0,
         "train": train_report,
+        "baseline_train_score": baseline_train_report["metrics"]["score"],
+        "local_score_delta": local_score_delta,
+        "local_safety_gate_passed": local_score_delta >= 0.0,
         "holdout": holdout_report,
         "probe_ready": (
             not isolation_issues
             and changed["changed_row_count"] > 0
+            and local_score_delta >= 0.0
             and (module != "candidate" or int(counters.get("decision_total", 0)) > 0)
         ),
         "zip": str(zip_path),
@@ -489,6 +645,7 @@ def _input_hashes(config: Phase1Top10ProbeConfig) -> dict[str, Any]:
         "minimum_boundary_document_support": config.minimum_boundary_document_support,
         "minimum_candidate_proposal_sources": config.minimum_candidate_proposal_sources,
         "open_holdout": config.open_holdout,
+        "full_diagnostic": config.full_diagnostic,
         "implementation": {
             str(path.name): _path_sha256(path) for path in implementation_paths
         },

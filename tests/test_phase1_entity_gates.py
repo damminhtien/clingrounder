@@ -66,7 +66,49 @@ def test_lab_gate_can_retype_with_reviewed_rule_and_drops_internal_attributes() 
     assert decisions[0]["action"] == "retype_internal_and_block"
 
 
-def test_strict_exclusions_do_not_run_review_exclusions() -> None:
+def test_lab_gate_keeps_self_describing_vitals_and_requires_anchor_for_concentrations() -> None:
+    text = "Nhiệt độ 38.8°C. Giá trị 6.3 mg/dL. Glucose 7.1 mg/dL."
+    rows = {
+        "1": [
+            _row("38.8°C", "KẾT_QUẢ_XÉT_NGHIỆM", text.index("38.8°C")),
+            _row("6.3 mg/dL", "KẾT_QUẢ_XÉT_NGHIỆM", text.index("6.3 mg/dL")),
+            _row("Glucose", "TÊN_XÉT_NGHIỆM", text.index("Glucose")),
+            _row("7.1 mg/dL", "KẾT_QUẢ_XÉT_NGHIỆM", text.index("7.1 mg/dL")),
+        ]
+    }
+
+    output, decisions, _ = apply_phase1_entity_gates(
+        rows,
+        {"1": text},
+        config=Phase1EntityGateConfig(lab_gate=True),
+    )
+
+    assert [row["text"] for row in output["1"]] == ["38.8°C", "Glucose", "7.1 mg/dL"]
+    blocked = next(row for row in decisions if row["before"]["text"] == "6.3 mg/dL")
+    assert blocked["rule_id"] == "builtin.lab.unanchored_value"
+
+
+def test_lab_gate_uses_same_line_fallback_for_translated_result_lists() -> None:
+    text = "- dấu hiệu sinh tồn là: 98.8 65 9360 20 95\n- ghi nhận 350 ml từ ống thông"
+    rows = {
+        "1": [
+            _row("98.8", "KẾT_QUẢ_XÉT_NGHIỆM", text.index("98.8")),
+            _row("65", "KẾT_QUẢ_XÉT_NGHIỆM", text.index("65")),
+            _row("350 ml", "KẾT_QUẢ_XÉT_NGHIỆM", text.index("350 ml")),
+        ]
+    }
+
+    output, decisions, _ = apply_phase1_entity_gates(
+        rows,
+        {"1": text},
+        config=Phase1EntityGateConfig(lab_gate=True),
+    )
+
+    assert [row["text"] for row in output["1"]] == ["98.8", "65", "350 ml"]
+    assert decisions == []
+
+
+def test_strict_exclusions_require_reviewed_type_scoped_registry_rule() -> None:
     text = "phẫu thuật và đau"
     policy = {
         "exclusions": {
@@ -81,15 +123,40 @@ def test_strict_exclusions_do_not_run_review_exclusions() -> None:
         ]
     }
 
-    output, decisions, _ = apply_phase1_entity_gates(
+    without_registry, decisions, _ = apply_phase1_entity_gates(
         rows,
         {"1": text},
         config=Phase1EntityGateConfig(strict_exclusions=True),
         annotation_policy=policy,
     )
+    assert [row["text"] for row in without_registry["1"]] == ["phẫu thuật", "đau"]
+    assert decisions == []
+
+    registry = phase1_rule_registry_from_data(
+        {
+            "schema_version": "phase1-rule-registry.v1",
+            "rules": [
+                {
+                    "rule_id": "exclude.reviewed.procedure",
+                    "stage": "strict_exclusion",
+                    "entity_type": "CHẨN_ĐOÁN",
+                    "normalized_mention": "phẫu thuật",
+                    "action": "block",
+                    "review_status": "reviewed",
+                }
+            ],
+        }
+    )
+    output, decisions, _ = apply_phase1_entity_gates(
+        rows,
+        {"1": text},
+        config=Phase1EntityGateConfig(strict_exclusions=True),
+        annotation_policy=policy,
+        registry=registry,
+    )
 
     assert [row["text"] for row in output["1"]] == ["đau"]
-    assert decisions[0]["source"] == "manual_gold_train"
+    assert decisions[0]["rule_id"] == "exclude.reviewed.procedure"
 
 
 def test_boundary_expansion_is_guarded_by_punctuation_and_overlap() -> None:

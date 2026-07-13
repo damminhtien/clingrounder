@@ -236,6 +236,14 @@ uv run python scripts/run_phase1_top10_probes.py \
   --output-root outputs/phase1/top10_probes
 ```
 
+The Top-1 campaign baseline and promotion thresholds are pinned in
+`configs/phase1_top1_campaign.yaml`. New runs should pass
+`--expected-base-sha256 ab9644f4d635132eee6462929461cf0d9b3bd3b9059e5a598704349410b54644`.
+Candidate probes require three exact independent proposal sources by default and are emitted as
+`C_*_ONE`, `C_*_THREE`, and `C_*_TEN`; submit the next tier only after the previous tier wins.
+Compiled exclusions remain discovery evidence. Runtime exclusion requires a reviewed rule with an
+entity type and, where necessary, context constraints in the rule registry.
+
 The default run keeps the deterministic 15-document holdout sealed. Use `--open-holdout` only for
 the planned day-6 checkpoint. The runner creates a content-hashed directory and never overwrites an
 existing run. Each variant has its own `output/`, `output.zip`, SHA, train-only metrics, decision

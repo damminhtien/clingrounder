@@ -24,6 +24,8 @@ def main() -> None:
     parser.add_argument("--journal-dir", default="outputs/loops/journal")
     parser.add_argument("--policy-diff", help="Optional JSON object or JSON file.")
     parser.add_argument("--non-target-tolerance", type=float, default=0.0001)
+    parser.add_argument("--minimum-assertion-gain", type=float, default=0.5)
+    parser.add_argument("--minimum-candidate-gain", type=float, default=0.5)
     args = parser.parse_args()
 
     baseline = _load_json(args.baseline)
@@ -33,6 +35,8 @@ def main() -> None:
         baseline,
         trial,
         module=args.module,
+        minimum_assertion_gain=args.minimum_assertion_gain,
+        minimum_candidate_gain=args.minimum_candidate_gain,
         non_target_tolerance=args.non_target_tolerance,
     )
     record = append_public_probe_journal(
