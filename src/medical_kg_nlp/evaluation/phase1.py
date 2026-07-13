@@ -21,10 +21,11 @@ from medical_kg_nlp.ontology.phase1 import (
     PHASE1_TYPE_BY_ENTITY_TYPE,
     expected_code_system,
 )
-from medical_kg_nlp.schema.annotation import EntityAnnotation
+from medical_kg_nlp.schema.annotation import AssertionEvidence, EntityAnnotation
 from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem
+from medical_kg_nlp.utils.text import normalize_for_match
 
 
 _PHASE1_ASSERTION_BY_STATUS = {
@@ -33,7 +34,96 @@ _PHASE1_ASSERTION_BY_STATUS = {
     AssertionStatus.HISTORICAL: "isHistorical",
 }
 _PHASE1_ASSERTION_OVERLAYS: tuple[Phase1AssertionOverlay, ...] = load_phase1_assertion_overlays()
-Phase1ExportPolicy = Literal["empty", "pipeline"]
+_SELECTIVE_EVIDENCE_SCOPES = frozenset({"left", "right", "bidirectional", "section_prior"})
+Phase1ExportPolicy = Literal["empty", "pipeline", "selective"]
+
+
+@dataclass(frozen=True)
+class Phase1SelectiveExportConfig:
+    assertion_allowed_scopes: frozenset[str]
+    assertion_allowed_types: Mapping[str, frozenset[str]]
+    assertion_min_evidence: int
+    assertion_require_calibrated_evidence: bool
+    calibrated_assertion_evidence: frozenset[tuple[str, str, str]]
+    candidate_enabled: bool
+    candidate_source_thresholds: Mapping[tuple[CodeSystem, str], float]
+    candidate_require_reviewed: bool
+    candidate_rxnorm_require_structured_mention: bool
+    reviewed_candidates: frozenset[tuple[str, str, str]]
+
+    @classmethod
+    def from_mapping(
+        cls,
+        payload: Mapping[str, Any],
+        *,
+        reviewed_candidates: frozenset[tuple[str, str, str]] = frozenset(),
+        calibrated_assertion_evidence: frozenset[tuple[str, str, str]] = frozenset(),
+    ) -> "Phase1SelectiveExportConfig":
+        assertions = _required_mapping(payload, "assertions")
+        candidates = _required_mapping(payload, "candidates")
+        raw_types = _required_mapping(assertions, "allowed_types")
+        unknown_labels = set(raw_types) - set(PHASE1_ALLOWED_ASSERTIONS)
+        if unknown_labels:
+            raise ValueError(
+                f"selective.assertions.allowed_types has unknown labels: {sorted(unknown_labels)}"
+            )
+        allowed_types = {
+            str(label): frozenset(_required_string_list(raw_types, str(label)))
+            for label in PHASE1_ALLOWED_ASSERTIONS
+        }
+        invalid_types = sorted(
+            {
+                entity_type
+                for entity_types in allowed_types.values()
+                for entity_type in entity_types
+                if entity_type not in PHASE1_ASSERTABLE_TYPES
+            }
+        )
+        if invalid_types:
+            raise ValueError(
+                f"selective.assertions.allowed_types has invalid entity types: {invalid_types}"
+            )
+        source_thresholds = _candidate_source_thresholds(candidates)
+        minimum = assertions.get("min_evidence", 1)
+        if isinstance(minimum, bool) or not isinstance(minimum, int) or minimum < 1:
+            raise ValueError("selective.assertions.min_evidence must be a positive integer")
+        allowed_scopes = frozenset(_required_string_list(assertions, "allowed_scopes"))
+        invalid_scopes = sorted(allowed_scopes - _SELECTIVE_EVIDENCE_SCOPES)
+        if invalid_scopes:
+            raise ValueError(
+                f"selective.assertions.allowed_scopes has invalid scopes: {invalid_scopes}"
+            )
+        candidate_enabled = _required_bool(candidates, "enabled")
+        require_calibrated_evidence = _required_bool(
+            assertions, "require_calibrated_evidence"
+        )
+        if require_calibrated_evidence and not calibrated_assertion_evidence:
+            raise ValueError(
+                "selective assertions require a non-empty calibrated evidence map"
+            )
+        require_reviewed = _required_bool(candidates, "require_reviewed")
+        if candidate_enabled and not source_thresholds:
+            raise ValueError(
+                "selective.candidates.source_thresholds must not be empty when candidates are enabled"
+            )
+        if candidate_enabled and require_reviewed and not reviewed_candidates:
+            raise ValueError(
+                "selective candidates require a non-empty reviewed candidate map"
+            )
+        return cls(
+            assertion_allowed_scopes=allowed_scopes,
+            assertion_allowed_types=allowed_types,
+            assertion_min_evidence=minimum,
+            assertion_require_calibrated_evidence=require_calibrated_evidence,
+            calibrated_assertion_evidence=calibrated_assertion_evidence,
+            candidate_enabled=candidate_enabled,
+            candidate_source_thresholds=source_thresholds,
+            candidate_require_reviewed=require_reviewed,
+            candidate_rxnorm_require_structured_mention=_required_bool(
+                candidates, "rxnorm_require_structured_mention"
+            ),
+            reviewed_candidates=reviewed_candidates,
+        )
 
 
 @dataclass(frozen=True)
@@ -66,6 +156,7 @@ def prediction_to_phase1_entities(
     source_text: str | None = None,
     assertion_policy: Phase1ExportPolicy = "pipeline",
     candidate_policy: Phase1ExportPolicy = "pipeline",
+    selective_config: Phase1SelectiveExportConfig | None = None,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for entity in prediction.entities:
@@ -80,6 +171,7 @@ def prediction_to_phase1_entities(
                 source_text=source_text,
                 assertion_policy=assertion_policy,
                 candidate_policy=candidate_policy,
+                selective_config=selective_config,
             )
         )
     return rows
@@ -93,9 +185,12 @@ def entity_to_phase1(
     source_text: str | None = None,
     assertion_policy: Phase1ExportPolicy = "pipeline",
     candidate_policy: Phase1ExportPolicy = "pipeline",
+    selective_config: Phase1SelectiveExportConfig | None = None,
 ) -> dict[str, Any]:
     _validate_export_policy(assertion_policy, "assertion_policy")
     _validate_export_policy(candidate_policy, "candidate_policy")
+    if "selective" in {assertion_policy, candidate_policy} and selective_config is None:
+        raise ValueError("selective export policy requires selective_config")
     text, span = _phase1_text_and_span(entity, phase1_type, source_text)
     return {
         "text": text,
@@ -103,11 +198,15 @@ def entity_to_phase1(
         "assertions": (
             _phase1_assertions(entity, source_text)
             if assertion_policy == "pipeline" and phase1_type in PHASE1_ASSERTABLE_TYPES
+            else _selective_assertions(entity, phase1_type, selective_config)
+            if assertion_policy == "selective"
             else []
         ),
         "candidates": (
             _phase1_candidates(entity, phase1_type, max_candidates=max_candidates)
             if candidate_policy == "pipeline"
+            else _selective_candidates(entity, phase1_type, selective_config)
+            if candidate_policy == "selective"
             else []
         ),
         "position": [span[0], span[1]],
@@ -402,6 +501,7 @@ def write_phase1_output_dir(
     source_text_by_document: Mapping[str, str] | None = None,
     assertion_policy: Phase1ExportPolicy = "pipeline",
     candidate_policy: Phase1ExportPolicy = "pipeline",
+    selective_config: Phase1SelectiveExportConfig | None = None,
 ) -> None:
     path = Path(output_dir)
     path.mkdir(parents=True, exist_ok=True)
@@ -417,6 +517,7 @@ def write_phase1_output_dir(
             else None,
             assertion_policy=assertion_policy,
             candidate_policy=candidate_policy,
+            selective_config=selective_config,
         )
         (path / f"{prediction.document_id}.json").write_text(
             json.dumps(rows, ensure_ascii=False, indent=2) + "\n",
@@ -715,13 +816,208 @@ def _phase1_candidates(
     return codes[:max_candidates]
 
 
+def _selective_assertions(
+    entity: EntityAnnotation,
+    phase1_type: str,
+    config: Phase1SelectiveExportConfig | None,
+) -> list[str]:
+    if config is None or phase1_type not in PHASE1_ASSERTABLE_TYPES:
+        return []
+    evidence_by_assertion: dict[str, list[AssertionEvidence]] = {}
+    for item in entity.assertion_evidence:
+        label = _PHASE1_ASSERTION_BY_STATUS.get(item.assertion)
+        if label is None or item.scope not in config.assertion_allowed_scopes:
+            continue
+        if (
+            config.assertion_require_calibrated_evidence
+            and (item.rule_id, label, phase1_type)
+            not in config.calibrated_assertion_evidence
+        ):
+            continue
+        evidence_by_assertion.setdefault(label, []).append(item)
+    return [
+        label
+        for label in PHASE1_ALLOWED_ASSERTIONS
+        if phase1_type in config.assertion_allowed_types.get(label, frozenset())
+        and len({item.rule_id for item in evidence_by_assertion.get(label, [])})
+        >= config.assertion_min_evidence
+    ]
+
+
+def _selective_candidates(
+    entity: EntityAnnotation,
+    phase1_type: str,
+    config: Phase1SelectiveExportConfig | None,
+) -> list[str]:
+    if config is None or not config.candidate_enabled:
+        return []
+    expected_system = _expected_code_system(phase1_type)
+    if expected_system is None:
+        return []
+    if (
+        expected_system == CodeSystem.RXNORM
+        and config.candidate_rxnorm_require_structured_mention
+        and not _has_structured_medication_mention(entity)
+    ):
+        return []
+    eligible: list[str] = []
+    normalized = normalize_for_match(entity.text)
+    for candidate in entity.candidates:
+        threshold = config.candidate_source_thresholds.get(
+            (expected_system, candidate.source)
+        )
+        if (
+            threshold is None
+            or not candidate.qualified
+            or candidate.code_system != expected_system
+            or candidate.code is None
+            or candidate.emit_probability < threshold
+        ):
+            continue
+        reviewed_key = (normalized, phase1_type, candidate.code)
+        if config.candidate_require_reviewed and reviewed_key not in config.reviewed_candidates:
+            continue
+        if candidate.code not in eligible:
+            eligible.append(candidate.code)
+    return eligible if len(eligible) == 1 else []
+
+
+def _has_structured_medication_mention(entity: EntityAnnotation) -> bool:
+    medication = entity.medication_mention
+    if medication is None:
+        return False
+    return any(
+        component.kind in {"strength", "dose_form", "dosage"}
+        for component in medication.components
+    )
+
+
 def _expected_code_system(phase1_type: str) -> CodeSystem | None:
     return expected_code_system(phase1_type)
 
 
 def _validate_export_policy(value: str, field: str) -> None:
-    if value not in {"empty", "pipeline"}:
-        raise ValueError(f"{field} must be one of: empty, pipeline.")
+    if value not in {"empty", "pipeline", "selective"}:
+        raise ValueError(f"{field} must be one of: empty, pipeline, selective.")
+
+
+def _required_mapping(payload: Mapping[str, Any], key: str) -> Mapping[str, Any]:
+    value = payload.get(key)
+    if not isinstance(value, Mapping):
+        raise ValueError(f"selective.{key} must be a mapping")
+    return value
+
+
+def _required_string_list(payload: Mapping[str, Any], key: str) -> list[str]:
+    value = payload.get(key)
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise ValueError(f"selective.{key} must be a list of strings")
+    result = [str(item).strip() for item in value]
+    if any(not item for item in result):
+        raise ValueError(f"selective.{key} must not contain empty strings")
+    return result
+
+
+def _required_probability(payload: Mapping[str, Any], key: str) -> float:
+    value = payload.get(key)
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise ValueError(f"selective.min_emit_probability.{key} must be a number")
+    result = float(value)
+    if not 0.0 <= result <= 1.0:
+        raise ValueError(f"selective.min_emit_probability.{key} must be between 0 and 1")
+    return result
+
+
+def _candidate_source_thresholds(
+    candidates: Mapping[str, Any],
+) -> dict[tuple[CodeSystem, str], float]:
+    raw_systems = _required_mapping(candidates, "source_thresholds")
+    expected_keys = {CodeSystem.ICD10.value, CodeSystem.RXNORM.value}
+    unknown = set(raw_systems) - expected_keys
+    if unknown:
+        raise ValueError(
+            f"selective.candidates.source_thresholds has unknown code systems: {sorted(unknown)}"
+        )
+    result: dict[tuple[CodeSystem, str], float] = {}
+    for code_system in (CodeSystem.ICD10, CodeSystem.RXNORM):
+        by_source = _required_mapping(raw_systems, code_system.value)
+        for raw_source in sorted(by_source):
+            source = str(raw_source).strip()
+            if not source or "+" in source:
+                raise ValueError(
+                    "selective candidate source names must be non-empty primary sources"
+                )
+            result[(code_system, source)] = _required_probability(by_source, str(raw_source))
+    return result
+
+
+def _required_bool(payload: Mapping[str, Any], key: str) -> bool:
+    value = payload.get(key)
+    if not isinstance(value, bool):
+        raise ValueError(f"selective.{key} must be a boolean")
+    return value
+
+
+def load_reviewed_candidate_map(path: str | Path) -> frozenset[tuple[str, str, str]]:
+    rows: set[tuple[str, str, str]] = set()
+    code_by_mention: dict[tuple[str, str], str] = {}
+    with Path(path).open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            if not line.strip():
+                continue
+            payload = json.loads(line)
+            if not isinstance(payload, Mapping):
+                raise ValueError(f"{path}:{line_number}: expected an object")
+            if payload.get("review_status") != "reviewed":
+                continue
+            mention = normalize_for_match(str(payload.get("normalized_mention", "")))
+            entity_type = str(payload.get("entity_type", ""))
+            candidate = str(payload.get("candidate", ""))
+            if not mention or entity_type not in PHASE1_CODABLE_TYPES or not candidate:
+                raise ValueError(f"{path}:{line_number}: invalid reviewed candidate row")
+            expected_system = _expected_code_system(entity_type)
+            if payload.get("code_system") != (
+                expected_system.value if expected_system is not None else None
+            ):
+                raise ValueError(
+                    f"{path}:{line_number}: code_system does not match entity_type"
+                )
+            mention_key = (mention, entity_type)
+            previous = code_by_mention.get(mention_key)
+            if previous is not None and previous != candidate:
+                raise ValueError(
+                    f"{path}:{line_number}: conflicting reviewed codes "
+                    f"{previous!r} and {candidate!r} for {mention_key!r}"
+                )
+            code_by_mention[mention_key] = candidate
+            rows.add((mention, entity_type, candidate))
+    return frozenset(rows)
+
+
+def load_calibrated_assertion_map(
+    path: str | Path,
+) -> frozenset[tuple[str, str, str]]:
+    rows: set[tuple[str, str, str]] = set()
+    with Path(path).open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            if not line.strip():
+                continue
+            payload = json.loads(line)
+            if not isinstance(payload, Mapping):
+                raise ValueError(f"{path}:{line_number}: expected an object")
+            if payload.get("review_status") != "calibrated":
+                continue
+            rule_id = str(payload.get("rule_id", "")).strip()
+            assertion = str(payload.get("assertion", ""))
+            entity_type = str(payload.get("entity_type", ""))
+            if (
+                not rule_id
+                or assertion not in PHASE1_ALLOWED_ASSERTIONS
+                or entity_type not in PHASE1_ASSERTABLE_TYPES
+            ):
+                raise ValueError(f"{path}:{line_number}: invalid calibrated assertion row")
+            rows.add((rule_id, assertion, entity_type))
+    return frozenset(rows)
 
 
 def _allowed_codes(dictionary: DictionaryStore | None) -> tuple[set[str], set[str]]:

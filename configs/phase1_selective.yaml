@@ -1,0 +1,67 @@
+input_dir: data/raw/input
+output_dir: phase1/selective/output
+zip: phase1/selective/output.zip
+run_root: outputs/phase1
+run_label: phase1_selective
+traces: phase1/selective/traces.jsonl
+mode: selective
+dictionary: data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
+abbreviations: data/dictionaries/abbreviations.jsonl
+strict_validation: true
+expected_count: 100
+max_candidates: 1
+assertion_policy: selective
+candidate_policy: selective
+
+selective:
+  assertions:
+    allowed_scopes:
+      - left
+      - right
+      - section_prior
+    min_evidence: 1
+    require_calibrated_evidence: true
+    calibrated_evidence_map: data/manual_gold/calibrated_assertion_evidence.jsonl
+    allowed_types:
+      isNegated:
+        - TRIỆU_CHỨNG
+        - CHẨN_ĐOÁN
+        - THUỐC
+      isFamily: []
+      isHistorical:
+        - CHẨN_ĐOÁN
+        - THUỐC
+  candidates:
+    # Public probes currently favor abstention. Enable only with a reviewed map
+    # and calibrated source probabilities from the selective calibration report.
+    enabled: false
+    reviewed_map: data/manual_gold/reviewed_candidate_map.jsonl
+    source_thresholds:
+      ICD-10:
+        exact: 0.95
+        abbreviation: 0.98
+        dictionary_exact: 0.99
+      RxNorm:
+        exact: 0.98
+        abbreviation: 0.99
+    require_reviewed: true
+    rxnorm_require_structured_mention: false
+
+parallel:
+  backend: process
+  workers: 4
+  chunksize: 4
+  fail_fast: true
+
+pipeline:
+  max_candidates: 20
+  context_window: 80
+  candidate_sources:
+    - exact
+    - abbreviation
+  enable_context: true
+  enable_linking: false
+  enable_candidate_reranking: false
+  enable_entity_kg_validation: false
+  enable_relations: false
+  enable_relation_kg_validation: false

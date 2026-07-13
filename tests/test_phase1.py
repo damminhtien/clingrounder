@@ -7,8 +7,11 @@ from pathlib import Path
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.evaluation.phase1 import (
+    Phase1SelectiveExportConfig,
     _maximum_weight_assignment,
     build_phase1_report,
+    load_calibrated_assertion_map,
+    load_reviewed_candidate_map,
     load_phase1_text_documents,
     prediction_to_phase1_entities,
     score_phase1_documents,
@@ -20,7 +23,12 @@ from medical_kg_nlp.evaluation.phase1 import (
 )
 from medical_kg_nlp.evaluation.phase1_submission_analysis import build_phase1_submission_analysis
 from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
-from medical_kg_nlp.schema.annotation import AssertionFeatures, CandidateConcept, EntityAnnotation
+from medical_kg_nlp.schema.annotation import (
+    AssertionEvidence,
+    AssertionFeatures,
+    CandidateConcept,
+    EntityAnnotation,
+)
 from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
@@ -115,6 +123,177 @@ def test_prediction_to_phase1_entities_supports_entity_only_abstention() -> None
     assert rows[0]["text"] == "tăng huyết áp"
     assert rows[0]["assertions"] == []
     assert rows[0]["candidates"] == []
+
+
+def test_selective_export_uses_evidence_and_reviewed_candidate_probability() -> None:
+    text = "Tiền sử không có tăng huyết áp."
+    entity = _entity(
+        "E1",
+        text,
+        "tăng huyết áp",
+        EntityType.DISEASE,
+        assertion=AssertionStatus.NEGATED,
+        candidates=[
+            _candidate(
+                CodeSystem.ICD10,
+                "I10",
+                source="exact",
+                emit_probability=0.97,
+            )
+        ],
+    )
+    entity.assertion_evidence = (
+        AssertionEvidence("NEG_NO", AssertionStatus.NEGATED, "không có", "left"),
+        AssertionEvidence(
+            "HIST_SECTION",
+            AssertionStatus.HISTORICAL,
+            "tiền sử",
+            "section_prior",
+        ),
+    )
+    prediction = ClinicalPrediction.from_text("1", text, [entity], [], "test")
+    config = _selective_config(
+        reviewed=frozenset({("tăng huyết áp", "CHẨN_ĐOÁN", "I10")})
+    )
+
+    rows = prediction_to_phase1_entities(
+        prediction,
+        assertion_policy="selective",
+        candidate_policy="selective",
+        selective_config=config,
+    )
+
+    assert rows[0]["assertions"] == ["isNegated"]
+    assert rows[0]["candidates"] == ["I10"]
+
+
+def test_selective_candidate_export_abstains_for_low_probability_or_ambiguity() -> None:
+    text = "Chẩn đoán tăng huyết áp."
+    entity = _entity(
+        "E1",
+        text,
+        "tăng huyết áp",
+        EntityType.DISEASE,
+        candidates=[
+            _candidate(
+                CodeSystem.ICD10,
+                "I10",
+                source="exact",
+                emit_probability=0.94,
+            ),
+            _candidate(
+                CodeSystem.ICD10,
+                "I11",
+                source="exact",
+                emit_probability=0.99,
+            ),
+        ],
+    )
+    prediction = ClinicalPrediction.from_text("1", text, [entity], [], "test")
+    reviewed = frozenset(
+        {
+            ("tăng huyết áp", "CHẨN_ĐOÁN", "I10"),
+            ("tăng huyết áp", "CHẨN_ĐOÁN", "I11"),
+        }
+    )
+
+    rows = prediction_to_phase1_entities(
+        prediction,
+        assertion_policy="selective",
+        candidate_policy="selective",
+        selective_config=_selective_config(reviewed=reviewed),
+    )
+
+    assert rows[0]["candidates"] == ["I11"]
+
+    entity.candidates[0] = _candidate(
+        CodeSystem.ICD10,
+        "I10",
+        source="exact",
+        emit_probability=0.99,
+    )
+    rows = prediction_to_phase1_entities(
+        prediction,
+        assertion_policy="selective",
+        candidate_policy="selective",
+        selective_config=_selective_config(reviewed=reviewed),
+    )
+    assert rows[0]["candidates"] == []
+
+
+def test_selective_export_requires_explicit_config() -> None:
+    text = "Ho."
+    prediction = ClinicalPrediction.from_text(
+        "1", text, [_entity("E1", text, "Ho", EntityType.SYMPTOM)], [], "test"
+    )
+
+    try:
+        prediction_to_phase1_entities(prediction, assertion_policy="selective")
+    except ValueError as error:
+        assert str(error) == "selective export policy requires selective_config"
+    else:
+        raise AssertionError("selective export accepted missing configuration")
+
+
+def test_load_reviewed_candidate_map_accepts_only_reviewed_rows(tmp_path: Path) -> None:
+    path = tmp_path / "reviewed.jsonl"
+    path.write_text(
+        "\n".join(
+            (
+                json.dumps(
+                    {
+                        "normalized_mention": "Tăng huyết áp",
+                        "entity_type": "CHẨN_ĐOÁN",
+                        "candidate": "I10",
+                        "code_system": "ICD-10",
+                        "review_status": "reviewed",
+                    },
+                    ensure_ascii=False,
+                ),
+                json.dumps(
+                    {
+                        "normalized_mention": "viêm phổi",
+                        "entity_type": "CHẨN_ĐOÁN",
+                        "candidate": "J18.9",
+                        "code_system": "ICD-10",
+                        "review_status": "draft",
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert load_reviewed_candidate_map(path) == frozenset(
+        {("tăng huyết áp", "CHẨN_ĐOÁN", "I10")}
+    )
+
+
+def test_load_reviewed_candidate_map_rejects_conflicting_codes(tmp_path: Path) -> None:
+    path = tmp_path / "reviewed.jsonl"
+    rows = [
+        {
+            "normalized_mention": "tăng huyết áp",
+            "entity_type": "CHẨN_ĐOÁN",
+            "candidate": code,
+            "code_system": "ICD-10",
+            "review_status": "reviewed",
+        }
+        for code in ("I10", "I11")
+    ]
+    path.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+
+    try:
+        load_reviewed_candidate_map(path)
+    except ValueError as error:
+        assert "conflicting reviewed codes" in str(error)
+    else:
+        raise AssertionError("conflicting reviewed candidate map was accepted")
 
 
 def test_prediction_to_phase1_entities_exports_only_qualified_candidates() -> None:
@@ -560,6 +739,10 @@ def test_phase1_submission_cli_validates_zip(tmp_path: Path) -> None:
             str(pred_path),
             "--zip",
             "phase1/output.zip",
+            "--internal-predictions",
+            "phase1/internal_predictions.jsonl",
+            "--traces",
+            "phase1/traces.jsonl",
             "--expected-count",
             "1",
         ],
@@ -575,6 +758,8 @@ def test_phase1_submission_cli_validates_zip(tmp_path: Path) -> None:
     assert summary["relations_enabled"] is False
     assert summary["mode"] == "entity_only"
     assert summary["relation_validation_enabled"] is False
+    assert Path(summary["internal_predictions"]).exists()
+    assert Path(summary["traces"]).exists()
 
     subprocess.run(
         [
@@ -666,6 +851,8 @@ def test_phase1_submission_cli_can_read_config_defaults(tmp_path: Path) -> None:
 def test_phase1_configs_separate_entity_only_and_full_execution() -> None:
     entity_only = read_yaml("configs/phase1_submission.yaml")
     full = read_yaml("configs/phase1_full.yaml")
+    selective = read_yaml("configs/phase1_selective.yaml")
+    selective_candidates = read_yaml("configs/phase1_selective_candidates.yaml")
 
     assert entity_only["mode"] == "entity_only"
     assert entity_only["assertion_policy"] == "empty"
@@ -685,6 +872,35 @@ def test_phase1_configs_separate_entity_only_and_full_execution() -> None:
     ):
         assert full["pipeline"][key] is True
     assert full["pipeline"]["enable_relations"] is False
+
+    assert selective["mode"] == "selective"
+    assert selective["assertion_policy"] == "selective"
+    assert selective["candidate_policy"] == "selective"
+    assert selective["selective"]["candidates"]["enabled"] is False
+    assert selective["pipeline"]["enable_context"] is True
+
+    reviewed = load_reviewed_candidate_map(
+        selective_candidates["selective"]["candidates"]["reviewed_map"]
+    )
+    calibrated_evidence = load_calibrated_assertion_map(
+        selective_candidates["selective"]["assertions"]["calibrated_evidence_map"]
+    )
+    parsed = Phase1SelectiveExportConfig.from_mapping(
+        selective_candidates["selective"],
+        reviewed_candidates=reviewed,
+        calibrated_assertion_evidence=calibrated_evidence,
+    )
+    assert parsed.candidate_enabled is True
+    assert parsed.candidate_source_thresholds == {
+        (CodeSystem.ICD10, "dictionary_exact"): 0.99505,
+        (CodeSystem.RXNORM, "dictionary_exact"): 0.989362,
+    }
+    assert selective_candidates["pipeline"]["link_emit_probabilities_by_source"] == {
+        "ICD-10:dictionary_exact": 0.99505,
+        "RxNorm:dictionary_exact": 0.989362,
+    }
+    assert parsed.assertion_require_calibrated_evidence is True
+    assert parsed.calibrated_assertion_evidence
 
 
 def test_phase1_pre_submit_gate_writes_analysis_and_loop_artifacts(tmp_path: Path) -> None:
@@ -836,15 +1052,44 @@ def _candidate(
     code: str,
     *,
     qualified: bool = True,
+    source: str = "test",
+    emit_probability: float = 1.0,
 ) -> CandidateConcept:
     return CandidateConcept(
         code_system=code_system,
         code=code,
         name=code,
-        score=1.0,
+        retrieval_score=1.0,
+        emit_probability=emit_probability,
         concept_id=f"{code_system.value}:{code}",
-        source="test",
+        source=source,
+        evidence_sources=(source,),
         matched_alias=code,
         qualified=qualified,
         qualification_reason="test_qualified" if qualified else "test_rejected",
+    )
+
+
+def _selective_config(
+    *,
+    reviewed: frozenset[tuple[str, str, str]],
+) -> Phase1SelectiveExportConfig:
+    return Phase1SelectiveExportConfig(
+        assertion_allowed_scopes=frozenset({"left", "right"}),
+        assertion_allowed_types={
+            "isNegated": frozenset({"TRIỆU_CHỨNG", "CHẨN_ĐOÁN", "THUỐC"}),
+            "isFamily": frozenset(),
+            "isHistorical": frozenset({"CHẨN_ĐOÁN", "THUỐC"}),
+        },
+        assertion_min_evidence=1,
+        assertion_require_calibrated_evidence=False,
+        calibrated_assertion_evidence=frozenset(),
+        candidate_enabled=True,
+        candidate_source_thresholds={
+            (CodeSystem.ICD10, "exact"): 0.95,
+            (CodeSystem.RXNORM, "exact"): 0.98,
+        },
+        candidate_require_reviewed=True,
+        candidate_rxnorm_require_structured_mention=False,
+        reviewed_candidates=reviewed,
     )

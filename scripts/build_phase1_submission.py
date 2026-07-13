@@ -13,6 +13,9 @@ from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.evaluation.phase1 import (
     Phase1ExportPolicy,
+    Phase1SelectiveExportConfig,
+    load_calibrated_assertion_map,
+    load_reviewed_candidate_map,
     load_phase1_text_documents,
     validate_phase1_submission_dir,
     validate_phase1_submission_zip,
@@ -25,7 +28,7 @@ from medical_kg_nlp.pipeline.parallel_batch import (
     run_batch_with_trace_parallel,
 )
 from medical_kg_nlp.pipeline.options import PipelineOptions
-from medical_kg_nlp.utils.io import read_yaml
+from medical_kg_nlp.utils.io import read_yaml, write_jsonl
 from medical_kg_nlp.utils.run_output import create_hashed_run_dir, path_in_run
 
 
@@ -48,11 +51,19 @@ def main() -> None:
     parser.add_argument("--run-label", help="Label embedded in the hashed run directory.")
     parser.add_argument(
         "--mode",
-        choices=("entity_only", "full", "custom"),
+        choices=("entity_only", "selective", "full", "custom"),
         help="Execution contract. Config defaults to custom when omitted.",
     )
     parser.add_argument(
         "--pred", help="Optional internal prediction JSONL to export instead of running."
+    )
+    parser.add_argument(
+        "--internal-predictions",
+        help="Optional path for the full internal prediction JSONL with decision provenance.",
+    )
+    parser.add_argument(
+        "--traces",
+        help="Optional path for per-document pipeline trace JSONL.",
     )
     parser.add_argument(
         "--dictionary",
@@ -69,12 +80,12 @@ def main() -> None:
     )
     parser.add_argument(
         "--assertion-policy",
-        choices=("empty", "pipeline"),
+        choices=("empty", "pipeline", "selective"),
         help="Export assertions from the pipeline or abstain with empty lists.",
     )
     parser.add_argument(
         "--candidate-policy",
-        choices=("empty", "pipeline"),
+        choices=("empty", "pipeline", "selective"),
         help="Export candidates from the pipeline or abstain with empty lists.",
     )
     parser.add_argument(
@@ -115,6 +126,14 @@ def main() -> None:
     )
     mode = str(args.mode or config.get("mode") or "custom").strip().lower()
     pred_path = _optional_str(args.pred if args.pred is not None else config.get("pred"))
+    internal_predictions_arg = _optional_str(
+        args.internal_predictions
+        if args.internal_predictions is not None
+        else config.get("internal_predictions")
+    )
+    traces_arg = _optional_str(
+        args.traces if args.traces is not None else config.get("traces")
+    )
     dictionary_path = _required_str(
         args.dictionary or config.get("dictionary") or "data/dictionaries/seed_concepts.jsonl",
         "dictionary",
@@ -157,7 +176,14 @@ def main() -> None:
         else _bool_setting(config.get("strict_validation"), True, "strict_validation")
     )
     pipeline_options = PipelineOptions.from_mapping(pipeline_config)
-    _validate_submission_mode(mode, assertion_policy, candidate_policy, pipeline_options)
+    selective_config = _selective_config(config, assertion_policy, candidate_policy)
+    _validate_submission_mode(
+        mode,
+        assertion_policy,
+        candidate_policy,
+        pipeline_options,
+        selective_config,
+    )
 
     run_output = (
         create_hashed_run_dir(
@@ -196,6 +222,20 @@ def main() -> None:
         predictions = [result.prediction for result in run_results]
         traces = [result.trace.to_json() for result in run_results]
 
+    internal_predictions_path = (
+        path_in_run(internal_predictions_arg, run_output)
+        if internal_predictions_arg
+        else None
+    )
+    if internal_predictions_path is not None:
+        write_jsonl(
+            internal_predictions_path,
+            [prediction.to_json() for prediction in predictions],
+        )
+    traces_path = path_in_run(traces_arg, run_output) if traces_arg else None
+    if traces_path is not None:
+        write_jsonl(traces_path, traces)
+
     output_dir = path_in_run(output_dir_arg, run_output)
     source_text_by_document = {document.document_id: document.text for document in documents}
     write_phase1_output_dir(
@@ -205,6 +245,7 @@ def main() -> None:
         source_text_by_document=source_text_by_document,
         assertion_policy=assertion_policy,
         candidate_policy=candidate_policy,
+        selective_config=selective_config,
     )
     dictionary = DictionaryStore.from_jsonl(dictionary_path)
     issues = [
@@ -229,6 +270,8 @@ def main() -> None:
         assertion_policy=assertion_policy,
         candidate_policy=candidate_policy,
         mode=mode,
+        internal_predictions_path=internal_predictions_path,
+        traces_path=traces_path,
     )
     if issues and strict_validation:
         print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
@@ -259,6 +302,8 @@ def main() -> None:
         assertion_policy=assertion_policy,
         candidate_policy=candidate_policy,
         mode=mode,
+        internal_predictions_path=internal_predictions_path,
+        traces_path=traces_path,
     )
     print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
     if issues and strict_validation:
@@ -279,6 +324,8 @@ def _summary(
     assertion_policy: Phase1ExportPolicy,
     candidate_policy: Phase1ExportPolicy,
     mode: str,
+    internal_predictions_path: Path | None,
+    traces_path: Path | None,
 ) -> dict[str, Any]:
     return {
         "run_id": run_output.run_id if run_output else None,
@@ -295,6 +342,10 @@ def _summary(
         "assertion_policy": assertion_policy,
         "candidate_policy": candidate_policy,
         "mode": mode,
+        "internal_predictions": (
+            str(internal_predictions_path) if internal_predictions_path else None
+        ),
+        "traces": str(traces_path) if traces_path else None,
         "issue_count": len(issues),
         "issues": issues[:20],
     }
@@ -337,8 +388,8 @@ def _int_setting(cli_value: int | None, config_value: Any, default: int, key: st
 
 def _export_policy(value: Any, key: str) -> Phase1ExportPolicy:
     policy = str(value or "pipeline").strip().lower()
-    if policy not in {"empty", "pipeline"}:
-        raise ValueError(f"{key} must be one of: empty, pipeline.")
+    if policy not in {"empty", "pipeline", "selective"}:
+        raise ValueError(f"{key} must be one of: empty, pipeline, selective.")
     return cast(Phase1ExportPolicy, policy)
 
 
@@ -355,10 +406,30 @@ def _validate_submission_mode(
     assertion_policy: Phase1ExportPolicy,
     candidate_policy: Phase1ExportPolicy,
     options: PipelineOptions,
+    selective_config: Phase1SelectiveExportConfig | None,
 ) -> None:
-    if mode not in {"entity_only", "full", "custom"}:
-        raise ValueError("mode must be one of: entity_only, full, custom.")
+    if mode not in {"entity_only", "selective", "full", "custom"}:
+        raise ValueError("mode must be one of: entity_only, selective, full, custom.")
     if mode == "custom":
+        return
+    if mode == "selective":
+        if assertion_policy != "selective" or candidate_policy != "selective":
+            raise ValueError("selective mode requires selective assertion and candidate policies.")
+        if selective_config is None:
+            raise ValueError("selective mode requires a selective config block.")
+        if not options.enable_context:
+            raise ValueError("selective mode requires context classification.")
+        if selective_config.candidate_enabled and not options.enable_linking:
+            non_pinned_sources = sorted(
+                source
+                for _, source in selective_config.candidate_source_thresholds
+                if not source.startswith("dictionary_")
+            )
+            if non_pinned_sources:
+                raise ValueError(
+                    "selective candidate export without linking only supports pinned "
+                    f"dictionary sources, got: {non_pinned_sources}"
+                )
         return
     if mode == "entity_only":
         if assertion_policy != "empty" or candidate_policy != "empty":
@@ -386,6 +457,31 @@ def _validate_submission_mode(
     inactive = sorted(name for name, value in required.items() if not value)
     if inactive:
         raise ValueError(f"full mode requires enabled assertion/linking stages: {inactive}")
+
+
+def _selective_config(
+    config: dict[str, Any],
+    assertion_policy: Phase1ExportPolicy,
+    candidate_policy: Phase1ExportPolicy,
+) -> Phase1SelectiveExportConfig | None:
+    if "selective" not in {assertion_policy, candidate_policy}:
+        return None
+    payload = _mapping(config.get("selective"), "selective")
+    assertions = _mapping(payload.get("assertions"), "selective.assertions")
+    candidates = _mapping(payload.get("candidates"), "selective.candidates")
+    evidence_path = _optional_str(assertions.get("calibrated_evidence_map"))
+    calibrated_evidence = (
+        load_calibrated_assertion_map(evidence_path)
+        if evidence_path
+        else frozenset()
+    )
+    reviewed_path = _optional_str(candidates.get("reviewed_map"))
+    reviewed = load_reviewed_candidate_map(reviewed_path) if reviewed_path else frozenset()
+    return Phase1SelectiveExportConfig.from_mapping(
+        payload,
+        reviewed_candidates=reviewed,
+        calibrated_assertion_evidence=calibrated_evidence,
+    )
 
 
 if __name__ == "__main__":

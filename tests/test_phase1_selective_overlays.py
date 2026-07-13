@@ -7,6 +7,7 @@ from medical_kg_nlp.evaluation.phase1_selective_overlays import (
     apply_selective_assertions,
     apply_selective_candidates,
     compile_reviewed_candidate_registry,
+    write_reviewed_candidate_map,
     validate_probe_isolation,
 )
 
@@ -178,6 +179,8 @@ def test_candidate_registry_uses_train_review_tt06_and_source_consensus(tmp_path
         ]
     }
     registry, audit = compile_reviewed_candidate_registry(gold, dictionary, split="all")
+    reviewed_path = tmp_path / "reviewed_candidate_map.jsonl"
+    reviewed_rows = write_reviewed_candidate_map(registry, reviewed_path)
     rows = {
         "1": [
             _row("tăng huyết áp", "CHẨN_ĐOÁN", 0),
@@ -203,6 +206,10 @@ def test_candidate_registry_uses_train_review_tt06_and_source_consensus(tmp_path
     assert [row["candidates"] for row in ingredient["1"]] == [[], ["4603"], []]
     assert [row["candidates"] for row in clinical["1"]] == [[], [], ["999"]]
     assert audit["compiled_rule_count"] == 3
+    assert len(reviewed_rows) == 3
+    assert all(row["review_status"] == "reviewed" for row in reviewed_rows)
+    assert all(row["code_system"] in {"ICD-10", "RxNorm"} for row in reviewed_rows)
+    assert reviewed_path.read_text(encoding="utf-8").endswith("\n")
     assert validate_probe_isolation(rows, clinical, module="candidate") == []
 
 

@@ -262,6 +262,74 @@ def compile_reviewed_candidate_registry(
     }
 
 
+def reviewed_candidate_map_rows(
+    registry: Phase1RuleRegistry,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    stages = (
+        "candidate_icd",
+        "candidate_rxnorm_ingredient",
+        "candidate_rxnorm_clinical_drug",
+    )
+    for rule in registry.active_rules(*stages):
+        if (
+            rule.entity_type not in PHASE1_CODABLE_TYPES
+            or rule.normalized_mention is None
+            or len(rule.candidates) != 1
+        ):
+            continue
+        provenance = dict(rule.provenance or {})
+        expected_system = (
+            "ICD-10" if rule.entity_type == "CHẨN_ĐOÁN" else "RxNorm"
+        )
+        code_system = str(provenance.get("code_system", ""))
+        if code_system != expected_system:
+            raise ValueError(
+                f"Rule {rule.rule_id!r} has code_system {code_system!r}; "
+                f"expected {expected_system!r}."
+            )
+        rows.append(
+            {
+                "normalized_mention": rule.normalized_mention,
+                "entity_type": rule.entity_type,
+                "candidate": rule.candidates[0],
+                "code_system": code_system,
+                "candidate_stage": rule.stage,
+                "confidence_tier": rule.confidence_tier,
+                "occurrence_support": int(provenance.get("occurrence_support", 0)),
+                "document_support": int(provenance.get("document_support", 0)),
+                "dictionary_release": str(provenance.get("dictionary_release", "")),
+                "provenance": str(provenance.get("source", "")),
+                "rule_id": rule.rule_id,
+                "review_status": rule.review_status,
+            }
+        )
+    return sorted(
+        rows,
+        key=lambda row: (
+            str(row["entity_type"]),
+            str(row["normalized_mention"]),
+            str(row["candidate"]),
+        ),
+    )
+
+
+def write_reviewed_candidate_map(
+    registry: Phase1RuleRegistry,
+    path: str | Path,
+) -> list[dict[str, Any]]:
+    rows = reviewed_candidate_map_rows(registry)
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        "".join(
+            json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in rows
+        ),
+        encoding="utf-8",
+    )
+    return rows
+
+
 def apply_selective_candidates(
     rows_by_doc: Mapping[str, list[dict[str, Any]]],
     registry: Phase1RuleRegistry,

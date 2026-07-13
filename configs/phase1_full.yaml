@@ -3,6 +3,8 @@ output_dir: phase1/full_output
 zip: phase1/full_output.zip
 run_root: outputs/phase1
 run_label: phase1-full
+internal_predictions: phase1/full_internal_predictions.jsonl
+traces: phase1/full_traces.jsonl
 mode: full
 dictionary: data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
 abbreviations: data/dictionaries/abbreviations.jsonl
@@ -28,9 +30,14 @@ pipeline:
   link_candidate_threshold: 0.75
   link_candidate_relative_margin: 0.05
   link_max_qualified_candidates: 5
+  link_enforce_rxnorm_structure: true
   # Source-specific values override type-specific values, which override the global threshold.
   link_candidate_thresholds_by_type: {}
   link_candidate_thresholds_by_source: {}
+  # Uncalibrated retrieval sources remain at probability zero and cannot pass selective export.
+  link_emit_probabilities_by_source:
+    "ICD-10:dictionary_exact": 0.99505
+    "RxNorm:dictionary_exact": 0.989362
   candidate_sources:
     - exact
     - abbreviation
