@@ -74,6 +74,7 @@ def compile_annotation_knowledge(
     manifest_path: str | Path,
     strict_document_support: int = 2,
     document_ids: Iterable[str] | None = None,
+    conflict_decisions_path: str | Path | None = None,
 ) -> dict[str, Any]:
     gold_root = Path(gold_dir)
     manifest_file = Path(manifest_path)
@@ -157,9 +158,14 @@ def compile_annotation_knowledge(
     negative_groups = _group_negative_mentions(rejected_mentions)
     _add_knowledge_conflicts(positive_groups, negative_groups, conflicts)
     conflicts = _finalize_conflicts(conflicts)
+    conflict_decisions = _load_conflict_decisions(conflict_decisions_path)
+    conflicts, resolutions, unused_decisions = _apply_conflict_decisions(
+        conflicts,
+        conflict_decisions,
+    )
     unstable_mentions = {
         str(row["normalized_text"])
-        for row in conflicts
+        for row in [*conflicts, *resolutions]
         if row.get("normalized_text")
         and row["conflict_type"] in {"positive_negative_same_mention", "positive_type_disagreement"}
     }
@@ -178,6 +184,7 @@ def compile_annotation_knowledge(
         guideline_rows=guideline_rows,
         policy=policy,
         conflicts=conflicts,
+        resolutions=resolutions,
     )
     return {
         "schema_version": "phase1-annotation-knowledge.v1",
@@ -188,6 +195,11 @@ def compile_annotation_knowledge(
             "gold_files_sha256": _sha256_paths(loaded_gold_paths),
             "selected_document_ids": sorted(seen_documents, key=_document_sort_key),
             "excluded_manifest_document_count": len(all_manifest_rows) - len(manifest_rows),
+            "conflict_decisions": (
+                str(Path(conflict_decisions_path)) if conflict_decisions_path is not None else None
+            ),
+            "unused_conflict_decision_count": len(unused_decisions),
+            "unused_conflict_decisions": unused_decisions,
         },
         "compiler_config": {"strict_document_support": strict_document_support},
         "summary": summary,
@@ -198,6 +210,7 @@ def compile_annotation_knowledge(
             "guidelines": guidelines,
         },
         "conflicts": conflicts,
+        "conflict_resolutions": resolutions,
     }
 
 
@@ -208,6 +221,11 @@ def write_annotation_knowledge(report: Mapping[str, Any], output_dir: str | Path
     _write_yaml(output / "phase1_annotation_policy.yaml", _mapping(report.get("policy")))
     conflicts = _dict_list(report.get("conflicts"))
     _write_conflicts_csv(output / "policy_conflicts.csv", conflicts)
+    resolutions = _dict_list(report.get("conflict_resolutions"))
+    (output / "conflict_resolutions.jsonl").write_text(
+        "".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in resolutions),
+        encoding="utf-8",
+    )
     _write_json(output / "conflict_summary.json", _conflict_summary(conflicts))
     (output / "report.md").write_text(render_annotation_knowledge_markdown(report), encoding="utf-8")
 
@@ -232,6 +250,7 @@ def render_annotation_knowledge_markdown(report: Mapping[str, Any]) -> str:
         f"- Context-required aliases: {summary.get('context_required_alias_count', 0)}",
         f"- Strict exclusions: {summary.get('strict_exclusion_count', 0)}",
         f"- Conflicts: {summary.get('conflict_count', 0)}",
+        f"- Accepted conflict decisions: {summary.get('resolved_conflict_count', 0)}",
         "",
         "Runtime policy contains concept-level rules only; document identifiers remain audit provenance and are not runtime selectors.",
         "",
@@ -670,6 +689,7 @@ def _build_summary(
     guideline_rows: list[dict[str, Any]],
     policy: Mapping[str, Any],
     conflicts: list[dict[str, Any]],
+    resolutions: list[dict[str, Any]],
 ) -> dict[str, Any]:
     aliases = _mapping(policy.get("aliases"))
     strict_aliases = _mapping(aliases.get("strict"))
@@ -695,6 +715,10 @@ def _build_summary(
         "conflict_count": len(conflicts),
         "conflict_count_by_type": dict(sorted(Counter(row["conflict_type"] for row in conflicts).items())),
         "conflict_count_by_severity": dict(sorted(Counter(row["severity"] for row in conflicts).items())),
+        "resolved_conflict_count": len(resolutions),
+        "resolved_conflict_count_by_action": dict(
+            sorted(Counter(row["resolution_action"] for row in resolutions).items())
+        ),
     }
 
 
@@ -867,6 +891,82 @@ def _finalize_conflicts(conflicts: list[dict[str, Any]]) -> list[dict[str, Any]]
     )
 
 
+def _load_conflict_decisions(
+    path: str | Path | None,
+) -> dict[tuple[str, str], dict[str, Any]]:
+    if path is None or not Path(path).exists():
+        return {}
+    decisions: dict[tuple[str, str], dict[str, Any]] = {}
+    forbidden_fields = {"document_id", "document_ids", "position", "span", "start", "end"}
+    with Path(path).open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            if not isinstance(row, dict):
+                raise ValueError(f"{path}:{line_number}: expected a JSON object.")
+            forbidden = forbidden_fields & set(row)
+            if forbidden:
+                raise ValueError(
+                    f"{path}:{line_number}: conflict decisions cannot contain "
+                    f"document-specific fields {sorted(forbidden)}."
+                )
+            conflict_type = str(row.get("conflict_type", "")).strip()
+            normalized_text = normalize_for_match(str(row.get("normalized_text", "")))
+            action = str(row.get("action", "")).strip()
+            reason = str(row.get("reason", "")).strip()
+            if action not in {"context_required", "type_by_context"}:
+                raise ValueError(f"{path}:{line_number}: unsupported resolution action {action!r}.")
+            if not conflict_type or not normalized_text or not reason:
+                raise ValueError(
+                    f"{path}:{line_number}: conflict_type, normalized_text, action, and reason are required."
+                )
+            key = (conflict_type, normalized_text)
+            if key in decisions:
+                raise ValueError(f"{path}:{line_number}: duplicate conflict decision {key!r}.")
+            decisions[key] = row
+    return decisions
+
+
+def _apply_conflict_decisions(
+    conflicts: list[dict[str, Any]],
+    decisions: Mapping[tuple[str, str], dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    unresolved: list[dict[str, Any]] = []
+    resolutions: list[dict[str, Any]] = []
+    used: set[tuple[str, str]] = set()
+    for conflict in conflicts:
+        key = (
+            str(conflict.get("conflict_type", "")),
+            normalize_for_match(str(conflict.get("normalized_text", ""))),
+        )
+        decision = decisions.get(key)
+        if decision is None:
+            unresolved.append(conflict)
+            continue
+        used.add(key)
+        # A resolution keeps the original evidence for audit while removing it from the
+        # unresolved queue. Runtime policy still treats the mention as context-sensitive.
+        resolutions.append(
+            {
+                **conflict,
+                "resolution_action": str(decision["action"]),
+                "resolution_reason": str(decision["reason"]),
+            }
+        )
+    unused = [
+        {
+            "conflict_type": key[0],
+            "normalized_text": key[1],
+            "action": decision["action"],
+            "reason": decision["reason"],
+        }
+        for key, decision in sorted(decisions.items())
+        if key not in used
+    ]
+    return unresolved, resolutions, unused
+
+
 def _conflict_summary(conflicts: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "conflict_count": len(conflicts),
@@ -878,7 +978,7 @@ def _conflict_summary(conflicts: list[dict[str, Any]]) -> dict[str, Any]:
 
 def _write_conflicts_csv(path: Path, conflicts: list[dict[str, Any]]) -> None:
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=_CONFLICT_FIELDS)
+        writer = csv.DictWriter(handle, fieldnames=_CONFLICT_FIELDS, lineterminator="\n")
         writer.writeheader()
         for row in conflicts:
             writer.writerow(

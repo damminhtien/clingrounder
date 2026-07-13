@@ -1,31 +1,7 @@
 conflict_id,conflict_type,severity,normalized_text,entity_types,document_ids,accepted_count,rejected_count,details,recommended_action
-14a5169ab9fe,positive_negative_same_mention,high,1,"[""KẾT_QUẢ_XÉT_NGHIỆM""]","[""66""]",1,1,Mention is accepted in gold and also appears in review_candidates.,require_context_specific_rule
-5b3cdc9a5ed1,positive_negative_same_mention,high,14279,"[""KẾT_QUẢ_XÉT_NGHIỆM""]","[""51""]",1,1,Mention is accepted in gold and also appears in review_candidates.,require_context_specific_rule
-28f1d740ea47,positive_negative_same_mention,high,biến đổi cấp tính,"[""CHẨN_ĐOÁN""]","[""35""]",1,1,Mention is accepted in gold and also appears in review_candidates.,require_context_specific_rule
-c1258e40c031,positive_negative_same_mention,high,bình thường,"[""KẾT_QUẢ_XÉT_NGHIỆM""]","[""1"", ""3"", ""17"", ""35"", ""37"", ""48"", ""56""]",17,1,Mention is accepted in gold and also appears in review_candidates.,require_context_specific_rule
-5a4e3d21d691,positive_negative_same_mention,high,bất thường,"[""KẾT_QUẢ_XÉT_NGHIỆM""]","[""8"", ""14"", ""56"", ""91"", ""92"", ""95""]",5,3,Mention is accepted in gold and also appears in review_candidates.,require_context_specific_rule
-2a4b70ebb23b,positive_negative_same_mention,high,chưa phát hiện bất thường,"[""KẾT_QUẢ_XÉT_NGHIỆM""]","[""11"", ""28""]",1,1,Mention is accepted in gold and also appears in review_candidates.,require_context_specific_rule
-49530c181e17,positive_negative_same_mention,high,dấu hiệu sinh tồn,"[""TÊN_XÉT_NGHIỆM""]","[""54"", ""91"", ""97""]",2,2,Mention is accepted in gold and also appears in review_candidates.,require_context_specific_rule
-8324015dfc7d,positive_negative_same_mention,high,ho,"[""TRIỆU_CHỨNG""]","[""5"", ""7"", ""10"", ""12"", ""27"", ""32"", ""38"", ""40"", ""98""]",16,2,Mention is accepted in gold and also appears in review_candidates.,require_context_specific_rule
-3ba433e4996b,positive_negative_same_mention,high,hẹp gây hạn chế dòng chảy,"[""CHẨN_ĐOÁN""]","[""43""]",2,1,Mention is accepted in gold and also appears in review_candidates.,require_context_specific_rule
-7ff63cbeabba,positive_negative_same_mention,high,kháng sinh,"[""THUỐC""]","[""58"", ""96""]",2,1,Mention is accepted in gold and also appears in review_candidates.,require_context_specific_rule
-41edf7537a63,positive_negative_same_mention,high,khó thở,"[""TRIỆU_CHỨNG""]","[""1"", ""8"", ""14"", ""27"", ""28"", ""32"", ""33"", ""38"", ""42"", ""43"", ""44"", ""47"", ""50"", ""53"", ""56"", ""91"", ""93"", ""95"", ""96"", ""100""]",41,1,Mention is accepted in gold and also appears in review_candidates.,require_context_specific_rule
-fcb6fd6becb3,positive_negative_same_mention,high,ngã,"[""TRIỆU_CHỨNG""]","[""35"", ""48""]",4,1,Mention is accepted in gold and also appears in review_candidates.,require_context_specific_rule
-3704b42409ce,positive_negative_same_mention,high,thuốc giảm đau opioid,"[""THUỐC""]","[""34""]",3,1,Mention is accepted in gold and also appears in review_candidates.,require_context_specific_rule
-20d9f49df788,positive_negative_same_mention,high,tăng gánh nhẹ tuần hoàn phổi,"[""KẾT_QUẢ_XÉT_NGHIỆM""]","[""37""]",1,1,Mention is accepted in gold and also appears in review_candidates.,require_context_specific_rule
-2d8a77c15dda,positive_negative_same_mention,high,đái tháo đườngđái tháo đường,"[""KẾT_QUẢ_XÉT_NGHIỆM""]","[""35""]",1,1,Mention is accepted in gold and also appears in review_candidates.,require_context_specific_rule
-2dd8ab37fdc0,positive_type_disagreement,high,huyết khối,"[""CHẨN_ĐOÁN"", ""TÊN_XÉT_NGHIỆM""]","[""16"", ""32""]",3,0,The same normalized mention is accepted with multiple Phase 1 types.,require_context_or_resolve_type_policy
-8ff730f59e2a,positive_type_disagreement,high,hạ huyết áp,"[""CHẨN_ĐOÁN"", ""TRIỆU_CHỨNG""]","[""5"", ""58"", ""96"", ""97""]",8,0,The same normalized mention is accepted with multiple Phase 1 types.,require_context_or_resolve_type_policy
-37f3e8f6b3c0,positive_type_disagreement,high,hạ huyết áp không đặc hiệu,"[""CHẨN_ĐOÁN"", ""TRIỆU_CHỨNG""]","[""16"", ""46"", ""58""]",5,0,The same normalized mention is accepted with multiple Phase 1 types.,require_context_or_resolve_type_policy
-d2e681e66245,positive_type_disagreement,high,tim to,"[""CHẨN_ĐOÁN"", ""KẾT_QUẢ_XÉT_NGHIỆM""]","[""3"", ""20"", ""37""]",5,0,The same normalized mention is accepted with multiple Phase 1 types.,require_context_or_resolve_type_policy
-c44f3ef20fde,positive_type_disagreement,high,tăng men gan,"[""CHẨN_ĐOÁN"", ""KẾT_QUẢ_XÉT_NGHIỆM""]","[""4"", ""35""]",2,0,The same normalized mention is accepted with multiple Phase 1 types.,require_context_or_resolve_type_policy
-2b5985979ac4,review_offset_mismatch,medium,bất thường,[],"[""92""]",0,1,Review candidate 1 does not match its raw-text position.,repair_or_null_review_position
+3911c036e923,gold_overlapping_entities,medium,viêm gan virus c,"[""CHẨN_ĐOÁN""]","[""88""]",2,0,"Overlapping spans (115, 131) 'Viêm gan virus C' and (115, 136) 'Viêm gan virus C và B'.",review_non_overlapping_boundary_policy
 a5a15974f161,review_offset_mismatch,medium,bị ngã trong bồn tắm,[],"[""100""]",0,1,Review candidate 3 does not match its raw-text position.,repair_or_null_review_position
 b86ebbb7b35e,review_offset_mismatch,medium,can thiệp x-quang,[],"[""9""]",0,1,Review candidate 3 does not match its raw-text position.,repair_or_null_review_position
-98cdfd4ee052,review_offset_mismatch,medium,chưa phát hiện bất thường,[],"[""11""]",0,1,Review candidate 0 does not match its raw-text position.,repair_or_null_review_position
-8003996b6934,review_offset_mismatch,medium,chọc dò dịch ổ bụng 7l,[],"[""11""]",0,1,Review candidate 2 does not match its raw-text position.,repair_or_null_review_position
-3c8400bd72ce,review_offset_mismatch,medium,chọc dò màng phổi 3l4,[],"[""11""]",0,1,Review candidate 1 does not match its raw-text position.,repair_or_null_review_position
-53a9cd1676e4,review_offset_mismatch,medium,chống đông máu,[],"[""65""]",0,1,Review candidate 0 does not match its raw-text position.,repair_or_null_review_position
 2c685ececb6c,review_offset_mismatch,medium,có thể có một tổn thương t2,[],"[""10""]",0,1,Review candidate 2 does not match its raw-text position.,repair_or_null_review_position
 2a2f3157634a,review_offset_mismatch,medium,cảm thấy khỏe,[],"[""3""]",0,1,Review candidate 3 does not match its raw-text position.,repair_or_null_review_position
 c9c43b04da00,review_offset_mismatch,medium,du lịch,[],"[""17""]",0,1,Review candidate 0 does not match its raw-text position.,repair_or_null_review_position
@@ -37,37 +13,27 @@ e64610e6929b,review_offset_mismatch,medium,dòng picc đã đặt,[],"[""66""]",
 1df18ca86153,review_offset_mismatch,medium,hút 0.5cc dịch mủ,[],"[""17""]",0,1,Review candidate 5 does not match its raw-text position.,repair_or_null_review_position
 8e717c3a2484,review_offset_mismatch,medium,hút thuốc,[],"[""3""]",0,1,Review candidate 0 does not match its raw-text position.,repair_or_null_review_position
 bc2f154a31f6,review_offset_mismatch,medium,họng,[],"[""38""]",0,1,Review candidate 1 does not match its raw-text position.,repair_or_null_review_position
-3669af0b5f68,review_offset_mismatch,medium,khoa cấp cứu,[],"[""13""]",0,1,Review candidate 2 does not match its raw-text position.,repair_or_null_review_position
 fc8465368bfd,review_offset_mismatch,medium,khoa cấp cứu,[],"[""17""]",0,1,Review candidate 3 does not match its raw-text position.,repair_or_null_review_position
 2a86933e8975,review_offset_mismatch,medium,khám bác sĩ chăm sóc chính,[],"[""17""]",0,1,Review candidate 2 does not match its raw-text position.,repair_or_null_review_position
-fcc477a7c9e7,review_offset_mismatch,medium,khám tại phòng khám,[],"[""13""]",0,1,Review candidate 1 does not match its raw-text position.,repair_or_null_review_position
 37e5329bf3c8,review_offset_mismatch,medium,không có triệu chứng trước đó,[],"[""3""]",0,1,Review candidate 2 does not match its raw-text position.,repair_or_null_review_position
-e2125d6d7dab,review_offset_mismatch,medium,không liên quan đến gắng sức,[],"[""14""]",0,1,Review candidate 1 does not match its raw-text position.,repair_or_null_review_position
 b7c6909fe95f,review_offset_mismatch,medium,không thấy giảm đau,[],"[""19""]",0,1,Review candidate 2 does not match its raw-text position.,repair_or_null_review_position
 182af9b8127b,review_offset_mismatch,medium,không tuân thủ điều trị bằng thuốc,[],"[""3""]",0,1,Review candidate 1 does not match its raw-text position.,repair_or_null_review_position
-a5b5b0e750c0,review_offset_mismatch,medium,mông bên phải,[],"[""13""]",0,1,Review candidate 4 does not match its raw-text position.,repair_or_null_review_position
 3cb5a51eea37,review_offset_mismatch,medium,mạch 83,[],"[""3""]",0,1,Review candidate 7 does not match its raw-text position.,repair_or_null_review_position
 e8cc09fa526e,review_offset_mismatch,medium,một số vùng không thể đánh giá tốt,[],"[""10""]",0,1,Review candidate 3 does not match its raw-text position.,repair_or_null_review_position
 909eddf38268,review_offset_mismatch,medium,nghi ngờ,[],"[""12""]",0,1,Review candidate 1 does not match its raw-text position.,repair_or_null_review_position
-7702fd691a5b,review_offset_mismatch,medium,ngã đang hồi phục,[],"[""92""]",0,1,Review candidate 0 does not match its raw-text position.,repair_or_null_review_position
 336c0486f205,review_offset_mismatch,medium,nhịp thở 20,[],"[""3""]",0,1,Review candidate 9 does not match its raw-text position.,repair_or_null_review_position
 a14e4481f4c3,review_offset_mismatch,medium,nội soi mật tụy ngược dòng,[],"[""5""]",0,1,Review candidate 4 does not match its raw-text position.,repair_or_null_review_position
-32d6006f5589,review_offset_mismatch,medium,phim chụp,[],"[""92""]",0,1,Review candidate 2 does not match its raw-text position.,repair_or_null_review_position
 f627a7c1adf6,review_offset_mismatch,medium,phòng cấp cứu,[],"[""19""]",0,1,Review candidate 3 does not match its raw-text position.,repair_or_null_review_position
 04d4012ecd37,review_offset_mismatch,medium,phòng cấp cứu khám và điều trị,[],"[""12""]",0,1,Review candidate 2 does not match its raw-text position.,repair_or_null_review_position
-2d4ca9879988,review_offset_mismatch,medium,phẫu thuật bắc cầu động mạch vành,[],"[""14""]",0,1,Review candidate 0 does not match its raw-text position.,repair_or_null_review_position
 925333b40374,review_offset_mismatch,medium,phẫu thuật mở cắt nối trực tràng/đại tràng sigma,[],"[""16""]",0,1,Review candidate 0 does not match its raw-text position.,repair_or_null_review_position
 e2f0a69025c7,review_offset_mismatch,medium,phẫu thuật nội soi cắt bỏ tuyến tiền liệt bên trái,[],"[""99""]",0,1,Review candidate 0 does not match its raw-text position.,repair_or_null_review_position
 31c66364f27c,review_offset_mismatch,medium,phẫu thuật sửa van tĩnh mạch chủ ngực bụng,[],"[""21""]",0,1,Review candidate 1 does not match its raw-text position.,repair_or_null_review_position
 13325c2e7f8c,review_offset_mismatch,medium,phổi rõ tiếng khi nghe,[],"[""17""]",0,1,Review candidate 6 does not match its raw-text position.,repair_or_null_review_position
-80d7a34cf400,review_offset_mismatch,medium,qua đường hậu môn,[],"[""65""]",0,1,Review candidate 1 does not match its raw-text position.,repair_or_null_review_position
 d864eecd376e,review_offset_mismatch,medium,quá trình bệnh lý tim phổi cấp tính,[],"[""66""]",0,1,Review candidate 3 does not match its raw-text position.,repair_or_null_review_position
 c0d084487616,review_offset_mismatch,medium,quá trình cấp tính,[],"[""100""]",0,1,Review candidate 2 does not match its raw-text position.,repair_or_null_review_position
-1019776413c5,review_offset_mismatch,medium,sinh thiết nội mạc tử cung gần đây,[],"[""13""]",0,1,Review candidate 0 does not match its raw-text position.,repair_or_null_review_position
 718d79c5022e,review_offset_mismatch,medium,spo2 độ bão hòa oxy 94-95 ra,[],"[""3""]",0,1,Review candidate 10 does not match its raw-text position.,repair_or_null_review_position
 edf959b5abf4,review_offset_mismatch,medium,stent graft động mạch chủ ngực,[],"[""21""]",0,1,Review candidate 0 does not match its raw-text position.,repair_or_null_review_position
 ab5b9e5cd57f,review_offset_mismatch,medium,thăm khám chẩn đoán và điều trị,[],"[""4""]",0,1,Review candidate 3 does not match its raw-text position.,repair_or_null_review_position
-cceeaee7c165,review_offset_mismatch,medium,thủ thuật tips,[],"[""11""]",0,1,Review candidate 3 does not match its raw-text position.,repair_or_null_review_position
 530fb397ae44,review_offset_mismatch,medium,tim nhịp đều,[],"[""17""]",0,1,Review candidate 7 does not match its raw-text position.,repair_or_null_review_position
 a8353f69c402,review_offset_mismatch,medium,truyền dịch,[],"[""100""]",0,1,Review candidate 4 does not match its raw-text position.,repair_or_null_review_position
 432600b805a7,review_offset_mismatch,medium,truyền dịch tĩnh mạch 750cc,[],"[""16""]",0,1,Review candidate 1 does not match its raw-text position.,repair_or_null_review_position
@@ -75,7 +41,6 @@ a8353f69c402,review_offset_mismatch,medium,truyền dịch,[],"[""100""]",0,1,Re
 f3de141d814e,review_offset_mismatch,medium,tổn thương này,[],"[""8""]",0,1,Review candidate 1 does not match its raw-text position.,repair_or_null_review_position
 94b2632882e7,review_offset_mismatch,medium,xét nghiệm ngoại trú,[],"[""100""]",0,1,Review candidate 0 does not match its raw-text position.,repair_or_null_review_position
 cb963c94229f,review_offset_mismatch,medium,xông khí dung,[],"[""16""]",0,1,Review candidate 2 does not match its raw-text position.,repair_or_null_review_position
-47851ceca42a,review_offset_mismatch,medium,âm hộ bên phải,[],"[""13""]",0,1,Review candidate 3 does not match its raw-text position.,repair_or_null_review_position
 53dfb68304bc,review_offset_mismatch,medium,đi lại,[],"[""19""]",0,1,Review candidate 1 does not match its raw-text position.,repair_or_null_review_position
 107c46e597f2,review_offset_mismatch,medium,điều trị bảo tồn,[],"[""9""]",0,1,Review candidate 1 does not match its raw-text position.,repair_or_null_review_position
 2daf5037bc38,review_offset_mismatch,medium,điều trị ngoại khoa,[],"[""9""]",0,1,Review candidate 4 does not match its raw-text position.,repair_or_null_review_position
@@ -85,7 +50,6 @@ f4643da2a4bc,review_offset_mismatch,medium,đặt catheter động mạch,[],"["
 fbd94fe84ff7,review_offset_mismatch,medium,đặt stent,[],"[""38""]",0,1,Review candidate 0 does not match its raw-text position.,repair_or_null_review_position
 139d5a928569,review_offset_mismatch,medium,đặt stent đường mật,[],"[""5""]",0,1,Review candidate 5 does not match its raw-text position.,repair_or_null_review_position
 85109e1fbb62,review_offset_mismatch,medium,đặt đường truyền tĩnh mạch ngoại vi,[],"[""5""]",0,1,Review candidate 8 does not match its raw-text position.,repair_or_null_review_position
-2ff9baf99233,review_offset_mismatch,medium,đỏ tươi,[],"[""65""]",0,1,Review candidate 2 does not match its raw-text position.,repair_or_null_review_position
 c692b6dde3e5,review_offset_mismatch,medium,đồ uống lạnh,[],"[""38""]",0,1,Review candidate 2 does not match its raw-text position.,repair_or_null_review_position
 d56bf79efd65,unstable_policy_evidence,warning,101.4,[],"[""5""]",0,1,Vital sign value; keep review-only until vital sign policy is fixed.,keep_out_of_automatic_runtime_policy
 10ba67a93f8f,unstable_policy_evidence,warning,101.8,[],"[""5""]",0,1,Vital sign value; keep review-only until vital sign policy is fixed.,keep_out_of_automatic_runtime_policy

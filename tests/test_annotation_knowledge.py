@@ -96,6 +96,57 @@ def test_compiler_reports_type_positive_negative_offset_and_count_conflicts(tmp_
     assert "đau" not in report["policy"]["aliases"]["strict"]["CHẨN_ĐOÁN"]
 
 
+def test_compiler_records_concept_level_conflict_resolution(tmp_path: Path) -> None:
+    gold_dir = tmp_path / "gold"
+    gold_dir.mkdir()
+    source = tmp_path / "1.txt"
+    source.write_text("ho", encoding="utf-8")
+    _write_gold(gold_dir / "1.json", [_row("ho", "TRIỆU_CHỨNG", 0)])
+    manifest = tmp_path / "review_manifest.jsonl"
+    _write_manifest(
+        manifest,
+        [
+            _manifest_row(
+                "1",
+                gold_dir / "1.json",
+                source,
+                review_candidates=[
+                    {
+                        "text": "ho",
+                        "position": [0, 2],
+                        "reason": "Generic short alias requires context.",
+                    }
+                ],
+            )
+        ],
+    )
+    decisions = tmp_path / "conflict_decisions.jsonl"
+    decisions.write_text(
+        json.dumps(
+            {
+                "conflict_type": "positive_negative_same_mention",
+                "normalized_text": "ho",
+                "action": "context_required",
+                "reason": "Accept only as a standalone symptom token.",
+            },
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    report = compile_annotation_knowledge(
+        gold_dir=gold_dir,
+        manifest_path=manifest,
+        conflict_decisions_path=decisions,
+    )
+
+    assert report["conflicts"] == []
+    assert report["summary"]["resolved_conflict_count"] == 1
+    assert report["conflict_resolutions"][0]["resolution_action"] == "context_required"
+    assert "ho" in report["policy"]["unstable_mentions"]
+
+
 def test_annotation_knowledge_cli_smoke(tmp_path: Path) -> None:
     gold_dir = tmp_path / "gold"
     gold_dir.mkdir()

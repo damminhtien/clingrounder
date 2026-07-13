@@ -22,6 +22,11 @@ def main() -> None:
     )
     parser.add_argument("--gold-dir", default="data/manual_gold")
     parser.add_argument("--manifest", default="data/manual_gold/review_manifest.jsonl")
+    parser.add_argument(
+        "--conflict-decisions",
+        default="data/manual_gold/conflict_decisions.jsonl",
+        help="Concept-level context/type decisions; document ids and absolute spans are forbidden.",
+    )
     parser.add_argument("--output-dir", default="data/manual_gold/compiled")
     parser.add_argument(
         "--strict-document-support",
@@ -52,6 +57,7 @@ def main() -> None:
         manifest_path=args.manifest,
         strict_document_support=args.strict_document_support,
         document_ids=document_ids,
+        conflict_decisions_path=args.conflict_decisions,
     )
     write_annotation_knowledge(report, args.output_dir)
     summary = report["summary"]
@@ -66,6 +72,7 @@ def main() -> None:
                 "strict_exclusion_count": summary["strict_exclusion_count"],
                 "conflict_count": summary["conflict_count"],
                 "conflict_count_by_severity": summary["conflict_count_by_severity"],
+                "resolved_conflict_count": summary["resolved_conflict_count"],
             },
             ensure_ascii=False,
             indent=2,

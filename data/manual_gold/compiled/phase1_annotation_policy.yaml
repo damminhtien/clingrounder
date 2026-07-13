@@ -13,9 +13,7 @@ aliases:
     - buồn nôn
     - chán ăn
     - chóng mặt
-    - chướng bụng
     - chủ quan sốt
-    - co giật
     - cơn ngất xỉu
     - cảm giác thắt chặt ngực
     - khò khè
@@ -23,18 +21,18 @@ aliases:
     - khó thở khi gắng sức
     - khó thở khi nằm
     - lú lẫn
-    - lơ mơ
-    - mất ý thức
     - mệt mỏi
     - nghẹt ngực
     - ngất xỉu
     - nhầy máu
     - nôn
     - nôn mửa
-    - phù chi dưới
+    - phù
     - run rẩy
+    - sưng nề
     - sốt
     - tiêu chảy
+    - tiểu tiện không tự chủ
     - toàn trạng suy kiệt
     - táo bón
     - ăn uống kém
@@ -42,108 +40,105 @@ aliases:
     - đau bụng
     - đau bụng hạ sườn phải
     - đau dữ dội
-    - đau lưng
     - đau ngực
-    - đau ngực trái
+    - đau vùng hạ sườn phải
     - đau đầu
     - đau đầu kéo dài
     - đánh trống ngực
+    - đỏ
     - đổ mồ hôi
     - ảo giác
     - ớn lạnh
     TÊN_XÉT_NGHIỆM:
     - ag anion gap
     - bạch cầu
-    - chọc dò dịch não tủy
-    - chụp cắt lớp vi tính
     - chụp cắt lớp vi tính sọ não
     - chụp x-quang ngực
+    - chụp động mạch vành
     - cr creatinine
     - creatinin
     - creatinine
     - cấy máu
     - cấy nước tiểu
-    - nghiệm pháp gắng sức
+    - lactate
     - nhiệt độ
     - nhịp thở
-    - nhịp tim
+    - nitrite
     - sinh thiết
+    - siêu âm
+    - siêu âm tim
+    - thông tim trái
     - troponin
     - tổng phân tích nước tiểu
-    - xét nghiệm máu
+    - xét nghiệm chức năng gan
     - điện tâm đồ
-    - đường huyết
     - độ bão hòa oxy
     KẾT_QUẢ_XÉT_NGHIỆM: []
     CHẨN_ĐOÁN:
     - bàng quang thần kinh
     - béo phì
     - bệnh bạch cầu dòng tủy mãn tính
+    - bệnh phổi tắc nghẽn mạn tính không xác định
     - bệnh thận mạn không đặc hiệu
     - bệnh tim mạch do xơ vữa động mạch
     - bệnh trào ngược dạ dày- thực quản không có viêm thực quản
-    - chấn thương đầu
+    - bệnh động mạch vành
+    - hen suyễn
     - liệt hai chi dưới
     - nhiễm khuẩn đường tiết niệu
-    - nhiễm trùng
     - nhồi máu cơ tim
     - rung nhĩ
     - rung nhĩ kèm đáp ứng thất nhanh
-    - suy thận cấp
+    - rối loạn lo âu
     - suy tim không đặc hiệu
-    - tai biến mạch máu não
+    - sỏi mật
     - thiếu oxy
     - thuyên tắc phổi
-    - tràn dịch màng phổi
     - tăng huyết áp
     - tăng lipid máu không đặc hiệu
-    - tăng sản tuyến tiền liệt
-    - ung thư đại tràng
+    - u ác của tuyến tiền liệt
+    - ung thư biểu mô tuyến
     - viêm bể thận
-    - viêm mô tế bào
     - viêm phế quản
     - viêm phổi
     - viêm túi mật
     - xơ gan do rượu
     - áp xe
     - đái tháo đường
+    - đái tháo đường type 2
     - đái tháo đường típ 2
     THUỐC:
     - azithromycin
-    - bactrim
-    - doxycycline
     - gleevec
     - kháng sinh tĩnh mạch
+    - lasix
+    - methadone
+    - nitroglycerin
     - omeprazole
     - tylenol
-    - vancomycin
   context_required:
     TRIỆU_CHỨNG:
     - ra máu
-    - sưng
     - yếu
     - đau
     TÊN_XÉT_NGHIỆM:
     - alt
-    - glucose
     - huyết áp
     - inr
     - kali
     - mri
-    - mạch
     - spo2
     - x-quang
     KẾT_QUẢ_XÉT_NGHIỆM:
+    - '0.01'
+    - '0.10'
     - '1.2'
     - '11.6'
-    - '17'
     - '2.4'
     - '20'
-    - '26.1'
-    - '99'
     - dương tính
     - tăng
-    - tăng cao
+    - tăng men gan
     - âm tính
     CHẨN_ĐOÁN: []
     THUỐC: []
@@ -151,10 +146,11 @@ aliases:
     TRIỆU_CHỨNG:
     - biến đổi ý thức
     - buồn nôn thoáng qua
+    - chướng bụng
     - chảy máu mũi
     - chảy máu nhiều
+    - chảy nước mũi
     - cánh tay trái lơ lửng
-    - căng cứng vai trái
     - cơn ngất
     - cơn rối loạn ý thức thoáng qua
     - cảm giác bất thường ở bên phải đầu
@@ -165,7 +161,7 @@ aliases:
     - dễ nôn
     - dịch rò rỉ quanh ống thông
     - giảm cân
-    - ho có đờm trắng
+    - ho khan ho
     - ho mạn tính có đờm vàng loãng
     - ho nhẹ
     - ho ra máu cỡ đồng xu x3 đêm qua
@@ -179,40 +175,34 @@ aliases:
     - khó khăn khi ra khỏi giường
     - khó khăn khi ăn
     - khó khăn khi ăn uống qua đường miệng
+    - khó thở khi gắng sức nhẹ
     - khó thở về đêm
     - khô âm đạo
-    - không thể chịu lực ở chân phải
-    - không thể tự đứng dậy
     - kéo khóa quần
     - kéo lê chân trái
     - kích thích nhẹ
-    - liên tục khuỵu chân
     - loét
     - lú lẫn ngày càng nặng
-    - máu từ trực tràng
     - mất cảm giác ngon miệng/chán ăn
     - mất ngủ
-    - mất ăn ngon
+    - mất trí nhớ chi tiết
     - mất định hướng
     - nhìn mờ
-    - nhìn song thị
-    - nhịp tim chậm nặng
+    - nhịp thở nhanh
     - nuốt vướng
     - nôn ra máu
     - nôn từng đợt sau khi ăn
     - nôn x 1
-    - phân ít
-    - phù
+    - phù chi dưới
+    - phù chân
     - phù hai bên
     - phù mắt cá chân
     - phù ngoại vi
     - phù phù
-    - phản xạ kém
     - ra dịch mật
     - ra huyết âm đạo lượng ít
     - suy nhược
-    - sưng nhẹ
-    - sưng nề
+    - sưng phù hai mắt cá chân
     - sưng quanh khớp ức đòn
     - sốt cao
     - sốt nhẹ đến 38.3 c
@@ -220,24 +210,18 @@ aliases:
     - tiếng rít
     - tiếng rít vào ban đêm
     - tiếng rít về đêm
-    - tiểu tiện không tự chủ
     - tiểu tiện ra sàn
-    - tình trạng tri giác giảm sút
     - tăng cân trở lại
     - tăng khó thở
     - tăng tăng cân 3 pound trong 7 ngày qua
     - tăng đau đầu
-    - tỉnh chậm
-    - tổn thương vùng âm hộ và mông bên phải
     - tự tử
     - uống kém
+    - vã mồ hôi
     - yếu cơ
     - yếu nửa người trái
-    - yếu sức chân phải
-    - yếu sức nửa người bên phải
     - đau bàn chân phải
     - đau bẹn trái
-    - đau bụng dữ dội
     - đau bụng gián đoạn
     - đau bụng trên
     - đau bụng vùng hạ sườn phải
@@ -253,114 +237,102 @@ aliases:
     - đau khi sờ nắn xung quanh vị trí đặt ống dẫn đặc biệt là khi hít thở sâu
     - đau khi ấn xoang
     - đau lưng kéo dài
-    - đau nhẹ
+    - đau ngực trái dữ dội lan xuống cánh tay trái
     - đau quanh vết mổ
     - đau rát khi đi tiểu
     - đau tăng dần khi đi lại
-    - đau vùng hạ sườn phải
     - đau vùng hạ vị bên phải và hạ vị bên trái
     - đau đầu dữ dội
     - đau đầu gối phải
-    - đau ở hông phải khi cử động và thay đổi tư thế
     - đi lại không vững
-    - đại tiện ra máu đỏ tươi gián đoạn
     - đổ mồ hôi qua đêm
     TÊN_XÉT_NGHIỆM:
+    - bilirubin
     - bản phân tích nước tiểu
     - bảng chức năng gan
     - bảng công thức máu
     - bảng công thức sinh hóa máu cơ bản
     - canxi ion hóa
     - cholangiogram
+    - chọc dò dịch não tủy
     - chọc hút bằng kim nhỏ
-    - chụp chụp ct sọ não
     - chụp chụp cắt lớp vi tính
-    - chụp ct
-    - chụp ct ngực không thuốc cản quang
     - chụp ct não
     - chụp ct sọ
-    - chụp ct sọ não
     - chụp ct sọ não không thuốc cản quang
-    - chụp cắt lớp vi tính ct
     - chụp cắt lớp vi tính ct đầu
     - chụp cắt lớp vi tính mạch máu ctma ngực
     - chụp cộng hưởng từ mật tụy
-    - chụp lại chụp ct sọ não
     - chụp mạch máu
-    - cr
     - các băng nhóm oligoclonal
+    - ercp nội soi mật tụy ngược dòng
+    - fna
+    - glucose
     - guaiac
-    - hct
     - huyết cầu tố
     - k
     - lhc
     - lấy mẫu bằng bàn chải
+    - lấy mẫu tế bào bằng chổi
     - monitor holter
     - mri ngoại trú
     - nội soi
     - nội soi thực quản - dạ dày - tá tràng
+    - nội soi đại tràng
     - pcr
     - phân tích nước tiểu
     - sinh thiết ghép thận
     - siêu âm hôm nay
     - siêu âm mạch máu chi trên
     - siêu âm thận
-    - siêu âm tim
     - siêu âm tim gắng sức dobutamine
-    - siêu âm tim qua thành ngực siêu âm tim qua thành ngực
     - siêu âm vùng cổ phải scm
     - siêu âm vùng gan mật
     - test hơi thở h. pylori
-    - xét nghiệm chức năng gan
-    - xét nghiệm gắng sức
     - xét nghiệm phân tìm cryptosporidium
-    - xét nghiệm theo dõi
-    - xạ hình tưới máu cơ tim mibi
     - điện tâm đồ ecg
     KẾT_QUẢ_XÉT_NGHIỆM:
-    - '0.01'
-    - '11663'
     - '12.0'
-    - 139/68 mmhg
-    - 16 lần/phút
-    - '2.0'
     - '2.2'
-    - '24.5'
-    - '24.7'
-    - 36.7 c
+    - '26.1'
     - 38 3 c
     - '5.1'
     - '5.8'
-    - 6.3 mẫu không tan máu
     - '6.8'
-    - 67 lần/phút
-    - '86'
-    - '98.1'
-    - 99 ra
+    - biệt hóa vừa phải đến kém
     - chỉ số kháng trở bình thường
     - dương tính với virus bk
     - dưới ngưỡng điều trị
     - dịch quanh túi mật
+    - giãn đường dẫn mật trong gan ở ống mật chủ 15 mm
     - không có gì đáng chú ý
     - không ghi nhận gì bất thường
+    - khối ở chỗ uốn gan
     - kích thước khoảng 1 cm
     - kết quả chọc hút bất thường
-    - mất vận động vùng đỉnh
+    - một chỗ hẹp đơn lẻ được thấy dài 7 mm ở một phần ba dưới của ống mật chủ
+    - một khối phình to 2 cm ở nhúm tá tràng lớn
+    - một khối u có nguồn gốc từ đường mật tụy
+    - nhịp xoang
     - nhịp xoang chiếm ưu thế
+    - phiên hình
+    - phân có guaiac dương tính
+    - sóng st chênh xuống ở các chuyển đạo v4 đến v6
     - thay đổi sóng t không đặc hiệu
+    - tim to
     - túi mật căng to
     - tế bào bất thường
     - đang chờ kết quả
     CHẨN_ĐOÁN:
     - bầm dập nhu mô vùng trán phải và trán - thái dương phải
     - bệnh lý chất trắng
+    - bệnh lý thần kinh ngoại biên
     - bệnh rễ thần kinh tuỷ sống ở ngón tay cái
     - bệnh thận đa nang
     - cơn đau thắt ngực không ổn định
     - ghép thận thất bại
-    - gãy cổ xương đùi di lệch
+    - hạ huyết áp không đặc hiệu
     - hạ thân nhiệt
-    - hẹp 60 đoạn gần động mạch liên thất trước trái
     - hẹp khoảng 65 của động mạch cảnh chung trái gần gốc
     - hẹp van động mạch chủ nghiêm trọng
     - hội chứng nghiện rượu
@@ -377,39 +349,30 @@ aliases:
     - ngất xỉu do phản ứng thần kinh mạch máu
     - nhiễm khuẩn huyết do tụ cầu vàng nhạy cảm methicillin
     - nhiễm khuẩn đường tiết niệu vị trí không xác định
-    - nhiễm trùng răng miệng
     - nhịp nhanh trên thất
     - nhịp tim chậm tương đối
     - nhồi máu cũ nhỏ ở vỏ não đỉnh trái
     - nhồi máu cơ tim vùng dưới cũ
+    - nốt sần tuyến giáp phải có cấu trúc vi nang
     - nốt tuyến giáp thùy trái
     - nốt tuyến giáp trái
     - phình mạch acom bên phải
     - phù gai thị
     - phù gai thị bên trái nặng hơn bên phải
-    - rung cuống nhĩ với đáp ứng thất nhanh
-    - rung nhĩ kịch phát
-    - rối loạn cân bằng kiềm toan phối hợp
+    - sa âm đạo
     - suy thận ngày càng nặng
     - sỏi đoạn cuối ống mật chủ
-    - thay đổi khí phế thủng
-    - thoát vị hoành nhỏ
-    - tràn dịch màng phổi hai bên
-    - tràn dịch màng tim
-    - tái phát u ác trực tràng
+    - thiếu máu
     - tăng calci máu
-    - tăng kali máu
     - tăng nhãn áp
-    - tắc hẹp 80 động mạch thận trái l
     - tắc nghẽn kéo dài gần chỗ nối mật tụy ảnh hưởng đến ống dẫn trước và sau bên
       phải
     - tụ máu ngoài màng cứng phải cấp tính trên nền tổn thương mạn tính
-    - u ác của tuyến tiền liệt
-    - ung thư biểu mô tuyến
+    - ung thư biểu mô tuyến giật nhú
+    - ung thư biểu mô tế bào thận
     - viêm dạ dày
     - viêm dạ dày ruột do virus
     - viêm phổi bệnh viện
-    - viêm phổi thuỳ không đặc hiệu
     - viêm thực quản độ c
     - viêm túi mật cấp
     - viêm túi mật cấp tính không biến chứng
@@ -418,23 +381,20 @@ aliases:
     - xuất huyết dưới nhện vùng trán phải
     - xuất huyết nội sọ không do chấn thương không đặc hiệu
     - xơ vữa mảng loét
-    - xẹp phổi hai đáy
-    - đa u tuỷ xương
+    - ý định tự tử
     - đào thải
     - đào thải kháng thể hữu hình cấp tính
-    - đại tràng giãn
     THUỐC:
     - allopurinol
-    - amiodarone
     - amoxicillin
     - atenolol
-    - carvedilol
-    - ceftazidime
+    - bactrim
     - cellcept
     - ciproflagyl
+    - clopidogrel
     - coumadin
-    - crestor
-    - isosorbide
+    - flagyl
+    - klonopinclonidine
     - metoprolol 25mg po bid
     - mucinex d
     - ntg
@@ -442,10 +402,8 @@ aliases:
     - prednisone 40 mg/ngày
     - prednisone giảm liều
     - prograf
-    - thay thế bicarbonate
+    - suboxone
     - thuốc giảm đau
-    - thở oxy tại nhà
-    - torsemide
     - vancozosyn
     - vicodin
 exclusions:
@@ -453,30 +411,21 @@ exclusions:
     administrative:
     - ama
     - gọi cho bác sĩ chăm sóc chính
-    - gọi ems
-    - gọi xe cứu thương
     - đi khám bác sĩ chăm sóc chính
-    - đưa bệnh nhân đến khoa cấp cứu
-    - được gọi điện bởi bác sĩ nội trú trực và được yêu cầu đến khoa cấp cứu
     - được khám bởi bác sĩ chăm sóc ban đầu khoảng 1 tuần trước
     - đến phòng cấp cứu
-    anatomy_only:
-    - mông bên phải
-    - thượng vị và góc phần tư trên bên phải
-    - âm hộ bên phải
     coreference:
     - triệu chứng tương tự
     - tổn thương này
     generic_or_vague:
-    - '5856'
     - bệnh lý bất thường
     - có thể là đợt có biểu hiện tương tự
     - cận lâm sàng
+    - kháng sinh
     - không có triệu chứng trước đó
     - kế hoạch
     - kết quả chẩn đoán hình ảnh
     - nguyên nhân chưa rõ
-    - phim chụp
     - phát hiện tổn thương
     - phổi rõ tiếng khi nghe
     - quá trình bệnh lý tim phổi cấp tính
@@ -498,27 +447,17 @@ exclusions:
     - can thiệp mạch vành
     - can thiệp tái thông động mạch cảnh
     - can thiệp x-quang
-    - chuyển nhịp bằng sốc điện đồng bộ
     - chạy thận nhân tạo
     - chế độ ăn kiêng có giám sát
-    - chọc dò dịch ổ bụng 7l
-    - chọc dò màng phổi 3l4
     - chọc hút dịch
-    - cắt bỏ một phần thận phải
     - cắt bỏ phân đoạn bên trái gan
-    - cắt bỏ tuyến thượng thận phải
     - cắt bỏ tuyến vú trái đơn giản
     - cắt bỏ u xơ tử cung qua đường bụng
     - cắt bỏ ống dẫn mật chủ
     - cắt cụt nhiều ngón chân phải
-    - dc cardioversion
     - dòng picc đã đặt
     - dẫn lưu dịch
-    - dẫn lưu dịch màng tim
-    - ercp
-    - gây dính màng phổi bằng talc
     - h40.0
-    - hóa trị huy động tế bào gốc
     - hút 0.5cc dịch mủ
     - hệ thống dẫn lưu
     - hỗ trợ thở áp lực dương không xâm nhập
@@ -528,7 +467,6 @@ exclusions:
     - nối mật tụy bằng ống dẫn hồi tràng
     - nối ống gan - hỗng tràng
     - nội soi mật tụy ngược dòng
-    - phẫu thuật bắc cầu động mạch vành
     - phẫu thuật cắt bỏ tuyến tiền liệt
     - phẫu thuật cắt bỏ ống dẫn mật chung
     - phẫu thuật mở cắt nối trực tràng/đại tràng sigma
@@ -541,30 +479,22 @@ exclusions:
     - phẫu thuật tạo hậu môn nhân tạo kiểu túi nối hồi tràng - hậu môn
     - phẫu thuật tạo đáy vị fundoplication
     - phẫu thuật đặt cảng
-    - r bk-pop đến dp bpg
     - r bkpop-dp bypass bằng tĩnh mạch hiển
     - shunt dẫn lưu tĩnh mạch cửa qua da
-    - sinh thiết nội mạc tử cung gần đây
     - sinh thiết thận
     - sinh thiết thận lại vào buổi sáng
     - sonde tiểu
-    - stent
     - stent graft động mạch chủ ngực
-    - thở oxy qua mask
     - thủ thuật
     - thủ thuật can thiệp nội mạch
     - thủ thuật nạo hạch gác rồng bên trái
-    - thủ thuật tips
     - thủ thuật điện chọn
     - truyền dịch
     - truyền dịch tĩnh mạch 750cc
     - truyền dịch yếu tố ix đậm đặc
-    - truyền máu
     - vòng pessary
     - xông khí dung
     - điều trị ngoại khoa
-    - đã phẫu thuật turp
-    - đã phẫu thuật turp transurethral resection of the prostate
     - đường vào động mạch đùi phải
     - đặt 3 stent đường mật
     - đặt catheter động mạch
@@ -578,10 +508,8 @@ exclusions:
     - đặt stent đường mật
     - đặt stent động mạch thận trái
     - đặt đường truyền tĩnh mạch ngoại vi
-    - đặt ống dẫn lưu phúc mạc qua da cho túi mật
     - đặt ống thông tĩnh mạch trung tâm
     - ống dẫn lưu jp
-    - ống nội khí quản
     risk_factor_or_lifestyle:
     - caffeine
     - căng thẳng
@@ -599,7 +527,6 @@ exclusions:
     - chọc hút
     - sau cân sau phẫu thuật
     - thay đổi sóng t
-    - trầm cảm
     - đột sống thắt lưng
     noisy_text:
     - chẩn đoán cho ảo giác bình thường
@@ -615,28 +542,22 @@ exclusions:
     - '202421'
     - '202433'
     - '211033'
-    - '3264'
     - '603849'
     - '727954'
     - '82000'
     - '855320'
-    - b99.9
     - bệnh nhân tỉnh
     - bị ngã
     - bị ngã trong bồn tắm
-    - chống đông máu
-    - code tai biến mạch máu não
     - các thủ thuật đã thực hiện
     - có thể có một tổn thương t2
     - du lịch
     - du thuyền
-    - dùng xe đẩy hàng làm dụng cụ hỗ trợ đi lại
     - dữ dội
     - gia đình nhận thấy
     - gập sâu
     - ho bệnh bạch cầu dòng tủy mãn tính
     - ho rung nhĩ kèm đáp ứng thất nhanh
-    - hoạt động gắng sức
     - họng
     - i82.4
     - k57.50
@@ -647,37 +568,25 @@ exclusions:
     - khám bụng mềm
     - khám là bình thường
     - khám niệu sản khoa
-    - khám tại phòng khám
     - không cho thấy bằng chứng
     - không có mỡ nào trong cơ thể
     - không có tác dụng
     - không giảm khi dùng bất kỳ thuốc nào
-    - không liên quan đến gắng sức
-    - không rõ
     - không thấy giảm đau
     - không thể tự chăm sóc bản thân
-    - không thở oxy
     - leo cầu thang
     - llq
     - lớp dịch dưới màng cứng mỏng
-    - lợi tiểu 600cc
     - một số vùng không thể đánh giá tốt
-    - nghỉ ngơi
-    - ngã hôm qua
-    - ngã đang hồi phục
     - ngừng uống
     - nhịp tim cải thiện thành
-    - nằm sải trên sàn
     - nữ
     - phân giai đoạn phẫu thuật
     - phòng cấp cứu
     - phòng cấp cứu khám và điều trị
-    - qua đường hậu môn
     - quả mận khô
     - rung nhĩ kèm nhịp nhanh trên thất
-    - talc
     - theo lời kể người nhà
-    - thường xuyên luyện tập
     - tăng lên 101.8
     - tắc mạch phổi
     - tự ý rời bệnh viện
@@ -691,7 +600,6 @@ exclusions:
     - đi tiêu bình thường
     - đại tiện bình thường
     - đầu gối phải
-    - đỏ tươi
     - đồ uống lạnh
     uncertain:
     - có khả năng
@@ -705,6 +613,7 @@ exclusions:
     - 39.7 độ c
     - bệnh đa xơ cứng
     - chỉ số huyết áp tâm thu
+    - dấu hiệu sinh tồn
     - huyết áp 159/72
     - huyết áp/mạch/nhiệt độ/nhịp thở/spo2
     - mạch 83
@@ -720,20 +629,15 @@ unstable_mentions:
 - biến đổi cấp tính
 - bình thường
 - bất thường
-- chưa phát hiện bất thường
-- dấu hiệu sinh tồn
+- ercp
 - ho
 - huyết khối
 - hạ huyết áp
-- hạ huyết áp không đặc hiệu
 - hẹp gây hạn chế dòng chảy
-- kháng sinh
 - khó thở
 - ngã
 - thuốc giảm đau opioid
-- tim to
-- tăng gánh nhẹ tuần hoàn phổi
-- tăng men gan
+- trầm cảm
 - đái tháo đườngđái tháo đường
 boundary_rules:
   global:

@@ -2,22 +2,23 @@
 
 ## Summary
 
-- Reviewed documents: 75
-- Accepted entities: 2244
-- Review/rejected mentions: 277
-- Guideline notes: 351
-- Strict runtime aliases: 104
-- Context-required aliases: 24
-- Strict exclusions: 135
-- Conflicts: 123
+- Reviewed documents: 76
+- Accepted entities: 2113
+- Review/rejected mentions: 223
+- Guideline notes: 324
+- Strict runtime aliases: 103
+- Context-required aliases: 20
+- Strict exclusions: 106
+- Conflicts: 87
+- Accepted conflict decisions: 15
 
 Runtime policy contains concept-level rules only; document identifiers remain audit provenance and are not runtime selectors.
 
 ## Strict Aliases
 
-- `TRIỆU_CHỨNG`: 42 strict, 4 context-required
-- `TÊN_XÉT_NGHIỆM`: 22 strict, 9 context-required
-- `KẾT_QUẢ_XÉT_NGHIỆM`: 0 strict, 11 context-required
+- `TRIỆU_CHỨNG`: 40 strict, 3 context-required
+- `TÊN_XÉT_NGHIỆM`: 23 strict, 7 context-required
+- `KẾT_QUẢ_XÉT_NGHIỆM`: 0 strict, 10 context-required
 - `CHẨN_ĐOÁN`: 32 strict, 0 context-required
 - `THUỐC`: 8 strict, 0 context-required
 
@@ -25,42 +26,17 @@ Runtime policy contains concept-level rules only; document identifiers remain au
 
 | Type | Severity | Count |
 | --- | --- | ---: |
-| `positive_negative_same_mention` | high | 15 |
-| `positive_type_disagreement` | high | 5 |
-| `review_offset_mismatch` | medium | 68 |
+| `gold_overlapping_entities` | medium | 1 |
+| `review_offset_mismatch` | medium | 51 |
 | `unstable_policy_evidence` | warning | 35 |
 
 ## Highest-Priority Conflicts
 
 | Severity | Type | Mention | Documents | Action |
 | --- | --- | --- | --- | --- |
-| high | `positive_negative_same_mention` | 1 | ['66'] | `require_context_specific_rule` |
-| high | `positive_negative_same_mention` | 14279 | ['51'] | `require_context_specific_rule` |
-| high | `positive_negative_same_mention` | biến đổi cấp tính | ['35'] | `require_context_specific_rule` |
-| high | `positive_negative_same_mention` | bình thường | ['1', '3', '17', '35', '37', '48', '56'] | `require_context_specific_rule` |
-| high | `positive_negative_same_mention` | bất thường | ['8', '14', '56', '91', '92', '95'] | `require_context_specific_rule` |
-| high | `positive_negative_same_mention` | chưa phát hiện bất thường | ['11', '28'] | `require_context_specific_rule` |
-| high | `positive_negative_same_mention` | dấu hiệu sinh tồn | ['54', '91', '97'] | `require_context_specific_rule` |
-| high | `positive_negative_same_mention` | ho | ['5', '7', '10', '12', '27', '32', '38', '40', '98'] | `require_context_specific_rule` |
-| high | `positive_negative_same_mention` | hẹp gây hạn chế dòng chảy | ['43'] | `require_context_specific_rule` |
-| high | `positive_negative_same_mention` | kháng sinh | ['58', '96'] | `require_context_specific_rule` |
-| high | `positive_negative_same_mention` | khó thở | ['1', '8', '14', '27', '28', '32', '33', '38', '42', '43', '44', '47', '50', '53', '56', '91', '93', '95', '96', '100'] | `require_context_specific_rule` |
-| high | `positive_negative_same_mention` | ngã | ['35', '48'] | `require_context_specific_rule` |
-| high | `positive_negative_same_mention` | thuốc giảm đau opioid | ['34'] | `require_context_specific_rule` |
-| high | `positive_negative_same_mention` | tăng gánh nhẹ tuần hoàn phổi | ['37'] | `require_context_specific_rule` |
-| high | `positive_negative_same_mention` | đái tháo đườngđái tháo đường | ['35'] | `require_context_specific_rule` |
-| high | `positive_type_disagreement` | huyết khối | ['16', '32'] | `require_context_or_resolve_type_policy` |
-| high | `positive_type_disagreement` | hạ huyết áp | ['5', '58', '96', '97'] | `require_context_or_resolve_type_policy` |
-| high | `positive_type_disagreement` | hạ huyết áp không đặc hiệu | ['16', '46', '58'] | `require_context_or_resolve_type_policy` |
-| high | `positive_type_disagreement` | tim to | ['3', '20', '37'] | `require_context_or_resolve_type_policy` |
-| high | `positive_type_disagreement` | tăng men gan | ['4', '35'] | `require_context_or_resolve_type_policy` |
-| medium | `review_offset_mismatch` | bất thường | ['92'] | `repair_or_null_review_position` |
+| medium | `gold_overlapping_entities` | viêm gan virus c | ['88'] | `review_non_overlapping_boundary_policy` |
 | medium | `review_offset_mismatch` | bị ngã trong bồn tắm | ['100'] | `repair_or_null_review_position` |
 | medium | `review_offset_mismatch` | can thiệp x-quang | ['9'] | `repair_or_null_review_position` |
-| medium | `review_offset_mismatch` | chưa phát hiện bất thường | ['11'] | `repair_or_null_review_position` |
-| medium | `review_offset_mismatch` | chọc dò dịch ổ bụng 7l | ['11'] | `repair_or_null_review_position` |
-| medium | `review_offset_mismatch` | chọc dò màng phổi 3l4 | ['11'] | `repair_or_null_review_position` |
-| medium | `review_offset_mismatch` | chống đông máu | ['65'] | `repair_or_null_review_position` |
 | medium | `review_offset_mismatch` | có thể có một tổn thương t2 | ['10'] | `repair_or_null_review_position` |
 | medium | `review_offset_mismatch` | cảm thấy khỏe | ['3'] | `repair_or_null_review_position` |
 | medium | `review_offset_mismatch` | du lịch | ['17'] | `repair_or_null_review_position` |
@@ -72,15 +48,39 @@ Runtime policy contains concept-level rules only; document identifiers remain au
 | medium | `review_offset_mismatch` | hút 0.5cc dịch mủ | ['17'] | `repair_or_null_review_position` |
 | medium | `review_offset_mismatch` | hút thuốc | ['3'] | `repair_or_null_review_position` |
 | medium | `review_offset_mismatch` | họng | ['38'] | `repair_or_null_review_position` |
-| medium | `review_offset_mismatch` | khoa cấp cứu | ['13'] | `repair_or_null_review_position` |
 | medium | `review_offset_mismatch` | khoa cấp cứu | ['17'] | `repair_or_null_review_position` |
 | medium | `review_offset_mismatch` | khám bác sĩ chăm sóc chính | ['17'] | `repair_or_null_review_position` |
-| medium | `review_offset_mismatch` | khám tại phòng khám | ['13'] | `repair_or_null_review_position` |
 | medium | `review_offset_mismatch` | không có triệu chứng trước đó | ['3'] | `repair_or_null_review_position` |
-| medium | `review_offset_mismatch` | không liên quan đến gắng sức | ['14'] | `repair_or_null_review_position` |
 | medium | `review_offset_mismatch` | không thấy giảm đau | ['19'] | `repair_or_null_review_position` |
 | medium | `review_offset_mismatch` | không tuân thủ điều trị bằng thuốc | ['3'] | `repair_or_null_review_position` |
-| medium | `review_offset_mismatch` | mông bên phải | ['13'] | `repair_or_null_review_position` |
 | medium | `review_offset_mismatch` | mạch 83 | ['3'] | `repair_or_null_review_position` |
 | medium | `review_offset_mismatch` | một số vùng không thể đánh giá tốt | ['10'] | `repair_or_null_review_position` |
 | medium | `review_offset_mismatch` | nghi ngờ | ['12'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | nhịp thở 20 | ['3'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | nội soi mật tụy ngược dòng | ['5'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | phòng cấp cứu | ['19'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | phòng cấp cứu khám và điều trị | ['12'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | phẫu thuật mở cắt nối trực tràng/đại tràng sigma | ['16'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | phẫu thuật nội soi cắt bỏ tuyến tiền liệt bên trái | ['99'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | phẫu thuật sửa van tĩnh mạch chủ ngực bụng | ['21'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | phổi rõ tiếng khi nghe | ['17'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | quá trình bệnh lý tim phổi cấp tính | ['66'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | quá trình cấp tính | ['100'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | spo2 độ bão hòa oxy 94-95 ra | ['3'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | stent graft động mạch chủ ngực | ['21'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | thăm khám chẩn đoán và điều trị | ['4'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | tim nhịp đều | ['17'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | truyền dịch | ['100'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | truyền dịch tĩnh mạch 750cc | ['16'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | tổn thương cấp tính | ['100'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | tổn thương này | ['8'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | xét nghiệm ngoại trú | ['100'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | xông khí dung | ['16'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | đi lại | ['19'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | điều trị bảo tồn | ['9'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | điều trị ngoại khoa | ['9'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | điều trị nội khoa | ['9'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | đặt catheter động mạch | ['5'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | đặt nội khí quản | ['5'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | đặt stent | ['38'] | `repair_or_null_review_position` |
+| medium | `review_offset_mismatch` | đặt stent đường mật | ['5'] | `repair_or_null_review_position` |
