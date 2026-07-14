@@ -1,200 +1,583 @@
 # Ontological Reasoning in Medical Knowledge Retrieval
 
-Prototype system for clinical entity extraction, dictionary-constrained normalization, context reasoning, relation extraction, and lightweight KG validation.
+This repository converts clinical narratives into structured medical data by:
 
-The internal schema stays rich for debugging, while the Phase 1 exporter writes the official flat
-entity JSON files for `input/1.txt` through `input/100.txt`.
+- detecting **entities** such as diseases, symptoms, medications, and laboratory observations;
+- classifying **assertions** such as present, negated, historical, family-related, or possible;
+- linking entity mentions to standard terminologies such as **ICD-10** and **RxNorm**;
+- validating predictions with ontology and knowledge-graph constraints;
+- exporting JSON files and submission archives that follow the Phase 1 schema.
 
-Supported runtime: Python 3.11–3.14, matching `pyproject.toml` and the CI matrix.
+For example, the pipeline transforms:
 
-## What Works Now
+```text
+Bệnh nhân có tiền sử đái tháo đường type 2, đang dùng metformin 500 mg.
+```
 
-- Typed internal schema for documents, entities, candidates, relations, and predictions.
-- Offset-preserving preprocessing utilities.
-- Structured seed ICD-10, RxNorm, Vietnamese alias, abbreviation, and local concept dictionaries.
-- Exact, fuzzy, abbreviation, character n-gram, and BM25-style candidate generation.
-- Rule-based NER over dictionary aliases plus lab/dose regexes.
-- Assertion rules for present, negated, historical, family, possible, planned, and resolved contexts.
-- Relation rules for treatment, symptom, test suggestion, and dose links.
-- KG constraints that prevent invalid code-system and relation-type outputs.
-- Phase 1 flat JSON exporter, validator, ZIP builder, and stage-wise Phase 1 metrics.
-- JSONL pipeline, data profiler, evaluator, ablation timing reports, error analysis CSV, and pytest coverage.
+into structured output similar to:
 
-## Quick Start
+```json
+{
+  "entities": [
+    {
+      "text": "đái tháo đường type 2",
+      "type": "DISEASE",
+      "assertion": "HISTORICAL",
+      "code_system": "ICD-10",
+      "code": "E11"
+    },
+    {
+      "text": "metformin",
+      "type": "DRUG",
+      "assertion": "PRESENT",
+      "code_system": "RxNorm",
+      "code": "6809"
+    }
+  ]
+}
+```
 
-Preferred:
+> This is a **hybrid system** built from rule-based NER, dictionary retrieval, heuristic reranking, and ontology validation. It is not an end-to-end neural model.
+
+Supported Python versions: **3.11–3.14**.
+
+Vietnamese documentation: [`README_VI.md`](README_VI.md).
+
+---
+
+## What the repository provides
+
+- Typed schemas for documents, entities, candidates, relations, and predictions.
+- Offset-preserving preprocessing.
+- ICD-10 and RxNorm dictionaries, Vietnamese aliases, and abbreviations.
+- Exact, fuzzy, character n-gram, and BM25 retrieval.
+- Rule-based NER for dictionary mentions, medications, strengths, and laboratory observations.
+- Assertion states: `PRESENT`, `NEGATED`, `HISTORICAL`, `FAMILY`, `POSSIBLE`, `PLANNED`, and `RESOLVED`.
+- Relation types such as `TREATS`, `HAS_DOSE`, and `SUGGESTS`.
+- Ontology and KG constraints that reject invalid code systems or relations.
+- Phase 1 exporters, validators, ZIP builders, evaluation tools, and error-analysis utilities.
+
+The repository prioritizes three properties:
+
+1. **Entity spans and offsets must be exact.**
+2. **The system must not emit codes outside the configured dictionaries or from an invalid code system.**
+3. **Every pipeline stage must remain inspectable and debuggable.**
+
+---
+
+# System architecture
+
+## 1. End-to-end flow
+
+```mermaid
+flowchart LR
+    A[Raw clinical text] --> B[Preprocessing]
+    B --> C[Section + sentence splitting]
+    C --> D[Entity extraction / NER]
+    D --> E[Assertion classification]
+    E --> F[Candidate generation]
+    F --> G[Candidate reranking]
+    G --> H[Code assignment or abstention]
+    H --> I[Ontology / KG validation]
+    I --> J[Relation extraction]
+    J --> K[Internal JSON]
+    K --> L[Phase 1 JSON + ZIP]
+    L --> M[Validation + evaluation]
+```
+
+The central pipeline orchestration lives in:
+
+```text
+src/medical_kg_nlp/pipeline/runner.py
+```
+
+The best function to read first is:
+
+```python
+PipelineRunner.process_document_with_trace()
+```
+
+Each stage records timing and counters in `PipelineTrace`, including the number of detected entities, generated candidates, assigned codes, and validation issues.
+
+## 2. Main components
+
+```mermaid
+flowchart TB
+    A[Clinical text]
+
+    subgraph P[Preprocessing]
+        P1[Offset mapping]
+        P2[Section splitter]
+        P3[Sentence splitter]
+    end
+
+    subgraph N[Entity extraction]
+        N1[DictionaryStore]
+        N2[Aho-Corasick matcher]
+        N3[RuleBasedNER]
+        N4[Drug / strength / lab rules]
+    end
+
+    subgraph C[Context reasoning]
+        C1[Assertion cues]
+        C2[Clause and scope rules]
+        C3[Section priors]
+    end
+
+    subgraph L[Entity linking]
+        L1[Exact / abbreviation]
+        L2[Fuzzy / n-gram / BM25]
+        L3[Merge + deduplicate]
+        L4[Rerank]
+        L5[Assign or abstain]
+    end
+
+    subgraph R[Ontology reasoning]
+        R1[Code-system constraints]
+        R2[Relation rules]
+        R3[KG validation]
+    end
+
+    subgraph O[Output]
+        O1[ClinicalPrediction]
+        O2[Phase 1 exporter]
+        O3[Schema / offset / ZIP validator]
+    end
+
+    A --> P --> N --> C --> L --> R --> O
+```
+
+## 3. Entity extraction
+
+```text
+Dictionary aliases
+    ↓
+Aho-Corasick scans the document
+    ↓
+Word-boundary validation
+    ↓
+Offset mapping back to the source text
+    ↓
+Duplicate and overlap resolution
+    ↓
+Additional drug, strength, and lab extraction rules
+    ↓
+EntityAnnotation
+```
+
+Core implementation:
+
+```text
+src/medical_kg_nlp/ner/dictionary_matcher.py
+src/medical_kg_nlp/ner/rule_ner.py
+src/medical_kg_nlp/ner/medication_attribute_extractor.py
+src/medical_kg_nlp/ner/lab_observation_extractor.py
+```
+
+Aho-Corasick efficiently locates dictionary strings. It does not understand negation, history, clinical context, or standard medical codes. Assertion classification and entity linking handle those concerns.
+
+## 4. Assertion classification
+
+Assertion classification determines the contextual status of an entity:
+
+```text
+"viêm phổi"                     → PRESENT
+"không ghi nhận viêm phổi"      → NEGATED
+"tiền sử viêm phổi"             → HISTORICAL
+"cha bệnh nhân bị ung thư phổi" → FAMILY
+"nghi viêm phổi"                → POSSIBLE
+```
+
+The classifier uses left and right cues, clause boundaries, scope-reset rules, and section titles. It also blocks semantic traps such as `không loại trừ`, which means “cannot rule out” rather than a true negation.
+
+Core implementation:
+
+```text
+src/medical_kg_nlp/context/assertion.py
+src/medical_kg_nlp/context/cue_loader.py
+src/medical_kg_nlp/context/rules.py
+```
+
+## 5. Entity linking
+
+Entity linking maps a mention in the clinical note to a standard concept:
+
+```text
+"đái tháo đường type 2" → ICD-10 E11
+"metformin"              → RxNorm 6809
+```
+
+```mermaid
+flowchart LR
+    A[Entity mention] --> B[Exact]
+    A --> C[Abbreviation]
+    A --> D[Fuzzy]
+    A --> E[Character n-gram]
+    A --> F[BM25]
+    B --> G[Merge candidates]
+    C --> G
+    D --> G
+    E --> G
+    F --> G
+    G --> H[Deduplicate by code]
+    H --> I[Filter by entity type]
+    I --> J[Rerank with mention + context]
+    J --> K{Score and margin high enough?}
+    K -->|Yes| L[Assign code]
+    K -->|No| M[Abstain]
+```
+
+Default retrieval sources:
+
+```python
+("exact", "abbreviation", "fuzzy", "char_ngram", "bm25")
+```
+
+Default parameters:
+
+```text
+max_candidates       = 20
+assignment_threshold = 0.75
+assignment_margin    = 0.05
+context_window       = 80 characters
+```
+
+A code is assigned only when the top score is sufficiently high and sufficiently separated from the second candidate. Otherwise, the system **abstains** instead of forcing an unreliable prediction.
+
+Core implementation:
+
+```text
+src/medical_kg_nlp/retrieval/candidate_generator.py
+src/medical_kg_nlp/linking/reranker.py
+src/medical_kg_nlp/linking/linker.py
+```
+
+## 6. Ontology and KG validation
+
+Validation rejects structurally invalid outputs:
+
+```text
+DRUG    → ICD-10   invalid
+DISEASE → RxNorm   invalid
+DRUG    → RxNorm   valid
+DISEASE → ICD-10   valid
+```
+
+Core implementation:
+
+```text
+src/medical_kg_nlp/kg/constraints.py
+src/medical_kg_nlp/kg/validator.py
+src/medical_kg_nlp/kg/ontology_reasoner.py
+```
+
+---
+
+# Phase 1 operating modes
+
+## `entity_only`: conservative submission mode
+
+```text
+configs/phase1_submission.yaml
+```
+
+The default mode:
+
+- focuses on entity extraction;
+- exports `assertions: []`;
+- exports `candidates: []`;
+- skips stages that do not affect the submission.
+
+This mode prevents low-precision assertion or candidate predictions from reducing the final score.
+
+## `full`: complete experimental pipeline
+
+```text
+configs/phase1_full.yaml
+```
+
+This mode enables:
+
+- assertion classification;
+- candidate generation;
+- candidate reranking;
+- confidence-based code assignment;
+- entity-level KG validation.
+
+`full` is not automatically better than `entity_only`. Measure it on reviewed local or manual gold data before using it for a submission.
+
+---
+
+# Quick installation
+
+## Using `uv` — recommended
 
 ```bash
 uv sync --extra dev
 uv run pre-commit install
-
-uv run python scripts/build_dictionaries.py --config configs/default.yaml
-uv run python scripts/build_indexes.py --config configs/default.yaml
-uv run python scripts/run_pipeline.py --input data/samples/sample_notes.jsonl --output outputs/predictions.jsonl
-uv run python scripts/validate_predictions.py --pred outputs/predictions.jsonl --documents data/samples/sample_notes.jsonl --dictionary data/dictionaries/seed_concepts.jsonl
-uv run python scripts/evaluate.py --gold data/samples/gold.jsonl --pred outputs/predictions.jsonl
-uv run python scripts/profile_data.py --documents data/samples/sample_notes.jsonl --gold data/samples/gold.jsonl --output outputs/profiles/sample_profile.json --markdown outputs/profiles/sample_profile.md
-uv run python scripts/build_phase1_submission.py --input-dir data/raw/input --run-root outputs/runs --output-dir phase1/output --zip phase1/output.zip --expected-count 100
-uv run python scripts/run_ablation.py --config configs/ablations.yaml --run-root outputs/runs
-uv run pytest tests/
 ```
 
-The default Phase 1 config uses the validated entity-only policy: entities are exported while
-`assertions` and `candidates` remain empty, and context/linking/KG stages that cannot affect the
-submission are not constructed. Use `--config configs/phase1_full.yaml` for a controlled
-assertion/candidate diagnostic. `configs/phase1_selective.yaml` enables evidence-gated assertions
-while retaining candidate abstention. `configs/phase1_selective_candidates.yaml` is a local
-calibration probe for reviewed `dictionary_exact` mappings; it is not promoted until a public probe
-wins.
-
-Internal predictions use the current strict schema only. Candidate rows require separate
-`retrieval_score` and `emit_probability` values plus source/evidence provenance; assertion rows
-require `assertion_evidence`. Legacy prediction JSON is intentionally rejected. Dictionary-pinned
-candidates do not receive an implicit confidence: an unconfigured `(code system, source)` has
-`emit_probability: 0` and therefore abstains under selective export.
-
-For controlled Top 10 experiments, use `scripts/run_phase1_top10_probes.py`. It builds
-content-hashed, strict-validated ZIPs for lab precision, strict exclusions, overlap resolution,
-selective assertions, and reviewed candidate tiers while keeping holdout sealed by default. See
-[`docs/evaluation.md`](docs/evaluation.md#top-10-probe-suite).
-
-Evaluate a flat output directory against the reviewed manual-gold split:
-
-```bash
-uv run python scripts/evaluate_phase1_manual_gold.py \
-  --gold-dir data/manual_gold \
-  --pred-dir outputs/phase1/<run>/phase1/output \
-  --output-dir outputs/evaluation/manual_gold
-```
-
-Compile the reviewed exact-unique whitelist and run document-fold candidate calibration:
-
-```bash
-uv run python scripts/build_phase1_reviewed_candidates.py --split train
-uv run python scripts/build_phase1_submission.py --config configs/phase1_full.yaml
-uv run python scripts/calibrate_phase1_candidates.py \
-  --pred outputs/phase1/<full-run>/phase1/full_internal_predictions.jsonl \
-  --reviewed-map data/manual_gold/reviewed_candidate_map.jsonl \
-  --output-dir outputs/phase1/<full-run>/calibration
-```
-
-Fallback without `uv`:
+## Without `uv`
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
 pre-commit install
+```
 
-python scripts/build_dictionaries.py --config configs/default.yaml
-python scripts/build_indexes.py --config configs/default.yaml
-python scripts/run_pipeline.py --input data/samples/sample_notes.jsonl --output outputs/predictions.jsonl
-python scripts/validate_predictions.py --pred outputs/predictions.jsonl --documents data/samples/sample_notes.jsonl --dictionary data/dictionaries/seed_concepts.jsonl
-python scripts/evaluate.py --gold data/samples/gold.jsonl --pred outputs/predictions.jsonl
-python scripts/profile_data.py --documents data/samples/sample_notes.jsonl --gold data/samples/gold.jsonl --output outputs/profiles/sample_profile.json --markdown outputs/profiles/sample_profile.md
-python scripts/build_phase1_submission.py --input-dir data/raw/input --run-root outputs/runs --output-dir phase1/output --zip phase1/output.zip --expected-count 100
-python scripts/run_ablation.py --config configs/ablations.yaml --run-root outputs/runs
+Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
+pre-commit install
+```
+
+---
+
+# Run the sample pipeline
+
+```bash
+python scripts/run_pipeline.py \
+  --input data/samples/sample_notes.jsonl \
+  --output outputs/predictions.jsonl
+```
+
+Representative sample predictions include:
+
+```text
+đái tháo đường type 2 → HISTORICAL → ICD-10 E11
+viêm phổi             → POSSIBLE   → ICD-10 J18.9
+hen phế quản          → NEGATED    → ICD-10 J45
+metformin             → PRESENT    → RxNorm 6809
+ung thư phổi          → FAMILY     → ICD-10 C34
+```
+
+Run the tests:
+
+```bash
 python -m pytest tests/
 ```
 
-## Optional Stacks
+---
 
-The baseline installs only lightweight runtime and dev dependencies. Add extras as needed:
+# Build a Phase 1 submission
 
-```bash
-uv sync --extra data          # polars, duckdb, pyarrow, jsonlines
-uv sync --extra retrieval     # rapidfuzz, bm25s, faiss-cpu
-uv sync --extra graph         # networkx
-uv sync --extra ml            # torch, transformers, datasets, tokenizers, accelerate, scikit-learn
-uv sync --extra cli           # typer, rich
-uv sync --extra api           # fastapi, uvicorn
-uv sync --extra experiment    # hydra-core, omegaconf, mlflow
-uv sync --extra wandb         # optional W&B tracking
-```
-
-Note: PyTorch and Accelerate wheels are platform-specific. On Python 3.14, they are enabled where
-compatible wheels exist; macOS x86_64 may need an official PyTorch index, a different Python build,
-or a source install.
-
-## Hashed Run Outputs
-
-Use `--run-root outputs/runs` on long-running commands to avoid overwriting old results. Each run
-creates a directory like `outputs/runs/20260702T143000Z_phase1_a1b2c3d4e5/` with a
-`run_manifest.json`; relative output paths are written inside that directory. The timestamp keeps
-runs unique, while the digest and manifest record content hashes, Git state, resolved config,
-Python version, dependency lock hash, random seed, and command.
+Entity-only mode:
 
 ```bash
-uv run python scripts/build_phase1_submission.py \
-  --input-dir data/raw/input \
-  --run-root outputs/runs \
-  --output-dir phase1/output \
-  --zip phase1/output.zip \
-  --expected-count 100
+python scripts/build_phase1_submission.py \
+  --config configs/phase1_submission.yaml
 ```
 
-## Expected Pipeline
+Full pipeline:
+
+```bash
+python scripts/build_phase1_submission.py \
+  --config configs/phase1_full.yaml
+```
+
+The submission builder:
+
+1. reads `1.txt ... 100.txt`;
+2. runs the pipeline;
+3. writes `1.json ... 100.json`;
+4. validates schema, offsets, and candidates;
+5. creates the ZIP archive;
+6. validates the final archive structure.
+
+---
+
+# Evaluation
+
+Internal JSONL evaluation:
+
+```bash
+python scripts/evaluate.py \
+  --gold data/samples/gold.jsonl \
+  --pred outputs/predictions.jsonl
+```
+
+Phase 1 manual-gold evaluation:
+
+```bash
+python scripts/evaluate_phase1_manual_gold.py \
+  --gold-dir data/manual_gold \
+  --pred-dir outputs/phase1/<run>/phase1/output \
+  --output-dir outputs/evaluation/manual_gold
+```
+
+Ablation experiments:
+
+```bash
+python scripts/run_ablation.py \
+  --config configs/ablations.yaml \
+  --run-root outputs/runs
+```
+
+See [`docs/evaluation.md`](docs/evaluation.md) for metric definitions and the evaluation workflow.
+
+---
+
+# Repository structure
 
 ```text
-Raw clinical text
-  -> document loading
-  -> offset-preserving preprocessing
-  -> section detection
-  -> sentence splitting
-  -> entity extraction
-  -> context/assertion classification
-  -> candidate generation
-  -> candidate reranking
-  -> normalization assignment
-  -> ICD/RxNorm/UMLS validation
-  -> relation extraction (internal reasoning for Phase 1)
-  -> ontology/KG consistency checking
-  -> structured JSON output
-  -> Phase 1 flat JSON/ZIP export when building a submission
-  -> prediction validation
-  -> evaluation and error analysis
+configs/                  YAML configuration files
+data/dictionaries/        Runtime dictionaries and aliases
+data/standards/           Standard Phase 1 concepts
+data/samples/             Small runnable examples
+docs/                     Architecture, schema, invariants, and evaluation docs
+scripts/                  Command-line entry points
+
+src/medical_kg_nlp/
+├── schema/               Internal data types
+├── preprocessing/        Sections, sentences, normalization, offset mapping
+├── dictionaries/         ICD-10, RxNorm, aliases, abbreviations
+├── ner/                  Entity extraction
+├── context/              Assertion classification
+├── retrieval/            Exact, fuzzy, n-gram, BM25 retrieval
+├── linking/              Reranking and code assignment
+├── ontology/             Phase 1-specific rules
+├── kg/                   Ontology and KG constraints
+├── relations/            Relation extraction
+├── pipeline/             Pipeline orchestration
+├── evaluation/           Metrics, error analysis, probes, ablations
+└── utils/                I/O, hashing, logging, text utilities
+
+tests/                    Unit, regression, and smoke tests
 ```
 
-`configs/phase1_submission.yaml` stops after entity extraction for official entity-only runs.
-`configs/phase1_full.yaml` enables context, candidate fusion, medication-aware reranking,
-separates the compact recognition dictionary from the RxNorm Full normalization store,
-confidence-margin qualification, and KG validation, and saves the internal prediction JSONL needed
-for calibration plus per-document trace JSONL. Only a reviewed, cross-fitted selective policy may
-treat retrieval output as submission-ready.
+---
 
-## Repository Layout
+# Recommended code-reading order
 
 ```text
-configs/                  YAML configuration
-data/dictionaries/         Seed ICD/RxNorm/local dictionaries
-data/samples/              Synthetic notes and gold annotations
-docs/                      Architecture, dictionaries, invariants, schema, evaluation, decisions
-scripts/                   Pipeline, evaluation, dictionary, and index commands
-src/medical_kg_nlp/        Python package
-tests/                     Unit and smoke tests
-.cursor/rules/             Cursor project rules
-.claude/skills/            Claude skill briefs for module-focused agent work
-AGENTS.md                  Repo instructions for coding agents
+1. README.md
+2. docs/invariants.md
+3. src/medical_kg_nlp/schema/types.py
+4. src/medical_kg_nlp/schema/annotation.py
+5. src/medical_kg_nlp/pipeline/runner.py
+6. src/medical_kg_nlp/ner/rule_ner.py
+7. src/medical_kg_nlp/ner/dictionary_matcher.py
+8. src/medical_kg_nlp/context/assertion.py
+9. src/medical_kg_nlp/retrieval/candidate_generator.py
+10. src/medical_kg_nlp/linking/reranker.py
+11. src/medical_kg_nlp/linking/linker.py
+12. src/medical_kg_nlp/ontology/phase1.py
+13. src/medical_kg_nlp/evaluation/phase1.py
+14. tests/test_pipeline_smoke.py
 ```
 
-## Project Hygiene
+The most useful initial breakpoint is:
 
-- License: MIT, see `LICENSE`.
-- Contributions: see `CONTRIBUTING.md`.
-- Security and private-data handling: see `SECURITY.md`.
-- Conduct: see `CODE_OF_CONDUCT.md`.
-- Changelog: see `CHANGELOG.md`.
-- CI: GitHub Actions workflow under `.github/workflows/ci.yml`.
-- Local shortcuts: `make lint`, `make type`, `make test`, `make pipeline`, `make validate`,
-  `make evaluate`, `make profile`, `make phase1-submit`, `make phase1-validate`, `make ablation`.
+```python
+PipelineRunner.process_document_with_trace()
+```
 
-## Current Limitations
+Trace the data in this order:
 
-- Runtime dictionaries are conservative reviewed subsets; full TT06 and versioned RxNorm source layers remain separate from runtime promotion.
-- Transformer NER, context, and relation classifiers are placeholders.
-- Public dataset adapters are schema-compatible placeholders until local dataset paths are supplied.
-- Hidden Phase 1 test data has no gold labels, so official-style `phase1_score` is only local on
-  synthetic or labeled regression data; test submissions are gated by schema, offset, dictionary,
-  and ZIP validation.
+```text
+text
+→ dictionary matches
+→ entities
+→ assertion_features
+→ generated_candidates
+→ reranked_candidates
+→ assigned code
+→ Phase 1 rows
+```
 
-The current priority is correctness of schema, offsets, linking constraints, context handling, and end-to-end debuggability before adding large models.
+---
+
+# Invariants that must not be broken
+
+## Offsets
+
+```python
+source_text[start:end] == entity.text
+```
+
+## Code systems
+
+```text
+DISEASE → ICD-10
+DRUG    → RxNorm
+```
+
+## Candidates
+
+- Every candidate must exist in the configured dictionary.
+- Candidates must be filtered by entity type.
+- Rows with the same `(code_system, code)` must be deduplicated before selecting top-k results.
+
+## Assertions
+
+A cue from one clause must not automatically propagate to an entity in a later clause.
+
+See [`docs/invariants.md`](docs/invariants.md) for the complete invariant set.
+
+---
+
+# Common commands
+
+```bash
+make lint
+make type
+make test
+make pipeline
+make validate
+make evaluate
+make profile
+make phase1-submit
+make phase1-validate
+make ablation
+```
+
+Optional dependency groups:
+
+```bash
+uv sync --extra data
+uv sync --extra retrieval
+uv sync --extra graph
+uv sync --extra ml
+uv sync --extra cli
+uv sync --extra api
+uv sync --extra experiment
+```
+
+---
+
+# Current limitations
+
+- Runtime dictionaries are still reviewed subsets rather than the complete TT06 and RxNorm corpora.
+- Transformer NER, context models, and relation classifiers remain extension points.
+- Rule-based assertion classification can fail on long sentences or complex semantics.
+- Entity-linking quality depends heavily on candidate recall and dictionary quality.
+- Dense retrieval is not enabled by default.
+- The hidden Phase 1 set has no public gold labels; local scores are meaningful only on reviewed synthetic or manual gold data.
+
+The current priority is to make schemas, offsets, entity extraction, linking constraints, context handling, and debugging reliable before introducing larger models.
+
+---
+
+# Related documentation
+
+- [`docs/architecture.md`](docs/architecture.md): detailed technical architecture.
+- [`docs/design.md`](docs/design.md): design decisions.
+- [`docs/schema.md`](docs/schema.md): internal schemas.
+- [`docs/invariants.md`](docs/invariants.md): invariants and correctness constraints.
+- [`docs/dictionaries.md`](docs/dictionaries.md): dictionaries and source data.
+- [`docs/evaluation.md`](docs/evaluation.md): metrics and evaluation workflow.
+- [`AGENTS.md`](AGENTS.md): guidance for coding agents.
+
+---
+
+# Project hygiene
+
+- License: MIT — [`LICENSE`](LICENSE).
+- Contribution guide: [`CONTRIBUTING.md`](CONTRIBUTING.md).
+- Security policy: [`SECURITY.md`](SECURITY.md).
+- Code of conduct: [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+- Changelog: [`CHANGELOG.md`](CHANGELOG.md).
