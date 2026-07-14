@@ -116,6 +116,7 @@ data/standards/rxnorm/raw/RxNorm_full_07062026.zip
 mlruns/
 wandb/
 outputs/ablations/
+outputs/benchmarks/
 outputs/evaluation/
 outputs/loops/
 outputs/profiles/
