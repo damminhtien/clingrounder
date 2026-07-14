@@ -59,6 +59,11 @@ Each runner stage emits timing and counters through `PipelineTrace`. Stage names
 stable so ablations can compare runtime, validation issues, linking behavior, context behavior, and
 relation quality while swapping one component at a time.
 
+Medication-list parsing is structural rather than vocabulary-specific. It recognizes numbered,
+parenthesized, bulleted, and inline items, separates an indication clause from the medication SIG,
+and extends validated drug spans through contiguous attributes. It does not delete or recreate
+indication entities; symptom/diagnosis recognition and typing remain owned by the normal NER stage.
+
 The current deterministic baseline keeps `offset_preserving_preprocessing` diagnostic-only:
 downstream NER, context, linking, and relation stages consume original source text. Normalized text
 should only feed downstream stages after normalized spans are mapped back to source offsets end to

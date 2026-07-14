@@ -5,22 +5,15 @@ from dataclasses import dataclass
 
 from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
 from medical_kg_nlp.schema.annotation import EntityAnnotation, MedicationMention
-from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
-from medical_kg_nlp.utils.text import normalize_for_match
+from medical_kg_nlp.schema.types import EntityType
 
 
-_LIST_LINE_RE = re.compile(r"(?m)^\s*\d+\.\s*(?P<body>[^\r\n]+)")
-_INDICATION_MARKER_RE = re.compile(r"\s+điều\s+trị\s+", re.IGNORECASE | re.UNICODE)
-_REVIEWED_INDICATIONS = (
-    "sốt đau",
-    "đau nhức",
-    "táo bón",
-    "mất ngủ",
-    "lo âu",
-    "ho",
+_ITEM_MARKER_RE = re.compile(
+    r"(?m)(?:^[ \t]*[-*•][ \t]+|(?<!\S)\d{1,3}[.)][ \t]+)",
+    flags=re.UNICODE,
 )
-_INDICATION_RE = re.compile(
-    r"(?<!\w)(?:" + "|".join(re.escape(value) for value in _REVIEWED_INDICATIONS) + r")(?!\w)",
+_INDICATION_MARKER_RE = re.compile(
+    r"\s+(?:điều\s+trị|cho|for)\s+",
     re.IGNORECASE | re.UNICODE,
 )
 
@@ -36,21 +29,43 @@ class MedicationListParser:
         self.mention_parser = MedicationMentionParser()
 
     def items(self, source_text: str) -> tuple[MedicationListItem, ...]:
+        """Parse numbered, parenthesized, bulleted, and inline medication list items."""
+        markers = list(_ITEM_MARKER_RE.finditer(source_text))
         items: list[MedicationListItem] = []
-        for match in _LIST_LINE_RE.finditer(source_text):
-            body_start, body_end = match.span("body")
-            marker = _INDICATION_MARKER_RE.search(source_text, body_start, body_end)
-            medication_end = marker.start() if marker is not None else body_end
-            while medication_end > body_start and source_text[medication_end - 1].isspace():
-                medication_end -= 1
+        for index, marker in enumerate(markers):
+            body_start = marker.end()
+            next_marker_start = (
+                markers[index + 1].start() if index + 1 < len(markers) else len(source_text)
+            )
+            line_breaks = [
+                position
+                for token in ("\r", "\n")
+                if (position := source_text.find(token, body_start, next_marker_start)) >= 0
+            ]
+            body_end = min(line_breaks, default=next_marker_start)
+            body_start, body_end = _trim_span(source_text, (body_start, body_end))
+            if body_end <= body_start:
+                continue
+            indication_marker = _INDICATION_MARKER_RE.search(
+                source_text, body_start, body_end
+            )
+            medication_end = indication_marker.start() if indication_marker else body_end
+            _, medication_end = _trim_span(source_text, (body_start, medication_end))
             indication_span = None
-            if marker is not None:
-                indication_start = marker.end()
-                while indication_start < body_end and source_text[indication_start].isspace():
-                    indication_start += 1
-                if indication_start < body_end:
-                    indication_span = (indication_start, body_end)
-            items.append(MedicationListItem((body_start, medication_end), indication_span))
+            if indication_marker is not None:
+                indication_span = _trim_span(
+                    source_text,
+                    (indication_marker.end(), body_end),
+                )
+                if indication_span[0] >= indication_span[1]:
+                    indication_span = None
+            if medication_end > body_start:
+                items.append(
+                    MedicationListItem(
+                        medication_span=(body_start, medication_end),
+                        indication_span=indication_span,
+                    )
+                )
         return tuple(items)
 
     def adjudicate(
@@ -60,13 +75,10 @@ class MedicationListParser:
         if not items:
             return entities
 
-        indication_spans = [item.indication_span for item in items if item.indication_span]
-        retained = [
-            entity
-            for entity in entities
-            if not any(_overlaps(entity.span, span) for span in indication_spans)
-        ]
-        for entity in retained:
+        # List parsing owns only medication boundaries. Indication entities remain the output of
+        # the normal NER/type pipeline; deleting and recreating a small whitelist overfits one list
+        # and silently loses unseen symptoms or diagnoses.
+        for entity in entities:
             if entity.type != EntityType.DRUG:
                 continue
             item = next(
@@ -85,30 +97,17 @@ class MedicationListParser:
                     if component.span[1] <= item.medication_span[1]
                 ),
             )
-
-        for indication_span in indication_spans:
-            for match in _INDICATION_RE.finditer(
-                source_text, indication_span[0], indication_span[1]
-            ):
-                span = match.span()
-                retained.append(
-                    EntityAnnotation(
-                        id="",
-                        span=span,
-                        text=source_text[span[0] : span[1]],
-                        normalized_text=normalize_for_match(source_text[span[0] : span[1]]),
-                        type=EntityType.SYMPTOM,
-                        assertion=AssertionStatus.PRESENT,
-                        code_system=CodeSystem.NONE,
-                        confidence=0.98,
-                    )
-                )
-        return retained
+        return entities
 
 
 def _contains(container: tuple[int, int], inner: tuple[int, int]) -> bool:
     return container[0] <= inner[0] and inner[1] <= container[1]
 
 
-def _overlaps(left: tuple[int, int], right: tuple[int, int]) -> bool:
-    return left[0] < right[1] and right[0] < left[1]
+def _trim_span(text: str, span: tuple[int, int]) -> tuple[int, int]:
+    start, end = span
+    while start < end and text[start].isspace():
+        start += 1
+    while end > start and text[end - 1].isspace():
+        end -= 1
+    return start, end
