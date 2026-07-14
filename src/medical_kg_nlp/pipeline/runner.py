@@ -12,7 +12,10 @@ from medical_kg_nlp.linking.linker import EntityLinker
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
 from medical_kg_nlp.pipeline.options import PipelineOptions
 from medical_kg_nlp.pipeline.tracing import PipelineTrace
-from medical_kg_nlp.preprocessing.offset_mapping import collapse_whitespace_preserve_offsets
+from medical_kg_nlp.preprocessing.normalizer import (
+    DEFAULT_NORMALIZATION_CONTRACT,
+    NormalizationContract,
+)
 from medical_kg_nlp.preprocessing.section_splitter import split_sections
 from medical_kg_nlp.preprocessing.sentence_splitter import split_sentences
 from medical_kg_nlp.relations.rule_relations import RuleRelationExtractor
@@ -40,8 +43,10 @@ class PipelineRunner:
         normalization_dictionary_path: str | Path | None = None,
         pipeline_version: str = "0.1.0",
         options: PipelineOptions | None = None,
+        normalization_contract: NormalizationContract = DEFAULT_NORMALIZATION_CONTRACT,
     ) -> None:
         self.options = options or PipelineOptions()
+        self.normalization_contract = normalization_contract
         # Load raw entries first and build only the two stores the runtime actually keeps. Building
         # a temporary indexed store per source duplicates normalization work and becomes expensive
         # for complete RxNorm releases.
@@ -138,12 +143,15 @@ class PipelineRunner:
             counters["metadata_fields"] = len(loaded_document.metadata)
 
         with trace.stage("offset_preserving_preprocessing") as counters:
-            mapped_text = collapse_whitespace_preserve_offsets(loaded_document.text)
+            mapped_text = self.normalization_contract.prepare(loaded_document.text)
             counters["original_characters"] = len(mapped_text.original)
             counters["normalized_characters"] = len(mapped_text.normalized)
             counters["offset_map_entries"] = len(mapped_text.normalized_to_original)
-            # Downstream stages still consume source text until normalized-span NER is wired end to end.
-            counters["diagnostic_only"] = 1
+            # Keep this counter machine-readable for stage reports. The contract version is
+            # recorded in code/config manifests rather than this integer-only trace structure.
+            counters["diagnostic_only"] = int(
+                self.normalization_contract.downstream_uses_source_text
+            )
 
         with trace.stage("section_detection") as counters:
             sections = self._sections(loaded_document.text)

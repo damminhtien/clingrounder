@@ -7,6 +7,10 @@
 - `EntityAnnotation.validate_offsets(source_text)` must pass for exported predictions when source
   text is available.
 - Preprocessing may create mapped text, but every emitted span must map back to the original text.
+- The active normalization contract is versioned. Changing normalization semantics requires a
+  version change, offset-map regression tests, and rebuilding indexes whose keys use that contract.
+- Until all span-producing stages consume mapped text explicitly, normalized text remains
+  lookup/diagnostic-only and pipeline stages must receive the original source text.
 
 ## Dictionary Safety
 
