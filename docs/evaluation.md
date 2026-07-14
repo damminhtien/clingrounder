@@ -219,6 +219,33 @@ missing/extra fragments, stage deltas, and error rates by compiled knowledge sta
 the existing Phase 1 text scorer; missing/spurious/boundary taxonomy uses same-type raw-span
 overlap so repeated mentions at distant offsets cannot be paired as a fake boundary error.
 
+Freeze the complete reviewed corpus before an entity ablation campaign:
+
+```bash
+uv run python scripts/freeze_phase1_holdout.py
+```
+
+`data/manual_gold/holdout_manifest.json` fingerprints every numeric gold JSON and raw TXT. Running
+the command again verifies the frozen corpus and fails if either labels or source text drift. Use
+`--replace` only after an intentional corpus revision. The current 100-document corpus freezes 76
+train and 24 holdout documents under the SHA-256/mod-5 policy.
+
+Run lab-result, medication-span, symptom-boundary, and diagnosis-boundary families independently:
+
+```bash
+uv run python scripts/run_phase1_entity_ablations.py \
+  --base outputs/phase1/<public-best>/output.zip \
+  --expected-base-sha256 <sha256> \
+  --stage pipeline=outputs/phase1/<pipeline>/output.zip \
+  --stage qwen_nonoverlap=outputs/phase1/<ensemble>/output.zip \
+  --public-wer <public-wer>
+```
+
+The runner learns boundary rules from train only, fixes all variants before opening holdout, writes
+strict-validated deterministic ZIP files, and emits a full WER/source/boundary report per variant.
+It never combines winning families. `keep_candidate` means both all-corpus and holdout WER improve;
+public promotion still requires an isolated external probe.
+
 Run dictionary-constrained candidate overlays without changing entities or assertions:
 
 ```bash
