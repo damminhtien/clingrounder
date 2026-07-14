@@ -13,6 +13,7 @@ from typing import Any
 
 
 _SLUG_RE = re.compile(r"[^A-Za-z0-9_.-]+")
+_ENVIRONMENT_LOCK_CANDIDATES = (Path("uv.lock"), Path("pyproject.toml"))
 
 
 @dataclass(frozen=True)
@@ -35,7 +36,7 @@ def create_hashed_run_dir(
     safe_label = _slug(label)
     input_artifacts = [_input_artifact(item) for item in inputs]
     git_commit, git_dirty, working_tree_hash = _git_metadata()
-    lock_hash = _file_sha256(Path("uv.lock")) if Path("uv.lock").is_file() else None
+    lock_hash = _environment_lock_hash()
     reproducibility_payload = {
         "label": label,
         "input_artifacts": input_artifacts,
@@ -147,6 +148,20 @@ def _file_sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _environment_lock_hash() -> str:
+    """Hash the strongest available environment definition.
+
+    ``uv.lock`` is preferred when present. The project does not currently commit
+    that file, so public CI falls back to ``pyproject.toml`` instead of emitting a
+    null reproducibility field.
+    """
+
+    for candidate in _ENVIRONMENT_LOCK_CANDIDATES:
+        if candidate.is_file():
+            return _file_sha256(candidate)
+    return hashlib.sha256(b"unlocked-environment").hexdigest()
 
 
 def _git_metadata() -> tuple[str | None, bool | None, str | None]:
