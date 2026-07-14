@@ -13,12 +13,113 @@ from medical_kg_nlp.ontology.phase1 import PHASE1_ASSERTABLE_TYPES, PHASE1_CODAB
 
 MANUAL_GOLD_HOLDOUT_MODULUS = 5
 MANUAL_GOLD_HOLDOUT_BUCKET = 0
+MANUAL_GOLD_SPLIT_SCHEMA_VERSION = "phase1-manual-gold-split.v1"
 
 
 def manual_gold_split(document_id: str) -> str:
     digest_prefix = hashlib.sha256(document_id.encode("utf-8")).hexdigest()[:8]
     bucket = int(digest_prefix, 16) % MANUAL_GOLD_HOLDOUT_MODULUS
     return "holdout" if bucket == MANUAL_GOLD_HOLDOUT_BUCKET else "train"
+
+
+def build_manual_gold_split_manifest(
+    gold_dir: str | Path,
+    documents_dir: str | Path,
+) -> dict[str, Any]:
+    """Fingerprint the reviewed corpus and freeze its deterministic split.
+
+    The manifest hashes both labels and raw text. A later annotation or source-text edit therefore
+    requires an explicit re-freeze instead of silently changing the experiment population.
+    """
+    gold_root = Path(gold_dir)
+    documents_root = Path(documents_dir)
+    gold_paths = {
+        path.stem: path
+        for path in gold_root.glob("*.json")
+        if path.stem.isdigit()
+    }
+    document_paths = {
+        path.stem: path
+        for path in documents_root.glob("*.txt")
+        if path.stem.isdigit()
+    }
+    if set(gold_paths) != set(document_paths):
+        missing_gold = sorted(set(document_paths) - set(gold_paths), key=_document_sort_key)
+        missing_documents = sorted(set(gold_paths) - set(document_paths), key=_document_sort_key)
+        raise ValueError(
+            "Manual-gold/source document mismatch: "
+            f"missing_gold={missing_gold}, missing_documents={missing_documents}."
+        )
+
+    assignments: list[dict[str, Any]] = []
+    gold_entity_count = 0
+    for document_id in sorted(gold_paths, key=_document_sort_key):
+        payload = json.loads(gold_paths[document_id].read_text(encoding="utf-8"))
+        if not isinstance(payload, list):
+            raise ValueError(f"{gold_paths[document_id]}: expected a JSON list.")
+        gold_entity_count += len(payload)
+        assignments.append(
+            {
+                "document_id": document_id,
+                "split": manual_gold_split(document_id),
+                "gold_sha256": _file_sha256(gold_paths[document_id]),
+                "document_sha256": _file_sha256(document_paths[document_id]),
+            }
+        )
+
+    train_ids = [row["document_id"] for row in assignments if row["split"] == "train"]
+    holdout_ids = [row["document_id"] for row in assignments if row["split"] == "holdout"]
+    corpus_fingerprint = hashlib.sha256(
+        json.dumps(assignments, ensure_ascii=False, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+    return {
+        "schema_version": MANUAL_GOLD_SPLIT_SCHEMA_VERSION,
+        "split_policy": {
+            "algorithm": "int(sha256(document_id)[:8], 16) % 5",
+            "holdout_bucket": MANUAL_GOLD_HOLDOUT_BUCKET,
+            "modulus": MANUAL_GOLD_HOLDOUT_MODULUS,
+        },
+        "corpus": {
+            "document_count": len(assignments),
+            "gold_entity_count": gold_entity_count,
+            "fingerprint_sha256": corpus_fingerprint,
+        },
+        "splits": {
+            "train": {
+                "document_count": len(train_ids),
+                "document_ids": train_ids,
+            },
+            "holdout": {
+                "document_count": len(holdout_ids),
+                "document_ids": holdout_ids,
+            },
+        },
+        "assignments": assignments,
+    }
+
+
+def verify_manual_gold_split_manifest(
+    manifest: dict[str, Any],
+    gold_dir: str | Path,
+    documents_dir: str | Path,
+) -> None:
+    current = build_manual_gold_split_manifest(gold_dir, documents_dir)
+    if manifest != current:
+        expected = manifest.get("corpus", {}).get("fingerprint_sha256")
+        actual = current["corpus"]["fingerprint_sha256"]
+        raise ValueError(
+            "Frozen manual-gold split no longer matches the corpus: "
+            f"expected fingerprint {expected}, got {actual}."
+        )
+
+
+def write_manual_gold_split_manifest(manifest: dict[str, Any], path: str | Path) -> None:
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
 
 
 def evaluate_manual_gold(
@@ -251,3 +352,7 @@ def _summary_markdown(report: dict[str, Any]) -> str:
 
 def _document_sort_key(document_id: str) -> tuple[int, int | str]:
     return (0, int(document_id)) if document_id.isdigit() else (1, document_id)
+
+
+def _file_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
