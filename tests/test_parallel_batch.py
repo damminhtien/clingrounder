@@ -12,15 +12,24 @@ from medical_kg_nlp.schema.document import ClinicalDocument
 
 def test_parallel_batch_thread_backend_preserves_input_order_and_traces() -> None:
     documents = _two_sample_documents()
+    runtime_metrics: dict[str, object] = {}
 
     results = run_batch_with_trace_parallel(
         documents,
         parallel_options=ParallelBatchOptions(backend="thread", max_workers=2, chunksize=1),
+        runtime_metrics=runtime_metrics,
     )
 
     assert [result.prediction.document_id for result in results] == ["sample_001", "sample_002"]
     assert all(result.trace.document_id == result.prediction.document_id for result in results)
     assert all(result.trace.bottleneck() is not None for result in results)
+    assert runtime_metrics["backend"] == "thread"
+    assert runtime_metrics["worker_count"] == 2
+    assert runtime_metrics["document_count"] == 2
+    assert float(runtime_metrics["initialization_ms"]) >= 0.0
+    assert float(runtime_metrics["processing_ms"]) > 0.0
+    assert float(runtime_metrics["documents_per_second"]) > 0.0
+    assert runtime_metrics["worker_initialization_in_processing"] is False
 
 
 def test_parallel_batch_process_backend_preserves_input_order() -> None:

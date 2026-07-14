@@ -66,6 +66,10 @@ def main() -> None:
         help="Optional path for per-document pipeline trace JSONL.",
     )
     parser.add_argument(
+        "--runtime-metrics",
+        help="Optional JSON path for batch initialization and processing timing.",
+    )
+    parser.add_argument(
         "--dictionary",
         help="Dictionary JSONL used for pipeline linking and candidate validation.",
     )
@@ -133,6 +137,11 @@ def main() -> None:
     )
     traces_arg = _optional_str(
         args.traces if args.traces is not None else config.get("traces")
+    )
+    runtime_metrics_arg = _optional_str(
+        args.runtime_metrics
+        if args.runtime_metrics is not None
+        else config.get("runtime_metrics")
     )
     dictionary_path = _required_str(
         args.dictionary or config.get("dictionary") or "data/dictionaries/seed_concepts.jsonl",
@@ -209,9 +218,15 @@ def main() -> None:
         else None
     )
     documents = load_phase1_text_documents(input_dir)
+    batch_runtime: dict[str, object] = {}
     if pred_path:
         predictions = SyntheticDatasetAdapter().load_gold(pred_path)
         traces = []
+        batch_runtime = {
+            "backend": "precomputed",
+            "document_count": len(documents),
+            "worker_count": 0,
+        }
     else:
         run_results = run_batch_with_trace_parallel(
             documents,
@@ -226,6 +241,7 @@ def main() -> None:
                 chunksize=chunksize,
                 fail_fast=fail_fast,
             ),
+            runtime_metrics=batch_runtime,
         )
         predictions = [result.prediction for result in run_results]
         traces = [result.trace.to_json() for result in run_results]
@@ -243,6 +259,11 @@ def main() -> None:
     traces_path = path_in_run(traces_arg, run_output) if traces_arg else None
     if traces_path is not None:
         write_jsonl(traces_path, traces)
+    runtime_metrics_path = (
+        path_in_run(runtime_metrics_arg, run_output) if runtime_metrics_arg else None
+    )
+    if runtime_metrics_path is not None:
+        _write_json(runtime_metrics_path, batch_runtime)
 
     output_dir = path_in_run(output_dir_arg, run_output)
     source_text_by_document = {document.document_id: document.text for document in documents}
@@ -297,6 +318,8 @@ def main() -> None:
         mode=mode,
         internal_predictions_path=internal_predictions_path,
         traces_path=traces_path,
+        runtime_metrics_path=runtime_metrics_path,
+        batch_runtime=batch_runtime,
     )
     if issues and strict_validation:
         print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
@@ -329,6 +352,8 @@ def main() -> None:
         mode=mode,
         internal_predictions_path=internal_predictions_path,
         traces_path=traces_path,
+        runtime_metrics_path=runtime_metrics_path,
+        batch_runtime=batch_runtime,
     )
     print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
     if issues and strict_validation:
@@ -351,6 +376,8 @@ def _summary(
     mode: str,
     internal_predictions_path: Path | None,
     traces_path: Path | None,
+    runtime_metrics_path: Path | None,
+    batch_runtime: dict[str, object],
 ) -> dict[str, Any]:
     return {
         "run_id": run_output.run_id if run_output else None,
@@ -371,6 +398,10 @@ def _summary(
             str(internal_predictions_path) if internal_predictions_path else None
         ),
         "traces": str(traces_path) if traces_path else None,
+        "runtime_metrics": (
+            str(runtime_metrics_path) if runtime_metrics_path else None
+        ),
+        "batch_runtime": batch_runtime,
         "issue_count": len(issues),
         "issues": issues[:20],
     }
@@ -389,6 +420,14 @@ def _optional_str(value: Any) -> str | None:
         return None
     text = str(value).strip()
     return text or None
+
+
+def _write_json(path: Path, payload: dict[str, object]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
 
 
 def _required_str(value: Any, key: str, parser: argparse.ArgumentParser) -> str:

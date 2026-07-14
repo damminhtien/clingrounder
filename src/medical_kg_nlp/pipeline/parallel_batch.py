@@ -3,9 +3,11 @@ from __future__ import annotations
 import os
 import threading
 import traceback
+from collections.abc import MutableMapping
 from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
+from time import perf_counter
 from typing import Literal
 
 from medical_kg_nlp.pipeline.options import PipelineOptions
@@ -58,14 +60,27 @@ def run_batch_with_trace_parallel(
     pipeline_version: str = "0.1.0",
     pipeline_options: PipelineOptions | None = None,
     parallel_options: ParallelBatchOptions | None = None,
+    runtime_metrics: MutableMapping[str, object] | None = None,
 ) -> list[PipelineRunResult]:
     global _WORKER_RUNNER
+    total_started = perf_counter()
     options = parallel_options or ParallelBatchOptions()
     pipeline_options = pipeline_options or PipelineOptions()
     worker_count = _effective_worker_count(options, len(documents))
     if not documents:
+        _record_runtime_metrics(
+            runtime_metrics,
+            backend=options.backend,
+            worker_count=worker_count,
+            document_count=0,
+            initialization_ms=0.0,
+            processing_ms=0.0,
+            total_started=total_started,
+            worker_initialization_in_processing=False,
+        )
         return []
     if options.backend == "serial" or worker_count <= 1:
+        initialization_started = perf_counter()
         runner = PipelineRunner(
             dictionary_path=dictionary_path,
             abbreviation_path=abbreviation_path,
@@ -74,7 +89,23 @@ def run_batch_with_trace_parallel(
             pipeline_version=pipeline_version,
             options=pipeline_options,
         )
-        return [runner.process_document_with_trace(document) for document in documents]
+        serial_initialization_ms = (perf_counter() - initialization_started) * 1000.0
+        processing_started = perf_counter()
+        serial_results = [
+            runner.process_document_with_trace(document) for document in documents
+        ]
+        serial_processing_ms = (perf_counter() - processing_started) * 1000.0
+        _record_runtime_metrics(
+            runtime_metrics,
+            backend="serial",
+            worker_count=1,
+            document_count=len(documents),
+            initialization_ms=serial_initialization_ms,
+            processing_ms=serial_processing_ms,
+            total_started=total_started,
+            worker_initialization_in_processing=False,
+        )
+        return serial_results
 
     indexed_documents = list(enumerate(documents))
     initializer_args = (
@@ -90,7 +121,10 @@ def run_batch_with_trace_parallel(
     errors: list[DocumentProcessingError] = []
 
     executor_context: Executor
+    initialization_ms: float | None
+    worker_initialization_in_processing = False
     if options.backend == "thread":
+        initialization_started = perf_counter()
         _WORKER_RUNNER = PipelineRunner(
             dictionary_path=dictionary_path,
             abbreviation_path=abbreviation_path,
@@ -99,14 +133,18 @@ def run_batch_with_trace_parallel(
             pipeline_version=pipeline_version,
             options=pipeline_options,
         )
+        initialization_ms = (perf_counter() - initialization_started) * 1000.0
         executor_context = ThreadPoolExecutor(max_workers=worker_count)
     else:
+        initialization_ms = None
+        worker_initialization_in_processing = True
         executor_context = ProcessPoolExecutor(
             max_workers=worker_count,
             initializer=_init_worker,
             initargs=initializer_args,
         )
 
+    processing_started = perf_counter()
     with executor_context as executor:
         for index, payload in executor.map(
             worker_fn, indexed_documents, chunksize=max(1, options.chunksize)
@@ -115,10 +153,22 @@ def run_batch_with_trace_parallel(
                 errors.append(payload)
             else:
                 results[index] = payload
+    processing_ms = (perf_counter() - processing_started) * 1000.0
 
     if errors:
         raise ParallelBatchError(errors)
-    return [_require_result(index, result) for index, result in enumerate(results)]
+    output = [_require_result(index, result) for index, result in enumerate(results)]
+    _record_runtime_metrics(
+        runtime_metrics,
+        backend=options.backend,
+        worker_count=worker_count,
+        document_count=len(documents),
+        initialization_ms=initialization_ms,
+        processing_ms=processing_ms,
+        total_started=total_started,
+        worker_initialization_in_processing=worker_initialization_in_processing,
+    )
+    return output
 
 
 def run_batch_parallel(
@@ -210,3 +260,33 @@ def _require_result(index: int, result: PipelineRunResult | None) -> PipelineRun
     if result is None:
         raise RuntimeError(f"Missing parallel result for document index {index}.")
     return result
+
+
+def _record_runtime_metrics(
+    target: MutableMapping[str, object] | None,
+    *,
+    backend: ParallelBackend,
+    worker_count: int,
+    document_count: int,
+    initialization_ms: float | None,
+    processing_ms: float,
+    total_started: float,
+    worker_initialization_in_processing: bool,
+) -> None:
+    if target is None:
+        return
+    total_ms = (perf_counter() - total_started) * 1000.0
+    target.update(
+        {
+            "backend": backend,
+            "worker_count": worker_count,
+            "document_count": document_count,
+            "initialization_ms": initialization_ms,
+            "processing_ms": processing_ms,
+            "total_ms": total_ms,
+            "documents_per_second": (
+                document_count / (total_ms / 1000.0) if total_ms > 0.0 else 0.0
+            ),
+            "worker_initialization_in_processing": worker_initialization_in_processing,
+        }
+    )

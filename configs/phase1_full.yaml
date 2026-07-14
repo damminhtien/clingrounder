@@ -5,6 +5,7 @@ run_root: outputs/phase1
 run_label: phase1-full
 internal_predictions: phase1/full_internal_predictions.jsonl
 traces: phase1/full_traces.jsonl
+runtime_metrics: phase1/full_runtime.json
 mode: full
 dictionary: data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
 recognition_dictionary: src/medical_kg_nlp/resources/phase1_btc_medication_recognition.jsonl
