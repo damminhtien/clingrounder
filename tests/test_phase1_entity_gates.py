@@ -108,6 +108,52 @@ def test_lab_gate_uses_same_line_fallback_for_translated_result_lists() -> None:
     assert decisions == []
 
 
+def test_medication_full_span_extends_only_contiguous_sig_attributes() -> None:
+    text = "amlodipine 10 mg po daily điều trị tăng huyết áp"
+    row = _row("amlodipine", "THUỐC", 0)
+    row["assertions"] = ["isHistorical"]
+    row["candidates"] = ["308135"]
+
+    output, decisions, counts = apply_phase1_entity_gates(
+        {"1": [row]},
+        {"1": text},
+        config=Phase1EntityGateConfig(medication_full_span=True, resolve_overlaps=False),
+    )
+
+    assert output["1"] == [
+        {
+            "text": "amlodipine 10 mg po daily",
+            "type": "THUỐC",
+            "assertions": ["isHistorical"],
+            "candidates": ["308135"],
+            "position": [0, 25],
+        }
+    ]
+    assert decisions[0]["rule_id"] == "builtin.medication.full_span"
+    assert decisions[0]["after"]["text"] == "amlodipine 10 mg po daily"
+    assert counts["medication_full_span.expand"] == 1
+
+
+def test_medication_full_span_blocks_expansion_over_another_entity() -> None:
+    text = "amlodipine 10 mg"
+    rows = {
+        "1": [
+            _row("amlodipine", "THUỐC", 0),
+            _row("10 mg", "KẾT_QUẢ_XÉT_NGHIỆM", text.index("10 mg")),
+        ]
+    }
+
+    output, decisions, counts = apply_phase1_entity_gates(
+        rows,
+        {"1": text},
+        config=Phase1EntityGateConfig(medication_full_span=True, resolve_overlaps=False),
+    )
+
+    assert [row["text"] for row in output["1"]] == ["amlodipine", "10 mg"]
+    assert decisions == []
+    assert counts["medication_full_span.blocked_overlap"] == 1
+
+
 def test_strict_exclusions_require_reviewed_type_scoped_registry_rule() -> None:
     text = "phẫu thuật và đau"
     policy = {

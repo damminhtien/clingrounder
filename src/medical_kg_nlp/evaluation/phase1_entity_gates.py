@@ -17,6 +17,7 @@ from medical_kg_nlp.evaluation.phase1_rule_registry import (
     Phase1RuleRegistry,
     phase1_rule_registry_from_data,
 )
+from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
 from medical_kg_nlp.ontology.phase1 import PHASE1_TYPE_PRIORITY
 from medical_kg_nlp.utils.text import normalize_for_match
 
@@ -87,6 +88,7 @@ _BOUNDARY_PUNCTUATION_RE = re.compile(r"[,;:\n.!?]")
 @dataclass(frozen=True)
 class Phase1EntityGateConfig:
     lab_gate: bool = False
+    medication_full_span: bool = False
     strict_exclusions: bool = False
     boundary_stages: tuple[str, ...] = ()
     resolve_overlaps: bool = True
@@ -134,6 +136,14 @@ def apply_phase1_entity_gates(
                 rows,
                 source_text,
                 active_registry,
+                decisions,
+                counters,
+            )
+        if config.medication_full_span:
+            rows = _apply_medication_full_span(
+                document_id,
+                rows,
+                source_text,
                 decisions,
                 counters,
             )
@@ -389,6 +399,50 @@ def _apply_lab_gate(
             )
             continue
         output.append(row)
+    return output
+
+
+def _apply_medication_full_span(
+    document_id: str,
+    rows: list[dict[str, Any]],
+    source_text: str,
+    decisions: list[dict[str, Any]],
+    counters: Counter[str],
+) -> list[dict[str, Any]]:
+    parser = MedicationMentionParser()
+    output = [dict(row) for row in rows]
+    for index, row in enumerate(output):
+        if row.get("type") != "THUỐC":
+            continue
+        start, end = _position(row)
+        mention = parser.parse(source_text, (start, end))
+        full_start, full_end = mention.full_span
+        if (full_start, full_end) == (start, end):
+            continue
+        expanded = dict(row)
+        expanded["position"] = [full_start, full_end]
+        expanded["text"] = source_text[full_start:full_end]
+        if any(
+            _overlaps(expanded, other)
+            for other_index, other in enumerate(output)
+            if other_index != index
+        ):
+            counters["medication_full_span.blocked_overlap"] += 1
+            continue
+
+        output[index] = expanded
+        _append_decision(
+            decisions,
+            counters,
+            document_id=document_id,
+            stage="medication_full_span",
+            rule_id="builtin.medication.full_span",
+            source="medication_mention_parser",
+            action="expand",
+            reason="Extend a drug name through contiguous dose, form, route, and frequency attributes.",
+            before=row,
+            after=expanded,
+        )
     return output
 
 

@@ -176,6 +176,10 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
 
     entity_variants = {
         "E_LAB": Phase1EntityGateConfig(lab_gate=True, resolve_overlaps=False),
+        "E_MEDICATION_FULL_SPAN": Phase1EntityGateConfig(
+            medication_full_span=True,
+            resolve_overlaps=False,
+        ),
         "E_EXCLUSION": Phase1EntityGateConfig(strict_exclusions=True, resolve_overlaps=False),
         "E_OVERLAP": Phase1EntityGateConfig(resolve_overlaps=True),
         "E_LAB_EXCLUSION": Phase1EntityGateConfig(
@@ -196,6 +200,7 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
         )
     entity_variants["E_ALL"] = Phase1EntityGateConfig(
         lab_gate=True,
+        medication_full_span=True,
         strict_exclusions=True,
         boundary_stages=(
             "boundary_diagnosis",
@@ -222,6 +227,7 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
             counters=counters,
             policy_diff={
                 "lab_gate": gate_config.lab_gate,
+                "medication_full_span": gate_config.medication_full_span,
                 "strict_exclusions": gate_config.strict_exclusions,
                 "boundary_stages": list(gate_config.boundary_stages),
                 "resolve_overlaps": gate_config.resolve_overlaps,
