@@ -7,8 +7,12 @@ from medical_kg_nlp.utils.run_output import create_hashed_run_dir, path_in_run
 
 
 def test_create_hashed_run_dir_is_unique_and_writes_manifest(tmp_path: Path) -> None:
-    first = create_hashed_run_dir(tmp_path / "runs", label="phase1", inputs=["data/raw/input"])
-    second = create_hashed_run_dir(tmp_path / "runs", label="phase1", inputs=["data/raw/input"])
+    input_dir = tmp_path / "input"
+    input_dir.mkdir()
+    (input_dir / "note.txt").write_text("clinical note", encoding="utf-8")
+
+    first = create_hashed_run_dir(tmp_path / "runs", label="phase1", inputs=[input_dir])
+    second = create_hashed_run_dir(tmp_path / "runs", label="phase1", inputs=[input_dir])
 
     assert first.run_dir != second.run_dir
     assert first.run_dir.exists()
@@ -17,7 +21,7 @@ def test_create_hashed_run_dir_is_unique_and_writes_manifest(tmp_path: Path) -> 
 
     manifest = json.loads(first.manifest_path.read_text(encoding="utf-8"))
     assert manifest["run_id"] == first.run_id
-    assert manifest["inputs"] == ["data/raw/input"]
+    assert manifest["inputs"] == [str(input_dir)]
     assert (
         manifest["content_hash"]
         == json.loads(second.manifest_path.read_text(encoding="utf-8"))["content_hash"]
@@ -26,6 +30,7 @@ def test_create_hashed_run_dir_is_unique_and_writes_manifest(tmp_path: Path) -> 
     assert manifest["python_version"]
     assert manifest["environment_lock_hash"]
     assert manifest["input_artifacts"][0]["kind"] == "directory"
+    assert manifest["input_artifacts"][0]["file_count"] == 1
 
 
 def test_run_content_hash_changes_when_input_content_changes(tmp_path: Path) -> None:
