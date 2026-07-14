@@ -93,9 +93,15 @@ Generated candidates remain in internal predictions for recall/rank analysis. On
 evidence sources are stored separately. Selective Phase 1 export applies a `(code system, primary
 source)` threshold matrix and an exact reviewed whitelist after qualification.
 
-RxNorm qualification receives the validated full medication span. Explicit strength, release type,
-or dose-form conflicts hard-reject a candidate with a structured reason; the candidate remains in
-the internal list for error analysis rather than being deleted from retrieval traces.
+RxNorm qualification receives the validated full medication span. Medication structure keeps
+ingredient/brand, product strength, administered dose, dosage form, route, frequency, and release
+type as distinct concepts. In particular, `po` is a route rather than evidence for a tablet and
+`iv` is a route rather than evidence for an injection product. A strength mismatch hard-rejects a
+candidate only when the mention provides product evidence such as amount plus explicit form or
+release type. Dose ranges and route/frequency SIG amounts remain administered or ambiguous doses
+and can affect ranking without rejecting a valid product. Explicit product-strength, release-type,
+or dose-form conflicts retain a structured rejection reason; rejected candidates remain in the
+internal list for error analysis rather than being deleted from retrieval traces.
 
 ## Assertion Rules
 

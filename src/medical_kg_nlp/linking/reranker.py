@@ -1,22 +1,21 @@
 from __future__ import annotations
 
 from dataclasses import replace
-import re
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.linking.candidate import Candidate
-from medical_kg_nlp.linking.structured_rxnorm import parse_medication_structure
+from medical_kg_nlp.linking.structured_rxnorm import (
+    MedicationStructure,
+    parse_medication_structure,
+    parse_rxnorm_entry_structure,
+)
 from medical_kg_nlp.schema.types import EntityType
 from medical_kg_nlp.utils.text import normalize_for_match, token_set
 
 
 _STRUCTURED_PRODUCT_TTYS = frozenset({"SCD", "SBD", "SCDF", "SBDF", "GPCK", "BPCK"})
 _INGREDIENT_TTYS = frozenset({"IN", "PIN", "MIN"})
-_ADMINISTERED_SIG_RE = re.compile(
-    r"(?<!\w)(?:po|p\.o\.|iv|im|sc|sl|bid|tid|qid|qhs|qam|qd|daily|prn|"
-    r"uống|tiêm|truyền|mỗi\s+ngày|hằng\s+ngày)(?!\w)|\d\s*-\s*\d",
-    flags=re.IGNORECASE | re.UNICODE,
-)
+_BRAND_TTYS = frozenset({"BN"})
 
 
 class HeuristicReranker:
@@ -29,8 +28,7 @@ class HeuristicReranker:
         context_window: str = "",
         mention: str = "",
     ) -> list[Candidate]:
-        mention_strengths = _strengths(mention)
-        mention_forms = _forms(mention)
+        mention_structure = parse_medication_structure(mention)
         context_tokens = token_set(context_window)
         reranked = [
             replace(
@@ -38,8 +36,7 @@ class HeuristicReranker:
                 score=self._candidate_score(
                     candidate,
                     mention=mention,
-                    mention_strengths=mention_strengths,
-                    mention_forms=mention_forms,
+                    mention_structure=mention_structure,
                     context_tokens=context_tokens,
                 ),
             )
@@ -60,34 +57,32 @@ class HeuristicReranker:
         candidate: Candidate,
         *,
         mention: str,
-        mention_strengths: frozenset[str],
-        mention_forms: frozenset[str],
+        mention_structure: MedicationStructure,
         context_tokens: set[str],
     ) -> float:
         entry = self.store.by_concept_id.get(candidate.concept_id)
         if entry is None:
             return candidate.score
-        candidate_name_text = " ".join(entry.all_names)
-        candidate_strengths = _strengths(f"{candidate_name_text} {entry.strength or ''}")
-        explicit_candidate_forms = _forms(candidate_name_text)
-        candidate_forms = _forms(f"{candidate_name_text} {entry.dose_form or ''}")
+        candidate_structure = parse_rxnorm_entry_structure(entry)
 
         score = candidate.score
-        if mention_strengths and candidate_strengths:
-            if not mention_strengths.isdisjoint(candidate_strengths):
-                score += 0.10
-            elif not _ADMINISTERED_SIG_RE.search(mention):
-                return max(0.0, score * 0.2)
+        candidate_strengths = candidate_structure.product_strengths
+        if mention_structure.product_strengths and candidate_strengths:
+            if mention_structure.product_strengths.isdisjoint(candidate_strengths):
+                return max(0.0, score * 0.1)
+        elif mention_structure.ambiguous_strengths and candidate_strengths:
+            # Ambiguous SIG strength may describe an administered dose. Prefer a matching product,
+            # but do not apply the hard conflict reserved for explicit product evidence.
+            if mention_structure.ambiguous_strengths.isdisjoint(candidate_strengths):
+                score *= 0.7
         elif entry.rxnorm_tty in _STRUCTURED_PRODUCT_TTYS and candidate_strengths:
             score -= 0.24
-        elif mention_strengths and entry.rxnorm_tty in _INGREDIENT_TTYS:
+        elif mention_structure.has_product_evidence and entry.rxnorm_tty in _INGREDIENT_TTYS:
             score -= 0.08
-        if mention_forms and candidate_forms:
-            if not mention_forms.isdisjoint(candidate_forms):
-                score += 0.06
-            elif explicit_candidate_forms:
+        if mention_structure.dose_forms and candidate_structure.dose_forms:
+            if mention_structure.dose_forms.isdisjoint(candidate_structure.dose_forms):
                 score -= 0.12
-        elif entry.rxnorm_tty in _STRUCTURED_PRODUCT_TTYS and explicit_candidate_forms:
+        elif entry.rxnorm_tty in _STRUCTURED_PRODUCT_TTYS and candidate_structure.dose_forms:
             score -= 0.08
 
         normalized_mention = normalize_for_match(mention)
@@ -100,16 +95,14 @@ class HeuristicReranker:
             if brand and brand in normalized_mention:
                 score += 0.04
 
+        if not mention_structure.has_product_evidence:
+            if entry.rxnorm_tty in _STRUCTURED_PRODUCT_TTYS:
+                score -= 0.08
+        elif entry.rxnorm_tty in {*_INGREDIENT_TTYS, *_BRAND_TTYS}:
+            score -= 0.08
+
         candidate_tokens = token_set(candidate.canonical_name)
         if candidate_tokens and context_tokens:
             overlap = len(candidate_tokens & context_tokens) / len(candidate_tokens)
             score += min(0.04, 0.04 * overlap)
         return min(1.0, max(0.0, score))
-
-
-def _strengths(text: str) -> frozenset[str]:
-    return parse_medication_structure(text).strengths
-
-
-def _forms(text: str) -> frozenset[str]:
-    return parse_medication_structure(text).dose_forms
