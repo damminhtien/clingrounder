@@ -66,6 +66,37 @@ python scripts/build_phase1_submission.py \
   --run-label phase1
 ```
 
+### Full terminology runtime benchmark
+
+`configs/phase1_full.yaml` uses the full processed RxNorm release for normalization and exact
+retrieval. It does not use the seed dictionary as the complete linking database. The smaller
+recognition store is intentional: NER trigger coverage and normalization vocabulary are different
+precision controls.
+
+Use `configs/phase1_full_diagnostic.yaml` to profile every lexical source and internal pipeline
+stage. This is a diagnostic configuration and should not be promoted merely because it returns more
+candidates.
+
+```bash
+uv run python scripts/build_phase1_submission.py \
+  --config configs/phase1_full.yaml \
+  --run-label phase1-full
+
+uv run python scripts/build_phase1_submission.py \
+  --config configs/phase1_full_diagnostic.yaml \
+  --run-label phase1-full-all-stages
+
+uv run python scripts/analyze_runtime_benchmarks.py \
+  --run exact=outputs/phase1/<exact-run> \
+  --run all-lexical=outputs/benchmarks/phase1_full/<diagnostic-run> \
+  --output-dir outputs/benchmarks/phase1_full/comparison
+```
+
+The benchmark sums counters across documents, reports initialization separately from processing,
+and hashes output ZIP files. Matching ZIP hashes are the required regression check for a pure
+runtime optimization. See [ADR 0005](decisions/0005-terminology-retrieval-scaling.md) for the
+database, FTS, and ANN decision.
+
 The profiler output is intended to be a cacheable experiment artifact. Use it to compare train/dev
 entity distributions, span lengths, context cue frequency, dictionary coverage, and unseen-code
 risks before adding larger models.
