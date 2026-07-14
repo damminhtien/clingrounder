@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 import sys
@@ -705,6 +706,23 @@ def test_phase1_zip_structure_validation_is_order_independent(tmp_path: Path) ->
     zip_phase1_output_dir(output_dir, zip_path)
 
     assert validate_phase1_submission_zip(zip_path, expected_count=12) == []
+
+
+def test_phase1_zip_is_deterministic_across_source_mtimes(tmp_path: Path) -> None:
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    source = output_dir / "1.json"
+    source.write_text("[]\n", encoding="utf-8")
+    first = tmp_path / "first.zip"
+    second = tmp_path / "second.zip"
+
+    zip_phase1_output_dir(output_dir, first)
+    source.touch()
+    zip_phase1_output_dir(output_dir, second)
+
+    assert hashlib.sha256(first.read_bytes()).digest() == hashlib.sha256(
+        second.read_bytes()
+    ).digest()
 
 
 def test_phase1_submission_cli_validates_zip(tmp_path: Path) -> None:

@@ -535,7 +535,16 @@ def zip_phase1_output_dir(output_dir: str | Path, zip_path: str | Path) -> None:
         for json_path in sorted(
             output_path.glob("*.json"), key=lambda item: _numeric_stem(item.stem)
         ):
-            archive.write(json_path, arcname=f"output/{json_path.name}")
+            # ZipFile.write copies filesystem mtimes into the archive, which makes identical
+            # submissions hash differently. Fixed metadata keeps probe manifests reproducible.
+            info = zipfile.ZipInfo(
+                filename=f"output/{json_path.name}",
+                date_time=(1980, 1, 1, 0, 0, 0),
+            )
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.create_system = 3
+            info.external_attr = 0o100644 << 16
+            archive.writestr(info, json_path.read_bytes())
 
 
 def phase1_validation_error_rows(issues: list[dict[str, Any]]) -> list[dict[str, Any]]:
