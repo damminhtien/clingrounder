@@ -34,6 +34,24 @@ class DictionaryStore:
         *,
         alias_overlay_path: str | Path | None = None,
     ) -> "DictionaryStore":
+        return cls(
+            cls.load_entries_jsonl(
+                path,
+                alias_overlay_path=alias_overlay_path,
+            )
+        )
+
+    @staticmethod
+    def load_entries_jsonl(
+        path: str | Path,
+        *,
+        alias_overlay_path: str | Path | None = None,
+    ) -> list[ConceptEntry]:
+        """Load concepts without constructing lookup indexes.
+
+        Pipeline assembly often merges multiple terminology files. Keeping loading separate avoids
+        building large temporary alias indexes that are immediately discarded by the merged store.
+        """
         entries: list[ConceptEntry] = []
         with Path(path).open("r", encoding="utf-8") as handle:
             for line in handle:
@@ -65,8 +83,7 @@ class DictionaryStore:
                         blocked_aliases=_string_tuple(row, "blocked_aliases"),
                     )
                 )
-        entries = _apply_alias_overlays(entries, alias_overlay_path)
-        return cls(entries)
+        return _apply_alias_overlays(entries, alias_overlay_path)
 
     def exact_lookup(self, mention: str) -> list[ConceptEntry]:
         return list(self.alias_index.get(normalize_for_match(mention), []))

@@ -7,6 +7,16 @@ from medical_kg_nlp.retrieval.candidate_generator import CandidateGenerator
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 
 
+def test_dictionary_can_load_entries_before_building_merged_indexes() -> None:
+    path = "data/dictionaries/seed_concepts.jsonl"
+
+    entries = DictionaryStore.load_entries_jsonl(path)
+    store = DictionaryStore.from_jsonl(path)
+
+    assert entries == store.entries
+    assert entries[0].concept_id in store.by_concept_id
+
+
 def test_drug_type_constraint_excludes_icd10() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")

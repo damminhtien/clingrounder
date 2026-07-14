@@ -42,13 +42,15 @@ class PipelineRunner:
         options: PipelineOptions | None = None,
     ) -> None:
         self.options = options or PipelineOptions()
-        primary_store = DictionaryStore.from_jsonl(
+        # Load raw entries first and build only the two stores the runtime actually keeps. Building
+        # a temporary indexed store per source duplicates normalization work and becomes expensive
+        # for complete RxNorm releases.
+        recognition_entries = DictionaryStore.load_entries_jsonl(
             dictionary_path, alias_overlay_path=alias_overlay_path
         )
-        recognition_entries = list(primary_store.entries)
         if recognition_dictionary_path is not None:
             recognition_entries.extend(
-                DictionaryStore.from_jsonl(recognition_dictionary_path).entries
+                DictionaryStore.load_entries_jsonl(recognition_dictionary_path)
             )
         self.store = DictionaryStore(_deduplicate_entries(recognition_entries))
         self.normalization_store = (
@@ -56,7 +58,7 @@ class PipelineRunner:
                 _deduplicate_entries(
                     [
                         *self.store.entries,
-                        *DictionaryStore.from_jsonl(normalization_dictionary_path).entries,
+                        *DictionaryStore.load_entries_jsonl(normalization_dictionary_path),
                     ]
                 )
             )

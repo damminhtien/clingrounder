@@ -61,9 +61,14 @@ class CandidateGenerator:
         if unknown_sources:
             raise ValueError(f"Unknown retrieval source(s): {sorted(unknown_sources)}")
         self.exact = ExactMatcher(store)
-        self.fuzzy = FuzzyMatcher(store)
-        self.char_ngram = CharNgramRetriever(store)
-        self.bm25 = BM25Retriever(store)
+        # Full terminology stores make the approximate indexes expensive to build. Construct only
+        # the sources selected by the run so exact-only production paths do not pay the startup and
+        # memory cost of fuzzy, n-gram, and BM25 indexes they will never query.
+        self.fuzzy = FuzzyMatcher(store) if "fuzzy" in self.retrieval_sources else None
+        self.char_ngram = (
+            CharNgramRetriever(store) if "char_ngram" in self.retrieval_sources else None
+        )
+        self.bm25 = BM25Retriever(store) if "bm25" in self.retrieval_sources else None
         self.abbreviations = self._load_abbreviations(abbreviation_path)
         self.mention_memory = self._load_mention_memory(mention_memory_path)
 
@@ -93,16 +98,19 @@ class CandidateGenerator:
                         )
                     )
         if "fuzzy" in self.retrieval_sources:
+            assert self.fuzzy is not None
             candidates.extend(
                 self.fuzzy.retrieve(mention, entity_type=entity_type, limit=self.max_candidates)
             )
         if "char_ngram" in self.retrieval_sources:
+            assert self.char_ngram is not None
             candidates.extend(
                 self.char_ngram.retrieve(
                     mention, entity_type=entity_type, limit=self.max_candidates
                 )
             )
         if "bm25" in self.retrieval_sources:
+            assert self.bm25 is not None
             candidates.extend(
                 self.bm25.retrieve(mention, entity_type=entity_type, limit=self.max_candidates)
             )

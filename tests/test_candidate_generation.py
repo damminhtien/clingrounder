@@ -43,6 +43,15 @@ def test_candidate_generation_can_disable_char_ngram_source() -> None:
     assert candidates == []
 
 
+def test_candidate_generation_builds_only_enabled_approximate_indexes() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    generator = CandidateGenerator(store, retrieval_sources=("exact",))
+
+    assert generator.fuzzy is None
+    assert generator.char_ngram is None
+    assert generator.bm25 is None
+
+
 def test_candidate_generation_rejects_unknown_retrieval_source() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     try:
