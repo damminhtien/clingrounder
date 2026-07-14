@@ -1,4 +1,5 @@
 from medical_kg_nlp.context.assertion import AssertionClassifier
+from medical_kg_nlp.context.cue_loader import AssertionCue, AssertionRuleRegistry
 from medical_kg_nlp.context.rules import PLANNED_LEFT_CUES, POSSIBLE_LEFT_CUES, POSSIBLE_RIGHT_CUES
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.document import Sentence
@@ -54,6 +55,32 @@ def test_assertion_classifier_exposes_stable_rule_evidence() -> None:
     assert evidence[0].rule_id.startswith("CUE_NEGATED_LEFT_")
     assert evidence[0].cue == "phủ nhận"
     assert evidence == repeated
+
+
+def test_assertion_rule_priority_controls_selected_evidence() -> None:
+    registry = AssertionRuleRegistry(
+        [
+            _cue("NEG_REMOTE", "remote", priority=200, max_distance=80),
+            _cue("NEG_NEAR", "near", priority=10, max_distance=20),
+        ]
+    )
+    entity, sentence = _entity("remote context near viêm phổi", "viêm phổi")
+
+    features, evidence = AssertionClassifier(registry).classify_features_with_evidence(
+        entity, sentence
+    )
+
+    assert features.negated is True
+    assert [item.rule_id for item in evidence] == ["NEG_REMOTE"]
+
+
+def test_assertion_rule_max_distance_limits_scope() -> None:
+    registry = AssertionRuleRegistry(
+        [_cue("NEG_SHORT", "không", priority=100, max_distance=3)]
+    )
+    entity, sentence = _entity("không có bằng chứng viêm phổi", "viêm phổi")
+
+    assert AssertionClassifier(registry).classify(entity, sentence) == AssertionStatus.PRESENT
 
 
 def test_possible_rule_overrides_negation_phrase() -> None:
@@ -284,3 +311,22 @@ def _typed_entity(
     entity, sentence = _entity(text, mention)
     entity.type = entity_type
     return entity, sentence
+
+
+def _cue(
+    rule_id: str,
+    cue: str,
+    *,
+    priority: int,
+    max_distance: int,
+) -> AssertionCue:
+    return AssertionCue(
+        rule_id=rule_id,
+        cue=cue,
+        assertion=AssertionStatus.NEGATED,
+        language="test",
+        scope="left",
+        source_ids=("test",),
+        priority=priority,
+        max_distance=max_distance,
+    )

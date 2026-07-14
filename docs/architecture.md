@@ -110,6 +110,10 @@ provenance, priority, and scope distance. Every loaded cue receives a stable `ru
 resource is packaged under `src/medical_kg_nlp/resources/`. The classifier returns rule evidence and
 `PipelineTrace` counts matched rule IDs, while Python owns only generic scope execution and explicit
 false-positive mechanics. Cue inventories must not be duplicated as fallback lists in Python.
+Within a direction, executable cue matches are ordered by descending rule `priority`, then nearest
+distance, longer cue, and stable `rule_id`. A match beyond that rule's `max_distance` is discarded.
+This ordering is independent of JSONL row order; evidence records point to the exact rule selected
+by execution rather than performing a second metadata lookup after matching.
 
 ## Data Storage
 

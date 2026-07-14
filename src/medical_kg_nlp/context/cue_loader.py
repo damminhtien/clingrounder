@@ -64,6 +64,46 @@ class AssertionRuleRegistry:
             scope=scope,
         )
 
+    def rules(
+        self,
+        assertion: AssertionStatus,
+        *,
+        scope: str,
+    ) -> tuple[AssertionCue, ...]:
+        """Return executable rules in deterministic priority order."""
+        rules = [
+            item
+            for item in self.cues
+            if item.assertion == assertion
+            and (item.scope == scope or item.scope == "bidirectional")
+        ]
+        return tuple(
+            sorted(
+                rules,
+                key=lambda item: (-item.priority, item.scope != scope, item.rule_id),
+            )
+        )
+
+    def section_prior(self, title: str) -> AssertionCue | None:
+        normalized = title.casefold().strip()
+        candidates = [
+            item
+            for item in self.cues
+            if item.scope == "section_prior" and item.cue.casefold().strip() == normalized
+        ]
+        if not candidates:
+            return None
+        return sorted(candidates, key=lambda item: (-item.priority, item.rule_id))[0]
+
+    @staticmethod
+    def evidence_for_rule(rule: AssertionCue, *, scope: str) -> AssertionEvidence:
+        return AssertionEvidence(
+            rule_id=rule.rule_id,
+            assertion=rule.assertion,
+            cue=rule.cue,
+            scope=scope,
+        )
+
 
 def load_assertion_cues(path: str | Path = DEFAULT_ASSERTION_CUE_PATH) -> list[AssertionCue]:
     cue_path = Path(path)

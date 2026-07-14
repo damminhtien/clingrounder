@@ -2,22 +2,8 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 
-from medical_kg_nlp.context.rules import (
-    ASSERTION_RULE_REGISTRY,
-    FAMILY_LEFT_CUES,
-    FAMILY_RIGHT_CUES,
-    HISTORICAL_LEFT_CUES,
-    HISTORICAL_RIGHT_CUES,
-    NEGATION_LEFT_CUES,
-    NEGATION_RIGHT_CUES,
-    PLANNED_LEFT_CUES,
-    PLANNED_RIGHT_CUES,
-    POSSIBLE_LEFT_CUES,
-    POSSIBLE_RIGHT_CUES,
-    RESOLVED_LEFT_CUES,
-    RESOLVED_RIGHT_CUES,
-    SECTION_PRIORS,
-)
+from medical_kg_nlp.context.cue_loader import AssertionCue, AssertionRuleRegistry
+from medical_kg_nlp.context.rules import ASSERTION_RULE_REGISTRY
 from medical_kg_nlp.schema.annotation import (
     AssertionEvidence,
     AssertionFeatures,
@@ -87,6 +73,12 @@ _FAMILY_PREDICATE_RE = re.compile(
 
 
 class AssertionClassifier:
+    def __init__(
+        self,
+        registry: AssertionRuleRegistry = ASSERTION_RULE_REGISTRY,
+    ) -> None:
+        self.registry = registry
+
     def classify(
         self, entity: EntityAnnotation, sentence: Sentence | None = None
     ) -> AssertionStatus:
@@ -115,96 +107,62 @@ class AssertionClassifier:
         statuses: set[AssertionStatus] = set()
         evidence: list[AssertionEvidence] = []
 
-        def add(assertion: AssertionStatus, cue: str | None, scope: str) -> None:
-            if cue is None:
+        def add(rule: AssertionCue | None, scope: str) -> None:
+            if rule is None:
                 return
-            statuses.add(assertion)
+            statuses.add(rule.assertion)
             evidence.append(
-                ASSERTION_RULE_REGISTRY.evidence(assertion, cue, scope=scope)
+                self.registry.evidence_for_rule(rule, scope=scope)
             )
 
-        add(
-            AssertionStatus.FAMILY,
-            self._matching_family(left_context, right_context),
-            "left",
-        )
-        add(
-            AssertionStatus.FAMILY,
-            self._matching_cue(right_context, FAMILY_RIGHT_CUES),
-            "right",
-        )
-        add(AssertionStatus.NEGATED, self._matching_negation(left_context), "left")
-        add(
-            AssertionStatus.NEGATED,
-            self._matching_cue(right_context, NEGATION_RIGHT_CUES),
-            "right",
-        )
-        add(
-            AssertionStatus.NEGATED,
-            self._matching_coordinated_negation(sentence_text, max(entity_start, 0)),
-            "left",
-        )
+        add(self._matching_family(left_context, right_context), "left")
+        add(self._matching_cue(right_context, AssertionStatus.FAMILY, "right"), "right")
+        add(self._matching_negation(left_context), "left")
+        add(self._matching_cue(right_context, AssertionStatus.NEGATED, "right"), "right")
+        add(self._matching_coordinated_negation(sentence_text, max(entity_start, 0)), "left")
         self._add_directional_evidence(
             add,
             AssertionStatus.HISTORICAL,
             left_context,
             right_context,
-            HISTORICAL_LEFT_CUES,
-            HISTORICAL_RIGHT_CUES,
         )
         self._add_directional_evidence(
             add,
             AssertionStatus.PLANNED,
             left_context,
             right_context,
-            PLANNED_LEFT_CUES,
-            PLANNED_RIGHT_CUES,
         )
         self._add_directional_evidence(
             add,
             AssertionStatus.RESOLVED,
             left_context,
             right_context,
-            RESOLVED_LEFT_CUES,
-            RESOLVED_RIGHT_CUES,
         )
         if section_prior is not None:
-            statuses.add(section_prior)
-            section_title = str(sentence.section_title).lower().strip() if sentence else ""
-            evidence.append(
-                ASSERTION_RULE_REGISTRY.evidence(
-                    section_prior,
-                    section_title,
-                    scope="section_prior",
-                )
-            )
+            statuses.add(section_prior.assertion)
+            evidence.append(self.registry.evidence_for_rule(section_prior, scope="section_prior"))
         self._add_directional_evidence(
             add,
             AssertionStatus.POSSIBLE,
             left_context,
             right_context,
-            POSSIBLE_LEFT_CUES,
-            POSSIBLE_RIGHT_CUES,
         )
         unique_evidence = {item.rule_id: item for item in evidence}
         return AssertionFeatures.from_statuses(statuses), tuple(unique_evidence.values())
 
     def _add_directional_evidence(
         self,
-        add: Callable[[AssertionStatus, str | None, str], None],
+        add: Callable[[AssertionCue | None, str], None],
         assertion: AssertionStatus,
         left_context: str,
         right_context: str,
-        left_cues: tuple[str, ...],
-        right_cues: tuple[str, ...],
     ) -> None:
-        add(assertion, self._matching_cue(left_context, left_cues), "left")
-        add(assertion, self._matching_cue(right_context, right_cues), "right")
+        add(self._matching_cue(left_context, assertion, "left"), "left")
+        add(self._matching_cue(right_context, assertion, "right"), "right")
 
-    @staticmethod
     def _section_prior(
-        entity: EntityAnnotation, sentence: Sentence | None
-    ) -> AssertionStatus | None:
+        self, entity: EntityAnnotation, sentence: Sentence | None
+    ) -> AssertionCue | None:
         if sentence is None or not sentence.section_title:
             return None
         title = sentence.section_title.lower().strip()
@@ -212,7 +170,7 @@ class AssertionClassifier:
         if rule is not None and rule.type_prior is not None:
             if PHASE1_TYPE_BY_ENTITY_TYPE.get(entity.type) != rule.type_prior:
                 return None
-        return SECTION_PRIORS.get(title)
+        return self.registry.section_prior(title)
 
     @staticmethod
     def _local_left_context(text: str, entity_start: int) -> str:
@@ -234,93 +192,85 @@ class AssertionClassifier:
             return right_context
         return right_context[: match.start()]
 
-    @staticmethod
-    def _matching_cue(text: str, cues: tuple[str, ...]) -> str | None:
-        for cue in cues:
-            normalized_cue = cue.strip()
-            if not normalized_cue:
-                continue
-            pattern = rf"(?<!\w){re.escape(normalized_cue)}(?!\w)"
-            if re.search(pattern, text, flags=re.IGNORECASE | re.UNICODE):
-                return normalized_cue
-        return None
+    def _matching_cue(
+        self,
+        text: str,
+        assertion: AssertionStatus,
+        scope: str,
+    ) -> AssertionCue | None:
+        matches = self._rule_matches(text, assertion, scope=scope)
+        return matches[0][1] if matches else None
 
-    def _matching_negation(self, left_context: str) -> str | None:
+    def _matching_negation(self, left_context: str) -> AssertionCue | None:
         blocked_spans = self._pattern_spans(left_context, _NEGATION_FALSE_POSITIVE_PATTERNS)
-        return self._matching_cue_outside_spans(
+        matches = self._rule_matches(
             left_context,
-            NEGATION_LEFT_CUES,
-            blocked_spans,
+            AssertionStatus.NEGATED,
+            scope="left",
+            blocked_spans=blocked_spans,
         )
+        return matches[0][1] if matches else None
 
     def _matching_coordinated_negation(
         self, sentence_text: str, entity_start: int
-    ) -> str | None:
+    ) -> AssertionCue | None:
         segment_start = 0
         for match in _NEGATION_COORDINATION_BOUNDARY_RE.finditer(sentence_text[:entity_start]):
             segment_start = match.end()
         segment = sentence_text[segment_start:entity_start]
         blocked_spans = self._pattern_spans(segment, _NEGATION_FALSE_POSITIVE_PATTERNS)
-        best_match: re.Match[str] | None = None
-        best_cue: str | None = None
-        for cue in NEGATION_LEFT_CUES:
-            normalized_cue = cue.strip()
-            if not normalized_cue:
-                continue
-            pattern = rf"(?<!\w){re.escape(normalized_cue)}(?!\w)"
-            for match in re.finditer(pattern, segment, flags=re.IGNORECASE | re.UNICODE):
-                if self._is_inside_spans(match.span(), blocked_spans):
-                    continue
-                if (
-                    best_match is None
-                    or match.start() > best_match.start()
-                    or (match.start() == best_match.start() and match.end() > best_match.end())
-                ):
-                    best_match = match
-                    best_cue = normalized_cue
-        if best_match is None:
-            return None
-        scope = segment[best_match.end() :]
-        if len(scope) > 120:
-            return None
-        if _NEGATION_COORDINATION_BREAK_RE.search(scope) is not None:
-            return None
-        return best_cue
+        for _, rule, match in self._rule_matches(
+            segment,
+            AssertionStatus.NEGATED,
+            scope="left",
+            blocked_spans=blocked_spans,
+        ):
+            if _NEGATION_COORDINATION_BREAK_RE.search(segment[match.end() :]) is None:
+                return rule
+        return None
 
-    def _matching_family(self, left_context: str, right_context: str) -> str | None:
+    def _matching_family(
+        self, left_context: str, right_context: str
+    ) -> AssertionCue | None:
         blocked_spans = self._pattern_spans(left_context, _FAMILY_FALSE_POSITIVE_PATTERNS)
-        for cue in FAMILY_LEFT_CUES:
-            normalized_cue = cue.strip()
-            if not normalized_cue:
-                continue
-            pattern = rf"(?<!\w){re.escape(normalized_cue)}(?!\w)"
-            match = re.search(pattern, left_context, flags=re.IGNORECASE | re.UNICODE)
-            if match is None:
-                continue
-            if self._is_inside_spans(match.span(), blocked_spans):
-                continue
-            if normalized_cue.lower() not in _FAMILY_MEMBER_CUES:
-                return normalized_cue
+        for _, rule, match in self._rule_matches(
+            left_context,
+            AssertionStatus.FAMILY,
+            scope="left",
+            blocked_spans=blocked_spans,
+        ):
+            if rule.cue.casefold() not in _FAMILY_MEMBER_CUES:
+                return rule
             family_scope = left_context[match.end() :] + " " + right_context
             if _FAMILY_PREDICATE_RE.search(family_scope):
-                return normalized_cue
+                return rule
         return None
 
-    def _matching_cue_outside_spans(
+    def _rule_matches(
         self,
         text: str,
-        cues: tuple[str, ...],
-        blocked_spans: list[tuple[int, int]],
-    ) -> str | None:
-        for cue in cues:
-            normalized_cue = cue.strip()
-            if not normalized_cue:
-                continue
-            pattern = rf"(?<!\w){re.escape(normalized_cue)}(?!\w)"
+        assertion: AssertionStatus,
+        *,
+        scope: str,
+        blocked_spans: list[tuple[int, int]] | None = None,
+    ) -> list[tuple[tuple[int, int, int, str], AssertionCue, re.Match[str]]]:
+        matches: list[
+            tuple[tuple[int, int, int, str], AssertionCue, re.Match[str]]
+        ] = []
+        blocked_spans = blocked_spans or []
+        for rule in self.registry.rules(assertion, scope=scope):
+            pattern = rf"(?<!\w){re.escape(rule.cue.strip())}(?!\w)"
             for match in re.finditer(pattern, text, flags=re.IGNORECASE | re.UNICODE):
-                if not self._is_inside_spans(match.span(), blocked_spans):
-                    return normalized_cue
-        return None
+                if self._is_inside_spans(match.span(), blocked_spans):
+                    continue
+                distance = len(text) - match.end() if scope == "left" else match.start()
+                if distance > rule.max_distance:
+                    continue
+                # Priority is an explicit policy decision. Distance and cue length only break ties,
+                # followed by rule_id for reproducibility across resource file reorderings.
+                key = (-rule.priority, distance, -len(rule.cue), rule.rule_id)
+                matches.append((key, rule, match))
+        return sorted(matches, key=lambda item: item[0])
 
     @staticmethod
     def _pattern_spans(text: str, patterns: tuple[re.Pattern[str], ...]) -> list[tuple[int, int]]:
