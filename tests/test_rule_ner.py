@@ -350,6 +350,45 @@ def test_rule_ner_recovers_concatenated_drug_aliases_with_source_offsets() -> No
         assert text[entity.span[0] : entity.span[1]] == entity.text
 
 
+def test_rule_ner_uses_medication_indication_context_for_dual_typed_concept() -> None:
+    store = DictionaryStore(
+        [
+            ConceptEntry(
+                concept_id="D:1",
+                code="R42",
+                code_system=CodeSystem.ICD10,
+                canonical_name="chóng mặt",
+                semantic_type=EntityType.DISEASE,
+            ),
+            ConceptEntry(
+                concept_id="S:1",
+                code=None,
+                code_system=CodeSystem.NONE,
+                canonical_name="chóng mặt",
+                semantic_type=EntityType.SYMPTOM,
+            ),
+            ConceptEntry(
+                concept_id="RX:1",
+                code="1",
+                code_system=CodeSystem.RXNORM,
+                canonical_name="thuốc thử",
+                semantic_type=EntityType.DRUG,
+            ),
+        ]
+    )
+    ner = RuleBasedNER(store)
+
+    indication = ner.extract("1. thuốc thử 5 mg po daily điều trị chóng mặt")
+    outside_list = ner.extract("Bệnh nhân có chóng mặt.")
+
+    assert next(entity for entity in indication if entity.text == "chóng mặt").type == (
+        EntityType.SYMPTOM
+    )
+    assert next(entity for entity in outside_list if entity.text == "chóng mặt").type == (
+        EntityType.DISEASE
+    )
+
+
 def test_rule_ner_phase1_latency_under_100ms_per_note() -> None:
     store = DictionaryStore.from_jsonl(
         "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"

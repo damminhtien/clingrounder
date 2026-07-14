@@ -74,6 +74,12 @@ class RuleBasedNER:
     def extract(self, text: str) -> list[EntityAnnotation]:
         spans: list[EntityAnnotation] = []
         occupied: list[tuple[int, int]] = []
+        medication_list_items = self.medication_lists.items(text)
+        indication_spans = tuple(
+            item.indication_span
+            for item in medication_list_items
+            if item.indication_span is not None
+        )
         raw_dictionary_matches = [
             match
             for match in self.matcher.find_candidates(
@@ -85,7 +91,12 @@ class RuleBasedNER:
         for match in raw_dictionary_matches:
             semantic_types_by_span.setdefault(match.span, set()).add(match.entry.semantic_type)
         selected_type_by_span = {
-            span: self._disambiguated_semantic_type(text, span, entity_types)
+            span: self._disambiguated_semantic_type(
+                text,
+                span,
+                entity_types,
+                medication_indication_spans=indication_spans,
+            )
             for span, entity_types in semantic_types_by_span.items()
         }
         dictionary_matches = self.matcher.resolve_longest(
@@ -135,17 +146,25 @@ class RuleBasedNER:
     def _blocked_contextual_alias(self, alias: str, text: str, span: tuple[int, int]) -> bool:
         return any(rule.blocks(alias, text, span) for rule in self.false_positive_rules)
 
-    @staticmethod
     def _disambiguated_semantic_type(
+        self,
         text: str,
         span: tuple[int, int],
         entity_types: set[EntityType],
+        *,
+        medication_indication_spans: tuple[tuple[int, int], ...] = (),
     ) -> EntityType | None:
         if len(entity_types) == 1:
             return next(iter(entity_types))
         if entity_types == {EntityType.DISEASE, EntityType.SYMPTOM}:
-            # The controlled dictionary uses this overlap for ICD-coded clinical
-            # signs such as hypoxia; retain the codable disease interpretation.
+            # Dual-typed concepts used as medication indications follow the BTC symptom policy.
+            # Diagnosis-only entries remain diseases, so unseen indications do not need a phrase
+            # whitelist and retain their dictionary semantics.
+            if any(
+                indication_start <= span[0] and span[1] <= indication_end
+                for indication_start, indication_end in medication_indication_spans
+            ):
+                return EntityType.SYMPTOM
             return EntityType.DISEASE
         left = text[max(0, span[0] - 32) : span[0]]
         right = text[span[1] : min(len(text), span[1] + 48)]

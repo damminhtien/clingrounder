@@ -63,6 +63,10 @@ Medication-list parsing is structural rather than vocabulary-specific. It recogn
 parenthesized, bulleted, and inline items, separates an indication clause from the medication SIG,
 and extends validated drug spans through contiguous attributes. It does not delete or recreate
 indication entities; symptom/diagnosis recognition and typing remain owned by the normal NER stage.
+When the dictionary genuinely provides both disease and symptom entries for the same indication
+span, the indication context selects symptom; diagnosis-only concepts remain diagnoses. Outside a
+medication indication, the conservative disease fallback remains until a model-backed type resolver
+is calibrated.
 
 The current deterministic baseline keeps `offset_preserving_preprocessing` diagnostic-only:
 downstream NER, context, linking, and relation stages consume original source text. Normalized text

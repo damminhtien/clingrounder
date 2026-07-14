@@ -288,6 +288,14 @@ the command again verifies the frozen corpus and fails if either labels or sourc
 `--replace` only after an intentional corpus revision. The current 100-document corpus freezes 76
 train and 24 holdout documents under the SHA-256/mod-5 policy.
 
+This split is a **legacy regression holdout**, not a blind policy holdout: its labels and aggregate
+results have already informed rule development. A valid blind policy holdout must come from newly
+annotated documents whose labels are inaccessible to rule/alias authors until the candidate,
+assertion, and entity policies are frozen. Do not relabel a subset of these 100 reviewed files as
+blind. Candidate calibration defaults to the legacy train split for development, and its result is
+only a safety signal until evaluated once on genuinely unseen policy data. Report candidate metrics
+by null/non-null, ICD parent/leaf, and RxNorm ingredient/brand/SCD/SBD buckets on that corpus.
+
 Run lab-result, medication-span, symptom-boundary, and diagnosis-boundary families independently:
 
 ```bash

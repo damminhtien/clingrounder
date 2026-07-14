@@ -551,14 +551,35 @@ uv sync --extra experiment
 
 # Current limitations
 
-- Runtime dictionaries are still reviewed subsets rather than the complete TT06 and RxNorm corpora.
-- Transformer NER, context models, and relation classifiers remain extension points.
-- Rule-based assertion classification can fail on long sentences or complex semantics.
-- Entity-linking quality depends heavily on candidate recall and dictionary quality.
-- Dense retrieval is not enabled by default.
-- The hidden Phase 1 set has no public gold labels; local scores are meaningful only on reviewed synthetic or manual gold data.
+- Recognition dictionaries remain reviewed subsets. `phase1_full.yaml` uses the complete processed
+  RxNorm July 2026 release for normalization, while runtime TT06 recognition/linking remains
+  controlled. Recognition coverage and normalization vocabulary are separate precision controls.
+- Active Phase 1 modes are entity-only, selective reviewed candidates, or exact full-store linking.
+  Fuzzy, character n-gram, and BM25 exist as diagnostic library capabilities but have not passed
+  the public/local accuracy and latency gates for submission use.
+- Transformer NER, context models, and relation classifiers remain extension points. Entity recall
+  and disease-versus-symptom ambiguity are still primarily dictionary/rule decisions.
+- Assertion rules now execute per-rule priority and distance, but deterministic clause scope can
+  still fail on long-distance or compositional semantics.
+- RxNorm parsing separates product strength, administered dose, dosage form, route, and release.
+  Concentration products, multi-ingredient strength alignment, and route-to-product compatibility
+  still need broader reviewed regression data.
+- Dense retrieval is not connected as a production candidate source. Adding ANN requires a
+  versioned embedding model and recall/precision benchmark; installing a vector database alone
+  does not provide dense retrieval.
+- The central offset-preserving normalization stage remains diagnostic-only. Downstream modules use
+  raw text and shared lookup normalization, so an end-to-end normalized-text path still requires
+  mapped-span regression coverage.
+- BTC sample memory and recognition overlays are benchmark-specific aids and are not evidence of
+  general clinical-linking performance.
+- The existing manual-gold holdout has been opened during rule development. It is a frozen legacy
+  regression set, not a blind policy holdout. A new independently annotated corpus is required for
+  unbiased policy selection.
+- The hidden Phase 1 set has no public gold labels, and candidate prevalence is known to differ from
+  manual gold. Local aggregate score alone must not promote a candidate policy.
 
-The current priority is to make schemas, offsets, entity extraction, linking constraints, context handling, and debugging reliable before introducing larger models.
+The current priority is blind evaluation data, model-backed entity proposals, calibrated candidate
+abstention, and semantic regression coverage rather than adding uncalibrated retrieval sources.
 
 ---
 
