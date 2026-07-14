@@ -5,6 +5,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Literal
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.evaluation.phase1 import (
@@ -219,6 +220,66 @@ def test_selective_candidate_export_abstains_for_low_probability_or_ambiguity() 
         candidate_policy="selective",
         selective_config=_selective_config(reviewed=reviewed),
     )
+    assert rows[0]["candidates"] == []
+
+
+def test_selective_candidate_expected_jaccard_can_emit_dynamic_top_k() -> None:
+    text = "Chẩn đoán tăng huyết áp."
+    entity = _entity(
+        "E1",
+        text,
+        "tăng huyết áp",
+        EntityType.DISEASE,
+        candidates=[
+            _candidate(CodeSystem.ICD10, "I10", source="exact", emit_probability=0.99),
+            _candidate(CodeSystem.ICD10, "I11", source="exact", emit_probability=0.99),
+            _candidate(CodeSystem.ICD10, "I12", source="exact", emit_probability=0.99),
+        ],
+    )
+    reviewed = frozenset(
+        ("tăng huyết áp", "CHẨN_ĐOÁN", code) for code in ("I10", "I11", "I12")
+    )
+    config = _selective_config(
+        reviewed=reviewed,
+        selection_policy="expected_jaccard",
+        empty_probability=0.05,
+        rank_probabilities=(0.9, 0.8, 0.1),
+    )
+
+    rows = prediction_to_phase1_entities(
+        ClinicalPrediction.from_text("1", text, [entity], [], "test"),
+        candidate_policy="selective",
+        selective_config=config,
+        max_candidates=5,
+    )
+
+    assert rows[0]["candidates"] == ["I10", "I11"]
+
+
+def test_selective_candidate_expected_jaccard_abstains_for_high_null_prevalence() -> None:
+    text = "Chẩn đoán tăng huyết áp."
+    entity = _entity(
+        "E1",
+        text,
+        "tăng huyết áp",
+        EntityType.DISEASE,
+        candidates=[
+            _candidate(CodeSystem.ICD10, "I10", source="exact", emit_probability=0.99)
+        ],
+    )
+    config = _selective_config(
+        reviewed=frozenset({("tăng huyết áp", "CHẨN_ĐOÁN", "I10")}),
+        selection_policy="expected_jaccard",
+        empty_probability=0.8,
+        rank_probabilities=(0.6,),
+    )
+
+    rows = prediction_to_phase1_entities(
+        ClinicalPrediction.from_text("1", text, [entity], [], "test"),
+        candidate_policy="selective",
+        selective_config=config,
+    )
+
     assert rows[0]["candidates"] == []
 
 
@@ -1091,6 +1152,9 @@ def _candidate(
 def _selective_config(
     *,
     reviewed: frozenset[tuple[str, str, str]],
+    selection_policy: Literal["unique", "expected_jaccard"] = "unique",
+    empty_probability: float = 0.0,
+    rank_probabilities: tuple[float, ...] = (),
 ) -> Phase1SelectiveExportConfig:
     return Phase1SelectiveExportConfig(
         assertion_allowed_scopes=frozenset({"left", "right"}),
@@ -1110,4 +1174,12 @@ def _selective_config(
         candidate_require_reviewed=True,
         candidate_rxnorm_require_structured_mention=False,
         reviewed_candidates=reviewed,
+        candidate_selection_policy=selection_policy,
+        candidate_empty_probabilities=(
+            {CodeSystem.ICD10: empty_probability} if rank_probabilities else {}
+        ),
+        candidate_rank_probabilities={
+            (CodeSystem.ICD10, "exact", rank): probability
+            for rank, probability in enumerate(rank_probabilities, start=1)
+        },
     )

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import zipfile
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal, cast
 
@@ -52,6 +52,13 @@ class Phase1SelectiveExportConfig:
     candidate_require_reviewed: bool
     candidate_rxnorm_require_structured_mention: bool
     reviewed_candidates: frozenset[tuple[str, str, str]]
+    candidate_selection_policy: Literal["unique", "expected_jaccard"] = "unique"
+    candidate_max_candidates: int = 5
+    candidate_min_expected_jaccard_gain: float = 0.0
+    candidate_empty_probabilities: Mapping[CodeSystem, float] = field(default_factory=dict)
+    candidate_rank_probabilities: Mapping[tuple[CodeSystem, str, int], float] = field(
+        default_factory=dict
+    )
 
     @classmethod
     def from_mapping(
@@ -104,6 +111,24 @@ class Phase1SelectiveExportConfig:
                 "selective assertions require a non-empty calibrated evidence map"
             )
         require_reviewed = _required_bool(candidates, "require_reviewed")
+        selection_policy = str(candidates.get("selection_policy", "unique"))
+        if selection_policy not in {"unique", "expected_jaccard"}:
+            raise ValueError(
+                "selective.candidates.selection_policy must be unique or expected_jaccard"
+            )
+        candidate_max_candidates = _positive_int(candidates, "max_candidates", default=5)
+        minimum_gain = _probability(
+            candidates.get("minimum_expected_jaccard_gain", 0.0),
+            "selective.candidates.minimum_expected_jaccard_gain",
+        )
+        empty_probabilities = _candidate_empty_probabilities(candidates)
+        rank_probabilities = _candidate_rank_probabilities(candidates)
+        if selection_policy == "expected_jaccard" and (
+            not empty_probabilities or not rank_probabilities
+        ):
+            raise ValueError(
+                "expected_jaccard selection requires empty_probabilities and rank_probabilities"
+            )
         if candidate_enabled and not source_thresholds:
             raise ValueError(
                 "selective.candidates.source_thresholds must not be empty when candidates are enabled"
@@ -125,6 +150,13 @@ class Phase1SelectiveExportConfig:
                 candidates, "rxnorm_require_structured_mention"
             ),
             reviewed_candidates=reviewed_candidates,
+            candidate_selection_policy=cast(
+                Literal["unique", "expected_jaccard"], selection_policy
+            ),
+            candidate_max_candidates=candidate_max_candidates,
+            candidate_min_expected_jaccard_gain=minimum_gain,
+            candidate_empty_probabilities=empty_probabilities,
+            candidate_rank_probabilities=rank_probabilities,
         )
 
 
@@ -207,7 +239,12 @@ def entity_to_phase1(
         "candidates": (
             _phase1_candidates(entity, phase1_type, max_candidates=max_candidates)
             if candidate_policy == "pipeline"
-            else _selective_candidates(entity, phase1_type, selective_config)
+            else _selective_candidates(
+                entity,
+                phase1_type,
+                selective_config,
+                max_candidates=max_candidates,
+            )
             if candidate_policy == "selective"
             else []
         ),
@@ -869,6 +906,8 @@ def _selective_candidates(
     entity: EntityAnnotation,
     phase1_type: str,
     config: Phase1SelectiveExportConfig | None,
+    *,
+    max_candidates: int,
 ) -> list[str]:
     if config is None or not config.candidate_enabled:
         return []
@@ -881,7 +920,7 @@ def _selective_candidates(
         and not _has_structured_medication_mention(entity)
     ):
         return []
-    eligible: list[str] = []
+    eligible: list[tuple[str, str]] = []
     normalized = normalize_for_match(entity.text)
     for candidate in entity.candidates:
         threshold = config.candidate_source_thresholds.get(
@@ -898,9 +937,80 @@ def _selective_candidates(
         reviewed_key = (normalized, phase1_type, candidate.code)
         if config.candidate_require_reviewed and reviewed_key not in config.reviewed_candidates:
             continue
-        if candidate.code not in eligible:
-            eligible.append(candidate.code)
-    return eligible if len(eligible) == 1 else []
+        if not any(code == candidate.code for code, _ in eligible):
+            eligible.append((candidate.code, candidate.source))
+    codes = [code for code, _ in eligible]
+    if config.candidate_selection_policy == "unique":
+        return codes if len(codes) == 1 else []
+
+    probabilities: list[float] = []
+    calibrated_codes: list[str] = []
+    for rank, (code, source) in enumerate(eligible, start=1):
+        probability = config.candidate_rank_probabilities.get(
+            (expected_system, source, rank)
+        )
+        if probability is None:
+            # Missing rank calibration means abstain from this rank and all lower ranks. Keeping a
+            # contiguous prefix makes the policy deterministic and prevents cherry-picked codes.
+            break
+        calibrated_codes.append(code)
+        probabilities.append(probability)
+    empty_probability = config.candidate_empty_probabilities.get(expected_system)
+    if empty_probability is None or not calibrated_codes:
+        return []
+    selected = _expected_jaccard_prefix_size(
+        probabilities,
+        empty_probability=empty_probability,
+        max_candidates=min(max_candidates, config.candidate_max_candidates),
+        minimum_gain=config.candidate_min_expected_jaccard_gain,
+    )
+    return calibrated_codes[:selected]
+
+
+def _expected_jaccard_prefix_size(
+    probabilities: list[float],
+    *,
+    empty_probability: float,
+    max_candidates: int,
+    minimum_gain: float,
+) -> int:
+    """Choose a ranked prefix using expected set Jaccard under calibrated marginals.
+
+    Candidate inclusion events are treated as independent for this decision model. The explicit
+    empty probability is calibrated separately because hidden-gold null prevalence is not implied
+    reliably by alternative candidate marginals.
+    """
+    if max_candidates < 1:
+        return 0
+    best_size = 0
+    best_score = empty_probability
+    for size in range(1, min(max_candidates, len(probabilities)) + 1):
+        selected_distribution = _bernoulli_count_distribution(probabilities[:size])
+        omitted_distribution = _bernoulli_count_distribution(probabilities[size:])
+        expected = 0.0
+        for true_positive, true_positive_probability in enumerate(selected_distribution):
+            for false_negative, false_negative_probability in enumerate(omitted_distribution):
+                expected += (
+                    true_positive_probability
+                    * false_negative_probability
+                    * true_positive
+                    / (size + false_negative)
+                )
+        if expected > best_score:
+            best_size = size
+            best_score = expected
+    return best_size if best_score >= empty_probability + minimum_gain else 0
+
+
+def _bernoulli_count_distribution(probabilities: list[float]) -> list[float]:
+    distribution = [1.0]
+    for probability in probabilities:
+        updated = [0.0] * (len(distribution) + 1)
+        for count, mass in enumerate(distribution):
+            updated[count] += mass * (1.0 - probability)
+            updated[count + 1] += mass * probability
+        distribution = updated
+    return distribution
 
 
 def _has_structured_medication_mention(entity: EntityAnnotation) -> bool:
@@ -947,6 +1057,83 @@ def _required_probability(payload: Mapping[str, Any], key: str) -> float:
     if not 0.0 <= result <= 1.0:
         raise ValueError(f"selective.min_emit_probability.{key} must be between 0 and 1")
     return result
+
+
+def _probability(value: object, path: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise ValueError(f"{path} must be a number")
+    result = float(value)
+    if not 0.0 <= result <= 1.0:
+        raise ValueError(f"{path} must be between 0 and 1")
+    return result
+
+
+def _positive_int(payload: Mapping[str, Any], key: str, *, default: int) -> int:
+    value = payload.get(key, default)
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError(f"selective.candidates.{key} must be a positive integer")
+    return value
+
+
+def _candidate_empty_probabilities(
+    candidates: Mapping[str, Any],
+) -> dict[CodeSystem, float]:
+    raw = candidates.get("empty_probabilities", {})
+    if not isinstance(raw, Mapping):
+        raise ValueError("selective.candidates.empty_probabilities must be a mapping")
+    output: dict[CodeSystem, float] = {}
+    for raw_system, value in raw.items():
+        try:
+            code_system = CodeSystem(str(raw_system))
+        except ValueError as error:
+            raise ValueError(
+                f"Unknown candidate empty-probability code system {raw_system!r}"
+            ) from error
+        if code_system not in {CodeSystem.ICD10, CodeSystem.RXNORM}:
+            raise ValueError(f"Unsupported candidate code system {code_system.value}")
+        output[code_system] = _probability(
+            value,
+            f"selective.candidates.empty_probabilities.{code_system.value}",
+        )
+    return output
+
+
+def _candidate_rank_probabilities(
+    candidates: Mapping[str, Any],
+) -> dict[tuple[CodeSystem, str, int], float]:
+    raw_systems = candidates.get("rank_probabilities", {})
+    if not isinstance(raw_systems, Mapping):
+        raise ValueError("selective.candidates.rank_probabilities must be a mapping")
+    output: dict[tuple[CodeSystem, str, int], float] = {}
+    for raw_system, raw_sources in raw_systems.items():
+        try:
+            code_system = CodeSystem(str(raw_system))
+        except ValueError as error:
+            raise ValueError(
+                f"Unknown candidate rank-probability code system {raw_system!r}"
+            ) from error
+        if code_system not in {CodeSystem.ICD10, CodeSystem.RXNORM}:
+            raise ValueError(f"Unsupported candidate code system {code_system.value}")
+        if not isinstance(raw_sources, Mapping):
+            raise ValueError(
+                f"selective.candidates.rank_probabilities.{code_system.value} must be a mapping"
+            )
+        for raw_source, raw_probabilities in raw_sources.items():
+            source = str(raw_source).strip()
+            if not source or "+" in source:
+                raise ValueError("candidate rank probabilities require primary source names")
+            if not isinstance(raw_probabilities, list) or not raw_probabilities:
+                raise ValueError(
+                    f"candidate rank probabilities for {code_system.value}:{source} "
+                    "must be a non-empty list"
+                )
+            for rank, probability in enumerate(raw_probabilities, start=1):
+                output[(code_system, source, rank)] = _probability(
+                    probability,
+                    f"selective.candidates.rank_probabilities."
+                    f"{code_system.value}.{source}[{rank}]",
+                )
+    return output
 
 
 def _candidate_source_thresholds(

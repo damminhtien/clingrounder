@@ -198,6 +198,33 @@ the runtime never substitutes a retrieval score or a hard-coded exact-match conf
 The full config also persists internal prediction and trace JSONL files inside the hashed run, so
 every calibration result can be tied to exact candidate provenance and stage counters.
 
+Candidate calibration also writes a config-ready `expected_jaccard_policy` block. It estimates null
+gold prevalence by code system and candidate correctness by primary source and rank. Selective
+export can then choose an empty set or a ranked prefix of one to five codes instead of requiring
+exactly one eligible code:
+
+```yaml
+selective:
+  candidates:
+    selection_policy: expected_jaccard
+    max_candidates: 5
+    minimum_expected_jaccard_gain: 0.05
+    empty_probabilities:
+      ICD-10: 0.40
+      RxNorm: 0.55
+    rank_probabilities:
+      ICD-10:
+        dictionary_exact: [0.90, 0.30, 0.10]
+      RxNorm:
+        dictionary_exact: [0.85, 0.25]
+```
+
+The selector computes expected set Jaccard for each contiguous prefix under the calibrated marginal
+model and compares it with the calibrated empty-set score. Missing rank calibration terminates the
+prefix rather than falling back to retrieval score. Do not copy values from the example above;
+generate them on a blind policy-training split and keep the policy holdout unopened until the
+candidate regime is frozen.
+
 Evaluate reviewed Phase 1 files without converting them to the internal schema:
 
 ```bash

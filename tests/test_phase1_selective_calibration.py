@@ -78,8 +78,54 @@ def test_candidate_calibration_report_writes_machine_readable_artifacts(
 
     payload = json.loads((tmp_path / "candidate_calibration.json").read_text(encoding="utf-8"))
     rows = (tmp_path / "candidate_calibration.jsonl").read_text(encoding="utf-8").splitlines()
-    assert payload["schema_version"] == "phase1-candidate-calibration.v1"
+    assert payload["schema_version"] == "phase1-candidate-calibration.v2"
     assert len(rows) == len(report["policy_groups"])
+    assert report["expected_jaccard_policy"]["empty_probabilities"]["ICD-10"] == 0.1
+    assert report["expected_jaccard_policy"]["rank_probabilities"]["ICD-10"][
+        "exact"
+    ] == [0.9]
+
+
+def test_candidate_calibration_estimates_contiguous_rank_probabilities() -> None:
+    predictions: list[ClinicalPrediction] = []
+    gold: dict[str, list[dict[str, object]]] = {}
+    for index in range(10):
+        document_id = str(index)
+        prediction = _prediction(document_id, "tăng huyết áp", "I10", "exact")
+        prediction.entities[0].candidates.append(
+            CandidateConcept(
+                code_system=CodeSystem.ICD10,
+                code="I11",
+                name="I11",
+                retrieval_score=0.8,
+                emit_probability=0.0,
+                concept_id="ICD-10:I11",
+                source="exact",
+                evidence_sources=("exact",),
+                matched_alias="tăng huyết áp",
+                qualified=True,
+                qualification_reason="test_candidate",
+            )
+        )
+        predictions.append(prediction)
+        gold[document_id] = [
+            _gold_row(
+                "tăng huyết áp",
+                candidates=["I10", "I11"] if index < 5 else ["I10"],
+            )
+        ]
+
+    report = build_candidate_calibration_report(
+        predictions,
+        gold,
+        options=CandidateCalibrationOptions(minimum_support=5, minimum_train_support=4),
+    )
+
+    policy = report["expected_jaccard_policy"]
+    probabilities = policy["rank_probabilities"]["ICD-10"]["exact"]
+    assert len(probabilities) == 2
+    assert probabilities[0] > 0.8
+    assert 0.4 < probabilities[1] < 0.6
 
 
 def test_assertion_calibration_promotes_precise_rule_and_rejects_false_rule(

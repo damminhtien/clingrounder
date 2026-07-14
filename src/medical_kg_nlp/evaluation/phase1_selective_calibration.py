@@ -15,7 +15,7 @@ from medical_kg_nlp.ontology.phase1 import (
     PHASE1_TYPE_BY_ENTITY_TYPE,
     expected_code_system,
 )
-from medical_kg_nlp.schema.annotation import EntityAnnotation
+from medical_kg_nlp.schema.annotation import CandidateConcept, EntityAnnotation
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.types import CodeSystem
 from medical_kg_nlp.schema.types import AssertionStatus
@@ -63,6 +63,7 @@ class _CandidateObservation:
     emitted_score: float
     abstained_score: float
     correct: bool
+    rank: int = 1
 
     @property
     def source_key(self) -> tuple[str, str]:
@@ -77,6 +78,10 @@ class _CandidateObservation:
             self.reviewed,
             self.mention_structure,
         )
+
+    @property
+    def rank_key(self) -> tuple[str, str, int]:
+        return self.code_system, self.source, self.rank
 
 
 @dataclass(frozen=True)
@@ -107,8 +112,11 @@ def build_candidate_calibration_report(
         folds=options.folds,
     )
     observations: list[_CandidateObservation] = []
+    rank_observations: list[_CandidateObservation] = []
     counters: Counter[str] = Counter()
     matched_opportunities: Counter[str] = Counter()
+    candidate_opportunities: Counter[str] = Counter()
+    empty_gold_opportunities: Counter[str] = Counter()
 
     for document_id in sorted(gold_by_document, key=_document_sort_key):
         prediction = prediction_by_document.get(document_id)
@@ -127,11 +135,17 @@ def build_candidate_calibration_report(
                 continue
             matched_opportunities[phase1_type] += 1
             expected_system = expected_code_system(phase1_type)
-            top = _top_candidate(entity, expected_system)
-            if top is None:
+            gold_codes = _candidate_set(gold.get("candidates"))
+            if expected_system is None:
+                continue
+            candidate_opportunities[expected_system.value] += 1
+            if not gold_codes:
+                empty_gold_opportunities[expected_system.value] += 1
+            qualified = _qualified_candidates(entity, expected_system)
+            if not qualified:
                 counters["matched_entity_without_qualified_candidate"] += 1
                 continue
-            gold_codes = _candidate_set(gold.get("candidates"))
+            top = qualified[0]
             emitted_score = (1.0 / len(gold_codes)) if top.code in gold_codes else 0.0
             abstained_score = 1.0 if not gold_codes else 0.0
             normalized = normalize_for_match(entity.text)
@@ -156,8 +170,39 @@ def build_candidate_calibration_report(
                     emitted_score=emitted_score,
                     abstained_score=abstained_score,
                     correct=top.code in gold_codes,
+                    rank=1,
                 )
             )
+            for rank, candidate in enumerate(qualified, start=1):
+                candidate_code = str(candidate.code)
+                candidate_reviewed_key = (normalized, phase1_type, candidate_code)
+                rank_observations.append(
+                    _CandidateObservation(
+                        document_id=document_id,
+                        fold=_fold(document_id, options.folds),
+                        entity_type=phase1_type,
+                        code_system=candidate.code_system.value,
+                        source=candidate.source,
+                        evidence_sources=candidate.evidence_sources,
+                        mention_structure=_mention_structure(entity, candidate.code_system),
+                        reviewed=candidate_reviewed_key in reviewed_candidates,
+                        reviewed_folds=frozenset(
+                            fold
+                            for fold, candidates in cross_fitted_reviewed.items()
+                            if candidate_reviewed_key in candidates
+                        ),
+                        code=candidate_code,
+                        retrieval_score=candidate.retrieval_score,
+                        emitted_score=(
+                            1.0 / len(gold_codes)
+                            if candidate_code in gold_codes
+                            else 0.0
+                        ),
+                        abstained_score=1.0 if not gold_codes else 0.0,
+                        correct=candidate_code in gold_codes,
+                        rank=rank,
+                    )
+                )
 
     source_groups = _group_report(
         observations,
@@ -183,13 +228,25 @@ def build_candidate_calibration_report(
         ),
         options=options,
     )
+    rank_groups = _group_report(
+        rank_observations,
+        key=lambda item: item.rank_key,
+        key_fields=("code_system", "source", "rank"),
+        options=options,
+    )
     recommended_source_probabilities = {
         f"{group['code_system']}:{group['source']}": group["smoothed_correct_probability"]
         for group in reviewed_source_groups
         if group["recommended"]
     }
+    expected_jaccard_policy = _expected_jaccard_policy(
+        rank_groups,
+        candidate_opportunities=candidate_opportunities,
+        empty_gold_opportunities=empty_gold_opportunities,
+        options=options,
+    )
     return {
-        "schema_version": "phase1-candidate-calibration.v1",
+        "schema_version": "phase1-candidate-calibration.v2",
         "options": {
             "folds": options.folds,
             "minimum_support": options.minimum_support,
@@ -210,6 +267,8 @@ def build_candidate_calibration_report(
         "source_groups": source_groups,
         "reviewed_source_groups": reviewed_source_groups,
         "policy_groups": policy_groups,
+        "rank_groups": rank_groups,
+        "expected_jaccard_policy": expected_jaccard_policy,
         "recommended_link_emit_probabilities_by_source": dict(
             sorted(recommended_source_probabilities.items())
         ),
@@ -557,9 +616,9 @@ def _cross_validate(
     }
 
 
-def _top_candidate(entity: EntityAnnotation, expected_system: CodeSystem | None) -> Any:
-    if expected_system is None:
-        return None
+def _qualified_candidates(
+    entity: EntityAnnotation, expected_system: CodeSystem
+) -> list[CandidateConcept]:
     candidates = [
         candidate
         for candidate in entity.candidates
@@ -567,12 +626,58 @@ def _top_candidate(entity: EntityAnnotation, expected_system: CodeSystem | None)
         and candidate.code_system == expected_system
         and candidate.code is not None
     ]
-    if not candidates:
-        return None
     return sorted(
         candidates,
         key=lambda candidate: (-candidate.retrieval_score, str(candidate.code)),
-    )[0]
+    )
+
+
+def _expected_jaccard_policy(
+    rank_groups: Sequence[Mapping[str, Any]],
+    *,
+    candidate_opportunities: Counter[str],
+    empty_gold_opportunities: Counter[str],
+    options: CandidateCalibrationOptions,
+) -> dict[str, Any]:
+    empty_probabilities = {
+        code_system: round(
+            _smoothed(empty_gold_opportunities[code_system], support, options),
+            6,
+        )
+        for code_system, support in sorted(candidate_opportunities.items())
+        if support >= options.minimum_support
+    }
+    grouped: dict[tuple[str, str], dict[int, Mapping[str, Any]]] = defaultdict(dict)
+    for row in rank_groups:
+        grouped[(str(row["code_system"]), str(row["source"]))][int(row["rank"])] = row
+
+    rank_probabilities: dict[str, dict[str, list[float]]] = defaultdict(dict)
+    for (code_system, source), rows_by_rank in sorted(grouped.items()):
+        probabilities: list[float] = []
+        # Stop at the first unsupported rank. A gap would make runtime prefixes incomparable with
+        # the rank population used during calibration.
+        for rank in range(1, max(rows_by_rank, default=0) + 1):
+            rank_row = rows_by_rank.get(rank)
+            if rank_row is None or int(rank_row["support"]) < options.minimum_support:
+                break
+            probabilities.append(float(rank_row["smoothed_correct_probability"]))
+        if probabilities:
+            rank_probabilities[code_system][source] = probabilities
+    return {
+        "selection_policy": "expected_jaccard",
+        "empty_probabilities": empty_probabilities,
+        "rank_probabilities": dict(rank_probabilities),
+        "minimum_expected_jaccard_gain": options.abstention_margin,
+        "max_candidates": max(
+            (
+                len(probabilities)
+                for sources in rank_probabilities.values()
+                for probabilities in sources.values()
+            ),
+            default=0,
+        ),
+        "assumption": "independent_candidate_inclusion",
+    }
 
 
 def _gold_index(
