@@ -15,6 +15,8 @@ from medical_kg_nlp.ontology.phase1 import (
     PHASE1_TYPE_BY_ENTITY_TYPE,
     expected_code_system,
 )
+from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
+from medical_kg_nlp.evaluation.candidate_coverage import build_candidate_coverage_report
 from medical_kg_nlp.schema.annotation import CandidateConcept, EntityAnnotation
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.types import CodeSystem
@@ -103,8 +105,10 @@ def build_candidate_calibration_report(
     gold_by_document: Mapping[str, list[dict[str, Any]]],
     *,
     reviewed_candidates: frozenset[tuple[str, str, str]] = frozenset(),
+    terminology_entries: Iterable[ConceptEntry] = (),
     options: CandidateCalibrationOptions = CandidateCalibrationOptions(),
 ) -> dict[str, Any]:
+    terminology_entries = tuple(terminology_entries)
     prediction_by_document = {prediction.document_id: prediction for prediction in predictions}
     cross_fitted_reviewed = _cross_fitted_reviewed_candidates(
         gold_by_document,
@@ -246,7 +250,7 @@ def build_candidate_calibration_report(
         options=options,
     )
     return {
-        "schema_version": "phase1-candidate-calibration.v2",
+        "schema_version": "phase1-candidate-calibration.v3",
         "options": {
             "folds": options.folds,
             "minimum_support": options.minimum_support,
@@ -268,6 +272,11 @@ def build_candidate_calibration_report(
         "reviewed_source_groups": reviewed_source_groups,
         "policy_groups": policy_groups,
         "rank_groups": rank_groups,
+        "coverage_buckets": build_candidate_coverage_report(
+            prediction_by_document.values(),
+            gold_by_document,
+            terminology_entries=terminology_entries,
+        ),
         "expected_jaccard_policy": expected_jaccard_policy,
         "recommended_link_emit_probabilities_by_source": dict(
             sorted(recommended_source_probabilities.items())

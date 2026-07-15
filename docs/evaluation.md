@@ -184,6 +184,8 @@ uv run python scripts/build_phase1_submission.py --config configs/phase1_full.ya
 uv run python scripts/calibrate_phase1_candidates.py \
   --pred outputs/phase1/<full-run>/phase1/full_internal_predictions.jsonl \
   --reviewed-map data/manual_gold/reviewed_candidate_map.jsonl \
+  --dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl \
+  --dictionary data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl \
   --output-dir outputs/phase1/<full-run>/calibration
 ```
 
@@ -197,6 +199,12 @@ Calibrated probabilities must be copied explicitly into
 the runtime never substitutes a retrieval score or a hard-coded exact-match confidence.
 The full config also persists internal prediction and trace JSONL files inside the hashed run, so
 every calibration result can be tied to exact candidate provenance and stage counters.
+
+When terminology files are supplied, calibration also reports exact-span candidate coverage by
+gold nullness and terminology granularity: RxNorm ingredient, brand, SCD/SBD, and ICD parent/leaf.
+Each bucket includes support, prediction coverage, exact-set accuracy, top-1 accuracy, and mean
+Jaccard. These are distribution diagnostics, not automatic promotion gates; unknown codes remain
+visible as `terminology_unknown` instead of being guessed from code shape.
 
 Candidate calibration also writes a config-ready `expected_jaccard_policy` block. It estimates null
 gold prevalence by code system and candidate correctness by primary source and rank. Selective

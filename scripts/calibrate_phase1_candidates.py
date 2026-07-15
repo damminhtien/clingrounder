@@ -9,6 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
+from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.evaluation.manual_gold import load_phase1_directory, manual_gold_split
 from medical_kg_nlp.evaluation.phase1 import load_reviewed_candidate_map
 from medical_kg_nlp.evaluation.phase1_selective_calibration import (
@@ -26,6 +27,12 @@ def main() -> None:
     parser.add_argument("--gold-dir", default="data/manual_gold")
     parser.add_argument("--split", choices=("train", "holdout", "all"), default="train")
     parser.add_argument("--reviewed-map")
+    parser.add_argument(
+        "--dictionary",
+        action="append",
+        default=[],
+        help="Terminology JSONL used to classify RxNorm TTY and ICD parent/leaf coverage.",
+    )
     parser.add_argument(
         "--output-dir",
         default="outputs/phase1/candidate_calibration",
@@ -54,6 +61,11 @@ def main() -> None:
         predictions,
         gold,
         reviewed_candidates=reviewed,
+        terminology_entries=[
+            entry
+            for path in args.dictionary
+            for entry in DictionaryStore.load_entries_jsonl(path)
+        ],
         options=CandidateCalibrationOptions(
             folds=args.folds,
             minimum_support=args.minimum_support,

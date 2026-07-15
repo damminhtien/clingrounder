@@ -11,6 +11,7 @@ from medical_kg_nlp.evaluation.phase1_selective_calibration import (
     write_calibrated_assertion_map,
 )
 from medical_kg_nlp.evaluation.phase1 import load_calibrated_assertion_map
+from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.schema.annotation import (
     AssertionEvidence,
     CandidateConcept,
@@ -78,12 +79,65 @@ def test_candidate_calibration_report_writes_machine_readable_artifacts(
 
     payload = json.loads((tmp_path / "candidate_calibration.json").read_text(encoding="utf-8"))
     rows = (tmp_path / "candidate_calibration.jsonl").read_text(encoding="utf-8").splitlines()
-    assert payload["schema_version"] == "phase1-candidate-calibration.v2"
+    assert payload["schema_version"] == "phase1-candidate-calibration.v3"
     assert len(rows) == len(report["policy_groups"])
     assert report["expected_jaccard_policy"]["empty_probabilities"]["ICD-10"] == 0.1
     assert report["expected_jaccard_policy"]["rank_probabilities"]["ICD-10"][
         "exact"
     ] == [0.9]
+
+
+def test_candidate_coverage_separates_null_rxnorm_and_icd_granularity() -> None:
+    predictions = [
+        _prediction("1", "aspirin", "1191", "exact", entity_type=EntityType.DRUG),
+        _prediction("2", "tăng huyết áp", "I10", "exact"),
+        _prediction("3", "bệnh mạch", "I99", "exact"),
+    ]
+    gold = {
+        "1": [_gold_row("aspirin", candidates=["1191"], entity_type="THUỐC")],
+        "2": [_gold_row("tăng huyết áp", candidates=["I10"])],
+        "3": [_gold_row("bệnh mạch", candidates=[])],
+    }
+    entries = [
+        ConceptEntry(
+            concept_id="RX:1191",
+            code="1191",
+            code_system=CodeSystem.RXNORM,
+            canonical_name="aspirin",
+            semantic_type=EntityType.DRUG,
+            rxnorm_tty="IN",
+        ),
+        ConceptEntry(
+            concept_id="ICD:I10",
+            code="I10",
+            code_system=CodeSystem.ICD10,
+            canonical_name="hypertension",
+            semantic_type=EntityType.DISEASE,
+        ),
+        ConceptEntry(
+            concept_id="ICD:I11",
+            code="I11",
+            code_system=CodeSystem.ICD10,
+            canonical_name="hypertensive heart disease",
+            semantic_type=EntityType.DISEASE,
+            parent_code="I10",
+        ),
+    ]
+
+    report = build_candidate_calibration_report(
+        predictions,
+        gold,
+        terminology_entries=entries,
+        options=CandidateCalibrationOptions(minimum_support=1, minimum_train_support=1),
+    )
+
+    buckets = {
+        (row["code_system"], row["bucket"]): row
+        for row in report["coverage_buckets"]["buckets"]
+    }
+    assert buckets[("RxNorm", "rxnorm_ingredient")]["mean_jaccard"] == 1.0
+    assert buckets[("ICD-10", "icd_parent")]["mean_jaccard"] == 1.0
+    assert buckets[("ICD-10", "gold_empty")]["mean_jaccard"] == 0.0
 
 
 def test_candidate_calibration_estimates_contiguous_rank_probabilities() -> None:
@@ -188,21 +242,24 @@ def _prediction(
     mention: str,
     code: str,
     source: str,
+    *,
+    entity_type: EntityType = EntityType.DISEASE,
 ) -> ClinicalPrediction:
+    code_system = CodeSystem.RXNORM if entity_type == EntityType.DRUG else CodeSystem.ICD10
     entity = EntityAnnotation(
         id="E1",
         span=(0, len(mention)),
         text=mention,
         normalized_text=mention,
-        type=EntityType.DISEASE,
+        type=entity_type,
         candidates=[
             CandidateConcept(
-                code_system=CodeSystem.ICD10,
+                code_system=code_system,
                 code=code,
                 name=mention,
                 retrieval_score=0.95,
                 emit_probability=0.0,
-                concept_id=f"ICD-10:{code}",
+                concept_id=f"{code_system.value}:{code}",
                 source=source,
                 evidence_sources=(source,),
                 matched_alias=mention,
@@ -214,10 +271,15 @@ def _prediction(
     return ClinicalPrediction.from_text(document_id, mention, [entity], [], "test")
 
 
-def _gold_row(mention: str, *, candidates: list[str]) -> dict[str, object]:
+def _gold_row(
+    mention: str,
+    *,
+    candidates: list[str],
+    entity_type: str = "CHẨN_ĐOÁN",
+) -> dict[str, object]:
     return {
         "text": mention,
-        "type": "CHẨN_ĐOÁN",
+        "type": entity_type,
         "assertions": [],
         "candidates": candidates,
         "position": [0, len(mention)],
