@@ -304,6 +304,30 @@ blind. Candidate calibration defaults to the legacy train split for development,
 only a safety signal until evaluated once on genuinely unseen policy data. Report candidate metrics
 by null/non-null, ICD parent/leaf, and RxNorm ingredient/brand/SCD/SBD buckets on that corpus.
 
+For a new task, seal the raw-document split before annotation or rule development:
+
+```bash
+uv run python scripts/manage_policy_holdout.py create \
+  --documents data/new_task/input \
+  --corpus-id new-task-v1 \
+  --output data/new_task/policy_holdout.sealed.json
+```
+
+The sealed manifest contains source hashes and split IDs but no label hashes. After the policy is
+frozen, put exactly the holdout labels in a separate directory and create a new opened record:
+
+```bash
+uv run python scripts/manage_policy_holdout.py open \
+  --documents data/new_task/input \
+  --manifest data/new_task/policy_holdout.sealed.json \
+  --holdout-gold-dir data/new_task/holdout_gold \
+  --output outputs/new_task/policy_holdout.opened.json
+```
+
+Opening refuses an all-corpus gold directory and never mutates the sealed manifest. This is an
+audit protocol, not an access-control boundary; repository permissions or an external reviewer
+must still prevent rule authors from reading holdout labels early.
+
 Run lab-result, medication-span, symptom-boundary, and diagnosis-boundary families independently:
 
 ```bash
