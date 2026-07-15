@@ -15,6 +15,7 @@ from medical_kg_nlp.pipeline.parallel_batch import (
     ParallelBatchOptions,
     run_batch_with_trace_parallel,
 )
+from medical_kg_nlp.pipeline.factory import PipelineFactoryConfig
 from medical_kg_nlp.utils.io import write_jsonl
 from medical_kg_nlp.utils.run_output import create_hashed_run_dir, path_in_run
 
@@ -91,8 +92,10 @@ def main() -> None:
     else:
         run_results = run_batch_with_trace_parallel(
             documents,
-            dictionary_path=args.dictionary,
-            abbreviation_path=args.abbreviations,
+            factory_config=PipelineFactoryConfig(
+                recognition_dictionary_path=args.dictionary,
+                abbreviation_path=args.abbreviations,
+            ),
             parallel_options=ParallelBatchOptions(
                 backend=args.parallel_backend,
                 max_workers=args.workers,

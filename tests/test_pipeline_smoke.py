@@ -1,11 +1,11 @@
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
-from medical_kg_nlp.pipeline.runner import PipelineRunner
+from medical_kg_nlp.pipeline.factory import PipelineFactory
 from medical_kg_nlp.schema.types import AssertionStatus, EntityType, RelationType
 
 
 def test_pipeline_smoke_sample_note() -> None:
     document = SyntheticDatasetAdapter().load_documents("data/samples/sample_notes.jsonl")[0]
-    prediction = PipelineRunner().process_document(document)
+    prediction = PipelineFactory.from_config().process_document(document)
     by_text = {entity.text: entity for entity in prediction.entities}
     assert by_text["đái tháo đường type 2"].assertion == AssertionStatus.HISTORICAL
     assert by_text["viêm phổi"].assertion == AssertionStatus.POSSIBLE
@@ -16,7 +16,7 @@ def test_pipeline_smoke_sample_note() -> None:
 
 
 def test_pipeline_smoke_source_backed_treatment_seed() -> None:
-    prediction = PipelineRunner().process_text(
+    prediction = PipelineFactory.from_config().process_text(
         "source-backed-treatment",
         "Tăng huyết áp đang điều trị lisinopril.",
     )
@@ -28,7 +28,7 @@ def test_pipeline_smoke_source_backed_treatment_seed() -> None:
 
 
 def test_pipeline_phase1_sections_drive_historical_context_and_skip_dose_result() -> None:
-    prediction = PipelineRunner().process_text(
+    prediction = PipelineFactory.from_config().process_text(
         "phase1-section-context",
         "1. Tiền sử bệnh\n"
         "Thuốc trước khi nhập viện\n"
@@ -52,7 +52,7 @@ def test_pipeline_phase1_sections_drive_historical_context_and_skip_dose_result(
 
 
 def test_pipeline_phase1_preadmission_status_section_is_historical() -> None:
-    prediction = PipelineRunner().process_text(
+    prediction = PipelineFactory.from_config().process_text(
         "phase1-preadmission-status",
         "1. Tiền sử bệnh hiện tại\n"
         "Tình trạng ngay trước khi nhập viện: Tiếp tục cảm thấy đánh trống ngực.\n"
@@ -69,7 +69,7 @@ def test_pipeline_phase1_preadmission_status_section_is_historical() -> None:
 
 
 def test_pipeline_phase1_chronic_conditions_section_overrides_possible_cue() -> None:
-    prediction = PipelineRunner().process_text(
+    prediction = PipelineFactory.from_config().process_text(
         "phase1-chronic-possible-history",
         "1. Tiền sử bệnh nội khoa\n"
         "Các bệnh lý mãn tính: nghi ngờ xơ gan do rượu\n"

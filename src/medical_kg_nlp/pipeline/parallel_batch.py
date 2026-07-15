@@ -6,11 +6,10 @@ import traceback
 from collections.abc import MutableMapping
 from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass
-from pathlib import Path
 from time import perf_counter
 from typing import Literal
 
-from medical_kg_nlp.pipeline.options import PipelineOptions
+from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
 from medical_kg_nlp.pipeline.runner import PipelineRunResult, PipelineRunner
 from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.output import ClinicalPrediction
@@ -53,19 +52,14 @@ _THREAD_LOCAL = threading.local()
 def run_batch_with_trace_parallel(
     documents: list[ClinicalDocument],
     *,
-    dictionary_path: str | Path = "data/dictionaries/seed_concepts.jsonl",
-    abbreviation_path: str | Path = "data/dictionaries/abbreviations.jsonl",
-    recognition_dictionary_path: str | Path | None = None,
-    normalization_dictionary_path: str | Path | None = None,
-    pipeline_version: str = "0.1.0",
-    pipeline_options: PipelineOptions | None = None,
+    factory_config: PipelineFactoryConfig | None = None,
     parallel_options: ParallelBatchOptions | None = None,
     runtime_metrics: MutableMapping[str, object] | None = None,
 ) -> list[PipelineRunResult]:
     global _WORKER_RUNNER
     total_started = perf_counter()
     options = parallel_options or ParallelBatchOptions()
-    pipeline_options = pipeline_options or PipelineOptions()
+    resolved_factory_config = factory_config or PipelineFactoryConfig()
     worker_count = _effective_worker_count(options, len(documents))
     if not documents:
         _record_runtime_metrics(
@@ -81,14 +75,7 @@ def run_batch_with_trace_parallel(
         return []
     if options.backend == "serial" or worker_count <= 1:
         initialization_started = perf_counter()
-        runner = PipelineRunner(
-            dictionary_path=dictionary_path,
-            abbreviation_path=abbreviation_path,
-            recognition_dictionary_path=recognition_dictionary_path,
-            normalization_dictionary_path=normalization_dictionary_path,
-            pipeline_version=pipeline_version,
-            options=pipeline_options,
-        )
+        runner = PipelineFactory.from_config(resolved_factory_config)
         serial_initialization_ms = (perf_counter() - initialization_started) * 1000.0
         processing_started = perf_counter()
         serial_results = [
@@ -108,14 +95,7 @@ def run_batch_with_trace_parallel(
         return serial_results
 
     indexed_documents = list(enumerate(documents))
-    initializer_args = (
-        str(dictionary_path),
-        str(abbreviation_path),
-        str(recognition_dictionary_path) if recognition_dictionary_path else None,
-        str(normalization_dictionary_path) if normalization_dictionary_path else None,
-        pipeline_version,
-        pipeline_options,
-    )
+    initializer_args = (resolved_factory_config,)
     worker_fn = _process_indexed_document if options.fail_fast else _process_indexed_document_safe
     results: list[PipelineRunResult | None] = [None] * len(documents)
     errors: list[DocumentProcessingError] = []
@@ -125,14 +105,7 @@ def run_batch_with_trace_parallel(
     worker_initialization_in_processing = False
     if options.backend == "thread":
         initialization_started = perf_counter()
-        _WORKER_RUNNER = PipelineRunner(
-            dictionary_path=dictionary_path,
-            abbreviation_path=abbreviation_path,
-            recognition_dictionary_path=recognition_dictionary_path,
-            normalization_dictionary_path=normalization_dictionary_path,
-            pipeline_version=pipeline_version,
-            options=pipeline_options,
-        )
+        _WORKER_RUNNER = PipelineFactory.from_config(resolved_factory_config)
         initialization_ms = (perf_counter() - initialization_started) * 1000.0
         executor_context = ThreadPoolExecutor(max_workers=worker_count)
     else:
@@ -174,46 +147,26 @@ def run_batch_with_trace_parallel(
 def run_batch_parallel(
     documents: list[ClinicalDocument],
     *,
-    dictionary_path: str | Path = "data/dictionaries/seed_concepts.jsonl",
-    abbreviation_path: str | Path = "data/dictionaries/abbreviations.jsonl",
-    recognition_dictionary_path: str | Path | None = None,
-    normalization_dictionary_path: str | Path | None = None,
-    pipeline_version: str = "0.1.0",
-    pipeline_options: PipelineOptions | None = None,
+    factory_config: PipelineFactoryConfig | None = None,
     parallel_options: ParallelBatchOptions | None = None,
 ) -> list[ClinicalPrediction]:
     return [
         result.prediction
         for result in run_batch_with_trace_parallel(
             documents,
-            dictionary_path=dictionary_path,
-            abbreviation_path=abbreviation_path,
-            recognition_dictionary_path=recognition_dictionary_path,
-            normalization_dictionary_path=normalization_dictionary_path,
-            pipeline_version=pipeline_version,
-            pipeline_options=pipeline_options,
+            factory_config=factory_config,
             parallel_options=parallel_options,
         )
     ]
 
 
 def _init_worker(
-    dictionary_path: str,
-    abbreviation_path: str,
-    recognition_dictionary_path: str | None,
-    normalization_dictionary_path: str | None,
-    pipeline_version: str,
-    pipeline_options: PipelineOptions,
+    factory_config: PipelineFactoryConfig,
 ) -> None:
     global _WORKER_RUNNER
-    runner = PipelineRunner(
-        dictionary_path=dictionary_path,
-        abbreviation_path=abbreviation_path,
-        recognition_dictionary_path=recognition_dictionary_path,
-        normalization_dictionary_path=normalization_dictionary_path,
-        pipeline_version=pipeline_version,
-        options=pipeline_options,
-    )
+    # SCALING: each process owns its concrete components; thread-safe repositories may still
+    # allocate thread-local read connections behind their port.
+    runner = PipelineFactory.from_config(factory_config)
     _WORKER_RUNNER = runner
     _THREAD_LOCAL.runner = runner
 

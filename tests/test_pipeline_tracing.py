@@ -1,11 +1,11 @@
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
-from medical_kg_nlp.pipeline import PipelineOptions, PipelineRunner
+from medical_kg_nlp.pipeline import PipelineFactory, PipelineFactoryConfig, PipelineOptions
 from medical_kg_nlp.schema.types import AssertionStatus
 
 
 def test_pipeline_trace_records_algorithm_stages() -> None:
     document = SyntheticDatasetAdapter().load_documents("data/samples/sample_notes.jsonl")[0]
-    result = PipelineRunner().process_document_with_trace(document)
+    result = PipelineFactory.from_config().process_document_with_trace(document)
 
     stage_names = [stage.name for stage in result.trace.stages]
     assert stage_names == [
@@ -41,7 +41,11 @@ def test_pipeline_trace_records_algorithm_stages() -> None:
 
 def test_pipeline_options_can_disable_context_and_relations() -> None:
     document = SyntheticDatasetAdapter().load_documents("data/samples/sample_notes.jsonl")[0]
-    runner = PipelineRunner(options=PipelineOptions(enable_context=False, enable_relations=False))
+    runner = PipelineFactory.from_config(
+        PipelineFactoryConfig(
+            options=PipelineOptions(enable_context=False, enable_relations=False)
+        )
+    )
     result = runner.process_document_with_trace(document)
 
     by_text = {entity.text: entity for entity in result.prediction.entities}
@@ -55,7 +59,11 @@ def test_pipeline_options_can_disable_context_and_relations() -> None:
 
 def test_pipeline_can_process_raw_text_and_skip_reranking() -> None:
     document = SyntheticDatasetAdapter().load_documents("data/samples/sample_notes.jsonl")[0]
-    runner = PipelineRunner(options=PipelineOptions(enable_candidate_reranking=False))
+    runner = PipelineFactory.from_config(
+        PipelineFactoryConfig(
+            options=PipelineOptions(enable_candidate_reranking=False)
+        )
+    )
     result = runner.process_text_with_trace(document.document_id, document.text, document.metadata)
 
     by_stage = {stage.name: stage for stage in result.trace.stages}
@@ -67,18 +75,20 @@ def test_pipeline_can_process_raw_text_and_skip_reranking() -> None:
 
 
 def test_entity_only_runner_does_not_build_linking_indexes() -> None:
-    runner = PipelineRunner(
-        options=PipelineOptions(
-            enable_context=False,
-            enable_linking=False,
-            enable_candidate_reranking=False,
-            enable_entity_kg_validation=False,
-            enable_relations=False,
-            enable_relation_kg_validation=False,
+    runner = PipelineFactory.from_config(
+        PipelineFactoryConfig(
+            options=PipelineOptions(
+                enable_context=False,
+                enable_linking=False,
+                enable_candidate_reranking=False,
+                enable_entity_kg_validation=False,
+                enable_relations=False,
+                enable_relation_kg_validation=False,
+            )
         )
     )
 
-    assert runner.linker is None
+    assert runner.components.candidate_retriever is None
     result = runner.process_text_with_trace("entity-only", "Bệnh nhân ho.")
     by_stage = {stage.name: stage for stage in result.trace.stages}
     assert by_stage["candidate_generation"].counters["skipped_entities"] > 0

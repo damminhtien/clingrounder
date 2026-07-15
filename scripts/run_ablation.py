@@ -11,6 +11,7 @@ from typing import Any, cast
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
+from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.evaluation.ablation import (
     AblationVariantResult,
     aggregate_traces,
@@ -18,7 +19,8 @@ from medical_kg_nlp.evaluation.ablation import (
     write_summary_csv,
 )
 from medical_kg_nlp.evaluation.end_to_end_metrics import evaluate_predictions
-from medical_kg_nlp.pipeline import PipelineOptions, PipelineRunner
+from medical_kg_nlp.pipeline import PipelineOptions
+from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.validator import PredictionValidator
 from medical_kg_nlp.utils.io import read_yaml, write_jsonl
@@ -95,11 +97,13 @@ def run_ablation(
         if not isinstance(options_payload, dict):
             raise ValueError(f"Variant {name!r} options must be a mapping.")
         options = PipelineOptions.from_mapping(cast(dict[str, object], options_payload))
-        runner = PipelineRunner(
-            dictionary_path=dictionary_path,
-            abbreviation_path=abbreviation_path,
-            pipeline_version=f"ablation:{name}",
-            options=options,
+        runner = PipelineFactory.from_config(
+            PipelineFactoryConfig(
+                recognition_dictionary_path=dictionary_path,
+                abbreviation_path=abbreviation_path,
+                pipeline_version=f"ablation:{name}",
+                options=options,
+            )
         )
 
         start = perf_counter()
@@ -113,7 +117,11 @@ def run_ablation(
         write_jsonl(prediction_path, [prediction.to_json() for prediction in predictions])
         _write_json(trace_path, [trace.to_json() for trace in traces])
 
-        validation_issues = _count_validation_issues(runner, predictions, documents_by_id)
+        validation_issues = _count_validation_issues(
+            dictionary_path,
+            predictions,
+            documents_by_id,
+        )
         metrics = evaluate_predictions(gold, predictions)
         docs_per_second = len(documents) / (total_ms / 1000) if total_ms > 0 else 0.0
         results.append(
@@ -136,11 +144,11 @@ def run_ablation(
 
 
 def _count_validation_issues(
-    runner: PipelineRunner,
+    dictionary_path: str,
     predictions: list[ClinicalPrediction],
     documents_by_id: dict[str, Any],
 ) -> int:
-    validator = PredictionValidator(runner.store)
+    validator = PredictionValidator(DictionaryStore.from_jsonl(dictionary_path))
     issues = 0
     for prediction in predictions:
         document = documents_by_id[prediction.document_id]

@@ -11,7 +11,7 @@ from medical_kg_nlp.evaluation.phase1 import (
     validate_phase1_entities,
 )
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
-from medical_kg_nlp.pipeline.runner import PipelineRunner
+from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
 from medical_kg_nlp.retrieval.candidate_generator import CandidateGenerator
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
 from medical_kg_nlp.utils.io import read_source_text
@@ -58,12 +58,17 @@ def test_btc_medication_list_boundaries_indications_and_assertions() -> None:
     text = read_source_text(FIXTURE)
     dictionary = _btc_recognition_store()
     entities = RuleBasedNER(dictionary).extract(text)
-    runner = PipelineRunner(options=None)
+    runner = PipelineFactory.from_config()
     sections = runner._sections(text)
     sentences = runner._sentences_from_sections(sections, text)
     for entity in entities:
         sentence = runner._find_sentence(entity, sentences)
-        entity.assertion_features = runner.assertion.classify_features(entity, sentence)
+        classifier = runner.components.assertion_classifier
+        assert classifier is not None
+        entity.assertion_features, _ = classifier.classify_features_with_evidence(
+            entity,
+            sentence,
+        )
 
     drugs = [entity for entity in entities if entity.type == EntityType.DRUG]
     symptoms = [entity for entity in entities if entity.type == EntityType.SYMPTOM]
@@ -129,7 +134,9 @@ def test_btc_rxnorm_memory_is_dictionary_constrained() -> None:
 def test_btc_sample_is_reproduced_end_to_end() -> None:
     text = read_source_text(FIXTURE)
     resource = "src/medical_kg_nlp/resources/phase1_btc_medication_recognition.jsonl"
-    prediction = PipelineRunner(dictionary_path=resource).process_text("btc", text)
+    prediction = PipelineFactory.from_config(
+        PipelineFactoryConfig(recognition_dictionary_path=str(resource))
+    ).process_text("btc", text)
     rows = prediction_to_phase1_entities(prediction, source_text=text)
     expected = json.loads(EXPECTED.read_text(encoding="utf-8"))
 
