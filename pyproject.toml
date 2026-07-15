@@ -94,8 +94,16 @@ where = ["src"]
 medical_kg_nlp = ["resources/*.jsonl"]
 
 [tool.pytest.ini_options]
+addopts = "-m 'not integration and not release and not benchmark and not private and not model'"
 pythonpath = [".", "src"]
 testpaths = ["tests"]
+markers = [
+  "integration: crosses package or process boundaries",
+  "release: validates release artifacts or end-to-end submission flows",
+  "benchmark: measures performance and may be machine-sensitive",
+  "private: requires non-public corpora or licensed resources",
+  "model: requires optional local model dependencies and cached weights",
+]
 
 [tool.ruff]
 line-length = 100

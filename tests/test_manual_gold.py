@@ -11,6 +11,7 @@ from medical_kg_nlp.evaluation.manual_gold import (
 )
 
 
+@pytest.mark.private
 def test_validate_complete_manual_gold_batch() -> None:
     result = subprocess.run(
         [

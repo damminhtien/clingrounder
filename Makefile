@@ -1,4 +1,4 @@
-.PHONY: install install-dev pre-commit lint type test test-targeted validate pipeline evaluate profile pipeline-report phase1-submit phase1-validate loop ablation qa clean
+.PHONY: install install-dev pre-commit lint type test test-fast test-full test-all test-targeted validate pipeline evaluate profile pipeline-report phase1-submit phase1-validate loop ablation qa qa-full clean
 
 PYTHON ?= .venv/bin/python
 RUN_ROOT ?= outputs/runs
@@ -20,6 +20,14 @@ type:
 
 test:
 	$(PYTHON) -m pytest tests
+
+test-fast: test
+
+test-full:
+	$(PYTHON) -m pytest -o addopts='' -m "not private and not model" tests
+
+test-all:
+	$(PYTHON) -m pytest -o addopts='' tests
 
 test-targeted:
 	$(PYTHON) -m pytest tests/test_schema.py tests/test_offset_mapping.py tests/test_kg_constraints.py -q
@@ -52,6 +60,8 @@ ablation:
 	$(PYTHON) scripts/run_ablation.py --config configs/ablations.yaml --run-root $(RUN_ROOT)
 
 qa: lint type test
+
+qa-full: lint type test-full
 
 clean:
 	find . -type d -name __pycache__ -prune -exec rm -rf {} +

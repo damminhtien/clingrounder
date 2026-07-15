@@ -7,6 +7,8 @@ import sys
 from pathlib import Path
 from typing import Literal
 
+import pytest
+
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.evaluation.phase1 import (
     Phase1SelectiveExportConfig,
@@ -786,6 +788,7 @@ def test_phase1_zip_is_deterministic_across_source_mtimes(tmp_path: Path) -> Non
     ).digest()
 
 
+@pytest.mark.release
 def test_phase1_submission_cli_validates_zip(tmp_path: Path) -> None:
     input_dir = tmp_path / "input"
     output_dir = tmp_path / "output"
@@ -857,6 +860,7 @@ def test_phase1_submission_cli_validates_zip(tmp_path: Path) -> None:
     )
 
 
+@pytest.mark.release
 def test_phase1_submission_cli_can_read_config_defaults(tmp_path: Path) -> None:
     input_dir = tmp_path / "input"
     input_dir.mkdir()

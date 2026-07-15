@@ -1,6 +1,8 @@
 import time
 from pathlib import Path
 
+import pytest
+
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
@@ -389,6 +391,8 @@ def test_rule_ner_uses_medication_indication_context_for_dual_typed_concept() ->
     )
 
 
+@pytest.mark.benchmark
+@pytest.mark.private
 def test_rule_ner_phase1_latency_under_100ms_per_note() -> None:
     store = DictionaryStore.from_jsonl(
         "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
