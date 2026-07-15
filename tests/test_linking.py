@@ -135,7 +135,7 @@ def test_reranker_penalizes_conflicting_rxnorm_strength() -> None:
     assert ranked[1].score <= 0.2
 
 
-def test_reranker_breaks_exact_score_tie_with_ambiguous_strength_without_hard_reject() -> None:
+def test_reranker_breaks_exact_score_tie_with_administered_dose_without_hard_reject() -> None:
     entries = [
         _drug_entry("RX:1", "1", "clonazepam 1 mg oral tablet"),
         _drug_entry("RX:2", "2", "clonazepam 2 mg oral tablet"),
@@ -152,7 +152,7 @@ def test_reranker_breaks_exact_score_tie_with_ambiguous_strength_without_hard_re
 
     assert ranked[0].code == "1"
     assert ranked[0].score == 1.0
-    assert ranked[1].score == 0.7
+    assert ranked[1].score == 0.85
 
 
 def test_reranker_uses_rxnorm_tty_for_bare_vs_structured_drug_mentions() -> None:

@@ -173,7 +173,11 @@ def _mention_strength_role(
     local_release = _matched_cues(local, _RELEASE_CUES)
     if local_forms or local_release:
         return "product"
-    if _ADMINISTRATION_RE.search(left) and (_SIG_RE.search(right) or _matched_cues(right, _ROUTE_CUES)):
+    # A route/frequency directly after an amount describes what the patient receives even when
+    # terse medication lists omit an administration verb (for example, "1.5 mg po qhs").
+    if _SIG_RE.search(right) or _matched_cues(right, _ROUTE_CUES):
+        return "administered"
+    if _ADMINISTRATION_RE.search(left):
         return "administered"
     if dose_forms or release_types:
         return "product"

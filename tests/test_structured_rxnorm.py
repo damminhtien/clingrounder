@@ -75,16 +75,47 @@ def test_linker_does_not_treat_administered_dose_as_product_strength() -> None:
     assert entity.candidates[0].emit_probability == 0.9
 
 
+def test_administered_dose_does_not_penalize_structured_product_candidate() -> None:
+    entry = _entry()
+    linker = EntityLinker(
+        CandidateGenerator(DictionaryStore([entry])),
+        candidate_threshold=0.9,
+        emit_probabilities_by_source={"exact": 0.9},
+    )
+    entity = EntityAnnotation(
+        id="E1",
+        span=(0, 10),
+        text="metoprolol",
+        normalized_text="metoprolol",
+        type=EntityType.DRUG,
+    )
+    candidate = Candidate(
+        concept_id=entry.concept_id,
+        code=entry.code,
+        code_system=entry.code_system,
+        canonical_name=entry.canonical_name,
+        semantic_type=entry.semantic_type,
+        score=0.9,
+        source="exact",
+        matched_alias="metoprolol",
+    )
+
+    linker.apply_candidates(entity, [candidate], mention="metoprolol 50 mg po qhs")
+
+    assert entity.candidates[0].qualified is True
+    assert entity.candidates[0].qualification_reason == "qualified"
+
+
 def test_route_is_not_inferred_as_dose_form() -> None:
     oral = parse_medication_structure("amlodipine 5 mg po daily")
     intravenous = parse_medication_structure("methylprednisolone 125 mg IV")
 
     assert oral.routes == frozenset({"oral"})
     assert oral.dose_forms == frozenset()
-    assert oral.ambiguous_strengths == frozenset({"5mg"})
+    assert oral.administered_doses == frozenset({"5mg"})
     assert intravenous.routes == frozenset({"intravenous"})
     assert intravenous.dose_forms == frozenset()
-    assert intravenous.administered_doses == frozenset()
+    assert intravenous.administered_doses == frozenset({"125mg"})
 
 
 def test_explicit_dose_form_separates_product_strength_from_administered_range() -> None:

@@ -75,6 +75,11 @@ class HeuristicReranker:
             # but do not apply the hard conflict reserved for explicit product evidence.
             if mention_structure.ambiguous_strengths.isdisjoint(candidate_strengths):
                 score *= 0.7
+        elif mention_structure.administered_doses and candidate_strengths:
+            # SIG dose is useful for ranking but cannot reject a manufactured strength: patients
+            # may take fractions or multiple units of a product.
+            if mention_structure.administered_doses.isdisjoint(candidate_strengths):
+                score *= 0.85
         elif entry.rxnorm_tty in _STRUCTURED_PRODUCT_TTYS and candidate_strengths:
             score -= 0.24
         elif mention_structure.has_product_evidence and entry.rxnorm_tty in _INGREDIENT_TTYS:
@@ -82,7 +87,11 @@ class HeuristicReranker:
         if mention_structure.dose_forms and candidate_structure.dose_forms:
             if mention_structure.dose_forms.isdisjoint(candidate_structure.dose_forms):
                 score -= 0.12
-        elif entry.rxnorm_tty in _STRUCTURED_PRODUCT_TTYS and candidate_structure.dose_forms:
+        elif (
+            entry.rxnorm_tty in _STRUCTURED_PRODUCT_TTYS
+            and candidate_structure.dose_forms
+            and not mention_structure.administered_doses
+        ):
             score -= 0.08
 
         normalized_mention = normalize_for_match(mention)
@@ -95,7 +104,10 @@ class HeuristicReranker:
             if brand and brand in normalized_mention:
                 score += 0.04
 
-        if not mention_structure.has_product_evidence:
+        if (
+            not mention_structure.has_product_evidence
+            and not mention_structure.administered_doses
+        ):
             if entry.rxnorm_tty in _STRUCTURED_PRODUCT_TTYS:
                 score -= 0.08
         elif entry.rxnorm_tty in {*_INGREDIENT_TTYS, *_BRAND_TTYS}:
