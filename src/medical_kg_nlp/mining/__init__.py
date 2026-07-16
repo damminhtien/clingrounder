@@ -2,6 +2,13 @@
 
 from medical_kg_nlp.mining.catalog import DuckDBMiningCatalog, ParquetSnapshotWriter
 from medical_kg_nlp.mining.connectors import connector_from_definition
+from medical_kg_nlp.mining.coverage import CoverageCubePlanner, CoverageTarget, ReviewPriority
+from medical_kg_nlp.mining.dedup import StableTextDeduplicator
+from medical_kg_nlp.mining.labeling import (
+    BatchedProposalLabelerAdapter,
+    ConsensusProposalLabeler,
+    PolicyAwareProposalLabelerAdapter,
+)
 from medical_kg_nlp.mining.parsers import parser_from_definition
 from medical_kg_nlp.mining.ports import (
     ArtifactStorePort,
@@ -40,16 +47,28 @@ from medical_kg_nlp.mining.registry import (
     VersionPolicy,
     load_source_registry,
 )
+from medical_kg_nlp.mining.review import JsonlReviewBackend
+from medical_kg_nlp.mining.synthetic import (
+    MinimalPairGenerator,
+    RenderedScenario,
+    ScenarioEntity,
+    ScenarioGraph,
+    ScenarioRelation,
+    SentinelScenarioRenderer,
+)
 
 __all__ = [
     "AccessClass",
     "AnnotationLayer",
     "AnnotationProposal",
     "ArtifactStorePort",
+    "BatchedProposalLabelerAdapter",
     "ConceptLink",
     "CoverageCell",
+    "CoverageCubePlanner",
     "CoveragePlannerPort",
     "CoverageReport",
+    "CoverageTarget",
     "DatasetSnapshot",
     "DeduplicatorPort",
     "DiscoveredArtifact",
@@ -59,14 +78,18 @@ __all__ = [
     "LocalArtifactStore",
     "LicenseMode",
     "MinedDocument",
+    "MinimalPairGenerator",
     "MiningQualityGate",
     "ParquetSnapshotWriter",
     "ProposalLabelerPort",
     "PolicyDecision",
+    "PolicyAwareProposalLabelerAdapter",
     "QualityGatePort",
     "RedistributionPolicy",
     "RetentionPolicy",
     "RelationProposal",
+    "RenderedScenario",
+    "ReviewPriority",
     "ReviewBackendPort",
     "ReviewStatus",
     "SourceArtifact",
@@ -75,9 +98,16 @@ __all__ = [
     "SourcePolicyGate",
     "SourceRegistry",
     "SourceRequest",
+    "ScenarioEntity",
+    "ScenarioGraph",
+    "ScenarioRelation",
+    "SentinelScenarioRenderer",
+    "StableTextDeduplicator",
     "StoredObject",
     "VersionPolicy",
     "connector_from_definition",
+    "ConsensusProposalLabeler",
+    "JsonlReviewBackend",
     "load_source_registry",
     "parser_from_definition",
 ]
