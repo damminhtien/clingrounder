@@ -4,15 +4,17 @@ from collections.abc import Mapping
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.linking.reranker import HeuristicReranker
 from medical_kg_nlp.linking.structured_rxnorm import rxnorm_structure_conflict
-from medical_kg_nlp.retrieval.candidate_generator import CandidateGenerator
+from medical_kg_nlp.retrieval.pipeline import RetrievalPipeline
 from medical_kg_nlp.schema.annotation import CandidateConcept, EntityAnnotation
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from medical_kg_nlp.terminology.ports import TerminologyRepository
 
 
 class EntityLinker:
     def __init__(
         self,
-        generator: CandidateGenerator,
+        retrieval: RetrievalPipeline,
+        repository: TerminologyRepository,
         *,
         assignment_threshold: float = 0.75,
         assignment_margin: float = 0.05,
@@ -47,8 +49,9 @@ class EntityLinker:
             raise ValueError("candidate source thresholds must be between 0 and 1")
         if any(not 0.0 <= value <= 1.0 for value in emit_probabilities.values()):
             raise ValueError("candidate emit probabilities must be between 0 and 1")
-        self.generator = generator
-        self.reranker = HeuristicReranker(generator.store)
+        self.retrieval = retrieval
+        self.repository = repository
+        self.reranker = HeuristicReranker(repository)
         self.assignment_threshold = assignment_threshold
         self.assignment_margin = assignment_margin
         self.candidate_threshold = effective_candidate_threshold
@@ -71,19 +74,19 @@ class EntityLinker:
         mention: str | None = None,
     ) -> list[Candidate]:
         full_mention = mention or entity.text
-        candidates = self.generator.generate(full_mention, entity.type, context_window)
+        candidates = self.retrieval.retrieve(full_mention, entity.type, context_window)
         if full_mention == entity.text or any(
             candidate.source == "btc_sample" for candidate in candidates
         ):
             return candidates
-        candidates.extend(self.generator.generate(entity.text, entity.type, context_window))
+        candidates.extend(self.retrieval.retrieve(entity.text, entity.type, context_window))
         by_concept: dict[str, Candidate] = {}
         for candidate in candidates:
             previous = by_concept.get(candidate.concept_id)
             if previous is None or candidate.score > previous.score:
                 by_concept[candidate.concept_id] = candidate
         return sorted(by_concept.values(), key=lambda item: item.score, reverse=True)[
-            : self.generator.max_candidates
+            : self.retrieval.max_candidates
         ]
 
     def rerank_candidates(
@@ -179,7 +182,7 @@ class EntityLinker:
             and entity_type == EntityType.DRUG
             and candidate.code_system == CodeSystem.RXNORM
         ):
-            entry = self.generator.store.by_concept_id.get(candidate.concept_id)
+            entry = self.repository.get_by_concept_id(candidate.concept_id)
             if entry is not None:
                 conflict = rxnorm_structure_conflict(mention, entry)
                 if conflict is not None:

@@ -159,6 +159,7 @@ def main() -> None:
     normalization_dictionary_path = _optional_str(
         config.get("normalization_dictionary")
     )
+    normalization_index_path = _optional_str(config.get("normalization_index"))
     recognition_dictionary_path = _optional_str(config.get("recognition_dictionary"))
     max_candidates = _int_setting(
         args.max_candidates, config.get("max_candidates"), 5, "max_candidates"
@@ -236,6 +237,7 @@ def main() -> None:
                 abbreviation_path=abbreviation_path,
                 additional_recognition_dictionary_path=recognition_dictionary_path,
                 normalization_dictionary_path=normalization_dictionary_path,
+                normalization_index_path=normalization_index_path,
                 options=pipeline_options,
             ),
             parallel_options=ParallelBatchOptions(

@@ -74,8 +74,8 @@ AGENT_PLAYBOOKS: dict[str, AgentPlaybook] = {
     ),
     "candidate_generation": AgentPlaybook(
         focus_files=(
-            "src/medical_kg_nlp/retrieval/candidate_generator.py",
-            "src/medical_kg_nlp/dictionaries/dictionary_store.py",
+            "src/medical_kg_nlp/retrieval/pipeline.py",
+            "src/medical_kg_nlp/retrieval/adapters.py",
             "src/medical_kg_nlp/linking/linker.py",
             "tests/test_candidate_generation.py",
         ),
@@ -91,8 +91,8 @@ AGENT_PLAYBOOKS: dict[str, AgentPlaybook] = {
     "normalization": AgentPlaybook(
         focus_files=(
             "src/medical_kg_nlp/linking/linker.py",
-            "src/medical_kg_nlp/retrieval/candidate_generator.py",
-            "src/medical_kg_nlp/dictionaries/dictionary_store.py",
+            "src/medical_kg_nlp/retrieval/pipeline.py",
+            "src/medical_kg_nlp/terminology/sqlite_repository.py",
             "tests/test_candidate_generation.py",
         ),
         commands=(

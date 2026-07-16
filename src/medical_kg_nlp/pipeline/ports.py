@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import Protocol
 
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.kg.validator import ValidationIssue
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.schema.annotation import (
@@ -15,7 +13,7 @@ from medical_kg_nlp.schema.annotation import (
     RelationAnnotation,
 )
 from medical_kg_nlp.schema.document import Sentence
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from medical_kg_nlp.terminology.ports import TerminologyRepository
 
 __all__ = [
     "AssertionClassifierPort",
@@ -102,39 +100,4 @@ class KnowledgeValidatorPort(Protocol):
         entities: list[EntityAnnotation],
         relations: list[RelationAnnotation],
     ) -> tuple[list[RelationAnnotation], list[ValidationIssue]]: ...
-
-
-class TerminologyRepository(Protocol):
-    """Query concepts without exposing a storage implementation."""
-
-    def get_by_concept_id(self, concept_id: str) -> ConceptEntry | None: ...
-
-    def get_by_code(self, code_system: CodeSystem, code: str) -> ConceptEntry | None: ...
-
-    def exact_lookup(
-        self,
-        mention: str,
-        *,
-        entity_type: EntityType | None = None,
-        code_systems: Sequence[CodeSystem] | None = None,
-        limit: int = 20,
-    ) -> list[ConceptEntry]: ...
-
-    def toneless_lookup(
-        self,
-        mention: str,
-        *,
-        entity_type: EntityType | None = None,
-        code_systems: Sequence[CodeSystem] | None = None,
-        limit: int = 20,
-    ) -> list[ConceptEntry]: ...
-
-    def search(
-        self,
-        mention: str,
-        *,
-        entity_type: EntityType | None = None,
-        code_systems: Sequence[CodeSystem] | None = None,
-        limit: int = 20,
-    ) -> list[ConceptEntry]: ...
 

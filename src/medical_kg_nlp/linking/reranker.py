@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.linking.structured_rxnorm import (
     MedicationStructure,
@@ -10,6 +9,7 @@ from medical_kg_nlp.linking.structured_rxnorm import (
     parse_rxnorm_entry_structure,
 )
 from medical_kg_nlp.schema.types import EntityType
+from medical_kg_nlp.terminology.ports import TerminologyRepository
 from medical_kg_nlp.utils.text import normalize_for_match, token_set
 
 
@@ -19,8 +19,8 @@ _BRAND_TTYS = frozenset({"BN"})
 
 
 class HeuristicReranker:
-    def __init__(self, store: DictionaryStore) -> None:
-        self.store = store
+    def __init__(self, repository: TerminologyRepository) -> None:
+        self.repository = repository
 
     def rerank(
         self,
@@ -60,7 +60,7 @@ class HeuristicReranker:
         mention_structure: MedicationStructure,
         context_tokens: set[str],
     ) -> float:
-        entry = self.store.by_concept_id.get(candidate.concept_id)
+        entry = self.repository.get_by_concept_id(candidate.concept_id)
         if entry is None:
             return candidate.score
         candidate_structure = parse_rxnorm_entry_structure(entry)

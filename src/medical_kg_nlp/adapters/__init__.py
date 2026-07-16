@@ -2,7 +2,6 @@
 
 from medical_kg_nlp.adapters.rules import (
     DictionaryCandidateAdapter,
-    InMemoryTerminologyRepository,
     KGValidatorAdapter,
     RuleAssertionClassifierAdapter,
     RuleEntityExtractorAdapter,
@@ -11,10 +10,8 @@ from medical_kg_nlp.adapters.rules import (
 
 __all__ = [
     "DictionaryCandidateAdapter",
-    "InMemoryTerminologyRepository",
     "KGValidatorAdapter",
     "RuleAssertionClassifierAdapter",
     "RuleEntityExtractorAdapter",
     "RuleRelationExtractorAdapter",
 ]
-

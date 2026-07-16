@@ -245,7 +245,8 @@ Code chỉ được gán khi top score đủ cao và đủ cách biệt với ca
 Code chính:
 
 ```text
-src/medical_kg_nlp/retrieval/candidate_generator.py
+src/medical_kg_nlp/retrieval/pipeline.py
+src/medical_kg_nlp/terminology/sqlite_repository.py
 src/medical_kg_nlp/linking/reranker.py
 src/medical_kg_nlp/linking/linker.py
 ```
@@ -462,7 +463,7 @@ tests/                    Unit, regression và smoke tests
 6. src/medical_kg_nlp/ner/rule_ner.py
 7. src/medical_kg_nlp/ner/dictionary_matcher.py
 8. src/medical_kg_nlp/context/assertion.py
-9. src/medical_kg_nlp/retrieval/candidate_generator.py
+9. src/medical_kg_nlp/retrieval/pipeline.py
 10. src/medical_kg_nlp/linking/reranker.py
 11. src/medical_kg_nlp/linking/linker.py
 12. src/medical_kg_nlp/ontology/phase1.py

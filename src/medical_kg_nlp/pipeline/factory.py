@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 
 from medical_kg_nlp.adapters.rules import (
     DictionaryCandidateAdapter,
-    InMemoryTerminologyRepository,
     KGValidatorAdapter,
     RuleAssertionClassifierAdapter,
     RuleEntityExtractorAdapter,
@@ -27,8 +26,15 @@ from medical_kg_nlp.preprocessing.normalizer import (
     NormalizationContract,
 )
 from medical_kg_nlp.relations.rule_relations import RuleRelationExtractor
-from medical_kg_nlp.retrieval.candidate_generator import CandidateGenerator
+from medical_kg_nlp.retrieval.rule_factory import build_rule_retrieval_pipeline
 from medical_kg_nlp.schema.types import EntityType
+from medical_kg_nlp.terminology import (
+    CompositeTerminologyRepository,
+    InMemoryTerminologyRepository,
+    SQLiteTerminologyRepository,
+    TerminologyRepository,
+    terminology_cache_path,
+)
 
 __all__ = ["PipelineFactory", "PipelineFactoryConfig"]
 
@@ -39,6 +45,8 @@ class PipelineFactoryConfig:
 
     recognition_dictionary_path: str = "data/dictionaries/seed_concepts.jsonl"
     normalization_dictionary_path: str | None = None
+    normalization_index_path: str | None = None
+    terminology_cache_dir: str = ".cache/medical-kg/terminology"
     additional_recognition_dictionary_path: str | None = None
     abbreviation_path: str = "data/dictionaries/abbreviations.jsonl"
     alias_overlay_path: str | None = "data/dictionaries/vietnamese_medical_alias.jsonl"
@@ -58,6 +66,14 @@ class PipelineFactoryConfig:
             ),
             normalization_dictionary_path=_optional_string(
                 terminology.get("normalization_path")
+            ),
+            normalization_index_path=_optional_string(
+                terminology.get("normalization_index_path")
+            ),
+            terminology_cache_dir=_string(
+                terminology,
+                "cache_dir",
+                cls.terminology_cache_dir,
             ),
             additional_recognition_dictionary_path=_optional_string(
                 terminology.get("additional_recognition_path")
@@ -96,17 +112,21 @@ class PipelineFactory:
             )
         recognition_store = DictionaryStore(_deduplicate_entries(recognition_entries))
 
-        normalization_store = recognition_store
+        recognition_repository = InMemoryTerminologyRepository(recognition_store)
+        terminology_repository: TerminologyRepository = recognition_repository
+        uses_sqlite_normalization = resolved.normalization_dictionary_path is not None
         if resolved.normalization_dictionary_path is not None:
-            normalization_store = DictionaryStore(
-                _deduplicate_entries(
-                    [
-                        *recognition_store.entries,
-                        *DictionaryStore.load_entries_jsonl(
-                            resolved.normalization_dictionary_path
-                        ),
-                    ]
-                )
+            source_paths = (resolved.normalization_dictionary_path,)
+            index_path = resolved.normalization_index_path or str(
+                terminology_cache_path(resolved.terminology_cache_dir, source_paths)
+            )
+            sqlite_repository = SQLiteTerminologyRepository(
+                index_path,
+                expected_source_paths=source_paths,
+                expected_normalization_version=resolved.normalization_contract.version,
+            )
+            terminology_repository = CompositeTerminologyRepository(
+                (recognition_repository, sqlite_repository)
             )
 
         options = resolved.options
@@ -127,12 +147,15 @@ class PipelineFactory:
         candidate_adapter: DictionaryCandidateAdapter | None = None
         if options.enable_linking:
             linker = EntityLinker(
-                CandidateGenerator(
-                    normalization_store,
+                build_rule_retrieval_pipeline(
+                    terminology_repository,
+                    approximate_store=recognition_store,
                     abbreviation_path=resolved.abbreviation_path,
                     max_candidates=options.max_candidates,
                     retrieval_sources=options.candidate_sources,
+                    use_fts_for_bm25=uses_sqlite_normalization,
                 ),
+                terminology_repository,
                 assignment_threshold=options.link_assignment_threshold,
                 assignment_margin=options.link_assignment_margin,
                 candidate_threshold=options.link_candidate_threshold,
@@ -160,7 +183,7 @@ class PipelineFactory:
         knowledge_validator = (
             KGValidatorAdapter(
                 KGValidator(
-                    normalization_store
+                    recognition_store
                     if options.enable_entity_kg_validation
                     or options.enable_relation_kg_validation
                     else None
@@ -178,7 +201,7 @@ class PipelineFactory:
             candidate_assigner=candidate_adapter,
             relation_extractor=relation_extractor,
             knowledge_validator=knowledge_validator,
-            terminology_repository=InMemoryTerminologyRepository(normalization_store),
+            terminology_repository=terminology_repository,
             options=options,
             normalization_contract=resolved.normalization_contract,
             pipeline_version=resolved.pipeline_version,

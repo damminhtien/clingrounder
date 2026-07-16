@@ -1,0 +1,273 @@
+"""Read-only, thread-local SQLite terminology repository."""
+
+from __future__ import annotations
+
+import json
+import sqlite3
+import threading
+from collections.abc import Sequence
+from pathlib import Path
+from urllib.parse import quote
+
+from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
+from medical_kg_nlp.preprocessing.normalizer import NORMALIZATION_CONTRACT_VERSION
+from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from medical_kg_nlp.terminology.index_builder import (
+    TERMINOLOGY_INDEX_SCHEMA_VERSION,
+    source_fingerprint,
+)
+from medical_kg_nlp.utils.text import normalize_for_match
+
+__all__ = ["SQLiteTerminologyRepository"]
+
+_CONCEPT_COLUMNS = (
+    "c.concept_id, c.code, c.code_system, c.canonical_name, c.semantic_type, "
+    "c.tty, c.parent_code, c.parents_json, c.aliases_json, c.synonyms_json, "
+    "c.abbreviations_json, c.blocked_aliases_json, c.official_name_vi, "
+    "c.official_name_en, c.source, c.rxnorm_id, c.ingredient, c.brand_name, "
+    "c.generic_name, c.dose_form, c.strength"
+)
+
+
+class SQLiteTerminologyRepository:
+    """Query a prebuilt index without loading the terminology release into RAM."""
+
+    def __init__(
+        self,
+        index_path: str | Path,
+        *,
+        expected_source_paths: tuple[str | Path, ...] | None = None,
+        expected_normalization_version: str = NORMALIZATION_CONTRACT_VERSION,
+    ) -> None:
+        self.index_path = Path(index_path).resolve()
+        if not self.index_path.is_file():
+            raise FileNotFoundError(
+                f"Terminology index does not exist: {self.index_path}. Build it explicitly first."
+            )
+        self._local = threading.local()
+        self.metadata = self._load_metadata()
+        self._validate_metadata(expected_source_paths, expected_normalization_version)
+
+    def get_by_concept_id(self, concept_id: str) -> ConceptEntry | None:
+        row = self._connection().execute(
+            f"SELECT {_CONCEPT_COLUMNS} FROM concepts c WHERE c.concept_id = ?",
+            (concept_id,),
+        ).fetchone()
+        return _entry_from_row(row) if row is not None else None
+
+    def get_by_code(self, code_system: CodeSystem, code: str) -> ConceptEntry | None:
+        row = self._connection().execute(
+            f"""
+            SELECT {_CONCEPT_COLUMNS}
+            FROM concepts c
+            WHERE c.code_system = ? AND c.code = ?
+            ORDER BY c.concept_id
+            LIMIT 1
+            """,
+            (code_system.value, code),
+        ).fetchone()
+        return _entry_from_row(row) if row is not None else None
+
+    def exact_lookup(
+        self,
+        mention: str,
+        *,
+        entity_type: EntityType | None = None,
+        code_systems: Sequence[CodeSystem] | None = None,
+        limit: int = 20,
+    ) -> list[ConceptEntry]:
+        return self._alias_lookup(
+            "a.normalized",
+            normalize_for_match(mention),
+            entity_type,
+            code_systems,
+            limit,
+        )
+
+    def toneless_lookup(
+        self,
+        mention: str,
+        *,
+        entity_type: EntityType | None = None,
+        code_systems: Sequence[CodeSystem] | None = None,
+        limit: int = 20,
+    ) -> list[ConceptEntry]:
+        return self._alias_lookup(
+            "a.toneless",
+            normalize_for_match(mention, strip_diacritics=True),
+            entity_type,
+            code_systems,
+            limit,
+        )
+
+    def search(
+        self,
+        mention: str,
+        *,
+        entity_type: EntityType | None = None,
+        code_systems: Sequence[CodeSystem] | None = None,
+        limit: int = 20,
+    ) -> list[ConceptEntry]:
+        _validate_limit(limit)
+        normalized = normalize_for_match(mention)
+        if len(normalized) < 3:
+            return self.exact_lookup(
+                mention,
+                entity_type=entity_type,
+                code_systems=code_systems,
+                limit=limit,
+            )
+        conditions, parameters = _concept_filters(entity_type, code_systems)
+        match_query = f'"{normalized.replace(chr(34), chr(34) * 2)}"'
+        sql = f"""
+            SELECT {_CONCEPT_COLUMNS}, bm25(aliases_fts) AS lexical_rank
+            FROM aliases_fts
+            JOIN concepts c ON c.concept_id = aliases_fts.concept_id
+            WHERE aliases_fts MATCH ? {conditions}
+            ORDER BY lexical_rank, c.code_system, COALESCE(c.code, ''), c.concept_id
+            LIMIT ?
+        """
+        rows = self._connection().execute(
+            sql,
+            (match_query, *parameters, max(limit, limit * 8)),
+        )
+        return _deduplicate_rows(rows, limit)
+
+    def close(self) -> None:
+        connection = getattr(self._local, "connection", None)
+        if connection is not None:
+            connection.close()
+            del self._local.connection
+
+    def _alias_lookup(
+        self,
+        column: str,
+        value: str,
+        entity_type: EntityType | None,
+        code_systems: Sequence[CodeSystem] | None,
+        limit: int,
+    ) -> list[ConceptEntry]:
+        _validate_limit(limit)
+        conditions, parameters = _concept_filters(entity_type, code_systems)
+        sql = f"""
+            SELECT DISTINCT {_CONCEPT_COLUMNS}
+            FROM aliases a
+            JOIN concepts c ON c.concept_id = a.concept_id
+            WHERE {column} = ? {conditions}
+            ORDER BY c.code_system, COALESCE(c.code, ''), c.concept_id
+            LIMIT ?
+        """
+        rows = self._connection().execute(sql, (value, *parameters, limit))
+        return [_entry_from_row(row) for row in rows]
+
+    def _connection(self) -> sqlite3.Connection:
+        connection = getattr(self._local, "connection", None)
+        if connection is None:
+            # SCALING: one immutable read connection per worker avoids a global lock and pool.
+            uri = f"file:{quote(str(self.index_path))}?mode=ro&immutable=1"
+            connection = sqlite3.connect(uri, uri=True, check_same_thread=False)
+            connection.row_factory = sqlite3.Row
+            connection.execute("PRAGMA query_only = ON")
+            self._local.connection = connection
+        return connection
+
+    def _load_metadata(self) -> dict[str, str]:
+        uri = f"file:{quote(str(self.index_path))}?mode=ro&immutable=1"
+        connection = sqlite3.connect(uri, uri=True)
+        try:
+            return {
+                str(key): str(value)
+                for key, value in connection.execute("SELECT key, value FROM metadata")
+            }
+        except sqlite3.DatabaseError as error:
+            raise ValueError(f"Invalid terminology index: {self.index_path}") from error
+        finally:
+            connection.close()
+
+    def _validate_metadata(
+        self,
+        expected_source_paths: tuple[str | Path, ...] | None,
+        expected_normalization_version: str,
+    ) -> None:
+        if self.metadata.get("schema_version") != TERMINOLOGY_INDEX_SCHEMA_VERSION:
+            raise ValueError("Terminology index schema version is stale")
+        if self.metadata.get("normalization_version") != expected_normalization_version:
+            raise ValueError("Terminology index normalization contract is stale")
+        if expected_source_paths is not None:
+            current = source_fingerprint(expected_source_paths)
+            if self.metadata.get("source_fingerprint") != current:
+                raise ValueError("Terminology index source fingerprint is stale")
+
+
+def _concept_filters(
+    entity_type: EntityType | None,
+    code_systems: Sequence[CodeSystem] | None,
+) -> tuple[str, list[str]]:
+    clauses: list[str] = []
+    parameters: list[str] = []
+    if entity_type is not None:
+        clauses.append("c.semantic_type = ?")
+        parameters.append(entity_type.value)
+    if code_systems is not None:
+        systems = [code_system.value for code_system in code_systems]
+        if not systems:
+            return " AND 0", []
+        clauses.append(f"c.code_system IN ({','.join('?' for _ in systems)})")
+        parameters.extend(systems)
+    return (" AND " + " AND ".join(clauses) if clauses else ""), parameters
+
+
+def _validate_limit(limit: int) -> None:
+    if limit < 1:
+        raise ValueError("limit must be at least 1")
+
+
+def _deduplicate_rows(rows: sqlite3.Cursor, limit: int) -> list[ConceptEntry]:
+    output: list[ConceptEntry] = []
+    seen: set[str] = set()
+    for row in rows:
+        concept_id = str(row["concept_id"])
+        if concept_id in seen:
+            continue
+        seen.add(concept_id)
+        output.append(_entry_from_row(row))
+        if len(output) == limit:
+            break
+    return output
+
+
+def _entry_from_row(row: sqlite3.Row) -> ConceptEntry:
+    return ConceptEntry(
+        concept_id=str(row["concept_id"]),
+        code=str(row["code"]) if row["code"] is not None else None,
+        code_system=CodeSystem(str(row["code_system"])),
+        canonical_name=str(row["canonical_name"]),
+        semantic_type=EntityType(str(row["semantic_type"])),
+        aliases=_json_tuple(row["aliases_json"]),
+        official_name_vi=_optional_string(row["official_name_vi"]),
+        official_name_en=_optional_string(row["official_name_en"]),
+        synonyms=_json_tuple(row["synonyms_json"]),
+        abbreviations=_json_tuple(row["abbreviations_json"]),
+        parents=_json_tuple(row["parents_json"]),
+        parent_code=_optional_string(row["parent_code"]),
+        source=str(row["source"]),
+        rxnorm_id=_optional_string(row["rxnorm_id"]),
+        ingredient=_optional_string(row["ingredient"]),
+        brand_name=_optional_string(row["brand_name"]),
+        generic_name=_optional_string(row["generic_name"]),
+        dose_form=_optional_string(row["dose_form"]),
+        rxnorm_tty=_optional_string(row["tty"]),
+        strength=_optional_string(row["strength"]),
+        blocked_aliases=_json_tuple(row["blocked_aliases_json"]),
+    )
+
+
+def _json_tuple(value: object) -> tuple[str, ...]:
+    payload = json.loads(str(value))
+    if not isinstance(payload, list):
+        raise ValueError("Expected JSON array in terminology index")
+    return tuple(str(item) for item in payload)
+
+
+def _optional_string(value: object) -> str | None:
+    return str(value) if value is not None else None

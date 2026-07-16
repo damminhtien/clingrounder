@@ -6,9 +6,10 @@ from medical_kg_nlp.linking.structured_rxnorm import (
     parse_medication_structure,
     rxnorm_structure_conflict,
 )
-from medical_kg_nlp.retrieval.candidate_generator import CandidateGenerator
+from medical_kg_nlp.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
 
 
 def test_rxnorm_structure_detects_strength_release_and_form_conflicts() -> None:
@@ -43,8 +44,10 @@ def test_administered_or_ambiguous_dose_does_not_hard_reject_product_strength() 
 
 def test_linker_does_not_treat_administered_dose_as_product_strength() -> None:
     entry = _entry()
+    store = DictionaryStore([entry])
     linker = EntityLinker(
-        CandidateGenerator(DictionaryStore([entry])),
+        _retrieval(store),
+        InMemoryTerminologyRepository(store),
         candidate_threshold=0.5,
         emit_probabilities_by_source={"exact": 0.9},
     )
@@ -77,8 +80,10 @@ def test_linker_does_not_treat_administered_dose_as_product_strength() -> None:
 
 def test_administered_dose_does_not_penalize_structured_product_candidate() -> None:
     entry = _entry()
+    store = DictionaryStore([entry])
     linker = EntityLinker(
-        CandidateGenerator(DictionaryStore([entry])),
+        _retrieval(store),
+        InMemoryTerminologyRepository(store),
         candidate_threshold=0.9,
         emit_probabilities_by_source={"exact": 0.9},
     )

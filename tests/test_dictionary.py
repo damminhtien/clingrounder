@@ -3,7 +3,7 @@ import subprocess
 import sys
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.retrieval.candidate_generator import CandidateGenerator
+from medical_kg_nlp.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 
 
@@ -19,16 +19,16 @@ def test_dictionary_can_load_entries_before_building_merged_indexes() -> None:
 
 def test_drug_type_constraint_excludes_icd10() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
-    candidates = generator.generate("metformin", EntityType.DRUG)
+    generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
+    candidates = generator.retrieve("metformin", EntityType.DRUG)
     assert candidates
     assert all(candidate.code_system == CodeSystem.RXNORM for candidate in candidates)
 
 
 def test_disease_type_constraint_excludes_rxnorm() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
-    candidates = generator.generate("type 2 diabetes", EntityType.DISEASE)
+    generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
+    candidates = generator.retrieve("type 2 diabetes", EntityType.DISEASE)
     assert candidates[0].code == "E11"
     assert all(candidate.code_system != CodeSystem.RXNORM for candidate in candidates)
 
@@ -45,13 +45,13 @@ def test_structured_icd_fields_expand_all_names() -> None:
 
 def test_vietnamese_medical_alias_maps_to_icd_code() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+    generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
 
-    hypertension = generator.generate("cao huyết áp", EntityType.DISEASE)
-    myocardial_infarction = generator.generate("nhồi máu cơ tim", EntityType.DISEASE)
-    copd = generator.generate("bệnh phổi tắc nghẽn mạn tính", EntityType.DISEASE)
-    ckd = generator.generate("suy thận mạn", EntityType.DISEASE)
-    gerd = generator.generate("GERD", EntityType.DISEASE)
+    hypertension = generator.retrieve("cao huyết áp", EntityType.DISEASE)
+    myocardial_infarction = generator.retrieve("nhồi máu cơ tim", EntityType.DISEASE)
+    copd = generator.retrieve("bệnh phổi tắc nghẽn mạn tính", EntityType.DISEASE)
+    ckd = generator.retrieve("suy thận mạn", EntityType.DISEASE)
+    gerd = generator.retrieve("GERD", EntityType.DISEASE)
 
     assert hypertension[0].code == "I10"
     assert myocardial_infarction[0].code == "I21.9"
@@ -75,9 +75,9 @@ def test_dictionary_alias_overlay_expands_runtime_candidate_lookup(tmp_path) -> 
         encoding="utf-8",
     )
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl", alias_overlay_path=alias_path)
-    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+    generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
 
-    candidates = generator.generate("đái đường", EntityType.DISEASE)
+    candidates = generator.retrieve("đái đường", EntityType.DISEASE)
 
     assert candidates[0].code == "E11"
     assert candidates[0].code_system == CodeSystem.ICD10
@@ -86,9 +86,9 @@ def test_dictionary_alias_overlay_expands_runtime_candidate_lookup(tmp_path) -> 
 
 def test_rxnorm_drug_fields_expand_aliases_without_icd_leakage() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+    generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
 
-    candidates = generator.generate("Ventolin", EntityType.DRUG)
+    candidates = generator.retrieve("Ventolin", EntityType.DRUG)
 
     assert candidates[0].code == "435"
     assert candidates[0].code_system == CodeSystem.RXNORM
@@ -97,11 +97,11 @@ def test_rxnorm_drug_fields_expand_aliases_without_icd_leakage() -> None:
 
 def test_source_backed_rxnorm_terms_are_dictionary_constrained() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+    generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
 
-    aspirin = generator.generate("ASA", EntityType.DRUG)
-    lisinopril = generator.generate("Zestril", EntityType.DRUG)
-    omeprazole = generator.generate("Prilosec", EntityType.DRUG)
+    aspirin = generator.retrieve("ASA", EntityType.DRUG)
+    lisinopril = generator.retrieve("Zestril", EntityType.DRUG)
+    omeprazole = generator.retrieve("Prilosec", EntityType.DRUG)
 
     assert aspirin[0].code == "1191"
     assert lisinopril[0].code == "29046"
@@ -111,13 +111,13 @@ def test_source_backed_rxnorm_terms_are_dictionary_constrained() -> None:
 
 def test_phase1_frequent_disease_terms_map_to_icd10() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+    generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
 
-    atrial_fibrillation = generator.generate("rung nhĩ", EntityType.DISEASE)
-    hyperlipidemia = generator.generate("rối loạn lipid máu", EntityType.DISEASE)
-    anemia = generator.generate("thiếu máu", EntityType.DISEASE)
-    infection = generator.generate("nhiễm khuẩn", EntityType.DISEASE)
-    kidney_stone = generator.generate("sỏi thận", EntityType.DISEASE)
+    atrial_fibrillation = generator.retrieve("rung nhĩ", EntityType.DISEASE)
+    hyperlipidemia = generator.retrieve("rối loạn lipid máu", EntityType.DISEASE)
+    anemia = generator.retrieve("thiếu máu", EntityType.DISEASE)
+    infection = generator.retrieve("nhiễm khuẩn", EntityType.DISEASE)
+    kidney_stone = generator.retrieve("sỏi thận", EntityType.DISEASE)
 
     assert atrial_fibrillation[0].code == "I48.91"
     assert hyperlipidemia[0].code == "E78.5"
@@ -129,15 +129,15 @@ def test_phase1_frequent_disease_terms_map_to_icd10() -> None:
 
 def test_phase1_frequent_drug_terms_map_to_rxnorm() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+    generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
 
-    tylenol = generator.generate("Tylenol", EntityType.DRUG)
-    lasix = generator.generate("Lasix", EntityType.DRUG)
-    metoprolol = generator.generate("Metoprolol", EntityType.DRUG)
-    nitroglycerin = generator.generate("NTG", EntityType.DRUG)
-    vancomycin = generator.generate("Vancomycin", EntityType.DRUG)
-    prednisone = generator.generate("Prednisone", EntityType.DRUG)
-    doxycycline = generator.generate("Doxycycline", EntityType.DRUG)
+    tylenol = generator.retrieve("Tylenol", EntityType.DRUG)
+    lasix = generator.retrieve("Lasix", EntityType.DRUG)
+    metoprolol = generator.retrieve("Metoprolol", EntityType.DRUG)
+    nitroglycerin = generator.retrieve("NTG", EntityType.DRUG)
+    vancomycin = generator.retrieve("Vancomycin", EntityType.DRUG)
+    prednisone = generator.retrieve("Prednisone", EntityType.DRUG)
+    doxycycline = generator.retrieve("Doxycycline", EntityType.DRUG)
 
     assert tylenol[0].code == "161"
     assert lasix[0].code == "4603"
@@ -151,7 +151,7 @@ def test_phase1_frequent_drug_terms_map_to_rxnorm() -> None:
 
 def test_phase1_ontology_lite_drug_terms_map_to_rxnorm() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+    generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
 
     expected = {
         "gleevec": "282388",
@@ -208,7 +208,7 @@ def test_phase1_ontology_lite_drug_terms_map_to_rxnorm() -> None:
     }
 
     for mention, code in expected.items():
-        candidates = generator.generate(mention, EntityType.DRUG)
+        candidates = generator.retrieve(mention, EntityType.DRUG)
         assert candidates[0].code == code
         assert all(candidate.code_system == CodeSystem.RXNORM for candidate in candidates)
 
@@ -217,10 +217,10 @@ def test_phase1_controlled_rxnorm_uses_ingredient_for_bare_brand_and_scd_for_ful
     store = DictionaryStore.from_jsonl(
         "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
     )
-    generator = CandidateGenerator(store)
+    generator = _retrieval(store)
 
-    bare_brand = generator.generate("eliquis", EntityType.DRUG)
-    full_product = generator.generate("apixaban 5 mg oral tablet", EntityType.DRUG)
+    bare_brand = generator.retrieve("eliquis", EntityType.DRUG)
+    full_product = generator.retrieve("apixaban 5 mg oral tablet", EntityType.DRUG)
 
     assert [(candidate.code, candidate.source) for candidate in bare_brand] == [
         ("1364430", "exact")
@@ -232,14 +232,14 @@ def test_phase1_controlled_rxnorm_uses_ingredient_for_bare_brand_and_scd_for_ful
 
 def test_phase1_frequent_symptom_and_lab_terms_are_dictionary_constrained() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+    generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
 
-    vomiting = generator.generate("nôn", EntityType.SYMPTOM)
-    abdominal_pain = generator.generate("đau bụng", EntityType.SYMPTOM)
-    edema = generator.generate("phù", EntityType.SYMPTOM)
-    potassium = generator.generate("kali", EntityType.LAB_TEST)
-    wbc = generator.generate("bạch cầu", EntityType.LAB_TEST)
-    troponin = generator.generate("troponin", EntityType.LAB_TEST)
+    vomiting = generator.retrieve("nôn", EntityType.SYMPTOM)
+    abdominal_pain = generator.retrieve("đau bụng", EntityType.SYMPTOM)
+    edema = generator.retrieve("phù", EntityType.SYMPTOM)
+    potassium = generator.retrieve("kali", EntityType.LAB_TEST)
+    wbc = generator.retrieve("bạch cầu", EntityType.LAB_TEST)
+    troponin = generator.retrieve("troponin", EntityType.LAB_TEST)
 
     assert vomiting[0].code == "SYMPTOM_NAUSEA_VOMITING"
     assert abdominal_pain[0].code == "SYMPTOM_ABDOMINAL_PAIN"
@@ -251,17 +251,17 @@ def test_phase1_frequent_symptom_and_lab_terms_are_dictionary_constrained() -> N
 
 def test_phase1_controlled_dictionary_includes_reviewed_vietnamese_symptom_and_lab_aliases() -> None:
     store = DictionaryStore.from_jsonl("data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
-    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+    generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
 
-    hemoptysis = generator.generate("ho ra máu", EntityType.SYMPTOM)
-    dysphagia = generator.generate("khó nuốt", EntityType.SYMPTOM)
-    ct = generator.generate("chụp CT", EntityType.LAB_TEST)
-    urinalysis = generator.generate("xét nghiệm nước tiểu", EntityType.LAB_TEST)
-    chest_xray = generator.generate("chụp x-quang ngực", EntityType.LAB_TEST)
-    blood_pressure = generator.generate("huyết áp", EntityType.LAB_TEST)
-    spo2 = generator.generate("SpO2", EntityType.LAB_TEST)
-    dysuria = generator.generate("đau buốt khi đi tiểu", EntityType.SYMPTOM)
-    procedure = generator.generate("thủ thuật", EntityType.PROCEDURE)
+    hemoptysis = generator.retrieve("ho ra máu", EntityType.SYMPTOM)
+    dysphagia = generator.retrieve("khó nuốt", EntityType.SYMPTOM)
+    ct = generator.retrieve("chụp CT", EntityType.LAB_TEST)
+    urinalysis = generator.retrieve("xét nghiệm nước tiểu", EntityType.LAB_TEST)
+    chest_xray = generator.retrieve("chụp x-quang ngực", EntityType.LAB_TEST)
+    blood_pressure = generator.retrieve("huyết áp", EntityType.LAB_TEST)
+    spo2 = generator.retrieve("SpO2", EntityType.LAB_TEST)
+    dysuria = generator.retrieve("đau buốt khi đi tiểu", EntityType.SYMPTOM)
+    procedure = generator.retrieve("thủ thuật", EntityType.PROCEDURE)
 
     assert hemoptysis[0].code == "SYMPTOM_HEMOPTYSIS"
     assert dysphagia[0].code == "SYMPTOM_DYSPHAGIA"
@@ -278,7 +278,7 @@ def test_phase1_controlled_dictionary_includes_reviewed_vietnamese_symptom_and_l
 
 def test_phase1_controlled_dictionary_includes_reviewed_standard_allowlist() -> None:
     store = DictionaryStore.from_jsonl("data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
-    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+    generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
 
     expected = {
         "gãy cổ xương đùi": "S72.0",
@@ -287,25 +287,25 @@ def test_phase1_controlled_dictionary_includes_reviewed_standard_allowlist() -> 
     }
 
     for mention, code in expected.items():
-        candidates = generator.generate(mention, EntityType.DISEASE)
+        candidates = generator.retrieve(mention, EntityType.DISEASE)
         assert candidates[0].code == code
         assert candidates[0].code_system == CodeSystem.ICD10
 
 
 def test_phase1_missed_terms_expand_ner_and_candidate_recall() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+    generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
 
-    palpitations = generator.generate("đánh trống ngực", EntityType.SYMPTOM)
-    chest_tightness = generator.generate("thắt chặt ngực", EntityType.SYMPTOM)
-    syncope = generator.generate("ngất", EntityType.SYMPTOM)
-    dizziness = generator.generate("chóng mặt", EntityType.SYMPTOM)
-    chest_discomfort = generator.generate("khó chịu vùng ngực", EntityType.SYMPTOM)
-    diabetes = generator.generate("đái tháo đường", EntityType.DISEASE)
-    cancer = generator.generate("ung thư", EntityType.DISEASE)
-    cardiovascular = generator.generate("bệnh tim mạch", EntityType.DISEASE)
-    calculus = generator.generate("sỏi", EntityType.DISEASE)
-    atenolol = generator.generate("atenolol", EntityType.DRUG)
+    palpitations = generator.retrieve("đánh trống ngực", EntityType.SYMPTOM)
+    chest_tightness = generator.retrieve("thắt chặt ngực", EntityType.SYMPTOM)
+    syncope = generator.retrieve("ngất", EntityType.SYMPTOM)
+    dizziness = generator.retrieve("chóng mặt", EntityType.SYMPTOM)
+    chest_discomfort = generator.retrieve("khó chịu vùng ngực", EntityType.SYMPTOM)
+    diabetes = generator.retrieve("đái tháo đường", EntityType.DISEASE)
+    cancer = generator.retrieve("ung thư", EntityType.DISEASE)
+    cardiovascular = generator.retrieve("bệnh tim mạch", EntityType.DISEASE)
+    calculus = generator.retrieve("sỏi", EntityType.DISEASE)
+    atenolol = generator.retrieve("atenolol", EntityType.DRUG)
 
     assert palpitations[0].code == "SYMPTOM_PALPITATIONS"
     assert chest_tightness[0].code == "SYMPTOM_CHEST_TIGHTNESS"
@@ -321,11 +321,11 @@ def test_phase1_missed_terms_expand_ner_and_candidate_recall() -> None:
 
 def test_phase1_biliary_stone_terms_prefer_specific_icd10_codes() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+    generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
 
-    gallstone = generator.generate("sỏi mật", EntityType.DISEASE)
-    bile_duct_stone = generator.generate("sỏi ống mật", EntityType.DISEASE)
-    distal_bile_duct_stone = generator.generate("sỏi đoạn cuối ống mật chủ", EntityType.DISEASE)
+    gallstone = generator.retrieve("sỏi mật", EntityType.DISEASE)
+    bile_duct_stone = generator.retrieve("sỏi ống mật", EntityType.DISEASE)
+    distal_bile_duct_stone = generator.retrieve("sỏi đoạn cuối ống mật chủ", EntityType.DISEASE)
 
     assert gallstone[0].code == "K80.20"
     assert bile_duct_stone[0].code == "K80.50"
@@ -335,7 +335,7 @@ def test_phase1_biliary_stone_terms_prefer_specific_icd10_codes() -> None:
 
 def test_phase1_ontology_lite_diagnosis_terms_map_to_icd10() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+    generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
 
     expected = {
         "hen suyễn": "J45",
@@ -371,14 +371,14 @@ def test_phase1_ontology_lite_diagnosis_terms_map_to_icd10() -> None:
     }
 
     for mention, code in expected.items():
-        candidates = generator.generate(mention, EntityType.DISEASE)
+        candidates = generator.retrieve(mention, EntityType.DISEASE)
         assert candidates[0].code == code
         assert all(candidate.code_system == CodeSystem.ICD10 for candidate in candidates)
 
 
 def test_phase1_ontology_lite_diagnosis_batch2_terms_map_to_icd10() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+    generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
 
     expected = {
         "u ác của tuyến tiền liệt": "C61",
@@ -415,46 +415,46 @@ def test_phase1_ontology_lite_diagnosis_batch2_terms_map_to_icd10() -> None:
     }
 
     for mention, code in expected.items():
-        candidates = generator.generate(mention, EntityType.DISEASE)
+        candidates = generator.retrieve(mention, EntityType.DISEASE)
         assert candidates[0].code == code
         assert all(candidate.code_system == CodeSystem.ICD10 for candidate in candidates)
 
 
 def test_phase1_empty_file_terms_expand_recall() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+    generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
 
-    assert generator.generate("hẹp động mạch cảnh", EntityType.DISEASE)[0].code == "I65.29"
-    assert generator.generate("tách thành động mạch chủ", EntityType.DISEASE)[0].code == "I71.00"
-    assert generator.generate("liệt hai chân", EntityType.DISEASE)[0].code == "G82.20"
-    assert generator.generate("béo phì", EntityType.DISEASE)[0].code == "E66.9"
-    assert generator.generate("tiểu tiện không tự chủ", EntityType.DISEASE)[0].code == "R32"
-    assert generator.generate("sa âm đạo", EntityType.DISEASE)[0].code == "N81.9"
-    assert generator.generate("bệnh rễ thần kinh", EntityType.DISEASE)[0].code == "M54.10"
-    assert generator.generate("loét ngón chân", EntityType.DISEASE)[0].code == "L97.509"
-    assert generator.generate("bàn chân vẹo bẩm sinh", EntityType.DISEASE)[0].code == "Q66.89"
-    assert generator.generate("gãy xương sườn trái", EntityType.DISEASE)[0].code == "S22.42"
-    assert generator.generate("vết thương thấu bụng", EntityType.DISEASE)[0].code == "S31.109"
-    assert generator.generate("giọng khàn", EntityType.SYMPTOM)[0].code == "SYMPTOM_HOARSENESS"
-    assert generator.generate("tổn thương dây thanh quản", EntityType.DISEASE)[0].code == "J38.3"
-    assert generator.generate("cơn co tử cung", EntityType.SYMPTOM)[0].code == "SYMPTOM_UTERINE_CONTRACTIONS"
+    assert generator.retrieve("hẹp động mạch cảnh", EntityType.DISEASE)[0].code == "I65.29"
+    assert generator.retrieve("tách thành động mạch chủ", EntityType.DISEASE)[0].code == "I71.00"
+    assert generator.retrieve("liệt hai chân", EntityType.DISEASE)[0].code == "G82.20"
+    assert generator.retrieve("béo phì", EntityType.DISEASE)[0].code == "E66.9"
+    assert generator.retrieve("tiểu tiện không tự chủ", EntityType.DISEASE)[0].code == "R32"
+    assert generator.retrieve("sa âm đạo", EntityType.DISEASE)[0].code == "N81.9"
+    assert generator.retrieve("bệnh rễ thần kinh", EntityType.DISEASE)[0].code == "M54.10"
+    assert generator.retrieve("loét ngón chân", EntityType.DISEASE)[0].code == "L97.509"
+    assert generator.retrieve("bàn chân vẹo bẩm sinh", EntityType.DISEASE)[0].code == "Q66.89"
+    assert generator.retrieve("gãy xương sườn trái", EntityType.DISEASE)[0].code == "S22.42"
+    assert generator.retrieve("vết thương thấu bụng", EntityType.DISEASE)[0].code == "S31.109"
+    assert generator.retrieve("giọng khàn", EntityType.SYMPTOM)[0].code == "SYMPTOM_HOARSENESS"
+    assert generator.retrieve("tổn thương dây thanh quản", EntityType.DISEASE)[0].code == "J38.3"
+    assert generator.retrieve("cơn co tử cung", EntityType.SYMPTOM)[0].code == "SYMPTOM_UTERINE_CONTRACTIONS"
 
 
 def test_phase1_new_empty_file_terms_expand_recall() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    generator = CandidateGenerator(store, "data/dictionaries/abbreviations.jsonl")
+    generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
 
-    assert generator.generate("xơ gan do rượu", EntityType.DISEASE)[0].code == "K70.3"
-    assert generator.generate("hội chứng não gan", EntityType.DISEASE)[0].code == "K76.82"
-    assert generator.generate("xuất huyết nội sọ không do chấn thương", EntityType.DISEASE)[0].code == "I62.9"
-    assert generator.generate("rối loạn lưỡng cực", EntityType.DISEASE)[0].code == "F31.9"
-    assert generator.generate("rối loạn lo âu", EntityType.DISEASE)[0].code == "F41.9"
-    assert generator.generate("rối loạn cảm xúc", EntityType.DISEASE)[0].code == "F39"
-    assert generator.generate("ý định tự tử", EntityType.DISEASE)[0].code == "R45.851"
-    assert generator.generate("hoảng sợ", EntityType.DISEASE)[0].code == "F41.0"
-    assert generator.generate("hoang tưởng", EntityType.DISEASE)[0].code == "F22"
-    assert generator.generate("clonidine", EntityType.DRUG)[0].code == "2599"
-    assert generator.generate("suboxone", EntityType.DRUG)[0].code == "352364"
+    assert generator.retrieve("xơ gan do rượu", EntityType.DISEASE)[0].code == "K70.3"
+    assert generator.retrieve("hội chứng não gan", EntityType.DISEASE)[0].code == "K76.82"
+    assert generator.retrieve("xuất huyết nội sọ không do chấn thương", EntityType.DISEASE)[0].code == "I62.9"
+    assert generator.retrieve("rối loạn lưỡng cực", EntityType.DISEASE)[0].code == "F31.9"
+    assert generator.retrieve("rối loạn lo âu", EntityType.DISEASE)[0].code == "F41.9"
+    assert generator.retrieve("rối loạn cảm xúc", EntityType.DISEASE)[0].code == "F39"
+    assert generator.retrieve("ý định tự tử", EntityType.DISEASE)[0].code == "R45.851"
+    assert generator.retrieve("hoảng sợ", EntityType.DISEASE)[0].code == "F41.0"
+    assert generator.retrieve("hoang tưởng", EntityType.DISEASE)[0].code == "F22"
+    assert generator.retrieve("clonidine", EntityType.DRUG)[0].code == "2599"
+    assert generator.retrieve("suboxone", EntityType.DRUG)[0].code == "352364"
 
 
 def test_blocked_alias_removes_false_positive_term() -> None:

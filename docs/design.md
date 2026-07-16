@@ -17,7 +17,7 @@ ClinicalDocument
   -> split_sentences
   -> RuleBasedNER
   -> AssertionClassifier
-  -> CandidateGenerator
+  -> RetrievalPipeline
   -> HeuristicReranker
   -> EntityLinker.apply_candidates
   -> KGValidator.validate_entities
@@ -48,7 +48,8 @@ Internal schemas live under `src/medical_kg_nlp/schema/`:
 - `DatasetAdapter.load_documents(path)` returns `list[ClinicalDocument]`.
 - `RuleBasedNER.extract(text)` returns offset-valid entities.
 - `AssertionClassifier.classify(entity, sentence)` returns an assertion label.
-- `CandidateGenerator.generate(mention, entity_type, context_window)` returns dictionary-constrained candidates.
+- `RetrievalPipeline.retrieve(mention, entity_type, context_window)` composes storage-neutral
+  retriever adapters and returns type-constrained candidates.
 - `HeuristicReranker.rerank(candidates, context_window)` orders candidates.
 - `EntityLinker.apply_candidates(entity, candidates)` writes top code and candidate list.
 - `RuleRelationExtractor.extract(entities, sentences)` returns typed relations.

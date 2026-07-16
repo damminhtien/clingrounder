@@ -12,7 +12,7 @@ from medical_kg_nlp.evaluation.phase1 import (
 )
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
 from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
-from medical_kg_nlp.retrieval.candidate_generator import CandidateGenerator
+from medical_kg_nlp.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
 from medical_kg_nlp.utils.io import read_source_text
 
@@ -114,9 +114,9 @@ def test_btc_rxnorm_memory_is_dictionary_constrained() -> None:
         semantic_type=EntityType.DRUG,
         rxnorm_tty="SCD",
     )
-    generator = CandidateGenerator(DictionaryStore([entry]), retrieval_sources=("exact",))
+    generator = _retrieval(DictionaryStore([entry]), retrieval_sources=("exact",))
 
-    candidates = generator.generate(
+    candidates = generator.retrieve(
         "amlodipine 10 mg po daily", EntityType.DRUG
     )
 
@@ -124,7 +124,7 @@ def test_btc_rxnorm_memory_is_dictionary_constrained() -> None:
         ("308135", "btc_sample")
     ]
     assert (
-        CandidateGenerator(DictionaryStore([]), retrieval_sources=("exact",)).generate(
+        _retrieval(DictionaryStore([]), retrieval_sources=("exact",)).retrieve(
             "amlodipine 10 mg po daily", EntityType.DRUG
         )
         == []

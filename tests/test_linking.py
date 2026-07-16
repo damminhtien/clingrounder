@@ -3,11 +3,13 @@ from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.linking.linker import EntityLinker
 from medical_kg_nlp.linking.reranker import HeuristicReranker
+from medical_kg_nlp.retrieval.adapters import ExactRetrieverAdapter
 from medical_kg_nlp.retrieval.bm25_retriever import BM25Retriever
-from medical_kg_nlp.retrieval.candidate_generator import CandidateGenerator
+from medical_kg_nlp.retrieval.pipeline import RetrievalPipeline
+from medical_kg_nlp.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
-import pytest
+from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
 
 
 def test_bm25_uses_fixed_calibration_instead_of_query_maximum() -> None:
@@ -20,7 +22,7 @@ def test_bm25_uses_fixed_calibration_instead_of_query_maximum() -> None:
 
 def test_candidate_merge_is_order_independent_and_deduplicates_output_code() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    generator = CandidateGenerator(store)
+    generator = _retrieval(store)
     exact = _candidate("concept-exact", "I10", 1.0, "exact")
     duplicate_code = _candidate("concept-fuzzy", "I10", 0.8, "fuzzy")
     unrelated = _candidate("concept-other", "I11", 0.7, "fuzzy")
@@ -41,9 +43,7 @@ def test_candidate_merge_is_order_independent_and_deduplicates_output_code() -> 
     assert i10.sources == ("exact", "fuzzy")
 
 
-def test_unique_exact_output_short_circuits_approximate_retrieval(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_unique_exact_output_short_circuits_approximate_retrieval() -> None:
     store = DictionaryStore(
         [
             ConceptEntry(
@@ -55,16 +55,28 @@ def test_unique_exact_output_short_circuits_approximate_retrieval(
             )
         ]
     )
-    generator = CandidateGenerator(store)
+    repository = InMemoryTerminologyRepository(store)
 
-    def fail(*args: object, **kwargs: object) -> list[Candidate]:
-        raise AssertionError("approximate retriever should not run")
+    class FailingRetriever:
+        source = "fuzzy"
+        terminal_on_match = False
+        unique_output_short_circuit = False
 
-    monkeypatch.setattr(generator.fuzzy, "retrieve", fail)
-    monkeypatch.setattr(generator.char_ngram, "retrieve", fail)
-    monkeypatch.setattr(generator.bm25, "retrieve", fail)
+        def retrieve(
+            self,
+            mention: str,
+            entity_type: EntityType,
+            context_window: str,
+            limit: int,
+        ) -> list[Candidate]:
+            raise AssertionError("approximate retriever should not run")
 
-    candidates = generator.generate("tăng huyết áp", EntityType.DISEASE)
+    generator = RetrievalPipeline(
+        repository,
+        (ExactRetrieverAdapter(repository), FailingRetriever()),
+    )
+
+    candidates = generator.retrieve("tăng huyết áp", EntityType.DISEASE)
 
     assert [(candidate.code, candidate.sources) for candidate in candidates] == [
         ("I10", ("exact",))
@@ -72,9 +84,7 @@ def test_unique_exact_output_short_circuits_approximate_retrieval(
     assert candidates[0].score == 1.0
 
 
-def test_ambiguous_exact_output_continues_approximate_retrieval(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_ambiguous_exact_output_continues_approximate_retrieval() -> None:
     store = DictionaryStore(
         [
             ConceptEntry(
@@ -95,23 +105,32 @@ def test_ambiguous_exact_output_continues_approximate_retrieval(
             ),
         ]
     )
-    generator = CandidateGenerator(store, retrieval_sources=("exact", "fuzzy"))
-    called = False
+    repository = InMemoryTerminologyRepository(store)
+    calls: list[str] = []
 
-    def retrieve(
-        mention: str,
-        entity_type: EntityType,
-        limit: int,
-    ) -> list[Candidate]:
-        nonlocal called
-        called = True
-        return []
+    class RecordingRetriever:
+        source = "fuzzy"
+        terminal_on_match = False
+        unique_output_short_circuit = False
 
-    monkeypatch.setattr(generator.fuzzy, "retrieve", retrieve)
+        def retrieve(
+            self,
+            mention: str,
+            entity_type: EntityType,
+            context_window: str,
+            limit: int,
+        ) -> list[Candidate]:
+            calls.append(mention)
+            return []
 
-    generator.generate("brand", EntityType.DRUG)
+    generator = RetrievalPipeline(
+        repository,
+        (ExactRetrieverAdapter(repository), RecordingRetriever()),
+    )
 
-    assert called is True
+    generator.retrieve("brand", EntityType.DRUG)
+
+    assert calls == ["brand"]
 
 
 def test_reranker_penalizes_conflicting_rxnorm_strength() -> None:
@@ -119,7 +138,9 @@ def test_reranker_penalizes_conflicting_rxnorm_strength() -> None:
         _drug_entry("RX:1", "1", "Drug 1 mg tablet"),
         _drug_entry("RX:05", "05", "Drug 0.5 mg tablet"),
     ]
-    reranker = HeuristicReranker(DictionaryStore(entries))
+    reranker = HeuristicReranker(
+        InMemoryTerminologyRepository(DictionaryStore(entries))
+    )
 
     ranked = reranker.rerank(
         [
@@ -140,7 +161,9 @@ def test_reranker_breaks_exact_score_tie_with_administered_dose_without_hard_rej
         _drug_entry("RX:1", "1", "clonazepam 1 mg oral tablet"),
         _drug_entry("RX:2", "2", "clonazepam 2 mg oral tablet"),
     ]
-    reranker = HeuristicReranker(DictionaryStore(entries))
+    reranker = HeuristicReranker(
+        InMemoryTerminologyRepository(DictionaryStore(entries))
+    )
 
     ranked = reranker.rerank(
         [
@@ -181,7 +204,9 @@ def test_reranker_uses_rxnorm_tty_for_bare_vs_structured_drug_mentions() -> None
             strength="5 MG",
         ),
     ]
-    reranker = HeuristicReranker(DictionaryStore(entries))
+    reranker = HeuristicReranker(
+        InMemoryTerminologyRepository(DictionaryStore(entries))
+    )
     candidates = [
         _candidate("RXNORM:1364430", "1364430", 0.8, "fuzzy"),
         _candidate("RXNORM:1364445", "1364445", 0.8, "fuzzy"),
@@ -199,7 +224,8 @@ def test_reranker_uses_rxnorm_tty_for_bare_vs_structured_drug_mentions() -> None
 def test_linker_keeps_candidates_but_abstains_without_score_margin() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     linker = EntityLinker(
-        CandidateGenerator(store),
+        _retrieval(store),
+        InMemoryTerminologyRepository(store),
         assignment_threshold=0.75,
         assignment_margin=0.05,
     )
@@ -272,7 +298,8 @@ def test_linker_caps_qualified_candidates_at_five() -> None:
 def test_linker_supports_type_and_source_specific_candidate_thresholds() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     linker = EntityLinker(
-        CandidateGenerator(store),
+        _retrieval(store),
+        InMemoryTerminologyRepository(store),
         candidate_threshold=0.75,
         candidate_thresholds_by_entity_type={EntityType.DISEASE: 0.85},
         candidate_thresholds_by_source={"exact": 0.70},
@@ -290,7 +317,8 @@ def test_linker_supports_type_and_source_specific_candidate_thresholds() -> None
 def _linker(*, candidate_relative_margin: float = 0.05) -> EntityLinker:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     return EntityLinker(
-        CandidateGenerator(store),
+        _retrieval(store),
+        InMemoryTerminologyRepository(store),
         candidate_relative_margin=candidate_relative_margin,
     )
 
