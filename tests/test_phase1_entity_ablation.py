@@ -4,11 +4,11 @@ import hashlib
 import json
 from pathlib import Path
 
-from medical_kg_nlp.evaluation.manual_gold import (
+from medical_kg_nlp.benchmarks.phase1.manual_gold import (
     build_manual_gold_split_manifest,
     write_manual_gold_split_manifest,
 )
-from medical_kg_nlp.evaluation.phase1_entity_ablation import (
+from medical_kg_nlp.benchmarks.phase1.phase1_entity_ablation import (
     Phase1EntityAblationConfig,
     run_phase1_entity_ablations,
 )

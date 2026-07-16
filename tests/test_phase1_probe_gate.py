@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from medical_kg_nlp.evaluation.phase1_probe_gate import (
+from medical_kg_nlp.benchmarks.phase1.phase1_probe_gate import (
     append_public_probe_journal,
     evaluate_public_probe_promotion,
 )

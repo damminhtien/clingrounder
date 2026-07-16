@@ -8,8 +8,8 @@ from pathlib import Path
 from statistics import mean, median
 from typing import Any
 
-from medical_kg_nlp.evaluation.manual_gold import manual_gold_split
-from medical_kg_nlp.evaluation.phase1 import score_phase1_documents
+from medical_kg_nlp.benchmarks.phase1.manual_gold import manual_gold_split
+from medical_kg_nlp.benchmarks.phase1.phase1 import score_phase1_documents
 from medical_kg_nlp.utils.text import normalize_for_match, text_window
 
 

@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from medical_kg_nlp.evaluation.loop_journal import write_experiment_journal
+from medical_kg_nlp.experiments.loop_journal import write_experiment_journal
 
 
 def write_loop_engineering_report(

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.evaluation.manual_gold_convention import (
+from medical_kg_nlp.benchmarks.phase1.manual_gold_convention import (
     audit_manual_gold_convention,
     write_manual_gold_convention_report,
 )

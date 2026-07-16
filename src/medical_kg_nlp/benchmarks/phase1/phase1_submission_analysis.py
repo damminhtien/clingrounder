@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.evaluation.phase1 import validate_phase1_submission_zip
+from medical_kg_nlp.benchmarks.phase1.phase1 import validate_phase1_submission_zip
 from medical_kg_nlp.utils.io import read_source_text
 
 _CODABLE_TYPES = {"CHẨN_ĐOÁN", "THUỐC"}

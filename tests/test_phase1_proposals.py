@@ -5,7 +5,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-from medical_kg_nlp.evaluation.phase1_proposals import (
+import pytest
+
+from medical_kg_nlp.benchmarks.phase1.phase1_proposals import (
     build_phase1_proposal_matrix,
     proposal_consensus_keys,
     write_phase1_proposal_matrix,
@@ -64,6 +66,7 @@ def test_proposal_matrix_excludes_invalid_offsets_and_writes_artifacts(tmp_path:
     assert "proposal" not in blind
 
 
+@pytest.mark.release
 def test_proposal_matrix_cli_smoke(tmp_path: Path) -> None:
     input_dir = tmp_path / "input"
     source_a = tmp_path / "a"

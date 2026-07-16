@@ -8,9 +8,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from medical_kg_nlp.benchmarks.phase1.pipeline_report import build_phase1_pipeline_report
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.evaluation.pipeline_report import build_pipeline_report, write_pipeline_report
+from medical_kg_nlp.evaluation.pipeline_report import write_pipeline_report
 from medical_kg_nlp.pipeline.parallel_batch import (
     ParallelBatchOptions,
     run_batch_with_trace_parallel,
@@ -109,7 +110,7 @@ def main() -> None:
             output_dir / "predictions.jsonl", [prediction.to_json() for prediction in predictions]
         )
 
-    report = build_pipeline_report(
+    report = build_phase1_pipeline_report(
         documents=documents,
         gold=gold,
         predictions=predictions,

@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.evaluation.phase1_probe_gate import (
+from medical_kg_nlp.benchmarks.phase1.phase1_probe_gate import (
     append_public_probe_journal,
     evaluate_public_probe_promotion,
 )

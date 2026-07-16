@@ -3,14 +3,14 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from medical_kg_nlp.evaluation.phase1_selective_calibration import (
+from medical_kg_nlp.benchmarks.phase1.phase1_selective_calibration import (
     CandidateCalibrationOptions,
     build_assertion_calibration_report,
     build_candidate_calibration_report,
     write_candidate_calibration_report,
     write_calibrated_assertion_map,
 )
-from medical_kg_nlp.evaluation.phase1 import load_calibrated_assertion_map
+from medical_kg_nlp.benchmarks.phase1.phase1 import load_calibrated_assertion_map
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.schema.annotation import (
     AssertionEvidence,

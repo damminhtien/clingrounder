@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from medical_kg_nlp.evaluation.manual_gold_manifest import (
+from medical_kg_nlp.benchmarks.phase1.manual_gold_manifest import (
     DEFAULT_CANDIDATE_POLICY,
     sync_manual_gold_manifest,
     validate_manual_gold_manifest,

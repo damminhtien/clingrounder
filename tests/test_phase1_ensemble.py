@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import zipfile
 
-from medical_kg_nlp.evaluation.phase1_ensemble import (
+from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import (
     PHASE1_ENTITY_TYPE_ORDER,
     expand_repeated_phase1_mentions,
     load_phase1_output_source,

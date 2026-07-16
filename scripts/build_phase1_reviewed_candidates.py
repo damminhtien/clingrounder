@@ -8,9 +8,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.evaluation.manual_gold import load_phase1_directory
-from medical_kg_nlp.evaluation.phase1_rule_registry import write_phase1_rule_registry
-from medical_kg_nlp.evaluation.phase1_selective_overlays import (
+from medical_kg_nlp.benchmarks.phase1.manual_gold import load_phase1_directory
+from medical_kg_nlp.benchmarks.phase1.phase1_rule_registry import write_phase1_rule_registry
+from medical_kg_nlp.benchmarks.phase1.phase1_selective_overlays import (
     compile_reviewed_candidate_registry,
     write_reviewed_candidate_map,
 )

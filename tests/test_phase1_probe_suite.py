@@ -9,6 +9,7 @@ import pytest
 
 
 @pytest.mark.parametrize("source_count", [2, 3])
+@pytest.mark.release
 def test_top10_probe_suite_cli_builds_isolated_validated_artifacts(
     tmp_path: Path,
     source_count: int,

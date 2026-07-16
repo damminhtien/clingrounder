@@ -3,9 +3,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 import yaml
 
-from medical_kg_nlp.evaluation.entity_wer_report import (
+from medical_kg_nlp.benchmarks.phase1.entity_wer_report import (
     build_entity_wer_report,
     write_entity_wer_report,
 )
@@ -75,6 +77,7 @@ def test_entity_wer_report_tracks_source_boundary_missing_and_spurious(tmp_path:
     assert (output_dir / "summary.md").exists()
 
 
+@pytest.mark.release
 def test_entity_wer_cli_smoke(tmp_path: Path) -> None:
     text = "ho"
     gold_dir = tmp_path / "gold"

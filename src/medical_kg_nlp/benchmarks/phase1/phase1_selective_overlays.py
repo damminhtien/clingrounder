@@ -8,9 +8,9 @@ from pathlib import Path
 from typing import Any, Iterable, Literal, Mapping
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.evaluation.manual_gold import manual_gold_split
-from medical_kg_nlp.evaluation.phase1_candidate_overlay import TT06_SOURCE_ID
-from medical_kg_nlp.evaluation.phase1_rule_registry import (
+from medical_kg_nlp.benchmarks.phase1.manual_gold import manual_gold_split
+from medical_kg_nlp.benchmarks.phase1.phase1_candidate_overlay import TT06_SOURCE_ID
+from medical_kg_nlp.benchmarks.phase1.phase1_rule_registry import (
     Phase1Rule,
     Phase1RuleRegistry,
     phase1_rule_registry_from_data,

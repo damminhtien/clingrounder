@@ -8,27 +8,27 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.evaluation.entity_wer_report import (
+from medical_kg_nlp.benchmarks.phase1.entity_wer_report import (
     build_entity_wer_report,
     write_entity_wer_report,
 )
-from medical_kg_nlp.evaluation.manual_gold import (
+from medical_kg_nlp.benchmarks.phase1.manual_gold import (
     evaluate_manual_gold,
     load_phase1_directory,
     verify_manual_gold_split_manifest,
 )
-from medical_kg_nlp.evaluation.phase1 import (
+from medical_kg_nlp.benchmarks.phase1.phase1 import (
     validate_phase1_submission_dir,
     validate_phase1_submission_zip,
     zip_phase1_output_dir,
 )
-from medical_kg_nlp.evaluation.phase1_ensemble import load_phase1_output_source
-from medical_kg_nlp.evaluation.phase1_entity_gates import (
+from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import load_phase1_output_source
+from medical_kg_nlp.benchmarks.phase1.phase1_entity_gates import (
     Phase1EntityGateConfig,
     apply_phase1_entity_gates,
     compile_boundary_rule_candidates,
 )
-from medical_kg_nlp.evaluation.phase1_rule_registry import write_phase1_rule_registry
+from medical_kg_nlp.benchmarks.phase1.phase1_rule_registry import write_phase1_rule_registry
 from medical_kg_nlp.utils.io import read_source_text, read_yaml
 
 

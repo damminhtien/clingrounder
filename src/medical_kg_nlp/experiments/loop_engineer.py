@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
-from medical_kg_nlp.evaluation.loop_analysis import (
+from medical_kg_nlp.experiments.loop_analysis import (
     baseline_report_id,
     context_confusion_rows,
     decide_experiment,
@@ -13,14 +13,14 @@ from medical_kg_nlp.evaluation.loop_analysis import (
     recommend_next_experiment,
     top_error_cases,
 )
-from medical_kg_nlp.evaluation.loop_agent import (
+from medical_kg_nlp.experiments.loop_agent import (
     build_agent_actions,
     build_agent_context,
     build_agent_poll_state,
     render_agent_brief,
     render_agent_compact_markdown,
 )
-from medical_kg_nlp.evaluation.loop_artifacts import (
+from medical_kg_nlp.experiments.loop_artifacts import (
     render_decision_markdown,
     render_next_experiment_markdown,
     render_top_error_cases_markdown,

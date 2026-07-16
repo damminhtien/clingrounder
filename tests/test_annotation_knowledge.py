@@ -3,9 +3,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 import yaml
 
-from medical_kg_nlp.evaluation.annotation_knowledge import (
+from medical_kg_nlp.benchmarks.phase1.annotation_knowledge import (
     compile_annotation_knowledge,
     write_annotation_knowledge,
 )
@@ -228,6 +230,7 @@ def test_compiler_records_confirmed_runtime_exclusion_resolution(tmp_path: Path)
     assert report["conflict_resolutions"][0]["resolution_action"] == "exclude_from_runtime"
 
 
+@pytest.mark.release
 def test_annotation_knowledge_cli_smoke(tmp_path: Path) -> None:
     gold_dir = tmp_path / "gold"
     gold_dir.mkdir()
@@ -265,6 +268,7 @@ def test_annotation_knowledge_cli_smoke(tmp_path: Path) -> None:
     assert (output_dir / "conflict_summary.json").exists()
 
 
+@pytest.mark.release
 def test_annotation_knowledge_cli_fails_on_unresolved_conflict(tmp_path: Path) -> None:
     gold_dir = tmp_path / "gold"
     gold_dir.mkdir()

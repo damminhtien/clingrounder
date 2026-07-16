@@ -151,14 +151,14 @@ AGENT_PLAYBOOKS: dict[str, AgentPlaybook] = {
     ),
     "evaluation": AgentPlaybook(
         focus_files=(
-            "src/medical_kg_nlp/evaluation/phase1.py",
+            "src/medical_kg_nlp/benchmarks/phase1/phase1.py",
             "src/medical_kg_nlp/evaluation/pipeline_report.py",
-            "src/medical_kg_nlp/evaluation/loop_engineer.py",
-            "src/medical_kg_nlp/evaluation/loop_analysis.py",
-            "src/medical_kg_nlp/evaluation/loop_artifacts.py",
-            "src/medical_kg_nlp/evaluation/loop_agent.py",
-            "src/medical_kg_nlp/evaluation/loop_journal.py",
-            "src/medical_kg_nlp/evaluation/loop_policy.py",
+            "src/medical_kg_nlp/experiments/loop_engineer.py",
+            "src/medical_kg_nlp/experiments/loop_analysis.py",
+            "src/medical_kg_nlp/experiments/loop_artifacts.py",
+            "src/medical_kg_nlp/experiments/loop_agent.py",
+            "src/medical_kg_nlp/experiments/loop_journal.py",
+            "src/medical_kg_nlp/experiments/loop_policy.py",
             "scripts/build_phase1_submission.py",
             "scripts/validate_phase1_submission.py",
             "tests/test_phase1.py",
@@ -177,7 +177,7 @@ AGENT_PLAYBOOKS: dict[str, AgentPlaybook] = {
     ),
     "phase1_submission": AgentPlaybook(
         focus_files=(
-            "src/medical_kg_nlp/evaluation/phase1.py",
+            "src/medical_kg_nlp/benchmarks/phase1/phase1.py",
             "src/medical_kg_nlp/evaluation/pipeline_report.py",
             "scripts/build_phase1_submission.py",
             "scripts/validate_phase1_submission.py",

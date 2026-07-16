@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.evaluation.policy_holdout import (
+from medical_kg_nlp.benchmarks.phase1.policy_holdout import (
     build_policy_holdout_manifest,
     open_policy_holdout_manifest,
     verify_policy_holdout_manifest,

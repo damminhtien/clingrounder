@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.evaluation.manual_gold import (
+from medical_kg_nlp.benchmarks.phase1.manual_gold import (
     build_manual_gold_split_manifest,
     verify_manual_gold_split_manifest,
     write_manual_gold_split_manifest,

@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import Any, Literal
 import zipfile
 
-from medical_kg_nlp.evaluation.manual_gold import load_phase1_directory, manual_gold_split
-from medical_kg_nlp.evaluation.phase1 import score_phase1_documents
+from medical_kg_nlp.benchmarks.phase1.manual_gold import load_phase1_directory, manual_gold_split
+from medical_kg_nlp.benchmarks.phase1.phase1 import score_phase1_documents
 
 
 PHASE1_ENTITY_TYPE_ORDER = (

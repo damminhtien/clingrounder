@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.evaluation.loop_engineer import (
+from medical_kg_nlp.experiments.loop_engineer import (
     build_loop_engineering_report,
     write_loop_engineering_report,
 )

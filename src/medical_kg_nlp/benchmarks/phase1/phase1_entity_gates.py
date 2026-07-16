@@ -10,8 +10,8 @@ from typing import Any, Mapping
 
 import yaml
 
-from medical_kg_nlp.evaluation.manual_gold import manual_gold_split
-from medical_kg_nlp.evaluation.phase1_rule_registry import (
+from medical_kg_nlp.benchmarks.phase1.manual_gold import manual_gold_split
+from medical_kg_nlp.benchmarks.phase1.phase1_rule_registry import (
     INTERNAL_RETYPE_TYPES,
     Phase1Rule,
     Phase1RuleRegistry,

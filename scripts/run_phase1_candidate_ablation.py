@@ -12,23 +12,23 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.evaluation.manual_gold import (
+from medical_kg_nlp.benchmarks.phase1.manual_gold import (
     evaluate_manual_gold,
     load_phase1_directory,
     write_manual_gold_report,
 )
-from medical_kg_nlp.evaluation.phase1 import (
+from medical_kg_nlp.benchmarks.phase1.phase1 import (
     validate_phase1_submission_dir,
     validate_phase1_submission_zip,
     zip_phase1_output_dir,
 )
-from medical_kg_nlp.evaluation.phase1_candidate_overlay import (
+from medical_kg_nlp.benchmarks.phase1.phase1_candidate_overlay import (
     Phase1CandidateIndex,
     Phase1CandidateOverlayConfig,
     apply_phase1_candidate_overlay,
     candidate_ablation_passes,
 )
-from medical_kg_nlp.evaluation.phase1_ensemble import load_phase1_output_source
+from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import load_phase1_output_source
 
 
 _VARIANTS = (

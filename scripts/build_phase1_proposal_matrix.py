@@ -8,8 +8,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.evaluation.phase1_ensemble import load_phase1_output_source
-from medical_kg_nlp.evaluation.phase1_proposals import (
+from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import load_phase1_output_source
+from medical_kg_nlp.benchmarks.phase1.phase1_proposals import (
     build_phase1_proposal_matrix,
     write_phase1_proposal_matrix,
 )

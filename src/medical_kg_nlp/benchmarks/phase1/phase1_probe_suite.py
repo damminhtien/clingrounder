@@ -8,38 +8,38 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.evaluation.annotation_knowledge import (
+from medical_kg_nlp.benchmarks.phase1.annotation_knowledge import (
     compile_annotation_knowledge,
     write_annotation_knowledge,
 )
-from medical_kg_nlp.evaluation.manual_gold import (
+from medical_kg_nlp.benchmarks.phase1.manual_gold import (
     load_phase1_directory,
     manual_gold_split,
 )
-from medical_kg_nlp.evaluation.phase1 import (
+from medical_kg_nlp.benchmarks.phase1.phase1 import (
     score_phase1_documents,
     validate_phase1_submission_dir,
     validate_phase1_submission_zip,
     zip_phase1_output_dir,
 )
-from medical_kg_nlp.evaluation.phase1_ensemble import load_phase1_output_source
-from medical_kg_nlp.evaluation.phase1_entity_gates import (
+from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import load_phase1_output_source
+from medical_kg_nlp.benchmarks.phase1.phase1_entity_gates import (
     Phase1EntityGateConfig,
     apply_phase1_entity_gates,
     compile_boundary_rule_candidates,
 )
-from medical_kg_nlp.evaluation.phase1_proposals import (
+from medical_kg_nlp.benchmarks.phase1.phase1_proposals import (
     build_phase1_proposal_matrix,
     proposal_consensus_keys,
     write_phase1_proposal_matrix,
 )
-from medical_kg_nlp.evaluation.phase1_rule_registry import (
+from medical_kg_nlp.benchmarks.phase1.phase1_rule_registry import (
     Phase1RuleRegistry,
     load_phase1_rule_registry,
     write_phase1_rule_registry,
 )
 from medical_kg_nlp.utils.io import read_source_text
-from medical_kg_nlp.evaluation.phase1_selective_overlays import (
+from medical_kg_nlp.benchmarks.phase1.phase1_selective_overlays import (
     AssertionRegime,
     CandidateRegime,
     apply_selective_assertions,

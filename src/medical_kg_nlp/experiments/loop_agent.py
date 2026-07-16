@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from medical_kg_nlp.evaluation.loop_policy import AGENT_PLAYBOOKS, DEFAULT_AGENT_PLAYBOOK
+from medical_kg_nlp.experiments.loop_policy import AGENT_PLAYBOOKS, DEFAULT_AGENT_PLAYBOOK
 
 
 def build_agent_context(

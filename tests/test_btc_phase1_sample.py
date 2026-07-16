@@ -5,7 +5,7 @@ from pathlib import Path
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.evaluation.phase1 import (
+from medical_kg_nlp.benchmarks.phase1.phase1 import (
     load_phase1_text_documents,
     prediction_to_phase1_entities,
     validate_phase1_entities,

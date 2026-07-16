@@ -5,6 +5,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
 from medical_kg_nlp.pipeline.parallel_batch import ParallelBatchOptions, run_batch_with_trace_parallel
 from medical_kg_nlp.schema.document import ClinicalDocument
@@ -32,6 +34,7 @@ def test_parallel_batch_thread_backend_preserves_input_order_and_traces() -> Non
     assert runtime_metrics["worker_initialization_in_processing"] is False
 
 
+@pytest.mark.integration
 def test_parallel_batch_process_backend_preserves_input_order() -> None:
     documents = _two_sample_documents()
 
@@ -44,6 +47,7 @@ def test_parallel_batch_process_backend_preserves_input_order() -> None:
     assert [result.trace.document_id for result in results] == ["sample_001", "sample_002"]
 
 
+@pytest.mark.integration
 def test_run_pipeline_cli_accepts_parallel_workers(tmp_path: Path) -> None:
     output_path = tmp_path / "predictions.jsonl"
 

@@ -1,4 +1,4 @@
-from medical_kg_nlp.evaluation.ablation import aggregate_traces, flatten_metrics
+from medical_kg_nlp.experiments.ablation import aggregate_traces, flatten_metrics
 from medical_kg_nlp.pipeline.tracing import PipelineTrace, StageMeasurement
 
 

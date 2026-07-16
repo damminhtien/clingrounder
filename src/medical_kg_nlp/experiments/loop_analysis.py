@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from medical_kg_nlp.evaluation.loop_policy import (
+from medical_kg_nlp.experiments.loop_policy import (
     CORE_SCORE_METRICS,
     DEFAULT_ERROR_POLICY,
     ERROR_POLICIES,

@@ -10,7 +10,7 @@ from typing import Literal
 import pytest
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.evaluation.phase1 import (
+from medical_kg_nlp.benchmarks.phase1.phase1 import (
     Phase1SelectiveExportConfig,
     _maximum_weight_assignment,
     build_phase1_report,
@@ -25,7 +25,7 @@ from medical_kg_nlp.evaluation.phase1 import (
     write_phase1_output_dir,
     zip_phase1_output_dir,
 )
-from medical_kg_nlp.evaluation.phase1_submission_analysis import build_phase1_submission_analysis
+from medical_kg_nlp.benchmarks.phase1.phase1_submission_analysis import build_phase1_submission_analysis
 from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
 from medical_kg_nlp.schema.annotation import (
     AssertionEvidence,
@@ -986,6 +986,7 @@ def test_phase1_configs_separate_entity_only_and_full_execution() -> None:
     assert parsed.calibrated_assertion_evidence
 
 
+@pytest.mark.release
 def test_phase1_pre_submit_gate_writes_analysis_and_loop_artifacts(tmp_path: Path) -> None:
     input_dir = tmp_path / "input"
     output_dir = tmp_path / "output"

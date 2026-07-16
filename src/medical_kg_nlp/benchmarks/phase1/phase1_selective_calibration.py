@@ -16,7 +16,7 @@ from medical_kg_nlp.ontology.phase1 import (
     expected_code_system,
 )
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.evaluation.candidate_coverage import build_candidate_coverage_report
+from medical_kg_nlp.benchmarks.phase1.candidate_coverage import build_candidate_coverage_report
 from medical_kg_nlp.schema.annotation import CandidateConcept, EntityAnnotation
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.types import CodeSystem

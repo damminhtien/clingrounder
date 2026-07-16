@@ -3,7 +3,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-from medical_kg_nlp.evaluation.manual_gold import (
+import pytest
+
+from medical_kg_nlp.benchmarks.phase1.manual_gold import (
     compare_manual_gold_gate,
     evaluate_manual_gold,
     manual_gold_split,
@@ -83,6 +85,7 @@ def test_manual_gold_gate_treats_error_caps_as_diagnostics() -> None:
     assert gate["diagnostic_checks"]["spurious"] is False
 
 
+@pytest.mark.release
 def test_manual_gold_cli_smoke(tmp_path: Path) -> None:
     gold_dir = tmp_path / "gold"
     pred_dir = tmp_path / "pred"

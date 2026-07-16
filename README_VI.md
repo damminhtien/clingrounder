@@ -467,7 +467,7 @@ tests/                    Unit, regression và smoke tests
 10. src/medical_kg_nlp/linking/reranker.py
 11. src/medical_kg_nlp/linking/linker.py
 12. src/medical_kg_nlp/ontology/phase1.py
-13. src/medical_kg_nlp/evaluation/phase1.py
+13. src/medical_kg_nlp/benchmarks/phase1/phase1.py
 14. tests/test_pipeline_smoke.py
 ```
 

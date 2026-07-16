@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from medical_kg_nlp.evaluation.phase1_entity_gates import (
+from medical_kg_nlp.benchmarks.phase1.phase1_entity_gates import (
     Phase1EntityGateConfig,
     apply_phase1_entity_gates,
     compile_boundary_rule_candidates,
 )
-from medical_kg_nlp.evaluation.phase1_rule_registry import phase1_rule_registry_from_data
+from medical_kg_nlp.benchmarks.phase1.phase1_rule_registry import phase1_rule_registry_from_data
 
 
 def test_lab_gate_keeps_anchored_values_and_blocks_unanchored_noise() -> None:

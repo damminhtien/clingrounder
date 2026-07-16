@@ -7,7 +7,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from medical_kg_nlp.evaluation.phase1 import _match_phase1_rows
+from medical_kg_nlp.benchmarks.phase1.phase1 import _match_phase1_rows
 from medical_kg_nlp.ontology.phase1 import PHASE1_ASSERTABLE_TYPES, PHASE1_CODABLE_TYPES
 
 
@@ -126,7 +126,7 @@ def evaluate_manual_gold(
     gold_by_doc: dict[str, list[dict[str, Any]]],
     pred_by_doc: dict[str, list[dict[str, Any]]],
 ) -> dict[str, Any]:
-    from medical_kg_nlp.evaluation.phase1 import score_phase1_documents
+    from medical_kg_nlp.benchmarks.phase1.phase1 import score_phase1_documents
 
     split_ids = {
         "all": sorted(gold_by_doc, key=_document_sort_key),
@@ -247,7 +247,7 @@ def _entity_type_metrics(
     gold_by_doc: dict[str, list[dict[str, Any]]],
     pred_by_doc: dict[str, list[dict[str, Any]]],
 ) -> dict[str, Any]:
-    from medical_kg_nlp.evaluation.phase1 import score_phase1_documents
+    from medical_kg_nlp.benchmarks.phase1.phase1 import score_phase1_documents
 
     types = sorted({str(row.get("type", "")) for rows in gold_by_doc.values() for row in rows})
     result: dict[str, Any] = {}

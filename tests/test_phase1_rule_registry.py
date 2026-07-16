@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from medical_kg_nlp.evaluation.phase1_rule_registry import (
+from medical_kg_nlp.benchmarks.phase1.phase1_rule_registry import (
     load_phase1_rule_registry,
     phase1_rule_registry_from_data,
 )

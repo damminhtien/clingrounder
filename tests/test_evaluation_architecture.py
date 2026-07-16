@@ -1,0 +1,91 @@
+"""Dependency and neutral-record contracts for reusable evaluation code."""
+
+from __future__ import annotations
+
+import ast
+from dataclasses import dataclass
+from pathlib import Path
+
+import pytest
+
+from medical_kg_nlp.benchmarks.phase1 import Phase1EvaluationAdapter, Phase1Record
+from medical_kg_nlp.evaluation import (
+    EvaluationDocument,
+    EvaluationEntity,
+    adapt_evaluation_records,
+)
+
+
+def test_generic_evaluation_does_not_import_benchmarks_or_experiments() -> None:
+    evaluation_root = Path("src/medical_kg_nlp/evaluation")
+    forbidden: list[tuple[str, str]] = []
+    for path in evaluation_root.glob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            modules: list[str] = []
+            if isinstance(node, ast.Import):
+                modules.extend(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                modules.append(node.module)
+            for module in modules:
+                if module.startswith(
+                    ("medical_kg_nlp.benchmarks", "medical_kg_nlp.experiments")
+                ):
+                    forbidden.append((str(path), module))
+
+    assert forbidden == []
+
+
+def test_evaluation_adapter_validates_offsets_and_duplicate_documents() -> None:
+    records = [_RawRecord("1", "đau ngực")]
+    adapted = adapt_evaluation_records(records, _Adapter())
+
+    assert adapted[0].entities[0].text == "đau ngực"
+    with pytest.raises(ValueError, match="Duplicate evaluation document ID"):
+        adapt_evaluation_records(records * 2, _Adapter())
+
+
+def test_phase1_plugin_adapts_to_neutral_records() -> None:
+    source = "đau ngực"
+    documents = adapt_evaluation_records(
+        [
+            Phase1Record(
+                document_id="1",
+                source_text=source,
+                entities=[
+                    {
+                        "text": source,
+                        "position": [0, len(source)],
+                        "type": "TRIỆU_CHỨNG",
+                        "assertions": [],
+                        "candidates": [],
+                    }
+                ],
+            )
+        ],
+        Phase1EvaluationAdapter(),
+    )
+
+    assert documents[0].entities[0].entity_type == "TRIỆU_CHỨNG"
+
+
+@dataclass(frozen=True)
+class _RawRecord:
+    document_id: str
+    text: str
+
+
+class _Adapter:
+    def adapt(self, record: _RawRecord) -> EvaluationDocument:
+        return EvaluationDocument(
+            document_id=record.document_id,
+            source_text=record.text,
+            entities=(
+                EvaluationEntity(
+                    entity_id="E1",
+                    span=(0, len(record.text)),
+                    text=record.text,
+                    entity_type="SYMPTOM",
+                ),
+            ),
+        )

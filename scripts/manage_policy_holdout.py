@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.evaluation.policy_holdout import (
+from medical_kg_nlp.benchmarks.phase1.policy_holdout import (
     build_policy_holdout_manifest,
     open_policy_holdout_manifest,
     verify_policy_holdout_manifest,
