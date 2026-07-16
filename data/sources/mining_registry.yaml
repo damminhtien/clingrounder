@@ -1,0 +1,213 @@
+schema_version: medical-source-registry.v2
+resources:
+  - id: vn_moh_guidelines
+    name: Vietnamese Ministry of Health clinical guidelines
+    category: vietnamese_guidelines
+    version: curated-2026-07
+    version_policy: manual_import
+    access_class: open_with_terms
+    license_id: vietnam_government_document
+    license_url: https://moh.gov.vn/
+    redistribution: attribution
+    hosted_processing_allowed: true
+    retention: immutable
+    connector: static_http
+    parser: vietnamese_guideline
+    urls:
+      - https://kcb.vn/phac-do.html
+    allowed_uses: [terminology_mining, phrase_mining, synthetic_grounding]
+    notes: Guidance text is not treated as representative clinical-note distribution.
+  - id: vietbioner
+    name: VietBioNER
+    category: vietnamese_biomedical_ner
+    version: lrec-2022
+    version_policy: manual_import
+    access_class: quarantine
+    license_id: verify_dataset_license
+    license_url: https://aclanthology.org/2022.lrec-1.385/
+    redistribution: unknown
+    hosted_processing_allowed: false
+    retention: local_only
+    connector: local_archive
+    parser: vietbioner
+    allowed_uses: [license_review]
+    notes: Paper license does not automatically establish the dataset artifact license.
+  - id: vietmed_ner
+    name: VietMed-NER
+    category: vietnamese_spoken_medical_ner
+    version: repository-snapshot
+    version_policy: manual_import
+    access_class: quarantine
+    license_id: verify_dataset_license
+    license_url: https://huggingface.co/leduckhai/VietMed-NER
+    redistribution: unknown
+    hosted_processing_allowed: false
+    retention: local_only
+    connector: local_archive
+    parser: vietmed_ner
+    allowed_uses: [license_review]
+  - id: pmc_oa
+    name: PubMed Central Open Access Subset
+    category: case_reports_and_literature
+    version: api-snapshot
+    version_policy: latest_with_snapshot
+    access_class: open_with_terms
+    license_id: per_article_license
+    license_url: https://pmc.ncbi.nlm.nih.gov/tools/openftlist/
+    license_mode: per_artifact
+    redistribution: attribution
+    hosted_processing_allowed: true
+    retention: immutable
+    connector: pmc_oa
+    parser: jats_xml
+    urls: [https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi]
+    allowed_uses: [rare_case_mining, relation_mining, synthetic_grounding]
+    rate_limit_per_second: 3
+  - id: dailymed
+    name: DailyMed Structured Product Labels
+    category: drug_labels
+    version: api-v2-snapshot
+    version_policy: latest_with_snapshot
+    access_class: open_with_terms
+    license_id: nlm_dailymed_terms
+    license_url: https://dailymed.nlm.nih.gov/dailymed/app-support-web-services.cfm
+    redistribution: attribution
+    hosted_processing_allowed: true
+    retention: immutable
+    connector: dailymed
+    parser: spl_xml
+    urls: [https://dailymed.nlm.nih.gov/dailymed/services/v2/]
+    allowed_uses: [drug_span_mining, dosage_relation_mining, adverse_effect_mining]
+    rate_limit_per_second: 2
+  - id: clinicaltrials_v2
+    name: ClinicalTrials.gov API v2
+    category: clinical_trials
+    version: api-v2-snapshot
+    version_policy: latest_with_snapshot
+    access_class: open
+    license_id: us_government_public_resource
+    license_url: https://clinicaltrials.gov/data-api
+    redistribution: allowed
+    hosted_processing_allowed: true
+    retention: immutable
+    connector: clinicaltrials
+    parser: clinicaltrials_json
+    urls: [https://clinicaltrials.gov/api/v2/]
+    allowed_uses: [condition_intervention_relation_mining, terminology_mining]
+    rate_limit_per_second: 3
+  - id: loinc_2_82
+    name: LOINC 2.82
+    category: terminology
+    version: "2.82"
+    version_policy: pinned
+    access_class: open_with_terms
+    license_id: loinc-license-5.8
+    license_url: https://loinc.org/license/
+    redistribution: attribution
+    hosted_processing_allowed: true
+    retention: immutable
+    connector: local_archive
+    parser: loinc_release
+    credentials: [LOINC account and accepted terms]
+    allowed_uses: [lab_terminology, lab_result_grounding]
+  - id: mondo
+    name: Mondo Disease Ontology
+    category: rare_disease_ontology
+    version: pinned-release-required
+    version_policy: manual_import
+    access_class: open
+    license_id: CC-BY-4.0
+    license_url: https://mondo.monarchinitiative.org/pages/download/
+    redistribution: attribution
+    hosted_processing_allowed: true
+    retention: immutable
+    connector: local_archive
+    parser: obo_json
+    allowed_uses: [rare_disease_coverage, ontology_relations]
+  - id: hpo
+    name: Human Phenotype Ontology and annotations
+    category: phenotype_ontology
+    version: pinned-release-required
+    version_policy: manual_import
+    access_class: open_with_terms
+    license_id: hpo-source-terms
+    license_url: https://hpo.jax.org/app/license
+    redistribution: attribution
+    hosted_processing_allowed: true
+    retention: immutable
+    connector: local_archive
+    parser: hpo_release
+    allowed_uses: [phenotype_coverage, disease_phenotype_relations]
+  - id: codiesp
+    name: CodiEsp corpus
+    category: clinical_coding_corpus
+    version: zenodo-3837305
+    version_policy: pinned
+    access_class: open
+    license_id: CC-BY-4.0
+    license_url: https://zenodo.org/records/3837305
+    redistribution: attribution
+    hosted_processing_allowed: true
+    retention: immutable
+    connector: static_http
+    parser: codiesp
+    urls: [https://zenodo.org/records/3837305/files/codiesp.zip]
+    allowed_uses: [cross_lingual_ner, icd_linking]
+  - id: biored
+    name: BioRED
+    category: biomedical_relation_corpus
+    version: repository-snapshot
+    version_policy: manual_import
+    access_class: quarantine
+    license_id: verify_dataset_license
+    license_url: https://github.com/ncbi/BioRED
+    redistribution: unknown
+    hosted_processing_allowed: false
+    retention: local_only
+    connector: local_archive
+    parser: bioc
+    allowed_uses: [license_review]
+  - id: synthea
+    name: Synthea synthetic patient generator
+    category: synthetic_ehr
+    version: pinned-commit-required
+    version_policy: manual_import
+    access_class: open
+    license_id: Apache-2.0
+    license_url: https://github.com/synthetichealth/synthea/blob/master/LICENSE
+    redistribution: allowed
+    hosted_processing_allowed: true
+    retention: immutable
+    connector: local_archive
+    parser: fhir_bundle
+    allowed_uses: [structured_scenario_generation, relation_mining, scale_testing]
+  - id: mimic_iv_note
+    name: MIMIC-IV-Note
+    category: clinical_notes
+    version: "2.2"
+    version_policy: pinned
+    access_class: dua
+    license_id: physionet-credentialed-health-data-1.5.0
+    license_url: https://physionet.org/content/mimic-iv-note/view-dua/2.2/
+    redistribution: prohibited
+    hosted_processing_allowed: false
+    retention: local_only
+    connector: local_archive
+    parser: mimic_iv_note
+    credentials: [PhysioNet credential, CITI training, signed DUA]
+    allowed_uses: [local_private_training, source_heldout_evaluation]
+  - id: n2c2_i2b2
+    name: n2c2 and i2b2 clinical NLP corpora
+    category: clinical_nlp_challenges
+    version: approved-local-snapshot
+    version_policy: manual_import
+    access_class: dua
+    license_id: dataset_specific_dua
+    license_url: https://portal.dbmi.hms.harvard.edu/projects/n2c2-nlp/
+    redistribution: prohibited
+    hosted_processing_allowed: false
+    retention: local_only
+    connector: local_archive
+    parser: n2c2
+    credentials: [approved dataset access]
+    allowed_uses: [local_assertion_training, local_relation_training]

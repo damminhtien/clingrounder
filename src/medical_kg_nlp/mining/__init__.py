@@ -11,6 +11,7 @@ from medical_kg_nlp.mining.ports import (
     ReviewBackendPort,
     SourceConnectorPort,
 )
+from medical_kg_nlp.mining.policy import MiningQualityGate, PolicyDecision, SourcePolicyGate
 from medical_kg_nlp.mining.records import (
     AccessClass,
     AnnotationLayer,
@@ -29,6 +30,14 @@ from medical_kg_nlp.mining.records import (
     StoredObject,
 )
 from medical_kg_nlp.mining.storage import FsspecArtifactStore, LocalArtifactStore
+from medical_kg_nlp.mining.registry import (
+    LicenseMode,
+    RetentionPolicy,
+    SourceDefinition,
+    SourceRegistry,
+    VersionPolicy,
+    load_source_registry,
+)
 
 __all__ = [
     "AccessClass",
@@ -46,16 +55,25 @@ __all__ = [
     "DuckDBMiningCatalog",
     "FsspecArtifactStore",
     "LocalArtifactStore",
+    "LicenseMode",
     "MinedDocument",
+    "MiningQualityGate",
     "ParquetSnapshotWriter",
     "ProposalLabelerPort",
+    "PolicyDecision",
     "QualityGatePort",
     "RedistributionPolicy",
+    "RetentionPolicy",
     "RelationProposal",
     "ReviewBackendPort",
     "ReviewStatus",
     "SourceArtifact",
     "SourceConnectorPort",
+    "SourceDefinition",
+    "SourcePolicyGate",
+    "SourceRegistry",
     "SourceRequest",
     "StoredObject",
+    "VersionPolicy",
+    "load_source_registry",
 ]
