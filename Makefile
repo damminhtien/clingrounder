@@ -33,13 +33,13 @@ test-targeted:
 	$(PYTHON) -m pytest tests/test_schema.py tests/test_offset_mapping.py tests/test_kg_constraints.py -q
 
 pipeline:
-	$(PYTHON) scripts/run_pipeline.py --input data/samples/sample_notes.jsonl --output outputs/predictions.jsonl
+	$(PYTHON) -m medical_kg_nlp.cli pipeline run --input data/samples/sample_notes.jsonl --output outputs/predictions.jsonl
 
 validate:
-	$(PYTHON) scripts/validate_predictions.py --pred outputs/predictions.jsonl --documents data/samples/sample_notes.jsonl --dictionary data/dictionaries/seed_concepts.jsonl
+	$(PYTHON) -m medical_kg_nlp.cli validate --pred outputs/predictions.jsonl --documents data/samples/sample_notes.jsonl --dictionary data/dictionaries/seed_concepts.jsonl
 
 evaluate:
-	$(PYTHON) scripts/evaluate.py --gold data/samples/gold.jsonl --pred outputs/predictions.jsonl
+	$(PYTHON) -m medical_kg_nlp.cli evaluate --gold data/samples/gold.jsonl --pred outputs/predictions.jsonl
 
 profile:
 	$(PYTHON) scripts/profile_data.py --documents data/samples/sample_notes.jsonl --gold data/samples/gold.jsonl --output outputs/profiles/sample_profile.json --markdown outputs/profiles/sample_profile.md
@@ -48,7 +48,7 @@ pipeline-report:
 	$(PYTHON) scripts/evaluate_pipeline_steps.py --documents data/samples/sample_notes.jsonl --gold data/samples/gold.jsonl --dictionary data/dictionaries/seed_concepts.jsonl --output-dir outputs/evaluation/sample
 
 phase1-submit:
-	$(PYTHON) scripts/build_phase1_submission.py --input-dir data/raw/input --run-root $(RUN_ROOT) --output-dir phase1/output --zip phase1/output.zip --expected-count 100
+	$(PYTHON) -m medical_kg_nlp.cli benchmark phase1 --input-dir data/raw/input --output-dir outputs/phase1/output --zip outputs/phase1/output.zip
 
 phase1-validate:
 	$(PYTHON) scripts/validate_phase1_submission.py --input-dir data/raw/input --output-dir outputs/phase1/output --zip outputs/phase1/output.zip --expected-count 100

@@ -1,3 +1,5 @@
+"""Parse and validate internal prediction payloads without mutating their content."""
+
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
@@ -23,6 +25,12 @@ from medical_kg_nlp.schema.output import ClinicalPrediction, PredictionMetadata
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType, RelationType
 from medical_kg_nlp.utils.hashing import sha256_text
 
+__all__ = [
+    "PredictionValidationIssue",
+    "PredictionValidator",
+    "prediction_from_json",
+]
+
 
 class _DictionaryEntry(Protocol):
     code_system: CodeSystem
@@ -35,6 +43,8 @@ class _DictionaryStore(Protocol):
 
 @dataclass(frozen=True)
 class PredictionValidationIssue:
+    """Stable issue record consumed by validation profiles and reports."""
+
     kind: str
     path: str
     message: str
@@ -44,6 +54,8 @@ class PredictionValidationIssue:
 
 
 class PredictionValidator:
+    """Detect schema and medical-invariant violations in one prediction."""
+
     def __init__(self, dictionary: _DictionaryStore | None = None) -> None:
         self._allowed_codes: set[tuple[CodeSystem, str]] = set()
         if dictionary is not None:
@@ -58,6 +70,8 @@ class PredictionValidator:
         payload: Mapping[str, Any],
         source_text: str | None = None,
     ) -> tuple[ClinicalPrediction | None, list[PredictionValidationIssue]]:
+        """Parse a JSON-like mapping and return structured issues instead of raising."""
+
         try:
             prediction = prediction_from_json(payload)
         except ValueError as error:
@@ -69,6 +83,8 @@ class PredictionValidator:
         prediction: ClinicalPrediction,
         source_text: str | None = None,
     ) -> list[PredictionValidationIssue]:
+        """Validate a typed prediction against optional raw text and terminology."""
+
         issues: list[PredictionValidationIssue] = []
         entity_ids: set[str] = set()
 
@@ -190,6 +206,8 @@ class PredictionValidator:
 
 
 def prediction_from_json(payload: Mapping[str, Any]) -> ClinicalPrediction:
+    """Parse the strict internal JSON representation into typed schema objects."""
+
     entities = [
         _entity_from_json(entity, f"$.entities[{index}]")
         for index, entity in enumerate(_sequence(payload, "entities", "$.entities"))

@@ -37,6 +37,9 @@ dependencies = [
   "PyYAML>=6.0.3",
 ]
 
+[project.scripts]
+medical-kg = "medical_kg_nlp.cli:main"
+
 [project.optional-dependencies]
 dev = [
   "pre-commit>=4.6.0",

@@ -159,7 +159,7 @@ AGENT_PLAYBOOKS: dict[str, AgentPlaybook] = {
             "src/medical_kg_nlp/experiments/loop_agent.py",
             "src/medical_kg_nlp/experiments/loop_journal.py",
             "src/medical_kg_nlp/experiments/loop_policy.py",
-            "scripts/build_phase1_submission.py",
+            "src/medical_kg_nlp/benchmarks/phase1/runner.py",
             "scripts/validate_phase1_submission.py",
             "tests/test_phase1.py",
             "tests/test_pipeline_report.py",
@@ -179,7 +179,7 @@ AGENT_PLAYBOOKS: dict[str, AgentPlaybook] = {
         focus_files=(
             "src/medical_kg_nlp/benchmarks/phase1/phase1.py",
             "src/medical_kg_nlp/evaluation/pipeline_report.py",
-            "scripts/build_phase1_submission.py",
+            "src/medical_kg_nlp/benchmarks/phase1/runner.py",
             "scripts/validate_phase1_submission.py",
             "tests/test_phase1.py",
             "docs/evaluation.md",

@@ -54,7 +54,10 @@ def test_run_pipeline_cli_accepts_parallel_workers(tmp_path: Path) -> None:
     subprocess.run(
         [
             sys.executable,
-            "scripts/run_pipeline.py",
+            "-m",
+            "medical_kg_nlp.cli",
+            "pipeline",
+            "run",
             "--input",
             "data/samples/sample_notes.jsonl",
             "--output",

@@ -1,3 +1,5 @@
+"""Stage orchestration for an already composed clinical NLP pipeline."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -11,11 +13,21 @@ from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.document import ClinicalDocument, Section, Sentence
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.types import CodeSystem
+from medical_kg_nlp.schema.validator import PredictionValidator
 from medical_kg_nlp.utils.text import text_window
+from medical_kg_nlp.validation.profiles import (
+    ValidationProfile,
+    ValidationSeverity,
+    apply_validation_profile,
+)
+
+__all__ = ["PipelineRunResult", "PipelineRunner"]
 
 
 @dataclass(frozen=True)
 class PipelineRunResult:
+    """Prediction and machine-readable stage trace for one document."""
+
     prediction: ClinicalPrediction
     trace: PipelineTrace
 
@@ -243,9 +255,33 @@ class PipelineRunner:
             counters["relations"] = len(prediction.relations)
 
         with trace.stage("prediction_validation") as counters:
-            prediction.validate(loaded_document.text)
+            issues = PredictionValidator().validate_prediction(
+                prediction,
+                source_text=loaded_document.text,
+            )
+            profiled_issues = apply_validation_profile(
+                issues,
+                ValidationProfile.CORE,
+                terminology_loaded=False,
+            )
+            errors = [
+                item
+                for item in profiled_issues
+                if item.severity is ValidationSeverity.ERROR
+            ]
+            counters["issues"] = len(profiled_issues)
+            counters["errors"] = len(errors)
+            counters["warnings"] = len(profiled_issues) - len(errors)
             counters["validated_entities"] = len(prediction.entities)
             counters["validated_relations"] = len(prediction.relations)
+            if errors:
+                # INVARIANT: component adapters cannot bypass offset, type/code-system,
+                # duplicate-ID, or relation safety by disabling optional KG stages.
+                detail = "; ".join(
+                    f"{item.issue.kind} at {item.issue.path}: {item.issue.message}"
+                    for item in errors
+                )
+                raise ValueError(f"Core prediction validation failed: {detail}")
         return PipelineRunResult(prediction=prediction, trace=trace)
 
     @staticmethod
@@ -273,6 +309,7 @@ class PipelineRunner:
             if sentence.span[0] <= entity.span[0] and entity.span[1] <= sentence.span[1]:
                 return sentence
         return None
+
 
 def _linking_mention(source_text: str, entity: EntityAnnotation) -> str:
     medication = entity.medication_mention
