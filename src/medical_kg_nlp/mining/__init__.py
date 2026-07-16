@@ -1,6 +1,8 @@
 """Reusable acquisition, curation, and dataset-snapshot primitives."""
 
 from medical_kg_nlp.mining.catalog import DuckDBMiningCatalog, ParquetSnapshotWriter
+from medical_kg_nlp.mining.connectors import connector_from_definition
+from medical_kg_nlp.mining.parsers import parser_from_definition
 from medical_kg_nlp.mining.ports import (
     ArtifactStorePort,
     CoveragePlannerPort,
@@ -75,5 +77,7 @@ __all__ = [
     "SourceRequest",
     "StoredObject",
     "VersionPolicy",
+    "connector_from_definition",
     "load_source_registry",
+    "parser_from_definition",
 ]
