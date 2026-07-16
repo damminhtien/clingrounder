@@ -95,8 +95,13 @@ mention
   -> export dynamic top-k, capped at 5
 ```
 
-Dense retrieval and cross-encoder reranking are extension points. The correctness gate is
-candidate recall at 20 before expensive reranking is added.
+Local Hugging Face adapters implement fast-tokenizer NER projection, text encoding, and
+cross-encoder reranking. They lazy-load the `ml` extra, require `model_id` plus a pinned `revision`,
+and pass `local_files_only=true`; importing the core pipeline never imports PyTorch or Transformers.
+Dense retrieval consumes a separate `DenseVectorIndexPort`, so adding an ANN backend cannot bypass
+terminology type/code-system constraints. No dense backend is enabled by default. The correctness
+gate remains candidate recall at 20 plus a model-revision-specific latency/RSS benchmark before an
+expensive retriever or reranker is promoted.
 
 Generated candidates remain in internal predictions for recall/rank analysis. Only candidates with
 `qualified=true` are eligible for Phase 1 export. `retrieval_score` ranks candidates;

@@ -29,6 +29,8 @@ __all__ = [
 
 @dataclass(frozen=True)
 class RuleEntityExtractorAdapter:
+    """Expose deterministic dictionary/rule NER through the extraction port."""
+
     implementation: RuleBasedNER
 
     def extract(self, source_text: str) -> list[EntityAnnotation]:
@@ -41,6 +43,8 @@ class RuleEntityExtractorAdapter:
 
 @dataclass(frozen=True)
 class RuleAssertionClassifierAdapter:
+    """Expose cue-based assertion classification through the context port."""
+
     implementation: AssertionClassifier
 
     def classify_features_with_evidence(
@@ -85,6 +89,8 @@ class DictionaryCandidateAdapter:
 
 @dataclass(frozen=True)
 class RuleRelationExtractorAdapter:
+    """Expose deterministic typed relation extraction through the relation port."""
+
     implementation: RuleRelationExtractor
 
     def extract(
@@ -97,6 +103,8 @@ class RuleRelationExtractorAdapter:
 
 @dataclass(frozen=True)
 class KGValidatorAdapter:
+    """Expose entity and relation constraints through one validator port."""
+
     implementation: KGValidator
 
     def validate_entities(

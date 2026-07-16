@@ -552,8 +552,10 @@ uv sync --extra experiment
 
 # Giới hạn hiện tại
 
-- Dictionary runtime vẫn là tập con đã review, chưa phải toàn bộ TT06/RxNorm.
-- Transformer NER, context model và relation classifier mới là extension point.
+- Recognition runtime vẫn dùng tập con đã review; normalization có thể dùng toàn bộ TT06/RxNorm
+  qua SQLite FTS5 index được build trước.
+- Adapter Hugging Face local cho NER và reranker đã có, nhưng chưa bật model mặc định. Config phải
+  khóa `model_id` và `revision`, còn dependency `ml` chỉ được lazy-load khi inference.
 - Rule-based assertion vẫn có thể sai với câu dài hoặc ngữ nghĩa phức tạp.
 - Entity linking phụ thuộc mạnh vào candidate recall và chất lượng dictionary.
 - Dense retrieval chưa phải thành phần mặc định.

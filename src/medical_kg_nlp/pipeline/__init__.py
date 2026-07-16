@@ -1,6 +1,10 @@
+"""Pipeline contracts, composition, execution, and parallel batch APIs."""
+
 from __future__ import annotations
+
 from medical_kg_nlp.pipeline.components import PipelineComponents
 from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
+from medical_kg_nlp.pipeline.model_config import PipelineModelConfig
 from medical_kg_nlp.pipeline.options import PipelineOptions
 from medical_kg_nlp.pipeline.parallel_batch import (
     ParallelBatchError,
@@ -17,6 +21,7 @@ __all__ = [
     "PipelineComponents",
     "PipelineFactory",
     "PipelineFactoryConfig",
+    "PipelineModelConfig",
     "PipelineOptions",
     "PipelineRunResult",
     "PipelineRunner",

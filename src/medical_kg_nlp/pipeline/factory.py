@@ -12,6 +12,10 @@ from medical_kg_nlp.adapters.rules import (
     RuleEntityExtractorAdapter,
     RuleRelationExtractorAdapter,
 )
+from medical_kg_nlp.adapters.huggingface import (
+    HuggingFaceCrossEncoderAdapter,
+    HuggingFaceTokenClassifierAdapter,
+)
 from medical_kg_nlp.context.assertion import AssertionClassifier
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
@@ -19,7 +23,9 @@ from medical_kg_nlp.kg.validator import KGValidator
 from medical_kg_nlp.linking.linker import EntityLinker
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
 from medical_kg_nlp.pipeline.components import PipelineComponents
+from medical_kg_nlp.pipeline.model_config import PipelineModelConfig
 from medical_kg_nlp.pipeline.options import PipelineOptions
+from medical_kg_nlp.pipeline.ports import CandidateRerankerPort, EntityExtractorPort
 from medical_kg_nlp.pipeline.runner import PipelineRunner
 from medical_kg_nlp.preprocessing.normalizer import (
     DEFAULT_NORMALIZATION_CONTRACT,
@@ -52,12 +58,14 @@ class PipelineFactoryConfig:
     alias_overlay_path: str | None = "data/dictionaries/vietnamese_medical_alias.jsonl"
     pipeline_version: str = "0.2.0"
     options: PipelineOptions = field(default_factory=PipelineOptions)
+    models: PipelineModelConfig = field(default_factory=PipelineModelConfig)
     normalization_contract: NormalizationContract = DEFAULT_NORMALIZATION_CONTRACT
 
     @classmethod
     def from_mapping(cls, payload: Mapping[str, object]) -> "PipelineFactoryConfig":
         terminology = _mapping(payload.get("terminology"), "terminology")
         pipeline = _mapping(payload.get("pipeline"), "pipeline")
+        models = _mapping(payload.get("models"), "models")
         return cls(
             recognition_dictionary_path=_string(
                 terminology,
@@ -88,6 +96,7 @@ class PipelineFactoryConfig:
             ),
             pipeline_version=_string(pipeline, "version", cls.pipeline_version),
             options=PipelineOptions.from_mapping(pipeline),
+            models=PipelineModelConfig.from_mapping(models),
         )
 
 
@@ -130,14 +139,22 @@ class PipelineFactory:
             )
 
         options = resolved.options
-        entity_extractor = RuleEntityExtractorAdapter(
-            RuleBasedNER(
-                recognition_store,
-                emit_probabilities_by_source=dict(
-                    options.link_emit_probabilities_by_source
-                ),
+        entity_extractor: EntityExtractorPort
+        if resolved.models.entity_extractor is not None:
+            entity_extractor = HuggingFaceTokenClassifierAdapter(
+                resolved.models.entity_extractor,
+                label_map=dict(resolved.models.entity_label_map),
+                stride=resolved.models.entity_stride,
             )
-        )
+        else:
+            entity_extractor = RuleEntityExtractorAdapter(
+                RuleBasedNER(
+                    recognition_store,
+                    emit_probabilities_by_source=dict(
+                        options.link_emit_probabilities_by_source
+                    ),
+                )
+            )
         assertion_classifier = (
             RuleAssertionClassifierAdapter(AssertionClassifier())
             if options.enable_context
@@ -175,6 +192,14 @@ class PipelineFactory:
             )
             candidate_adapter = DictionaryCandidateAdapter(linker)
 
+        candidate_reranker: CandidateRerankerPort | None = candidate_adapter
+        if options.enable_linking and resolved.models.candidate_reranker is not None:
+            candidate_reranker = HuggingFaceCrossEncoderAdapter(
+                resolved.models.candidate_reranker,
+                model_weight=resolved.models.candidate_reranker_weight,
+                positive_label_index=resolved.models.candidate_positive_label_index,
+            )
+
         relation_extractor = (
             RuleRelationExtractorAdapter(RuleRelationExtractor())
             if options.enable_relations
@@ -197,7 +222,7 @@ class PipelineFactory:
             entity_extractor=entity_extractor,
             assertion_classifier=assertion_classifier,
             candidate_retriever=candidate_adapter,
-            candidate_reranker=candidate_adapter,
+            candidate_reranker=candidate_reranker,
             candidate_assigner=candidate_adapter,
             relation_extractor=relation_extractor,
             knowledge_validator=knowledge_validator,

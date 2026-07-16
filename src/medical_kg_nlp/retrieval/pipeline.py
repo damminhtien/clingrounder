@@ -18,6 +18,7 @@ SOURCE_WEIGHTS = {
     "abbreviation": 0.92,
     "fuzzy": 0.72,
     "char_ngram": 0.62,
+    "dense": 0.58,
     "bm25": 0.50,
 }
 _RRF_K = 60

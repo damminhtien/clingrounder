@@ -558,8 +558,9 @@ uv sync --extra experiment
 - Active Phase 1 modes are entity-only, selective reviewed candidates, or exact full-store linking.
   Fuzzy, character n-gram, and BM25 exist as diagnostic library capabilities but have not passed
   the public/local accuracy and latency gates for submission use.
-- Transformer NER, context models, and relation classifiers remain extension points. Entity recall
-  and disease-versus-symptom ambiguity are still primarily dictionary/rule decisions.
+- Local Hugging Face NER and reranker adapters are available behind pinned, lazy-loaded model
+  config. No model weights are enabled by default; entity recall and disease-versus-symptom
+  ambiguity remain primarily dictionary/rule decisions until a local model passes evaluation.
 - Assertion rules now execute per-rule priority and distance, but deterministic clause scope can
   still fail on long-distance or compositional semantics.
 - RxNorm parsing separates product strength, administered dose, dosage form, route, and release.
