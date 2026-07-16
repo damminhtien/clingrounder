@@ -41,6 +41,9 @@ Bệnh nhân có tiền sử đái tháo đường type 2, đang dùng metformin
 
 Python hỗ trợ: **3.11–3.14**.
 
+Sơ đồ ownership và extension point: [`docs/code-map.md`](docs/code-map.md).
+Hướng dẫn migration breaking 0.2: [`docs/migration-v0.2.md`](docs/migration-v0.2.md).
+
 ---
 
 ## Repo đang làm được gì?
@@ -272,15 +275,11 @@ src/medical_kg_nlp/kg/ontology_reasoner.py
 
 ---
 
-# Hai chế độ Phase 1
+# Hai policy export Phase 1
 
 ## `entity_only`: submission ổn định
 
-```text
-configs/phase1_submission.yaml
-```
-
-Chế độ mặc định này:
+Dùng `--assertion-policy empty --candidate-policy empty` với command benchmark Phase 1. Policy này:
 
 - chỉ tập trung vào entity extraction;
 - xuất `assertions: []`;
@@ -291,11 +290,8 @@ Mục tiêu là tránh để assertion hoặc candidate chưa đủ precision l�
 
 ## `full`: thử nghiệm đầy đủ
 
-```text
-configs/phase1_full.yaml
-```
-
-Chế độ này bật:
+Dùng `--assertion-policy pipeline --candidate-policy pipeline` để xuất kết quả nội bộ. Pipeline
+đầy đủ bật:
 
 - assertion classification;
 - candidate generation;
@@ -339,7 +335,7 @@ pre-commit install
 # Chạy thử
 
 ```bash
-python scripts/run_pipeline.py \
+uv run medical-kg pipeline run \
   --input data/samples/sample_notes.jsonl \
   --output outputs/predictions.jsonl
 ```
@@ -357,25 +353,21 @@ ung thư phổi          → FAMILY     → ICD-10 C34
 Chạy test:
 
 ```bash
-python -m pytest tests/
+uv run pytest tests
 ```
 
 ---
 
 # Build submission Phase 1
 
-Entity-only:
-
 ```bash
-python scripts/build_phase1_submission.py \
-  --config configs/phase1_submission.yaml
-```
-
-Full pipeline:
-
-```bash
-python scripts/build_phase1_submission.py \
-  --config configs/phase1_full.yaml
+uv run medical-kg benchmark phase1 \
+  --input-dir data/raw/input \
+  --output-dir outputs/phase1/current/output \
+  --zip outputs/phase1/current/output.zip \
+  --dictionary data/dictionaries/seed_concepts.jsonl \
+  --assertion-policy empty \
+  --candidate-policy empty
 ```
 
 Script sẽ:
@@ -387,7 +379,8 @@ Script sẽ:
 5. tạo ZIP;
 6. kiểm tra cấu trúc ZIP.
 
-Các run dùng `--run-root` được ghi vào thư mục có timestamp và content hash, kèm `run_manifest.json` để lưu config, input hash, Git state, Python version và command đã chạy.
+Các experiment chuyên biệt vẫn có thể dùng `--run-root` và manifest riêng; command benchmark ổn định
+chỉ ghi đúng các đường dẫn artifact được truyền vào.
 
 ---
 
@@ -396,7 +389,7 @@ Các run dùng `--run-root` được ghi vào thư mục có timestamp và conte
 Internal JSONL:
 
 ```bash
-python scripts/evaluate.py \
+uv run medical-kg evaluate \
   --gold data/samples/gold.jsonl \
   --pred outputs/predictions.jsonl
 ```
@@ -430,24 +423,29 @@ data/dictionaries/        Dictionary và alias runtime
 data/standards/           Concept chuẩn cho Phase 1
 data/samples/             Dữ liệu nhỏ để chạy thử
 docs/                     Kiến trúc, schema, invariant, evaluation
-scripts/                  Các entrypoint command line
+scripts/                  Import dữ liệu và experiment chuyên biệt
 
 src/medical_kg_nlp/
 ├── schema/               Kiểu dữ liệu nội bộ
+├── pipeline/             Port, composition root, runner, parallel batch
+├── adapters/             Rule/model implementation có thể thay thế
 ├── preprocessing/        Section, sentence, normalize, offset mapping
-├── dictionaries/         ICD-10, RxNorm, alias, abbreviation
+├── dictionaries/         JSONL canonical và source importer
+├── terminology/          Repository port và SQLite FTS5 index
 ├── ner/                  Entity extraction
 ├── context/              Assertion classification
-├── retrieval/            Exact, fuzzy, n-gram, BM25
+├── retrieval/            Ghép lexical/dense retriever
 ├── linking/              Reranking và code assignment
-├── ontology/             Luật riêng cho Phase 1
 ├── kg/                   Ontology/KG constraints
 ├── relations/            Relation extraction
-├── pipeline/             Điều phối luồng chạy
-├── evaluation/           Metric, error analysis, probe, ablation
+├── evaluation/           Metric/report độc lập đề bài
+├── experiments/          Ablation, journal và loop tooling
+├── benchmarks/phase1/    Adapter/scorer/exporter Phase 1
+├── validation/           Profile core/development/release
+├── cli/                  Handler của command medical-kg
 └── utils/                IO, hashing, logging, text utilities
 
-tests/                    Unit, regression và smoke tests
+tests/                    Fast contract và các tier opt-in
 ```
 
 ---
@@ -457,18 +455,15 @@ tests/                    Unit, regression và smoke tests
 ```text
 1. README.md
 2. docs/invariants.md
-3. src/medical_kg_nlp/schema/types.py
-4. src/medical_kg_nlp/schema/annotation.py
-5. src/medical_kg_nlp/pipeline/runner.py
-6. src/medical_kg_nlp/ner/rule_ner.py
-7. src/medical_kg_nlp/ner/dictionary_matcher.py
-8. src/medical_kg_nlp/context/assertion.py
+3. docs/code-map.md
+4. src/medical_kg_nlp/pipeline/ports.py
+5. src/medical_kg_nlp/pipeline/factory.py
+6. src/medical_kg_nlp/pipeline/runner.py
+7. src/medical_kg_nlp/schema/annotation.py
+8. src/medical_kg_nlp/terminology/ports.py
 9. src/medical_kg_nlp/retrieval/pipeline.py
-10. src/medical_kg_nlp/linking/reranker.py
-11. src/medical_kg_nlp/linking/linker.py
-12. src/medical_kg_nlp/ontology/phase1.py
-13. src/medical_kg_nlp/benchmarks/phase1/phase1.py
-14. tests/test_pipeline_smoke.py
+10. src/medical_kg_nlp/benchmarks/phase1/phase1.py
+11. tests/test_pipeline_contracts.py
 ```
 
 Breakpoint tốt nhất:

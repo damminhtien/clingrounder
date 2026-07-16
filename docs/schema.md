@@ -50,7 +50,8 @@ issues instead of silently accepting invalid output. It checks:
 Command:
 
 ```bash
-python scripts/validate_predictions.py \
+uv run medical-kg validate \
+  --profile development \
   --pred outputs/predictions.jsonl \
   --documents data/samples/sample_notes.jsonl \
   --dictionary data/dictionaries/seed_concepts.jsonl

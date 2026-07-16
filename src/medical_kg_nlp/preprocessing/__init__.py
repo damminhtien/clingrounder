@@ -1,4 +1,7 @@
+"""Offset-preserving normalization, sectioning, and sentence splitting."""
+
 from __future__ import annotations
+
 from medical_kg_nlp.preprocessing.offset_mapping import OffsetMappedText
 from medical_kg_nlp.preprocessing.normalizer import (
     DEFAULT_NORMALIZATION_CONTRACT,

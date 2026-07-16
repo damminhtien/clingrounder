@@ -44,13 +44,14 @@ Recommended checks:
 ruff check .
 mypy src
 pytest tests
-python scripts/validate_predictions.py \
+uv run medical-kg validate \
+  --profile development \
   --pred outputs/predictions.jsonl \
   --documents data/samples/sample_notes.jsonl \
   --dictionary data/dictionaries/seed_concepts.jsonl
 ```
 
-Use `.venv/bin/python -m ...` for the same commands if tools are installed only in the local venv.
+Use `python -m medical_kg_nlp.cli ...` if the console script is not installed in the active venv.
 
 ## Pull Requests
 

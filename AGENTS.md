@@ -69,7 +69,7 @@ uv run pytest tests
 Run the sample pipeline:
 
 ```bash
-uv run python scripts/run_pipeline.py \
+uv run medical-kg pipeline run \
   --input data/samples/sample_notes.jsonl \
   --output outputs/predictions.jsonl
 ```
@@ -77,14 +77,15 @@ uv run python scripts/run_pipeline.py \
 Validate predictions:
 
 ```bash
-uv run python scripts/validate_predictions.py \
+uv run medical-kg validate \
+  --profile development \
   --pred outputs/predictions.jsonl \
   --documents data/samples/sample_notes.jsonl \
   --dictionary data/dictionaries/seed_concepts.jsonl
 ```
 
-If `uv` is not installed, use the same commands through `python -m` or the script path after
-installing the dev dependencies.
+If `uv` is not installed, use `python -m medical_kg_nlp.cli` after installing the project and dev
+dependencies.
 
 ## Command Output Hygiene
 

@@ -1,4 +1,7 @@
+"""Canonical JSONL terminology records and source import utilities."""
+
 from __future__ import annotations
+
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.icd10_sources import (
     ICD10AliasOverlay,

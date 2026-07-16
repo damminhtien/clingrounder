@@ -44,5 +44,6 @@
 
 ## Validation Gate
 
-Use `scripts/validate_predictions.py` to check schema, offsets, dictionary codes, and KG relation
-constraints before treating exported JSONL as valid output.
+Use `medical-kg validate` to check schema, offsets, dictionary codes, and KG relation constraints
+before treating exported JSONL as valid output. Runtime uses the `core` profile; ordinary CLI checks
+use `development`; submission and artifact gates use `release`.

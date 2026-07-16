@@ -30,7 +30,8 @@ retrieval, and experiment-analysis ecosystem is stronger in Python for this proj
 - Retrieval: built-in exact/fuzzy/char-ngram/BM25 baseline, with optional bm25s, RapidFuzz,
   FAISS CPU, and Qdrant client.
 - Graph: lightweight in-memory graph first, with optional NetworkX and DuckDB/SQLite-ready tables.
-- API/CLI: Typer/Rich for future CLIs; FastAPI/Uvicorn only when serving is needed.
+- CLI: installed `medical-kg` command using standard-library `argparse`; FastAPI/Uvicorn only when
+  serving is needed.
 - Experiments: Hydra/OmegaConf and MLflow optional; W&B separate.
 
 ## Pipeline
@@ -133,9 +134,10 @@ by execution rather than performing a second metadata lookup after matching.
 
 ## Data Storage
 
-Prototype data stays in JSONL, Parquet-compatible tables, DuckDB/SQLite-ready graph tables, and
-small local indexes. A graph database is deferred until interactive graph traversal becomes a real
-requirement.
+Canonical terminology stays in JSONL. Full lexical lookup uses a derived SQLite FTS5 index keyed by
+source, schema, and normalization fingerprints; runtime connections are read-only and thread-local.
+Prototype tabular data remains Parquet/DuckDB-compatible. A graph database is deferred until
+interactive graph traversal becomes a real requirement.
 
 ## Agentic Workflow
 

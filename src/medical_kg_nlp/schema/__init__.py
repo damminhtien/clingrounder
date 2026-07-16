@@ -1,4 +1,7 @@
+"""Typed internal document, annotation, prediction, and validator schemas."""
+
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 from medical_kg_nlp.schema.annotation import CandidateConcept, EntityAnnotation, RelationAnnotation

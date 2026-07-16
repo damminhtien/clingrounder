@@ -35,16 +35,17 @@ metrics are computed.
 ## Commands
 
 ```bash
-python scripts/run_pipeline.py \
+uv run medical-kg pipeline run \
   --input data/samples/sample_notes.jsonl \
   --output outputs/predictions.jsonl
 
-python scripts/validate_predictions.py \
+uv run medical-kg validate \
+  --profile development \
   --pred outputs/predictions.jsonl \
   --documents data/samples/sample_notes.jsonl \
   --dictionary data/dictionaries/seed_concepts.jsonl
 
-python scripts/evaluate.py \
+uv run medical-kg evaluate \
   --gold data/samples/gold.jsonl \
   --pred outputs/predictions.jsonl
 
@@ -61,35 +62,37 @@ python scripts/evaluate_pipeline_steps.py \
   --run-root outputs/runs \
   --output-dir evaluation/sample
 
-python scripts/build_phase1_submission.py \
-  --config configs/phase1_submission.yaml \
-  --run-label phase1
+uv run medical-kg benchmark phase1 \
+  --input-dir data/raw/input \
+  --output-dir outputs/phase1/current/output \
+  --zip outputs/phase1/current/output.zip \
+  --assertion-policy empty \
+  --candidate-policy empty
 ```
 
-### Full terminology runtime benchmark
+### Full terminology runtime
 
 `configs/phase1_full.yaml` uses the full processed RxNorm release for normalization and exact
 retrieval. It does not use the seed dictionary as the complete linking database. The smaller
 recognition store is intentional: NER trigger coverage and normalization vocabulary are different
 precision controls.
 
-Use `configs/phase1_full_diagnostic.yaml` to profile every lexical source and internal pipeline
-stage. This is a diagnostic configuration and should not be promoted merely because it returns more
-candidates.
+Build the full terminology index explicitly, then point the pipeline config at the resulting
+immutable SQLite file. `configs/phase1_full_diagnostic.yaml` remains an experiment config for
+profiling lexical sources and internal stages; it should not be promoted merely because it returns
+more candidates.
 
 ```bash
-uv run python scripts/build_phase1_submission.py \
-  --config configs/phase1_full.yaml \
-  --run-label phase1-full
+uv run medical-kg terminology build \
+  --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl \
+  --cache-dir .cache/medical-kg/terminology
 
-uv run python scripts/build_phase1_submission.py \
+uv run medical-kg pipeline run \
+  --input data/samples/sample_notes.jsonl \
+  --output outputs/benchmarks/phase1_full/predictions.jsonl \
   --config configs/phase1_full_diagnostic.yaml \
-  --run-label phase1-full-all-stages
-
-uv run python scripts/analyze_runtime_benchmarks.py \
-  --run exact=outputs/phase1/<exact-run> \
-  --run all-lexical=outputs/benchmarks/phase1_full/<diagnostic-run> \
-  --output-dir outputs/benchmarks/phase1_full/comparison
+  --run-root outputs/benchmarks/phase1_full \
+  --run-label all-lexical
 ```
 
 The benchmark sums counters across documents, reports initialization separately from processing,
@@ -118,7 +121,7 @@ pipeline. Omit `--pred` to run the pipeline, save `predictions.jsonl`, and colle
 Pipeline execution can parallelize across documents:
 
 ```bash
-python scripts/run_pipeline.py \
+uv run medical-kg pipeline run \
   --input data/samples/sample_notes.jsonl \
   --output outputs/predictions.jsonl \
   --workers 4 \
@@ -162,25 +165,21 @@ issues, no offset mismatches, no invalid candidates, and a correct ZIP layout. `
 available for labeled regression data and synthetic samples so the loop engine can still optimize the
 official 0.3/0.3/0.4 objective before submitting.
 
-Use `configs/phase1_submission.yaml` as the default source of truth for Phase 1 submission paths,
-dictionary, parallelism, and pipeline options. The default config writes to a timestamped hash
-directory under `outputs/phase1`, validates the output directory before creating the ZIP, validates
-the ZIP payload against source TXT offsets and dictionary candidates, and disables relation
-extraction/validation because Phase 1 exports only flat entities. CLI flags override config values
-for one-off runs.
+The stable Phase 1 CLI takes explicit input, output, dictionary, parallelism, and export-policy
+arguments. It validates the directory before creating a deterministic ZIP, validates the ZIP again
+against raw TXT offsets and dictionary candidates, and disables relation extraction because Phase 1
+exports only flat entities. Historical `configs/phase1_*.yaml` files remain experiment records; they
+are not an implicit second configuration source for the benchmark command.
 
-The current competition baseline is entity-only. `assertion_policy: empty` and
-`candidate_policy: empty` preserve entity text/type/offsets while deliberately abstaining on the two
-high-risk fields. The `selective` policy is a third, explicit mode: assertion output requires
-allowed rule evidence, and candidate output requires a qualified candidate, a configured
-`(code system, primary source)` threshold, and optionally a reviewed exact mapping. Internal schema
-compatibility fallbacks are not supported.
+The conservative competition baseline uses `--assertion-policy empty` and
+`--candidate-policy empty`, preserving entity text/type/offsets while abstaining on the two high-risk
+fields. The stable CLI also supports `pipeline`. Selective calibration remains task experiment code
+under `benchmarks/phase1` and is not part of the reusable command surface.
 
 Compile reviewed mappings and calibrate emit versus abstain with document-fold cross-validation:
 
 ```bash
 uv run python scripts/build_phase1_reviewed_candidates.py --split train
-uv run python scripts/build_phase1_submission.py --config configs/phase1_full.yaml
 uv run python scripts/calibrate_phase1_candidates.py \
   --pred outputs/phase1/<full-run>/phase1/full_internal_predictions.jsonl \
   --reviewed-map data/manual_gold/reviewed_candidate_map.jsonl \

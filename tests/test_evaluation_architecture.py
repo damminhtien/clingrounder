@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import ast
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
 
+from medical_kg_nlp import __version__
 from medical_kg_nlp.benchmarks.phase1 import Phase1EvaluationAdapter, Phase1Record
 from medical_kg_nlp.evaluation import (
     EvaluationDocument,
@@ -34,6 +36,37 @@ def test_generic_evaluation_does_not_import_benchmarks_or_experiments() -> None:
                     forbidden.append((str(path), module))
 
     assert forbidden == []
+
+
+def test_public_packages_declare_docs_and_exports() -> None:
+    package_root = Path("src/medical_kg_nlp")
+    violations: list[str] = []
+    for path in sorted(package_root.rglob("__init__.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        has_exports = any(
+            (
+                isinstance(node, ast.Assign)
+                and any(isinstance(target, ast.Name) and target.id == "__all__" for target in node.targets)
+            )
+            or (
+                isinstance(node, ast.AnnAssign)
+                and isinstance(node.target, ast.Name)
+                and node.target.id == "__all__"
+            )
+            for node in tree.body
+        )
+        if ast.get_docstring(tree) is None:
+            violations.append(f"{path}: missing module docstring")
+        if not has_exports:
+            violations.append(f"{path}: missing explicit __all__")
+
+    assert violations == []
+
+
+def test_package_versions_remain_synchronized() -> None:
+    project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+
+    assert project["project"]["version"] == __version__
 
 
 def test_evaluation_adapter_validates_offsets_and_duplicate_documents() -> None:

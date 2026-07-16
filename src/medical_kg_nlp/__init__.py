@@ -1,5 +1,7 @@
+"""Composable clinical NLP, terminology retrieval, and evaluation toolkit."""
+
 from __future__ import annotations
-"""Medical KG NLP prototype package."""
 
-__version__ = "0.1.0"
+__all__ = ["__version__"]
 
+__version__ = "0.2.0"

@@ -42,6 +42,8 @@ into structured output similar to:
 Supported Python versions: **3.11–3.14**.
 
 Vietnamese documentation: [`README_VI.md`](README_VI.md).
+Package ownership and extension points: [`docs/code-map.md`](docs/code-map.md).
+Breaking 0.2 migration notes: [`docs/migration-v0.2.md`](docs/migration-v0.2.md).
 
 ---
 
@@ -274,15 +276,12 @@ src/medical_kg_nlp/kg/ontology_reasoner.py
 
 ---
 
-# Phase 1 operating modes
+# Phase 1 export policies
 
 ## `entity_only`: conservative submission mode
 
-```text
-configs/phase1_submission.yaml
-```
-
-The default mode:
+Pass `--assertion-policy empty --candidate-policy empty` to the Phase 1 benchmark command. This
+policy:
 
 - focuses on entity extraction;
 - exports `assertions: []`;
@@ -293,11 +292,8 @@ This mode prevents low-precision assertion or candidate predictions from reducin
 
 ## `full`: complete experimental pipeline
 
-```text
-configs/phase1_full.yaml
-```
-
-This mode enables:
+Pass `--assertion-policy pipeline --candidate-policy pipeline` to export values produced by the
+configured pipeline. The internal pipeline enables:
 
 - assertion classification;
 - candidate generation;
@@ -341,7 +337,7 @@ pre-commit install
 # Run the sample pipeline
 
 ```bash
-python scripts/run_pipeline.py \
+uv run medical-kg pipeline run \
   --input data/samples/sample_notes.jsonl \
   --output outputs/predictions.jsonl
 ```
@@ -359,25 +355,24 @@ ung thư phổi          → FAMILY     → ICD-10 C34
 Run the tests:
 
 ```bash
-python -m pytest tests/
+uv run pytest tests
 ```
+
+The default suite contains fast unit and contract tests. Run every public test before release with
+`uv run pytest -o addopts='' tests`.
 
 ---
 
 # Build a Phase 1 submission
 
-Entity-only mode:
-
 ```bash
-python scripts/build_phase1_submission.py \
-  --config configs/phase1_submission.yaml
-```
-
-Full pipeline:
-
-```bash
-python scripts/build_phase1_submission.py \
-  --config configs/phase1_full.yaml
+uv run medical-kg benchmark phase1 \
+  --input-dir data/raw/input \
+  --output-dir outputs/phase1/current/output \
+  --zip outputs/phase1/current/output.zip \
+  --dictionary data/dictionaries/seed_concepts.jsonl \
+  --assertion-policy empty \
+  --candidate-policy empty
 ```
 
 The submission builder:
@@ -396,7 +391,7 @@ The submission builder:
 Internal JSONL evaluation:
 
 ```bash
-python scripts/evaluate.py \
+uv run medical-kg evaluate \
   --gold data/samples/gold.jsonl \
   --pred outputs/predictions.jsonl
 ```
@@ -430,25 +425,33 @@ data/dictionaries/        Runtime dictionaries and aliases
 data/standards/           Standard Phase 1 concepts
 data/samples/             Small runnable examples
 docs/                     Architecture, schema, invariants, and evaluation docs
-scripts/                  Command-line entry points
+scripts/                  Dataset importers and specialized experiments
 
 src/medical_kg_nlp/
 ├── schema/               Internal data types
+├── pipeline/             Ports, composition root, runner, parallel batch
+├── adapters/             Replaceable rule and local model implementations
 ├── preprocessing/        Sections, sentences, normalization, offset mapping
-├── dictionaries/         ICD-10, RxNorm, aliases, abbreviations
+├── dictionaries/         Canonical JSONL records and source importers
+├── terminology/          Repository port and SQLite FTS5 index
 ├── ner/                  Entity extraction
 ├── context/              Assertion classification
-├── retrieval/            Exact, fuzzy, n-gram, BM25 retrieval
+├── retrieval/            Lexical/dense retriever composition
 ├── linking/              Reranking and code assignment
-├── ontology/             Phase 1-specific rules
 ├── kg/                   Ontology and KG constraints
 ├── relations/            Relation extraction
-├── pipeline/             Pipeline orchestration
-├── evaluation/           Metrics, error analysis, probes, ablations
+├── evaluation/           Task-neutral metrics and reports
+├── experiments/          Ablations, journals, and loop tooling
+├── benchmarks/phase1/    Phase 1 adapter, scorer, exporter, and campaign code
+├── validation/           Core/development/release validation profiles
+├── cli/                  Installed medical-kg command handlers
 └── utils/                I/O, hashing, logging, text utilities
 
-tests/                    Unit, regression, and smoke tests
+tests/                    Fast contracts plus opt-in integration/release/model tiers
 ```
+
+Root `scripts/` now contains dataset importers and specialized experiment utilities, not the stable
+application CLI. See the [code map](docs/code-map.md) for ownership and search recipes.
 
 ---
 
@@ -457,18 +460,15 @@ tests/                    Unit, regression, and smoke tests
 ```text
 1. README.md
 2. docs/invariants.md
-3. src/medical_kg_nlp/schema/types.py
-4. src/medical_kg_nlp/schema/annotation.py
-5. src/medical_kg_nlp/pipeline/runner.py
-6. src/medical_kg_nlp/ner/rule_ner.py
-7. src/medical_kg_nlp/ner/dictionary_matcher.py
-8. src/medical_kg_nlp/context/assertion.py
+3. docs/code-map.md
+4. src/medical_kg_nlp/pipeline/ports.py
+5. src/medical_kg_nlp/pipeline/factory.py
+6. src/medical_kg_nlp/pipeline/runner.py
+7. src/medical_kg_nlp/schema/annotation.py
+8. src/medical_kg_nlp/terminology/ports.py
 9. src/medical_kg_nlp/retrieval/pipeline.py
-10. src/medical_kg_nlp/linking/reranker.py
-11. src/medical_kg_nlp/linking/linker.py
-12. src/medical_kg_nlp/ontology/phase1.py
-13. src/medical_kg_nlp/benchmarks/phase1/phase1.py
-14. tests/test_pipeline_smoke.py
+10. src/medical_kg_nlp/benchmarks/phase1/phase1.py
+11. tests/test_pipeline_contracts.py
 ```
 
 The most useful initial breakpoint is:
