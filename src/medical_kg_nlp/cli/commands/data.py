@@ -49,6 +49,10 @@ from medical_kg_nlp.mining.profile import (
 from medical_kg_nlp.mining.recognition_benchmark import (
     benchmark_recognition_dictionary,
 )
+from medical_kg_nlp.mining.recognition_knowledge import (
+    compile_recognition_knowledge,
+    load_recognition_knowledge_policy,
+)
 from medical_kg_nlp.mining.reconciliation import reconcile_exact_duplicates
 from medical_kg_nlp.mining.records import AnnotationProposal, MinedDocument, SourceRequest
 from medical_kg_nlp.mining.quality import GoldAgreementGate, ReviewAgreementEvaluator
@@ -68,6 +72,7 @@ from medical_kg_nlp.mining.splits import (
 from medical_kg_nlp.terminology import SQLiteTerminologyRepository
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.schema.types import EntityType
+from medical_kg_nlp.utils.hashing import sha256_file
 
 __all__ = [
     "build_dataset",
@@ -77,6 +82,7 @@ __all__ = [
     "audit_dailymed_rxnorm",
     "compile_dailymed_rxnorm",
     "compile_alias_knowledge",
+    "compile_recognition_knowledge_artifact",
     "curate_annotation_dataset",
     "export_review",
     "freeze_snapshot",
@@ -259,9 +265,38 @@ def build_lexicon(args: argparse.Namespace) -> int:
         min_occurrences=args.min_occurrences,
         min_documents=args.min_documents,
     )
-    write_jsonl(args.output, (entry.to_dict() for entry in result.entries))
-    write_jsonl(args.conflicts_output, result.conflicts)
-    write_json(args.report_output, result.report)
+    inventory_sha256 = write_jsonl(
+        args.output,
+        (entry.to_dict() for entry in result.entries),
+    )
+    conflicts_sha256 = write_jsonl(args.conflicts_output, result.conflicts)
+    report = {
+        **result.report,
+        "inputs": {
+            "documents": str(Path(args.documents)),
+            "documents_sha256": sha256_file(args.documents),
+            "annotations": str(Path(args.annotations)),
+            "annotations_sha256": sha256_file(args.annotations),
+        },
+        "selection": {
+            "split_manifest": (
+                None if args.split_manifest is None else str(Path(args.split_manifest))
+            ),
+            "split_manifest_sha256": (
+                None
+                if args.split_manifest is None
+                else sha256_file(args.split_manifest)
+            ),
+            "split": args.split,
+        },
+        "outputs": {
+            "inventory": str(Path(args.output)),
+            "inventory_sha256": inventory_sha256,
+            "conflicts": str(Path(args.conflicts_output)),
+            "conflicts_sha256": conflicts_sha256,
+        },
+    }
+    write_json(args.report_output, report)
     _print_json(
         {
             "ambiguous_mention_count": len(result.conflicts),
@@ -397,6 +432,52 @@ def compile_alias_knowledge(args: argparse.Namespace) -> int:
             "overlay_alias_count": report["overlay_alias_count"],
             "recognition_concept_count": report["recognition_concept_count"],
             "decision_counts": report["decision_counts"],
+            "report": args.report_output,
+        }
+    )
+    return 0
+
+
+def compile_recognition_knowledge_artifact(args: argparse.Namespace) -> int:
+    """Compile corpus-backed, code-free recognition concepts for NER evaluation."""
+
+    inventory_sha256 = sha256_file(args.inventory)
+    baseline_entries = tuple(
+        entry
+        for dictionary_path in args.baseline_dictionary
+        for entry in DictionaryStore.load_entries_jsonl(dictionary_path)
+    )
+    result = compile_recognition_knowledge(
+        load_mention_inventory(args.inventory),
+        load_recognition_knowledge_policy(args.policy),
+        inventory_sha256=inventory_sha256,
+        baseline_entries=baseline_entries,
+    )
+    output_sha256 = write_jsonl(args.output, result.concepts)
+    decisions_sha256 = write_jsonl(args.decisions_output, result.decisions)
+    report = {
+        **result.report,
+        "inputs": {
+            "inventory": str(Path(args.inventory)),
+            "inventory_sha256": inventory_sha256,
+            "policy": str(Path(args.policy)),
+            "baseline_dictionaries": [
+                str(Path(path)) for path in args.baseline_dictionary
+            ],
+        },
+        "outputs": {
+            "recognition_dictionary": str(Path(args.output)),
+            "recognition_dictionary_sha256": output_sha256,
+            "decisions": str(Path(args.decisions_output)),
+            "decisions_sha256": decisions_sha256,
+        },
+    }
+    write_json(args.report_output, report)
+    _print_json(
+        {
+            "recognition_concept_count": len(result.concepts),
+            "decision_counts": result.report["decision_counts"],
+            "output": args.output,
             "report": args.report_output,
         }
     )

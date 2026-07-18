@@ -50,6 +50,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.data",
         "compile_alias_knowledge",
     ),
+    "data_knowledge_compile_recognition": (
+        "medical_kg_nlp.cli.commands.data",
+        "compile_recognition_knowledge_artifact",
+    ),
     "data_knowledge_benchmark_recognition": (
         "medical_kg_nlp.cli.commands.data",
         "benchmark_recognition_knowledge",

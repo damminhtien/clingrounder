@@ -132,10 +132,13 @@ def test_lexicon_build_cli_writes_inventory_conflicts_and_report(tmp_path: Path,
     inventory = [
         json.loads(line) for line in (tmp_path / "inventory.jsonl").read_text().splitlines()
     ]
+    report = json.loads((tmp_path / "report.json").read_text(encoding="utf-8"))
 
     assert exit_code == 0
     assert output["entry_count"] == 1
     assert inventory[0]["normalized_mention"] == "pcr"
+    assert report["inputs"]["documents_sha256"]
+    assert report["outputs"]["inventory_sha256"]
 
 
 def test_lexicon_build_cli_selects_only_frozen_training_records(

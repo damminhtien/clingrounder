@@ -74,6 +74,12 @@ from medical_kg_nlp.mining.reconciliation import (
 from medical_kg_nlp.mining.recognition_benchmark import (
     benchmark_recognition_dictionary,
 )
+from medical_kg_nlp.mining.recognition_knowledge import (
+    RecognitionKnowledgeCompilationResult,
+    RecognitionKnowledgePolicy,
+    compile_recognition_knowledge,
+    load_recognition_knowledge_policy,
+)
 from medical_kg_nlp.mining.storage import FsspecArtifactStore, LocalArtifactStore
 from medical_kg_nlp.mining.registry import (
     LicenseMode,
@@ -152,6 +158,8 @@ __all__ = [
     "PolicyAwareProposalLabelerAdapter",
     "QualityGatePort",
     "RedistributionPolicy",
+    "RecognitionKnowledgeCompilationResult",
+    "RecognitionKnowledgePolicy",
     "RelationLabelerPort",
     "RetentionPolicy",
     "RelationProposal",
@@ -182,6 +190,7 @@ __all__ = [
     "build_mention_inventory",
     "crosswalk_mentions",
     "compile_mined_aliases",
+    "compile_recognition_knowledge",
     "curate_annotations",
     "connector_from_definition",
     "ConsensusProposalLabeler",
@@ -191,6 +200,7 @@ __all__ = [
     "load_annotation_curation_policy",
     "load_mention_inventory",
     "load_mining_plan",
+    "load_recognition_knowledge_policy",
     "load_alias_promotion_policy",
     "parser_from_definition",
     "profile_blocking_issue_count",

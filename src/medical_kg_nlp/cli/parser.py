@@ -301,6 +301,24 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     knowledge_aliases.add_argument("--recognition-output", required=True)
     knowledge_aliases.add_argument("--decisions-output", required=True)
     knowledge_aliases.add_argument("--report-output", required=True)
+    knowledge_recognition = knowledge_operations.add_parser(
+        "compile-recognition",
+        help="Compile split-frozen mention inventories into code-free NER concepts.",
+    )
+    knowledge_recognition.set_defaults(
+        handler="data_knowledge_compile_recognition"
+    )
+    knowledge_recognition.add_argument("--inventory", required=True)
+    knowledge_recognition.add_argument("--policy", required=True)
+    knowledge_recognition.add_argument(
+        "--baseline-dictionary",
+        action="append",
+        default=[],
+        help="Existing recognition dictionary used to reject duplicate/type-conflicting aliases.",
+    )
+    knowledge_recognition.add_argument("--output", required=True)
+    knowledge_recognition.add_argument("--decisions-output", required=True)
+    knowledge_recognition.add_argument("--report-output", required=True)
     recognition_benchmark = knowledge_operations.add_parser(
         "benchmark-recognition",
         help="Compare a compact mined dictionary with a baseline entity matcher.",
