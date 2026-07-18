@@ -18,6 +18,10 @@ from medical_kg_nlp.mining.curation import (
     curate_annotations,
     load_annotation_curation_policy,
 )
+from medical_kg_nlp.mining.graph_knowledge import (
+    GraphCompilationConfig,
+    compile_knowledge_graph,
+)
 from medical_kg_nlp.mining.io import (
     load_annotations,
     load_documents,
@@ -90,6 +94,7 @@ __all__ = [
     "crosswalk_lexicon",
     "audit_dailymed_rxnorm",
     "compile_dailymed_rxnorm",
+    "compile_graph_knowledge",
     "compile_alias_knowledge",
     "compile_recognition_knowledge_artifact",
     "curate_annotation_dataset",
@@ -512,6 +517,34 @@ def compile_alias_knowledge(args: argparse.Namespace) -> int:
             "report": args.report_output,
         }
     )
+    return 0
+
+
+def compile_graph_knowledge(args: argparse.Namespace) -> int:
+    """Deduplicate terminology, mined entities, relations, and source evidence."""
+
+    documents = () if args.documents is None else load_documents(args.documents)
+    annotations = () if args.annotations is None else load_annotations(args.annotations)
+    relations = () if args.relations is None else load_relations(args.relations)
+    report = compile_knowledge_graph(
+        terminology_paths=tuple(args.terminology_source),
+        alias_overlay_paths=tuple(args.alias_overlay),
+        documents=documents,
+        annotations=annotations,
+        relations=relations,
+        config=GraphCompilationConfig(
+            include_entity_types=tuple(args.entity_type),
+            include_unlinked_terms=not args.linked_only,
+        ),
+        nodes_output=args.nodes_output,
+        edges_output=args.edges_output,
+        evidence_output=args.evidence_output,
+        report_output=args.report_output,
+        documents_path=args.documents,
+        annotations_path=args.annotations,
+        relations_path=args.relations,
+    )
+    _print_json(report)
     return 0
 
 

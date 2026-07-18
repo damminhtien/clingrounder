@@ -381,6 +381,22 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         "--split",
         help="Named evaluation split; requires --split-manifest.",
     )
+    graph_compile = knowledge_operations.add_parser(
+        "compile-graph",
+        help="Deduplicate canonical ontology and mined relation evidence.",
+    )
+    graph_compile.set_defaults(handler="data_knowledge_compile_graph")
+    graph_compile.add_argument("--terminology-source", action="append", default=[])
+    graph_compile.add_argument("--alias-overlay", action="append", default=[])
+    graph_compile.add_argument("--documents")
+    graph_compile.add_argument("--annotations")
+    graph_compile.add_argument("--relations")
+    graph_compile.add_argument("--entity-type", action="append", default=[])
+    graph_compile.add_argument("--linked-only", action="store_true")
+    graph_compile.add_argument("--nodes-output", required=True)
+    graph_compile.add_argument("--edges-output", required=True)
+    graph_compile.add_argument("--evidence-output", required=True)
+    graph_compile.add_argument("--report-output", required=True)
 
     label = operations.add_parser("label", help="Run a local proposal-labeler adapter.")
     label_operations = label.add_subparsers(dest="data_label_command", required=True)

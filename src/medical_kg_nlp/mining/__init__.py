@@ -22,6 +22,10 @@ from medical_kg_nlp.mining.labeling import (
     ConsensusProposalLabeler,
     PolicyAwareProposalLabelerAdapter,
 )
+from medical_kg_nlp.mining.graph_knowledge import (
+    GraphCompilationConfig,
+    compile_knowledge_graph,
+)
 from medical_kg_nlp.mining.knowledge import (
     AliasKnowledgeCompilationResult,
     MinedAliasPromotionPolicy,
@@ -144,6 +148,7 @@ __all__ = [
     "DatasetSnapshot",
     "DeduplicatorPort",
     "DiscoveredArtifact",
+    "GraphCompilationConfig",
     "DocumentParserPort",
     "DocumentCanonicalMapping",
     "DuckDBMiningCatalog",
@@ -202,6 +207,7 @@ __all__ = [
     "VersionPolicy",
     "build_dataset_profile",
     "build_linked_alias_proposals",
+    "compile_knowledge_graph",
     "benchmark_recognition_dictionary",
     "build_mention_inventory",
     "crosswalk_mentions",
