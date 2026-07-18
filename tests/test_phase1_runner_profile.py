@@ -5,6 +5,7 @@ from pathlib import Path
 from medical_kg_nlp.benchmarks.phase1.runner import (
     Phase1BenchmarkConfig,
     build_phase1_factory_config,
+    _validation_paths,
 )
 
 
@@ -58,8 +59,14 @@ def test_validation_dictionary_paths_are_explicit_and_ordered(tmp_path: Path) ->
     )
 
     # The field is intentionally separate from dictionary_path: recognition can stay compact
-    # while release validation covers every code system emitted by normalization.
+    # while release validation covers every code system emitted by normalization. The runner
+    # always includes the recognition source first.
     assert config.validation_dictionary_paths == (
+        tmp_path / "icd.jsonl",
+        tmp_path / "rxnorm.jsonl",
+    )
+    assert _validation_paths(config) == (
+        tmp_path / "recognition.jsonl",
         tmp_path / "icd.jsonl",
         tmp_path / "rxnorm.jsonl",
     )

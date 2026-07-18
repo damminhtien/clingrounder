@@ -152,7 +152,11 @@ def build_phase1_factory_config(config: Phase1BenchmarkConfig) -> PipelineFactor
 def _validation_paths(config: Phase1BenchmarkConfig) -> tuple[Path, ...]:
     """Return the code sources accepted by the release validator."""
 
-    return config.validation_dictionary_paths or (config.dictionary_path,)
+    # The recognition dictionary may contain legacy competition codes that are not part of the
+    # current TT06 release. Keep it in the validation view, then add any explicitly pinned full
+    # sources for codes emitted by normalization.
+    paths = (config.dictionary_path, *config.validation_dictionary_paths)
+    return tuple(dict.fromkeys(paths))
 
 
 def _load_validation_dictionary(config: Phase1BenchmarkConfig) -> DictionaryStore:
