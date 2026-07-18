@@ -166,25 +166,31 @@ class SQLiteTerminologyRepository:
             parameters=parameters,
             limit=limit,
         )
-        token_query = _token_and_query(normalized)
-        if len(output) >= limit or token_query is None or token_query == phrase_query:
-            return output
-
-        # SCALING: phrase hits stay first. The wider token query runs only when needed and
-        # remains bounded; it improves review/search recall without changing exact lookup.
         seen = {entry.concept_id for entry in output}
-        for entry in self._fts_search(
-            token_query,
-            conditions=conditions,
-            parameters=parameters,
-            limit=limit * 4,
-        ):
-            if entry.concept_id in seen:
-                continue
-            output.append(entry)
-            seen.add(entry.concept_id)
-            if len(output) == limit:
+        token_and_query, token_or_query = _token_queries(normalized)
+        fallbacks = (
+            (token_and_query, limit * 4),
+            (token_or_query, limit * 2),
+        )
+        for fallback_query, query_limit in fallbacks:
+            if len(output) >= limit:
                 break
+            if fallback_query is None or fallback_query == phrase_query:
+                continue
+            # SCALING: strict phrase/AND hits stay first. The bounded OR query only fills an
+            # incomplete top-k, improving unseen-surface recall without widening exact lookup.
+            for entry in self._fts_search(
+                fallback_query,
+                conditions=conditions,
+                parameters=parameters,
+                limit=query_limit,
+            ):
+                if entry.concept_id in seen:
+                    continue
+                output.append(entry)
+                seen.add(entry.concept_id)
+                if len(output) == limit:
+                    break
         return output
 
     def _fts_search(
@@ -328,18 +334,21 @@ def _quoted_fts_term(value: str) -> str:
     return f'"{value.replace(chr(34), chr(34) * 2)}"'
 
 
-def _token_and_query(value: str) -> str | None:
+def _token_queries(value: str) -> tuple[str | None, str | None]:
     # FTS5's trigram tokenizer cannot use one- or two-character query terms. Keep only stable
-    # alphanumeric terms and require at least two so a wider query cannot turn into a broad scan.
+    # alphanumeric terms and require at least two so an OR query cannot become a broad scan.
     raw_tokens = re.findall(r"[^\W_]+", value)
     # INVARIANT: a short number often distinguishes clinical subtypes (for example type 1/2).
     # Dropping it can rank a contradictory concept, so leave that query as an exact-only miss.
     if any(token.isdigit() and len(token) < 3 for token in raw_tokens):
-        return None
+        return None, None
     tokens = tuple(dict.fromkeys(token for token in raw_tokens if len(token) >= 3))
     if len(tokens) < 2:
-        return None
-    return " AND ".join(_quoted_fts_term(token) for token in tokens)
+        return None, None
+    return (
+        " AND ".join(_quoted_fts_term(token) for token in tokens),
+        " OR ".join(_quoted_fts_term(token) for token in tokens),
+    )
 
 
 def _entry_from_row(row: sqlite3.Row) -> ConceptEntry:

@@ -143,6 +143,43 @@ def test_sqlite_fts_search_falls_back_to_order_independent_terms(tmp_path: Path)
     assert [entry.code for entry in results] == ["C34.9"]
 
 
+def test_sqlite_fts_search_fills_top_k_with_partial_token_matches(tmp_path: Path) -> None:
+    source = tmp_path / "concepts.jsonl"
+    rows = [
+        {
+            "concept_id": "ICD:N18.9",
+            "code": "N18.9",
+            "code_system": "ICD-10",
+            "canonical_name": "chronic kidney disease",
+            "semantic_type": "DISEASE",
+            "source": "test",
+        },
+        {
+            "concept_id": "ICD:K76.9",
+            "code": "K76.9",
+            "code_system": "ICD-10",
+            "canonical_name": "acute liver disease",
+            "semantic_type": "DISEASE",
+            "source": "test",
+        },
+    ]
+    source.write_text(
+        "".join(json.dumps(row) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+    manifest = build_terminology_index((source,), cache_dir=tmp_path / "cache")
+    repository = SQLiteTerminologyRepository(manifest.index_path)
+
+    results = repository.search(
+        "advanced chronic disease",
+        entity_type=EntityType.DISEASE,
+        code_systems=(CodeSystem.ICD10,),
+        limit=5,
+    )
+
+    assert [entry.code for entry in results] == ["N18.9", "K76.9"]
+
+
 def test_sqlite_fts_search_does_not_drop_short_numeric_subtype(tmp_path: Path) -> None:
     source = tmp_path / "concepts.jsonl"
     source.write_text(
