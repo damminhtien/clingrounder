@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 import threading
 from collections.abc import Sequence
@@ -158,7 +159,42 @@ class SQLiteTerminologyRepository:
                 limit=limit,
             )
         conditions, parameters = _concept_filters(entity_type, code_systems)
-        match_query = f'"{normalized.replace(chr(34), chr(34) * 2)}"'
+        phrase_query = _quoted_fts_term(normalized)
+        output = self._fts_search(
+            phrase_query,
+            conditions=conditions,
+            parameters=parameters,
+            limit=limit,
+        )
+        token_query = _token_and_query(normalized)
+        if len(output) >= limit or token_query is None or token_query == phrase_query:
+            return output
+
+        # SCALING: phrase hits stay first. The wider token query runs only when needed and
+        # remains bounded; it improves review/search recall without changing exact lookup.
+        seen = {entry.concept_id for entry in output}
+        for entry in self._fts_search(
+            token_query,
+            conditions=conditions,
+            parameters=parameters,
+            limit=limit * 4,
+        ):
+            if entry.concept_id in seen:
+                continue
+            output.append(entry)
+            seen.add(entry.concept_id)
+            if len(output) == limit:
+                break
+        return output
+
+    def _fts_search(
+        self,
+        match_query: str,
+        *,
+        conditions: str,
+        parameters: Sequence[str],
+        limit: int,
+    ) -> list[ConceptEntry]:
         sql = f"""
             SELECT {_CONCEPT_COLUMNS}, bm25(aliases_fts) AS lexical_rank
             FROM aliases_fts
@@ -286,6 +322,19 @@ def _deduplicate_rows(rows: sqlite3.Cursor, limit: int) -> list[ConceptEntry]:
         if len(output) == limit:
             break
     return output
+
+
+def _quoted_fts_term(value: str) -> str:
+    return f'"{value.replace(chr(34), chr(34) * 2)}"'
+
+
+def _token_and_query(value: str) -> str | None:
+    # FTS5's trigram tokenizer cannot use one- or two-character query terms. Keep only stable
+    # alphanumeric terms and require at least two so a wider query cannot turn into a broad scan.
+    tokens = tuple(dict.fromkeys(token for token in re.findall(r"[^\W_]+", value) if len(token) >= 3))
+    if len(tokens) < 2:
+        return None
+    return " AND ".join(_quoted_fts_term(token) for token in tokens)
 
 
 def _entry_from_row(row: sqlite3.Row) -> ConceptEntry:

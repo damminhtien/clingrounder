@@ -114,6 +114,35 @@ def test_sqlite_fts_search_is_deterministic_across_threads(tmp_path: Path) -> No
     assert results == [["RX:6809"]] * 32
 
 
+def test_sqlite_fts_search_falls_back_to_order_independent_terms(tmp_path: Path) -> None:
+    source = tmp_path / "concepts.jsonl"
+    source.write_text(
+        json.dumps(
+            {
+                "concept_id": "ICD:C34.9",
+                "code": "C34.9",
+                "code_system": "ICD-10",
+                "canonical_name": "malignant cancer of the lung",
+                "semantic_type": "DISEASE",
+                "source": "test",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    manifest = build_terminology_index((source,), cache_dir=tmp_path / "cache")
+    repository = SQLiteTerminologyRepository(manifest.index_path)
+
+    results = repository.search(
+        "lung cancer",
+        entity_type=EntityType.DISEASE,
+        code_systems=(CodeSystem.ICD10,),
+        limit=5,
+    )
+
+    assert [entry.code for entry in results] == ["C34.9"]
+
+
 def test_sqlite_repository_rejects_stale_source_fingerprint(tmp_path: Path) -> None:
     source = _write_source(tmp_path / "concepts.jsonl")
     manifest = build_terminology_index((source,), cache_dir=tmp_path / "cache")
