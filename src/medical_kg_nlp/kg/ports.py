@@ -28,6 +28,7 @@ class KnowledgeGraphRepositoryPort(Protocol):
         entity_type: str | None = None,
         code_system: str | None = None,
         limit: int = 20,
+        exact_only: bool = False,
     ) -> list[KnowledgeNode]: ...
 
     def neighbors(

@@ -20,6 +20,7 @@ from medical_kg_nlp.context.assertion import AssertionClassifier
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.merge import merge_concept_entries
 from medical_kg_nlp.kg.validator import KGValidator
+from medical_kg_nlp.kg.sqlite_repository import SQLiteKnowledgeGraphRepository
 from medical_kg_nlp.linking.linker import EntityLinker
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
 from medical_kg_nlp.pipeline.components import PipelineComponents
@@ -53,6 +54,7 @@ class PipelineFactoryConfig:
     normalization_dictionary_paths: tuple[str, ...] = ()
     normalization_index_path: str | None = None
     normalization_alias_overlay_paths: tuple[str, ...] = ()
+    knowledge_graph_index_path: str | None = None
     terminology_cache_dir: str = ".cache/medical-kg/terminology"
     additional_recognition_dictionary_path: str | None = None
     abbreviation_path: str = "data/dictionaries/abbreviations.jsonl"
@@ -83,6 +85,9 @@ class PipelineFactoryConfig:
             normalization_alias_overlay_paths=_string_tuple(
                 terminology.get("normalization_alias_overlay_paths"),
                 "normalization_alias_overlay_paths",
+            ),
+            knowledge_graph_index_path=_optional_string(
+                terminology.get("knowledge_graph_index_path")
             ),
             terminology_cache_dir=_string(
                 terminology,
@@ -152,6 +157,16 @@ class PipelineFactory:
             )
 
         options = resolved.options
+        knowledge_graph_repository = None
+        if "kg_exact" in options.candidate_sources:
+            if resolved.knowledge_graph_index_path is None:
+                raise ValueError(
+                    "candidate_sources includes kg_exact but terminology."
+                    "knowledge_graph_index_path is missing"
+                )
+            knowledge_graph_repository = SQLiteKnowledgeGraphRepository(
+                resolved.knowledge_graph_index_path
+            )
         entity_extractor: EntityExtractorPort
         if resolved.models.entity_extractor is not None:
             entity_extractor = HuggingFaceTokenClassifierAdapter(
@@ -184,6 +199,7 @@ class PipelineFactory:
                     max_candidates=options.max_candidates,
                     retrieval_sources=options.candidate_sources,
                     use_fts_for_bm25=uses_sqlite_normalization,
+                    knowledge_graph_repository=knowledge_graph_repository,
                 ),
                 terminology_repository,
                 assignment_threshold=options.link_assignment_threshold,

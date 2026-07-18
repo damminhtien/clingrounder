@@ -19,6 +19,8 @@ from medical_kg_nlp.kg.sqlite_builder import build_knowledge_graph_index
 from medical_kg_nlp.kg.sqlite_repository import SQLiteKnowledgeGraphRepository
 from medical_kg_nlp.cli import main
 from medical_kg_nlp.mining.io import write_jsonl
+from medical_kg_nlp.retrieval.adapters import KnowledgeGraphExactRetrieverAdapter
+from medical_kg_nlp.schema.types import EntityType
 from medical_kg_nlp.utils.text import normalize_for_match
 
 
@@ -147,6 +149,19 @@ def test_sqlite_graph_concurrent_reads_are_deterministic(tmp_path: Path) -> None
         results = list(pool.map(query, range(32)))
 
     assert results == [("child",)] * 32
+    repository.close()
+
+
+def test_graph_exact_retriever_is_type_filtered_and_does_not_use_fts(tmp_path: Path) -> None:
+    nodes_path, edges_path, evidence_path, _ = _write_graph(tmp_path)
+    manifest = build_knowledge_graph_index(nodes_path, edges_path, evidence_path, cache_dir=tmp_path)
+    repository = SQLiteKnowledgeGraphRepository(manifest.index_path)
+    adapter = KnowledgeGraphExactRetrieverAdapter(repository)
+
+    candidates = adapter.retrieve("cao huyet ap", EntityType.DISEASE, "", 5)
+    assert [(item.code_system.value, item.code) for item in candidates] == [("ICD-10", "I10")]
+    assert adapter.retrieve("hypertension disease", EntityType.DISEASE, "", 5) == []
+    assert adapter.retrieve("cao huyết áp", EntityType.DRUG, "", 5) == []
     repository.close()
 
 

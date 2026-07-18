@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Protocol
 
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
+from medical_kg_nlp.kg.ports import KnowledgeGraphRepositoryPort
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.retrieval.bm25_retriever import BM25Retriever
 from medical_kg_nlp.retrieval.constraints import allowed_code_systems
@@ -25,6 +26,7 @@ __all__ = [
     "ExactRetrieverAdapter",
     "FTSRetrieverAdapter",
     "FuzzyRetrieverAdapter",
+    "KnowledgeGraphExactRetrieverAdapter",
     "MentionRetrieverAdapter",
     "ReviewedMentionRetrieverAdapter",
 ]
@@ -270,6 +272,71 @@ class FTSRetrieverAdapter:
             _candidate(entry, max(0.3, 0.5 - rank * 0.005), self.source, mention)
             for rank, entry in enumerate(entries)
         ]
+
+
+@dataclass(frozen=True)
+class KnowledgeGraphExactRetrieverAdapter:
+    """Retrieve only code-bearing graph concepts with exact alias matches.
+
+    The graph is an optional mined overlay. It is intentionally not allowed to use
+    FTS, ontology traversal, or untyped term nodes here: candidate generation must
+    remain dictionary-constrained and type-compatible.
+    """
+
+    repository: KnowledgeGraphRepositoryPort
+    source: str = "kg_exact"
+    terminal_on_match: bool = False
+    unique_output_short_circuit: bool = False
+
+    def retrieve(
+        self,
+        mention: str,
+        entity_type: EntityType,
+        context_window: str,
+        limit: int,
+    ) -> list[Candidate]:
+        del context_window
+        systems = allowed_code_systems(entity_type)
+        output: list[Candidate] = []
+        seen: set[tuple[str, str]] = set()
+        for system in systems or ():
+            nodes = self.repository.search_nodes(
+                mention,
+                entity_type=entity_type.value,
+                code_system=system.value,
+                limit=limit,
+                exact_only=True,
+            )
+            for node in nodes:
+                if node.code is None or node.code_system != system.value:
+                    continue
+                key = (node.code_system, node.code)
+                if key in seen:
+                    continue
+                seen.add(key)
+                try:
+                    semantic_type = EntityType(node.entity_type)
+                    code_system = CodeSystem(node.code_system)
+                except ValueError:
+                    # INVARIANT: an unknown graph enum must never leak into a Candidate.
+                    continue
+                if semantic_type != entity_type:
+                    continue
+                output.append(
+                    Candidate(
+                        concept_id=node.node_id,
+                        code=node.code,
+                        code_system=code_system,
+                        canonical_name=node.label,
+                        semantic_type=semantic_type,
+                        score=1.0,
+                        source=self.source,
+                        matched_alias=mention,
+                    )
+                )
+                if len(output) >= limit:
+                    return output
+        return output
 
 
 def _candidate(

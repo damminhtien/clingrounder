@@ -12,6 +12,7 @@ from medical_kg_nlp.retrieval.adapters import (
     ExactRetrieverAdapter,
     FTSRetrieverAdapter,
     FuzzyRetrieverAdapter,
+    KnowledgeGraphExactRetrieverAdapter,
     MentionRetrieverAdapter,
     ReviewedMentionRetrieverAdapter,
 )
@@ -21,6 +22,7 @@ from medical_kg_nlp.retrieval.ngram_retriever import CharNgramRetriever
 from medical_kg_nlp.retrieval.pipeline import RetrievalPipeline
 from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
 from medical_kg_nlp.terminology.ports import TerminologyRepository
+from medical_kg_nlp.kg.ports import KnowledgeGraphRepositoryPort
 
 __all__ = [
     "DEFAULT_RETRIEVAL_SOURCES",
@@ -64,11 +66,13 @@ def build_rule_retrieval_pipeline(
         "src/medical_kg_nlp/resources/phase1_rxnorm_memory.jsonl"
     ),
     use_fts_for_bm25: bool = False,
+    knowledge_graph_repository: KnowledgeGraphRepositoryPort | None = None,
 ) -> RetrievalPipeline:
     """Compose selected retrievers while keeping the pipeline storage-neutral."""
 
     selected = set(retrieval_sources or DEFAULT_RETRIEVAL_SOURCES)
-    unknown = selected - set(DEFAULT_RETRIEVAL_SOURCES)
+    supported = {*DEFAULT_RETRIEVAL_SOURCES, "kg_exact"}
+    unknown = selected - supported
     if unknown:
         raise ValueError(f"Unknown retrieval source(s): {sorted(unknown)}")
 
@@ -91,6 +95,10 @@ def build_rule_retrieval_pipeline(
             if use_fts_for_bm25
             else BM25RetrieverAdapter(BM25Retriever(approximate_store))
         )
+    if "kg_exact" in selected:
+        if knowledge_graph_repository is None:
+            raise ValueError("kg_exact retrieval requires a knowledge graph repository")
+        adapters.append(KnowledgeGraphExactRetrieverAdapter(knowledge_graph_repository))
     return RetrievalPipeline(
         repository,
         tuple(adapters),

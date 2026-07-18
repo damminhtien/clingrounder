@@ -81,8 +81,9 @@ class SQLiteKnowledgeGraphRepository:
         entity_type: str | None = None,
         code_system: str | None = None,
         limit: int = 20,
+        exact_only: bool = False,
     ) -> list[KnowledgeNode]:
-        """Search exact and toneless aliases before falling back to FTS."""
+        """Search exact/toneless aliases, optionally skipping the FTS fallback."""
 
         _validate_limit(limit)
         normalized = normalize_for_match(query)
@@ -122,6 +123,8 @@ class SQLiteKnowledgeGraphRepository:
             seen.add(node.node_id)
             if len(output) >= limit:
                 return output
+        if exact_only:
+            return output
         match_query = f'"{normalized.replace(chr(34), chr(34) * 2)}"'
         fts_rows = self._connection().execute(
             f"""
