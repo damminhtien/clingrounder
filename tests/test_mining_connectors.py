@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import json
 from pathlib import Path
 from typing import BinaryIO
 
@@ -50,6 +51,99 @@ def test_dailymed_discovers_versioned_set_ids() -> None:
 
     assert [item.metadata["set_id"] for item in artifacts] == ["a-set", "z-set"]
     assert artifacts[0].uri.endswith("/spls/a-set.xml")
+
+
+def test_dailymed_discovers_a_pinned_filtered_catalog_slice() -> None:
+    source = _registry().by_id("dailymed")
+    query = (
+        "published_date=2026-07-17&published_date_comparison=eq"
+        "&pagesize=2&page=1"
+    )
+    catalog_uri = f"{source.urls[0]}spls.json?{query}"
+    payload = json.dumps(
+        {
+            "data": [
+                {
+                    "setid": "z-set",
+                    "spl_version": 3,
+                    "published_date": "Jul 17, 2026",
+                    "title": "Drug Z",
+                },
+                {
+                    "setid": "a-set",
+                    "spl_version": 1,
+                    "published_date": "Jul 17, 2026",
+                    "title": "Drug A",
+                },
+            ],
+            "metadata": {
+                "current_page": 1,
+                "total_pages": 1,
+                "total_elements": 2,
+                "db_published_date": "Jul 17, 2026 07:50:58PM EST",
+            },
+        }
+    ).encode()
+    connector = DailyMedConnector(source, MemoryTransport({catalog_uri: payload}))
+
+    artifacts = list(
+        connector.discover(
+            SourceRequest(
+                source_id="dailymed",
+                source_version="catalog-2026-07-17",
+                parameters={
+                    "catalog": {
+                        "expected_db_published_date": "Jul 17, 2026 07:50:58PM EST",
+                        "expected_total_elements": 2,
+                        "filters": {
+                            "published_date": "2026-07-17",
+                            "published_date_comparison": "eq",
+                        },
+                        "page_size": 2,
+                    }
+                },
+            )
+        )
+    )
+
+    assert [item.metadata["set_id"] for item in artifacts] == ["a-set", "z-set"]
+    assert artifacts[0].metadata["spl_version"] == "1"
+    assert artifacts[0].metadata["catalog_db_published_date"].startswith("Jul 17")
+    assert artifacts[0].metadata["discovery_uri"] == catalog_uri
+
+
+def test_dailymed_catalog_fails_closed_when_snapshot_changes() -> None:
+    source = _registry().by_id("dailymed")
+    catalog_uri = f"{source.urls[0]}spls.json?pagesize=100&page=1"
+    payload = json.dumps(
+        {
+            "data": [],
+            "metadata": {
+                "current_page": 1,
+                "total_pages": 0,
+                "total_elements": 0,
+                "db_published_date": "Jul 18, 2026 01:00:00AM EST",
+            },
+        }
+    ).encode()
+    connector = DailyMedConnector(source, MemoryTransport({catalog_uri: payload}))
+
+    with pytest.raises(ValueError, match="DailyMed catalog changed"):
+        list(
+            connector.discover(
+                SourceRequest(
+                    source_id="dailymed",
+                    source_version="catalog-2026-07-17",
+                    parameters={
+                        "catalog": {
+                            "expected_db_published_date": (
+                                "Jul 17, 2026 07:50:58PM EST"
+                            )
+                        }
+                    },
+                )
+            )
+        )
 
 
 def test_pmc_oa_resolves_and_checkpoints_article_license(tmp_path: Path) -> None:
