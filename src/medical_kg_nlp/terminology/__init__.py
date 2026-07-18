@@ -5,6 +5,7 @@ from medical_kg_nlp.terminology.index_builder import (
     TERMINOLOGY_INDEX_SCHEMA_VERSION,
     TerminologyIndexManifest,
     build_terminology_index,
+    input_fingerprint,
     source_fingerprint,
     terminology_cache_path,
 )
@@ -20,6 +21,7 @@ __all__ = [
     "TerminologyRepository",
     "TerminologyIndexManifest",
     "build_terminology_index",
+    "input_fingerprint",
     "source_fingerprint",
     "terminology_cache_path",
 ]

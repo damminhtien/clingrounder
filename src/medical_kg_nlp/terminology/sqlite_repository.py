@@ -14,6 +14,7 @@ from medical_kg_nlp.preprocessing.normalizer import NORMALIZATION_CONTRACT_VERSI
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.terminology.index_builder import (
     TERMINOLOGY_INDEX_SCHEMA_VERSION,
+    input_fingerprint,
     source_fingerprint,
 )
 from medical_kg_nlp.utils.text import normalize_for_match
@@ -37,6 +38,7 @@ class SQLiteTerminologyRepository:
         index_path: str | Path,
         *,
         expected_source_paths: tuple[str | Path, ...] | None = None,
+        expected_alias_overlay_paths: tuple[str | Path, ...] | None = None,
         expected_normalization_version: str = NORMALIZATION_CONTRACT_VERSION,
     ) -> None:
         self.index_path = Path(index_path).resolve()
@@ -46,7 +48,11 @@ class SQLiteTerminologyRepository:
             )
         self._local = threading.local()
         self.metadata = self._load_metadata()
-        self._validate_metadata(expected_source_paths, expected_normalization_version)
+        self._validate_metadata(
+            expected_source_paths,
+            expected_alias_overlay_paths,
+            expected_normalization_version,
+        )
 
     def get_by_concept_id(self, concept_id: str) -> ConceptEntry | None:
         row = self._connection().execute(
@@ -187,6 +193,7 @@ class SQLiteTerminologyRepository:
     def _validate_metadata(
         self,
         expected_source_paths: tuple[str | Path, ...] | None,
+        expected_alias_overlay_paths: tuple[str | Path, ...] | None,
         expected_normalization_version: str,
     ) -> None:
         if self.metadata.get("schema_version") != TERMINOLOGY_INDEX_SCHEMA_VERSION:
@@ -197,6 +204,14 @@ class SQLiteTerminologyRepository:
             current = source_fingerprint(expected_source_paths)
             if self.metadata.get("source_fingerprint") != current:
                 raise ValueError("Terminology index source fingerprint is stale")
+            overlays = expected_alias_overlay_paths or ()
+            expected_input = input_fingerprint(expected_source_paths, overlays)
+            if self.metadata.get("input_fingerprint") != expected_input:
+                raise ValueError("Terminology index alias-overlay fingerprint is stale")
+        elif expected_alias_overlay_paths is not None:
+            raise ValueError(
+                "Expected canonical source paths are required when validating alias overlays"
+            )
 
 
 def _concept_filters(

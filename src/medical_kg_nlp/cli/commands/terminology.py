@@ -16,6 +16,7 @@ def build_index(args: argparse.Namespace) -> int:
 
     manifest = build_terminology_index(
         tuple(args.source),
+        alias_overlay_paths=tuple(args.alias_overlay),
         output_path=args.output,
         cache_dir=args.cache_dir,
     )
@@ -29,6 +30,7 @@ def inspect_index(args: argparse.Namespace) -> int:
     repository = SQLiteTerminologyRepository(
         args.index,
         expected_source_paths=tuple(args.source) if args.source else None,
+        expected_alias_overlay_paths=(tuple(args.alias_overlay) if args.source else None),
     )
     payload: dict[str, object] = {"metadata": repository.metadata}
     if args.query:

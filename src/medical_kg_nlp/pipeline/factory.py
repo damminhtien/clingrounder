@@ -18,7 +18,7 @@ from medical_kg_nlp.adapters.huggingface import (
 )
 from medical_kg_nlp.context.assertion import AssertionClassifier
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
+from medical_kg_nlp.dictionaries.merge import merge_concept_entries
 from medical_kg_nlp.kg.validator import KGValidator
 from medical_kg_nlp.linking.linker import EntityLinker
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
@@ -52,6 +52,7 @@ class PipelineFactoryConfig:
     recognition_dictionary_path: str = "data/dictionaries/seed_concepts.jsonl"
     normalization_dictionary_path: str | None = None
     normalization_index_path: str | None = None
+    normalization_alias_overlay_paths: tuple[str, ...] = ()
     terminology_cache_dir: str = ".cache/medical-kg/terminology"
     additional_recognition_dictionary_path: str | None = None
     abbreviation_path: str = "data/dictionaries/abbreviations.jsonl"
@@ -77,6 +78,10 @@ class PipelineFactoryConfig:
             ),
             normalization_index_path=_optional_string(
                 terminology.get("normalization_index_path")
+            ),
+            normalization_alias_overlay_paths=_string_tuple(
+                terminology.get("normalization_alias_overlay_paths"),
+                "normalization_alias_overlay_paths",
             ),
             terminology_cache_dir=_string(
                 terminology,
@@ -119,7 +124,7 @@ class PipelineFactory:
                     resolved.additional_recognition_dictionary_path
                 )
             )
-        recognition_store = DictionaryStore(_deduplicate_entries(recognition_entries))
+        recognition_store = DictionaryStore(merge_concept_entries(recognition_entries))
 
         recognition_repository = InMemoryTerminologyRepository(recognition_store)
         terminology_repository: TerminologyRepository = recognition_repository
@@ -127,11 +132,16 @@ class PipelineFactory:
         if resolved.normalization_dictionary_path is not None:
             source_paths = (resolved.normalization_dictionary_path,)
             index_path = resolved.normalization_index_path or str(
-                terminology_cache_path(resolved.terminology_cache_dir, source_paths)
+                terminology_cache_path(
+                    resolved.terminology_cache_dir,
+                    source_paths,
+                    alias_overlay_paths=resolved.normalization_alias_overlay_paths,
+                )
             )
             sqlite_repository = SQLiteTerminologyRepository(
                 index_path,
                 expected_source_paths=source_paths,
+                expected_alias_overlay_paths=resolved.normalization_alias_overlay_paths,
                 expected_normalization_version=resolved.normalization_contract.version,
             )
             terminology_repository = CompositeTerminologyRepository(
@@ -244,11 +254,6 @@ class PipelineFactory:
         return PipelineFactoryConfig.from_mapping(config)
 
 
-def _deduplicate_entries(entries: list[ConceptEntry]) -> list[ConceptEntry]:
-    by_concept_id = {entry.concept_id: entry for entry in entries}
-    return list(by_concept_id.values())
-
-
 def _mapping(value: object, name: str) -> dict[str, object]:
     if value is None:
         return {}
@@ -270,3 +275,13 @@ def _optional_string(value: object) -> str | None:
     if not isinstance(value, str) or not value:
         raise ValueError("optional path values must be non-empty strings")
     return value
+
+
+def _string_tuple(value: object, name: str) -> tuple[str, ...]:
+    if value is None:
+        return ()
+    if not isinstance(value, list | tuple) or not all(
+        isinstance(item, str) and item for item in value
+    ):
+        raise ValueError(f"{name} must be an array of non-empty strings")
+    return tuple(value)

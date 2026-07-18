@@ -47,6 +47,12 @@ def _terminology_parser(commands: argparse._SubParsersAction[argparse.ArgumentPa
     build = operations.add_parser("build", help="Build a versioned SQLite FTS5 index.")
     build.set_defaults(handler="terminology_build")
     build.add_argument("--source", action="append", required=True)
+    build.add_argument(
+        "--alias-overlay",
+        action="append",
+        default=[],
+        help="Strict provenance-bearing alias JSONL; may be repeated.",
+    )
     build.add_argument("--output")
     build.add_argument("--cache-dir", default=".cache/medical-kg/terminology")
 
@@ -54,6 +60,7 @@ def _terminology_parser(commands: argparse._SubParsersAction[argparse.ArgumentPa
     inspect.set_defaults(handler="terminology_inspect")
     inspect.add_argument("--index", required=True)
     inspect.add_argument("--source", action="append")
+    inspect.add_argument("--alias-overlay", action="append", default=[])
     inspect.add_argument("--query")
     inspect.add_argument("--entity-type")
     inspect.add_argument("--code-system", action="append")
