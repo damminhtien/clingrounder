@@ -17,7 +17,6 @@ from medical_kg_nlp.benchmarks.phase1.phase1 import (
     zip_phase1_output_dir,
 )
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.merge import merge_concept_entries
 from medical_kg_nlp.pipeline.factory import PipelineFactoryConfig
 from medical_kg_nlp.pipeline.parallel_batch import (
     ParallelBatchOptions,
@@ -170,4 +169,7 @@ def _load_validation_dictionary(config: Phase1BenchmarkConfig) -> DictionaryStor
     entries = []
     for path in _validation_paths(config):
         entries.extend(DictionaryStore.load_entries_jsonl(path))
-    return DictionaryStore(merge_concept_entries(entries))
+    # Validation only needs the set of legal (system, code) pairs. Do not merge metadata here:
+    # releases can intentionally reuse a concept ID while carrying different parent metadata
+    # (for example a legacy seed row versus the current TT06 row).
+    return DictionaryStore(entries)
