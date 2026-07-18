@@ -1,0 +1,33 @@
+schema_version: medical-mention-crosswalk-policy.v1
+policies:
+  - policy_id: local-pipeline-disease-to-tt06-v1
+    source_entity_type: DISEASE
+    source_label: DISEASE
+    # INVARIANT: disease proposals cannot query RxNorm.
+    target_entity_types: [DISEASE]
+    code_systems: [ICD-10]
+
+  - policy_id: local-pipeline-drug-to-rxnorm-v1
+    source_entity_type: DRUG
+    source_label: DRUG
+    # INVARIANT: drug proposals cannot query ICD-10.
+    target_entity_types: [DRUG]
+    code_systems: [RxNorm]
+
+  - policy_id: local-pipeline-symptom-to-local-v1
+    source_entity_type: SYMPTOM
+    source_label: SYMPTOM
+    target_entity_types: [SYMPTOM]
+    code_systems: [LOCAL]
+
+  - policy_id: local-pipeline-lab-test-to-local-v1
+    source_entity_type: LAB_TEST
+    source_label: LAB_TEST
+    target_entity_types: [LAB_TEST]
+    code_systems: [LOCAL]
+
+  - policy_id: local-pipeline-lab-result-to-local-v1
+    source_entity_type: LAB_RESULT
+    source_label: LAB_RESULT
+    target_entity_types: [LAB_RESULT]
+    code_systems: [LOCAL]

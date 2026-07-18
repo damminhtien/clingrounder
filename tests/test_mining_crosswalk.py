@@ -11,7 +11,11 @@ import yaml
 from medical_kg_nlp.cli.main import main
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.mining.crosswalk import MentionCrosswalkPolicy, crosswalk_mentions
+from medical_kg_nlp.mining.crosswalk import (
+    MentionCrosswalkPolicy,
+    crosswalk_mentions,
+    load_crosswalk_policies,
+)
 from medical_kg_nlp.mining.io import write_jsonl
 from medical_kg_nlp.mining.lexicon import MentionInventoryEntry, load_mention_inventory
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
@@ -176,6 +180,23 @@ def test_crosswalk_policy_rejects_type_code_system_mismatch() -> None:
             target_entity_types=(EntityType.DRUG,),
             code_systems=(CodeSystem.ICD10,),
         )
+
+
+def test_local_pipeline_crosswalk_policy_keeps_code_systems_type_safe() -> None:
+    policy_path = (
+        Path(__file__).parents[1] / "configs/mining/crosswalk/local-pipeline.yaml"
+    )
+
+    policies = load_crosswalk_policies(policy_path)
+    systems_by_source_type = {
+        policy.source_entity_type: policy.code_systems for policy in policies
+    }
+
+    assert systems_by_source_type["DISEASE"] == (CodeSystem.ICD10,)
+    assert systems_by_source_type["DRUG"] == (CodeSystem.RXNORM,)
+    assert systems_by_source_type["SYMPTOM"] == (CodeSystem.LOCAL,)
+    assert systems_by_source_type["LAB_TEST"] == (CodeSystem.LOCAL,)
+    assert systems_by_source_type["LAB_RESULT"] == (CodeSystem.LOCAL,)
 
 
 def test_crosswalk_cli_validates_index_and_writes_deterministic_artifacts(
