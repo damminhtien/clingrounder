@@ -219,6 +219,39 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     lexicon_crosswalk.add_argument("--query-limit", type=int, default=1_000)
     lexicon_crosswalk.add_argument("--candidate-output-limit", type=int, default=20)
 
+    mapping = operations.add_parser(
+        "mapping", help="Compile source crosswalk releases into queryable indexes."
+    )
+    mapping_operations = mapping.add_subparsers(
+        dest="data_mapping_command", required=True
+    )
+    mapping_dailymed = mapping_operations.add_parser(
+        "compile-dailymed-rxnorm",
+        help="Deduplicate and index the official SPL-to-RxNorm mapping archive.",
+    )
+    mapping_dailymed.set_defaults(handler="data_mapping_compile_dailymed_rxnorm")
+    mapping_dailymed.add_argument("--artifacts", required=True)
+    mapping_dailymed.add_argument("--store", required=True)
+    mapping_dailymed.add_argument("--output", required=True)
+    mapping_dailymed.add_argument("--index-output", required=True)
+    mapping_dailymed.add_argument("--report-output", required=True)
+
+    mapping_audit = mapping_operations.add_parser(
+        "audit-dailymed-rxnorm",
+        help="Compare a compiled DailyMed mapping with a pinned terminology index.",
+    )
+    mapping_audit.set_defaults(handler="data_mapping_audit_dailymed_rxnorm")
+    mapping_audit.add_argument("--index", required=True)
+    mapping_audit.add_argument("--terminology-index", required=True)
+    mapping_audit.add_argument(
+        "--source",
+        action="append",
+        required=True,
+        help="Canonical terminology JSONL used to validate the index fingerprint.",
+    )
+    mapping_audit.add_argument("--proposals-output", required=True)
+    mapping_audit.add_argument("--report-output", required=True)
+
     label = operations.add_parser("label", help="Run a local proposal-labeler adapter.")
     label_operations = label.add_subparsers(dest="data_label_command", required=True)
     label_propose = label_operations.add_parser(

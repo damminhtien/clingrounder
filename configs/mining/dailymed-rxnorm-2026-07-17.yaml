@@ -1,0 +1,19 @@
+schema_version: medical-mining-plan.v1
+registry: ../../data/sources/mining_registry.yaml
+work_dir: ../../outputs/mining/dailymed-rxnorm-2026-07-17
+artifact_store:
+  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  storage_options: {}
+  encrypted_at_rest: false
+sources:
+  - source_id: dailymed_rxnorm_mappings
+    source_version: "2026-07-17"
+    parse_documents: false
+    parameters:
+      artifacts:
+        - uri: https://dailymed-data.nlm.nih.gov/public-release-files/rxnorm_mappings.zip
+          media_type: application/zip
+          sha256: 0d2797b35c31c0651e616d075b8b042591074e66a0c5955d8c4919e50ed9860c
+          metadata:
+            source_last_modified: "2026-07-17"
+            source_md5: 5f6bbd0aab31a8b6b4e29e366dfaa30d

@@ -83,6 +83,22 @@ resources:
     urls: [https://dailymed.nlm.nih.gov/dailymed/services/v2/]
     allowed_uses: [drug_span_mining, dosage_relation_mining, adverse_effect_mining]
     rate_limit_per_second: 2
+  - id: dailymed_rxnorm_mappings
+    name: DailyMed SPL to RxNorm Mappings
+    category: drug_terminology_mappings
+    version: "2026-07-17"
+    version_policy: pinned
+    access_class: open_with_terms
+    license_id: nlm_dailymed_terms
+    license_url: https://dailymed.nlm.nih.gov/dailymed/app-support-mapping-files.cfm
+    redistribution: attribution
+    hosted_processing_allowed: true
+    retention: immutable
+    connector: static_http
+    parser: dailymed_rxnorm_mapping
+    urls: [https://dailymed-data.nlm.nih.gov/public-release-files/rxnorm_mappings.zip]
+    allowed_uses: [terminology_linking, dictionary_enrichment, linking_evaluation]
+    rate_limit_per_second: 1
   - id: clinicaltrials_v2
     name: ClinicalTrials.gov API v2
     category: clinical_trials

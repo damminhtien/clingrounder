@@ -32,6 +32,10 @@ from medical_kg_nlp.mining.labeling import (
     PolicyAwareProposalLabelerAdapter,
 )
 from medical_kg_nlp.mining.lexicon import build_mention_inventory, load_mention_inventory
+from medical_kg_nlp.mining.mappings.dailymed_rxnorm import (
+    audit_dailymed_rxnorm_mapping,
+    compile_dailymed_rxnorm_mapping,
+)
 from medical_kg_nlp.mining.policy import SourcePolicyGate
 from medical_kg_nlp.mining.ports import ProposalLabelerPort, RelationLabelerPort
 from medical_kg_nlp.mining.profile import (
@@ -56,6 +60,8 @@ __all__ = [
     "build_dataset",
     "build_lexicon",
     "crosswalk_lexicon",
+    "audit_dailymed_rxnorm",
+    "compile_dailymed_rxnorm",
     "curate_annotation_dataset",
     "export_review",
     "freeze_snapshot",
@@ -276,6 +282,46 @@ def crosswalk_lexicon(args: argparse.Namespace) -> int:
             "unique_exact_entry_count": result.report["unique_exact_entry_count"],
         }
     )
+    return 0
+
+
+def compile_dailymed_rxnorm(args: argparse.Namespace) -> int:
+    """Compile one checksum-pinned official DailyMed mapping artifact."""
+
+    artifacts = load_source_artifacts(args.artifacts)
+    if len(artifacts) != 1:
+        raise ValueError("DailyMed RxNorm compilation requires exactly one artifact")
+    artifact = artifacts[0]
+    store = artifact_store_from_uri(args.store)
+    with store.open(artifact.object.sha256) as stream:
+        report = compile_dailymed_rxnorm_mapping(
+            artifact,
+            stream,
+            output_path=args.output,
+            index_path=args.index_output,
+            report_path=args.report_output,
+        )
+    _print_json(report)
+    return 0
+
+
+def audit_dailymed_rxnorm(args: argparse.Namespace) -> int:
+    """Emit review-only aliases after validating the terminology source fingerprint."""
+
+    # INVARIANT: validate the derived terminology index against canonical JSONL
+    # before querying its internal tables for code and alias membership.
+    repository = SQLiteTerminologyRepository(
+        args.terminology_index,
+        expected_source_paths=tuple(args.source),
+    )
+    repository.close()
+    report = audit_dailymed_rxnorm_mapping(
+        args.index,
+        args.terminology_index,
+        proposals_path=args.proposals_output,
+        report_path=args.report_output,
+    )
+    _print_json(report)
     return 0
 
 

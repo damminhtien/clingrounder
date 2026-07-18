@@ -34,6 +34,14 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.data",
         "crosswalk_lexicon",
     ),
+    "data_mapping_compile_dailymed_rxnorm": (
+        "medical_kg_nlp.cli.commands.data",
+        "compile_dailymed_rxnorm",
+    ),
+    "data_mapping_audit_dailymed_rxnorm": (
+        "medical_kg_nlp.cli.commands.data",
+        "audit_dailymed_rxnorm",
+    ),
     "data_label_propose": ("medical_kg_nlp.cli.commands.data", "propose_labels"),
     "data_relation_propose": (
         "medical_kg_nlp.cli.commands.data",
