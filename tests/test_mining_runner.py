@@ -68,8 +68,8 @@ def _fixture_plan(tmp_path: Path) -> Path:
     _write_registry(tmp_path / "registry.yaml")
     archive_path = tmp_path / "fixture.zip"
     with zipfile.ZipFile(archive_path, "w") as archive:
-        archive.writestr("train/1.txt", "Caso clínico uno")
-        archive.writestr("train/2.txt", "Caso clínico dos")
+        archive.writestr("root/train/text_files/1.txt", "Caso clínico uno")
+        archive.writestr("root/train/text_files/2.txt", "Caso clínico dos")
     plan_path = tmp_path / "plan.yaml"
     _write_plan(plan_path)
     return plan_path

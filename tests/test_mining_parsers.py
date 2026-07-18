@@ -165,14 +165,24 @@ def test_bioc_parser_preserves_absolute_passage_offsets(tmp_path: Path) -> None:
 def test_codiesp_parser_reads_notes_without_extracting_paths(tmp_path: Path) -> None:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
-        archive.writestr("train/2.txt", "Segundo caso")
-        archive.writestr("train/1.txt", "Primer caso")
-        archive.writestr("train/1.ann", "T1\tDIAGNOSTICO 0 6\tPrimer")
+        archive.writestr("root/train/text_files/2.txt", "Segundo caso")
+        archive.writestr("root/train/text_files/1.txt", "Primer caso")
+        archive.writestr("root/train/text_files_en/1.txt", "First case")
+        archive.writestr("root/background/text_files/3.txt", "Caso de fondo")
     artifact, store = _artifact(
         tmp_path, buffer.getvalue(), source_id="codiesp", media_type="application/zip"
     )
 
     documents = list(CodiEspArchiveParser().parse(artifact, store=store))
 
-    assert [document.metadata["external_id"] for document in documents] == ["1", "2"]
-    assert [document.text for document in documents] == ["Primer caso", "Segundo caso"]
+    assert [document.metadata["external_id"] for document in documents] == [
+        "train:1",
+        "train:2",
+        "background:3",
+    ]
+    assert [document.text for document in documents] == [
+        "Primer caso",
+        "Segundo caso",
+        "Caso de fondo",
+    ]
+    assert all(document.language == "es" for document in documents)

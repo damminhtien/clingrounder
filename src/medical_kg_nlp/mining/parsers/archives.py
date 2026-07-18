@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import io
-import zipfile
 from collections.abc import Iterable
 
+from medical_kg_nlp.mining.formats.codiesp import read_codiesp_archive
 from medical_kg_nlp.mining.parsers.base import ArtifactParserAdapter
 from medical_kg_nlp.mining.ports import ArtifactStorePort
 from medical_kg_nlp.mining.records import MinedDocument, SourceArtifact
@@ -42,12 +41,10 @@ class PlainTextParser(ArtifactParserAdapter):
 
 
 class CodiEspArchiveParser(ArtifactParserAdapter):
-    """Parse UTF-8 note members from a CodiEsp ZIP without extracting to disk."""
+    """Parse only Spanish source cases from a bounded CodiEsp archive."""
 
     parser_id = "codiesp"
-    parser_revision = "1"
-    max_members = 100_000
-    max_member_bytes = 32 * 1024 * 1024
+    parser_revision = "2"
 
     def parse(
         self,
@@ -55,28 +52,25 @@ class CodiEspArchiveParser(ArtifactParserAdapter):
         *,
         store: ArtifactStorePort,
     ) -> Iterable[MinedDocument]:
-        payload = self.read_artifact(artifact, store)
-        with zipfile.ZipFile(io.BytesIO(payload)) as archive:
-            members = sorted(
-                (item for item in archive.infolist() if not item.is_dir() and item.filename.endswith(".txt")),
-                key=lambda item: item.filename,
+        bundle = read_codiesp_archive(
+            self.read_artifact(artifact, store),
+            include_annotations=False,
+        )
+        for source_document in bundle.documents:
+            external_id = f"{source_document.split}:{source_document.case_id}"
+            metadata = {
+                "archive_member": source_document.text_member,
+                "codiesp_case_id": source_document.case_id,
+                "corpus_split": source_document.split,
+            }
+            if source_document.annotation_member is not None:
+                metadata["annotation_member"] = source_document.annotation_member
+            yield self.make_document(
+                artifact,
+                external_id=external_id,
+                text=source_document.text,
+                language="es",
+                note_type="clinical_case",
+                group_ids=(f"codiesp_case:{source_document.case_id}",),
+                metadata=metadata,
             )
-            if len(members) > self.max_members:
-                raise ValueError("CodiEsp archive exceeds member count limit")
-            if not members:
-                raise ValueError("CodiEsp archive contains no .txt documents")
-            for member in members:
-                if member.file_size > self.max_member_bytes:
-                    raise ValueError(f"CodiEsp member {member.filename!r} exceeds size limit")
-                # SECURITY: ZipFile.open reads a member directly; paths are never extracted.
-                text = archive.read(member).decode("utf-8-sig")
-                external_id = member.filename.rsplit("/", 1)[-1].removesuffix(".txt")
-                yield self.make_document(
-                    artifact,
-                    external_id=external_id,
-                    text=text,
-                    language="es",
-                    note_type="clinical_case",
-                    group_ids=(f"codiesp_case:{external_id}",),
-                    metadata={"archive_member": member.filename},
-                )

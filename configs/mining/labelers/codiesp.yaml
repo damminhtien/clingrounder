@@ -1,0 +1,16 @@
+artifacts: outputs/mining/codiesp-zenodo-3837305/artifacts.jsonl
+store: outputs/mining/artifact-store
+labeler_id: codiesp-x@zenodo-3837305-v1.4
+terminology_version: codiesp-v1.4-source-cie10
+layer: silver
+review_status: proposed
+
+# CodiEsp DIAGNOSTICO includes diseases, signs, and symptoms. It is imported as
+# FINDING until a later adjudication layer separates the internal entity types.
+label_map:
+  DIAGNOSTICO:
+    entity_type: FINDING
+    code_system: ICD-10-CM
+  PROCEDIMIENTO:
+    entity_type: PROCEDURE
+    code_system: ICD-10-PCS

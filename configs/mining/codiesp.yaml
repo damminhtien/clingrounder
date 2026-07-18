@@ -1,0 +1,24 @@
+schema_version: medical-mining-plan.v1
+registry: ../../data/sources/mining_registry.yaml
+work_dir: ../../outputs/mining/codiesp-zenodo-3837305
+artifact_store:
+  # The corpus is small and open. Larger campaigns should override the store
+  # with a mounted external volume or an S3-compatible URI.
+  uri: ../../outputs/mining/artifact-store
+  storage_options: {}
+  encrypted_at_rest: false
+sources:
+  - source_id: codiesp
+    source_version: zenodo-3837305
+    enabled: true
+    parse_documents: true
+    parameters:
+      artifacts:
+        - uri: https://zenodo.org/api/records/3837305/files/codiesp.zip/content
+          media_type: application/zip
+          sha256: 52b290233906a2eb589ac7b1d9429adeac88f6a9cae8b0d3c180504afbe61688
+          metadata:
+            corpus_release: "1.4"
+            zenodo_record: "3837305"
+            zenodo_md5: 0642277ab2e7234f7053316b57c5e28c
+            corpus_format: codiesp-x-tsv
