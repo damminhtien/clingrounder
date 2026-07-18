@@ -404,10 +404,10 @@ SQLite normalization repository.
 DailyMed contributes 35,627 source-pinned RxNorm aliases. Ranking canonical and ingredient TTYs
 ahead of product variants raised exact hit@1 on the 59-query medication diagnostic set from about
 0.203 to 0.559 and MRR from about 0.336 to 0.576. CodiEsp contributes 642 Spanish aliases linked to
-418 TT06 concepts after rejecting unknown ICD-10-CM/PCS codes and conflicting aliases. On its
-independent overlay query set, exact hit@1 improved from 0/642 to 642/642 and FTS recall@20 from
-40/642 to 642/642. The 59-query RxNorm metrics were byte-for-byte unchanged after adding CodiEsp,
-which verifies type/code-system isolation.
+418 TT06 concepts after rejecting unknown ICD-10-CM/PCS codes and conflicting aliases. Querying
+those same 642 overlay rows produces 642/642 exact hits; this is an index integration check, not a
+generalization benchmark. The 59-query RxNorm metrics were byte-for-byte unchanged after adding
+CodiEsp, which verifies type/code-system isolation.
 
 Reproduce the CodiEsp gate with:
 
@@ -429,6 +429,42 @@ The resulting index contains 88,837 concepts and 188,488 aliases. Its content-ad
 is `.cache/medical-kg/terminology/terminology-a2d5a19e83fbc9e1a305.sqlite3`; runtime composition is
 recorded in `configs/pipeline/full_terminology.yaml`. The cache path is derived output, not a source
 artifact, and must be rebuilt from the pinned manifests on another machine.
+
+### Leakage-Safe CodiEsp Retrieval Gate
+
+CodiEsp's official `train`, `dev`, and `test` metadata now controls alias promotion. Only train
+documents can produce the 393 runtime aliases in
+`outputs/mining/knowledge/codiesp-icd10-split-2026-07-18/train/alias_overlay.jsonl`; dev and test
+produce query-only artifacts. Queries are sliced by whether the exact alias and target code were
+seen in train.
+
+| Query set | Queries | Unknown to TT06 | Exact hit@1 | FTS recall@20 | Unseen-alias recall@20 |
+|---|---:|---:|---:|---:|---:|
+| Dev, base | 1,443 | 400 | 0.35% | 8.32% | 7.00% |
+| Dev, train aliases | 1,443 | 400 | 18.09% | 28.55% | 13.16% |
+| Test, base | 1,403 | 376 | 0.36% | 8.13% | 6.95% |
+| Test, train aliases | 1,403 | 376 | 19.32% | 30.65% | 14.42% |
+
+The base rows above include the bounded partial-token FTS fallback. Compared with strict phrase/AND
+search, train-enriched recall@20 rose from 20.44% to 28.55% on dev and from 22.17% to 30.65% on
+test. P95 lexical latency increased from about 5.3 ms to 15-17 ms. Phrase and AND matches retain
+priority; OR matches only fill an incomplete top-k and remain type/code-system filtered.
+
+The 400 dev and 376 test expected codes absent from TT06 stay in the report as impossible targets.
+They are not imported from ICD-10-CM by code shape and are not silently converted to parent codes.
+The full released-source CodiEsp overlay remains available for production terminology coverage,
+while model/search evaluation must use the train-only index
+`.cache/medical-kg/terminology/terminology-codiesp-train-2026-07-18.sqlite3`.
+
+Build a held-out query set with:
+
+```bash
+uv run medical-kg terminology query-set \
+  --linked-proposal outputs/mining/knowledge/codiesp-icd10-split-2026-07-18/dev/proposals.jsonl \
+  --reference-alias-overlay outputs/mining/knowledge/codiesp-icd10-split-2026-07-18/train/alias_overlay.jsonl \
+  --output outputs/mining/knowledge/codiesp-icd10-split-2026-07-18/dev/queries.jsonl \
+  --manifest-output outputs/mining/knowledge/codiesp-icd10-split-2026-07-18/dev/query_manifest.json
+```
 
 VietBioNER follows a different promotion decision. A train-only compiler accepted 100 recognition
 concepts. On 12 source-held-out development documents, the enriched dictionary reached precision

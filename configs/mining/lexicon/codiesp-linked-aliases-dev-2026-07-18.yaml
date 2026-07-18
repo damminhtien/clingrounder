@@ -1,0 +1,26 @@
+schema_version: linked-alias-proposal-policy.v1
+policy_id: codiesp-zenodo-3837305-linked-diagnosis-dev-v1
+
+accepted_source_ids: [codiesp]
+accepted_source_sha256:
+  - 52b290233906a2eb589ac7b1d9429adeac88f6a9cae8b0d3c180504afbe61688
+
+source_code_systems:
+  ICD-10-CM: ICD-10
+source_label_types:
+  DIAGNOSTICO: DISEASE
+
+accepted_label_sources: [source_human_annotation]
+accepted_layers: [silver]
+accepted_review_statuses: [proposed]
+proposal_review_status: source_human_annotation
+alias_tty: SOURCE_HUMAN_ANNOTATION
+
+# EVALUATION: singletons are retained because this partition never updates runtime knowledge.
+document_metadata_filters:
+  corpus_split: [dev]
+min_occurrences: 1
+min_documents: 1
+require_contiguous: true
+require_source_text_match: true
+max_annotation_examples: 20
