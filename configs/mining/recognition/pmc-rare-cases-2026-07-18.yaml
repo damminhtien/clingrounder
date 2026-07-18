@@ -1,0 +1,36 @@
+schema_version: mined-recognition-promotion-policy.v1
+policy_id: pmc-rare-cases-recognition-review-v1
+
+# LICENSE: this policy consumes only the local, license-audited PMC OA snapshot.
+# INVARIANT: the inventory hash prevents silently compiling a different mined corpus.
+accepted_inventory_sha256:
+  - fb9f550b11e904d809ecf487f01278145e14cc4c3ed6add0500d443b20f6c177
+
+source_label_types:
+  DISEASE: DISEASE
+  DRUG: DRUG
+  LAB_RESULT: LAB_RESULT
+  LAB_TEST: LAB_TEST
+  SYMPTOM: SYMPTOM
+
+accepted_label_sources:
+  - local_pipeline_prediction
+accepted_review_tiers:
+  - multi_document
+min_occurrences: 2
+min_documents: 2
+allow_consensus_single_document: false
+min_consensus_occurrences: 1
+min_alias_characters: 3
+max_alias_characters: 80
+max_alias_tokens: 12
+max_surface_variants: 8
+allow_numeric_only: false
+
+# Generic English terms are useful for diagnostics but too broad for recognition promotion.
+blocked_normalized_mentions:
+  - cancer
+  - infection
+  - infectious disease
+  - malignancy
+  - daily
