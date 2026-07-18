@@ -775,13 +775,16 @@ def freeze_snapshot(args: argparse.Namespace) -> int:
     documents = load_documents(args.documents)
     annotations = () if args.annotations is None else load_annotations(args.annotations)
     relations = () if args.relations is None else load_relations(args.relations)
-    source_fingerprints = (
-        ()
-        if args.artifacts is None
-        else tuple(
+    source_fingerprints = tuple(args.source_fingerprint)
+    for fingerprint in source_fingerprints:
+        if len(fingerprint) != 64 or any(
+            character not in "0123456789abcdef" for character in fingerprint
+        ):
+            raise ValueError("--source-fingerprint must be a lowercase SHA-256 digest")
+    if args.artifacts is not None:
+        source_fingerprints += tuple(
             artifact.object.sha256 for artifact in load_source_artifacts(args.artifacts)
         )
-    )
     snapshot = SnapshotBuilder(
         split_config=SnapshotSplitConfig(
             development_fraction=args.development_fraction,

@@ -575,6 +575,12 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     snapshot_freeze.add_argument("--annotations")
     snapshot_freeze.add_argument("--relations")
     snapshot_freeze.add_argument("--artifacts")
+    snapshot_freeze.add_argument(
+        "--source-fingerprint",
+        action="append",
+        default=[],
+        help="Pinned lowercase SHA-256 for a non-artifact upstream manifest.",
+    )
     snapshot_freeze.add_argument("--version", required=True)
     snapshot_freeze.add_argument("--created-at", required=True)
     snapshot_freeze.add_argument("--output-dir", required=True)

@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from medical_kg_nlp.cli.main import main
+from medical_kg_nlp.mining.io import write_jsonl
 from medical_kg_nlp.mining.records import (
     AccessClass,
     AnnotationLayer,
@@ -206,3 +208,36 @@ def test_snapshot_never_places_synthetic_document_in_challenge(tmp_path: Path) -
             documents=[document],
             write_parquet=False,
         )
+
+
+def test_snapshot_cli_records_non_artifact_source_fingerprint(
+    tmp_path: Path, capsys
+) -> None:
+    document = _document("doc", "Tăng huyết áp")
+    documents_path = tmp_path / "documents.jsonl"
+    write_jsonl(documents_path, (document.to_dict(),))
+
+    exit_code = main(
+        [
+            "data",
+            "snapshot",
+            "freeze",
+            "--documents",
+            str(documents_path),
+            "--source-fingerprint",
+            "a" * 64,
+            "--version",
+            "fixture-v1",
+            "--created-at",
+            "2026-07-18T00:00:00+00:00",
+            "--output-dir",
+            str(tmp_path / "snapshot-cli"),
+            "--manifest-only",
+            "--skip-agreement-gate",
+        ]
+    )
+    capsys.readouterr()
+    manifest = json.loads((tmp_path / "snapshot-cli" / "manifest.json").read_text())
+
+    assert exit_code == 0
+    assert manifest["source_fingerprints"] == ["a" * 64]

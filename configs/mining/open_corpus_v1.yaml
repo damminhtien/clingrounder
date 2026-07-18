@@ -1,0 +1,26 @@
+schema_version: medical-corpus-fusion-plan.v1
+output_root: ../../outputs/mining/fused
+run_label: open-corpus-v1
+
+# SimHash groups are split barriers only. Raw-identical text is the sole format that
+# the fusion stage is allowed to collapse and reconcile across annotation sources.
+hamming_threshold: 3
+bands: 4
+
+sources:
+  - source_id: codiesp
+    documents: ../../outputs/mining/codiesp-zenodo-3837305/documents.jsonl
+    annotations: ../../outputs/mining/codiesp-zenodo-3837305/contiguous_training_annotations.jsonl
+
+  - source_id: dailymed
+    documents: ../../outputs/mining/dailymed-daily-2026-07-17/documents.jsonl
+    annotations: ../../outputs/mining/dailymed-daily-2026-07-17/structured_annotations.jsonl
+    relations: ../../outputs/mining/dailymed-daily-2026-07-17/structured_relations.jsonl
+
+  - source_id: vietbioner
+    documents: ../../outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl
+    annotations: ../../outputs/mining/vietbioner-19ba70a/reconciled/training_annotations.jsonl
+
+  - source_id: pmc_oa
+    documents: ../../outputs/mining/pmc-rare-cases-2026-07-18/documents.jsonl
+    annotations: ../../outputs/mining/pmc-rare-cases-2026-07-18/pipeline_proposals.jsonl
