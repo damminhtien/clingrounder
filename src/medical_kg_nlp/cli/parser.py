@@ -54,6 +54,10 @@ def _terminology_parser(commands: argparse._SubParsersAction[argparse.ArgumentPa
         help="Strict provenance-bearing alias JSONL; may be repeated.",
     )
     build.add_argument("--output")
+    build.add_argument(
+        "--manifest-output",
+        help="Persist the reproducibility manifest in addition to printing it.",
+    )
     build.add_argument("--cache-dir", default=".cache/medical-kg/terminology")
 
     inspect = operations.add_parser("inspect", help="Inspect metadata or query a built index.")

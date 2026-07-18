@@ -26,7 +26,13 @@ def build_index(args: argparse.Namespace) -> int:
         output_path=args.output,
         cache_dir=args.cache_dir,
     )
-    print(json.dumps(manifest.to_json(), ensure_ascii=False, indent=2, sort_keys=True))
+    payload = manifest.to_json()
+    encoded = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    if args.manifest_output is not None:
+        output = Path(args.manifest_output)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(encoded, encoding="utf-8")
+    print(encoded, end="")
     return 0
 
 

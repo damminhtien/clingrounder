@@ -19,10 +19,26 @@ def test_terminology_build_and_inspect_commands(tmp_path: Path, capsys: pytest.C
         encoding="utf-8",
     )
     index = tmp_path / "terminology.sqlite3"
+    manifest = tmp_path / "manifest.json"
 
-    assert main(["terminology", "build", "--source", str(source), "--output", str(index)]) == 0
+    assert (
+        main(
+            [
+                "terminology",
+                "build",
+                "--source",
+                str(source),
+                "--output",
+                str(index),
+                "--manifest-output",
+                str(manifest),
+            ]
+        )
+        == 0
+    )
     build_payload = json.loads(capsys.readouterr().out)
     assert build_payload["concept_count"] == 1
+    assert json.loads(manifest.read_text(encoding="utf-8")) == build_payload
 
     assert (
         main(
