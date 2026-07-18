@@ -9,6 +9,11 @@ from medical_kg_nlp.mining.labeling import (
     ConsensusProposalLabeler,
     PolicyAwareProposalLabelerAdapter,
 )
+from medical_kg_nlp.mining.lexicon import (
+    MentionInventoryEntry,
+    MentionInventoryResult,
+    build_mention_inventory,
+)
 from medical_kg_nlp.mining.parsers import parser_from_definition
 from medical_kg_nlp.mining.ports import (
     ArtifactStorePort,
@@ -108,6 +113,8 @@ __all__ = [
     "MiningQualityGate",
     "MiningPlan",
     "MiningPlanResult",
+    "MentionInventoryEntry",
+    "MentionInventoryResult",
     "ParquetSnapshotWriter",
     "ProposalLabelerPort",
     "PolicyDecision",
@@ -139,6 +146,7 @@ __all__ = [
     "StoredObject",
     "VersionPolicy",
     "build_dataset_profile",
+    "build_mention_inventory",
     "connector_from_definition",
     "ConsensusProposalLabeler",
     "JsonlReviewBackend",

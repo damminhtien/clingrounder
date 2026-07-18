@@ -26,6 +26,7 @@ from medical_kg_nlp.mining.labeling import (
     BatchedProposalLabelerAdapter,
     PolicyAwareProposalLabelerAdapter,
 )
+from medical_kg_nlp.mining.lexicon import build_mention_inventory
 from medical_kg_nlp.mining.policy import SourcePolicyGate
 from medical_kg_nlp.mining.ports import ProposalLabelerPort
 from medical_kg_nlp.mining.profile import (
@@ -47,6 +48,7 @@ from medical_kg_nlp.mining.snapshot import SnapshotBuilder, SnapshotSplitConfig
 
 __all__ = [
     "build_dataset",
+    "build_lexicon",
     "export_review",
     "freeze_snapshot",
     "import_review",
@@ -180,6 +182,29 @@ def reconcile_duplicates(args: argparse.Namespace) -> int:
             "training_annotation_count": len(result.training_annotations),
             "review_annotation_count": len(result.review_annotations),
             "exact_micro_jaccard": result.report.exact_micro_jaccard,
+            "report": args.report_output,
+        }
+    )
+    return 0
+
+
+def build_lexicon(args: argparse.Namespace) -> int:
+    """Write mined mention hypotheses and a separate ambiguity report."""
+
+    result = build_mention_inventory(
+        load_documents(args.documents),
+        load_annotations(args.annotations),
+        min_occurrences=args.min_occurrences,
+        min_documents=args.min_documents,
+    )
+    write_jsonl(args.output, (entry.to_dict() for entry in result.entries))
+    write_jsonl(args.conflicts_output, result.conflicts)
+    write_json(args.report_output, result.report)
+    _print_json(
+        {
+            "ambiguous_mention_count": len(result.conflicts),
+            "entry_count": len(result.entries),
+            "output": args.output,
             "report": args.report_output,
         }
     )

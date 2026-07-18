@@ -173,16 +173,44 @@ uv run medical-kg data dataset inspect \
   --output outputs/mining/vietbioner-19ba70a/source_profile.json \
   --strict
 
-uv run medical-kg data snapshot freeze \
+uv run medical-kg data dataset reconcile-duplicates \
   --documents outputs/mining/vietbioner-19ba70a/documents.jsonl \
   --annotations outputs/mining/vietbioner-19ba70a/source_annotations.jsonl \
+  --documents-output outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
+  --annotations-output outputs/mining/vietbioner-19ba70a/reconciled/training_annotations.jsonl \
+  --review-output outputs/mining/vietbioner-19ba70a/reconciled/review_annotations.jsonl \
+  --mapping-output outputs/mining/vietbioner-19ba70a/reconciled/document_map.jsonl \
+  --report-output outputs/mining/vietbioner-19ba70a/reconciled/agreement_report.json \
+  --labeler-id vietbioner-exact-duplicate-consensus:v1
+
+uv run medical-kg data review export \
+  --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
+  --proposals outputs/mining/vietbioner-19ba70a/reconciled/review_annotations.jsonl \
+  --output outputs/mining/vietbioner-19ba70a/reconciled/review_queue.jsonl
+
+uv run medical-kg data lexicon build \
+  --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
+  --annotations outputs/mining/vietbioner-19ba70a/reconciled/training_annotations.jsonl \
+  --output outputs/mining/vietbioner-19ba70a/reconciled/mention_inventory.jsonl \
+  --conflicts-output outputs/mining/vietbioner-19ba70a/reconciled/mention_conflicts.jsonl \
+  --report-output outputs/mining/vietbioner-19ba70a/reconciled/mention_inventory_report.json
+
+uv run medical-kg data snapshot freeze \
+  --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
+  --annotations outputs/mining/vietbioner-19ba70a/reconciled/training_annotations.jsonl \
   --artifacts outputs/mining/vietbioner-19ba70a/artifacts.jsonl \
-  --version vietbioner-19ba70a-silver-v1 \
-  --created-at 2026-07-18T14:40:46+07:00 \
-  --output-dir outputs/mining/snapshots/vietbioner-19ba70a-silver-v1 \
+  --version vietbioner-19ba70a-reconciled-silver-v1 \
+  --created-at 2026-07-18T15:22:54+07:00 \
+  --output-dir outputs/mining/snapshots/vietbioner-19ba70a-reconciled-silver-v1 \
   --skip-agreement-gate
 ```
 
 The expected import has 70 annotator documents, 3,574 source annotations, seven exact-duplicate
-text groups, and no offset mismatch. The source snapshot remains silver because duplicate
-annotators have not yet been adjudicated into a consensus gold layer.
+text groups, and no offset mismatch. Exact reconciliation produces 63 unique documents, 3,109
+silver training annotations, and 164 disagreement hypotheses in the review queue. Pairwise exact
+micro-Jaccard on duplicate annotations is about 0.647, so union labels must not be promoted to gold.
+
+The mention inventory contains unlinked terminology hypotheses only. It must not be concatenated
+into runtime dictionaries: VietBioNER merges symptoms and diseases into one source type and is
+heavily concentrated on tuberculosis and HIV. Use the conflict report and pinned terminology
+repositories to review aliases, then create a separate versioned mapping overlay.

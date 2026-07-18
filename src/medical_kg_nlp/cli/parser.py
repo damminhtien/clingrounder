@@ -172,6 +172,24 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         "--labeler-id", default="exact-duplicate-consensus:v1"
     )
 
+    lexicon = operations.add_parser(
+        "lexicon", help="Build mined mention inventories for terminology review."
+    )
+    lexicon_operations = lexicon.add_subparsers(
+        dest="data_lexicon_command", required=True
+    )
+    lexicon_build = lexicon_operations.add_parser(
+        "build", help="Aggregate source mentions without assigning medical codes."
+    )
+    lexicon_build.set_defaults(handler="data_lexicon_build")
+    lexicon_build.add_argument("--documents", required=True)
+    lexicon_build.add_argument("--annotations", required=True)
+    lexicon_build.add_argument("--output", required=True)
+    lexicon_build.add_argument("--conflicts-output", required=True)
+    lexicon_build.add_argument("--report-output", required=True)
+    lexicon_build.add_argument("--min-occurrences", type=int, default=1)
+    lexicon_build.add_argument("--min-documents", type=int, default=1)
+
     label = operations.add_parser("label", help="Run a local proposal-labeler adapter.")
     label_operations = label.add_subparsers(dest="data_label_command", required=True)
     label_propose = label_operations.add_parser(
