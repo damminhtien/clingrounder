@@ -75,6 +75,44 @@ def test_curation_partitions_without_mutating_source_annotations() -> None:
     assert source_issue.metadata["import_issues"] == '["mismatch"]'
 
 
+def test_curation_builds_non_overlapping_bio_view_with_audit_winner() -> None:
+    short = replace(
+        _annotation("short"),
+        span=(0, 5),
+        text="dolor",
+        entity_type="DISEASE",
+    )
+    long = replace(
+        _annotation("long"),
+        span=(0, 13),
+        text="dolor crónico",
+        entity_type="DISEASE",
+    )
+    separate = replace(
+        _annotation("separate"),
+        span=(20, 25),
+        entity_type="DISEASE",
+    )
+    policy = replace(
+        _policy(),
+        allowed_layers=frozenset({AnnotationLayer.SILVER}),
+        allowed_entity_types=frozenset({"DISEASE"}),
+        overlap_strategy="prefer_quality_longest",
+    )
+
+    result = curate_annotations((short, separate, long), policy)
+
+    assert {annotation.annotation_id for annotation in result.accepted} == {
+        "long",
+        "separate",
+    }
+    assert [annotation.annotation_id for annotation in result.rejected] == ["short"]
+    assert result.report["overlap_winners"] == {"short": "long"}
+    assert result.report["rejection_reason_counts"] == {
+        "overlap_lower_priority": 1
+    }
+
+
 def test_curation_cli_writes_accepted_rejected_and_report(
     tmp_path: Path,
     capsys,

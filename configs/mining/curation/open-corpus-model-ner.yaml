@@ -1,0 +1,13 @@
+schema_version: medical-annotation-curation-policy.v1
+policy_id: open-corpus-v1-bio-compatible-ner
+allowed_review_statuses: [proposed, accepted]
+allowed_layers: [silver, gold, challenge]
+allowed_entity_types: [DISEASE, FINDING, DRUG, SYMPTOM, LAB_TEST, LAB_RESULT]
+allow_discontinuous: false
+reject_import_issues: true
+max_span_length: 256
+
+# BIO token classification cannot encode overlapping spans. Selection prefers
+# reviewed layers, confidence, and then the longest boundary; every dropped label is
+# retained unchanged in rejected JSONL with its winning annotation ID in the report.
+overlap_strategy: prefer_quality_longest

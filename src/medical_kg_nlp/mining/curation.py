@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
-from collections import Counter
+from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, cast
 
 import yaml
 
-from medical_kg_nlp.mining.records import AnnotationProposal, ReviewStatus
+from medical_kg_nlp.mining.records import (
+    AnnotationLayer,
+    AnnotationProposal,
+    ReviewStatus,
+)
 
 __all__ = [
     "AnnotationCurationPolicy",
@@ -29,12 +33,19 @@ class AnnotationCurationPolicy:
     allow_discontinuous: bool = True
     reject_import_issues: bool = True
     max_span_length: int | None = None
+    allowed_layers: frozenset[AnnotationLayer] | None = None
+    allowed_entity_types: frozenset[str] = frozenset()
+    overlap_strategy: Literal["preserve", "prefer_quality_longest"] = "preserve"
 
     def __post_init__(self) -> None:
         if not self.policy_id.strip() or not self.allowed_review_statuses:
             raise ValueError("Annotation curation policy must have an ID and statuses")
         if self.max_span_length is not None and self.max_span_length <= 0:
             raise ValueError("max_span_length must be positive when configured")
+        if self.allowed_layers is not None and not self.allowed_layers:
+            raise ValueError("allowed_layers cannot be empty when configured")
+        if any(not entity_type.strip() for entity_type in self.allowed_entity_types):
+            raise ValueError("allowed_entity_types must contain non-empty values")
 
 
 @dataclass(frozen=True)
@@ -58,12 +69,30 @@ def load_annotation_curation_policy(path: str | Path) -> AnnotationCurationPolic
     if not isinstance(raw_statuses, list) or not raw_statuses:
         raise ValueError("allowed_review_statuses must be a non-empty list")
     maximum = raw.get("max_span_length")
+    raw_layers = raw.get("allowed_layers")
+    if raw_layers is not None and not isinstance(raw_layers, list):
+        raise ValueError("allowed_layers must be a list when configured")
+    raw_entity_types = raw.get("allowed_entity_types", [])
+    if not isinstance(raw_entity_types, list):
+        raise ValueError("allowed_entity_types must be a list")
+    overlap_strategy = str(raw.get("overlap_strategy", "preserve"))
+    if overlap_strategy not in {"preserve", "prefer_quality_longest"}:
+        raise ValueError("Unsupported overlap_strategy")
     return AnnotationCurationPolicy(
         policy_id=str(raw["policy_id"]),
         allowed_review_statuses=frozenset(ReviewStatus(str(value)) for value in raw_statuses),
         allow_discontinuous=_boolean(raw, "allow_discontinuous", default=True),
         reject_import_issues=_boolean(raw, "reject_import_issues", default=True),
         max_span_length=None if maximum is None else int(maximum),
+        allowed_layers=(
+            None
+            if raw_layers is None
+            else frozenset(AnnotationLayer(str(value)) for value in raw_layers)
+        ),
+        allowed_entity_types=frozenset(str(value) for value in raw_entity_types),
+        overlap_strategy=cast(
+            Literal["preserve", "prefer_quality_longest"], overlap_strategy
+        ),
     )
 
 
@@ -76,19 +105,30 @@ def curate_annotations(
     annotation_ids = [annotation.annotation_id for annotation in annotations]
     if len(annotation_ids) != len(set(annotation_ids)):
         raise ValueError("Cannot curate annotations with duplicate IDs")
-    accepted = []
-    rejected = []
+    eligible: list[AnnotationProposal] = []
+    rejected: list[AnnotationProposal] = []
     reason_counts: Counter[str] = Counter()
     rejected_by_reason: dict[str, list[str]] = {}
     for annotation in sorted(annotations, key=lambda item: item.annotation_id):
         reasons = _rejection_reasons(annotation, policy)
         if not reasons:
-            accepted.append(annotation)
+            eligible.append(annotation)
             continue
         rejected.append(annotation)
         for reason in reasons:
             reason_counts[reason] += 1
         rejected_by_reason[annotation.annotation_id] = reasons
+    overlap_winners: dict[str, str] = {}
+    if policy.overlap_strategy == "prefer_quality_longest":
+        accepted, overlap_rejected, overlap_winners = _resolve_overlaps(eligible)
+        rejected.extend(overlap_rejected)
+        for annotation in overlap_rejected:
+            reason_counts["overlap_lower_priority"] += 1
+            rejected_by_reason[annotation.annotation_id] = ["overlap_lower_priority"]
+    else:
+        accepted = eligible
+    accepted.sort(key=lambda item: item.annotation_id)
+    rejected.sort(key=lambda item: item.annotation_id)
     accepted_types = Counter(annotation.entity_type for annotation in accepted)
     rejected_types = Counter(annotation.entity_type for annotation in rejected)
     report = {
@@ -110,7 +150,15 @@ def curate_annotations(
             "allow_discontinuous": policy.allow_discontinuous,
             "reject_import_issues": policy.reject_import_issues,
             "max_span_length": policy.max_span_length,
+            "allowed_layers": (
+                None
+                if policy.allowed_layers is None
+                else sorted(layer.value for layer in policy.allowed_layers)
+            ),
+            "allowed_entity_types": sorted(policy.allowed_entity_types),
+            "overlap_strategy": policy.overlap_strategy,
         },
+        "overlap_winners": dict(sorted(overlap_winners.items())),
     }
     return AnnotationCurationResult(
         accepted=tuple(accepted),
@@ -126,6 +174,13 @@ def _rejection_reasons(
     reasons = []
     if annotation.review_status not in policy.allowed_review_statuses:
         reasons.append(f"review_status:{annotation.review_status.value}")
+    if policy.allowed_layers is not None and annotation.layer not in policy.allowed_layers:
+        reasons.append(f"layer:{annotation.layer.value}")
+    if (
+        policy.allowed_entity_types
+        and annotation.entity_type not in policy.allowed_entity_types
+    ):
+        reasons.append(f"entity_type:{annotation.entity_type}")
     if not policy.allow_discontinuous and annotation.metadata.get("discontinuous") == "true":
         reasons.append("discontinuous")
     if policy.reject_import_issues and annotation.metadata.get("import_issues", "[]") not in {
@@ -137,6 +192,59 @@ def _rejection_reasons(
     if policy.max_span_length is not None and span_length > policy.max_span_length:
         reasons.append("span_too_long")
     return reasons
+
+
+def _resolve_overlaps(
+    annotations: Sequence[AnnotationProposal],
+) -> tuple[list[AnnotationProposal], list[AnnotationProposal], dict[str, str]]:
+    by_document: dict[str, list[AnnotationProposal]] = defaultdict(list)
+    for annotation in annotations:
+        by_document[annotation.document_id].append(annotation)
+    accepted: list[AnnotationProposal] = []
+    rejected: list[AnnotationProposal] = []
+    winners: dict[str, str] = {}
+    for document_id in sorted(by_document):
+        selected: list[AnnotationProposal] = []
+        for annotation in sorted(by_document[document_id], key=_overlap_priority):
+            winner = next(
+                (candidate for candidate in selected if _overlaps(annotation, candidate)),
+                None,
+            )
+            if winner is None:
+                selected.append(annotation)
+            else:
+                rejected.append(annotation)
+                winners[annotation.annotation_id] = winner.annotation_id
+        accepted.extend(selected)
+    return accepted, rejected, winners
+
+
+def _overlap_priority(annotation: AnnotationProposal) -> tuple[int, int, float, int, int, str]:
+    review_rank = {
+        ReviewStatus.ACCEPTED: 0,
+        ReviewStatus.PROPOSED: 1,
+        ReviewStatus.NEEDS_REVIEW: 2,
+        ReviewStatus.REJECTED: 3,
+    }[annotation.review_status]
+    layer_rank = {
+        AnnotationLayer.GOLD: 0,
+        AnnotationLayer.CHALLENGE: 0,
+        AnnotationLayer.SILVER: 1,
+        AnnotationLayer.BRONZE: 2,
+    }[annotation.layer]
+    span_length = annotation.span[1] - annotation.span[0]
+    return (
+        review_rank,
+        layer_rank,
+        -annotation.confidence,
+        -span_length,
+        annotation.span[0],
+        annotation.annotation_id,
+    )
+
+
+def _overlaps(left: AnnotationProposal, right: AnnotationProposal) -> bool:
+    return left.span[0] < right.span[1] and right.span[0] < left.span[1]
 
 
 def _boolean(raw: Mapping[str, Any], key: str, *, default: bool) -> bool:
