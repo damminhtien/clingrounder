@@ -1,0 +1,26 @@
+terminology:
+  # General pipeline profile: compact seed recognition plus reviewed VN clinical terms.
+  recognition_path: data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
+  additional_recognition_path: data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl
+  abbreviation_path: data/dictionaries/abbreviations.jsonl
+  alias_overlay_path: data/dictionaries/vietnamese_medical_alias.jsonl
+  normalization_paths:
+    - data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl
+    - data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
+    - data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl
+  normalization_alias_overlay_paths:
+    - outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl
+    - outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl
+  normalization_index_path: .cache/medical-kg/terminology/terminology-715f8d77659ea043358d.sqlite3
+  knowledge_graph_index_path: .cache/medical-kg/knowledge-graph/knowledge-graph-687a122fb72f9925f7ef.sqlite3
+
+pipeline:
+  version: "0.2.0-general-vn-terminology"
+  enable_context: true
+  enable_linking: true
+  enable_candidate_reranking: true
+  enable_entity_kg_validation: true
+  enable_relations: true
+  enable_relation_kg_validation: true
+  max_candidates: 20
+  candidate_sources: [exact, abbreviation, fuzzy, char_ngram, bm25]

@@ -1,5 +1,5 @@
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
-from medical_kg_nlp.pipeline.factory import PipelineFactory
+from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
 from medical_kg_nlp.schema.types import AssertionStatus, EntityType, RelationType
 
 
@@ -25,6 +25,26 @@ def test_pipeline_smoke_source_backed_treatment_seed() -> None:
     assert by_text["Tăng huyết áp"].code == "I10"
     assert by_text["lisinopril"].code == "29046"
     assert any(relation.type == RelationType.TREATS for relation in prediction.relations)
+
+
+def test_pipeline_can_add_reviewed_vietnamese_clinical_lexicon() -> None:
+    runner = PipelineFactory.from_config(
+        PipelineFactoryConfig(
+            additional_recognition_dictionary_path=(
+                "data/standards/vn_clinical_lexicon/processed/"
+                "vn_clinical_lexicon_concepts.jsonl"
+            )
+        )
+    )
+    prediction = runner.process_text(
+        "vn-lexicon-smoke",
+        "Bệnh nhân có tiểu buốt và khó nuốt; đã thực hiện chụp mạch vành.",
+    )
+    by_text = {entity.text: entity for entity in prediction.entities}
+    assert by_text["tiểu buốt"].type == EntityType.SYMPTOM
+    assert by_text["tiểu buốt"].code == "SYMPTOM_DYSURIA"
+    assert by_text["khó nuốt"].code == "SYMPTOM_DYSPHAGIA"
+    assert by_text["chụp mạch vành"].type == EntityType.PROCEDURE
 
 
 def test_pipeline_phase1_sections_drive_historical_context_and_skip_dose_result() -> None:
