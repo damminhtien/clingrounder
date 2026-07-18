@@ -205,13 +205,47 @@ def test_sqlite_index_rejects_invalid_or_conflicting_alias_overlays(
     with pytest.raises(ValueError, match="semantic_type"):
         build_terminology_index((source,), alias_overlay_paths=(wrong_type,))
 
-    collision = _write_overlay(
-        tmp_path / "collision.jsonl",
+    cross_space_homonym = _write_overlay(
+        tmp_path / "cross-space.jsonl",
         target_concept_id="RX:6809",
         alias="Đái tháo đường",
     )
+    cross_space_manifest = build_terminology_index(
+        (source,),
+        alias_overlay_paths=(cross_space_homonym,),
+        cache_dir=tmp_path / "cross-space-cache",
+    )
+    cross_space_repository = SQLiteTerminologyRepository(cross_space_manifest.index_path)
+    assert cross_space_repository.exact_lookup(
+        "Đái tháo đường",
+        entity_type=EntityType.DRUG,
+        code_systems=(CodeSystem.RXNORM,),
+    )[0].code == "6809"
+
+    collision_source = tmp_path / "collision-concepts.jsonl"
+    collision_source.write_text(
+        json.dumps(
+            {
+                "concept_id": "RX:999",
+                "code": "999",
+                "code_system": "RxNorm",
+                "canonical_name": "shared drug alias",
+                "semantic_type": "DRUG",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    collision = _write_overlay(
+        tmp_path / "collision.jsonl",
+        target_concept_id="RX:6809",
+        alias="shared drug alias",
+    )
     with pytest.raises(ValueError, match="already belongs to canonical concepts"):
-        build_terminology_index((source,), alias_overlay_paths=(collision,))
+        build_terminology_index(
+            (source, collision_source),
+            alias_overlay_paths=(collision,),
+        )
 
 
 def test_sqlite_index_merges_compatible_duplicate_concepts(tmp_path: Path) -> None:

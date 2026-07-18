@@ -171,11 +171,16 @@ def _apply_alias_overlays(
     by_concept_id = {entry.concept_id: entry for entry in entries}
     aliases_by_concept: dict[str, list[str]] = {}
     overlay_sources: dict[tuple[str, str], str] = {}
-    normalized_targets: dict[str, str] = {}
-    base_targets: dict[str, set[str]] = {}
+    normalized_targets: dict[tuple[str, EntityType, CodeSystem], str] = {}
+    base_targets: dict[tuple[str, EntityType, CodeSystem], set[str]] = {}
     for entry in entries:
         for name in entry.all_names:
-            base_targets.setdefault(normalize_for_match(name), set()).add(entry.concept_id)
+            key = (
+                normalize_for_match(name),
+                entry.semantic_type,
+                entry.code_system,
+            )
+            base_targets.setdefault(key, set()).add(entry.concept_id)
 
     for overlay_path in alias_overlay_paths:
         path = Path(overlay_path)
@@ -193,19 +198,26 @@ def _apply_alias_overlays(
                     concepts=by_concept_id,
                 )
                 normalized = normalize_for_match(alias)
-                existing_targets = base_targets.get(normalized, set())
+                # INVARIANT: runtime exact lookup filters semantic type and code system before
+                # LIMIT. Homonyms across those spaces are valid; ambiguity inside one space is not.
+                collision_key = (
+                    normalized,
+                    target.semantic_type,
+                    target.code_system,
+                )
+                existing_targets = base_targets.get(collision_key, set())
                 if existing_targets and target.concept_id not in existing_targets:
                     raise ValueError(
                         f"{path}:{line_number}: alias {alias!r} already belongs to canonical "
                         f"concepts {sorted(existing_targets)!r}, not {target.concept_id!r}"
                     )
-                previous_target = normalized_targets.get(normalized)
+                previous_target = normalized_targets.get(collision_key)
                 if previous_target is not None and previous_target != target.concept_id:
                     raise ValueError(
                         f"{path}:{line_number}: normalized alias {normalized!r} targets both "
                         f"{previous_target!r} and {target.concept_id!r}"
                     )
-                normalized_targets[normalized] = target.concept_id
+                normalized_targets[collision_key] = target.concept_id
                 existing = {normalize_for_match(value) for value in target.all_names}
                 existing.update(
                     normalize_for_match(value)
