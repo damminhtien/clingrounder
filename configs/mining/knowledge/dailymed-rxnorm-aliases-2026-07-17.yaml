@@ -1,0 +1,28 @@
+schema_version: mined-alias-promotion-policy.v1
+policy_id: dailymed-rxnorm-official-aliases-2026-07-17-v1
+
+# LICENSE: aliases come from the NLM-published SPL-to-RxNorm crosswalk, not inferred matching.
+accepted_sources:
+  - DailyMed SPL-RxNorm mapping
+accepted_source_sha256:
+  - 0d2797b35c31c0651e616d075b8b042591074e66a0c5955d8c4919e50ed9860c
+accepted_review_statuses:
+  - review_required
+
+# INVARIANT: every promoted code must resolve to a DRUG in the pinned RxNorm release.
+allowed_code_systems:
+  - RxNorm
+allowed_semantic_types:
+  - DRUG
+allowed_ttys:
+  - SCD
+  - SBD
+  - PSN
+  - SY
+
+# A single official set/version mapping is admissible after global alias-collision checks.
+min_supporting_records: 1
+min_alias_characters: 3
+max_alias_characters: 240
+max_alias_tokens: 40
+allow_numeric_only: false

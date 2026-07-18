@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import importlib
 import json
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any, cast
@@ -30,6 +30,10 @@ from medical_kg_nlp.mining.io import (
 from medical_kg_nlp.mining.labeling import (
     BatchedProposalLabelerAdapter,
     PolicyAwareProposalLabelerAdapter,
+)
+from medical_kg_nlp.mining.knowledge import (
+    compile_mined_aliases,
+    load_alias_promotion_policy,
 )
 from medical_kg_nlp.mining.lexicon import build_mention_inventory, load_mention_inventory
 from medical_kg_nlp.mining.mappings.dailymed_rxnorm import (
@@ -62,6 +66,7 @@ __all__ = [
     "crosswalk_lexicon",
     "audit_dailymed_rxnorm",
     "compile_dailymed_rxnorm",
+    "compile_alias_knowledge",
     "curate_annotation_dataset",
     "export_review",
     "freeze_snapshot",
@@ -325,6 +330,63 @@ def audit_dailymed_rxnorm(args: argparse.Namespace) -> int:
     return 0
 
 
+def compile_alias_knowledge(args: argparse.Namespace) -> int:
+    """Compile source-pinned aliases and a compact recognition dictionary."""
+
+    repository = SQLiteTerminologyRepository(
+        args.index,
+        expected_source_paths=tuple(args.source),
+        expected_alias_overlay_paths=tuple(args.base_alias_overlay),
+    )
+    try:
+        result = compile_mined_aliases(
+            (
+                row
+                for proposal_path in args.proposals
+                for row in _load_jsonl_mappings(proposal_path)
+            ),
+            repository,
+            load_alias_promotion_policy(args.policy),
+        )
+    finally:
+        repository.close()
+    overlay_sha256 = write_jsonl(args.overlay_output, result.alias_overlays)
+    recognition_sha256 = write_jsonl(
+        args.recognition_output,
+        result.recognition_concepts,
+    )
+    decisions_sha256 = write_jsonl(args.decisions_output, result.decisions)
+    report = {
+        **result.report,
+        "inputs": {
+            "proposals": [str(Path(path)) for path in args.proposals],
+            "terminology_index": str(Path(args.index)),
+            "terminology_input_fingerprint": repository.metadata.get(
+                "input_fingerprint",
+                "",
+            ),
+        },
+        "outputs": {
+            "alias_overlay": str(Path(args.overlay_output)),
+            "alias_overlay_sha256": overlay_sha256,
+            "recognition_dictionary": str(Path(args.recognition_output)),
+            "recognition_dictionary_sha256": recognition_sha256,
+            "decisions": str(Path(args.decisions_output)),
+            "decisions_sha256": decisions_sha256,
+        },
+    }
+    write_json(args.report_output, report)
+    _print_json(
+        {
+            "overlay_alias_count": report["overlay_alias_count"],
+            "recognition_concept_count": report["recognition_concept_count"],
+            "decision_counts": report["decision_counts"],
+            "report": args.report_output,
+        }
+    )
+    return 0
+
+
 def propose_labels(args: argparse.Namespace) -> int:
     documents = load_documents(args.documents)
     config = _load_mapping(args.adapter_config) if args.adapter_config else None
@@ -537,6 +599,18 @@ def _load_mapping(path: str | Path) -> dict[str, Any]:
     if not isinstance(raw, Mapping):
         raise ValueError(f"Expected mapping in {path}")
     return {str(key): value for key, value in raw.items()}
+
+
+def _load_jsonl_mappings(path: str | Path) -> Iterator[dict[str, Any]]:
+    source = Path(path)
+    with source.open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            if not line.strip():
+                continue
+            raw = json.loads(line)
+            if not isinstance(raw, Mapping):
+                raise ValueError(f"{source}:{line_number}: expected JSON object")
+            yield {str(key): value for key, value in raw.items()}
 
 
 def _print_json(payload: Mapping[str, Any]) -> None:

@@ -259,6 +259,29 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     mapping_audit.add_argument("--proposals-output", required=True)
     mapping_audit.add_argument("--report-output", required=True)
 
+    knowledge = operations.add_parser(
+        "knowledge",
+        help="Promote mined evidence into strict runtime knowledge artifacts.",
+    )
+    knowledge_operations = knowledge.add_subparsers(
+        dest="data_knowledge_command",
+        required=True,
+    )
+    knowledge_aliases = knowledge_operations.add_parser(
+        "compile-aliases",
+        help="Compile conflict-free aliases against a pinned terminology index.",
+    )
+    knowledge_aliases.set_defaults(handler="data_knowledge_compile_aliases")
+    knowledge_aliases.add_argument("--proposals", action="append", required=True)
+    knowledge_aliases.add_argument("--index", required=True)
+    knowledge_aliases.add_argument("--source", action="append", required=True)
+    knowledge_aliases.add_argument("--base-alias-overlay", action="append", default=[])
+    knowledge_aliases.add_argument("--policy", required=True)
+    knowledge_aliases.add_argument("--overlay-output", required=True)
+    knowledge_aliases.add_argument("--recognition-output", required=True)
+    knowledge_aliases.add_argument("--decisions-output", required=True)
+    knowledge_aliases.add_argument("--report-output", required=True)
+
     label = operations.add_parser("label", help="Run a local proposal-labeler adapter.")
     label_operations = label.add_subparsers(dest="data_label_command", required=True)
     label_propose = label_operations.add_parser(

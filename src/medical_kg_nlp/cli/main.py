@@ -42,6 +42,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.data",
         "audit_dailymed_rxnorm",
     ),
+    "data_knowledge_compile_aliases": (
+        "medical_kg_nlp.cli.commands.data",
+        "compile_alias_knowledge",
+    ),
     "data_label_propose": ("medical_kg_nlp.cli.commands.data", "propose_labels"),
     "data_relation_propose": (
         "medical_kg_nlp.cli.commands.data",

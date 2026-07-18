@@ -22,6 +22,12 @@ from medical_kg_nlp.mining.labeling import (
     ConsensusProposalLabeler,
     PolicyAwareProposalLabelerAdapter,
 )
+from medical_kg_nlp.mining.knowledge import (
+    AliasKnowledgeCompilationResult,
+    MinedAliasPromotionPolicy,
+    compile_mined_aliases,
+    load_alias_promotion_policy,
+)
 from medical_kg_nlp.mining.lexicon import (
     MentionInventoryEntry,
     MentionInventoryResult,
@@ -106,6 +112,7 @@ __all__ = [
     "AnnotationCurationPolicy",
     "AnnotationCurationResult",
     "ArtifactStorePort",
+    "AliasKnowledgeCompilationResult",
     "BatchedProposalLabelerAdapter",
     "ConceptLink",
     "CoverageCell",
@@ -128,6 +135,7 @@ __all__ = [
     "MinedDocument",
     "MinimalPairGenerator",
     "MiningQualityGate",
+    "MinedAliasPromotionPolicy",
     "MiningPlan",
     "MiningPlanResult",
     "MentionInventoryEntry",
@@ -169,6 +177,7 @@ __all__ = [
     "build_dataset_profile",
     "build_mention_inventory",
     "crosswalk_mentions",
+    "compile_mined_aliases",
     "curate_annotations",
     "connector_from_definition",
     "ConsensusProposalLabeler",
@@ -178,6 +187,7 @@ __all__ = [
     "load_annotation_curation_policy",
     "load_mention_inventory",
     "load_mining_plan",
+    "load_alias_promotion_policy",
     "parser_from_definition",
     "profile_blocking_issue_count",
     "reconcile_exact_duplicates",
