@@ -393,3 +393,64 @@ RxCUIs exist and 2,710 are rejected as release mismatches. The audit emits 36,07
 pairs as `review_required`; it never mutates the canonical terminology automatically. None of the
 105 newly published SPL set IDs is present in this mapping release yet, so those daily records retain
 their NDC/UNII/NCI links until an authoritative RxNorm mapping catches up.
+
+## Knowledge Promotion Results
+
+Mined knowledge is promoted independently for recognition and normalization. A source can improve
+retrieval without being safe to scan over every clinical note. The active full-terminology config
+therefore keeps a compact recognition dictionary and loads reviewed aliases only into the filtered
+SQLite normalization repository.
+
+DailyMed contributes 35,627 source-pinned RxNorm aliases. Ranking canonical and ingredient TTYs
+ahead of product variants raised exact hit@1 on the 59-query medication diagnostic set from about
+0.203 to 0.559 and MRR from about 0.336 to 0.576. CodiEsp contributes 642 Spanish aliases linked to
+418 TT06 concepts after rejecting unknown ICD-10-CM/PCS codes and conflicting aliases. On its
+independent overlay query set, exact hit@1 improved from 0/642 to 642/642 and FTS recall@20 from
+40/642 to 642/642. The 59-query RxNorm metrics were byte-for-byte unchanged after adding CodiEsp,
+which verifies type/code-system isolation.
+
+Reproduce the CodiEsp gate with:
+
+```bash
+uv run medical-kg terminology query-set \
+  --alias-overlay outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl \
+  --output outputs/mining/knowledge/codiesp-icd10-2026-07-18/benchmark/codiesp_tt06_queries.jsonl \
+  --manifest-output outputs/mining/knowledge/codiesp-icd10-2026-07-18/benchmark/query_manifest.json
+
+uv run medical-kg terminology build \
+  --source data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
+  --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl \
+  --alias-overlay outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl \
+  --alias-overlay outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl \
+  --manifest-output outputs/mining/knowledge/codiesp-icd10-2026-07-18/enriched_terminology_manifest.json
+```
+
+The resulting index contains 88,837 concepts and 188,232 aliases. Its content-addressed local path
+is `.cache/medical-kg/terminology/terminology-a2d5a19e83fbc9e1a305.sqlite3`; runtime composition is
+recorded in `configs/pipeline/full_terminology.yaml`. The cache path is derived output, not a source
+artifact, and must be rebuilt from the pinned manifests on another machine.
+
+VietBioNER follows a different promotion decision. A train-only compiler accepted 100 recognition
+concepts. On 12 source-held-out development documents, the enriched dictionary reached precision
+0.610, recall 0.613, and F1 0.612, but produced 161 false positives; 111 were overlapping boundary
+errors. It remains proposal/training knowledge and is not enabled in the runtime recognizer.
+
+For model NER, export the reconciled raw spans without changing offsets or leaking the development
+split:
+
+```bash
+uv run medical-kg data dataset export-spans \
+  --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
+  --annotations outputs/mining/vietbioner-19ba70a/reconciled/training_annotations.jsonl \
+  --split-manifest outputs/mining/snapshots/vietbioner-19ba70a-reconciled-silver-v2/manifest.json \
+  --output outputs/mining/model_datasets/vietbioner-19ba70a-reconciled-silver-v2/spans.jsonl \
+  --manifest-output outputs/mining/model_datasets/vietbioner-19ba70a-reconciled-silver-v2/manifest.json \
+  --entity-type FINDING \
+  --entity-type PROCEDURE \
+  --max-characters 1200
+```
+
+The current export has 217 chunks and 2,307 entities: 1,880 findings and 427 procedures, with 178
+train chunks and 39 development chunks. Chunk limits are soft only when necessary to avoid cutting
+an entity. Every local span round-trips to its original document offset, and overlapping labels are
+rejected because a BIO token classifier cannot represent them safely.

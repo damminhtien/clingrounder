@@ -45,7 +45,7 @@ composition root that turns config into a runnable component graph.
 | `experiments/` | Ablations, journals, and agent-facing experiment loops | Reusable metrics |
 | `benchmarks/phase1/` | Phase 1 schema, scoring, export, and campaign code | Generic evaluation behavior |
 | `validation/` | Core/development/release severity and generic artifact checks | Task-specific ZIP layout |
-| `mining/` | Licensed acquisition, immutable artifacts, parsers, curation, review, and snapshots | Competition schemas or hosted services |
+| `mining/` | Licensed acquisition, immutable artifacts, parsers, curation, review, model datasets, and snapshots | Competition schemas or hosted services |
 | `cli/` | `argparse` command routing and thin IO handlers | Metrics or pipeline algorithms |
 
 ## Public Ports
@@ -78,6 +78,7 @@ terminology:
   normalization_index_path: .cache/medical-kg/terminology/full.sqlite3
   normalization_alias_overlay_paths:
     - outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl
+    - outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl
   cache_dir: .cache/medical-kg/terminology
   additional_recognition_path: null
   abbreviation_path: data/dictionaries/abbreviations.jsonl
@@ -127,6 +128,11 @@ uv run medical-kg terminology inspect \
   --query metformin \
   --entity-type DRUG \
   --code-system RxNorm
+
+uv run medical-kg terminology query-set \
+  --alias-overlay outputs/mining/knowledge/reviewed-aliases.jsonl \
+  --output outputs/mining/benchmark/queries.jsonl \
+  --manifest-output outputs/mining/benchmark/query-manifest.json
 ```
 
 The cache key includes source SHA-256, schema version, and normalization version. Runtime opens
@@ -136,13 +142,14 @@ read-only, query-only, thread-local connections and never rebuilds a stale index
 
 ```text
 medical-kg pipeline run
-medical-kg terminology build|inspect
+medical-kg terminology build|inspect|query-set|benchmark
 medical-kg evaluate
 medical-kg validate
 medical-kg benchmark phase1
 medical-kg data registry validate
 medical-kg data source sync
 medical-kg data dataset build
+medical-kg data dataset export-spans
 medical-kg data label propose
 medical-kg data review export|import
 medical-kg data coverage report
