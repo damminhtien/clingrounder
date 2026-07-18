@@ -173,6 +173,8 @@ def _empty_view_sql(view_name: str, table_name: str) -> str:
             ("label_source", "VARCHAR"),
             ("evidence_start", "BIGINT"),
             ("evidence_end", "BIGINT"),
+            ("labeler_id", "VARCHAR"),
+            ("review_status", "VARCHAR"),
             ("metadata_json", "VARCHAR"),
         ),
     }[table_name]
@@ -239,6 +241,8 @@ def _relation_row(relation: RelationProposal) -> dict[str, Any]:
         "label_source": raw["label_source"],
         "evidence_start": None if evidence is None else evidence[0],
         "evidence_end": None if evidence is None else evidence[1],
+        "labeler_id": raw["labeler_id"],
+        "review_status": raw["review_status"],
         "metadata_json": _canonical_json(raw["metadata"]),
     }
 
@@ -292,6 +296,8 @@ def _parquet_schema(pa: Any, table_name: str) -> Any:
             ("label_source", string),
             ("evidence_start", integer),
             ("evidence_end", integer),
+            ("labeler_id", string),
+            ("review_status", string),
             ("metadata_json", string),
         ],
     }

@@ -114,6 +114,8 @@ def test_parquet_snapshot_uses_stable_annotation_and_relation_schemas(
         confidence=1.0,
         layer=AnnotationLayer.GOLD,
         label_source="human",
+        labeler_id="reviewer",
+        review_status=ReviewStatus.ACCEPTED,
         evidence_span=(0, len(document.text)),
     )
     snapshot_root = tmp_path / "snapshot_full"

@@ -172,6 +172,14 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     review_import.set_defaults(handler="data_review_import")
     review_import.add_argument("--input", required=True)
     review_import.add_argument("--output", required=True)
+    review_quality = review_operations.add_parser(
+        "quality", help="Measure pairwise gold-review agreement."
+    )
+    review_quality.set_defaults(handler="data_review_quality")
+    review_quality.add_argument("--documents", required=True)
+    review_quality.add_argument("--proposals", required=True)
+    review_quality.add_argument("--relations")
+    review_quality.add_argument("--output", required=True)
 
     coverage = operations.add_parser("coverage", help="Measure coverage and review priority.")
     coverage_operations = coverage.add_subparsers(
@@ -208,6 +216,7 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     snapshot_freeze.add_argument("--hash-salt", default="medical-kg-snapshot-v1")
     snapshot_freeze.add_argument("--max-synthetic-fraction", type=float, default=0.4)
     snapshot_freeze.add_argument("--manifest-only", action="store_true")
+    snapshot_freeze.add_argument("--skip-agreement-gate", action="store_true")
 
     run = operations.add_parser("run", help="Run a resumable declarative mining plan.")
     run.set_defaults(handler="data_run")

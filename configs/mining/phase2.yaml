@@ -68,3 +68,4 @@ snapshot:
   hash_salt: medical-kg-phase2-open-v1
   max_synthetic_train_fraction: 0.40
   write_parquet: true
+  enforce_agreement: true

@@ -48,6 +48,12 @@ from medical_kg_nlp.mining.registry import (
     load_source_registry,
 )
 from medical_kg_nlp.mining.review import JsonlReviewBackend
+from medical_kg_nlp.mining.quality import (
+    AgreementThresholds,
+    GoldAgreementGate,
+    ReviewAgreementEvaluator,
+    ReviewAgreementReport,
+)
 from medical_kg_nlp.mining.runner import (
     MiningPlan,
     MiningPlanResult,
@@ -67,6 +73,7 @@ from medical_kg_nlp.mining.synthetic import (
 
 __all__ = [
     "AccessClass",
+    "AgreementThresholds",
     "AnnotationLayer",
     "AnnotationProposal",
     "ArtifactStorePort",
@@ -83,6 +90,7 @@ __all__ = [
     "DocumentParserPort",
     "DuckDBMiningCatalog",
     "FsspecArtifactStore",
+    "GoldAgreementGate",
     "LocalArtifactStore",
     "LicenseMode",
     "MinedDocument",
@@ -100,6 +108,8 @@ __all__ = [
     "RelationProposal",
     "RenderedScenario",
     "ReviewPriority",
+    "ReviewAgreementEvaluator",
+    "ReviewAgreementReport",
     "ReviewBackendPort",
     "ReviewStatus",
     "SourceArtifact",

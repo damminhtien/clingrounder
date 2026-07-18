@@ -15,6 +15,7 @@ from medical_kg_nlp.mining.catalog import ParquetSnapshotWriter
 from medical_kg_nlp.mining.dedup import StableTextDeduplicator
 from medical_kg_nlp.mining.io import write_json
 from medical_kg_nlp.mining.policy import MiningQualityGate
+from medical_kg_nlp.mining.quality import GoldAgreementGate, ReviewAgreementEvaluator
 from medical_kg_nlp.mining.records import (
     AccessClass,
     AnnotationLayer,
@@ -59,11 +60,13 @@ class SnapshotBuilder:
         split_config: SnapshotSplitConfig | None = None,
         quality_gate: MiningQualityGate | None = None,
         deduplicator: StableTextDeduplicator | None = None,
+        agreement_gate: GoldAgreementGate | None = None,
         rows_per_shard: int = 50_000,
     ) -> None:
         self.split_config = split_config or SnapshotSplitConfig()
         self.quality_gate = quality_gate or MiningQualityGate()
         self.deduplicator = deduplicator or StableTextDeduplicator()
+        self.agreement_gate = agreement_gate
         self.rows_per_shard = rows_per_shard
 
     def freeze(
@@ -91,6 +94,7 @@ class SnapshotBuilder:
         )
         splits, split_groups = self._assign_splits(ordered_documents)
         issues.extend(_challenge_issues(splits, ordered_annotations))
+        issues.extend(_challenge_relation_issues(splits, ordered_relations))
         issues.extend(_synthetic_challenge_issues(splits, ordered_documents))
         issues.extend(
             _synthetic_fraction_issues(
@@ -99,6 +103,23 @@ class SnapshotBuilder:
                 maximum=self.split_config.max_synthetic_train_fraction,
             )
         )
+        agreement_report = None
+        if self.agreement_gate is not None:
+            agreement_report = ReviewAgreementEvaluator().evaluate(
+                ordered_documents,
+                ordered_annotations,
+                ordered_relations,
+            )
+            issues.extend(
+                self.agreement_gate.validate(
+                    agreement_report,
+                    has_gold_relations=any(
+                        relation.layer
+                        in {AnnotationLayer.GOLD, AnnotationLayer.CHALLENGE}
+                        for relation in ordered_relations
+                    ),
+                )
+            )
         if issues:
             raise ValueError("Snapshot validation failed:\n" + "\n".join(sorted(set(issues))))
 
@@ -131,6 +152,9 @@ class SnapshotBuilder:
             },
             "redistributable": not restricted_reasons,
             "restricted_reasons": list(restricted_reasons),
+            "quality": (
+                None if agreement_report is None else agreement_report.to_dict()
+            ),
             "storage": {
                 "format": "parquet" if write_parquet else "manifest_only",
                 "tables": _expected_tables(
@@ -297,6 +321,22 @@ def _challenge_issues(
             issues.append(f"non_gold_challenge:{annotation.annotation_id}")
         if annotation.review_status is not ReviewStatus.ACCEPTED:
             issues.append(f"unreviewed_challenge:{annotation.annotation_id}")
+    return issues
+
+
+def _challenge_relation_issues(
+    splits: Mapping[str, str], relations: Sequence[RelationProposal]
+) -> list[str]:
+    issues: list[str] = []
+    for relation in relations:
+        if splits.get(relation.document_id) != "challenge":
+            continue
+        if relation.layer not in {AnnotationLayer.GOLD, AnnotationLayer.CHALLENGE}:
+            issues.append(f"non_gold_challenge_relation:{relation.relation_id}")
+        if relation.review_status is not ReviewStatus.ACCEPTED:
+            issues.append(f"unreviewed_challenge_relation:{relation.relation_id}")
+        if relation.labeler_id is None:
+            issues.append(f"anonymous_challenge_relation:{relation.relation_id}")
     return issues
 
 

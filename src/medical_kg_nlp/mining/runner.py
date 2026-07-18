@@ -29,6 +29,7 @@ from medical_kg_nlp.mining.records import (
     SourceArtifact,
     SourceRequest,
 )
+from medical_kg_nlp.mining.quality import GoldAgreementGate
 from medical_kg_nlp.mining.registry import SourceDefinition, load_source_registry
 from medical_kg_nlp.mining.snapshot import SnapshotBuilder, SnapshotSplitConfig
 from medical_kg_nlp.mining.storage import FsspecArtifactStore, LocalArtifactStore
@@ -83,6 +84,7 @@ class SnapshotPlan(BaseModel):
     hash_salt: str = "medical-kg-phase2-v1"
     max_synthetic_train_fraction: float = Field(default=0.4, ge=0.0, le=1.0)
     write_parquet: bool = True
+    enforce_agreement: bool = True
 
 
 class MiningPlan(BaseModel):
@@ -273,7 +275,8 @@ def run_mining_plan(path: str | Path) -> MiningPlanResult:
                 max_synthetic_train_fraction=(
                     snapshot_plan.max_synthetic_train_fraction
                 ),
-            )
+            ),
+            agreement_gate=(GoldAgreementGate() if snapshot_plan.enforce_agreement else None),
         )
         snapshot = builder.freeze(
             version=snapshot_plan.version,

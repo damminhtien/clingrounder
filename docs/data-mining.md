@@ -82,6 +82,12 @@ uv run medical-kg data review export \
   --proposals outputs/mining/pmc/proposals.jsonl \
   --output outputs/mining/pmc/review.jsonl
 
+uv run medical-kg data review quality \
+  --documents outputs/mining/pmc/documents.jsonl \
+  --proposals outputs/mining/pmc/reviewed.jsonl \
+  --relations outputs/mining/pmc/relations.jsonl \
+  --output outputs/mining/pmc/review-quality.json
+
 uv run medical-kg data coverage report \
   --documents outputs/mining/pmc/documents.jsonl \
   --proposals outputs/mining/pmc/proposals.jsonl \

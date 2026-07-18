@@ -136,6 +136,8 @@ def relation_from_dict(raw: Mapping[str, Any]) -> RelationProposal:
         layer=AnnotationLayer(str(raw["layer"])),
         label_source=str(raw["label_source"]),
         evidence_span=None if evidence is None else _integer_pair(evidence, "evidence_span"),
+        labeler_id=None if raw.get("labeler_id") is None else str(raw["labeler_id"]),
+        review_status=ReviewStatus(str(raw.get("review_status", "proposed"))),
         metadata=_string_mapping(raw.get("metadata", {}), "metadata"),
     )
 

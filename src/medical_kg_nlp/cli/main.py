@@ -23,6 +23,7 @@ _HANDLERS = {
     "data_label_propose": ("medical_kg_nlp.cli.commands.data", "propose_labels"),
     "data_review_export": ("medical_kg_nlp.cli.commands.data", "export_review"),
     "data_review_import": ("medical_kg_nlp.cli.commands.data", "import_review"),
+    "data_review_quality": ("medical_kg_nlp.cli.commands.data", "review_quality"),
     "data_coverage_report": ("medical_kg_nlp.cli.commands.data", "report_coverage"),
     "data_snapshot_freeze": ("medical_kg_nlp.cli.commands.data", "freeze_snapshot"),
     "data_run": ("medical_kg_nlp.cli.commands.data", "run_plan"),

@@ -26,6 +26,7 @@ from medical_kg_nlp.mining.labeling import BatchedProposalLabelerAdapter
 from medical_kg_nlp.mining.policy import SourcePolicyGate
 from medical_kg_nlp.mining.ports import ProposalLabelerPort
 from medical_kg_nlp.mining.records import SourceRequest
+from medical_kg_nlp.mining.quality import GoldAgreementGate, ReviewAgreementEvaluator
 from medical_kg_nlp.mining.registry import load_source_registry
 from medical_kg_nlp.mining.review import JsonlReviewBackend
 from medical_kg_nlp.mining.runner import (
@@ -43,6 +44,7 @@ __all__ = [
     "import_review",
     "propose_labels",
     "report_coverage",
+    "review_quality",
     "run_plan",
     "sync_registered_source",
     "validate_registry",
@@ -154,6 +156,23 @@ def import_review(args: argparse.Namespace) -> int:
     return 0
 
 
+def review_quality(args: argparse.Namespace) -> int:
+    documents = load_documents(args.documents)
+    proposals = load_annotations(args.proposals)
+    relations = () if args.relations is None else load_relations(args.relations)
+    report = ReviewAgreementEvaluator().evaluate(documents, proposals, relations)
+    issues = GoldAgreementGate().validate(
+        report,
+        has_gold_relations=any(
+            relation.layer.value in {"gold", "challenge"} for relation in relations
+        ),
+    )
+    payload = {**report.to_dict(), "blocking_issues": list(issues)}
+    write_json(args.output, payload)
+    _print_json({"blocking_issue_count": len(issues), "output": args.output})
+    return 1 if issues else 0
+
+
 def report_coverage(args: argparse.Namespace) -> int:
     documents = load_documents(args.documents)
     proposals = load_annotations(args.proposals)
@@ -216,7 +235,8 @@ def freeze_snapshot(args: argparse.Namespace) -> int:
             challenge_templates=frozenset(args.challenge_template),
             hash_salt=args.hash_salt,
             max_synthetic_train_fraction=args.max_synthetic_fraction,
-        )
+        ),
+        agreement_gate=(None if args.skip_agreement_gate else GoldAgreementGate()),
     ).freeze(
         version=args.version,
         created_at=args.created_at,

@@ -345,6 +345,8 @@ class RelationProposal:
     layer: AnnotationLayer
     label_source: str
     evidence_span: tuple[int, int] | None = None
+    labeler_id: str | None = None
+    review_status: ReviewStatus = ReviewStatus.PROPOSED
     metadata: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -364,6 +366,8 @@ class RelationProposal:
             start, end = self.evidence_span
             if start < 0 or end <= start:
                 raise ValueError(f"Invalid relation evidence span {self.evidence_span}")
+        if self.labeler_id is not None:
+            _require_text(self.labeler_id, "relation labeler_id")
 
     def validate(self, document: MinedDocument, annotations: dict[str, AnnotationProposal]) -> None:
         if self.document_id != document.document_id:
@@ -386,6 +390,8 @@ class RelationProposal:
             "layer": self.layer.value,
             "label_source": self.label_source,
             "evidence_span": list(self.evidence_span) if self.evidence_span else None,
+            "labeler_id": self.labeler_id,
+            "review_status": self.review_status.value,
             "metadata": dict(sorted(self.metadata.items())),
         }
 

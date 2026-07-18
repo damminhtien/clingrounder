@@ -207,6 +207,8 @@ class SentinelScenarioRenderer:
                 confidence=1.0,
                 layer=AnnotationLayer.SILVER,
                 label_source="scenario_graph",
+                labeler_id="scenario_renderer:v1",
+                review_status=ReviewStatus.PROPOSED,
                 metadata={"origin": "synthetic"},
             )
             for relation in graph.relations
