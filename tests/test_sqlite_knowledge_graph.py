@@ -15,6 +15,7 @@ from medical_kg_nlp.kg.knowledge_schema import (
     KnowledgeNode,
     KnowledgeNodeKind,
 )
+from medical_kg_nlp.kg.benchmark import benchmark_graph_aliases
 from medical_kg_nlp.kg.sqlite_builder import build_knowledge_graph_index
 from medical_kg_nlp.kg.sqlite_repository import SQLiteKnowledgeGraphRepository
 from medical_kg_nlp.cli import main
@@ -165,6 +166,35 @@ def test_graph_exact_retriever_is_type_filtered_and_does_not_use_fts(tmp_path: P
     repository.close()
 
 
+def test_graph_alias_benchmark_reports_coverage_and_rank(tmp_path: Path) -> None:
+    nodes_path, edges_path, evidence_path, _ = _write_graph(tmp_path)
+    manifest = build_knowledge_graph_index(nodes_path, edges_path, evidence_path, cache_dir=tmp_path)
+    overlay = tmp_path / "aliases.jsonl"
+    write_jsonl(
+        overlay,
+        (
+            {
+                "alias": "cao huyết áp",
+                "target_concept_id": "ICD10:I10",
+                "semantic_type": "DISEASE",
+            },
+            {
+                "alias": "missing",
+                "target_concept_id": "ICD10:Z99.9",
+                "semantic_type": "DISEASE",
+            },
+        ),
+    )
+    repository = SQLiteKnowledgeGraphRepository(manifest.index_path)
+    report = benchmark_graph_aliases(repository, (overlay,), limit=5)
+    source = report["sources"][str(overlay)]
+    assert source["rows"] == 2
+    assert source["covered_targets"] == 1
+    assert source["unknown_targets"] == 1
+    assert source["top1_rate"] == 1.0
+    repository.close()
+
+
 def test_sqlite_graph_rejects_stale_inputs_and_unknown_endpoints(tmp_path: Path) -> None:
     nodes_path, edges_path, evidence_path, nodes = _write_graph(tmp_path)
     manifest = build_knowledge_graph_index(nodes_path, edges_path, evidence_path, cache_dir=tmp_path)
@@ -248,3 +278,33 @@ def test_kg_cli_builds_manifest_and_queries_code(
     )
     inspect_payload = json.loads(capsys.readouterr().out)
     assert inspect_payload["code_result"]["node_id"] == "child"
+
+    overlay = tmp_path / "cli-aliases.jsonl"
+    write_jsonl(
+        overlay,
+        (
+            {
+                "alias": "cao huyết áp",
+                "target_concept_id": "ICD10:I10",
+                "semantic_type": "DISEASE",
+            },
+        ),
+    )
+    report_path = tmp_path / "alias-report.json"
+    assert (
+        main(
+            [
+                "kg",
+                "benchmark-aliases",
+                "--index",
+                str(index),
+                "--alias-overlay",
+                str(overlay),
+                "--output",
+                str(report_path),
+            ]
+        )
+        == 0
+    )
+    benchmark_payload = json.loads(capsys.readouterr().out)
+    assert benchmark_payload["sources"][str(overlay)]["top1_rate"] == 1.0

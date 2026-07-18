@@ -11,6 +11,7 @@ from medical_kg_nlp.kg.knowledge_schema import (
     KnowledgeNode,
     KnowledgeNodeKind,
 )
+from medical_kg_nlp.kg.benchmark import benchmark_graph_aliases
 from medical_kg_nlp.kg.ports import KnowledgeGraphRepositoryPort
 from medical_kg_nlp.kg.sqlite_builder import (
     KNOWLEDGE_GRAPH_SCHEMA_VERSION,
@@ -38,6 +39,7 @@ __all__ = [
     "OntologyReasoner",
     "SQLiteKnowledgeGraphRepository",
     "build_knowledge_graph_index",
+    "benchmark_graph_aliases",
 ]
 
 

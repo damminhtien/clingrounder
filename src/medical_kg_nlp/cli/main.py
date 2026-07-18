@@ -23,6 +23,10 @@ _HANDLERS = {
         "benchmark_index",
     ),
     "kg_build": ("medical_kg_nlp.cli.commands.kg", "build_graph_index"),
+    "kg_benchmark_aliases": (
+        "medical_kg_nlp.cli.commands.kg",
+        "benchmark_graph_aliases_command",
+    ),
     "kg_inspect": ("medical_kg_nlp.cli.commands.kg", "inspect_graph_index"),
     "evaluate": ("medical_kg_nlp.cli.commands.evaluate", "evaluate"),
     "validate": ("medical_kg_nlp.cli.commands.validate", "validate"),

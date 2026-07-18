@@ -59,6 +59,17 @@ def _kg_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     inspect.add_argument("--max-depth", type=int, default=20)
     inspect.add_argument("--limit", type=int, default=20)
 
+    benchmark = operations.add_parser(
+        "benchmark-aliases",
+        help="Benchmark exact alias coverage against overlay targets.",
+    )
+    benchmark.set_defaults(handler="kg_benchmark_aliases")
+    benchmark.add_argument("--index", required=True)
+    benchmark.add_argument("--alias-overlay", action="append", required=True)
+    benchmark.add_argument("--output", required=True)
+    benchmark.add_argument("--limit", type=int, default=5)
+    benchmark.add_argument("--max-misses", type=int, default=50)
+
 
 def _pipeline_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     pipeline = commands.add_parser("pipeline", help="Run pipeline operations.")

@@ -10,8 +10,50 @@ from medical_kg_nlp.kg import (
     SQLiteKnowledgeGraphRepository,
     build_knowledge_graph_index,
 )
+from medical_kg_nlp.kg.benchmark import benchmark_graph_aliases
 
-__all__ = ["build_graph_index", "inspect_graph_index"]
+__all__ = [
+    "benchmark_graph_aliases_command",
+    "build_graph_index",
+    "inspect_graph_index",
+]
+
+
+def benchmark_graph_aliases_command(args: argparse.Namespace) -> int:
+    """Run a compact-polling alias benchmark and persist the full report."""
+
+    repository = SQLiteKnowledgeGraphRepository(args.index)
+    try:
+        report = benchmark_graph_aliases(
+            repository,
+            tuple(args.alias_overlay),
+            limit=args.limit,
+            max_misses=args.max_misses,
+        )
+    finally:
+        repository.close()
+    output = Path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    summary = {
+        "schema_version": report["schema_version"],
+        "sources": {
+            path: {
+                "covered_targets": values["covered_targets"],
+                "top1_rate": values["top1_rate"],
+                "topk_rate": values["topk_rate"],
+                "ambiguous_queries": values["ambiguous_queries"],
+                "elapsed_ms": values["elapsed_ms"],
+            }
+            for path, values in report["sources"].items()
+        },
+        "report": str(output),
+    }
+    print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
 
 
 def build_graph_index(args: argparse.Namespace) -> int:
