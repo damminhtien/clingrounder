@@ -136,3 +136,63 @@ def test_lexicon_build_cli_writes_inventory_conflicts_and_report(tmp_path: Path,
     assert exit_code == 0
     assert output["entry_count"] == 1
     assert inventory[0]["normalized_mention"] == "pcr"
+
+
+def test_lexicon_build_cli_selects_only_frozen_training_records(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    train_document = _document("train", "Lao phổi")
+    development_document = _document("development", "PCR")
+    documents_path = tmp_path / "documents.jsonl"
+    annotations_path = tmp_path / "annotations.jsonl"
+    manifest_path = tmp_path / "manifest.json"
+    write_jsonl(
+        documents_path,
+        (train_document.to_dict(), development_document.to_dict()),
+    )
+    write_jsonl(
+        annotations_path,
+        (
+            _annotation(train_document, "train-annotation").to_dict(),
+            _annotation(
+                development_document,
+                "development-annotation",
+                entity_type="PROCEDURE",
+                source_label="DiagnosticProcedure",
+            ).to_dict(),
+        ),
+    )
+    manifest_path.write_text(
+        json.dumps({"splits": {"train": "train", "development": "development"}}),
+        encoding="utf-8",
+    )
+
+    exit_code = main(
+        [
+            "data",
+            "lexicon",
+            "build",
+            "--documents",
+            str(documents_path),
+            "--annotations",
+            str(annotations_path),
+            "--split-manifest",
+            str(manifest_path),
+            "--split",
+            "train",
+            "--output",
+            str(tmp_path / "inventory.jsonl"),
+            "--conflicts-output",
+            str(tmp_path / "conflicts.jsonl"),
+            "--report-output",
+            str(tmp_path / "report.json"),
+        ]
+    )
+    capsys.readouterr()
+    inventory = [
+        json.loads(line) for line in (tmp_path / "inventory.jsonl").read_text().splitlines()
+    ]
+
+    assert exit_code == 0
+    assert [row["normalized_mention"] for row in inventory] == ["lao phổi"]

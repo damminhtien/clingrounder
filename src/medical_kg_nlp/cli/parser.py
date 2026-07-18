@@ -218,6 +218,14 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     lexicon_build.add_argument("--report-output", required=True)
     lexicon_build.add_argument("--min-occurrences", type=int, default=1)
     lexicon_build.add_argument("--min-documents", type=int, default=1)
+    lexicon_build.add_argument(
+        "--split-manifest",
+        help="Optional frozen snapshot manifest used to select records.",
+    )
+    lexicon_build.add_argument(
+        "--split",
+        help="Named split to select; requires --split-manifest.",
+    )
     lexicon_crosswalk = lexicon_operations.add_parser(
         "crosswalk",
         help="Query mined mentions against a pinned terminology index.",
@@ -304,6 +312,14 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     recognition_benchmark.add_argument("--additional-dictionary", required=True)
     recognition_benchmark.add_argument("--entity-type", action="append", required=True)
     recognition_benchmark.add_argument("--output", required=True)
+    recognition_benchmark.add_argument(
+        "--split-manifest",
+        help="Optional frozen snapshot manifest used to select evaluation records.",
+    )
+    recognition_benchmark.add_argument(
+        "--split",
+        help="Named evaluation split; requires --split-manifest.",
+    )
 
     label = operations.add_parser("label", help="Run a local proposal-labeler adapter.")
     label_operations = label.add_subparsers(dest="data_label_command", required=True)

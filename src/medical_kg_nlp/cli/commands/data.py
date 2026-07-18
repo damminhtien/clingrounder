@@ -50,7 +50,7 @@ from medical_kg_nlp.mining.recognition_benchmark import (
     benchmark_recognition_dictionary,
 )
 from medical_kg_nlp.mining.reconciliation import reconcile_exact_duplicates
-from medical_kg_nlp.mining.records import SourceRequest
+from medical_kg_nlp.mining.records import AnnotationProposal, MinedDocument, SourceRequest
 from medical_kg_nlp.mining.quality import GoldAgreementGate, ReviewAgreementEvaluator
 from medical_kg_nlp.mining.registry import load_source_registry
 from medical_kg_nlp.mining.review import JsonlReviewBackend
@@ -61,6 +61,10 @@ from medical_kg_nlp.mining.runner import (
     sync_source,
 )
 from medical_kg_nlp.mining.snapshot import SnapshotBuilder, SnapshotSplitConfig
+from medical_kg_nlp.mining.splits import (
+    load_split_document_ids,
+    select_mined_records,
+)
 from medical_kg_nlp.terminology import SQLiteTerminologyRepository
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.schema.types import EntityType
@@ -243,9 +247,15 @@ def curate_annotation_dataset(args: argparse.Namespace) -> int:
 def build_lexicon(args: argparse.Namespace) -> int:
     """Write mined mention hypotheses and a separate ambiguity report."""
 
+    documents, annotations = _load_selected_mined_records(
+        documents_path=args.documents,
+        annotations_path=args.annotations,
+        split_manifest=args.split_manifest,
+        split=args.split,
+    )
     result = build_mention_inventory(
-        load_documents(args.documents),
-        load_annotations(args.annotations),
+        documents,
+        annotations,
         min_occurrences=args.min_occurrences,
         min_documents=args.min_documents,
     )
@@ -396,9 +406,15 @@ def compile_alias_knowledge(args: argparse.Namespace) -> int:
 def benchmark_recognition_knowledge(args: argparse.Namespace) -> int:
     """Measure exact span/type changes before promoting mined NER knowledge."""
 
+    documents, annotations = _load_selected_mined_records(
+        documents_path=args.documents,
+        annotations_path=args.annotations,
+        split_manifest=args.split_manifest,
+        split=args.split,
+    )
     report = benchmark_recognition_dictionary(
-        load_documents(args.documents),
-        load_annotations(args.annotations),
+        documents,
+        annotations,
         DictionaryStore.from_jsonl(args.baseline_dictionary),
         DictionaryStore.from_jsonl(args.additional_dictionary),
         entity_types=tuple(EntityType(value) for value in args.entity_type),
@@ -627,6 +643,29 @@ def _load_mapping(path: str | Path) -> dict[str, Any]:
     if not isinstance(raw, Mapping):
         raise ValueError(f"Expected mapping in {path}")
     return {str(key): value for key, value in raw.items()}
+
+
+def _load_selected_mined_records(
+    *,
+    documents_path: str | Path,
+    annotations_path: str | Path,
+    split_manifest: str | Path | None,
+    split: str | None,
+) -> tuple[tuple[MinedDocument, ...], tuple[AnnotationProposal, ...]]:
+    """Load full records, then apply one frozen split without rewriting offsets."""
+
+    documents = load_documents(documents_path)
+    annotations = load_annotations(annotations_path)
+    if (split_manifest is None) != (split is None):
+        raise ValueError("--split-manifest and --split must be provided together")
+    if split_manifest is None or split is None:
+        return documents, annotations
+    selection = select_mined_records(
+        documents,
+        annotations,
+        load_split_document_ids(split_manifest, split),
+    )
+    return selection.documents, selection.annotations
 
 
 def _load_jsonl_mappings(path: str | Path) -> Iterator[dict[str, Any]]:
