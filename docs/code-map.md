@@ -18,6 +18,8 @@ schema + preprocessing + terminology ports
 
 generic evaluation ← task adapters ← benchmarks
 experiments may depend on pipeline/evaluation/benchmarks, never the reverse
+
+source registry -> mining connectors -> artifact store -> parsers -> curation -> snapshots
 ```
 
 `PipelineRunner` does not read files or construct implementations. `PipelineFactory` is the only
@@ -43,6 +45,7 @@ composition root that turns config into a runnable component graph.
 | `experiments/` | Ablations, journals, and agent-facing experiment loops | Reusable metrics |
 | `benchmarks/phase1/` | Phase 1 schema, scoring, export, and campaign code | Generic evaluation behavior |
 | `validation/` | Core/development/release severity and generic artifact checks | Task-specific ZIP layout |
+| `mining/` | Licensed acquisition, immutable artifacts, parsers, curation, review, and snapshots | Competition schemas or hosted services |
 | `cli/` | `argparse` command routing and thin IO handlers | Metrics or pipeline algorithms |
 
 ## Public Ports
@@ -133,6 +136,14 @@ medical-kg terminology build|inspect
 medical-kg evaluate
 medical-kg validate
 medical-kg benchmark phase1
+medical-kg data registry validate
+medical-kg data source sync
+medical-kg data dataset build
+medical-kg data label propose
+medical-kg data review export|import
+medical-kg data coverage report
+medical-kg data snapshot freeze
+medical-kg data run
 ```
 
 Validation profiles:
@@ -164,12 +175,13 @@ local cache and must not download weights.
 ```bash
 rg "class .*Port" src/medical_kg_nlp/pipeline src/medical_kg_nlp/terminology
 rg "PipelineFactoryConfig|from_mapping" src tests configs
-rg "INVARIANT:|SCALING:|MODEL:" src tests
+rg "INVARIANT:|SCALING:|MODEL:|LICENSE:|PRIVACY:" src tests
 rg "EntityAnnotation|RelationAnnotation" src/medical_kg_nlp/schema tests
 rg "TerminologyRepository|exact_lookup|search" src tests
 rg "EvaluationAdapter" src/medical_kg_nlp/evaluation src/medical_kg_nlp/benchmarks tests
 rg "ValidationProfile" src tests
 ```
 
-Comments with `INVARIANT:`, `SCALING:`, and `MODEL:` explain non-obvious safety, concurrency, and
-projection decisions. Ordinary control flow should remain self-explanatory rather than narrated.
+Comments with `INVARIANT:`, `SCALING:`, `MODEL:`, `LICENSE:`, and `PRIVACY:` explain non-obvious
+safety, concurrency, projection, source-policy, and data-handling decisions. Ordinary control flow
+should remain self-explanatory rather than narrated.

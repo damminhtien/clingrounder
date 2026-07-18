@@ -1,0 +1,133 @@
+# Data Mining
+
+`medical_kg_nlp.mining` builds reusable clinical NLP datasets without depending on a competition
+schema. The lifecycle is:
+
+```text
+registered source -> immutable artifact -> parsed document -> proposals
+-> review -> coverage analysis -> leakage-safe snapshot
+```
+
+## Safety Model
+
+- Source bytes are content-addressed under `objects/sha256/<prefix>/<hash>`.
+- Every source has a version, access class, license URL, redistribution rule, retention rule,
+  connector, and parser in `data/sources/mining_registry.yaml`.
+- Per-article sources such as PMC OA must provide the article license before fetch completes.
+- `DUA`, credentialled, private, and quarantine records cannot use hosted labelers.
+- `MinedDocument.text` is immutable. Normalization or translation creates a child document rather
+  than rewriting offsets.
+- Gold and challenge annotations must be human-accepted. Synthetic records can train models but
+  cannot enter challenge snapshots.
+
+Sources with unresolved dataset-level terms remain in `quarantine`. Registering a URL does not
+grant permission to redistribute its content.
+
+## Storage
+
+Set an external local volume or S3-compatible URI:
+
+```bash
+export MEDICAL_KG_ARTIFACT_STORE=/Volumes/medical-kg-mining
+# or: export MEDICAL_KG_ARTIFACT_STORE=s3://bucket/medical-kg-mining
+```
+
+JSONL remains the checkpoint and review exchange format. Frozen dataset tables use sharded Parquet;
+DuckDB is an optional query catalog. Install these backends with:
+
+```bash
+uv sync --extra dev --extra data
+```
+
+## Commands
+
+Validate policy before downloading anything:
+
+```bash
+uv run medical-kg data registry validate \
+  --registry data/sources/mining_registry.yaml
+```
+
+Synchronize one explicit request. The parameter file contains connector inputs such as `pmc_ids`,
+`set_ids`, `nct_ids`, local `paths`, or explicit `artifacts` with checksums:
+
+```bash
+uv run medical-kg data source sync \
+  --source-id pmc_oa \
+  --source-version 2026-07-18 \
+  --parameters configs/mining/requests/pmc-cases.yaml \
+  --store "$MEDICAL_KG_ARTIFACT_STORE" \
+  --output outputs/mining/pmc/artifacts.jsonl
+```
+
+Parse, label, review, and inspect coverage independently:
+
+```bash
+uv run medical-kg data dataset build \
+  --source-id pmc_oa \
+  --artifacts outputs/mining/pmc/artifacts.jsonl \
+  --store "$MEDICAL_KG_ARTIFACT_STORE" \
+  --output outputs/mining/pmc/documents.jsonl
+
+uv run medical-kg data label propose \
+  --documents outputs/mining/pmc/documents.jsonl \
+  --adapter my_local_plugin:create_labeler \
+  --adapter-config configs/models/mining-labeler.yaml \
+  --output outputs/mining/pmc/proposals.jsonl
+
+uv run medical-kg data review export \
+  --documents outputs/mining/pmc/documents.jsonl \
+  --proposals outputs/mining/pmc/proposals.jsonl \
+  --output outputs/mining/pmc/review.jsonl
+
+uv run medical-kg data coverage report \
+  --documents outputs/mining/pmc/documents.jsonl \
+  --proposals outputs/mining/pmc/proposals.jsonl \
+  --targets configs/mining/coverage_phase2.yaml \
+  --snapshot-id phase2-working \
+  --output outputs/mining/pmc/coverage.json
+```
+
+Run a resumable campaign:
+
+```bash
+uv run medical-kg data run --plan configs/mining/phase2.yaml
+```
+
+Each source stage is keyed by source config, request config, connector revision, and parser revision.
+Acquisition checkpoints each artifact. A completed stage is reused on later runs; changing the
+source version, parser revision, checksum, or request creates a new stage directory.
+
+## Review Priority
+
+The fixed ranking formula is:
+
+```text
+0.30 coverage_gap + 0.25 model_disagreement + 0.20 novelty
++ 0.15 relation_density + 0.10 source_quality
+```
+
+Review queues should be grouped by normalized mention/context pattern, then processed for 1-2 hours
+per day. Randomly double-review 10% and target agreement of at least 0.90 for spans/types, 0.85 for
+assertions, and 0.80 for relations.
+
+## Snapshot Rules
+
+`SnapshotBuilder` unions exact/near duplicate, patient, case, article, template, and concept-family
+groups before assigning a split. If any member is held out, the entire connected component becomes
+challenge. This prevents a duplicated note or article template from appearing in both train and
+evaluation.
+
+Freeze requires an explicit version and timestamp. It rejects invalid offsets, relation endpoints,
+unreviewed challenge annotations, synthetic challenge documents, and training snapshots above the
+configured synthetic fraction. Existing snapshot directories are immutable; an identical manifest
+is an idempotent no-op.
+
+## Current Connector Coverage
+
+Implemented acquisition adapters cover explicit local archives, static URLs, PMC OA, DailyMed, and
+ClinicalTrials.gov. Implemented document parsers cover JATS, SPL, ClinicalTrials JSON, FHIR Bundle,
+BioC JSON, CodiEsp ZIP, and plain text. LOINC/HPO/Mondo are terminology inputs and should use
+`parse_documents: false`. VietBioNER and VietMed-NER remain local-license-review lanes until their
+exact downloaded formats and redistribution terms are pinned; do not silently interpret an unknown
+archive layout.

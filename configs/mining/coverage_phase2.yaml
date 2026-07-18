@@ -1,0 +1,19 @@
+targets:
+  - dimensions: {entity_type: DISEASE, assertion: FAMILY}
+    target: 100
+  - dimensions: {entity_type: DISEASE, assertion: NEGATED}
+    target: 100
+  - dimensions: {entity_type: DISEASE, assertion: POSSIBLE}
+    target: 100
+  - dimensions: {entity_type: DRUG, note_type: medication_list}
+    target: 200
+  - dimensions: {entity_type: LAB_RESULT, note_type: lab_panel}
+    target: 200
+  - dimensions: {language: vi, noise: toneless}
+    target: 100
+  - dimensions: {language: vi, noise: ocr}
+    target: 100
+  - dimensions: {note_type: radiology_report, entity_type: DISEASE}
+    target: 100
+  - dimensions: {note_type: discharge_note, entity_type: DISEASE}
+    target: 200

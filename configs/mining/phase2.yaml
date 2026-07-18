@@ -1,0 +1,68 @@
+schema_version: medical-mining-plan.v1
+registry: ../../data/sources/mining_registry.yaml
+work_dir: ../../outputs/mining/phase2-open-v1
+artifact_store:
+  # Use a mounted encrypted volume or an s3:// URI. The variable is required intentionally.
+  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  storage_options: {}
+sources:
+  - source_id: pmc_oa
+    source_version: "2026-07-18"
+    enabled: false
+    parse_documents: true
+    parameters:
+      pmc_ids: []
+  - source_id: dailymed
+    source_version: "2026-07-18"
+    enabled: false
+    parse_documents: true
+    parameters:
+      set_ids: []
+  - source_id: clinicaltrials_v2
+    source_version: "2026-07-18"
+    enabled: false
+    parse_documents: true
+    parameters:
+      nct_ids: []
+  - source_id: codiesp
+    source_version: zenodo-3837305
+    enabled: false
+    parse_documents: true
+    parameters:
+      artifacts: []
+  - source_id: synthea
+    source_version: local-snapshot
+    enabled: false
+    parse_documents: true
+    parameters:
+      paths: []
+      media_type: application/fhir+json
+  - source_id: biored
+    source_version: local-license-reviewed-snapshot
+    enabled: false
+    parse_documents: true
+    parameters:
+      paths: []
+      media_type: application/json
+  - source_id: vietbioner
+    source_version: local-license-reviewed-snapshot
+    enabled: false
+    parse_documents: false
+    parameters:
+      paths: []
+  - source_id: vietmed_ner
+    source_version: local-license-reviewed-snapshot
+    enabled: false
+    parse_documents: false
+    parameters:
+      paths: []
+snapshot:
+  version: phase2-open-v1
+  created_at: "2026-08-16T00:00:00+07:00"
+  output_dir: ../../outputs/mining/snapshots/phase2-open-v1
+  development_fraction: 0.10
+  challenge_sources: []
+  challenge_templates: []
+  hash_salt: medical-kg-phase2-open-v1
+  max_synthetic_train_fraction: 0.40
+  write_parquet: true

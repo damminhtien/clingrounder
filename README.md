@@ -415,6 +415,20 @@ python scripts/run_ablation.py \
 
 See [`docs/evaluation.md`](docs/evaluation.md) for metric definitions and the evaluation workflow.
 
+## Data mining
+
+Licensed source acquisition, proposal review, coverage planning, and immutable dataset snapshots are
+available through the task-neutral mining package:
+
+```bash
+export MEDICAL_KG_ARTIFACT_STORE=/Volumes/medical-kg-mining
+uv run medical-kg data registry validate
+uv run medical-kg data run --plan configs/mining/phase2.yaml
+```
+
+See [`docs/data-mining.md`](docs/data-mining.md) for source policy, storage, DUA isolation, review
+priority, and snapshot leakage rules.
+
 ---
 
 # Repository structure
@@ -434,6 +448,7 @@ src/medical_kg_nlp/
 ├── preprocessing/        Sections, sentences, normalization, offset mapping
 ├── dictionaries/         Canonical JSONL records and source importers
 ├── terminology/          Repository port and SQLite FTS5 index
+├── mining/               Licensed acquisition, curation, review, and snapshots
 ├── ner/                  Entity extraction
 ├── context/              Assertion classification
 ├── retrieval/            Lexical/dense retriever composition
