@@ -14,6 +14,10 @@ import yaml
 
 from medical_kg_nlp.mining.coverage import CoverageCubePlanner, CoverageTarget
 from medical_kg_nlp.mining.crosswalk import crosswalk_mentions, load_crosswalk_policies
+from medical_kg_nlp.mining.curation import (
+    curate_annotations,
+    load_annotation_curation_policy,
+)
 from medical_kg_nlp.mining.io import (
     load_annotations,
     load_documents,
@@ -52,6 +56,7 @@ __all__ = [
     "build_dataset",
     "build_lexicon",
     "crosswalk_lexicon",
+    "curate_annotation_dataset",
     "export_review",
     "freeze_snapshot",
     "import_review",
@@ -185,6 +190,32 @@ def reconcile_duplicates(args: argparse.Namespace) -> int:
             "training_annotation_count": len(result.training_annotations),
             "review_annotation_count": len(result.review_annotations),
             "exact_micro_jaccard": result.report.exact_micro_jaccard,
+            "report": args.report_output,
+        }
+    )
+    return 0
+
+
+def curate_annotation_dataset(args: argparse.Namespace) -> int:
+    """Materialize a policy-specific view without mutating source proposals."""
+
+    result = curate_annotations(
+        load_annotations(args.annotations),
+        load_annotation_curation_policy(args.policy),
+    )
+    write_jsonl(
+        args.accepted_output,
+        (annotation.to_dict() for annotation in result.accepted),
+    )
+    write_jsonl(
+        args.rejected_output,
+        (annotation.to_dict() for annotation in result.rejected),
+    )
+    write_json(args.report_output, result.report)
+    _print_json(
+        {
+            "accepted_count": len(result.accepted),
+            "rejected_count": len(result.rejected),
             "report": args.report_output,
         }
     )

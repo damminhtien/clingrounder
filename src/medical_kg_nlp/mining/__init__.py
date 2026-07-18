@@ -3,6 +3,12 @@
 from medical_kg_nlp.mining.catalog import DuckDBMiningCatalog, ParquetSnapshotWriter
 from medical_kg_nlp.mining.connectors import connector_from_definition
 from medical_kg_nlp.mining.coverage import CoverageCubePlanner, CoverageTarget, ReviewPriority
+from medical_kg_nlp.mining.curation import (
+    AnnotationCurationPolicy,
+    AnnotationCurationResult,
+    curate_annotations,
+    load_annotation_curation_policy,
+)
 from medical_kg_nlp.mining.crosswalk import (
     MentionCrosswalkPolicy,
     MentionCrosswalkRecord,
@@ -96,6 +102,8 @@ __all__ = [
     "AgreementThresholds",
     "AnnotationLayer",
     "AnnotationProposal",
+    "AnnotationCurationPolicy",
+    "AnnotationCurationResult",
     "ArtifactStorePort",
     "BatchedProposalLabelerAdapter",
     "ConceptLink",
@@ -159,11 +167,13 @@ __all__ = [
     "build_dataset_profile",
     "build_mention_inventory",
     "crosswalk_mentions",
+    "curate_annotations",
     "connector_from_definition",
     "ConsensusProposalLabeler",
     "JsonlReviewBackend",
     "load_source_registry",
     "load_crosswalk_policies",
+    "load_annotation_curation_policy",
     "load_mention_inventory",
     "load_mining_plan",
     "parser_from_definition",

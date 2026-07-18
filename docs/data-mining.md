@@ -232,3 +232,63 @@ hit remains `review_required`: for example, VietBioNER's broad finding label doe
 the symptom `ho` from a diagnosis even though TT06 has an exact `R05` label. The crosswalk validates
 the SQLite source fingerprint, filters entity type and code system before lookup, and never performs
 fuzzy matching or mutates a runtime dictionary.
+
+## CodiEsp Source Snapshot
+
+CodiEsp v1.4 is pinned to Zenodo record `3837305`, CC BY 4.0, with source SHA-256
+`52b290233906a2eb589ac7b1d9429adeac88f6a9cae8b0d3c180504afbe61688`. The importer reads only
+Spanish `text_files` members; machine-translated `text_files_en` members are deliberately excluded.
+Run acquisition and source-label import with:
+
+```bash
+uv run medical-kg data run --plan configs/mining/codiesp.yaml
+
+uv run medical-kg data label propose \
+  --documents outputs/mining/codiesp-zenodo-3837305/documents.jsonl \
+  --adapter medical_kg_nlp.mining.labelers.codiesp:create_codiesp_archive_labeler \
+  --adapter-config configs/mining/labelers/codiesp.yaml \
+  --output outputs/mining/codiesp-zenodo-3837305/source_annotations.jsonl \
+  --batch-size 256
+
+uv run medical-kg data dataset inspect \
+  --documents outputs/mining/codiesp-zenodo-3837305/documents.jsonl \
+  --annotations outputs/mining/codiesp-zenodo-3837305/source_annotations.jsonl \
+  --output outputs/mining/codiesp-zenodo-3837305/source_profile.json \
+  --strict
+
+uv run medical-kg data dataset curate-annotations \
+  --annotations outputs/mining/codiesp-zenodo-3837305/source_annotations.jsonl \
+  --policy configs/mining/curation/codiesp-contiguous-ner.yaml \
+  --accepted-output outputs/mining/codiesp-zenodo-3837305/contiguous_training_annotations.jsonl \
+  --rejected-output outputs/mining/codiesp-zenodo-3837305/noncontiguous_review_annotations.jsonl \
+  --report-output outputs/mining/codiesp-zenodo-3837305/curation_report.json
+
+uv run medical-kg data snapshot freeze \
+  --documents outputs/mining/codiesp-zenodo-3837305/documents.jsonl \
+  --annotations outputs/mining/codiesp-zenodo-3837305/contiguous_training_annotations.jsonl \
+  --artifacts outputs/mining/codiesp-zenodo-3837305/artifacts.jsonl \
+  --version codiesp-zenodo-3837305-contiguous-silver-v1 \
+  --created-at 2026-07-18T17:15:00+07:00 \
+  --output-dir outputs/mining/snapshots/codiesp-zenodo-3837305-contiguous-silver-v1 \
+  --development-fraction 0 \
+  --hash-salt codiesp-zenodo-3837305-contiguous-silver-v1 \
+  --skip-agreement-gate
+```
+
+The reproducible import contains 3,751 Spanish documents and 18,435 CodiEsp-X source annotations:
+14,305 diagnostic/finding records and 4,130 procedure records. All concept links retain the source
+ICD-10-CM or ICD-10-PCS provenance. Eleven source rows have a text-reference or zero-length-segment
+issue and are marked `needs_review`; no internal raw offset is invalid.
+
+CodiEsp contains 3,707 discontinuous annotations, including 135 whose segments are listed in phrase
+order rather than source-offset order. Source JSONL preserves their original segment geometry and a
+raw envelope. The contiguous NER view keeps 14,726 exact, issue-free annotations and routes 3,709
+records to a separate review/linking file. Do not train a contiguous token classifier directly on
+the source envelope file.
+
+The frozen snapshot
+`codiesp-zenodo-3837305-contiguous-silver-v1-4b75600fd6d5f751` has manifest SHA-256
+`7b8e678e7f83cec058e3cf7299f1cb43e648fbcae625cc5837088e9812983a4f`. It deliberately assigns all
+documents to the generic `train` partition: the authoritative CodiEsp `train`, `dev`, `test`, and
+`background` split remains in document metadata and must be selected by a CodiEsp evaluation
+adapter. This prevents the generic hash splitter from silently redefining the external benchmark.

@@ -25,6 +25,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.data",
         "reconcile_duplicates",
     ),
+    "data_dataset_curate_annotations": (
+        "medical_kg_nlp.cli.commands.data",
+        "curate_annotation_dataset",
+    ),
     "data_lexicon_build": ("medical_kg_nlp.cli.commands.data", "build_lexicon"),
     "data_lexicon_crosswalk": (
         "medical_kg_nlp.cli.commands.data",

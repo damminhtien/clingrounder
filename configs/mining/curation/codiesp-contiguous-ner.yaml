@@ -1,0 +1,6 @@
+schema_version: medical-annotation-curation-policy.v1
+policy_id: codiesp-contiguous-exact-ner-v1
+allowed_review_statuses: [proposed, accepted]
+allow_discontinuous: false
+reject_import_issues: true
+max_span_length: 256

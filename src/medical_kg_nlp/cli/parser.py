@@ -171,6 +171,16 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     dataset_reconcile.add_argument(
         "--labeler-id", default="exact-duplicate-consensus:v1"
     )
+    dataset_curate = dataset_operations.add_parser(
+        "curate-annotations",
+        help="Partition source annotations into model-eligible and review records.",
+    )
+    dataset_curate.set_defaults(handler="data_dataset_curate_annotations")
+    dataset_curate.add_argument("--annotations", required=True)
+    dataset_curate.add_argument("--policy", required=True)
+    dataset_curate.add_argument("--accepted-output", required=True)
+    dataset_curate.add_argument("--rejected-output", required=True)
+    dataset_curate.add_argument("--report-output", required=True)
 
     lexicon = operations.add_parser(
         "lexicon", help="Build mined mention inventories for terminology review."
