@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import yaml
@@ -143,6 +144,24 @@ def test_compiler_fail_closes_on_source_aware_reviewed_mentions() -> None:
     assert [row["canonical_name"] for row in result.concepts] == ["Lao phổi"]
     assert result.report["reviewed_source_mention_count"] == 1
     assert result.report["reason_counts"]["mention_not_reviewed"] == 1
+
+
+def test_compiler_blocks_short_alias_even_when_reviewed() -> None:
+    base_policy = _policy()
+    policy = replace(
+        base_policy,
+        min_alias_characters=3,
+        accepted_source_mentions=frozenset({("Symptom_and_Disease", "đỏ")}),
+    )
+
+    result = compile_recognition_knowledge(
+        (_entry("term:short", "đỏ"),),
+        policy,
+        inventory_sha256=_INVENTORY_SHA256,
+    )
+
+    assert not result.concepts
+    assert result.report["reason_counts"] == {"alias_shape_not_allowed": 1}
 
 
 def test_compile_recognition_cli_pins_inventory_and_writes_audit_artifacts(

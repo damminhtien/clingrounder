@@ -65,6 +65,11 @@ def test_recognition_mining_writes_holdout_gate_and_is_idempotent(tmp_path: Path
     assert first["promotion_gate"]["passed"] is True
     assert first["compilation"]["recognition_concept_count"] == 1
     assert (run_dir / "holdout_benchmark.json").exists()
+    concepts = [
+        json.loads(line)
+        for line in (run_dir / "recognition_concepts.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert all("document_id" not in concept and "position" not in concept for concept in concepts)
     assert load_documents(run_dir / "train" / "documents.jsonl")[0].access_class.value == (
         "local_private"
     )
