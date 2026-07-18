@@ -15,6 +15,10 @@ from medical_kg_nlp.mining.labelers.dailymed import (
     create_dailymed_structured_labeler,
     create_dailymed_structured_relation_labeler,
 )
+from medical_kg_nlp.mining.labelers.pipeline import (
+    LocalPipelineProposalLabeler,
+    create_local_pipeline_labeler,
+)
 
 __all__ = [
     "BratArchiveLabelerAdapter",
@@ -26,4 +30,6 @@ __all__ = [
     "create_codiesp_archive_labeler",
     "create_dailymed_structured_labeler",
     "create_dailymed_structured_relation_labeler",
+    "LocalPipelineProposalLabeler",
+    "create_local_pipeline_labeler",
 ]

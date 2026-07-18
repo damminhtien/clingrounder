@@ -1,0 +1,8 @@
+pipeline_config: configs/pipeline/full_terminology.yaml
+labeler_id: local-pipeline-full-terminology@0.2.0
+layer: bronze
+review_status: proposed
+model_revision: null
+terminology_versions:
+  ICD-10: TT06/2026
+  RxNorm: RxNorm/2026-07-06
