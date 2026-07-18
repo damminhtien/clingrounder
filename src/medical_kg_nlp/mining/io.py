@@ -163,10 +163,26 @@ def write_jsonl(path: str | Path, rows: Iterable[Mapping[str, Any]]) -> str:
 
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    lines = [json.dumps(row, ensure_ascii=False, sort_keys=True) for row in rows]
-    payload = ("\n".join(lines) + ("\n" if lines else "")).encode("utf-8")
-    _atomic_write(target, payload)
-    return hashlib.sha256(payload).hexdigest()
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{target.name}.", dir=target.parent
+    )
+    digest = hashlib.sha256()
+    try:
+        with os.fdopen(descriptor, "wb") as handle:
+            for row in rows:
+                encoded = (
+                    json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n"
+                ).encode("utf-8")
+                handle.write(encoded)
+                digest.update(encoded)
+            handle.flush()
+            os.fsync(handle.fileno())
+        # SCALING: rows never accumulate in memory; replace remains all-or-nothing.
+        os.replace(temporary_name, target)
+    except BaseException:
+        Path(temporary_name).unlink(missing_ok=True)
+        raise
+    return digest.hexdigest()
 
 
 def write_json(path: str | Path, payload: Mapping[str, Any]) -> str:
