@@ -317,6 +317,7 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     dataset_export_spans.add_argument("--manifest-output", required=True)
     dataset_export_spans.add_argument("--entity-type", action="append", default=[])
     dataset_export_spans.add_argument("--max-characters", type=int, default=1600)
+    dataset_export_spans.add_argument("--empty-chunk-rate", type=float, default=1.0)
     dataset_export_spans.add_argument("--drop-empty-chunks", action="store_true")
 
     lexicon = operations.add_parser(

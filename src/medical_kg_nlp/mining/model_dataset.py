@@ -28,12 +28,15 @@ class SpanDatasetConfig:
     max_characters: int = 1600
     entity_types: tuple[str, ...] = ()
     include_empty_chunks: bool = True
+    empty_chunk_rate: float = 1.0
 
     def __post_init__(self) -> None:
         if self.max_characters < 128:
             raise ValueError("max_characters must be at least 128")
         if any(not value.strip() for value in self.entity_types):
             raise ValueError("entity_types must contain non-empty values")
+        if not 0.0 <= self.empty_chunk_rate <= 1.0:
+            raise ValueError("empty_chunk_rate must be in [0, 1]")
 
 
 def load_dataset_splits(path: str | Path) -> dict[str, str]:
@@ -80,10 +83,13 @@ def iter_span_training_records(
                 for annotation in document_annotations
                 if start <= annotation.span[0] and annotation.span[1] <= end
             ]
-            if not chunk_annotations and not config.include_empty_chunks:
+            identity = f"{document.document_id}\x1f{start}\x1f{end}"
+            if not chunk_annotations and (
+                not config.include_empty_chunks
+                or not _sample_empty_chunk(identity, config.empty_chunk_rate)
+            ):
                 continue
             text = document.text[start:end]
-            identity = f"{document.document_id}\x1f{start}\x1f{end}"
             record = {
                 "record_id": f"span-record:{sha256_text(identity)[:24]}",
                 "document_id": document.document_id,
@@ -161,6 +167,7 @@ def export_span_dataset(
             "max_characters": config.max_characters,
             "entity_types": list(config.entity_types),
             "include_empty_chunks": config.include_empty_chunks,
+            "empty_chunk_rate": config.empty_chunk_rate,
         },
         "inputs": {
             "documents": _fingerprinted_path(documents_path),
@@ -248,6 +255,16 @@ def _chunk_spans(
             raise RuntimeError("Span dataset chunking did not make progress")
         yield start, end
         start = end
+
+
+def _sample_empty_chunk(identity: str, rate: float) -> bool:
+    if rate <= 0.0:
+        return False
+    if rate >= 1.0:
+        return True
+    bucket = int(sha256_text(identity)[:8], 16) / 0xFFFFFFFF
+    # SCALING: hash sampling is deterministic and does not buffer negative chunks.
+    return bucket < rate
 
 
 def _preferred_boundary(text: str, start: int, end: int) -> int:

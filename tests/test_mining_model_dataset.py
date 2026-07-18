@@ -116,6 +116,40 @@ def test_span_records_reject_overlapping_bio_labels() -> None:
         )
 
 
+def test_empty_chunk_sampling_is_deterministic_and_can_be_disabled() -> None:
+    document = _document("word " * 100)
+    splits = {document.document_id: "train"}
+
+    sampled_first = list(
+        iter_span_training_records(
+            (document,),
+            (),
+            splits,
+            SpanDatasetConfig(max_characters=128, empty_chunk_rate=0.5),
+        )
+    )
+    sampled_second = list(
+        iter_span_training_records(
+            (document,),
+            (),
+            splits,
+            SpanDatasetConfig(max_characters=128, empty_chunk_rate=0.5),
+        )
+    )
+    disabled = list(
+        iter_span_training_records(
+            (document,),
+            (),
+            splits,
+            SpanDatasetConfig(max_characters=128, empty_chunk_rate=0.0),
+        )
+    )
+
+    assert sampled_first == sampled_second
+    assert sampled_first
+    assert disabled == []
+
+
 def test_span_dataset_export_writes_pinned_manifest(tmp_path: Path) -> None:
     document = _document()
     documents_path = tmp_path / "documents.jsonl"

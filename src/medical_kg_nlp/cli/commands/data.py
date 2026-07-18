@@ -348,6 +348,7 @@ def export_span_training_dataset(args: argparse.Namespace) -> int:
             max_characters=args.max_characters,
             entity_types=tuple(args.entity_type),
             include_empty_chunks=not args.drop_empty_chunks,
+            empty_chunk_rate=args.empty_chunk_rate,
         ),
         output_path=args.output,
         manifest_path=args.manifest_output,
