@@ -39,6 +39,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.data",
         "reconcile_duplicates",
     ),
+    "data_dataset_fuse": (
+        "medical_kg_nlp.cli.commands.data",
+        "fuse_datasets",
+    ),
     "data_dataset_curate_annotations": (
         "medical_kg_nlp.cli.commands.data",
         "curate_annotation_dataset",

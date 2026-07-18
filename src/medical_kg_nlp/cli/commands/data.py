@@ -22,6 +22,7 @@ from medical_kg_nlp.mining.graph_knowledge import (
     GraphCompilationConfig,
     compile_knowledge_graph,
 )
+from medical_kg_nlp.mining.fusion import run_corpus_fusion_plan
 from medical_kg_nlp.mining.io import (
     load_annotations,
     load_documents,
@@ -101,6 +102,7 @@ __all__ = [
     "export_review",
     "export_span_training_dataset",
     "freeze_snapshot",
+    "fuse_datasets",
     "import_review",
     "inspect_dataset",
     "propose_labels",
@@ -237,6 +239,14 @@ def reconcile_duplicates(args: argparse.Namespace) -> int:
             "report": args.report_output,
         }
     )
+    return 0
+
+
+def fuse_datasets(args: argparse.Namespace) -> int:
+    """Run deterministic cross-source fusion from a strict plan."""
+
+    result = run_corpus_fusion_plan(args.plan)
+    _print_json(result.model_dump(mode="json"))
     return 0
 
 

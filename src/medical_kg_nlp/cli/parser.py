@@ -273,6 +273,12 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     dataset_reconcile.add_argument(
         "--labeler-id", default="exact-duplicate-consensus:v1"
     )
+    dataset_fuse = dataset_operations.add_parser(
+        "fuse",
+        help="Fuse source corpora, collapse raw duplicates, and isolate near duplicates.",
+    )
+    dataset_fuse.set_defaults(handler="data_dataset_fuse")
+    dataset_fuse.add_argument("--plan", required=True)
     dataset_curate = dataset_operations.add_parser(
         "curate-annotations",
         help="Partition source annotations into model-eligible and review records.",
