@@ -292,3 +292,80 @@ The frozen snapshot
 documents to the generic `train` partition: the authoritative CodiEsp `train`, `dev`, `test`, and
 `background` split remains in document metadata and must be selected by a CodiEsp evaluation
 adapter. This prevents the generic hash splitter from silently redefining the external benchmark.
+
+## DailyMed Structured Medication Snapshot
+
+DailyMed catalog mining uses a fail-closed database publication date and a bounded page range. The
+first real slice is the 105 SPL records published on 17 July 2026 from catalog database snapshot
+`Jul 17, 2026 07:50:58PM EST`. Set `MEDICAL_KG_ARTIFACT_STORE` to an external volume or S3 prefix;
+the full human-label releases are too large for the repository workspace.
+
+```bash
+export MEDICAL_KG_ARTIFACT_STORE=/Volumes/medical-kg-mining
+uv run medical-kg data run --plan configs/mining/dailymed-daily-2026-07-17.yaml
+
+uv run medical-kg data label propose \
+  --documents outputs/mining/dailymed-daily-2026-07-17/documents.jsonl \
+  --adapter medical_kg_nlp.mining.labelers.dailymed:create_dailymed_structured_labeler \
+  --adapter-config configs/mining/labelers/dailymed-structured.yaml \
+  --output outputs/mining/dailymed-daily-2026-07-17/structured_annotations.jsonl
+
+uv run medical-kg data relation propose \
+  --documents outputs/mining/dailymed-daily-2026-07-17/documents.jsonl \
+  --annotations outputs/mining/dailymed-daily-2026-07-17/structured_annotations.jsonl \
+  --adapter medical_kg_nlp.mining.labelers.dailymed:create_dailymed_structured_relation_labeler \
+  --adapter-config configs/mining/labelers/dailymed-relations.yaml \
+  --output outputs/mining/dailymed-daily-2026-07-17/structured_relations.jsonl
+
+uv run medical-kg data snapshot freeze \
+  --documents outputs/mining/dailymed-daily-2026-07-17/documents.jsonl \
+  --annotations outputs/mining/dailymed-daily-2026-07-17/structured_annotations.jsonl \
+  --relations outputs/mining/dailymed-daily-2026-07-17/structured_relations.jsonl \
+  --artifacts outputs/mining/dailymed-daily-2026-07-17/artifacts.jsonl \
+  --version dailymed-daily-2026-07-17-structured-silver-v2 \
+  --created-at 2026-07-18T19:00:00+07:00 \
+  --output-dir outputs/mining/snapshots/dailymed-daily-2026-07-17-structured-silver-v2 \
+  --skip-agreement-gate
+```
+
+The structured view contains 239 documents, 841 source annotations, 559 source concept links and
+707 medication relations. It preserves product, generic name, active ingredient, strength, dosage
+form, route, NDC, UNII and NCI identifiers with exact rendered offsets. Snapshot
+`dailymed-daily-2026-07-17-structured-silver-v2-7cbd7e2e3ebc7805` has manifest SHA-256
+`70bbc54c43f5e8b5cb60f05b90802abe54bfe1bbfecf814b1ea2c9da406b8318`.
+
+The generic exact-name crosswalk in `configs/mining/crosswalk/dailymed-rxnorm.yaml` is diagnostic,
+not authoritative. On this slice it produces 406 mention inventory entries and 55 semantic
+conflicts: 171 entries have multiple exact RxNorm codes, 133 are skipped by policy, 14 are unique,
+and 88 are unmatched. This confirms that exact drug strings alone cannot replace the official
+versioned SPL mapping or structured drug parsing.
+
+DailyMed's official SPL-to-RxNorm mapping is acquired separately because it is a versioned source
+crosswalk, not inferred text matching. Compile and audit the checksum-pinned release with:
+
+```bash
+uv run medical-kg data run --plan configs/mining/dailymed-rxnorm-2026-07-17.yaml
+
+uv run medical-kg data mapping compile-dailymed-rxnorm \
+  --artifacts outputs/mining/dailymed-rxnorm-2026-07-17/artifacts.jsonl \
+  --store "$MEDICAL_KG_ARTIFACT_STORE" \
+  --output outputs/mining/dailymed-rxnorm-2026-07-17/compiled_mappings.jsonl \
+  --index-output outputs/mining/dailymed-rxnorm-2026-07-17/dailymed_rxnorm.sqlite3 \
+  --report-output outputs/mining/dailymed-rxnorm-2026-07-17/compilation_report.json
+
+uv run medical-kg data mapping audit-dailymed-rxnorm \
+  --index outputs/mining/dailymed-rxnorm-2026-07-17/dailymed_rxnorm.sqlite3 \
+  --terminology-index .cache/medical-kg/terminology/terminology-0598a6a288ef81ea932f.sqlite3 \
+  --source data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
+  --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl \
+  --proposals-output outputs/mining/dailymed-rxnorm-2026-07-17/review_alias_proposals.jsonl \
+  --report-output outputs/mining/dailymed-rxnorm-2026-07-17/audit_report.json
+```
+
+The 17 July mapping archive has SHA-256
+`0d2797b35c31c0651e616d075b8b042591074e66a0c5955d8c4919e50ed9860c`, 468,456 source rows,
+150,925 versioned mappings and 24,312 RxCUIs. Against the pinned 6 July RxNorm release, 21,602
+RxCUIs exist and 2,710 are rejected as release mismatches. The audit emits 36,076 missing alias
+pairs as `review_required`; it never mutates the canonical terminology automatically. None of the
+105 newly published SPL set IDs is present in this mapping release yet, so those daily records retain
+their NDC/UNII/NCI links until an authoritative RxNorm mapping catches up.

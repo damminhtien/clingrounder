@@ -1,0 +1,17 @@
+schema_version: medical-mention-crosswalk-policy.v1
+policies:
+  - policy_id: dailymed-product-name-to-rxnorm-v1
+    source_entity_type: DRUG
+    source_label: SPL_PRODUCT_NAME
+    target_entity_types: [DRUG]
+    code_systems: [RxNorm]
+  - policy_id: dailymed-generic-name-to-rxnorm-v1
+    source_entity_type: DRUG
+    source_label: SPL_GENERIC_NAME
+    target_entity_types: [DRUG]
+    code_systems: [RxNorm]
+  - policy_id: dailymed-active-ingredient-to-rxnorm-v1
+    source_entity_type: DRUG
+    source_label: SPL_ACTIVE_INGREDIENT
+    target_entity_types: [DRUG]
+    code_systems: [RxNorm]

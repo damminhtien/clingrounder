@@ -1,0 +1,23 @@
+schema_version: medical-mining-plan.v1
+registry: ../../data/sources/mining_registry.yaml
+work_dir: ../../outputs/mining/dailymed-daily-2026-07-17
+artifact_store:
+  # SCALING: point this at the external mining volume for large/full releases.
+  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  storage_options: {}
+  encrypted_at_rest: false
+sources:
+  - source_id: dailymed
+    source_version: catalog-db-2026-07-17T195058-EST
+    parse_documents: true
+    parameters:
+      catalog:
+        # Fail closed rather than silently replacing a versioned snapshot.
+        expected_db_published_date: "Jul 17, 2026 07:50:58PM EST"
+        expected_total_elements: 105
+        start_page: 1
+        page_count: 2
+        page_size: 100
+        filters:
+          published_date: "2026-07-17"
+          published_date_comparison: eq
