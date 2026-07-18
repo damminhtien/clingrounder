@@ -172,6 +172,7 @@ def compile_knowledge_graph(
     entries = _load_terminology(terminology_paths)
     concept_ids: dict[tuple[str, str], str] = {}
     concept_entry_ids: dict[tuple[str, str], str] = {}
+    concept_nodes_by_entry_id: dict[str, str] = {}
     for entry, source_path in entries:
         if entry.code is None:
             counters["code_free_terminology_skipped"] += 1
@@ -179,6 +180,10 @@ def compile_knowledge_graph(
         node_id = concept_node_id(entry.code_system.value, entry.code)
         concept_ids[(entry.code_system.value, entry.code)] = node_id
         concept_entry_ids[(entry.code_system.value, entry.concept_id)] = node_id
+        previous_entry_node = concept_nodes_by_entry_id.get(entry.concept_id)
+        if previous_entry_node is not None and previous_entry_node != node_id:
+            raise ValueError(f"Terminology concept ID {entry.concept_id!r} is not globally unique")
+        concept_nodes_by_entry_id[entry.concept_id] = node_id
         node = nodes.setdefault(
             node_id,
             _NodeAccumulator(
@@ -222,7 +227,13 @@ def compile_knowledge_graph(
             )
             counters["hierarchy_observation_count"] += 1
 
-    _apply_alias_overlays(alias_overlay_paths, nodes, concept_ids, counters)
+    _apply_alias_overlays(
+        alias_overlay_paths,
+        nodes,
+        concept_ids,
+        concept_nodes_by_entry_id,
+        counters,
+    )
 
     documents_by_id = _unique_documents(documents)
     all_annotations_by_id, annotations_by_id = _valid_annotations(
@@ -429,6 +440,7 @@ def _apply_alias_overlays(
     paths: Sequence[str | Path],
     nodes: dict[str, _NodeAccumulator],
     concept_ids: Mapping[tuple[str, str], str],
+    concept_entry_ids: Mapping[str, str],
     counters: Counter[str],
 ) -> None:
     for raw_path in paths:
@@ -440,14 +452,23 @@ def _apply_alias_overlays(
                 raw = json.loads(line)
                 if not isinstance(raw, Mapping):
                     raise ValueError(f"{path}:{line_number}: expected JSON object")
-                code_system = _required_string(raw, "code_system", path, line_number)
-                code = _required_string(raw, "code", path, line_number)
                 alias = _required_string(raw, "alias", path, line_number)
-                node_id = concept_ids.get((code_system, code))
-                if node_id is None:
+                target_concept_id = _optional_non_empty_string(raw.get("target_concept_id"))
+                code_system = _optional_non_empty_string(raw.get("code_system"))
+                code = _optional_non_empty_string(raw.get("code"))
+                if target_concept_id is not None:
+                    node_id = concept_entry_ids.get(target_concept_id)
+                elif code_system is not None and code is not None:
+                    node_id = concept_ids.get((code_system, code))
+                else:
                     raise ValueError(
-                        f"{path}:{line_number}: overlay targets unknown {code_system}:{code}"
+                        f"{path}:{line_number}: alias requires target_concept_id or code system/code"
                     )
+                if node_id is None:
+                    # INVARIANT: heterogeneous overlays may mention local concepts, but graph
+                    # compilation never invents a node absent from its canonical sources.
+                    counters["unknown_alias_target_skipped"] += 1
+                    continue
                 nodes[node_id].add_label(alias, priority=4)
                 nodes[node_id].sources.add(f"alias-overlay:{path.name}")
                 counters["alias_overlay_observation_count"] += 1
@@ -613,6 +634,12 @@ def _required_string(
     value = raw.get(field_name)
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{path}:{line_number}: {field_name} must be a non-empty string")
+    return value.strip()
+
+
+def _optional_non_empty_string(value: object) -> str | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
     return value.strip()
 
 

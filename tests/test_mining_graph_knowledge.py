@@ -121,7 +121,17 @@ def test_graph_compiler_deduplicates_concepts_terms_and_edges(tmp_path: Path) ->
                 "code": "I10",
                 "code_system": "ICD-10",
                 "semantic_type": "DISEASE",
-            }
+            },
+            {
+                "alias": "tăng HA",
+                "target_concept_id": "ICD10:I10",
+                "semantic_type": "DISEASE",
+            },
+            {
+                "alias": "local only",
+                "target_concept_id": "LOCAL:UNKNOWN",
+                "semantic_type": "OTHER",
+            },
         ],
     )
     documents = (
@@ -180,7 +190,8 @@ def test_graph_compiler_deduplicates_concepts_terms_and_edges(tmp_path: Path) ->
     hierarchy = next(edge for edge in edges if edge["relation_type"] == "IS_A")
     assert hierarchy["support_count"] == 1
     i10 = next(node for node in nodes if node["code"] == "I10")
-    assert "cao huyết áp" in i10["aliases"]
+    assert {"cao huyết áp", "tăng HA"}.issubset(i10["aliases"])
+    assert report["decision_counts"]["unknown_alias_target_skipped"] == 1
     assert json.loads(report_path.read_text(encoding="utf-8")) == report
 
 
