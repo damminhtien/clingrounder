@@ -13,6 +13,8 @@ terminology:
     - outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl
   normalization_index_path: .cache/medical-kg/terminology/terminology-715f8d77659ea043358d.sqlite3
   knowledge_graph_index_path: .cache/medical-kg/knowledge-graph/knowledge-graph-687a122fb72f9925f7ef.sqlite3
+  # SCALING: cache is bounded and local to each worker process.
+  query_cache_size: 4096
 
 pipeline:
   version: "0.2.0-general-vn-terminology"

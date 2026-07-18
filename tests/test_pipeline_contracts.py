@@ -14,6 +14,7 @@ from medical_kg_nlp.pipeline import (
 )
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from medical_kg_nlp.terminology import CachedTerminologyRepository
 
 
 @dataclass(frozen=True)
@@ -133,6 +134,7 @@ def test_factory_config_accepts_multiple_canonical_terminology_sources() -> None
                     "mined-drug-aliases.jsonl",
                     "mined-disease-aliases.jsonl",
                 ],
+                "query_cache_size": 128,
             }
         }
     )
@@ -142,3 +144,35 @@ def test_factory_config_accepts_multiple_canonical_terminology_sources() -> None
         "mined-drug-aliases.jsonl",
         "mined-disease-aliases.jsonl",
     )
+    assert config.terminology_query_cache_size == 128
+
+
+def test_pipeline_factory_wraps_terminology_with_bounded_cache() -> None:
+    runner = PipelineFactory.from_config(
+        {
+            "terminology": {
+                "recognition_path": "data/dictionaries/seed_concepts.jsonl",
+                "alias_overlay_path": None,
+                "query_cache_size": 8,
+            },
+            "pipeline": {
+                "enable_context": False,
+                "enable_linking": False,
+                "enable_candidate_reranking": False,
+                "enable_entity_kg_validation": False,
+                "enable_relations": False,
+                "enable_relation_kg_validation": False,
+            },
+        }
+    )
+
+    repository = runner.components.terminology_repository
+    assert isinstance(repository, CachedTerminologyRepository)
+    assert repository.cache_info().max_size == 8
+
+
+def test_factory_config_rejects_negative_terminology_cache_size() -> None:
+    with pytest.raises(ValueError, match="query_cache_size"):
+        PipelineFactoryConfig.from_mapping(
+            {"terminology": {"query_cache_size": -1}}
+        )

@@ -1,5 +1,9 @@
 """Terminology repositories and persistent derived-index tooling."""
 
+from medical_kg_nlp.terminology.cache import (
+    CachedTerminologyRepository,
+    TerminologyCacheInfo,
+)
 from medical_kg_nlp.terminology.composite import CompositeTerminologyRepository
 from medical_kg_nlp.terminology.evaluation import (
     TerminologyQuery,
@@ -23,11 +27,13 @@ from medical_kg_nlp.terminology.query_sets import (
 from medical_kg_nlp.terminology.sqlite_repository import SQLiteTerminologyRepository
 
 __all__ = [
+    "CachedTerminologyRepository",
     "CompositeTerminologyRepository",
     "InMemoryTerminologyRepository",
     "SQLiteTerminologyRepository",
     "TERMINOLOGY_INDEX_SCHEMA_VERSION",
     "TerminologyRepository",
+    "TerminologyCacheInfo",
     "TerminologyQuery",
     "TerminologyIndexManifest",
     "build_alias_overlay_queries",

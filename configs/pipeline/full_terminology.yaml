@@ -16,6 +16,8 @@ terminology:
   # Optional mined KG exact retrieval. Keep disabled unless its graph fingerprint is pinned.
   knowledge_graph_index_path: .cache/medical-kg/knowledge-graph/knowledge-graph-668ddc869e58db0583c0.sqlite3
   cache_dir: .cache/medical-kg/terminology
+  # SCALING: bounded per-process cache removes repeated SQLite work for recurring mentions.
+  query_cache_size: 4096
 
 pipeline:
   version: "0.2.0-full-terminology"

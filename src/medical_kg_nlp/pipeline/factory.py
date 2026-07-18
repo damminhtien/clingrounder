@@ -36,6 +36,7 @@ from medical_kg_nlp.relations.rule_relations import RuleRelationExtractor
 from medical_kg_nlp.retrieval.rule_factory import build_rule_retrieval_pipeline
 from medical_kg_nlp.schema.types import EntityType
 from medical_kg_nlp.terminology import (
+    CachedTerminologyRepository,
     CompositeTerminologyRepository,
     InMemoryTerminologyRepository,
     SQLiteTerminologyRepository,
@@ -56,6 +57,7 @@ class PipelineFactoryConfig:
     normalization_alias_overlay_paths: tuple[str, ...] = ()
     knowledge_graph_index_path: str | None = None
     terminology_cache_dir: str = ".cache/medical-kg/terminology"
+    terminology_query_cache_size: int = 0
     additional_recognition_dictionary_path: str | None = None
     abbreviation_path: str = "data/dictionaries/abbreviations.jsonl"
     alias_overlay_path: str | None = "data/dictionaries/vietnamese_medical_alias.jsonl"
@@ -63,6 +65,10 @@ class PipelineFactoryConfig:
     options: PipelineOptions = field(default_factory=PipelineOptions)
     models: PipelineModelConfig = field(default_factory=PipelineModelConfig)
     normalization_contract: NormalizationContract = DEFAULT_NORMALIZATION_CONTRACT
+
+    def __post_init__(self) -> None:
+        if self.terminology_query_cache_size < 0:
+            raise ValueError("terminology.query_cache_size must be non-negative")
 
     @classmethod
     def from_mapping(cls, payload: Mapping[str, object]) -> "PipelineFactoryConfig":
@@ -93,6 +99,11 @@ class PipelineFactoryConfig:
                 terminology,
                 "cache_dir",
                 cls.terminology_cache_dir,
+            ),
+            terminology_query_cache_size=_nonnegative_int(
+                terminology,
+                "query_cache_size",
+                cls.terminology_query_cache_size,
             ),
             additional_recognition_dictionary_path=_optional_string(
                 terminology.get("additional_recognition_path")
@@ -154,6 +165,11 @@ class PipelineFactory:
             )
             terminology_repository = CompositeTerminologyRepository(
                 (recognition_repository, sqlite_repository)
+            )
+        if resolved.terminology_query_cache_size:
+            terminology_repository = CachedTerminologyRepository(
+                terminology_repository,
+                max_size=resolved.terminology_query_cache_size,
             )
 
         options = resolved.options
@@ -304,3 +320,10 @@ def _string_tuple(value: object, name: str) -> tuple[str, ...]:
     ):
         raise ValueError(f"{name} must be an array of non-empty strings")
     return tuple(value)
+
+
+def _nonnegative_int(payload: Mapping[str, object], key: str, default: int) -> int:
+    value = payload.get(key, default)
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError(f"{key} must be a non-negative integer")
+    return value
