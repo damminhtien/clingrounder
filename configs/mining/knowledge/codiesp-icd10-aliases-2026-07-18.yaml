@@ -1,0 +1,17 @@
+schema_version: mined-alias-promotion-policy.v1
+policy_id: codiesp-zenodo-3837305-tt06-aliases-v1
+
+accepted_sources: [codiesp]
+accepted_source_sha256:
+  - 52b290233906a2eb589ac7b1d9429adeac88f6a9cae8b0d3c180504afbe61688
+accepted_review_statuses: [source_human_annotation]
+
+allowed_code_systems: [ICD-10]
+allowed_semantic_types: [DISEASE]
+allowed_ttys: [SOURCE_HUMAN_ANNOTATION]
+
+min_supporting_records: 2
+min_alias_characters: 3
+max_alias_characters: 160
+max_alias_tokens: 20
+allow_numeric_only: false

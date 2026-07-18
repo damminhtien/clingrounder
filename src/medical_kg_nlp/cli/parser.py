@@ -245,6 +245,18 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     lexicon_crosswalk.add_argument("--workers", type=int, default=4)
     lexicon_crosswalk.add_argument("--query-limit", type=int, default=1_000)
     lexicon_crosswalk.add_argument("--candidate-output-limit", type=int, default=20)
+    linked_aliases = lexicon_operations.add_parser(
+        "propose-linked-aliases",
+        help="Aggregate source annotations with explicit concept links into alias proposals.",
+    )
+    linked_aliases.set_defaults(handler="data_lexicon_propose_linked_aliases")
+    linked_aliases.add_argument("--documents", required=True)
+    linked_aliases.add_argument("--annotations", required=True)
+    linked_aliases.add_argument("--artifacts", required=True)
+    linked_aliases.add_argument("--policy", required=True)
+    linked_aliases.add_argument("--output", required=True)
+    linked_aliases.add_argument("--decisions-output", required=True)
+    linked_aliases.add_argument("--report-output", required=True)
 
     mapping = operations.add_parser(
         "mapping", help="Compile source crosswalk releases into queryable indexes."

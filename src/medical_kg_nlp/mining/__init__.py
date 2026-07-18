@@ -34,6 +34,12 @@ from medical_kg_nlp.mining.lexicon import (
     build_mention_inventory,
     load_mention_inventory,
 )
+from medical_kg_nlp.mining.linked_aliases import (
+    LinkedAliasProposalPolicy,
+    LinkedAliasProposalResult,
+    build_linked_alias_proposals,
+    load_linked_alias_policy,
+)
 from medical_kg_nlp.mining.parsers import parser_from_definition
 from medical_kg_nlp.mining.ports import (
     ArtifactStorePort,
@@ -141,6 +147,8 @@ __all__ = [
     "GoldAgreementGate",
     "LocalArtifactStore",
     "LicenseMode",
+    "LinkedAliasProposalPolicy",
+    "LinkedAliasProposalResult",
     "MinedDocument",
     "MinimalPairGenerator",
     "MiningQualityGate",
@@ -186,6 +194,7 @@ __all__ = [
     "StoredObject",
     "VersionPolicy",
     "build_dataset_profile",
+    "build_linked_alias_proposals",
     "benchmark_recognition_dictionary",
     "build_mention_inventory",
     "crosswalk_mentions",
@@ -200,6 +209,7 @@ __all__ = [
     "load_annotation_curation_policy",
     "load_mention_inventory",
     "load_mining_plan",
+    "load_linked_alias_policy",
     "load_recognition_knowledge_policy",
     "load_alias_promotion_policy",
     "parser_from_definition",

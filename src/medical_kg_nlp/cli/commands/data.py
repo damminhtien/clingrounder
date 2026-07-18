@@ -36,6 +36,10 @@ from medical_kg_nlp.mining.knowledge import (
     load_alias_promotion_policy,
 )
 from medical_kg_nlp.mining.lexicon import build_mention_inventory, load_mention_inventory
+from medical_kg_nlp.mining.linked_aliases import (
+    build_linked_alias_proposals,
+    load_linked_alias_policy,
+)
 from medical_kg_nlp.mining.mappings.dailymed_rxnorm import (
     audit_dailymed_rxnorm_mapping,
     compile_dailymed_rxnorm_mapping,
@@ -89,6 +93,7 @@ __all__ = [
     "import_review",
     "inspect_dataset",
     "propose_labels",
+    "propose_linked_aliases",
     "propose_relations",
     "reconcile_duplicates",
     "report_coverage",
@@ -336,6 +341,48 @@ def crosswalk_lexicon(args: argparse.Namespace) -> int:
             "report": args.report_output,
             "status_entry_counts": result.report["status_entry_counts"],
             "unique_exact_entry_count": result.report["unique_exact_entry_count"],
+        }
+    )
+    return 0
+
+
+def propose_linked_aliases(args: argparse.Namespace) -> int:
+    """Build source-pinned alias proposals from human concept-linked spans."""
+
+    result = build_linked_alias_proposals(
+        load_documents(args.documents),
+        load_annotations(args.annotations),
+        load_source_artifacts(args.artifacts),
+        load_linked_alias_policy(args.policy),
+    )
+    proposals_sha256 = write_jsonl(args.output, result.proposals)
+    decisions_sha256 = write_jsonl(args.decisions_output, result.decisions)
+    report = {
+        **result.report,
+        "inputs": {
+            "documents": str(Path(args.documents)),
+            "documents_sha256": sha256_file(args.documents),
+            "annotations": str(Path(args.annotations)),
+            "annotations_sha256": sha256_file(args.annotations),
+            "artifacts": str(Path(args.artifacts)),
+            "artifacts_sha256": sha256_file(args.artifacts),
+            "policy": str(Path(args.policy)),
+        },
+        "outputs": {
+            "proposals": str(Path(args.output)),
+            "proposals_sha256": proposals_sha256,
+            "decisions": str(Path(args.decisions_output)),
+            "decisions_sha256": decisions_sha256,
+        },
+    }
+    write_json(args.report_output, report)
+    _print_json(
+        {
+            "proposal_count": len(result.proposals),
+            "proposal_occurrence_count": result.report["proposal_occurrence_count"],
+            "decision_counts": result.report["decision_counts"],
+            "output": args.output,
+            "report": args.report_output,
         }
     )
     return 0
