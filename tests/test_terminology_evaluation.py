@@ -65,6 +65,36 @@ def test_query_loader_rejects_duplicate_ids(tmp_path: Path) -> None:
         load_terminology_queries(path)
 
 
+def test_retrieval_evaluation_reports_query_slice_metrics(tmp_path: Path) -> None:
+    source = _write_source(tmp_path / "rxnorm.jsonl")
+    queries_path = _write_queries(tmp_path / "queries.jsonl")
+    rows = [json.loads(line) for line in queries_path.read_text().splitlines()]
+    rows[0]["slices"] = ["alias_unseen_in_reference", "code_seen_in_reference"]
+    rows[1]["slices"] = ["alias_seen_in_reference", "code_seen_in_reference"]
+    rows[2]["slices"] = ["alias_unseen_in_reference", "code_unseen_in_reference"]
+    queries_path.write_text(
+        "".join(json.dumps(row) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+    manifest = build_terminology_index((source,), cache_dir=tmp_path / "cache")
+    repository = SQLiteTerminologyRepository(manifest.index_path)
+
+    report = evaluate_terminology_queries(
+        repository,
+        load_terminology_queries(queries_path),
+    )
+
+    assert report["slice_counts"] == {
+        "alias_seen_in_reference": 1,
+        "alias_unseen_in_reference": 2,
+        "code_seen_in_reference": 2,
+        "code_unseen_in_reference": 1,
+    }
+    exact_slices = report["modes"]["exact"]["slice_metrics"]
+    assert exact_slices["alias_seen_in_reference"]["hit_at_1"] == 1.0
+    assert exact_slices["alias_unseen_in_reference"]["hit_at_1"] == 0.0
+
+
 def _write_source(path: Path) -> Path:
     path.write_text(
         json.dumps(

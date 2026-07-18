@@ -9,8 +9,10 @@ import pytest
 
 from medical_kg_nlp.terminology import (
     build_alias_overlay_queries,
+    build_linked_proposal_queries,
     load_terminology_queries,
     write_alias_overlay_query_set,
+    write_linked_proposal_query_set,
 )
 
 
@@ -98,3 +100,74 @@ def test_alias_overlay_queries_reject_unlinked_recognition_alias(tmp_path: Path)
 
     with pytest.raises(ValueError, match="cannot use code system NONE"):
         build_alias_overlay_queries((overlay,))
+
+
+def test_linked_proposal_queries_report_reference_leakage_slices(tmp_path: Path) -> None:
+    train_overlay = tmp_path / "train_aliases.jsonl"
+    proposals = tmp_path / "development_proposals.jsonl"
+    queries_path = tmp_path / "queries.jsonl"
+    manifest_path = tmp_path / "manifest.json"
+    _write_overlay(
+        train_overlay,
+        [
+            {
+                "alias": "tăng huyết áp",
+                "code": "I10",
+                "code_system": "ICD-10",
+                "semantic_type": "DISEASE",
+            }
+        ],
+    )
+    _write_overlay(
+        proposals,
+        [
+            {
+                "normalized_alias": "tăng huyết áp",
+                "code": "I10",
+                "code_system": "ICD-10",
+                "semantic_type": "DISEASE",
+                "surface_variants": [{"surface": "Tăng huyết áp"}],
+            },
+            {
+                "normalized_alias": "cao huyết áp",
+                "code": "I10",
+                "code_system": "ICD-10",
+                "semantic_type": "DISEASE",
+                "surface_variants": [{"surface": "Cao huyết áp"}],
+            },
+            {
+                "normalized_alias": "bệnh mới",
+                "code": "I11",
+                "code_system": "ICD-10",
+                "semantic_type": "DISEASE",
+                "surface_variants": [{"surface": "Bệnh mới"}],
+            },
+        ],
+    )
+
+    queries = build_linked_proposal_queries(
+        (proposals,),
+        reference_overlay_paths=(train_overlay,),
+    )
+    manifest = write_linked_proposal_query_set(
+        (proposals,),
+        queries_path,
+        manifest_path,
+        reference_overlay_paths=(train_overlay,),
+    )
+
+    by_mention = {query.mention: query for query in queries}
+    assert by_mention["Tăng huyết áp"].slices == (
+        "alias_seen_in_reference",
+        "code_seen_in_reference",
+    )
+    assert by_mention["Cao huyết áp"].slices == (
+        "alias_unseen_in_reference",
+        "code_seen_in_reference",
+    )
+    assert by_mention["Bệnh mới"].slices == (
+        "alias_unseen_in_reference",
+        "code_unseen_in_reference",
+    )
+    assert manifest["slice_counts"]["alias_unseen_in_reference"] == 2
+    assert load_terminology_queries(queries_path) == queries

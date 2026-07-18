@@ -13,6 +13,7 @@ from medical_kg_nlp.terminology import (
     evaluate_terminology_queries,
     load_terminology_queries,
     write_alias_overlay_query_set,
+    write_linked_proposal_query_set,
 )
 
 __all__ = ["benchmark_index", "build_index", "build_query_set", "inspect_index"]
@@ -73,13 +74,23 @@ def inspect_index(args: argparse.Namespace) -> int:
 
 
 def build_query_set(args: argparse.Namespace) -> int:
-    """Create a source-pinned retrieval query set from reviewed aliases."""
+    """Create a source-pinned retrieval query set without mixing train and held-out evidence."""
 
-    payload = write_alias_overlay_query_set(
-        tuple(args.alias_overlay),
-        args.output,
-        args.manifest_output,
-    )
+    if args.alias_overlay:
+        if args.reference_alias_overlay:
+            raise ValueError("Reference overlays apply only to linked proposal query sets")
+        payload = write_alias_overlay_query_set(
+            tuple(args.alias_overlay),
+            args.output,
+            args.manifest_output,
+        )
+    else:
+        payload = write_linked_proposal_query_set(
+            tuple(args.linked_proposal),
+            args.output,
+            args.manifest_output,
+            reference_overlay_paths=tuple(args.reference_alias_overlay),
+        )
     print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 

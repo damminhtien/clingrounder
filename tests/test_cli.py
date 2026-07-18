@@ -98,6 +98,48 @@ def test_terminology_query_set_command(tmp_path: Path, capsys: pytest.CaptureFix
     assert json.loads(manifest.read_text(encoding="utf-8")) == payload
 
 
+def test_terminology_query_set_command_supports_heldout_linked_proposals(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    proposals = tmp_path / "proposals.jsonl"
+    queries = tmp_path / "queries.jsonl"
+    manifest = tmp_path / "query_manifest.json"
+    write_jsonl(
+        proposals,
+        [
+            {
+                "normalized_alias": "cao huyết áp",
+                "code": "I10",
+                "code_system": "ICD-10",
+                "semantic_type": "DISEASE",
+                "surface_variants": [{"surface": "Cao huyết áp"}],
+            }
+        ],
+    )
+
+    assert (
+        main(
+            [
+                "terminology",
+                "query-set",
+                "--linked-proposal",
+                str(proposals),
+                "--output",
+                str(queries),
+                "--manifest-output",
+                str(manifest),
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["slice_counts"] == {
+        "alias_unseen_in_reference": 1,
+        "code_unseen_in_reference": 1,
+    }
+
+
 def test_terminology_benchmark_prints_summary_and_saves_errors(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

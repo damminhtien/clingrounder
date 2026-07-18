@@ -31,12 +31,17 @@ class TerminologyQuery:
     entity_type: EntityType
     code_system: CodeSystem
     expected_codes: tuple[str, ...]
+    slices: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.query_id or not self.mention.strip() or not self.expected_codes:
             raise ValueError("Terminology queries require ID, mention, and expected codes")
         if self.code_system == CodeSystem.NONE:
             raise ValueError("Terminology queries cannot target the NONE code system")
+        if any(not value.strip() for value in self.slices) or len(self.slices) != len(
+            set(self.slices)
+        ):
+            raise ValueError("Terminology query slices must be unique non-empty strings")
 
 
 def load_terminology_queries(path: str | Path) -> tuple[TerminologyQuery, ...]:
@@ -63,6 +68,7 @@ def load_terminology_queries(path: str | Path) -> tuple[TerminologyQuery, ...]:
                     entity_type=EntityType(str(raw["entity_type"])),
                     code_system=CodeSystem(str(raw["code_system"])),
                     expected_codes=tuple(str(code) for code in codes),
+                    slices=_optional_string_tuple(raw, "slices", source, line_number),
                 )
             )
     query_ids = [query.query_id for query in queries]
@@ -112,10 +118,12 @@ def evaluate_terminology_queries(
                     "candidate_codes": codes,
                     "candidate_count": len(codes),
                     "expected_rank": rank,
+                    "slices": list(query.slices),
                 }
             )
         mode_reports[mode] = {
             "metrics": _rank_metrics(rows),
+            "slice_metrics": _slice_metrics(rows),
             "latency_ms": _latency_metrics(latencies),
             "errors": [row for row in rows if row["expected_rank"] is None],
         }
@@ -129,7 +137,7 @@ def evaluate_terminology_queries(
         if repository.get_by_code(system, code) is None
     )
     return {
-        "schema_version": "terminology-retrieval-evaluation.v1",
+        "schema_version": "terminology-retrieval-evaluation.v2",
         "query_count": len(queries),
         "unique_mention_count": len({query.mention.casefold() for query in queries}),
         "entity_type_counts": dict(
@@ -137,6 +145,9 @@ def evaluate_terminology_queries(
         ),
         "code_system_counts": dict(
             sorted(Counter(query.code_system.value for query in queries).items())
+        ),
+        "slice_counts": dict(
+            sorted(Counter(value for query in queries for value in query.slices).items())
         ),
         "unknown_expected_code_count": len(unknown_pairs),
         "unknown_expected_codes": [
@@ -204,6 +215,25 @@ def _rank_metrics(rows: Sequence[Mapping[str, Any]]) -> dict[str, float | int]:
     }
 
 
+def _slice_metrics(
+    rows: Sequence[Mapping[str, Any]],
+) -> dict[str, dict[str, float | int]]:
+    slices = sorted(
+        {
+            str(value)
+            for row in rows
+            for value in row.get("slices", [])
+            if str(value)
+        }
+    )
+    return {
+        slice_name: _rank_metrics(
+            [row for row in rows if slice_name in row.get("slices", [])]
+        )
+        for slice_name in slices
+    }
+
+
 def _latency_metrics(values: Sequence[float]) -> dict[str, float]:
     ordered = sorted(values)
     return {
@@ -212,3 +242,17 @@ def _latency_metrics(values: Sequence[float]) -> dict[str, float]:
         "p95": ordered[min(len(ordered) - 1, int(0.95 * (len(ordered) - 1)))],
         "max": ordered[-1],
     }
+
+
+def _optional_string_tuple(
+    raw: Mapping[str, object],
+    field: str,
+    path: Path,
+    line_number: int,
+) -> tuple[str, ...]:
+    value = raw.get(field, [])
+    if not isinstance(value, list) or not all(
+        isinstance(item, str) and item.strip() for item in value
+    ):
+        raise ValueError(f"{path}:{line_number}: {field} must be a string array")
+    return tuple(str(item).strip() for item in value)
