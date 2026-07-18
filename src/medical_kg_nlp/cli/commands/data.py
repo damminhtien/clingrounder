@@ -44,6 +44,11 @@ from medical_kg_nlp.mining.mappings.dailymed_rxnorm import (
     audit_dailymed_rxnorm_mapping,
     compile_dailymed_rxnorm_mapping,
 )
+from medical_kg_nlp.mining.model_dataset import (
+    SpanDatasetConfig,
+    export_span_dataset,
+    load_dataset_splits,
+)
 from medical_kg_nlp.mining.policy import SourcePolicyGate
 from medical_kg_nlp.mining.ports import ProposalLabelerPort, RelationLabelerPort
 from medical_kg_nlp.mining.profile import (
@@ -89,6 +94,7 @@ __all__ = [
     "compile_recognition_knowledge_artifact",
     "curate_annotation_dataset",
     "export_review",
+    "export_span_training_dataset",
     "freeze_snapshot",
     "import_review",
     "inspect_dataset",
@@ -252,6 +258,30 @@ def curate_annotation_dataset(args: argparse.Namespace) -> int:
             "report": args.report_output,
         }
     )
+    return 0
+
+
+def export_span_training_dataset(args: argparse.Namespace) -> int:
+    """Compile raw character spans for tokenizer-specific training downstream."""
+
+    documents = load_documents(args.documents)
+    annotations = load_annotations(args.annotations)
+    manifest = export_span_dataset(
+        documents,
+        annotations,
+        load_dataset_splits(args.split_manifest),
+        SpanDatasetConfig(
+            max_characters=args.max_characters,
+            entity_types=tuple(args.entity_type),
+            include_empty_chunks=not args.drop_empty_chunks,
+        ),
+        output_path=args.output,
+        manifest_path=args.manifest_output,
+        documents_path=args.documents,
+        annotations_path=args.annotations,
+        split_manifest_path=args.split_manifest,
+    )
+    _print_json(manifest)
     return 0
 
 

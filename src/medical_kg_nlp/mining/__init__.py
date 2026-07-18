@@ -40,6 +40,12 @@ from medical_kg_nlp.mining.linked_aliases import (
     build_linked_alias_proposals,
     load_linked_alias_policy,
 )
+from medical_kg_nlp.mining.model_dataset import (
+    SpanDatasetConfig,
+    export_span_dataset,
+    iter_span_training_records,
+    load_dataset_splits,
+)
 from medical_kg_nlp.mining.parsers import parser_from_definition
 from medical_kg_nlp.mining.ports import (
     ArtifactStorePort,
@@ -192,6 +198,7 @@ __all__ = [
     "SnapshotBuilder",
     "SnapshotSplitConfig",
     "StoredObject",
+    "SpanDatasetConfig",
     "VersionPolicy",
     "build_dataset_profile",
     "build_linked_alias_proposals",
@@ -210,6 +217,9 @@ __all__ = [
     "load_mention_inventory",
     "load_mining_plan",
     "load_linked_alias_policy",
+    "export_span_dataset",
+    "iter_span_training_records",
+    "load_dataset_splits",
     "load_recognition_knowledge_policy",
     "load_alias_promotion_policy",
     "parser_from_definition",

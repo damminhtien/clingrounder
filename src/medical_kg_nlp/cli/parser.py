@@ -213,6 +213,19 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     dataset_curate.add_argument("--accepted-output", required=True)
     dataset_curate.add_argument("--rejected-output", required=True)
     dataset_curate.add_argument("--report-output", required=True)
+    dataset_export_spans = dataset_operations.add_parser(
+        "export-spans",
+        help="Compile source-held-out character spans for local NER training.",
+    )
+    dataset_export_spans.set_defaults(handler="data_dataset_export_spans")
+    dataset_export_spans.add_argument("--documents", required=True)
+    dataset_export_spans.add_argument("--annotations", required=True)
+    dataset_export_spans.add_argument("--split-manifest", required=True)
+    dataset_export_spans.add_argument("--output", required=True)
+    dataset_export_spans.add_argument("--manifest-output", required=True)
+    dataset_export_spans.add_argument("--entity-type", action="append", default=[])
+    dataset_export_spans.add_argument("--max-characters", type=int, default=1600)
+    dataset_export_spans.add_argument("--drop-empty-chunks", action="store_true")
 
     lexicon = operations.add_parser(
         "lexicon", help="Build mined mention inventories for terminology review."
