@@ -450,6 +450,61 @@ uv run medical-kg data dataset export-spans \
   --max-characters 1200
 ```
 
+## Compiled Knowledge Graph
+
+The terminology and mined relation layers are also compiled into a provenance-bearing graph. The
+compiler keeps JSONL as the source of truth and promotes only exact, typed links. In particular,
+an RxNorm `ingredient` field is linked only when it resolves to one unique `IN`, `PIN`, or `MIN`
+concept. Unresolved or ambiguous fields are counted and skipped; they are never converted into a
+guessed code or edge.
+
+```bash
+uv run medical-kg data knowledge compile-graph \
+  --terminology-source data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
+  --terminology-source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl \
+  --alias-overlay data/dictionaries/vietnamese_medical_alias.jsonl \
+  --alias-overlay outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl \
+  --alias-overlay outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl \
+  --documents outputs/mining/dailymed-daily-2026-07-17/documents.jsonl \
+  --annotations outputs/mining/dailymed-daily-2026-07-17/structured_annotations.jsonl \
+  --relations outputs/mining/dailymed-daily-2026-07-17/structured_relations.jsonl \
+  --nodes-output outputs/mining/knowledge/full-graph-rxnorm-2026-07-18/nodes.jsonl \
+  --edges-output outputs/mining/knowledge/full-graph-rxnorm-2026-07-18/edges.jsonl \
+  --evidence-output outputs/mining/knowledge/full-graph-rxnorm-2026-07-18/evidence.jsonl \
+  --report-output outputs/mining/knowledge/full-graph-rxnorm-2026-07-18/compilation_report.json
+
+uv run medical-kg kg build \
+  --nodes outputs/mining/knowledge/full-graph-rxnorm-2026-07-18/nodes.jsonl \
+  --edges outputs/mining/knowledge/full-graph-rxnorm-2026-07-18/edges.jsonl \
+  --evidence outputs/mining/knowledge/full-graph-rxnorm-2026-07-18/evidence.jsonl \
+  --manifest-output outputs/mining/knowledge/full-graph-rxnorm-2026-07-18/index_manifest.json
+```
+
+The pinned 18 July graph contains 94,098 nodes, 97,232 semantic edges, and 97,250 evidence rows.
+Its 89,112 coded nodes come from TT06 and RxNorm; the remaining term nodes represent structured
+dosage forms, strengths, and uncoded mined mentions. The graph adds 14,602 unique ingredient
+links, 46,804 dosage-form links, 22,630 strength links, 12,919 ICD hierarchy links, and the
+707 DailyMed relation observations. The read-only SQLite artifact is
+`.cache/medical-kg/knowledge-graph/knowledge-graph-668ddc869e58db0583c0.sqlite3`.
+
+Alias coverage is checked independently before enabling `kg_exact` retrieval:
+
+```bash
+uv run medical-kg kg benchmark-aliases \
+  --index .cache/medical-kg/knowledge-graph/knowledge-graph-668ddc869e58db0583c0.sqlite3 \
+  --alias-overlay data/dictionaries/vietnamese_medical_alias.jsonl \
+  --alias-overlay outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl \
+  --alias-overlay outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl \
+  --output outputs/mining/knowledge/full-graph-rxnorm-2026-07-18/alias_benchmark.json
+```
+
+CodiEsp and DailyMed resolve at 100% top-1 on this artifact. Vietnamese aliases reach 100% at
+top-5 and 95.45% at top-1; `suy tim` (`I50`/`I50.9`) and `hẹp ống sống` (`M48.00`/`M48.0`) remain
+ambiguous and must not be auto-emitted. The `kg_exact` retriever is opt-in, exact/toneless only,
+and filters entity type and code system before the result limit. It does not traverse the graph or
+use FTS to invent candidates. Ontology edges are available for audit, future reranking, and
+relation reasoning; they are not an unconstrained NER trigger source.
+
 The current export has 217 chunks and 2,307 entities: 1,880 findings and 427 procedures, with 178
 train chunks and 39 development chunks. Chunk limits are soft only when necessary to avoid cutting
 an entity. Every local span round-trips to its original document offset, and overlapping labels are
