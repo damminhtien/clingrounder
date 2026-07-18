@@ -156,6 +156,11 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         "--adapter", required=True, help="Local factory in module:attribute form."
     )
     label_propose.add_argument("--adapter-config", help="YAML/JSON factory config mapping.")
+    label_propose.add_argument(
+        "--hosted",
+        action="store_true",
+        help="Mark the plugin as hosted and enforce document privacy policy.",
+    )
     label_propose.add_argument("--output", required=True)
     label_propose.add_argument("--batch-size", type=int, default=16)
 

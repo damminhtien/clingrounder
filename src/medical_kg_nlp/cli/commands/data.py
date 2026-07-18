@@ -22,7 +22,10 @@ from medical_kg_nlp.mining.io import (
     write_jsonl,
     write_text,
 )
-from medical_kg_nlp.mining.labeling import BatchedProposalLabelerAdapter
+from medical_kg_nlp.mining.labeling import (
+    BatchedProposalLabelerAdapter,
+    PolicyAwareProposalLabelerAdapter,
+)
 from medical_kg_nlp.mining.policy import SourcePolicyGate
 from medical_kg_nlp.mining.ports import ProposalLabelerPort
 from medical_kg_nlp.mining.records import SourceRequest
@@ -124,6 +127,11 @@ def propose_labels(args: argparse.Namespace) -> int:
     documents = load_documents(args.documents)
     config = _load_mapping(args.adapter_config) if args.adapter_config else None
     labeler = _load_labeler(args.adapter, config)
+    if args.hosted:
+        labeler = PolicyAwareProposalLabelerAdapter(
+            labeler,
+            allow_document=lambda document: document.hosted_processing_allowed,
+        )
     batched = BatchedProposalLabelerAdapter(labeler, batch_size=args.batch_size)
     proposals = tuple(batched.propose(documents))
     documents_by_id = {document.document_id: document for document in documents}

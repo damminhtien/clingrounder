@@ -5,9 +5,14 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Iterable, Sequence
 
+import pytest
+
 from medical_kg_nlp.mining.coverage import CoverageCubePlanner, CoverageTarget
 from medical_kg_nlp.mining.dedup import StableTextDeduplicator
-from medical_kg_nlp.mining.labeling import ConsensusProposalLabeler
+from medical_kg_nlp.mining.labeling import (
+    ConsensusProposalLabeler,
+    PolicyAwareProposalLabelerAdapter,
+)
 from medical_kg_nlp.mining.records import (
     AccessClass,
     AnnotationLayer,
@@ -152,3 +157,24 @@ def test_review_jsonl_round_trip_preserves_provenance() -> None:
 
     assert imported == (proposal,)
     assert backend.export([document], [proposal]) == payload
+
+
+def test_hosted_labeler_rejects_entire_batch_before_delegate_call() -> None:
+    open_document = _document("open", "sốt")
+    private_document = MinedDocument(
+        document_id="private",
+        text="khó thở",
+        language="vi",
+        note_type="discharge_note",
+        source_artifact_id="private:artifact",
+        access_class=AccessClass.DUA,
+        redistribution=RedistributionPolicy.PROHIBITED,
+        hosted_processing_allowed=False,
+    )
+    hosted = PolicyAwareProposalLabelerAdapter(
+        FixtureLabeler([]),
+        allow_document=lambda document: document.hosted_processing_allowed,
+    )
+
+    with pytest.raises(PermissionError, match="private"):
+        list(hosted.propose([open_document, private_document]))

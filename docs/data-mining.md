@@ -96,6 +96,10 @@ uv run medical-kg data coverage report \
   --output outputs/mining/pmc/coverage.json
 ```
 
+Hosted teachers are plugin-only and must add `--hosted`. The command checks every document before
+invoking the plugin and rejects the whole batch if any source disallows hosted processing. Local
+rule and Hugging Face adapters omit this flag.
+
 Run a resumable campaign:
 
 ```bash
