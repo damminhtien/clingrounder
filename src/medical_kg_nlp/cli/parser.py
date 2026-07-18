@@ -293,6 +293,17 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     knowledge_aliases.add_argument("--recognition-output", required=True)
     knowledge_aliases.add_argument("--decisions-output", required=True)
     knowledge_aliases.add_argument("--report-output", required=True)
+    recognition_benchmark = knowledge_operations.add_parser(
+        "benchmark-recognition",
+        help="Compare a compact mined dictionary with a baseline entity matcher.",
+    )
+    recognition_benchmark.set_defaults(handler="data_knowledge_benchmark_recognition")
+    recognition_benchmark.add_argument("--documents", required=True)
+    recognition_benchmark.add_argument("--annotations", required=True)
+    recognition_benchmark.add_argument("--baseline-dictionary", required=True)
+    recognition_benchmark.add_argument("--additional-dictionary", required=True)
+    recognition_benchmark.add_argument("--entity-type", action="append", required=True)
+    recognition_benchmark.add_argument("--output", required=True)
 
     label = operations.add_parser("label", help="Run a local proposal-labeler adapter.")
     label_operations = label.add_subparsers(dest="data_label_command", required=True)

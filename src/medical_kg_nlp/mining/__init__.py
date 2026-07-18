@@ -71,6 +71,9 @@ from medical_kg_nlp.mining.reconciliation import (
     ExactDuplicateReconciliationResult,
     reconcile_exact_duplicates,
 )
+from medical_kg_nlp.mining.recognition_benchmark import (
+    benchmark_recognition_dictionary,
+)
 from medical_kg_nlp.mining.storage import FsspecArtifactStore, LocalArtifactStore
 from medical_kg_nlp.mining.registry import (
     LicenseMode,
@@ -175,6 +178,7 @@ __all__ = [
     "StoredObject",
     "VersionPolicy",
     "build_dataset_profile",
+    "benchmark_recognition_dictionary",
     "build_mention_inventory",
     "crosswalk_mentions",
     "compile_mined_aliases",

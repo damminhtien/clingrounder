@@ -46,6 +46,9 @@ from medical_kg_nlp.mining.profile import (
     build_dataset_profile,
     profile_blocking_issue_count,
 )
+from medical_kg_nlp.mining.recognition_benchmark import (
+    benchmark_recognition_dictionary,
+)
 from medical_kg_nlp.mining.reconciliation import reconcile_exact_duplicates
 from medical_kg_nlp.mining.records import SourceRequest
 from medical_kg_nlp.mining.quality import GoldAgreementGate, ReviewAgreementEvaluator
@@ -59,10 +62,13 @@ from medical_kg_nlp.mining.runner import (
 )
 from medical_kg_nlp.mining.snapshot import SnapshotBuilder, SnapshotSplitConfig
 from medical_kg_nlp.terminology import SQLiteTerminologyRepository
+from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.schema.types import EntityType
 
 __all__ = [
     "build_dataset",
     "build_lexicon",
+    "benchmark_recognition_knowledge",
     "crosswalk_lexicon",
     "audit_dailymed_rxnorm",
     "compile_dailymed_rxnorm",
@@ -382,6 +388,28 @@ def compile_alias_knowledge(args: argparse.Namespace) -> int:
             "recognition_concept_count": report["recognition_concept_count"],
             "decision_counts": report["decision_counts"],
             "report": args.report_output,
+        }
+    )
+    return 0
+
+
+def benchmark_recognition_knowledge(args: argparse.Namespace) -> int:
+    """Measure exact span/type changes before promoting mined NER knowledge."""
+
+    report = benchmark_recognition_dictionary(
+        load_documents(args.documents),
+        load_annotations(args.annotations),
+        DictionaryStore.from_jsonl(args.baseline_dictionary),
+        DictionaryStore.from_jsonl(args.additional_dictionary),
+        entity_types=tuple(EntityType(value) for value in args.entity_type),
+    )
+    write_json(args.output, report)
+    _print_json(
+        {
+            "baseline": report["baseline"]["metrics"],
+            "enriched": report["enriched"]["metrics"],
+            "delta": report["delta"],
+            "output": args.output,
         }
     )
     return 0
