@@ -19,6 +19,7 @@ def build_parser() -> argparse.ArgumentParser:
     _evaluate_parser(commands)
     _validate_parser(commands)
     _benchmark_parser(commands)
+    _data_parser(commands)
     return parser
 
 
@@ -98,3 +99,115 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     phase1.add_argument("--parallel-backend", choices=("serial", "thread", "process"), default="process")
     phase1.add_argument("--workers", type=int, default=1)
     phase1.add_argument("--chunksize", type=int, default=4)
+
+
+def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    data = commands.add_parser("data", help="Acquire, curate, and freeze mined datasets.")
+    operations = data.add_subparsers(dest="data_command", required=True)
+
+    registry = operations.add_parser("registry", help="Validate source-registry policy.")
+    registry_operations = registry.add_subparsers(
+        dest="data_registry_command", required=True
+    )
+    registry_validate = registry_operations.add_parser(
+        "validate", help="Validate registry v2 and print a source summary."
+    )
+    registry_validate.set_defaults(handler="data_registry_validate")
+    registry_validate.add_argument(
+        "--registry", default="data/sources/mining_registry.yaml"
+    )
+
+    source = operations.add_parser("source", help="Synchronize one registered source.")
+    source_operations = source.add_subparsers(dest="data_source_command", required=True)
+    source_sync = source_operations.add_parser(
+        "sync", help="Discover and checkpoint source artifacts."
+    )
+    source_sync.set_defaults(handler="data_source_sync")
+    source_sync.add_argument("--registry", default="data/sources/mining_registry.yaml")
+    source_sync.add_argument("--source-id", required=True)
+    source_sync.add_argument("--source-version", required=True)
+    source_sync.add_argument("--parameters", help="YAML/JSON request-parameter mapping.")
+    source_sync.add_argument("--store", required=True)
+    source_sync.add_argument("--output", required=True)
+
+    dataset = operations.add_parser("dataset", help="Build documents from acquired artifacts.")
+    dataset_operations = dataset.add_subparsers(
+        dest="data_dataset_command", required=True
+    )
+    dataset_build = dataset_operations.add_parser(
+        "build", help="Parse a source artifact manifest into immutable documents."
+    )
+    dataset_build.set_defaults(handler="data_dataset_build")
+    dataset_build.add_argument("--registry", default="data/sources/mining_registry.yaml")
+    dataset_build.add_argument("--source-id", required=True)
+    dataset_build.add_argument("--artifacts", required=True)
+    dataset_build.add_argument("--store", required=True)
+    dataset_build.add_argument("--output", required=True)
+
+    label = operations.add_parser("label", help="Run a local proposal-labeler adapter.")
+    label_operations = label.add_subparsers(dest="data_label_command", required=True)
+    label_propose = label_operations.add_parser(
+        "propose", help="Generate provenance-bearing annotation proposals."
+    )
+    label_propose.set_defaults(handler="data_label_propose")
+    label_propose.add_argument("--documents", required=True)
+    label_propose.add_argument(
+        "--adapter", required=True, help="Local factory in module:attribute form."
+    )
+    label_propose.add_argument("--adapter-config", help="YAML/JSON factory config mapping.")
+    label_propose.add_argument("--output", required=True)
+    label_propose.add_argument("--batch-size", type=int, default=16)
+
+    review = operations.add_parser("review", help="Exchange deterministic review queues.")
+    review_operations = review.add_subparsers(dest="data_review_command", required=True)
+    review_export = review_operations.add_parser("export", help="Export a JSONL review queue.")
+    review_export.set_defaults(handler="data_review_export")
+    review_export.add_argument("--documents", required=True)
+    review_export.add_argument("--proposals", required=True)
+    review_export.add_argument("--output", required=True)
+    review_import = review_operations.add_parser(
+        "import", help="Import reviewed proposal decisions."
+    )
+    review_import.set_defaults(handler="data_review_import")
+    review_import.add_argument("--input", required=True)
+    review_import.add_argument("--output", required=True)
+
+    coverage = operations.add_parser("coverage", help="Measure coverage and review priority.")
+    coverage_operations = coverage.add_subparsers(
+        dest="data_coverage_command", required=True
+    )
+    coverage_report = coverage_operations.add_parser(
+        "report", help="Write coverage-cube cells and ranked review records."
+    )
+    coverage_report.set_defaults(handler="data_coverage_report")
+    coverage_report.add_argument("--documents", required=True)
+    coverage_report.add_argument("--proposals", required=True)
+    coverage_report.add_argument("--targets", required=True)
+    coverage_report.add_argument("--snapshot-id", required=True)
+    coverage_report.add_argument("--output", required=True)
+
+    snapshot = operations.add_parser("snapshot", help="Freeze a leakage-safe snapshot.")
+    snapshot_operations = snapshot.add_subparsers(
+        dest="data_snapshot_command", required=True
+    )
+    snapshot_freeze = snapshot_operations.add_parser(
+        "freeze", help="Validate and atomically freeze Parquet snapshot shards."
+    )
+    snapshot_freeze.set_defaults(handler="data_snapshot_freeze")
+    snapshot_freeze.add_argument("--documents", required=True)
+    snapshot_freeze.add_argument("--annotations")
+    snapshot_freeze.add_argument("--relations")
+    snapshot_freeze.add_argument("--artifacts")
+    snapshot_freeze.add_argument("--version", required=True)
+    snapshot_freeze.add_argument("--created-at", required=True)
+    snapshot_freeze.add_argument("--output-dir", required=True)
+    snapshot_freeze.add_argument("--development-fraction", type=float, default=0.1)
+    snapshot_freeze.add_argument("--challenge-source", action="append", default=[])
+    snapshot_freeze.add_argument("--challenge-template", action="append", default=[])
+    snapshot_freeze.add_argument("--hash-salt", default="medical-kg-snapshot-v1")
+    snapshot_freeze.add_argument("--max-synthetic-fraction", type=float, default=0.4)
+    snapshot_freeze.add_argument("--manifest-only", action="store_true")
+
+    run = operations.add_parser("run", help="Run a resumable declarative mining plan.")
+    run.set_defaults(handler="data_run")
+    run.add_argument("--plan", required=True)

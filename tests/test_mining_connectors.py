@@ -129,5 +129,9 @@ def test_local_connector_only_imports_explicit_paths(tmp_path: Path) -> None:
     )
 
     assert len(discovered) == 1
-    assert discovered[0].metadata == {"filename": "codiesp.zip"}
+    assert discovered[0].metadata == {
+        "filename": "codiesp.zip",
+        "byte_size": str(len(b"local fixture")),
+    }
+    assert discovered[0].expected_sha256 == hashlib.sha256(b"local fixture").hexdigest()
     assert discovered[0].uri.startswith("file:")

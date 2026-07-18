@@ -34,6 +34,7 @@ __all__ = [
     "source_artifact_from_dict",
     "write_json",
     "write_jsonl",
+    "write_text",
 ]
 
 T = TypeVar("T")
@@ -172,6 +173,16 @@ def write_json(path: str | Path, payload: Mapping[str, Any]) -> str:
     encoded = (
         json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     ).encode("utf-8")
+    _atomic_write(target, encoded)
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def write_text(path: str | Path, payload: str) -> str:
+    """Atomically write UTF-8 text and return its content fingerprint."""
+
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    encoded = payload.encode("utf-8")
     _atomic_write(target, encoded)
     return hashlib.sha256(encoded).hexdigest()
 

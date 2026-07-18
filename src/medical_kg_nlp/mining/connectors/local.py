@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Any, BinaryIO
@@ -39,13 +40,16 @@ class LocalArchiveConnector(RegisteredConnectorAdapter):
             path = Path(raw_path).expanduser().resolve()
             if not path.is_file():
                 raise FileNotFoundError(path)
+            expected_sha256 = checksums.get(raw_path) or checksums.get(path.name)
+            if expected_sha256 is None:
+                expected_sha256 = _file_sha256(path)
             yield DiscoveredArtifact(
                 source_id=request.source_id,
                 source_version=request.source_version,
                 uri=path.as_uri(),
                 media_type=media_type,
-                expected_sha256=checksums.get(raw_path) or checksums.get(path.name),
-                metadata={"filename": path.name},
+                expected_sha256=expected_sha256,
+                metadata={"filename": path.name, "byte_size": str(path.stat().st_size)},
             )
 
 
@@ -62,3 +66,11 @@ def _string_mapping(value: Any, *, field_name: str) -> dict[str, str]:
     if not isinstance(value, dict):
         raise ValueError(f"{field_name} must be a mapping")
     return {str(key): str(item) for key, item in value.items()}
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        while chunk := handle.read(1024 * 1024):
+            digest.update(chunk)
+    return digest.hexdigest()

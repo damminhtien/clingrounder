@@ -53,6 +53,8 @@ class _RateLimiter:
 class RegisteredConnectorAdapter(ABC):
     """Base connector that centralizes version, checksum, and policy handling."""
 
+    connector_revision = "1"
+
     def __init__(
         self,
         source: SourceDefinition,

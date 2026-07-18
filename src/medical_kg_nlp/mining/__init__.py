@@ -48,6 +48,13 @@ from medical_kg_nlp.mining.registry import (
     load_source_registry,
 )
 from medical_kg_nlp.mining.review import JsonlReviewBackend
+from medical_kg_nlp.mining.runner import (
+    MiningPlan,
+    MiningPlanResult,
+    SourceJob,
+    load_mining_plan,
+    run_mining_plan,
+)
 from medical_kg_nlp.mining.snapshot import SnapshotBuilder, SnapshotSplitConfig
 from medical_kg_nlp.mining.synthetic import (
     MinimalPairGenerator,
@@ -81,6 +88,8 @@ __all__ = [
     "MinedDocument",
     "MinimalPairGenerator",
     "MiningQualityGate",
+    "MiningPlan",
+    "MiningPlanResult",
     "ParquetSnapshotWriter",
     "ProposalLabelerPort",
     "PolicyDecision",
@@ -94,6 +103,7 @@ __all__ = [
     "ReviewBackendPort",
     "ReviewStatus",
     "SourceArtifact",
+    "SourceJob",
     "SourceConnectorPort",
     "SourceDefinition",
     "SourcePolicyGate",
@@ -112,5 +122,7 @@ __all__ = [
     "ConsensusProposalLabeler",
     "JsonlReviewBackend",
     "load_source_registry",
+    "load_mining_plan",
     "parser_from_definition",
+    "run_mining_plan",
 ]
