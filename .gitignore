@@ -122,6 +122,7 @@ outputs/evaluation/
 outputs/loops/
 outputs/mining/
 outputs/profiles/
+outputs/smoke/
 
 # poetry
 #   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.

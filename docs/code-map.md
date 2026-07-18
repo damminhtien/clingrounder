@@ -72,8 +72,12 @@ Inject implementations through `PipelineComponents` for tests or custom applicat
 ```yaml
 terminology:
   recognition_path: data/dictionaries/seed_concepts.jsonl
-  normalization_path: data/processed/full_concepts.jsonl
+  normalization_paths:
+    - data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl
+    - data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
   normalization_index_path: .cache/medical-kg/terminology/full.sqlite3
+  normalization_alias_overlay_paths:
+    - outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl
   cache_dir: .cache/medical-kg/terminology
   additional_recognition_path: null
   abbreviation_path: data/dictionaries/abbreviations.jsonl

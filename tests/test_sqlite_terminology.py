@@ -217,7 +217,7 @@ def test_pipeline_factory_requires_and_uses_prebuilt_normalization_index(
     )
     config = PipelineFactoryConfig(
         recognition_dictionary_path=str(source),
-        normalization_dictionary_path=str(source),
+        normalization_dictionary_paths=(str(source),),
         normalization_index_path=str(missing_index),
         options=options,
     )

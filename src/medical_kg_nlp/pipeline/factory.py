@@ -50,7 +50,7 @@ class PipelineFactoryConfig:
     """Serializable configuration consumed by the composition root."""
 
     recognition_dictionary_path: str = "data/dictionaries/seed_concepts.jsonl"
-    normalization_dictionary_path: str | None = None
+    normalization_dictionary_paths: tuple[str, ...] = ()
     normalization_index_path: str | None = None
     normalization_alias_overlay_paths: tuple[str, ...] = ()
     terminology_cache_dir: str = ".cache/medical-kg/terminology"
@@ -73,8 +73,9 @@ class PipelineFactoryConfig:
                 "recognition_path",
                 cls.recognition_dictionary_path,
             ),
-            normalization_dictionary_path=_optional_string(
-                terminology.get("normalization_path")
+            normalization_dictionary_paths=_string_tuple(
+                terminology.get("normalization_paths"),
+                "normalization_paths",
             ),
             normalization_index_path=_optional_string(
                 terminology.get("normalization_index_path")
@@ -128,9 +129,11 @@ class PipelineFactory:
 
         recognition_repository = InMemoryTerminologyRepository(recognition_store)
         terminology_repository: TerminologyRepository = recognition_repository
-        uses_sqlite_normalization = resolved.normalization_dictionary_path is not None
-        if resolved.normalization_dictionary_path is not None:
-            source_paths = (resolved.normalization_dictionary_path,)
+        uses_sqlite_normalization = bool(resolved.normalization_dictionary_paths)
+        if resolved.normalization_dictionary_paths:
+            # SCALING: canonical releases remain separate immutable files; the composition root
+            # validates one content-addressed SQLite index against the complete ordered source set.
+            source_paths = resolved.normalization_dictionary_paths
             index_path = resolved.normalization_index_path or str(
                 terminology_cache_path(
                     resolved.terminology_cache_dir,

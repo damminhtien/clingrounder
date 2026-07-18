@@ -122,3 +122,17 @@ def test_factory_config_remains_serializable_for_process_workers() -> None:
     )
 
     assert config.options.enable_candidate_reranking is False
+
+
+def test_factory_config_accepts_multiple_canonical_terminology_sources() -> None:
+    config = PipelineFactoryConfig.from_mapping(
+        {
+            "terminology": {
+                "normalization_paths": ["icd.jsonl", "rxnorm.jsonl"],
+                "normalization_alias_overlay_paths": ["mined-aliases.jsonl"],
+            }
+        }
+    )
+
+    assert config.normalization_dictionary_paths == ("icd.jsonl", "rxnorm.jsonl")
+    assert config.normalization_alias_overlay_paths == ("mined-aliases.jsonl",)
