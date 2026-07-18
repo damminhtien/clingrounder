@@ -523,6 +523,71 @@ uv run medical-kg data dataset export-spans \
   --max-characters 1200
 ```
 
+### Model-balanced NER snapshot
+
+The source-held-out snapshot above is intentionally a challenge artifact. It is not a suitable
+training validation split when an entire source contributes a label that never occurs in training:
+the first model snapshot had `FINDING` only in development. A second, immutable model-balanced
+snapshot therefore hashes all documents into train/development with a 10% development fraction.
+The two artifacts are separate by design:
+
+Rebuild the snapshot and span artifact deterministically with:
+
+```bash
+medical-kg data snapshot freeze \
+  --documents outputs/mining/fused/open-corpus-v1-39106c1cc9d0/documents.jsonl \
+  --annotations outputs/mining/fused/open-corpus-v1-39106c1cc9d0/annotations.jsonl \
+  --relations outputs/mining/fused/open-corpus-v1-39106c1cc9d0/relations.jsonl \
+  --source-fingerprint 39106c1cc9d04e545d4728657cecb5e9702a6c95e548fe4c47f887085e66543d \
+  --version open-corpus-v1-balanced-2026-07-18 \
+  --created-at 2026-07-18T00:00:00+07:00 \
+  --output-dir outputs/mining/snapshots/open-corpus-v1-balanced-2026-07-18 \
+  --development-fraction 0.1 \
+  --hash-salt open-corpus-v1-balanced-2026-07-18 \
+  --skip-agreement-gate
+```
+
+Then run the existing `data dataset export-spans` command against the new snapshot manifest and
+the fused `curated_annotations.jsonl` input. The source-heldout snapshot must remain untouched.
+
+| artifact | chunks | entities | label coverage |
+| --- | ---: | ---: | --- |
+| source-held-out | 3,745 | 13,107 | development-only `FINDING` |
+| model-balanced | 3,745 | 13,107 | both splits: `DISEASE`, `DRUG`, `FINDING` |
+
+The current model-balanced fingerprints are:
+
+```text
+snapshot manifest: ecc593272fb5c0f2dd089976b9c93eb276434b572829491ffd0913af5d97f3c0
+span dataset:      aa6cafa2efd1f4f68f927067d41348b16e22da19f5f57f7375b2c5e62ab8aff6
+```
+
+Validate it before a model run:
+
+```bash
+medical-kg model validate-token-dataset \
+  --dataset outputs/mining/model-datasets/open-corpus-v1-balanced-2026-07-18/spans.jsonl \
+  --dataset-manifest outputs/mining/model-datasets/open-corpus-v1-balanced-2026-07-18/manifest.json
+```
+
+Training requires the local `ml` extra and a cached fast tokenizer/model. The command is offline by
+construction (`local_files_only=true`) and writes a model fingerprint plus metrics manifest:
+
+```bash
+medical-kg model train-token-classifier \
+  --dataset outputs/mining/model-datasets/open-corpus-v1-balanced-2026-07-18/spans.jsonl \
+  --dataset-manifest outputs/mining/model-datasets/open-corpus-v1-balanced-2026-07-18/manifest.json \
+  --model-id "$LOCAL_MODEL_ID" \
+  --revision "$LOCAL_MODEL_REVISION" \
+  --output-dir outputs/models/open-corpus-ner-<run-id>
+```
+
+Use `--internal-validation-fraction 0.1` to select a checkpoint from a deterministic document
+holdout inside `train` without consuming the source-heldout challenge. Do not use the original
+source-heldout `development` split for training or merge its labels into the train vocabulary.
+The trainer rejects unseen evaluation labels, tokenizer boundary drift, changed dataset hashes,
+and missing model revisions before importing Torch.
+
 ## Compiled Knowledge Graph
 
 The terminology and mined relation layers are also compiled into a provenance-bearing graph. The

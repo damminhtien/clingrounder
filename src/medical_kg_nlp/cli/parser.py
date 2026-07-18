@@ -221,14 +221,14 @@ def _model_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser])
         help="Validate mined spans and train/evaluation label compatibility.",
     )
     validate.set_defaults(handler="model_validate_token_dataset")
-    _token_training_identity_arguments(validate, include_output=False)
+    _token_training_identity_arguments(validate, include_output=False, include_model=False)
 
     train = operations.add_parser(
         "train-token-classifier",
         help="Train a pinned, locally cached Hugging Face token classifier.",
     )
     train.set_defaults(handler="model_train_token_classifier")
-    _token_training_identity_arguments(train, include_output=True)
+    _token_training_identity_arguments(train, include_output=True, include_model=True)
     train.add_argument("--max-length", type=int, default=512)
     train.add_argument("--stride", type=int, default=64)
     train.add_argument("--train-batch-size", type=int, default=8)
@@ -253,11 +253,13 @@ def _token_training_identity_arguments(
     parser: argparse.ArgumentParser,
     *,
     include_output: bool,
+    include_model: bool,
 ) -> None:
     parser.add_argument("--dataset", required=True)
     parser.add_argument("--dataset-manifest", required=True)
-    parser.add_argument("--model-id", required=True)
-    parser.add_argument("--revision", required=True)
+    if include_model:
+        parser.add_argument("--model-id", required=True)
+        parser.add_argument("--revision", required=True)
     parser.add_argument("--train-split", default="train")
     parser.add_argument("--evaluation-split", default="development")
     parser.add_argument(
