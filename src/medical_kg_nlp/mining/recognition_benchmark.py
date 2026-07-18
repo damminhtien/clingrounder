@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Sequence
 from statistics import fmean, median
 from time import perf_counter
@@ -12,8 +13,11 @@ from medical_kg_nlp.dictionaries.merge import merge_concept_entries
 from medical_kg_nlp.mining.records import AnnotationProposal, MinedDocument
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
 from medical_kg_nlp.schema.types import EntityType
+from medical_kg_nlp.utils.text import normalize_for_match
 
 __all__ = ["benchmark_recognition_dictionary"]
+
+_SpanKey = tuple[str, int, int, EntityType]
 
 
 def benchmark_recognition_dictionary(
@@ -30,7 +34,7 @@ def benchmark_recognition_dictionary(
         raise ValueError("Recognition benchmark requires documents and entity types")
     document_ids = {document.document_id for document in documents}
     selected_types = set(entity_types)
-    gold: set[tuple[str, int, int, EntityType]] = set()
+    gold: set[_SpanKey] = set()
     for annotation in gold_annotations:
         if annotation.document_id not in document_ids:
             raise ValueError(
@@ -78,14 +82,14 @@ def benchmark_recognition_dictionary(
 
 def _run_extractor(
     documents: Sequence[MinedDocument],
-    gold: set[tuple[str, int, int, EntityType]],
+    gold: set[_SpanKey],
     store: DictionaryStore,
     selected_types: set[EntityType],
 ) -> dict[str, Any]:
     build_started = perf_counter()
     extractor = RuleBasedNER(store)
     build_ms = (perf_counter() - build_started) * 1000.0
-    predicted: set[tuple[str, int, int, EntityType]] = set()
+    predicted: set[_SpanKey] = set()
     latencies: list[float] = []
     for document in documents:
         started = perf_counter()
@@ -111,6 +115,7 @@ def _run_extractor(
         "prediction_count": len(predicted),
         "metrics": metrics,
         "entity_types": _type_metrics(gold, predicted),
+        "error_analysis": _error_analysis(documents, gold, predicted),
         "runtime_ms": {
             "matcher_build": build_ms,
             "extraction_total": sum(latencies),
@@ -125,8 +130,8 @@ def _run_extractor(
 
 
 def _exact_metrics(
-    gold: set[tuple[str, int, int, EntityType]],
-    predicted: set[tuple[str, int, int, EntityType]],
+    gold: set[_SpanKey],
+    predicted: set[_SpanKey],
 ) -> dict[str, float | int]:
     true_positive = len(gold & predicted)
     false_positive = len(predicted - gold)
@@ -145,8 +150,8 @@ def _exact_metrics(
 
 
 def _type_metrics(
-    gold: set[tuple[str, int, int, EntityType]],
-    predicted: set[tuple[str, int, int, EntityType]],
+    gold: set[_SpanKey],
+    predicted: set[_SpanKey],
 ) -> dict[str, dict[str, float | int]]:
     types = sorted({row[3] for row in gold | predicted}, key=lambda value: value.value)
     return {
@@ -156,3 +161,93 @@ def _type_metrics(
         )
         for entity_type in types
     }
+
+
+def _error_analysis(
+    documents: Sequence[MinedDocument],
+    gold: set[_SpanKey],
+    predicted: set[_SpanKey],
+) -> dict[str, Any]:
+    documents_by_id = {document.document_id: document for document in documents}
+    false_positive = predicted - gold
+    false_negative = gold - predicted
+    return {
+        "false_positive": _summarize_errors(
+            false_positive,
+            reference=gold,
+            documents_by_id=documents_by_id,
+            overlap_kind="boundary_overlap",
+            disjoint_kind="spurious",
+        ),
+        "false_negative": _summarize_errors(
+            false_negative,
+            reference=predicted,
+            documents_by_id=documents_by_id,
+            overlap_kind="boundary_overlap",
+            disjoint_kind="missing",
+        ),
+    }
+
+
+def _summarize_errors(
+    rows: set[_SpanKey],
+    *,
+    reference: set[_SpanKey],
+    documents_by_id: dict[str, MinedDocument],
+    overlap_kind: str,
+    disjoint_kind: str,
+    limit: int = 100,
+) -> dict[str, Any]:
+    grouped: dict[tuple[str, EntityType, str], list[_SpanKey]] = {}
+    for row in sorted(rows):
+        document_id, start, end, entity_type = row
+        document = documents_by_id[document_id]
+        normalized = normalize_for_match(document.text[start:end])
+        kind = overlap_kind if _overlaps_reference(row, reference) else disjoint_kind
+        grouped.setdefault((normalized, entity_type, kind), []).append(row)
+
+    groups = []
+    for (normalized, entity_type, kind), members in sorted(
+        grouped.items(),
+        key=lambda item: (-len(item[1]), item[0][0], item[0][1].value, item[0][2]),
+    )[:limit]:
+        examples = []
+        for document_id, start, end, _ in members[:3]:
+            text = documents_by_id[document_id].text[start:end]
+            examples.append(
+                {
+                    "document_id": document_id,
+                    "span": [start, end],
+                    "text": text,
+                }
+            )
+        groups.append(
+            {
+                "normalized_mention": normalized,
+                "entity_type": entity_type.value,
+                "error_kind": kind,
+                "occurrence_count": len(members),
+                "document_count": len({row[0] for row in members}),
+                "examples": examples,
+            }
+        )
+    kind_counts = Counter(
+        overlap_kind if _overlaps_reference(row, reference) else disjoint_kind
+        for row in rows
+    )
+    return {
+        "count": len(rows),
+        "kind_counts": dict(sorted(kind_counts.items())),
+        "top_mentions": groups,
+    }
+
+
+def _overlaps_reference(row: _SpanKey, reference: set[_SpanKey]) -> bool:
+    document_id, start, end, entity_type = row
+    return any(
+        document_id == other_document_id
+        and entity_type == other_type
+        and start < other_end
+        and other_start < end
+        for other_document_id, other_start, other_end, other_type in reference
+    )

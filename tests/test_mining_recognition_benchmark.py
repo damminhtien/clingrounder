@@ -62,6 +62,61 @@ def test_mined_recognition_dictionary_improves_exact_drug_recall() -> None:
     assert report["enriched"]["runtime_ms"]["per_document_max"] >= 0.0
 
 
+def test_recognition_benchmark_separates_boundary_errors_from_spurious_matches() -> None:
+    document = MinedDocument(
+        document_id="doc-boundary",
+        text="severe chest pain",
+        language="en",
+        note_type="clinical_note",
+        source_artifact_id="artifact-1",
+        access_class=AccessClass.OPEN,
+        redistribution=RedistributionPolicy.ALLOWED,
+        hosted_processing_allowed=True,
+    )
+    gold = AnnotationProposal(
+        annotation_id="gold-boundary",
+        document_id=document.document_id,
+        span=(0, len(document.text)),
+        text=document.text,
+        entity_type="FINDING",
+        assertions=(),
+        concepts=(),
+        confidence=1.0,
+        layer=AnnotationLayer.GOLD,
+        label_source="fixture",
+        labeler_id="fixture",
+        review_status=ReviewStatus.ACCEPTED,
+    )
+    baseline = DictionaryStore([])
+    additional = DictionaryStore(
+        [
+            ConceptEntry(
+                concept_id="LOCAL:chest-pain",
+                code=None,
+                code_system=CodeSystem.NONE,
+                canonical_name="chest pain",
+                semantic_type=EntityType.FINDING,
+                source="fixture",
+            )
+        ]
+    )
+
+    report = benchmark_recognition_dictionary(
+        (document,),
+        (gold,),
+        baseline,
+        additional,
+        entity_types=(EntityType.FINDING,),
+    )
+    errors = report["enriched"]["error_analysis"]
+
+    assert errors["false_positive"]["kind_counts"] == {"boundary_overlap": 1}
+    assert errors["false_negative"]["kind_counts"] == {"boundary_overlap": 1}
+    assert errors["false_positive"]["top_mentions"][0]["normalized_mention"] == (
+        "chest pain"
+    )
+
+
 def _concept(
     concept_id: str,
     code: str,
