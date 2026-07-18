@@ -425,7 +425,7 @@ uv run medical-kg terminology build \
   --manifest-output outputs/mining/knowledge/codiesp-icd10-2026-07-18/enriched_terminology_manifest.json
 ```
 
-The resulting index contains 88,837 concepts and 188,232 aliases. Its content-addressed local path
+The resulting index contains 88,837 concepts and 188,488 aliases. Its content-addressed local path
 is `.cache/medical-kg/terminology/terminology-a2d5a19e83fbc9e1a305.sqlite3`; runtime composition is
 recorded in `configs/pipeline/full_terminology.yaml`. The cache path is derived output, not a source
 artifact, and must be rebuilt from the pinned manifests on another machine.
