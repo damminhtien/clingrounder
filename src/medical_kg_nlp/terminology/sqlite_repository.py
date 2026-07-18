@@ -29,6 +29,40 @@ _CONCEPT_COLUMNS = (
     "c.generic_name, c.dose_form, c.strength"
 )
 
+# RxNorm TTY only breaks lexical ties. It must never outrank a better FTS match.
+_TTY_RANK_SQL = """
+CASE c.tty
+    WHEN 'IN' THEN 0
+    WHEN 'PIN' THEN 1
+    WHEN 'MIN' THEN 2
+    WHEN 'BN' THEN 3
+    WHEN 'SCD' THEN 4
+    WHEN 'SBD' THEN 5
+    WHEN 'SCDF' THEN 6
+    WHEN 'SBDF' THEN 7
+    WHEN 'GPCK' THEN 8
+    WHEN 'BPCK' THEN 9
+    ELSE 20
+END
+"""
+
+# Product rows repeat their ingredient as an alias. Prefer a concept's own label so
+# an ingredient query returns the IN concept before every SCD/SBD containing it.
+_ALIAS_SOURCE_RANK_SQL = """
+CASE a.source
+    WHEN 'canonical_name' THEN 0
+    WHEN 'official_name_vi' THEN 1
+    WHEN 'official_name_en' THEN 1
+    WHEN 'alias' THEN 2
+    WHEN 'synonym' THEN 2
+    WHEN 'abbreviation' THEN 2
+    WHEN 'generic_name' THEN 3
+    WHEN 'brand_name' THEN 3
+    WHEN 'ingredient' THEN 4
+    ELSE 2
+END
+"""
+
 
 class SQLiteTerminologyRepository:
     """Query a prebuilt index without loading the terminology release into RAM."""
@@ -130,7 +164,8 @@ class SQLiteTerminologyRepository:
             FROM aliases_fts
             JOIN concepts c ON c.concept_id = aliases_fts.concept_id
             WHERE aliases_fts MATCH ? {conditions}
-            ORDER BY lexical_rank, c.code_system, COALESCE(c.code, ''), c.concept_id
+            ORDER BY lexical_rank, {_TTY_RANK_SQL}, c.code_system,
+                     COALESCE(c.code, ''), c.concept_id
             LIMIT ?
         """
         rows = self._connection().execute(
@@ -156,11 +191,13 @@ class SQLiteTerminologyRepository:
         _validate_limit(limit)
         conditions, parameters = _concept_filters(entity_type, code_systems)
         sql = f"""
-            SELECT DISTINCT {_CONCEPT_COLUMNS}
+            SELECT {_CONCEPT_COLUMNS}, MIN({_ALIAS_SOURCE_RANK_SQL}) AS alias_rank
             FROM aliases a
             JOIN concepts c ON c.concept_id = a.concept_id
             WHERE {column} = ? {conditions}
-            ORDER BY c.code_system, COALESCE(c.code, ''), c.concept_id
+            GROUP BY c.concept_id
+            ORDER BY alias_rank, {_TTY_RANK_SQL}, c.code_system,
+                     COALESCE(c.code, ''), c.concept_id
             LIMIT ?
         """
         rows = self._connection().execute(sql, (value, *parameters, limit))

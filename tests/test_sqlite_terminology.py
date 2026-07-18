@@ -52,6 +52,46 @@ def test_sqlite_filters_type_and_code_system_before_limit(tmp_path: Path) -> Non
     ]
 
 
+def test_sqlite_exact_lookup_prioritizes_canonical_ingredient_over_product_field(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "rxnorm.jsonl"
+    rows = [
+        {
+            "concept_id": "RX:6809",
+            "code": "6809",
+            "code_system": "RxNorm",
+            "canonical_name": "metformin",
+            "semantic_type": "DRUG",
+            "rxnorm_tty": "IN",
+            "ingredient": "metformin",
+            "source": "test",
+        },
+        {
+            "concept_id": "RX:1000",
+            "code": "1000",
+            "code_system": "RxNorm",
+            "canonical_name": "metformin 500 MG Oral Tablet",
+            "semantic_type": "DRUG",
+            "rxnorm_tty": "SCD",
+            "ingredient": "metformin",
+            "source": "test",
+        },
+    ]
+    source.write_text(
+        "".join(json.dumps(row) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+    manifest = build_terminology_index((source,), cache_dir=tmp_path / "cache")
+    repository = SQLiteTerminologyRepository(manifest.index_path)
+
+    assert [entry.code for entry in repository.exact_lookup("metformin")] == [
+        "6809",
+        "1000",
+    ]
+    assert repository.search("metformin")[0].code == "6809"
+
+
 def test_sqlite_fts_search_is_deterministic_across_threads(tmp_path: Path) -> None:
     source = _write_source(tmp_path / "concepts.jsonl")
     manifest = build_terminology_index((source,), cache_dir=tmp_path / "cache")
