@@ -592,6 +592,26 @@ source-heldout `development` split for training or merge its labels into the tra
 The trainer rejects unseen evaluation labels, tokenizer boundary drift, changed dataset hashes,
 and missing model revisions before importing Torch.
 
+### Full-type NER view for later phases
+
+The Phase 1-compatible view deliberately excludes `PROCEDURE`. For later phases, a separate
+harmonized view was curated from `harmonized_annotations.jsonl` with the same overlap and offset
+gates, adding 2,757 accepted procedure spans:
+
+```text
+accepted spans: 15,847
+chunks:         3,823 (3,450 train / 373 development)
+dataset SHA:    90e1b05cac683046a88e58ab26bb090cd58c7d54077a6845f9fa49ccb59c2ca8
+labels:         DISEASE, DRUG, FINDING, PROCEDURE
+```
+
+Artifact paths:
+`outputs/mining/model-datasets/open-corpus-v1-full-ner-harmonized-2026-07-18/`.
+The `LAB_TEST`, `LAB_RESULT`, and `SYMPTOM` proposals currently remain bronze-only in the fused
+corpus and are not promoted into this quality-gated view. They must use a separately marked weak-
+supervision artifact or human review before becoming evaluation labels; this prevents proposed
+PMC annotations from being mistaken for clinical gold.
+
 ## Compiled Knowledge Graph
 
 The terminology and mined relation layers are also compiled into a provenance-bearing graph. The

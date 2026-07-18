@@ -1,0 +1,19 @@
+schema_version: medical-annotation-curation-policy.v1
+policy_id: open-corpus-v1-full-ner
+allowed_review_statuses: [proposed, accepted]
+allowed_layers: [silver, gold, challenge]
+allowed_entity_types:
+  - DISEASE
+  - FINDING
+  - DRUG
+  - SYMPTOM
+  - LAB_TEST
+  - LAB_RESULT
+  - PROCEDURE
+allow_discontinuous: false
+reject_import_issues: true
+max_span_length: 256
+
+# INVARIANT: BIO cannot represent overlapping spans. Keep the reviewed/longest
+# winner and retain every discarded proposal in the rejected artifact.
+overlap_strategy: prefer_quality_longest
