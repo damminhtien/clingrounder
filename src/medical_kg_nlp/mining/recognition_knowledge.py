@@ -49,6 +49,7 @@ class RecognitionKnowledgePolicy:
     max_alias_tokens: int = 20
     max_surface_variants: int = 12
     allow_numeric_only: bool = False
+    accepted_source_mentions: frozenset[tuple[str, str]] = frozenset()
     blocked_normalized_mentions: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
@@ -76,6 +77,16 @@ class RecognitionKnowledgePolicy:
             for value in self.blocked_normalized_mentions
         ):
             raise ValueError("Blocked mentions must use the active normalization contract")
+        mapped_labels = set(labels)
+        if any(label not in mapped_labels for label, _ in self.accepted_source_mentions):
+            raise ValueError("Reviewed mentions must use a mapped source label")
+        if any(
+            not mention or mention != normalize_for_match(mention)
+            for _, mention in self.accepted_source_mentions
+        ):
+            raise ValueError(
+                "Reviewed mentions must be non-empty and use the active normalization contract"
+            )
 
     def mapped_type(self, source_label: str | None) -> EntityType | None:
         """Return the reviewed internal type for one source-specific label."""
@@ -133,6 +144,7 @@ def load_recognition_knowledge_policy(path: str | Path) -> RecognitionKnowledgeP
         max_alias_tokens=int(raw.get("max_alias_tokens", 20)),
         max_surface_variants=int(raw.get("max_surface_variants", 12)),
         allow_numeric_only=bool(raw.get("allow_numeric_only", False)),
+        accepted_source_mentions=_source_mention_allowlist(raw),
         blocked_normalized_mentions=_string_tuple(
             raw,
             "blocked_normalized_mentions",
@@ -245,6 +257,7 @@ def compile_recognition_knowledge(
             "entity_type_counts": dict(
                 sorted(Counter(str(row["semantic_type"]) for row in ordered_concepts).items())
             ),
+            "reviewed_source_mention_count": len(policy.accepted_source_mentions),
             "promotion_contract": (
                 "split-frozen, inventory-pinned, source-label-mapped, code-free"
             ),
@@ -278,6 +291,13 @@ def _eligible_mention(
         return None, "normalization_contract_mismatch"
     if normalized in policy.blocked_normalized_mentions:
         return None, "blocked_mention"
+    # SCALING: a source-aware hash allowlist lets large inventories fail closed without
+    # scanning a linear rule list for every mention.
+    if policy.accepted_source_mentions and (
+        entry.source_label,
+        normalized,
+    ) not in policy.accepted_source_mentions:
+        return None, "mention_not_reviewed"
     if not _alias_shape_allowed(normalized, policy):
         return None, "alias_shape_not_allowed"
     return _EligibleMention(entry=entry, entity_type=entity_type), "eligible"
@@ -390,3 +410,26 @@ def _string_tuple(
     ):
         raise ValueError(f"Recognition policy field {key!r} must be a string list")
     return tuple(str(item).strip() for item in value)
+
+
+def _source_mention_allowlist(
+    raw: Mapping[str, Any],
+) -> frozenset[tuple[str, str]]:
+    """Decode an optional source-label keyed reviewed mention allowlist."""
+
+    raw_allowlist = raw.get("accepted_source_mentions")
+    if raw_allowlist is None:
+        return frozenset()
+    if not isinstance(raw_allowlist, Mapping):
+        raise ValueError("accepted_source_mentions must be an object")
+    values: set[tuple[str, str]] = set()
+    for raw_label, raw_mentions in raw_allowlist.items():
+        label = str(raw_label)
+        if not isinstance(raw_mentions, Sequence) or isinstance(raw_mentions, str):
+            raise ValueError(
+                f"accepted_source_mentions[{label!r}] must be a string array"
+            )
+        values.update(
+            (label, normalize_for_match(str(mention))) for mention in raw_mentions
+        )
+    return frozenset(values)

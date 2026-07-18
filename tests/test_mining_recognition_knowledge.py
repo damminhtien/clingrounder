@@ -120,6 +120,31 @@ def test_compiler_rejects_mapped_and_baseline_type_conflicts() -> None:
     assert baseline_result.report["reason_counts"] == {"baseline_type_conflict": 1}
 
 
+def test_compiler_fail_closes_on_source_aware_reviewed_mentions() -> None:
+    base_policy = _policy()
+    policy = RecognitionKnowledgePolicy(
+        **{
+            **base_policy.__dict__,
+            "accepted_source_mentions": frozenset(
+                {("Symptom_and_Disease", "lao phổi")}
+            ),
+        }
+    )
+
+    result = compile_recognition_knowledge(
+        (
+            _entry("term:accepted", "Lao phổi"),
+            _entry("term:unreviewed", "Ho ra máu"),
+        ),
+        policy,
+        inventory_sha256=_INVENTORY_SHA256,
+    )
+
+    assert [row["canonical_name"] for row in result.concepts] == ["Lao phổi"]
+    assert result.report["reviewed_source_mention_count"] == 1
+    assert result.report["reason_counts"]["mention_not_reviewed"] == 1
+
+
 def test_compile_recognition_cli_pins_inventory_and_writes_audit_artifacts(
     tmp_path: Path,
     capsys,
@@ -137,6 +162,7 @@ def test_compile_recognition_cli_pins_inventory_and_writes_audit_artifacts(
                 "source_label_types": {"DiagnosticProcedure": "PROCEDURE"},
                 "accepted_label_sources": ["source_human_annotation"],
                 "accepted_review_tiers": ["multi_document"],
+                "accepted_source_mentions": {"DiagnosticProcedure": ["PCR"]},
                 "min_occurrences": 2,
                 "min_documents": 2,
             },
@@ -171,4 +197,5 @@ def test_compile_recognition_cli_pins_inventory_and_writes_audit_artifacts(
     assert exit_code == 0
     assert concept["semantic_type"] == "PROCEDURE"
     assert report["inventory_sha256"] == inventory_sha256
+    assert report["reviewed_source_mention_count"] == 1
     assert report["outputs"]["recognition_dictionary_sha256"] == sha256_file(output_path)
