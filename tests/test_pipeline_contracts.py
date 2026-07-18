@@ -129,10 +129,16 @@ def test_factory_config_accepts_multiple_canonical_terminology_sources() -> None
         {
             "terminology": {
                 "normalization_paths": ["icd.jsonl", "rxnorm.jsonl"],
-                "normalization_alias_overlay_paths": ["mined-aliases.jsonl"],
+                "normalization_alias_overlay_paths": [
+                    "mined-drug-aliases.jsonl",
+                    "mined-disease-aliases.jsonl",
+                ],
             }
         }
     )
 
     assert config.normalization_dictionary_paths == ("icd.jsonl", "rxnorm.jsonl")
-    assert config.normalization_alias_overlay_paths == ("mined-aliases.jsonl",)
+    assert config.normalization_alias_overlay_paths == (
+        "mined-drug-aliases.jsonl",
+        "mined-disease-aliases.jsonl",
+    )

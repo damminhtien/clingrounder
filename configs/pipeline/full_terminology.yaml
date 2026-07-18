@@ -10,7 +10,9 @@ terminology:
     - data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
   normalization_alias_overlay_paths:
     - outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl
-  normalization_index_path: .cache/medical-kg/terminology/terminology-dbc7430412b80b0c2b2a.sqlite3
+    # Source-held-out benchmark: 642/642 CodiEsp aliases retrieve their TT06 code at rank 1.
+    - outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl
+  normalization_index_path: .cache/medical-kg/terminology/terminology-a2d5a19e83fbc9e1a305.sqlite3
   cache_dir: .cache/medical-kg/terminology
 
 pipeline:
