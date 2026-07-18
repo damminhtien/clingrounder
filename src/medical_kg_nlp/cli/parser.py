@@ -279,6 +279,22 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     )
     dataset_fuse.set_defaults(handler="data_dataset_fuse")
     dataset_fuse.add_argument("--plan", required=True)
+    dataset_harmonize = dataset_operations.add_parser(
+        "harmonize",
+        help="Align source labels and codes against a pinned terminology repository.",
+    )
+    dataset_harmonize.set_defaults(handler="data_dataset_harmonize")
+    dataset_harmonize.add_argument("--documents", required=True)
+    dataset_harmonize.add_argument("--annotations", required=True)
+    dataset_harmonize.add_argument("--index", required=True)
+    dataset_harmonize.add_argument("--source", action="append", required=True)
+    dataset_harmonize.add_argument(
+        "--alias-overlay-source", action="append", default=[]
+    )
+    dataset_harmonize.add_argument("--policy", required=True)
+    dataset_harmonize.add_argument("--output", required=True)
+    dataset_harmonize.add_argument("--decisions-output", required=True)
+    dataset_harmonize.add_argument("--report-output", required=True)
     dataset_curate = dataset_operations.add_parser(
         "curate-annotations",
         help="Partition source annotations into model-eligible and review records.",

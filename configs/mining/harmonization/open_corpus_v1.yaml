@@ -1,0 +1,14 @@
+schema_version: annotation-harmonization-policy.v1
+policy_id: open-corpus-v1-source-label-alignment
+rules:
+  - rule_id: codiesp-diagnosis-to-tt06
+    source_id: codiesp
+    source_entity_type: FINDING
+    source_label: DIAGNOSTICO
+    target_entity_type: DISEASE
+    concept_system_map:
+      ICD-10-CM: ICD-10
+    target_terminology_version: TT06-2026-BYT
+    # CodiEsp contains ICD-10-CM extensions absent from TT06. They remain in
+    # harmonization metadata but cannot enter the normalized concept layer.
+    unmapped_concept_action: drop

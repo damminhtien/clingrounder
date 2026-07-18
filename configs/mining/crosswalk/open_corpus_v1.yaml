@@ -1,0 +1,45 @@
+schema_version: medical-mention-crosswalk-policy.v1
+policies:
+  - policy_id: codiesp-diagnosis-to-tt06-v1
+    source_entity_type: FINDING
+    source_label: DIAGNOSTICO
+    target_entity_types: [DISEASE]
+    code_systems: [ICD-10]
+
+  - policy_id: vietbioner-finding-to-tt06-review-v1
+    source_entity_type: FINDING
+    source_label: Symptom_and_Disease
+    # VietBioNER does not distinguish symptom from disease. Exact hits remain
+    # crosswalk proposals and are never promoted without a separate review policy.
+    target_entity_types: [DISEASE]
+    code_systems: [ICD-10]
+
+  - policy_id: dailymed-product-to-rxnorm-v1
+    source_entity_type: DRUG
+    source_label: SPL_PRODUCT_NAME
+    target_entity_types: [DRUG]
+    code_systems: [RxNorm]
+
+  - policy_id: dailymed-generic-to-rxnorm-v1
+    source_entity_type: DRUG
+    source_label: SPL_GENERIC_NAME
+    target_entity_types: [DRUG]
+    code_systems: [RxNorm]
+
+  - policy_id: dailymed-ingredient-to-rxnorm-v1
+    source_entity_type: DRUG
+    source_label: SPL_ACTIVE_INGREDIENT
+    target_entity_types: [DRUG]
+    code_systems: [RxNorm]
+
+  - policy_id: local-disease-to-tt06-v1
+    source_entity_type: DISEASE
+    source_label: DISEASE
+    target_entity_types: [DISEASE]
+    code_systems: [ICD-10]
+
+  - policy_id: local-drug-to-rxnorm-v1
+    source_entity_type: DRUG
+    source_label: DRUG
+    target_entity_types: [DRUG]
+    code_systems: [RxNorm]

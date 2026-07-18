@@ -23,6 +23,10 @@ from medical_kg_nlp.mining.graph_knowledge import (
     compile_knowledge_graph,
 )
 from medical_kg_nlp.mining.fusion import run_corpus_fusion_plan
+from medical_kg_nlp.mining.harmonization import (
+    harmonize_annotations,
+    load_annotation_harmonization_policy,
+)
 from medical_kg_nlp.mining.io import (
     load_annotations,
     load_documents,
@@ -103,6 +107,7 @@ __all__ = [
     "export_span_training_dataset",
     "freeze_snapshot",
     "fuse_datasets",
+    "harmonize_dataset",
     "import_review",
     "inspect_dataset",
     "propose_labels",
@@ -247,6 +252,60 @@ def fuse_datasets(args: argparse.Namespace) -> int:
 
     result = run_corpus_fusion_plan(args.plan)
     _print_json(result.model_dump(mode="json"))
+    return 0
+
+
+def harmonize_dataset(args: argparse.Namespace) -> int:
+    """Apply source-aware label alignment with terminology existence checks."""
+
+    repository = SQLiteTerminologyRepository(
+        args.index,
+        expected_source_paths=tuple(args.source),
+        expected_alias_overlay_paths=tuple(args.alias_overlay_source),
+    )
+    try:
+        result = harmonize_annotations(
+            load_documents(args.documents),
+            load_annotations(args.annotations),
+            repository,
+            load_annotation_harmonization_policy(args.policy),
+        )
+    finally:
+        repository.close()
+    annotations_sha256 = write_jsonl(
+        args.output, (annotation.to_dict() for annotation in result.annotations)
+    )
+    decisions_sha256 = write_jsonl(args.decisions_output, result.decisions)
+    report = {
+        **result.report,
+        "inputs": {
+            "documents": str(Path(args.documents)),
+            "documents_sha256": sha256_file(args.documents),
+            "annotations": str(Path(args.annotations)),
+            "annotations_sha256": sha256_file(args.annotations),
+            "policy": str(Path(args.policy)),
+            "policy_sha256": sha256_file(args.policy),
+            "terminology_index": str(Path(args.index)),
+            "terminology_input_fingerprint": repository.metadata.get(
+                "input_fingerprint", ""
+            ),
+        },
+        "outputs": {
+            "annotations": str(Path(args.output)),
+            "annotations_sha256": annotations_sha256,
+            "decisions": str(Path(args.decisions_output)),
+            "decisions_sha256": decisions_sha256,
+        },
+    }
+    write_json(args.report_output, report)
+    _print_json(
+        {
+            "annotation_count": len(result.annotations),
+            "decision_counts": result.report["decision_counts"],
+            "output": args.output,
+            "report": args.report_output,
+        }
+    )
     return 0
 
 

@@ -30,6 +30,13 @@ from medical_kg_nlp.mining.graph_knowledge import (
     GraphCompilationConfig,
     compile_knowledge_graph,
 )
+from medical_kg_nlp.mining.harmonization import (
+    AnnotationHarmonizationPolicy,
+    AnnotationHarmonizationResult,
+    AnnotationHarmonizationRule,
+    harmonize_annotations,
+    load_annotation_harmonization_policy,
+)
 from medical_kg_nlp.mining.fusion import (
     CorpusFusionPlan,
     CorpusFusionResult,
@@ -148,6 +155,9 @@ __all__ = [
     "AccessClass",
     "AgreementThresholds",
     "AnnotationLayer",
+    "AnnotationHarmonizationPolicy",
+    "AnnotationHarmonizationResult",
+    "AnnotationHarmonizationRule",
     "AnnotationProposal",
     "AnnotationCurationPolicy",
     "AnnotationCurationResult",
@@ -248,9 +258,11 @@ __all__ = [
     "load_linked_alias_policy",
     "export_span_dataset",
     "fuse_corpora",
+    "harmonize_annotations",
     "iter_span_training_records",
     "load_dataset_splits",
     "load_corpus_fusion_plan",
+    "load_annotation_harmonization_policy",
     "load_recognition_knowledge_policy",
     "load_alias_promotion_policy",
     "parser_from_definition",
