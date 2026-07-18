@@ -16,6 +16,7 @@ from medical_kg_nlp.adapters import (
     HuggingFaceModelConfig,
     HuggingFaceTextEncoderAdapter,
     HuggingFaceTokenClassifierAdapter,
+    HybridEntityExtractorAdapter,
     OptionalModelDependencyError,
 )
 from medical_kg_nlp.adapters.huggingface import runtime as huggingface_runtime
@@ -51,6 +52,7 @@ def test_model_config_requires_pinned_identity() -> None:
     assert config.entity_extractor is not None
     assert config.entity_extractor.provenance == "local/model@abc123"
     assert config.entity_label_map == (("PROBLEM", EntityType.DISEASE),)
+    assert config.entity_combine_with_dictionary is False
 
 
 def test_model_adapter_construction_does_not_import_optional_dependencies(
@@ -176,6 +178,34 @@ def test_factory_wires_model_extractor_without_loading_weights(tmp_path: Path) -
     runner = PipelineFactory.from_config(config)
 
     assert isinstance(runner.components.entity_extractor, HuggingFaceTokenClassifierAdapter)
+
+
+def test_factory_can_combine_model_with_reviewed_dictionary(tmp_path: Path) -> None:
+    dictionary = tmp_path / "concepts.jsonl"
+    dictionary.write_text(
+        '{"concept_id":"D1","code":"I10","code_system":"ICD-10",'
+        '"canonical_name":"tăng huyết áp","semantic_type":"DISEASE"}\n',
+        encoding="utf-8",
+    )
+    config = PipelineFactoryConfig(
+        recognition_dictionary_path=str(dictionary),
+        options=PipelineOptions(
+            enable_context=False,
+            enable_linking=False,
+            enable_entity_kg_validation=False,
+            enable_relations=False,
+            enable_relation_kg_validation=False,
+        ),
+        models=PipelineModelConfig(
+            entity_extractor=_model_config(),
+            entity_stride=8,
+            entity_combine_with_dictionary=True,
+        ),
+    )
+
+    runner = PipelineFactory.from_config(config)
+
+    assert isinstance(runner.components.entity_extractor, HybridEntityExtractorAdapter)
 
 
 def test_factory_wires_cross_encoder_without_loading_weights(tmp_path: Path) -> None:

@@ -7,6 +7,7 @@ from medical_kg_nlp.adapters.huggingface import (
     HuggingFaceTokenClassifierAdapter,
     OptionalModelDependencyError,
 )
+from medical_kg_nlp.adapters.hybrid import HybridEntityExtractorAdapter
 from medical_kg_nlp.adapters.rules import (
     DictionaryCandidateAdapter,
     KGValidatorAdapter,
@@ -21,6 +22,7 @@ __all__ = [
     "HuggingFaceModelConfig",
     "HuggingFaceTextEncoderAdapter",
     "HuggingFaceTokenClassifierAdapter",
+    "HybridEntityExtractorAdapter",
     "KGValidatorAdapter",
     "OptionalModelDependencyError",
     "RuleAssertionClassifierAdapter",

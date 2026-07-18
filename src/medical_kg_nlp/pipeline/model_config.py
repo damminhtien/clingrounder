@@ -18,6 +18,7 @@ class PipelineModelConfig:
     entity_extractor: HuggingFaceModelConfig | None = None
     entity_label_map: tuple[tuple[str, EntityType], ...] = ()
     entity_stride: int = 64
+    entity_combine_with_dictionary: bool = False
     candidate_reranker: HuggingFaceModelConfig | None = None
     candidate_reranker_weight: float = 0.75
     candidate_positive_label_index: int = 1
@@ -46,6 +47,11 @@ class PipelineModelConfig:
         )
         entity_label_map = _label_map(entity_payload or {})
         entity_stride = _integer(entity_payload or {}, "stride", cls.entity_stride)
+        combine_with_dictionary = _boolean(
+            entity_payload or {},
+            "combine_with_dictionary",
+            cls.entity_combine_with_dictionary,
+        )
         reranker_weight = _probability(
             reranker_payload or {},
             "model_weight",
@@ -66,6 +72,7 @@ class PipelineModelConfig:
             entity_extractor=entity_model,
             entity_label_map=entity_label_map,
             entity_stride=entity_stride,
+            entity_combine_with_dictionary=combine_with_dictionary,
             candidate_reranker=reranker_model,
             candidate_reranker_weight=reranker_weight,
             candidate_positive_label_index=positive_label_index,
@@ -99,6 +106,13 @@ def _integer(payload: Mapping[str, object], key: str, default: int) -> int:
     value = payload.get(key, default)
     if isinstance(value, bool) or not isinstance(value, int):
         raise ValueError(f"models.{key} must be an integer")
+    return value
+
+
+def _boolean(payload: Mapping[str, object], key: str, default: bool) -> bool:
+    value = payload.get(key, default)
+    if not isinstance(value, bool):
+        raise ValueError(f"models.entity_extractor.{key} must be a boolean")
     return value
 
 

@@ -12,6 +12,7 @@ from medical_kg_nlp.adapters.rules import (
     RuleEntityExtractorAdapter,
     RuleRelationExtractorAdapter,
 )
+from medical_kg_nlp.adapters.hybrid import HybridEntityExtractorAdapter
 from medical_kg_nlp.adapters.huggingface import (
     HuggingFaceCrossEncoderAdapter,
     HuggingFaceTokenClassifierAdapter,
@@ -185,11 +186,25 @@ class PipelineFactory:
             )
         entity_extractor: EntityExtractorPort
         if resolved.models.entity_extractor is not None:
-            entity_extractor = HuggingFaceTokenClassifierAdapter(
+            model_entity_extractor = HuggingFaceTokenClassifierAdapter(
                 resolved.models.entity_extractor,
                 label_map=dict(resolved.models.entity_label_map),
                 stride=resolved.models.entity_stride,
             )
+            if resolved.models.entity_combine_with_dictionary:
+                entity_extractor = HybridEntityExtractorAdapter(
+                    model=model_entity_extractor,
+                    dictionary=RuleEntityExtractorAdapter(
+                        RuleBasedNER(
+                            recognition_store,
+                            emit_probabilities_by_source=dict(
+                                options.link_emit_probabilities_by_source
+                            ),
+                        )
+                    ),
+                )
+            else:
+                entity_extractor = model_entity_extractor
         else:
             entity_extractor = RuleEntityExtractorAdapter(
                 RuleBasedNER(
