@@ -71,6 +71,12 @@ uv run medical-kg data dataset build \
   --store "$MEDICAL_KG_ARTIFACT_STORE" \
   --output outputs/mining/pmc/documents.jsonl
 
+uv run medical-kg data dataset inspect \
+  --documents outputs/mining/pmc/documents.jsonl \
+  --annotations outputs/mining/pmc/proposals.jsonl \
+  --output outputs/mining/pmc/source-profile.json \
+  --strict
+
 uv run medical-kg data label propose \
   --documents outputs/mining/pmc/documents.jsonl \
   --adapter my_local_plugin:create_labeler \
@@ -139,7 +145,44 @@ is an idempotent no-op.
 
 Implemented acquisition adapters cover explicit local archives, static URLs, PMC OA, DailyMed, and
 ClinicalTrials.gov. Implemented document parsers cover JATS, SPL, ClinicalTrials JSON, FHIR Bundle,
-BioC JSON, CodiEsp ZIP, and plain text. LOINC/HPO/Mondo are terminology inputs and should use
-`parse_documents: false`. VietBioNER and VietMed-NER remain local-license-review lanes until their
-exact downloaded formats and redistribution terms are pinned; do not silently interpret an unknown
-archive layout.
+BioC JSON, CodiEsp ZIP, BRAT ZIP, and plain text. LOINC/HPO/Mondo are terminology inputs and should
+use `parse_documents: false`.
+
+VietBioNER is pinned at Git commit `19ba70a5947d1be72906d407c860b1666b9337e9` under CC BY 4.0.
+`configs/mining/vietbioner.yaml` acquires the checksum-pinned archive, preserves each annotator as a
+separate document, groups exact duplicate text into one split, and imports source labels as silver
+proposals through `medical_kg_nlp.mining.labelers.brat`. The broad internal label mapping is an
+import convention, not adjudicated clinical gold. VietMed-NER remains quarantined until an explicit
+dataset annotation license is available; do not copy model-card visibility into a redistribution
+assumption.
+
+The current VietBioNER snapshot can be reproduced without an implicit download or parser choice:
+
+```bash
+uv run medical-kg data run --plan configs/mining/vietbioner.yaml
+
+uv run medical-kg data label propose \
+  --documents outputs/mining/vietbioner-19ba70a/documents.jsonl \
+  --adapter medical_kg_nlp.mining.labelers.brat:create_brat_archive_labeler \
+  --adapter-config configs/mining/labelers/vietbioner.yaml \
+  --output outputs/mining/vietbioner-19ba70a/source_annotations.jsonl
+
+uv run medical-kg data dataset inspect \
+  --documents outputs/mining/vietbioner-19ba70a/documents.jsonl \
+  --annotations outputs/mining/vietbioner-19ba70a/source_annotations.jsonl \
+  --output outputs/mining/vietbioner-19ba70a/source_profile.json \
+  --strict
+
+uv run medical-kg data snapshot freeze \
+  --documents outputs/mining/vietbioner-19ba70a/documents.jsonl \
+  --annotations outputs/mining/vietbioner-19ba70a/source_annotations.jsonl \
+  --artifacts outputs/mining/vietbioner-19ba70a/artifacts.jsonl \
+  --version vietbioner-19ba70a-silver-v1 \
+  --created-at 2026-07-18T14:40:46+07:00 \
+  --output-dir outputs/mining/snapshots/vietbioner-19ba70a-silver-v1 \
+  --skip-agreement-gate
+```
+
+The expected import has 70 annotator documents, 3,574 source annotations, seven exact-duplicate
+text groups, and no offset mismatch. The source snapshot remains silver because duplicate
+annotators have not yet been adjudicated into a consensus gold layer.

@@ -21,6 +21,7 @@ from medical_kg_nlp.mining.ports import (
     SourceConnectorPort,
 )
 from medical_kg_nlp.mining.policy import MiningQualityGate, PolicyDecision, SourcePolicyGate
+from medical_kg_nlp.mining.profile import build_dataset_profile, profile_blocking_issue_count
 from medical_kg_nlp.mining.records import (
     AccessClass,
     AnnotationLayer,
@@ -128,11 +129,13 @@ __all__ = [
     "SnapshotSplitConfig",
     "StoredObject",
     "VersionPolicy",
+    "build_dataset_profile",
     "connector_from_definition",
     "ConsensusProposalLabeler",
     "JsonlReviewBackend",
     "load_source_registry",
     "load_mining_plan",
     "parser_from_definition",
+    "profile_blocking_issue_count",
     "run_mining_plan",
 ]

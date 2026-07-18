@@ -28,6 +28,10 @@ from medical_kg_nlp.mining.labeling import (
 )
 from medical_kg_nlp.mining.policy import SourcePolicyGate
 from medical_kg_nlp.mining.ports import ProposalLabelerPort
+from medical_kg_nlp.mining.profile import (
+    build_dataset_profile,
+    profile_blocking_issue_count,
+)
 from medical_kg_nlp.mining.records import SourceRequest
 from medical_kg_nlp.mining.quality import GoldAgreementGate, ReviewAgreementEvaluator
 from medical_kg_nlp.mining.registry import load_source_registry
@@ -45,6 +49,7 @@ __all__ = [
     "export_review",
     "freeze_snapshot",
     "import_review",
+    "inspect_dataset",
     "propose_labels",
     "report_coverage",
     "review_quality",
@@ -121,6 +126,25 @@ def build_dataset(args: argparse.Namespace) -> int:
     write_jsonl(args.output, (document.to_dict() for document in documents))
     _print_json({"document_count": len(documents), "output": args.output})
     return 0
+
+
+def inspect_dataset(args: argparse.Namespace) -> int:
+    """Write a reusable source profile and optionally gate structural issues."""
+
+    documents = load_documents(args.documents)
+    annotations = () if args.annotations is None else load_annotations(args.annotations)
+    profile = build_dataset_profile(documents, annotations)
+    blocking_issue_count = profile_blocking_issue_count(profile)
+    write_json(args.output, profile)
+    _print_json(
+        {
+            "annotation_count": len(annotations),
+            "blocking_issue_count": blocking_issue_count,
+            "document_count": len(documents),
+            "output": args.output,
+        }
+    )
+    return 1 if args.strict and blocking_issue_count else 0
 
 
 def propose_labels(args: argparse.Namespace) -> int:

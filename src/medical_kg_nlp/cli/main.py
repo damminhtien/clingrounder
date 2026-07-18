@@ -20,6 +20,7 @@ _HANDLERS = {
     "data_registry_validate": ("medical_kg_nlp.cli.commands.data", "validate_registry"),
     "data_source_sync": ("medical_kg_nlp.cli.commands.data", "sync_registered_source"),
     "data_dataset_build": ("medical_kg_nlp.cli.commands.data", "build_dataset"),
+    "data_dataset_inspect": ("medical_kg_nlp.cli.commands.data", "inspect_dataset"),
     "data_label_propose": ("medical_kg_nlp.cli.commands.data", "propose_labels"),
     "data_review_export": ("medical_kg_nlp.cli.commands.data", "export_review"),
     "data_review_import": ("medical_kg_nlp.cli.commands.data", "import_review"),

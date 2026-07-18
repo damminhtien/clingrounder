@@ -144,6 +144,18 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     dataset_build.add_argument("--artifacts", required=True)
     dataset_build.add_argument("--store", required=True)
     dataset_build.add_argument("--output", required=True)
+    dataset_inspect = dataset_operations.add_parser(
+        "inspect", help="Profile documents, labels, duplicates, and offset integrity."
+    )
+    dataset_inspect.set_defaults(handler="data_dataset_inspect")
+    dataset_inspect.add_argument("--documents", required=True)
+    dataset_inspect.add_argument("--annotations")
+    dataset_inspect.add_argument("--output", required=True)
+    dataset_inspect.add_argument(
+        "--strict",
+        action="store_true",
+        help="Return a failing status when structural issues are present.",
+    )
 
     label = operations.add_parser("label", help="Run a local proposal-labeler adapter.")
     label_operations = label.add_subparsers(dest="data_label_command", required=True)
