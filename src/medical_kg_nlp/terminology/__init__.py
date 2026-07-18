@@ -16,6 +16,10 @@ from medical_kg_nlp.terminology.index_builder import (
 )
 from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
 from medical_kg_nlp.terminology.ports import TerminologyRepository
+from medical_kg_nlp.terminology.query_sets import (
+    build_alias_overlay_queries,
+    write_alias_overlay_query_set,
+)
 from medical_kg_nlp.terminology.sqlite_repository import SQLiteTerminologyRepository
 
 __all__ = [
@@ -26,10 +30,12 @@ __all__ = [
     "TerminologyRepository",
     "TerminologyQuery",
     "TerminologyIndexManifest",
+    "build_alias_overlay_queries",
     "build_terminology_index",
     "evaluate_terminology_queries",
     "input_fingerprint",
     "load_terminology_queries",
     "source_fingerprint",
     "terminology_cache_path",
+    "write_alias_overlay_query_set",
 ]

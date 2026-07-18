@@ -61,6 +61,43 @@ def test_terminology_build_and_inspect_commands(tmp_path: Path, capsys: pytest.C
     assert inspect_payload["results"][0]["code"] == "I10"
 
 
+def test_terminology_query_set_command(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    overlay = tmp_path / "aliases.jsonl"
+    queries = tmp_path / "queries.jsonl"
+    manifest = tmp_path / "query_manifest.json"
+    write_jsonl(
+        overlay,
+        [
+            {
+                "alias": "cao huyết áp",
+                "code": "I10",
+                "code_system": "ICD-10",
+                "semantic_type": "DISEASE",
+            }
+        ],
+    )
+
+    assert (
+        main(
+            [
+                "terminology",
+                "query-set",
+                "--alias-overlay",
+                str(overlay),
+                "--output",
+                str(queries),
+                "--manifest-output",
+                str(manifest),
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["query_count"] == 1
+    assert read_jsonl(queries)[0]["expected_codes"] == ["I10"]
+    assert json.loads(manifest.read_text(encoding="utf-8")) == payload
+
+
 def test_validate_command_profiles_hash_mismatch(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

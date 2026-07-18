@@ -60,6 +60,15 @@ def _terminology_parser(commands: argparse._SubParsersAction[argparse.ArgumentPa
     )
     build.add_argument("--cache-dir", default=".cache/medical-kg/terminology")
 
+    query_set = operations.add_parser(
+        "query-set",
+        help="Build neutral retrieval queries from reviewed alias overlays.",
+    )
+    query_set.set_defaults(handler="terminology_query_set")
+    query_set.add_argument("--alias-overlay", action="append", required=True)
+    query_set.add_argument("--output", required=True)
+    query_set.add_argument("--manifest-output", required=True)
+
     inspect = operations.add_parser("inspect", help="Inspect metadata or query a built index.")
     inspect.set_defaults(handler="terminology_inspect")
     inspect.add_argument("--index", required=True)

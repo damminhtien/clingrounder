@@ -12,9 +12,10 @@ from medical_kg_nlp.terminology import (
     build_terminology_index,
     evaluate_terminology_queries,
     load_terminology_queries,
+    write_alias_overlay_query_set,
 )
 
-__all__ = ["benchmark_index", "build_index", "inspect_index"]
+__all__ = ["benchmark_index", "build_index", "build_query_set", "inspect_index"]
 
 
 def build_index(args: argparse.Namespace) -> int:
@@ -67,6 +68,18 @@ def inspect_index(args: argparse.Namespace) -> int:
                 limit=args.limit,
             )
         ]
+    print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def build_query_set(args: argparse.Namespace) -> int:
+    """Create a source-pinned retrieval query set from reviewed aliases."""
+
+    payload = write_alias_overlay_query_set(
+        tuple(args.alias_overlay),
+        args.output,
+        args.manifest_output,
+    )
     print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 
