@@ -555,6 +555,10 @@ the fused `curated_annotations.jsonl` input. The source-heldout snapshot must re
 | source-held-out | 3,745 | 13,107 | development-only `FINDING` |
 | model-balanced | 3,745 | 13,107 | both splits: `DISEASE`, `DRUG`, `FINDING` |
 
+The model-balanced chunk distribution is `train/development`: CodiEsp `2,770/277`, DailyMed
+`410/55`, PMC OA `19/2`, and VietBioNER `179/33`. Hashing is performed at document/group level,
+so chunks from one document cannot cross the split boundary.
+
 The current model-balanced fingerprints are:
 
 ```text
