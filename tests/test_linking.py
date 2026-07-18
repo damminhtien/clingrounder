@@ -1,9 +1,14 @@
+from pathlib import Path
+
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.linking.linker import EntityLinker
 from medical_kg_nlp.linking.reranker import HeuristicReranker
-from medical_kg_nlp.retrieval.adapters import ExactRetrieverAdapter
+from medical_kg_nlp.retrieval.adapters import (
+    ExactRetrieverAdapter,
+    ReviewedMentionRetrieverAdapter,
+)
 from medical_kg_nlp.retrieval.bm25_retriever import BM25Retriever
 from medical_kg_nlp.retrieval.pipeline import RetrievalPipeline
 from medical_kg_nlp.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
@@ -82,6 +87,50 @@ def test_unique_exact_output_short_circuits_approximate_retrieval() -> None:
         ("I10", ("exact",))
     ]
     assert candidates[0].score == 1.0
+
+
+def test_reviewed_memory_short_circuits_conflicting_seed_exact_match(
+    tmp_path: Path,
+) -> None:
+    store = DictionaryStore(
+        [
+            ConceptEntry(
+                concept_id="ICD10:I25.10",
+                code="I25.10",
+                code_system=CodeSystem.ICD10,
+                canonical_name="bệnh động mạch vành",
+                semantic_type=EntityType.DISEASE,
+            ),
+            ConceptEntry(
+                concept_id="ICD10:I25.1",
+                code="I25.1",
+                code_system=CodeSystem.ICD10,
+                canonical_name="coronary artery disease",
+                aliases=("bệnh động mạch vành",),
+                semantic_type=EntityType.DISEASE,
+            ),
+        ]
+    )
+    repository = InMemoryTerminologyRepository(store)
+    memory = tmp_path / "reviewed.jsonl"
+    memory.write_text(
+        '{"mention":"bệnh động mạch vành","code_system":"ICD-10",'
+        '"code":"I25.1","provenance":"reviewed_memory:test"}\n',
+        encoding="utf-8",
+    )
+    generator = RetrievalPipeline(
+        repository,
+        (
+            ReviewedMentionRetrieverAdapter.from_jsonl(repository, memory),
+            ExactRetrieverAdapter(repository),
+        ),
+    )
+
+    candidates = generator.retrieve("bệnh động mạch vành", EntityType.DISEASE)
+
+    assert [(candidate.code, candidate.source) for candidate in candidates] == [
+        ("I25.1", "reviewed_memory:test")
+    ]
 
 
 def test_ambiguous_exact_output_continues_approximate_retrieval() -> None:

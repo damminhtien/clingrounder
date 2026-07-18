@@ -8,6 +8,7 @@ import pytest
 from medical_kg_nlp.benchmarks.phase1.reviewed_alias_overlay import (
     compile_reviewed_candidate_aliases,
     load_reviewed_candidate_proposals,
+    reviewed_alias_memory_rows,
 )
 from medical_kg_nlp.terminology import SQLiteTerminologyRepository, build_terminology_index
 
@@ -46,6 +47,7 @@ def test_reviewed_map_compiles_to_typed_normalization_overlay(tmp_path: Path) ->
         ("DRUG", "6809"),
     ]
     assert all("document_id" not in row and "position" not in row for row in result.alias_overlays)
+    assert reviewed_alias_memory_rows(result)[0]["mention"] == "metformin xr"
 
 
 def test_reviewed_map_rejects_cross_system_and_conflicting_rows(tmp_path: Path) -> None:

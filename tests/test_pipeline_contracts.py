@@ -135,6 +135,7 @@ def test_factory_config_accepts_multiple_canonical_terminology_sources() -> None
                     "mined-disease-aliases.jsonl",
                 ],
                 "query_cache_size": 128,
+                "reviewed_mention_path": "reviewed-memory.jsonl",
                 "additional_recognition_paths": ["vn.jsonl", "mined.jsonl"],
             }
         }
@@ -146,6 +147,7 @@ def test_factory_config_accepts_multiple_canonical_terminology_sources() -> None
         "mined-disease-aliases.jsonl",
     )
     assert config.terminology_query_cache_size == 128
+    assert config.reviewed_mention_path == "reviewed-memory.jsonl"
     assert config.additional_recognition_dictionary_paths == ("vn.jsonl", "mined.jsonl")
 
 

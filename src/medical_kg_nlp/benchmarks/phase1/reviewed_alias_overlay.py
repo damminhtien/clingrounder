@@ -28,6 +28,7 @@ __all__ = [
     "build_reviewed_alias_policy",
     "compile_reviewed_candidate_aliases",
     "load_reviewed_candidate_proposals",
+    "reviewed_alias_memory_rows",
 ]
 
 PHASE1_REVIEWED_ALIAS_SOURCE = "phase1_manual_gold_train"
@@ -165,6 +166,37 @@ def compile_reviewed_candidate_aliases(
         build_reviewed_alias_policy(source_sha256),
     )
     return result, source_sha256
+
+
+def reviewed_alias_memory_rows(
+    result: AliasKnowledgeCompilationResult,
+) -> tuple[dict[str, str], ...]:
+    """Return terminal exact mappings for aliases that passed promotion.
+
+    The memory file is derived from promoted overlays rather than the input map,
+    so rejected conflicts and unknown codes cannot bypass the compiler through a
+    faster retrieval path.
+    """
+
+    rows = [
+        {
+            "mention": str(alias["alias"]),
+            "code_system": str(alias["code_system"]),
+            "code": str(alias["code"]),
+            "provenance": f"reviewed_memory:{alias['policy_id']}",
+        }
+        for alias in result.alias_overlays
+    ]
+    return tuple(
+        sorted(
+            rows,
+            key=lambda row: (
+                normalize_for_match(row["mention"]),
+                row["code_system"],
+                row["code"],
+            ),
+        )
+    )
 
 
 def _required_string(

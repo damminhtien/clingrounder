@@ -59,6 +59,9 @@ class PipelineFactoryConfig:
     knowledge_graph_index_path: str | None = None
     terminology_cache_dir: str = ".cache/medical-kg/terminology"
     terminology_query_cache_size: int = 0
+    reviewed_mention_path: str | None = (
+        "src/medical_kg_nlp/resources/phase1_rxnorm_memory.jsonl"
+    )
     additional_recognition_dictionary_path: str | None = None
     additional_recognition_dictionary_paths: tuple[str, ...] = ()
     abbreviation_path: str = "data/dictionaries/abbreviations.jsonl"
@@ -106,6 +109,9 @@ class PipelineFactoryConfig:
                 terminology,
                 "query_cache_size",
                 cls.terminology_query_cache_size,
+            ),
+            reviewed_mention_path=_optional_string(
+                terminology.get("reviewed_mention_path", cls.reviewed_mention_path)
             ),
             additional_recognition_dictionary_path=_optional_string(
                 terminology.get("additional_recognition_path")
@@ -237,6 +243,7 @@ class PipelineFactory:
                     abbreviation_path=resolved.abbreviation_path,
                     max_candidates=options.max_candidates,
                     retrieval_sources=options.candidate_sources,
+                    mention_memory_path=resolved.reviewed_mention_path,
                     use_fts_for_bm25=uses_sqlite_normalization,
                     knowledge_graph_repository=knowledge_graph_repository,
                 ),

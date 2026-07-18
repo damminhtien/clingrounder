@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from medical_kg_nlp.benchmarks.phase1.reviewed_alias_overlay import (
     compile_reviewed_candidate_aliases,
+    reviewed_alias_memory_rows,
 )
 from medical_kg_nlp.mining.io import write_json, write_jsonl
 from medical_kg_nlp.terminology import SQLiteTerminologyRepository
@@ -30,6 +31,7 @@ def main() -> None:
     parser.add_argument("--base-alias-overlay", action="append", default=[])
     parser.add_argument("--overlay-output", required=True)
     parser.add_argument("--recognition-output", required=True)
+    parser.add_argument("--memory-output", required=True)
     parser.add_argument("--decisions-output", required=True)
     parser.add_argument("--report-output", required=True)
     args = parser.parse_args()
@@ -49,6 +51,7 @@ def main() -> None:
 
     overlay_sha256 = write_jsonl(args.overlay_output, result.alias_overlays)
     recognition_sha256 = write_jsonl(args.recognition_output, result.recognition_concepts)
+    memory_sha256 = write_jsonl(args.memory_output, reviewed_alias_memory_rows(result))
     decisions_sha256 = write_jsonl(args.decisions_output, result.decisions)
     report = {
         **result.report,
@@ -65,6 +68,8 @@ def main() -> None:
             "alias_overlay_sha256": overlay_sha256,
             "recognition_dictionary": str(Path(args.recognition_output)),
             "recognition_dictionary_sha256": recognition_sha256,
+            "reviewed_memory": str(Path(args.memory_output)),
+            "reviewed_memory_sha256": memory_sha256,
             "decisions": str(Path(args.decisions_output)),
             "decisions_sha256": decisions_sha256,
         },
@@ -72,6 +77,7 @@ def main() -> None:
             "recognition_enabled": False,
             "normalization_overlay_only": True,
             "document_specific_fields_present": False,
+            "reviewed_memory_terminal": True,
         },
     }
     write_json(args.report_output, report)
