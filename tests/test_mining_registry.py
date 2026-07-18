@@ -81,6 +81,32 @@ def test_source_policy_gate_rejects_version_drift() -> None:
     assert "source_version_mismatch" in decision.reasons
 
 
+def test_source_policy_gate_requires_local_encrypted_dua_storage() -> None:
+    registry = load_source_registry("data/sources/mining_registry.yaml")
+    gate = SourcePolicyGate(registry)
+    source = registry.by_id("mimic_iv_note")
+
+    unencrypted = gate.artifact_storage(
+        source,
+        store_uri="/Volumes/private-medical-data",
+        encrypted_at_rest=False,
+    )
+    remote = gate.artifact_storage(
+        source,
+        store_uri="s3://example/mimic",
+        encrypted_at_rest=True,
+    )
+    allowed = gate.artifact_storage(
+        source,
+        store_uri="/Volumes/encrypted-medical-data",
+        encrypted_at_rest=True,
+    )
+
+    assert "restricted_source_requires_encryption_at_rest" in unencrypted.reasons
+    assert "local_only_source_requires_local_store" in remote.reasons
+    assert allowed.allowed is True
+
+
 def test_quality_gate_reports_offsets_unknown_concepts_and_synthetic_challenge() -> None:
     document = MinedDocument(
         document_id="doc-1",

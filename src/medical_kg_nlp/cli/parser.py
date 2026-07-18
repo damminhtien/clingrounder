@@ -128,6 +128,7 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     source_sync.add_argument("--source-version", required=True)
     source_sync.add_argument("--parameters", help="YAML/JSON request-parameter mapping.")
     source_sync.add_argument("--store", required=True)
+    source_sync.add_argument("--encrypted-at-rest", action="store_true")
     source_sync.add_argument("--output", required=True)
 
     dataset = operations.add_parser("dataset", help="Build documents from acquired artifacts.")

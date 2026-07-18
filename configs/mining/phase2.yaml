@@ -5,6 +5,8 @@ artifact_store:
   # Use a mounted encrypted volume or an s3:// URI. The variable is required intentionally.
   uri: ${MEDICAL_KG_ARTIFACT_STORE}
   storage_options: {}
+  # Set true only after verifying encryption on the mounted DUA/private volume.
+  encrypted_at_rest: false
 sources:
   - source_id: pmc_oa
     source_version: "2026-07-18"

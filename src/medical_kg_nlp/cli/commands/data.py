@@ -73,6 +73,16 @@ def sync_registered_source(args: argparse.Namespace) -> int:
     registry = load_source_registry(args.registry)
     source = registry.by_id(args.source_id)
     parameters = _load_mapping(args.parameters) if args.parameters else {}
+    policy_gate = SourcePolicyGate(registry)
+    storage_decision = policy_gate.artifact_storage(
+        source,
+        store_uri=args.store,
+        encrypted_at_rest=args.encrypted_at_rest,
+    )
+    if not storage_decision.allowed:
+        raise PermissionError(
+            f"Storage policy rejected {source.id}: {', '.join(storage_decision.reasons)}"
+        )
     store = artifact_store_from_uri(args.store)
     artifacts = sync_source(
         source=source,
@@ -82,7 +92,7 @@ def sync_registered_source(args: argparse.Namespace) -> int:
             parameters=parameters,
         ),
         store=store,
-        policy_gate=SourcePolicyGate(registry),
+        policy_gate=policy_gate,
         checkpoint_path=args.output,
     )
     _print_json({"artifact_count": len(artifacts), "output": args.output})

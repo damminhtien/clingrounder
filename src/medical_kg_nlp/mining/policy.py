@@ -15,7 +15,12 @@ from medical_kg_nlp.mining.records import (
     ReviewStatus,
     SourceArtifact,
 )
-from medical_kg_nlp.mining.registry import LicenseMode, SourceRegistry
+from medical_kg_nlp.mining.registry import (
+    LicenseMode,
+    RetentionPolicy,
+    SourceDefinition,
+    SourceRegistry,
+)
 
 __all__ = ["MiningQualityGate", "PolicyDecision", "SourcePolicyGate"]
 
@@ -81,6 +86,24 @@ class SourcePolicyGate:
             }:
                 reasons.add(f"{document.document_id}:{document.access_class.value}")
         return PolicyDecision(not reasons, tuple(sorted(reasons)))
+
+    def artifact_storage(
+        self,
+        source: SourceDefinition,
+        *,
+        store_uri: str,
+        encrypted_at_rest: bool,
+    ) -> PolicyDecision:
+        """Validate storage placement before restricted bytes are fetched."""
+
+        reasons: list[str] = []
+        remote = "://" in store_uri and not store_uri.startswith("file://")
+        if source.retention is RetentionPolicy.LOCAL_ONLY and remote:
+            reasons.append("local_only_source_requires_local_store")
+        if source.access_class in {AccessClass.DUA, AccessClass.LOCAL_PRIVATE}:
+            if not encrypted_at_rest:
+                reasons.append("restricted_source_requires_encryption_at_rest")
+        return PolicyDecision(not reasons, tuple(reasons))
 
 
 class MiningQualityGate:

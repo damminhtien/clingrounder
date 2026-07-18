@@ -15,6 +15,8 @@ registered source -> immutable artifact -> parsed document -> proposals
   connector, and parser in `data/sources/mining_registry.yaml`.
 - Per-article sources such as PMC OA must provide the article license before fetch completes.
 - `DUA`, credentialled, private, and quarantine records cannot use hosted labelers.
+- `local_only` sources are rejected on remote object stores. DUA/private jobs additionally require
+  `encrypted_at_rest: true`; this declaration must reflect verified volume encryption.
 - `MinedDocument.text` is immutable. Normalization or translation creates a child document rather
   than rewriting offsets.
 - Gold and challenge annotations must be human-accepted. Synthetic records can train models but

@@ -52,6 +52,7 @@ class ArtifactStoreConfig(BaseModel):
 
     uri: str = Field(min_length=1)
     storage_options: dict[str, Any] = Field(default_factory=dict)
+    encrypted_at_rest: bool = False
 
 
 class SourceJob(BaseModel):
@@ -177,6 +178,16 @@ def run_mining_plan(path: str | Path) -> MiningPlanResult:
         if not job.enabled:
             continue
         source = registry.by_id(job.source_id)
+        storage_decision = policy_gate.artifact_storage(
+            source,
+            store_uri=plan.artifact_store.uri,
+            encrypted_at_rest=plan.artifact_store.encrypted_at_rest,
+        )
+        if not storage_decision.allowed:
+            raise PermissionError(
+                f"Storage policy rejected {source.id}: "
+                f"{', '.join(storage_decision.reasons)}"
+            )
         fingerprint = _job_fingerprint(source, job)
         stage_dir = stage_root / f"{job.source_id}-{fingerprint[:16]}"
         artifact_path = stage_dir / "artifacts.jsonl"
