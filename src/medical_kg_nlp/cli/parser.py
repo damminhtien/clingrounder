@@ -90,6 +90,11 @@ def _terminology_parser(commands: argparse._SubParsersAction[argparse.ArgumentPa
     benchmark.add_argument("--queries", required=True)
     benchmark.add_argument("--output", required=True)
     benchmark.add_argument("--limit", type=int, default=20)
+    benchmark.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print detailed query errors; they are always retained in --output.",
+    )
 
 
 def _evaluate_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:

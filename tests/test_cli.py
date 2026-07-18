@@ -98,6 +98,64 @@ def test_terminology_query_set_command(tmp_path: Path, capsys: pytest.CaptureFix
     assert json.loads(manifest.read_text(encoding="utf-8")) == payload
 
 
+def test_terminology_benchmark_prints_summary_and_saves_errors(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    source = tmp_path / "concepts.jsonl"
+    queries = tmp_path / "queries.jsonl"
+    index = tmp_path / "terminology.sqlite3"
+    report = tmp_path / "report.json"
+    write_jsonl(
+        source,
+        [
+            {
+                "concept_id": "D1",
+                "code": "I10",
+                "code_system": "ICD-10",
+                "canonical_name": "tăng huyết áp",
+                "semantic_type": "DISEASE",
+            }
+        ],
+    )
+    write_jsonl(
+        queries,
+        [
+            {
+                "query_id": "missing-1",
+                "mention": "không tồn tại",
+                "entity_type": "DISEASE",
+                "code_system": "ICD-10",
+                "expected_codes": ["I10"],
+            }
+        ],
+    )
+    assert main(["terminology", "build", "--source", str(source), "--output", str(index)]) == 0
+    capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "terminology",
+                "benchmark",
+                "--index",
+                str(index),
+                "--source",
+                str(source),
+                "--queries",
+                str(queries),
+                "--output",
+                str(report),
+            ]
+        )
+        == 0
+    )
+    summary = json.loads(capsys.readouterr().out)
+    detailed = json.loads(report.read_text(encoding="utf-8"))
+    assert "errors" not in summary["modes"]["exact"]
+    assert detailed["modes"]["exact"]["errors"][0]["query_id"] == "missing-1"
+
+
 def test_validate_command_profiles_hash_mismatch(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

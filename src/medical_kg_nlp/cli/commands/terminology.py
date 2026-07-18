@@ -112,5 +112,28 @@ def benchmark_index(args: argparse.Namespace) -> int:
         json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
+    # SCALING: detailed miss rows stay in the report file; agent polling remains compact.
+    printed = payload if args.verbose else _benchmark_summary(payload, output)
+    print(json.dumps(printed, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
+
+
+def _benchmark_summary(payload: dict[str, object], output: Path) -> dict[str, object]:
+    modes = payload.get("modes")
+    compact_modes: dict[str, object] = {}
+    if isinstance(modes, dict):
+        for name, raw in modes.items():
+            if isinstance(raw, dict):
+                compact_modes[str(name)] = {
+                    "metrics": raw.get("metrics", {}),
+                    "latency_ms": raw.get("latency_ms", {}),
+                }
+    return {
+        "schema_version": payload.get("schema_version"),
+        "index": payload.get("index"),
+        "queries": payload.get("queries"),
+        "query_count": payload.get("query_count"),
+        "unknown_expected_code_count": payload.get("unknown_expected_code_count"),
+        "modes": compact_modes,
+        "report": str(output),
+    }
