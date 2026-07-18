@@ -30,6 +30,9 @@ def run_phase1(args: argparse.Namespace) -> int:
             pipeline_config_path=(
                 Path(args.pipeline_config) if args.pipeline_config else None
             ),
+            validation_dictionary_paths=tuple(
+                Path(path) for path in args.validation_dictionaries
+            ),
             assertion_policy=cast(BenchmarkExportPolicy, args.assertion_policy),
             candidate_policy=cast(BenchmarkExportPolicy, args.candidate_policy),
             max_candidates=args.max_candidates,

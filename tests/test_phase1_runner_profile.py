@@ -45,3 +45,21 @@ pipeline:
     assert config.options.candidate_sources == ("exact", "bm25")
     assert config.options.enable_relations is False
     assert config.options.enable_relation_kg_validation is False
+
+
+def test_validation_dictionary_paths_are_explicit_and_ordered(tmp_path: Path) -> None:
+    config = Phase1BenchmarkConfig(
+        input_dir=tmp_path,
+        output_dir=tmp_path / "output",
+        zip_path=tmp_path / "output.zip",
+        dictionary_path=tmp_path / "recognition.jsonl",
+        abbreviation_path=tmp_path / "abbr.jsonl",
+        validation_dictionary_paths=(tmp_path / "icd.jsonl", tmp_path / "rxnorm.jsonl"),
+    )
+
+    # The field is intentionally separate from dictionary_path: recognition can stay compact
+    # while release validation covers every code system emitted by normalization.
+    assert config.validation_dictionary_paths == (
+        tmp_path / "icd.jsonl",
+        tmp_path / "rxnorm.jsonl",
+    )

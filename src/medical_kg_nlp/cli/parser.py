@@ -185,6 +185,16 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
             "terminology index are preserved while benchmark paths override the base files."
         ),
     )
+    phase1.add_argument(
+        "--validation-dictionary",
+        dest="validation_dictionaries",
+        action="append",
+        default=[],
+        help=(
+            "Canonical JSONL source accepted by release validation; repeat for TT06 and "
+            "RxNorm when a full terminology profile emits both systems."
+        ),
+    )
     phase1.add_argument("--assertion-policy", choices=("empty", "pipeline"), default="pipeline")
     phase1.add_argument("--candidate-policy", choices=("empty", "pipeline"), default="pipeline")
     phase1.add_argument("--max-candidates", type=int, default=5)

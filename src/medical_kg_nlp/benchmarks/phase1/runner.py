@@ -17,6 +17,7 @@ from medical_kg_nlp.benchmarks.phase1.phase1 import (
     zip_phase1_output_dir,
 )
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.dictionaries.merge import merge_concept_entries
 from medical_kg_nlp.pipeline.factory import PipelineFactoryConfig
 from medical_kg_nlp.pipeline.parallel_batch import (
     ParallelBatchOptions,
@@ -44,6 +45,7 @@ class Phase1BenchmarkConfig:
     dictionary_path: Path
     abbreviation_path: Path
     pipeline_config_path: Path | None = None
+    validation_dictionary_paths: tuple[Path, ...] = ()
     assertion_policy: BenchmarkExportPolicy = "pipeline"
     candidate_policy: BenchmarkExportPolicy = "pipeline"
     max_candidates: int = 5
@@ -77,7 +79,7 @@ def run_phase1_benchmark(config: Phase1BenchmarkConfig) -> dict[str, Any]:
         assertion_policy=config.assertion_policy,
         candidate_policy=config.candidate_policy,
     )
-    dictionary = DictionaryStore.from_jsonl(config.dictionary_path)
+    dictionary = _load_validation_dictionary(config)
     directory_issues = validate_phase1_submission_dir(
         config.input_dir,
         config.output_dir,
@@ -106,6 +108,7 @@ def run_phase1_benchmark(config: Phase1BenchmarkConfig) -> dict[str, Any]:
         "pipeline_config": str(config.pipeline_config_path)
         if config.pipeline_config_path is not None
         else None,
+        "validation_dictionaries": [str(path) for path in _validation_paths(config)],
         "validation_issues": 0,
     }
 
@@ -144,3 +147,23 @@ def build_phase1_factory_config(config: Phase1BenchmarkConfig) -> PipelineFactor
             enable_relation_kg_validation=False,
         ),
     )
+
+
+def _validation_paths(config: Phase1BenchmarkConfig) -> tuple[Path, ...]:
+    """Return the code sources accepted by the release validator."""
+
+    return config.validation_dictionary_paths or (config.dictionary_path,)
+
+
+def _load_validation_dictionary(config: Phase1BenchmarkConfig) -> DictionaryStore:
+    """Build one validation view from one or more pinned canonical JSONL sources.
+
+    Recognition and normalization deliberately have different storage footprints. A full profile
+    may emit a code from TT06/RxNorm even though its recognition dictionary is intentionally tiny;
+    release validation must therefore receive the same canonical code sources explicitly.
+    """
+
+    entries = []
+    for path in _validation_paths(config):
+        entries.extend(DictionaryStore.load_entries_jsonl(path))
+    return DictionaryStore(merge_concept_entries(entries))
