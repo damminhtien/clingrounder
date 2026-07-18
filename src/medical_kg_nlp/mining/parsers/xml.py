@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 import io
+import json
 import tarfile
 import xml.etree.ElementTree as ET
 from collections.abc import Iterable
 
+from medical_kg_nlp.mining.formats.dailymed import (
+    extract_spl_products,
+    render_spl_product,
+)
 from medical_kg_nlp.mining.parsers.base import ArtifactParserAdapter
 from medical_kg_nlp.mining.ports import ArtifactStorePort
 from medical_kg_nlp.mining.records import MinedDocument, SourceArtifact
@@ -45,10 +50,10 @@ class JatsXmlParser(ArtifactParserAdapter):
 
 
 class SplXmlParser(ArtifactParserAdapter):
-    """Render one DailyMed SPL document while preserving section boundaries."""
+    """Render DailyMed narrative text and source-structured product records."""
 
     parser_id = "spl_xml"
-    parser_revision = "1"
+    parser_revision = "2"
 
     def parse(
         self,
@@ -62,6 +67,12 @@ class SplXmlParser(ArtifactParserAdapter):
         if set_id_node is not None:
             set_id = (set_id_node.get("root") or _node_text(set_id_node)).strip()
         set_id = set_id or artifact.metadata.get("set_id") or artifact.object.sha256[:16]
+        version_node = _first_local(root, "versionNumber")
+        spl_version = "" if version_node is None else (version_node.get("value") or "").strip()
+        effective_node = _first_local(root, "effectiveTime")
+        effective_time = (
+            "" if effective_node is None else (effective_node.get("value") or "").strip()
+        )
         blocks: list[str] = []
         title = _first_local(root, "title")
         if title is not None and (text := _node_text(title)):
@@ -89,7 +100,40 @@ class SplXmlParser(ArtifactParserAdapter):
             language=_xml_language(root, default="en"),
             note_type="structured_product_label",
             group_ids=(f"drug_label:{set_id}",),
+            metadata={
+                "dailymed_set_id": set_id,
+                "dailymed_source_version": artifact.source_version,
+                "dailymed_spl_version": spl_version or artifact.metadata.get("spl_version", ""),
+                "effective_time": effective_time,
+                "published_date": artifact.metadata.get("published_date", ""),
+            },
         )
+        for product_index, product in enumerate(extract_spl_products(root)):
+            rendered = render_spl_product(product)
+            yield self.make_document(
+                artifact,
+                external_id=f"{set_id}:product:{product_index}",
+                text=rendered.text,
+                language=_xml_language(root, default="en"),
+                note_type="structured_medication_record",
+                group_ids=(f"drug_label:{set_id}",),
+                metadata={
+                    "dailymed_set_id": set_id,
+                    "dailymed_source_version": artifact.source_version,
+                    "dailymed_spl_version": (
+                        spl_version or artifact.metadata.get("spl_version", "")
+                    ),
+                    "effective_time": effective_time,
+                    "published_date": artifact.metadata.get("published_date", ""),
+                    "spl_fields": json.dumps(
+                        [field.to_dict() for field in rendered.fields],
+                        ensure_ascii=False,
+                        separators=(",", ":"),
+                    ),
+                    "spl_ndc": product.ndc,
+                    "spl_product_index": str(product_index),
+                },
+            )
 
 
 def _jats_payloads(payload: bytes, media_type: str) -> tuple[tuple[str, bytes], ...]:
