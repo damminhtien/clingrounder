@@ -14,6 +14,10 @@ _HANDLERS = {
     "pipeline_run": ("medical_kg_nlp.cli.commands.pipeline", "run_pipeline"),
     "terminology_build": ("medical_kg_nlp.cli.commands.terminology", "build_index"),
     "terminology_inspect": ("medical_kg_nlp.cli.commands.terminology", "inspect_index"),
+    "terminology_benchmark": (
+        "medical_kg_nlp.cli.commands.terminology",
+        "benchmark_index",
+    ),
     "evaluate": ("medical_kg_nlp.cli.commands.evaluate", "evaluate"),
     "validate": ("medical_kg_nlp.cli.commands.validate", "validate"),
     "benchmark_phase1": ("medical_kg_nlp.cli.commands.phase1", "run_phase1"),

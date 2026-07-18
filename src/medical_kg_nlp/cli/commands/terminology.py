@@ -4,11 +4,17 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
 
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.terminology import SQLiteTerminologyRepository, build_terminology_index
+from medical_kg_nlp.terminology import (
+    SQLiteTerminologyRepository,
+    build_terminology_index,
+    evaluate_terminology_queries,
+    load_terminology_queries,
+)
 
-__all__ = ["build_index", "inspect_index"]
+__all__ = ["benchmark_index", "build_index", "inspect_index"]
 
 
 def build_index(args: argparse.Namespace) -> int:
@@ -55,5 +61,37 @@ def inspect_index(args: argparse.Namespace) -> int:
                 limit=args.limit,
             )
         ]
+    print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def benchmark_index(args: argparse.Namespace) -> int:
+    """Evaluate a fingerprint-validated index against neutral query JSONL."""
+
+    repository = SQLiteTerminologyRepository(
+        args.index,
+        expected_source_paths=tuple(args.source),
+        expected_alias_overlay_paths=tuple(args.alias_overlay),
+    )
+    try:
+        report = evaluate_terminology_queries(
+            repository,
+            load_terminology_queries(args.queries),
+            limit=args.limit,
+        )
+    finally:
+        repository.close()
+    payload = {
+        **report,
+        "index": str(Path(args.index)),
+        "input_fingerprint": repository.metadata.get("input_fingerprint", ""),
+        "queries": str(Path(args.queries)),
+    }
+    output = Path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
     return 0

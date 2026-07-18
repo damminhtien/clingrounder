@@ -66,6 +66,18 @@ def _terminology_parser(commands: argparse._SubParsersAction[argparse.ArgumentPa
     inspect.add_argument("--code-system", action="append")
     inspect.add_argument("--limit", type=int, default=20)
 
+    benchmark = operations.add_parser(
+        "benchmark",
+        help="Evaluate exact, toneless, and FTS retrieval against neutral queries.",
+    )
+    benchmark.set_defaults(handler="terminology_benchmark")
+    benchmark.add_argument("--index", required=True)
+    benchmark.add_argument("--source", action="append", required=True)
+    benchmark.add_argument("--alias-overlay", action="append", default=[])
+    benchmark.add_argument("--queries", required=True)
+    benchmark.add_argument("--output", required=True)
+    benchmark.add_argument("--limit", type=int, default=20)
+
 
 def _evaluate_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     evaluate = commands.add_parser("evaluate", help="Evaluate internal-schema predictions.")
