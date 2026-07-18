@@ -535,6 +535,9 @@ def compile_graph_knowledge(args: argparse.Namespace) -> int:
         config=GraphCompilationConfig(
             include_entity_types=tuple(args.entity_type),
             include_unlinked_terms=not args.linked_only,
+            include_structured_terminology_relations=(
+                not args.no_structured_terminology_relations
+            ),
         ),
         nodes_output=args.nodes_output,
         edges_output=args.edges_output,

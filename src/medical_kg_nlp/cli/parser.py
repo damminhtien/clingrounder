@@ -441,6 +441,11 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     graph_compile.add_argument("--relations")
     graph_compile.add_argument("--entity-type", action="append", default=[])
     graph_compile.add_argument("--linked-only", action="store_true")
+    graph_compile.add_argument(
+        "--no-structured-terminology-relations",
+        action="store_true",
+        help="Keep canonical concepts but skip RxNorm attribute edges.",
+    )
     graph_compile.add_argument("--nodes-output", required=True)
     graph_compile.add_argument("--edges-output", required=True)
     graph_compile.add_argument("--evidence-output", required=True)

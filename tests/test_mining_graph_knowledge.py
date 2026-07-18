@@ -218,3 +218,62 @@ def test_graph_compiler_skips_relations_with_quality_filtered_endpoints(
     assert report["decision_counts"]["annotation_review_filter_skipped"] == 1
     assert report["decision_counts"]["relation_filtered_endpoint_skipped"] == 1
     assert report["output_counts"]["edges"] == 0
+
+
+def test_graph_compiler_promotes_unique_rxnorm_attributes(tmp_path: Path) -> None:
+    terminology = tmp_path / "rxnorm.jsonl"
+    write_jsonl(
+        terminology,
+        [
+            {
+                "concept_id": "RXNORM:1",
+                "code": "1",
+                "code_system": "RxNorm",
+                "canonical_name": "mesna",
+                "semantic_type": "DRUG",
+                "rxnorm_tty": "IN",
+                "ingredient": "mesna",
+            },
+            {
+                "concept_id": "RXNORM:2",
+                "code": "2",
+                "code_system": "RxNorm",
+                "canonical_name": "mesna 100 MG Oral Tablet",
+                "semantic_type": "DRUG",
+                "rxnorm_tty": "SCD",
+                "ingredient": "mesna",
+                "dose_form": "Oral Tablet",
+                "strength": "RXN_AVAILABLE_STRENGTH=100 MG",
+            },
+            {
+                "concept_id": "RXNORM:3",
+                "code": "3",
+                "code_system": "RxNorm",
+                "canonical_name": "Mesnex",
+                "semantic_type": "DRUG",
+                "rxnorm_tty": "BN",
+                "ingredient": "mesna",
+            },
+        ],
+    )
+    report = compile_knowledge_graph(
+        terminology_paths=(terminology,),
+        alias_overlay_paths=(),
+        documents=(),
+        annotations=(),
+        relations=(),
+        config=GraphCompilationConfig(),
+        nodes_output=tmp_path / "nodes.jsonl",
+        edges_output=tmp_path / "edges.jsonl",
+        evidence_output=tmp_path / "evidence.jsonl",
+        report_output=tmp_path / "report.json",
+    )
+    edges = read_jsonl(tmp_path / "edges.jsonl")
+    assert report["decision_counts"]["structured_ingredient_observation_count"] == 2
+    assert report["decision_counts"]["structured_dose_form_observation_count"] == 1
+    assert report["decision_counts"]["structured_strength_observation_count"] == 1
+    assert {edge["relation_type"] for edge in edges} == {
+        "HAS_ACTIVE_INGREDIENT",
+        "HAS_DOSAGE_FORM",
+        "HAS_STRENGTH",
+    }

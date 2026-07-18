@@ -25,6 +25,7 @@ from medical_kg_nlp.mining.records import (
     RelationProposal,
     ReviewStatus,
 )
+from medical_kg_nlp.schema.types import CodeSystem
 from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
 from medical_kg_nlp.utils.text import normalize_for_match
 
@@ -46,6 +47,7 @@ class GraphCompilationConfig:
     )
     include_entity_types: tuple[str, ...] = ()
     include_unlinked_terms: bool = True
+    include_structured_terminology_relations: bool = True
 
 
 @dataclass
@@ -234,6 +236,15 @@ def compile_knowledge_graph(
         concept_nodes_by_entry_id,
         counters,
     )
+    if config.include_structured_terminology_relations:
+        _apply_structured_terminology_relations(
+            entries,
+            concept_ids,
+            nodes,
+            edges,
+            evidence,
+            counters,
+        )
 
     documents_by_id = _unique_documents(documents)
     all_annotations_by_id, annotations_by_id = _valid_annotations(
@@ -361,6 +372,9 @@ def compile_knowledge_graph(
             ],
             "include_entity_types": list(config.include_entity_types),
             "include_unlinked_terms": config.include_unlinked_terms,
+            "include_structured_terminology_relations": (
+                config.include_structured_terminology_relations
+            ),
         },
         "input_counts": {
             "terminology_concepts": len(entries),
@@ -472,6 +486,151 @@ def _apply_alias_overlays(
                 nodes[node_id].add_label(alias, priority=4)
                 nodes[node_id].sources.add(f"alias-overlay:{path.name}")
                 counters["alias_overlay_observation_count"] += 1
+
+
+def _apply_structured_terminology_relations(
+    entries: Sequence[tuple[ConceptEntry, Path]],
+    concept_ids: Mapping[tuple[str, str], str],
+    nodes: dict[str, _NodeAccumulator],
+    edges: dict[str, _EdgeAccumulator],
+    evidence: list[KnowledgeEvidence],
+    counters: Counter[str],
+) -> None:
+    """Promote exact RxNorm structured attributes into auditable graph edges.
+
+    RxNorm releases expose ingredient, dosage-form, and strength attributes as flat
+    concept fields rather than an edge table. We only promote an ingredient when the
+    normalized value resolves to one unique IN/PIN/MIN node; ambiguous values remain
+    metadata, not guessed graph edges.
+    """
+
+    ingredient_targets: dict[str, set[str]] = {}
+    for entry, _ in entries:
+        if (
+            entry.code_system != CodeSystem.RXNORM
+            or entry.code is None
+            or entry.rxnorm_tty not in {"IN", "PIN", "MIN"}
+        ):
+            continue
+        node_id = concept_ids.get((entry.code_system.value, entry.code))
+        if node_id is None:
+            continue
+        for name in (entry.canonical_name, entry.ingredient):
+            if name:
+                ingredient_targets.setdefault(normalize_for_match(name), set()).add(node_id)
+
+    for entry, source_path in entries:
+        if entry.code_system != CodeSystem.RXNORM or entry.code is None:
+            continue
+        head_id = concept_ids.get((entry.code_system.value, entry.code))
+        if head_id is None:
+            continue
+        source = f"terminology:{source_path.name}"
+        if entry.ingredient and entry.rxnorm_tty not in {"IN", "PIN", "MIN"}:
+            target_ids = ingredient_targets.get(normalize_for_match(entry.ingredient), set())
+            if len(target_ids) == 1:
+                tail_id = next(iter(target_ids))
+                if tail_id != head_id:
+                    _add_structured_edge(
+                        edges,
+                        evidence,
+                        head_id=head_id,
+                        tail_id=tail_id,
+                        relation_type="HAS_ACTIVE_INGREDIENT",
+                        source=source,
+                        source_record_id=f"{entry.concept_id}:ingredient:{source_path.name}",
+                    )
+                    counters["structured_ingredient_observation_count"] += 1
+            elif not target_ids:
+                counters["structured_ingredient_unresolved_skipped"] += 1
+            else:
+                counters["structured_ingredient_ambiguous_skipped"] += 1
+
+        if entry.dose_form:
+            tail_id = _structured_term_node(
+                nodes,
+                entity_type="DOSAGE_FORM",
+                text=entry.dose_form,
+                source=source,
+            )
+            _add_structured_edge(
+                edges,
+                evidence,
+                head_id=head_id,
+                tail_id=tail_id,
+                relation_type="HAS_DOSAGE_FORM",
+                source=source,
+                source_record_id=f"{entry.concept_id}:dose_form:{source_path.name}",
+            )
+            counters["structured_dose_form_observation_count"] += 1
+
+        if entry.strength:
+            strength = _clean_strength(entry.strength)
+            if strength:
+                tail_id = _structured_term_node(
+                    nodes,
+                    entity_type="STRENGTH",
+                    text=strength,
+                    source=source,
+                )
+                _add_structured_edge(
+                    edges,
+                    evidence,
+                    head_id=head_id,
+                    tail_id=tail_id,
+                    relation_type="HAS_STRENGTH",
+                    source=source,
+                    source_record_id=f"{entry.concept_id}:strength:{source_path.name}",
+                )
+                counters["structured_strength_observation_count"] += 1
+
+
+def _structured_term_node(
+    nodes: dict[str, _NodeAccumulator],
+    *,
+    entity_type: str,
+    text: str,
+    source: str,
+) -> str:
+    node_id = term_node_id(entity_type, text)
+    node = nodes.setdefault(
+        node_id,
+        _NodeAccumulator(
+            node_id=node_id,
+            kind=KnowledgeNodeKind.TERM,
+            entity_type=entity_type,
+        ),
+    )
+    node.add_label(text, priority=0)
+    node.sources.add(source)
+    return node_id
+
+
+def _add_structured_edge(
+    edges: dict[str, _EdgeAccumulator],
+    evidence: list[KnowledgeEvidence],
+    *,
+    head_id: str,
+    tail_id: str,
+    relation_type: str,
+    source: str,
+    source_record_id: str,
+) -> None:
+    edge = _edge_accumulator(edges, head_id, tail_id, relation_type)
+    edge.add(confidence=1.0, source=source, layer="canonical", document_id=None)
+    evidence.append(
+        _evidence(
+            edge.edge_id,
+            source_record_id=source_record_id,
+            source_record_kind="terminology_structured_attribute",
+            source=source,
+        )
+    )
+
+
+def _clean_strength(value: str) -> str:
+    prefix = "RXN_AVAILABLE_STRENGTH="
+    return value.removeprefix(prefix).strip()
 
 
 def _unique_documents(documents: Sequence[MinedDocument]) -> dict[str, MinedDocument]:
