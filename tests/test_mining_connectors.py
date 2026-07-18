@@ -16,7 +16,7 @@ from medical_kg_nlp.mining.connectors import (
     PmcOaConnector,
     StaticHttpConnector,
 )
-from medical_kg_nlp.mining.records import SourceRequest
+from medical_kg_nlp.mining.records import RedistributionPolicy, SourceRequest
 from medical_kg_nlp.mining.registry import load_source_registry
 from medical_kg_nlp.mining.storage import LocalArtifactStore
 
@@ -166,7 +166,7 @@ def test_pmc_oa_resolves_and_checkpoints_article_license(tmp_path: Path) -> None
             SourceRequest(
                 source_id="pmc_oa",
                 source_version="2026-07-16",
-                parameters={"pmc_ids": ["PMC42"]},
+                parameters={"pmc_ids": ["PMC42"], "content_format": "oa_package"},
             )
         )
     )
@@ -176,6 +176,43 @@ def test_pmc_oa_resolves_and_checkpoints_article_license(tmp_path: Path) -> None
     assert artifact.license_id == "CC BY 4.0"
     assert artifact.object.sha256 == hashlib.sha256(b"fixture-package").hexdigest()
     assert artifact.metadata["pmc_id"] == "PMC42"
+    assert artifact.redistribution is RedistributionPolicy.ATTRIBUTION
+
+
+def test_pmc_oa_uses_license_resolved_bioc_transport_by_default(tmp_path: Path) -> None:
+    source = _registry().by_id("pmc_oa")
+    discovery_uri = f"{source.urls[0]}?id=PMC42"
+    package_uri = "ftp://ftp.ncbi.example/PMC42.tar.gz"
+    bioc_uri = f"{source.urls[1]}/BioC_json/PMC42/unicode"
+    transport = MemoryTransport(
+        {
+            discovery_uri: (
+                b'<OA><records><record id="PMC42" license="CC BY-NC-ND">'
+                b'<link format="tgz" href="ftp://ftp.ncbi.example/PMC42.tar.gz"/>'
+                b"</record></records></OA>"
+            ),
+            bioc_uri: b'{"documents": [{"id": "42", "passages": []}]}',
+        }
+    )
+    connector = PmcOaConnector(source, transport)
+
+    discovered = list(
+        connector.discover(
+            SourceRequest(
+                source_id="pmc_oa",
+                source_version="2026-07-18",
+                parameters={"pmc_ids": ["pmc42"]},
+            )
+        )
+    )
+    artifact = connector.fetch(discovered[0], store=LocalArtifactStore(tmp_path))
+
+    assert discovered[0].uri == bioc_uri
+    assert discovered[0].media_type == "application/json"
+    assert artifact.license_id == "CC BY-NC-ND"
+    assert artifact.redistribution is RedistributionPolicy.PROHIBITED
+    assert artifact.metadata["oa_package_uri"] == package_uri
+    assert artifact.metadata["content_format"] == "bioc_json"
 
 
 def test_fetch_rejects_checksum_mismatch(tmp_path: Path) -> None:

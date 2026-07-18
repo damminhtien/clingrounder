@@ -13,6 +13,7 @@ from medical_kg_nlp.mining.parsers import (
     CodiEspArchiveParser,
     FhirBundleParser,
     JatsXmlParser,
+    PmcOaParser,
     SplXmlParser,
 )
 from medical_kg_nlp.mining.records import (
@@ -160,6 +161,41 @@ def test_bioc_parser_preserves_absolute_passage_offsets(tmp_path: Path) -> None:
 
     assert document.text[8:25] == "Disease and gene."
     assert document.text == "Title   Disease and gene."
+
+
+def test_pmc_parser_accepts_real_bioc_collection_shape(tmp_path: Path) -> None:
+    payload = [
+        {
+            "bioctype": "BioCCollection",
+            "source": "PMC",
+            "documents": [
+                {
+                    "id": "13373952",
+                    "passages": [
+                        {"offset": 0, "text": "Rare case"},
+                        {"offset": 12, "text": "Clinical finding."},
+                        {
+                            "offset": 30,
+                            "text": "",
+                            "infons": {"section_type": "REF", "type": "ref"},
+                        },
+                    ],
+                }
+            ],
+        }
+    ]
+    artifact, store = _artifact(
+        tmp_path,
+        json.dumps(payload).encode(),
+        source_id="pmc_oa",
+        media_type="application/json",
+    )
+
+    document = next(iter(PmcOaParser().parse(artifact, store=store)))
+
+    assert document.text == "Rare case   Clinical finding."
+    assert document.group_ids == ("article:13373952",)
+    assert document.metadata["parser_id"] == "bioc_json"
 
 
 def test_codiesp_parser_reads_notes_without_extracting_paths(tmp_path: Path) -> None:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import xml.etree.ElementTree as ET
 from collections.abc import Iterable, Mapping, Sequence
 from contextlib import closing
@@ -10,7 +11,11 @@ from typing import Any
 from urllib.parse import quote, urlencode
 
 from medical_kg_nlp.mining.connectors.base import RegisteredConnectorAdapter
-from medical_kg_nlp.mining.records import DiscoveredArtifact, SourceRequest
+from medical_kg_nlp.mining.records import (
+    DiscoveredArtifact,
+    RedistributionPolicy,
+    SourceRequest,
+)
 from medical_kg_nlp.mining.registry import SourceDefinition
 
 __all__ = [
@@ -188,18 +193,54 @@ class ClinicalTrialsConnector(RegisteredConnectorAdapter):
 class PmcOaConnector(RegisteredConnectorAdapter):
     """Resolve PMC IDs through the OA service and retain each article license."""
 
+    connector_revision = "3"
+
     def _discover(self, request: SourceRequest) -> Iterable[DiscoveredArtifact]:
         records = request.parameters.get("artifacts")
         if records is not None:
             yield from _records_to_artifacts(request, _artifact_records(request.parameters))
             return
-        pmc_ids = _string_sequence(request.parameters.get("pmc_ids"), field_name="pmc_ids")
+        pmc_ids = tuple(
+            sorted(
+                _validated_pmc_id(value)
+                for value in _string_sequence(
+                    request.parameters.get("pmc_ids"), field_name="pmc_ids"
+                )
+            )
+        )
+        content_format = str(
+            request.parameters.get("content_format", "bioc_json")
+        ).strip()
+        if content_format not in {"bioc_json", "oa_package"}:
+            raise ValueError("PMC content_format must be 'bioc_json' or 'oa_package'")
         endpoint = self.source.urls[0].rstrip("?")
-        for pmc_id in sorted(pmc_ids):
-            uri = f"{endpoint}?id={quote(pmc_id, safe='')}"
-            with closing(self.open_uri(uri)) as stream:
+        for pmc_id in pmc_ids:
+            discovery_uri = f"{endpoint}?id={quote(pmc_id, safe='')}"
+            with closing(self.open_uri(discovery_uri)) as stream:
                 payload = stream.read()
-            yield _parse_pmc_oa_response(request, pmc_id, payload)
+            package = _parse_pmc_oa_response(request, pmc_id, payload)
+            if content_format == "oa_package":
+                yield package
+                continue
+            if len(self.source.urls) < 2:
+                raise ValueError("PMC BioC discovery requires a registered BioC endpoint")
+            bioc_endpoint = self.source.urls[1].rstrip("/")
+            # LICENSE: OA metadata remains authoritative; BioC is only the text transport.
+            yield DiscoveredArtifact(
+                source_id=request.source_id,
+                source_version=request.source_version,
+                uri=(
+                    f"{bioc_endpoint}/BioC_json/"
+                    f"{quote(pmc_id, safe='')}/unicode"
+                ),
+                media_type="application/json",
+                metadata={
+                    **package.metadata,
+                    "content_format": "bioc_json",
+                    "discovery_uri": discovery_uri,
+                    "oa_package_uri": package.uri,
+                },
+            )
 
 
 def _parse_pmc_oa_response(
@@ -232,8 +273,33 @@ def _parse_pmc_oa_response(
         source_version=request.source_version,
         uri=href,
         media_type=media_type,
-        metadata={"pmc_id": pmc_id, "license_id": license_id},
+        metadata={
+            "pmc_id": pmc_id,
+            "license_id": license_id,
+            "redistribution": _pmc_redistribution(license_id).value,
+        },
     )
+
+
+def _validated_pmc_id(value: str) -> str:
+    pmc_id = value.upper()
+    if re.fullmatch(r"PMC[0-9]+", pmc_id) is None:
+        raise ValueError(f"Invalid PMC identifier {value!r}")
+    return pmc_id
+
+
+def _pmc_redistribution(license_id: str) -> RedistributionPolicy:
+    normalized = " ".join(license_id.upper().split())
+    if normalized in {"CC0", "CC0 1.0", "PUBLIC DOMAIN"}:
+        return RedistributionPolicy.ALLOWED
+    if "-ND" in normalized or "NO DERIVATIVES" in normalized:
+        # LICENSE: a mined/annotated dataset is not treated as the unadapted article.
+        return RedistributionPolicy.PROHIBITED
+    if "-NC" in normalized or "NONCOMMERCIAL" in normalized:
+        return RedistributionPolicy.NON_COMMERCIAL
+    if normalized.startswith("CC BY"):
+        return RedistributionPolicy.ATTRIBUTION
+    return RedistributionPolicy.UNKNOWN
 
 
 def _parse_dailymed_catalog_page(

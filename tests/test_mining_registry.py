@@ -83,6 +83,30 @@ def test_source_policy_gate_rejects_version_drift() -> None:
     assert "source_version_mismatch" in decision.reasons
 
 
+def test_source_policy_gate_accepts_per_artifact_redistribution_policy() -> None:
+    registry = load_source_registry("data/sources/mining_registry.yaml")
+    gate = SourcePolicyGate(registry)
+    source = registry.by_id("pmc_oa")
+    artifact = SourceArtifact(
+        artifact_id="pmc-article",
+        source_id=source.id,
+        source_version="oa-query-v1",
+        source_uri="https://example.test/PMC42.json",
+        object=StoredObject("a" * 64, "file:///data/object", 7),
+        media_type="application/json",
+        license_id="CC BY-NC-ND",
+        access_class=source.access_class,
+        redistribution=RedistributionPolicy.PROHIBITED,
+        hosted_processing_allowed=source.hosted_processing_allowed,
+        retrieved_at="2026-07-18T00:00:00Z",
+    )
+
+    decision = gate.validate_artifact(artifact)
+
+    assert decision.allowed is True
+    assert decision.reasons == ()
+
+
 def test_source_policy_gate_requires_local_encrypted_dua_storage() -> None:
     registry = load_source_registry("data/sources/mining_registry.yaml")
     gate = SourcePolicyGate(registry)

@@ -117,6 +117,27 @@ def test_snapshot_manifest_is_deterministic_and_freeze_is_idempotent(tmp_path: P
         )
 
 
+def test_snapshot_marks_noncommercial_documents_as_restricted(tmp_path: Path) -> None:
+    document = replace(
+        _document("doc", "Rare case"),
+        redistribution=RedistributionPolicy.NON_COMMERCIAL,
+    )
+
+    snapshot = SnapshotBuilder(
+        split_config=SnapshotSplitConfig(development_fraction=0.0)
+    ).freeze(
+        version="restricted-v1",
+        created_at="2026-07-18T00:00:00+00:00",
+        output_dir=tmp_path / "snapshot",
+        documents=[document],
+        annotations=[],
+        write_parquet=False,
+    )
+
+    assert snapshot.redistributable is False
+    assert snapshot.restricted_reasons == ("redistribution:non_commercial",)
+
+
 def test_snapshot_rejects_unreviewed_challenge_annotation(tmp_path: Path) -> None:
     document = _document("held", "Bệnh hiếm", source="held_source")
     annotation = _gold(document, "ann")

@@ -293,6 +293,30 @@ documents to the generic `train` partition: the authoritative CodiEsp `train`, `
 `background` split remains in document metadata and must be selected by a CodiEsp evaluation
 adapter. This prevents the generic hash splitter from silently redefining the external benchmark.
 
+## PMC Rare-Case Raw Snapshot
+
+`configs/mining/pmc-rare-cases-2026-07-18.yaml` pins ten PMCID values selected from an open-access
+rare-case query. Discovery still calls the OA service for each article's current license, while the
+article text is checkpointed from the official BioC JSON endpoint. This avoids treating unstable
+FTP package links as a reproducible transport and preserves BioC absolute passage offsets.
+
+```bash
+export MEDICAL_KG_ARTIFACT_STORE=/Volumes/medical-kg-mining
+uv run medical-kg data run --plan configs/mining/pmc-rare-cases-2026-07-18.yaml
+
+uv run medical-kg data dataset inspect \
+  --documents outputs/mining/pmc-rare-cases-2026-07-18/documents.jsonl \
+  --output outputs/mining/pmc-rare-cases-2026-07-18/source_profile.json \
+  --strict
+```
+
+The slice contains ten unique English articles and 232,630 source characters with zero offset or
+duplicate issue. Four articles are CC BY, three CC BY-NC, and three CC BY-NC-ND. Snapshot
+`pmc-rare-cases-2026-07-18-raw-v2-84000050e3cbf220` has manifest SHA-256
+`1c8f50fbb2ae23782797d19f8fee64a9ecbd879e48952920bc0fd855a4cbedd3` and is deliberately marked
+non-redistributable because the mixed-source snapshot contains non-commercial and no-derivatives
+licenses. Keep raw articles separate from model proposals and derived knowledge overlays.
+
 ## DailyMed Structured Medication Snapshot
 
 DailyMed catalog mining uses a fail-closed database publication date and a bounded page range. The

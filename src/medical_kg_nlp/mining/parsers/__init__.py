@@ -8,6 +8,7 @@ from medical_kg_nlp.mining.parsers.json_formats import (
     ClinicalTrialsJsonParser,
     FhirBundleParser,
 )
+from medical_kg_nlp.mining.parsers.pmc import PmcOaParser
 from medical_kg_nlp.mining.parsers.xml import JatsXmlParser, SplXmlParser
 
 __all__ = [
@@ -18,6 +19,7 @@ __all__ = [
     "FhirBundleParser",
     "JatsXmlParser",
     "PlainTextParser",
+    "PmcOaParser",
     "SplXmlParser",
     "parser_from_definition",
 ]

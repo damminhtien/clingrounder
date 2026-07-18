@@ -92,7 +92,7 @@ class BiocJsonParser(ArtifactParserAdapter):
     """Reconstruct BioC passage offsets so imported annotations remain projectable."""
 
     parser_id = "bioc_json"
-    parser_revision = "1"
+    parser_revision = "2"
 
     def parse(
         self,
@@ -101,9 +101,7 @@ class BiocJsonParser(ArtifactParserAdapter):
         store: ArtifactStorePort,
     ) -> Iterable[MinedDocument]:
         payload = json.loads(self.read_artifact(artifact, store))
-        documents = payload.get("documents") if isinstance(payload, Mapping) else payload
-        if not isinstance(documents, Sequence):
-            raise ValueError("BioC JSON must contain a documents sequence")
+        documents = _bioc_documents(payload)
         for document in documents:
             if not isinstance(document, Mapping):
                 raise ValueError("BioC document must be an object")
@@ -122,6 +120,31 @@ class BiocJsonParser(ArtifactParserAdapter):
                 note_type="biomedical_literature",
                 group_ids=(f"article:{external_id}",),
             )
+
+
+def _bioc_documents(payload: Any) -> tuple[Mapping[str, Any], ...]:
+    """Flatten BioC object, document-list, and collection-list serializations."""
+
+    raw_documents: Any = payload.get("documents") if isinstance(payload, Mapping) else payload
+    if not isinstance(raw_documents, Sequence) or isinstance(raw_documents, (str, bytes)):
+        raise ValueError("BioC JSON must contain a documents sequence")
+    documents: list[Mapping[str, Any]] = []
+    for item in raw_documents:
+        if not isinstance(item, Mapping):
+            raise ValueError("BioC document or collection must be an object")
+        collection_documents = item.get("documents")
+        if collection_documents is None:
+            documents.append(item)
+            continue
+        if not isinstance(collection_documents, Sequence) or isinstance(
+            collection_documents, (str, bytes)
+        ):
+            raise ValueError("BioC collection documents must be a sequence")
+        for document in collection_documents:
+            if not isinstance(document, Mapping):
+                raise ValueError("BioC document must be an object")
+            documents.append(document)
+    return tuple(documents)
 
 
 def _clinical_trial_sections(protocol: Mapping[str, Any]) -> list[str]:
@@ -205,8 +228,12 @@ def _reconstruct_bioc_text(passages: Sequence[Any]) -> str:
             raise ValueError("BioC passage must be an object")
         offset = int(passage.get("offset", 0))
         text = str(passage.get("text", ""))
-        if offset < 0 or not text:
-            raise ValueError("BioC passage requires a non-negative offset and text")
+        if offset < 0:
+            raise ValueError("BioC passage requires a non-negative offset")
+        if not text:
+            # BioC PMC exports can include empty reference placeholders. They carry no
+            # characters or annotations, so excluding them does not alter any raw offset.
+            continue
         normalized.append((offset, text))
         max_end = max(max_end, offset + len(text))
     if not normalized:

@@ -408,6 +408,7 @@ def _restricted_reasons(documents: Sequence[MinedDocument]) -> tuple[str, ...]:
         if document.access_class in restricted_access:
             reasons.add(f"access:{document.access_class.value}")
         if document.redistribution in {
+            RedistributionPolicy.NON_COMMERCIAL,
             RedistributionPolicy.PROHIBITED,
             RedistributionPolicy.UNKNOWN,
         }:

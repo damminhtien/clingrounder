@@ -1,0 +1,28 @@
+schema_version: medical-mining-plan.v1
+registry: ../../data/sources/mining_registry.yaml
+work_dir: ../../outputs/mining/pmc-rare-cases-2026-07-18
+artifact_store:
+  # SCALING: use external storage for wider slices; this ten-article tranche is a smoke corpus.
+  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  storage_options: {}
+  encrypted_at_rest: false
+sources:
+  - source_id: pmc_oa
+    source_version: rare-case-title-query-2026-07-18-v1
+    parse_documents: true
+    parameters:
+      # Query provenance: "case report"[Title] AND rare[Title/Abstract]
+      # AND open access[filter] AND 2024:2026[pdat], resolved through ESearch/ESummary.
+      # Explicit IDs make this snapshot independent of future search-result ordering.
+      content_format: bioc_json
+      pmc_ids:
+        - PMC13372571
+        - PMC13372972
+        - PMC13373379
+        - PMC13373394
+        - PMC13373432
+        - PMC13373694
+        - PMC13373762
+        - PMC13373952
+        - PMC13374689
+        - PMC13374839

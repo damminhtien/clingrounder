@@ -11,6 +11,7 @@ from medical_kg_nlp.mining.parsers.json_formats import (
     ClinicalTrialsJsonParser,
     FhirBundleParser,
 )
+from medical_kg_nlp.mining.parsers.pmc import PmcOaParser
 from medical_kg_nlp.mining.parsers.xml import JatsXmlParser, SplXmlParser
 from medical_kg_nlp.mining.ports import DocumentParserPort
 from medical_kg_nlp.mining.registry import SourceDefinition
@@ -23,6 +24,7 @@ def parser_from_definition(source: SourceDefinition) -> DocumentParserPort:
 
     parser_factories: dict[str, Callable[[], DocumentParserPort]] = {
         "jats_xml": JatsXmlParser,
+        "pmc_oa": PmcOaParser,
         "spl_xml": SplXmlParser,
         "clinicaltrials_json": ClinicalTrialsJsonParser,
         "fhir_bundle": FhirBundleParser,

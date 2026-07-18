@@ -51,7 +51,10 @@ class SourcePolicyGate:
             reasons.append("access_class_mismatch")
         if source.license_mode is LicenseMode.FIXED and artifact.license_id != source.license_id:
             reasons.append("license_mismatch")
-        if artifact.redistribution is not source.redistribution:
+        if (
+            source.license_mode is LicenseMode.FIXED
+            and artifact.redistribution is not source.redistribution
+        ):
             reasons.append("redistribution_mismatch")
         if artifact.hosted_processing_allowed != source.hosted_processing_allowed:
             reasons.append("hosted_processing_mismatch")
@@ -74,6 +77,7 @@ class SourcePolicyGate:
         reasons: set[str] = set()
         for document in documents:
             if document.redistribution in {
+                RedistributionPolicy.NON_COMMERCIAL,
                 RedistributionPolicy.PROHIBITED,
                 RedistributionPolicy.UNKNOWN,
             }:

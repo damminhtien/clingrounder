@@ -63,8 +63,10 @@ resources:
     hosted_processing_allowed: true
     retention: immutable
     connector: pmc_oa
-    parser: jats_xml
-    urls: [https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi]
+    parser: pmc_oa
+    urls:
+      - https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi
+      - https://www.ncbi.nlm.nih.gov/research/bionlp/RESTful/pmcoa.cgi
     allowed_uses: [rare_case_mining, relation_mining, synthetic_grounding]
     rate_limit_per_second: 3
   - id: dailymed
