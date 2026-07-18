@@ -17,6 +17,7 @@ from medical_kg_nlp.mining.lexicon import MentionInventoryEntry, load_mention_in
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.terminology import (
     InMemoryTerminologyRepository,
+    SQLiteTerminologyRepository,
     build_terminology_index,
 )
 
@@ -124,6 +125,46 @@ def test_crosswalk_is_deterministic_across_worker_counts() -> None:
     assert [record.to_dict() for record in serial.records] == [
         record.to_dict() for record in concurrent.records
     ]
+
+
+def test_crosswalk_lexical_fallback_is_opt_in_and_review_only(tmp_path: Path) -> None:
+    source = tmp_path / "terminology.jsonl"
+    source.write_text(
+        json.dumps(
+            {
+                "concept_id": "ICD:C34.9",
+                "code": "C34.9",
+                "code_system": "ICD-10",
+                "canonical_name": "malignant cancer of the lung",
+                "semantic_type": "DISEASE",
+                "source": "fixture",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    index = tmp_path / "terminology.sqlite3"
+    build_terminology_index((source,), output_path=index)
+    repository = SQLiteTerminologyRepository(index)
+    entries = (_inventory("term:lung-cancer", "lung cancer"),)
+
+    exact = crosswalk_mentions(entries, repository, (_policy(),))
+    lexical = crosswalk_mentions(
+        entries,
+        repository,
+        (_policy(),),
+        lexical_fallback=True,
+    )
+
+    assert exact.records[0].status == "unmatched"
+    row = lexical.records[0].to_dict()
+    assert row["match_mode"] == "fts_lexical"
+    assert row["status"] == "lexical_candidates"
+    assert row["promotion_status"] == "review_required"
+    assert row["automatic_promotion_allowed"] is False
+    assert row["candidates"][0]["code"] == "C34.9"
+    assert lexical.report["unique_exact_entry_count"] == 0
+    repository.close()
 
 
 def test_crosswalk_policy_rejects_type_code_system_mismatch() -> None:

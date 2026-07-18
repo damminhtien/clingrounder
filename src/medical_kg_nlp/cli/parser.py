@@ -324,6 +324,14 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     lexicon_crosswalk.add_argument("--workers", type=int, default=4)
     lexicon_crosswalk.add_argument("--query-limit", type=int, default=1_000)
     lexicon_crosswalk.add_argument("--candidate-output-limit", type=int, default=20)
+    lexicon_crosswalk.add_argument(
+        "--lexical-fallback",
+        action="store_true",
+        help=(
+            "After an exact miss, emit bounded FTS candidates for human review; "
+            "these rows are never promoted automatically."
+        ),
+    )
     linked_aliases = lexicon_operations.add_parser(
         "propose-linked-aliases",
         help="Aggregate source annotations with explicit concept links into alias proposals.",

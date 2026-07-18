@@ -349,7 +349,7 @@ def build_lexicon(args: argparse.Namespace) -> int:
 
 
 def crosswalk_lexicon(args: argparse.Namespace) -> int:
-    """Write exact terminology proposals while rejecting stale derived indexes."""
+    """Write terminology review proposals while rejecting stale derived indexes."""
 
     repository = SQLiteTerminologyRepository(
         args.index,
@@ -364,6 +364,7 @@ def crosswalk_lexicon(args: argparse.Namespace) -> int:
             workers=args.workers,
             query_limit=args.query_limit,
             candidate_output_limit=args.candidate_output_limit,
+            lexical_fallback=args.lexical_fallback,
         )
     finally:
         repository.close()

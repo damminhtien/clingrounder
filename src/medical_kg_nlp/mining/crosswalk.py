@@ -1,4 +1,9 @@
-"""Exact, type-gated crosswalk from mined mentions to pinned terminologies."""
+"""Type-gated crosswalk from mined mentions to pinned terminologies.
+
+Exact matches are the only rows eligible for later alias-promotion review. Optional
+lexical matches are evidence for a human review queue and are never promoted by this
+module.
+"""
 
 from __future__ import annotations
 
@@ -54,7 +59,7 @@ class MentionCrosswalkPolicy:
 
 @dataclass(frozen=True)
 class MentionCrosswalkRecord:
-    """One mined mention and its exact terminology lookup outcome."""
+    """One mined mention and its terminology lookup outcome."""
 
     term_id: str
     normalized_mention: str
@@ -63,6 +68,7 @@ class MentionCrosswalkRecord:
     occurrence_count: int
     document_count: int
     policy_id: str | None
+    match_mode: str
     status: str
     candidate_count: int
     code_count: int
@@ -78,7 +84,7 @@ class MentionCrosswalkRecord:
             "occurrence_count": self.occurrence_count,
             "document_count": self.document_count,
             "policy_id": self.policy_id,
-            "match_mode": "normalized_exact",
+            "match_mode": self.match_mode,
             "status": self.status,
             "candidate_count": self.candidate_count,
             "code_count": self.code_count,
@@ -86,9 +92,16 @@ class MentionCrosswalkRecord:
             "candidates": list(self.candidates),
             "promotion_status": (
                 "review_required"
-                if self.status in {"unique_concept_exact", "unique_code_exact"}
+                if self.status
+                in {
+                    "unique_concept_exact",
+                    "unique_code_exact",
+                    "lexical_candidates",
+                }
                 else "not_eligible"
             ),
+            # INVARIANT: crosswalk output is review evidence, never a runtime code assignment.
+            "automatic_promotion_allowed": False,
         }
 
 
@@ -151,8 +164,13 @@ def crosswalk_mentions(
     workers: int = 1,
     query_limit: int = 1_000,
     candidate_output_limit: int = 20,
+    lexical_fallback: bool = False,
 ) -> MentionCrosswalkResult:
-    """Resolve exact candidates concurrently while preserving stable result order."""
+    """Resolve candidates concurrently while preserving stable result order.
+
+    ``lexical_fallback`` widens only unmatched exact queries. Those candidates retain
+    a distinct status so downstream review cannot treat them as confirmed aliases.
+    """
 
     if workers <= 0 or query_limit <= 0 or candidate_output_limit <= 0:
         raise ValueError("Crosswalk limits and worker count must be positive")
@@ -175,6 +193,20 @@ def crosswalk_mentions(
             )
             query_truncated = query_truncated or len(values) == query_limit
             concepts.update((concept.concept_id, concept) for concept in values)
+        match_mode = "normalized_exact"
+        if not concepts and lexical_fallback:
+            # SCALING: widening happens only after an exact miss and remains constrained by
+            # target entity type, code system, and the same bounded query limit.
+            match_mode = "fts_lexical"
+            for target_type in policy.target_entity_types:
+                values = repository.search(
+                    entry.normalized_mention,
+                    entity_type=target_type,
+                    code_systems=policy.code_systems,
+                    limit=query_limit,
+                )
+                query_truncated = query_truncated or len(values) == query_limit
+                concepts.update((concept.concept_id, concept) for concept in values)
         ordered = tuple(
             sorted(
                 concepts.values(),
@@ -185,7 +217,9 @@ def crosswalk_mentions(
                 ),
             )
         )
-        if query_truncated:
+        if match_mode == "fts_lexical" and ordered:
+            status = "lexical_candidates"
+        elif query_truncated:
             status = "ambiguous_truncated"
         elif not ordered:
             status = "unmatched"
@@ -200,6 +234,7 @@ def crosswalk_mentions(
         return _record(
             entry,
             policy=policy,
+            match_mode=match_mode,
             status=status,
             concepts=ordered,
             query_truncated=query_truncated,
@@ -231,7 +266,12 @@ def crosswalk_mentions(
         ),
         "policy_ids": [policy.policy_id for policy in policies],
         "query": {
-            "match_mode": "normalized_exact",
+            "match_mode": (
+                "normalized_exact_with_lexical_fallback"
+                if lexical_fallback
+                else "normalized_exact"
+            ),
+            "lexical_fallback": lexical_fallback,
             "workers": workers,
             "query_limit": query_limit,
             "candidate_output_limit": candidate_output_limit,
@@ -256,6 +296,7 @@ def _record(
     *,
     policy: MentionCrosswalkPolicy | None,
     status: str,
+    match_mode: str = "normalized_exact",
     concepts: Sequence[ConceptEntry] = (),
     query_truncated: bool = False,
     candidate_output_limit: int = 20,
@@ -281,6 +322,7 @@ def _record(
         occurrence_count=entry.occurrence_count,
         document_count=entry.document_count,
         policy_id=None if policy is None else policy.policy_id,
+        match_mode=match_mode,
         status=status,
         candidate_count=len(concepts),
         code_count=len(code_keys),
