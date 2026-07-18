@@ -44,7 +44,7 @@ def _artifact() -> SourceArtifact:
     )
 
 
-def _document(document_id: str) -> MinedDocument:
+def _document(document_id: str, *, corpus_split: str | None = None) -> MinedDocument:
     return MinedDocument(
         document_id=document_id,
         text="sinovitis",
@@ -54,6 +54,7 @@ def _document(document_id: str) -> MinedDocument:
         access_class=AccessClass.OPEN,
         redistribution=RedistributionPolicy.ATTRIBUTION,
         hosted_processing_allowed=True,
+        metadata={"corpus_split": corpus_split} if corpus_split is not None else {},
     )
 
 
@@ -139,3 +140,26 @@ def test_linked_alias_builder_rejects_discontinuous_and_conflicting_links() -> N
         "discontinuous_span": 1,
         "source_target_conflict": 2,
     }
+
+
+def test_linked_alias_policy_filters_official_source_split() -> None:
+    documents = (
+        _document("train-1", corpus_split="train"),
+        _document("train-2", corpus_split="train"),
+        _document("dev-1", corpus_split="dev"),
+    )
+    annotations = (
+        _annotation("train-1", "annotation-train-1"),
+        _annotation("train-2", "annotation-train-2"),
+        _annotation("dev-1", "annotation-dev-1"),
+    )
+    policy = replace(
+        _policy(),
+        document_metadata_filters=(("corpus_split", ("train",)),),
+    )
+
+    result = build_linked_alias_proposals(documents, annotations, (_artifact(),), policy)
+
+    assert result.proposals[0]["supporting_record_count"] == 2
+    assert result.report["document_metadata_filters"] == {"corpus_split": ["train"]}
+    assert result.report["reason_counts"]["document_metadata_not_allowed"] == 1

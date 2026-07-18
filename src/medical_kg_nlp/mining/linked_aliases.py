@@ -44,6 +44,7 @@ class LinkedAliasProposalPolicy:
     accepted_review_statuses: tuple[str, ...]
     proposal_review_status: str
     alias_tty: str
+    document_metadata_filters: tuple[tuple[str, tuple[str, ...]], ...] = ()
     min_occurrences: int = 2
     min_documents: int = 2
     require_contiguous: bool = True
@@ -71,10 +72,13 @@ class LinkedAliasProposalPolicy:
         for values, name in (
             (self.source_code_systems, "source code-system"),
             (self.source_label_types, "source-label"),
+            (self.document_metadata_filters, "document-metadata"),
         ):
             keys = [key for key, _ in values]
             if len(keys) != len(set(keys)):
                 raise ValueError(f"Linked-alias {name} mappings must be unique")
+        if any(not key.strip() or not allowed for key, allowed in self.document_metadata_filters):
+            raise ValueError("Document metadata filters require a key and allowed values")
 
 
 @dataclass(frozen=True)
@@ -126,6 +130,15 @@ def load_linked_alias_policy(path: str | Path) -> LinkedAliasProposalPolicy:
         accepted_review_statuses=_string_tuple(raw, "accepted_review_statuses"),
         proposal_review_status=_required_string(raw, "proposal_review_status"),
         alias_tty=_required_string(raw, "alias_tty"),
+        document_metadata_filters=tuple(
+            sorted(
+                (str(key), _string_values(values, f"document_metadata_filters.{key}"))
+                for key, values in _optional_mapping(
+                    raw,
+                    "document_metadata_filters",
+                ).items()
+            )
+        ),
         min_occurrences=int(raw.get("min_occurrences", 2)),
         min_documents=int(raw.get("min_documents", 2)),
         require_contiguous=bool(raw.get("require_contiguous", True)),
@@ -291,6 +304,13 @@ def _linked_mention(
         return None, "source_not_allowed"
     if artifact.object.sha256 not in policy.accepted_source_sha256:
         return None, "source_fingerprint_not_allowed"
+    if any(
+        document.metadata.get(key) not in allowed_values
+        for key, allowed_values in policy.document_metadata_filters
+    ):
+        # INVARIANT: train-only alias promotion is encoded in the pinned policy,
+        # rather than depending on an ad hoc caller-side document filter.
+        return None, "document_metadata_not_allowed"
     if annotation.label_source not in policy.accepted_label_sources:
         return None, "label_source_not_allowed"
     if annotation.layer.value not in policy.accepted_layers:
@@ -358,6 +378,9 @@ def _report(
         "proposal_contract": (
             "source-pinned, contiguous, exact-concept-linked, multi-document"
         ),
+        "document_metadata_filters": {
+            key: list(values) for key, values in policy.document_metadata_filters
+        },
     }
 
 
@@ -408,3 +431,18 @@ def _mapping(raw: Mapping[str, Any], key: str) -> Mapping[str, Any]:
     if not isinstance(value, Mapping) or not value:
         raise ValueError(f"Linked-alias policy field {key!r} must be an object")
     return value
+
+
+def _optional_mapping(raw: Mapping[str, Any], key: str) -> Mapping[str, Any]:
+    value = raw.get(key, {})
+    if not isinstance(value, Mapping):
+        raise ValueError(f"Linked-alias policy field {key!r} must be an object")
+    return value
+
+
+def _string_values(value: object, key: str) -> tuple[str, ...]:
+    if not isinstance(value, list) or not value or not all(
+        isinstance(item, str) and item.strip() for item in value
+    ):
+        raise ValueError(f"Linked-alias policy field {key!r} must be a string list")
+    return tuple(str(item).strip() for item in value)
