@@ -143,6 +143,35 @@ def test_sqlite_fts_search_falls_back_to_order_independent_terms(tmp_path: Path)
     assert [entry.code for entry in results] == ["C34.9"]
 
 
+def test_sqlite_fts_search_does_not_drop_short_numeric_subtype(tmp_path: Path) -> None:
+    source = tmp_path / "concepts.jsonl"
+    source.write_text(
+        json.dumps(
+            {
+                "concept_id": "ICD:E10",
+                "code": "E10",
+                "code_system": "ICD-10",
+                "canonical_name": "type 1 diabetes mellitus",
+                "semantic_type": "DISEASE",
+                "source": "test",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    manifest = build_terminology_index((source,), cache_dir=tmp_path / "cache")
+    repository = SQLiteTerminologyRepository(manifest.index_path)
+
+    results = repository.search(
+        "type 2 diabetes",
+        entity_type=EntityType.DISEASE,
+        code_systems=(CodeSystem.ICD10,),
+        limit=5,
+    )
+
+    assert results == []
+
+
 def test_sqlite_repository_rejects_stale_source_fingerprint(tmp_path: Path) -> None:
     source = _write_source(tmp_path / "concepts.jsonl")
     manifest = build_terminology_index((source,), cache_dir=tmp_path / "cache")

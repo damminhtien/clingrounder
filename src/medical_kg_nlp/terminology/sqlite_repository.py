@@ -331,7 +331,12 @@ def _quoted_fts_term(value: str) -> str:
 def _token_and_query(value: str) -> str | None:
     # FTS5's trigram tokenizer cannot use one- or two-character query terms. Keep only stable
     # alphanumeric terms and require at least two so a wider query cannot turn into a broad scan.
-    tokens = tuple(dict.fromkeys(token for token in re.findall(r"[^\W_]+", value) if len(token) >= 3))
+    raw_tokens = re.findall(r"[^\W_]+", value)
+    # INVARIANT: a short number often distinguishes clinical subtypes (for example type 1/2).
+    # Dropping it can rank a contradictory concept, so leave that query as an exact-only miss.
+    if any(token.isdigit() and len(token) < 3 for token in raw_tokens):
+        return None
+    tokens = tuple(dict.fromkeys(token for token in raw_tokens if len(token) >= 3))
     if len(tokens) < 2:
         return None
     return " AND ".join(_quoted_fts_term(token) for token in tokens)
