@@ -178,7 +178,10 @@ def build_phase1_reviewed_recognition_policy(
         min_occurrences=1,
         min_documents=1,
         allow_consensus_single_document=False,
-        min_alias_characters=2,
+        # INVARIANT: one- and two-character clinical fragments (for example ``đỏ``) are
+        # never promoted as standalone recognition aliases; their surrounding phrase or
+        # context gate must establish the entity boundary first.
+        min_alias_characters=3,
         max_alias_characters=240,
         max_alias_tokens=40,
         max_surface_variants=20,
