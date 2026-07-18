@@ -48,6 +48,7 @@ from medical_kg_nlp.mining.registry import (
     load_source_registry,
 )
 from medical_kg_nlp.mining.review import JsonlReviewBackend
+from medical_kg_nlp.mining.snapshot import SnapshotBuilder, SnapshotSplitConfig
 from medical_kg_nlp.mining.synthetic import (
     MinimalPairGenerator,
     RenderedScenario,
@@ -103,6 +104,8 @@ __all__ = [
     "ScenarioRelation",
     "SentinelScenarioRenderer",
     "StableTextDeduplicator",
+    "SnapshotBuilder",
+    "SnapshotSplitConfig",
     "StoredObject",
     "VersionPolicy",
     "connector_from_definition",

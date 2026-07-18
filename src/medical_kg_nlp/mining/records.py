@@ -375,6 +375,20 @@ class RelationProposal:
         if self.evidence_span is not None and self.evidence_span[1] > len(document.text):
             raise ValueError("Relation evidence span exceeds source text")
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "relation_id": self.relation_id,
+            "document_id": self.document_id,
+            "head_annotation_id": self.head_annotation_id,
+            "tail_annotation_id": self.tail_annotation_id,
+            "relation_type": self.relation_type,
+            "confidence": self.confidence,
+            "layer": self.layer.value,
+            "label_source": self.label_source,
+            "evidence_span": list(self.evidence_span) if self.evidence_span else None,
+            "metadata": dict(sorted(self.metadata.items())),
+        }
+
 
 @dataclass(frozen=True)
 class CoverageCell:
@@ -441,6 +455,21 @@ class DatasetSnapshot:
             raise ValueError("Snapshot counts must be non-negative")
         if self.redistributable and self.restricted_reasons:
             raise ValueError("Redistributable snapshots cannot have restricted reasons")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "snapshot_id": self.snapshot_id,
+            "version": self.version,
+            "manifest_sha256": self.manifest_sha256,
+            "document_count": self.document_count,
+            "annotation_count": self.annotation_count,
+            "relation_count": self.relation_count,
+            "source_fingerprints": list(self.source_fingerprints),
+            "split_counts": dict(self.split_counts),
+            "redistributable": self.redistributable,
+            "created_at": self.created_at,
+            "restricted_reasons": list(self.restricted_reasons),
+        }
 
 
 def _require_text(value: str, field_name: str) -> None:

@@ -6,8 +6,6 @@ import importlib
 import json
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any
-
 from medical_kg_nlp.mining.records import AnnotationProposal, MinedDocument, RelationProposal
 
 __all__ = ["DuckDBMiningCatalog", "ParquetSnapshotWriter"]
@@ -47,7 +45,7 @@ class ParquetSnapshotWriter:
                 for proposal in sorted(annotations, key=lambda item: item.annotation_id)
             ],
             "relations": [
-                _relation_dict(relation)
+                relation.to_dict()
                 for relation in sorted(relations, key=lambda item: item.relation_id)
             ],
         }
@@ -110,18 +108,3 @@ def _safe_view_name(snapshot_name: str, table_name: str) -> str:
         for character in snapshot_name
     )
     return f"{safe_snapshot}_{table_name}"
-
-
-def _relation_dict(relation: RelationProposal) -> dict[str, Any]:
-    return {
-        "relation_id": relation.relation_id,
-        "document_id": relation.document_id,
-        "head_annotation_id": relation.head_annotation_id,
-        "tail_annotation_id": relation.tail_annotation_id,
-        "relation_type": relation.relation_type,
-        "confidence": relation.confidence,
-        "layer": relation.layer.value,
-        "label_source": relation.label_source,
-        "evidence_span": list(relation.evidence_span) if relation.evidence_span else None,
-        "metadata": dict(sorted(relation.metadata.items())),
-    }
