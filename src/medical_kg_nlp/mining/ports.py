@@ -10,6 +10,7 @@ from medical_kg_nlp.mining.records import (
     CoverageReport,
     DiscoveredArtifact,
     MinedDocument,
+    RelationProposal,
     SourceArtifact,
     SourceRequest,
     StoredObject,
@@ -22,6 +23,7 @@ __all__ = [
     "DocumentParserPort",
     "ProposalLabelerPort",
     "QualityGatePort",
+    "RelationLabelerPort",
     "ReviewBackendPort",
     "SourceConnectorPort",
 ]
@@ -65,6 +67,16 @@ class ProposalLabelerPort(Protocol):
     """Produce provenance-bearing proposals without mutating source documents."""
 
     def propose(self, documents: Sequence[MinedDocument]) -> Iterable[AnnotationProposal]: ...
+
+
+class RelationLabelerPort(Protocol):
+    """Produce source/model relations over an immutable annotation layer."""
+
+    def propose(
+        self,
+        documents: Sequence[MinedDocument],
+        annotations: Sequence[AnnotationProposal],
+    ) -> Iterable[RelationProposal]: ...
 
 
 class DeduplicatorPort(Protocol):

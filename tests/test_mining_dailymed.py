@@ -5,7 +5,10 @@ from __future__ import annotations
 import io
 from pathlib import Path
 
-from medical_kg_nlp.mining.labelers.dailymed import DailyMedStructuredLabelerAdapter
+from medical_kg_nlp.mining.labelers.dailymed import (
+    DailyMedStructuredLabelerAdapter,
+    DailyMedStructuredRelationLabelerAdapter,
+)
 from medical_kg_nlp.mining.parsers.xml import SplXmlParser
 from medical_kg_nlp.mining.records import (
     AccessClass,
@@ -71,6 +74,25 @@ def test_spl_parser_and_labeler_project_structured_medication_fields(
     ]
     for proposal in proposals:
         proposal.validate_offsets(structured)
+
+    relations = tuple(
+        DailyMedStructuredRelationLabelerAdapter(
+            labeler_id="dailymed-spl-relations:v1"
+        ).propose(documents, proposals)
+    )
+    assert sorted(relation.relation_type for relation in relations) == [
+        "HAS_ACTIVE_INGREDIENT",
+        "HAS_DOSAGE_FORM",
+        "HAS_GENERIC_NAME",
+        "HAS_ROUTE",
+        "HAS_STRENGTH",
+    ]
+    strength = next(
+        relation for relation in relations if relation.relation_type == "HAS_STRENGTH"
+    )
+    by_id = {proposal.annotation_id: proposal for proposal in proposals}
+    assert by_id[strength.head_annotation_id].source_label == "SPL_ACTIVE_INGREDIENT"
+    assert by_id[strength.tail_annotation_id].source_label == "SPL_INGREDIENT_STRENGTH"
 
 
 def _spl_artifact(tmp_path: Path) -> tuple[SourceArtifact, LocalArtifactStore]:

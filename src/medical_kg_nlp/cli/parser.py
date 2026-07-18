@@ -238,6 +238,26 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     label_propose.add_argument("--output", required=True)
     label_propose.add_argument("--batch-size", type=int, default=16)
 
+    relation = operations.add_parser(
+        "relation", help="Run a local relation-labeler adapter."
+    )
+    relation_operations = relation.add_subparsers(
+        dest="data_relation_command", required=True
+    )
+    relation_propose = relation_operations.add_parser(
+        "propose", help="Generate provenance-bearing relation proposals."
+    )
+    relation_propose.set_defaults(handler="data_relation_propose")
+    relation_propose.add_argument("--documents", required=True)
+    relation_propose.add_argument("--annotations", required=True)
+    relation_propose.add_argument(
+        "--adapter", required=True, help="Local factory in module:attribute form."
+    )
+    relation_propose.add_argument(
+        "--adapter-config", help="YAML/JSON factory config mapping."
+    )
+    relation_propose.add_argument("--output", required=True)
+
     review = operations.add_parser("review", help="Exchange deterministic review queues.")
     review_operations = review.add_subparsers(dest="data_review_command", required=True)
     review_export = review_operations.add_parser("export", help="Export a JSONL review queue.")

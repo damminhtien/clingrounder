@@ -36,6 +36,7 @@ from medical_kg_nlp.mining.ports import (
     DocumentParserPort,
     ProposalLabelerPort,
     QualityGatePort,
+    RelationLabelerPort,
     ReviewBackendPort,
     SourceConnectorPort,
 )
@@ -140,6 +141,7 @@ __all__ = [
     "PolicyAwareProposalLabelerAdapter",
     "QualityGatePort",
     "RedistributionPolicy",
+    "RelationLabelerPort",
     "RetentionPolicy",
     "RelationProposal",
     "RenderedScenario",

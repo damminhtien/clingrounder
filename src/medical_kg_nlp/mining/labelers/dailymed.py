@@ -12,10 +12,16 @@ from medical_kg_nlp.mining.records import (
     AnnotationProposal,
     ConceptLink,
     MinedDocument,
+    RelationProposal,
     ReviewStatus,
 )
 
-__all__ = ["DailyMedStructuredLabelerAdapter", "create_dailymed_structured_labeler"]
+__all__ = [
+    "DailyMedStructuredLabelerAdapter",
+    "DailyMedStructuredRelationLabelerAdapter",
+    "create_dailymed_structured_labeler",
+    "create_dailymed_structured_relation_labeler",
+]
 
 
 class DailyMedStructuredLabelerAdapter:
@@ -94,12 +100,113 @@ class DailyMedStructuredLabelerAdapter:
                 yield proposal
 
 
+class DailyMedStructuredRelationLabelerAdapter:
+    """Derive medication composition and attribute relations from SPL roles."""
+
+    def __init__(
+        self,
+        *,
+        labeler_id: str,
+        layer: AnnotationLayer = AnnotationLayer.SILVER,
+        review_status: ReviewStatus = ReviewStatus.PROPOSED,
+    ) -> None:
+        if not labeler_id.strip():
+            raise ValueError("DailyMed relation labeler_id must be non-empty")
+        self.labeler_id = labeler_id
+        self.layer = layer
+        self.review_status = review_status
+
+    def propose(
+        self,
+        documents: Sequence[MinedDocument],
+        annotations: Sequence[AnnotationProposal],
+    ) -> Iterable[RelationProposal]:
+        """Connect product/ingredient heads to their source-structured tails."""
+
+        annotations_by_document: dict[str, list[AnnotationProposal]] = {}
+        for annotation in annotations:
+            annotations_by_document.setdefault(annotation.document_id, []).append(annotation)
+        for document in sorted(documents, key=lambda item: item.document_id):
+            if document.note_type != "structured_medication_record":
+                continue
+            values = annotations_by_document.get(document.document_id, [])
+            products = [
+                value for value in values if value.metadata.get("field_role") == "product"
+            ]
+            if len(products) != 1:
+                raise ValueError(
+                    f"DailyMed record {document.document_id!r} requires exactly one product"
+                )
+            product = products[0]
+            ingredients = {
+                value.metadata.get("relation_group", ""): value
+                for value in values
+                if value.metadata.get("field_role") == "active_ingredient"
+            }
+            for tail in sorted(values, key=lambda item: item.annotation_id):
+                role = tail.metadata.get("field_role", "")
+                relation_type = _RELATION_BY_ROLE.get(role)
+                if relation_type is None:
+                    continue
+                head = product
+                if role == "strength":
+                    group_id = tail.metadata.get("relation_group", "")
+                    ingredient_head = ingredients.get(group_id)
+                    if ingredient_head is None:
+                        raise ValueError(
+                            f"DailyMed strength {tail.annotation_id!r} has no ingredient head"
+                        )
+                    head = ingredient_head
+                start = min(head.span[0], tail.span[0])
+                end = max(head.span[1], tail.span[1])
+                yield RelationProposal(
+                    relation_id=_relation_id(
+                        document.document_id,
+                        head.annotation_id,
+                        tail.annotation_id,
+                        relation_type,
+                    ),
+                    document_id=document.document_id,
+                    head_annotation_id=head.annotation_id,
+                    tail_annotation_id=tail.annotation_id,
+                    relation_type=relation_type,
+                    confidence=1.0,
+                    layer=self.layer,
+                    label_source="source_structured_relation",
+                    evidence_span=(start, end),
+                    labeler_id=self.labeler_id,
+                    review_status=self.review_status,
+                    metadata={
+                        "dailymed_set_id": _required_metadata(
+                            document, "dailymed_set_id"
+                        ),
+                        "spl_product_index": _required_metadata(
+                            document, "spl_product_index"
+                        ),
+                    },
+                )
+
+
 def create_dailymed_structured_labeler(
     config: Mapping[str, Any],
 ) -> DailyMedStructuredLabelerAdapter:
     """Build the DailyMed labeler from task-neutral CLI plugin configuration."""
 
     return DailyMedStructuredLabelerAdapter(
+        labeler_id=_required_string(config, "labeler_id"),
+        layer=AnnotationLayer(str(config.get("layer", AnnotationLayer.SILVER.value))),
+        review_status=ReviewStatus(
+            str(config.get("review_status", ReviewStatus.PROPOSED.value))
+        ),
+    )
+
+
+def create_dailymed_structured_relation_labeler(
+    config: Mapping[str, Any],
+) -> DailyMedStructuredRelationLabelerAdapter:
+    """Build the DailyMed relation labeler for the generic relation CLI."""
+
+    return DailyMedStructuredRelationLabelerAdapter(
         labeler_id=_required_string(config, "labeler_id"),
         layer=AnnotationLayer(str(config.get("layer", AnnotationLayer.SILVER.value))),
         review_status=ReviewStatus(
@@ -158,3 +265,22 @@ def _annotation_id(
         f"{field.get('role', '')}"
     ).encode("utf-8")
     return f"dailymed:{hashlib.sha256(identity).hexdigest()[:24]}"
+
+
+def _relation_id(
+    document_id: str,
+    head_id: str,
+    tail_id: str,
+    relation_type: str,
+) -> str:
+    identity = f"{document_id}\0{head_id}\0{tail_id}\0{relation_type}".encode("utf-8")
+    return f"dailymed-rel:{hashlib.sha256(identity).hexdigest()[:24]}"
+
+
+_RELATION_BY_ROLE = {
+    "generic_name": "HAS_GENERIC_NAME",
+    "active_ingredient": "HAS_ACTIVE_INGREDIENT",
+    "strength": "HAS_STRENGTH",
+    "dosage_form": "HAS_DOSAGE_FORM",
+    "route": "HAS_ROUTE",
+}

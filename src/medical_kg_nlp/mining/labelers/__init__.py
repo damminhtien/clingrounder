@@ -11,7 +11,9 @@ from medical_kg_nlp.mining.labelers.codiesp import (
 )
 from medical_kg_nlp.mining.labelers.dailymed import (
     DailyMedStructuredLabelerAdapter,
+    DailyMedStructuredRelationLabelerAdapter,
     create_dailymed_structured_labeler,
+    create_dailymed_structured_relation_labeler,
 )
 
 __all__ = [
@@ -19,7 +21,9 @@ __all__ = [
     "CodiEspArchiveLabelerAdapter",
     "CodiEspLabelMapping",
     "DailyMedStructuredLabelerAdapter",
+    "DailyMedStructuredRelationLabelerAdapter",
     "create_brat_archive_labeler",
     "create_codiesp_archive_labeler",
     "create_dailymed_structured_labeler",
+    "create_dailymed_structured_relation_labeler",
 ]

@@ -33,7 +33,7 @@ from medical_kg_nlp.mining.labeling import (
 )
 from medical_kg_nlp.mining.lexicon import build_mention_inventory, load_mention_inventory
 from medical_kg_nlp.mining.policy import SourcePolicyGate
-from medical_kg_nlp.mining.ports import ProposalLabelerPort
+from medical_kg_nlp.mining.ports import ProposalLabelerPort, RelationLabelerPort
 from medical_kg_nlp.mining.profile import (
     build_dataset_profile,
     profile_blocking_issue_count,
@@ -62,6 +62,7 @@ __all__ = [
     "import_review",
     "inspect_dataset",
     "propose_labels",
+    "propose_relations",
     "reconcile_duplicates",
     "report_coverage",
     "review_quality",
@@ -301,6 +302,38 @@ def propose_labels(args: argparse.Namespace) -> int:
     return 0
 
 
+def propose_relations(args: argparse.Namespace) -> int:
+    """Run a relation adapter and validate every document/endpoint reference."""
+
+    documents = load_documents(args.documents)
+    annotations = load_annotations(args.annotations)
+    config = _load_mapping(args.adapter_config) if args.adapter_config else None
+    labeler = _load_relation_labeler(args.adapter, config)
+    relations = tuple(labeler.propose(documents, annotations))
+    documents_by_id = {document.document_id: document for document in documents}
+    annotations_by_id = {annotation.annotation_id: annotation for annotation in annotations}
+    for relation in relations:
+        document = documents_by_id.get(relation.document_id)
+        if document is None:
+            raise ValueError(f"Relation references unknown document {relation.document_id!r}")
+        head = annotations_by_id.get(relation.head_annotation_id)
+        tail = annotations_by_id.get(relation.tail_annotation_id)
+        if head is None or tail is None:
+            raise ValueError(f"Relation {relation.relation_id!r} has an unknown endpoint")
+        if head.document_id != relation.document_id or tail.document_id != relation.document_id:
+            raise ValueError(f"Relation {relation.relation_id!r} crosses documents")
+        if relation.evidence_span is not None:
+            start, end = relation.evidence_span
+            if start < 0 or end <= start or end > len(document.text):
+                raise ValueError(
+                    f"Relation {relation.relation_id!r} has invalid evidence span"
+                )
+    ordered = sorted(relations, key=lambda item: item.relation_id)
+    write_jsonl(args.output, (relation.to_dict() for relation in ordered))
+    _print_json({"relation_count": len(ordered), "output": args.output})
+    return 0
+
+
 def export_review(args: argparse.Namespace) -> int:
     payload = JsonlReviewBackend().export(
         load_documents(args.documents),
@@ -432,6 +465,23 @@ def _load_labeler(reference: str, config: Mapping[str, Any] | None) -> ProposalL
     if not callable(getattr(labeler, "propose", None)):
         raise TypeError(f"Adapter factory {reference!r} did not return a proposal labeler")
     return cast(ProposalLabelerPort, labeler)
+
+
+def _load_relation_labeler(
+    reference: str,
+    config: Mapping[str, Any] | None,
+) -> RelationLabelerPort:
+    module_name, separator, attribute_name = reference.partition(":")
+    if not separator or not module_name or not attribute_name:
+        raise ValueError("Adapter must use module:attribute form")
+    factory = getattr(importlib.import_module(module_name), attribute_name)
+    if not callable(factory):
+        raise TypeError(f"Adapter factory {reference!r} is not callable")
+    typed_factory = cast(Callable[..., object], factory)
+    labeler = typed_factory() if config is None else typed_factory(config)
+    if not callable(getattr(labeler, "propose", None)):
+        raise TypeError(f"Adapter factory {reference!r} did not return a relation labeler")
+    return cast(RelationLabelerPort, labeler)
 
 
 def _load_mapping(path: str | Path) -> dict[str, Any]:
