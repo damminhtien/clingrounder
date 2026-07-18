@@ -31,6 +31,14 @@ _HANDLERS = {
     "evaluate": ("medical_kg_nlp.cli.commands.evaluate", "evaluate"),
     "validate": ("medical_kg_nlp.cli.commands.validate", "validate"),
     "benchmark_phase1": ("medical_kg_nlp.cli.commands.phase1", "run_phase1"),
+    "model_validate_token_dataset": (
+        "medical_kg_nlp.cli.commands.model",
+        "validate_token_dataset",
+    ),
+    "model_train_token_classifier": (
+        "medical_kg_nlp.cli.commands.model",
+        "train_token_classifier",
+    ),
     "data_registry_validate": ("medical_kg_nlp.cli.commands.data", "validate_registry"),
     "data_source_sync": ("medical_kg_nlp.cli.commands.data", "sync_registered_source"),
     "data_dataset_build": ("medical_kg_nlp.cli.commands.data", "build_dataset"),

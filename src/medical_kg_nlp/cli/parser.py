@@ -20,6 +20,7 @@ def build_parser() -> argparse.ArgumentParser:
     _evaluate_parser(commands)
     _validate_parser(commands)
     _benchmark_parser(commands)
+    _model_parser(commands)
     _data_parser(commands)
     return parser
 
@@ -209,6 +210,72 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     phase1.add_argument("--parallel-backend", choices=("serial", "thread", "process"), default="process")
     phase1.add_argument("--workers", type=int, default=1)
     phase1.add_argument("--chunksize", type=int, default=4)
+
+
+def _model_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    model = commands.add_parser("model", help="Validate datasets and train local models.")
+    operations = model.add_subparsers(dest="model_command", required=True)
+
+    validate = operations.add_parser(
+        "validate-token-dataset",
+        help="Validate mined spans and train/evaluation label compatibility.",
+    )
+    validate.set_defaults(handler="model_validate_token_dataset")
+    _token_training_identity_arguments(validate, include_output=False)
+
+    train = operations.add_parser(
+        "train-token-classifier",
+        help="Train a pinned, locally cached Hugging Face token classifier.",
+    )
+    train.set_defaults(handler="model_train_token_classifier")
+    _token_training_identity_arguments(train, include_output=True)
+    train.add_argument("--max-length", type=int, default=512)
+    train.add_argument("--stride", type=int, default=64)
+    train.add_argument("--train-batch-size", type=int, default=8)
+    train.add_argument("--evaluation-batch-size", type=int, default=16)
+    train.add_argument("--epochs", type=float, default=3.0)
+    train.add_argument("--learning-rate", type=float, default=2e-5)
+    train.add_argument("--weight-decay", type=float, default=0.01)
+    train.add_argument("--warmup-ratio", type=float, default=0.1)
+    train.add_argument("--gradient-accumulation-steps", type=int, default=1)
+    train.add_argument("--preprocessing-workers", type=int, default=1)
+    train.add_argument("--seed", type=int, default=42)
+    precision = train.add_mutually_exclusive_group()
+    precision.add_argument("--fp16", action="store_true")
+    precision.add_argument("--bf16", action="store_true")
+    train.add_argument("--cpu", action="store_true")
+    train.add_argument("--cache-dir")
+    train.add_argument("--resume-from-checkpoint")
+    train.add_argument("--overwrite-output", action="store_true")
+
+
+def _token_training_identity_arguments(
+    parser: argparse.ArgumentParser,
+    *,
+    include_output: bool,
+) -> None:
+    parser.add_argument("--dataset", required=True)
+    parser.add_argument("--dataset-manifest", required=True)
+    parser.add_argument("--model-id", required=True)
+    parser.add_argument("--revision", required=True)
+    parser.add_argument("--train-split", default="train")
+    parser.add_argument("--evaluation-split", default="development")
+    parser.add_argument(
+        "--internal-validation-fraction",
+        type=float,
+        default=0.0,
+        help=(
+            "Deterministically hold out train documents for model selection; "
+            "mutually exclusive with --evaluation-split."
+        ),
+    )
+    parser.add_argument(
+        "--no-evaluation",
+        action="store_true",
+        help="Train without an evaluation split; intended only for final refits.",
+    )
+    if include_output:
+        parser.add_argument("--output-dir", required=True)
 
 
 def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
