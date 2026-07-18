@@ -189,6 +189,25 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     lexicon_build.add_argument("--report-output", required=True)
     lexicon_build.add_argument("--min-occurrences", type=int, default=1)
     lexicon_build.add_argument("--min-documents", type=int, default=1)
+    lexicon_crosswalk = lexicon_operations.add_parser(
+        "crosswalk",
+        help="Query mined mentions against a pinned terminology index.",
+    )
+    lexicon_crosswalk.set_defaults(handler="data_lexicon_crosswalk")
+    lexicon_crosswalk.add_argument("--inventory", required=True)
+    lexicon_crosswalk.add_argument("--index", required=True)
+    lexicon_crosswalk.add_argument(
+        "--source",
+        action="append",
+        required=True,
+        help="Canonical terminology JSONL used to validate the index fingerprint.",
+    )
+    lexicon_crosswalk.add_argument("--policy", required=True)
+    lexicon_crosswalk.add_argument("--output", required=True)
+    lexicon_crosswalk.add_argument("--report-output", required=True)
+    lexicon_crosswalk.add_argument("--workers", type=int, default=4)
+    lexicon_crosswalk.add_argument("--query-limit", type=int, default=1_000)
+    lexicon_crosswalk.add_argument("--candidate-output-limit", type=int, default=20)
 
     label = operations.add_parser("label", help="Run a local proposal-labeler adapter.")
     label_operations = label.add_subparsers(dest="data_label_command", required=True)

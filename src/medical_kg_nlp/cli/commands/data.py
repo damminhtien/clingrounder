@@ -13,6 +13,7 @@ from typing import Any, cast
 import yaml
 
 from medical_kg_nlp.mining.coverage import CoverageCubePlanner, CoverageTarget
+from medical_kg_nlp.mining.crosswalk import crosswalk_mentions, load_crosswalk_policies
 from medical_kg_nlp.mining.io import (
     load_annotations,
     load_documents,
@@ -26,7 +27,7 @@ from medical_kg_nlp.mining.labeling import (
     BatchedProposalLabelerAdapter,
     PolicyAwareProposalLabelerAdapter,
 )
-from medical_kg_nlp.mining.lexicon import build_mention_inventory
+from medical_kg_nlp.mining.lexicon import build_mention_inventory, load_mention_inventory
 from medical_kg_nlp.mining.policy import SourcePolicyGate
 from medical_kg_nlp.mining.ports import ProposalLabelerPort
 from medical_kg_nlp.mining.profile import (
@@ -45,10 +46,12 @@ from medical_kg_nlp.mining.runner import (
     sync_source,
 )
 from medical_kg_nlp.mining.snapshot import SnapshotBuilder, SnapshotSplitConfig
+from medical_kg_nlp.terminology import SQLiteTerminologyRepository
 
 __all__ = [
     "build_dataset",
     "build_lexicon",
+    "crosswalk_lexicon",
     "export_review",
     "freeze_snapshot",
     "import_review",
@@ -206,6 +209,39 @@ def build_lexicon(args: argparse.Namespace) -> int:
             "entry_count": len(result.entries),
             "output": args.output,
             "report": args.report_output,
+        }
+    )
+    return 0
+
+
+def crosswalk_lexicon(args: argparse.Namespace) -> int:
+    """Write exact terminology proposals while rejecting stale derived indexes."""
+
+    repository = SQLiteTerminologyRepository(
+        args.index,
+        expected_source_paths=tuple(args.source),
+    )
+    try:
+        result = crosswalk_mentions(
+            load_mention_inventory(args.inventory),
+            repository,
+            load_crosswalk_policies(args.policy),
+            terminology_metadata=repository.metadata,
+            workers=args.workers,
+            query_limit=args.query_limit,
+            candidate_output_limit=args.candidate_output_limit,
+        )
+    finally:
+        repository.close()
+    write_jsonl(args.output, (record.to_dict() for record in result.records))
+    write_json(args.report_output, result.report)
+    _print_json(
+        {
+            "entry_count": len(result.records),
+            "output": args.output,
+            "report": args.report_output,
+            "status_entry_counts": result.report["status_entry_counts"],
+            "unique_exact_entry_count": result.report["unique_exact_entry_count"],
         }
     )
     return 0

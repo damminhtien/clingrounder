@@ -195,6 +195,16 @@ uv run medical-kg data lexicon build \
   --conflicts-output outputs/mining/vietbioner-19ba70a/reconciled/mention_conflicts.jsonl \
   --report-output outputs/mining/vietbioner-19ba70a/reconciled/mention_inventory_report.json
 
+uv run medical-kg data lexicon crosswalk \
+  --inventory outputs/mining/vietbioner-19ba70a/reconciled/mention_inventory.jsonl \
+  --index .cache/medical-kg/terminology/terminology-0598a6a288ef81ea932f.sqlite3 \
+  --source data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
+  --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl \
+  --policy configs/mining/crosswalk/vietbioner.yaml \
+  --output outputs/mining/vietbioner-19ba70a/reconciled/terminology_crosswalk.jsonl \
+  --report-output outputs/mining/vietbioner-19ba70a/reconciled/terminology_crosswalk_report.json \
+  --workers 4
+
 uv run medical-kg data snapshot freeze \
   --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
   --annotations outputs/mining/vietbioner-19ba70a/reconciled/training_annotations.jsonl \
@@ -214,3 +224,11 @@ The mention inventory contains unlinked terminology hypotheses only. It must not
 into runtime dictionaries: VietBioNER merges symptoms and diseases into one source type and is
 heavily concentrated on tuberculosis and HIV. Use the conflict report and pinned terminology
 repositories to review aliases, then create a separate versioned mapping overlay.
+
+The pinned TT06/RxNorm exact crosswalk currently resolves 8 of 768 inventory entries, covering 22
+of 3,109 source occurrences. Another 248 disease/symptom hypotheses are unmatched and 512 entries
+are intentionally skipped because no source-label policy permits a terminology query. Every exact
+hit remains `review_required`: for example, VietBioNER's broad finding label does not distinguish
+the symptom `ho` from a diagnosis even though TT06 has an exact `R05` label. The crosswalk validates
+the SQLite source fingerprint, filters entity type and code system before lookup, and never performs
+fuzzy matching or mutates a runtime dictionary.

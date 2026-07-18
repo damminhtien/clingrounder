@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from collections import Counter, defaultdict
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from medical_kg_nlp.mining.policy import MiningQualityGate
@@ -16,6 +18,7 @@ __all__ = [
     "MentionInventoryEntry",
     "MentionInventoryResult",
     "build_mention_inventory",
+    "load_mention_inventory",
 ]
 
 
@@ -37,6 +40,27 @@ class MentionInventoryEntry:
     example_document_ids: tuple[str, ...]
     review_tier: str
     recommended_use: str
+
+    def __post_init__(self) -> None:
+        for value, name in (
+            (self.term_id, "term_id"),
+            (self.normalized_mention, "normalized_mention"),
+            (self.entity_type, "entity_type"),
+            (self.review_tier, "review_tier"),
+            (self.recommended_use, "recommended_use"),
+        ):
+            if not value.strip():
+                raise ValueError(f"Mention inventory {name} must be non-empty")
+        if self.occurrence_count <= 0 or self.document_count <= 0:
+            raise ValueError("Mention inventory support counts must be positive")
+        if not 0 <= self.consensus_occurrence_count <= self.occurrence_count:
+            raise ValueError("Invalid mention inventory consensus count")
+        if self.surface_variant_count <= 0 or not self.surface_variants:
+            raise ValueError("Mention inventory requires a surface variant")
+        if self.surface_variant_count < len(self.surface_variants):
+            raise ValueError("surface_variant_count cannot be smaller than emitted variants")
+        if any(not surface.strip() or count <= 0 for surface, count in self.surface_variants):
+            raise ValueError("Mention inventory surface variants must be non-empty and positive")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -62,6 +86,40 @@ class MentionInventoryEntry:
             "concepts": [],
         }
 
+    @classmethod
+    def from_dict(cls, raw: Mapping[str, Any]) -> MentionInventoryEntry:
+        """Decode one strict inventory row for later terminology crosswalks."""
+
+        raw_surfaces = raw.get("surface_variants")
+        if not isinstance(raw_surfaces, list):
+            raise ValueError("surface_variants must be a list")
+        surfaces = []
+        for raw_surface in raw_surfaces:
+            if not isinstance(raw_surface, Mapping):
+                raise ValueError("surface variant must be an object")
+            surfaces.append((str(raw_surface["surface"]), int(raw_surface["count"])))
+        raw_label_sources = raw.get("label_sources")
+        if not isinstance(raw_label_sources, Mapping):
+            raise ValueError("label_sources must be an object")
+        return cls(
+            term_id=str(raw["term_id"]),
+            normalized_mention=str(raw["normalized_mention"]),
+            entity_type=str(raw["entity_type"]),
+            source_label=(None if raw.get("source_label") is None else str(raw["source_label"])),
+            occurrence_count=int(raw["occurrence_count"]),
+            document_count=int(raw["document_count"]),
+            consensus_occurrence_count=int(raw["consensus_occurrence_count"]),
+            surface_variant_count=int(raw["surface_variant_count"]),
+            surface_variants=tuple(surfaces),
+            source_artifact_ids=tuple(str(value) for value in raw.get("source_artifact_ids", [])),
+            label_sources=tuple(
+                sorted((str(key), int(value)) for key, value in raw_label_sources.items())
+            ),
+            example_document_ids=tuple(str(value) for value in raw.get("example_document_ids", [])),
+            review_tier=str(raw["review_tier"]),
+            recommended_use=str(raw["recommended_use"]),
+        )
+
 
 @dataclass(frozen=True)
 class MentionInventoryResult:
@@ -70,6 +128,27 @@ class MentionInventoryResult:
     entries: tuple[MentionInventoryEntry, ...]
     conflicts: tuple[dict[str, Any], ...]
     report: dict[str, Any]
+
+
+def load_mention_inventory(path: str | Path) -> tuple[MentionInventoryEntry, ...]:
+    """Load deterministic JSONL inventory rows with line-local errors."""
+
+    entries = []
+    with Path(path).open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            if not line.strip():
+                continue
+            raw = json.loads(line)
+            if not isinstance(raw, Mapping):
+                raise ValueError(f"Inventory row {line_number} must be an object")
+            try:
+                entries.append(MentionInventoryEntry.from_dict(raw))
+            except (KeyError, TypeError, ValueError) as error:
+                raise ValueError(f"Invalid inventory row {line_number}: {error}") from error
+    term_ids = [entry.term_id for entry in entries]
+    if len(term_ids) != len(set(term_ids)):
+        raise ValueError("Mention inventory contains duplicate term IDs")
+    return tuple(entries)
 
 
 def build_mention_inventory(

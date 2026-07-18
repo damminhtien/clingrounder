@@ -3,6 +3,13 @@
 from medical_kg_nlp.mining.catalog import DuckDBMiningCatalog, ParquetSnapshotWriter
 from medical_kg_nlp.mining.connectors import connector_from_definition
 from medical_kg_nlp.mining.coverage import CoverageCubePlanner, CoverageTarget, ReviewPriority
+from medical_kg_nlp.mining.crosswalk import (
+    MentionCrosswalkPolicy,
+    MentionCrosswalkRecord,
+    MentionCrosswalkResult,
+    crosswalk_mentions,
+    load_crosswalk_policies,
+)
 from medical_kg_nlp.mining.dedup import StableTextDeduplicator
 from medical_kg_nlp.mining.labeling import (
     BatchedProposalLabelerAdapter,
@@ -13,6 +20,7 @@ from medical_kg_nlp.mining.lexicon import (
     MentionInventoryEntry,
     MentionInventoryResult,
     build_mention_inventory,
+    load_mention_inventory,
 )
 from medical_kg_nlp.mining.parsers import parser_from_definition
 from medical_kg_nlp.mining.ports import (
@@ -115,6 +123,9 @@ __all__ = [
     "MiningPlanResult",
     "MentionInventoryEntry",
     "MentionInventoryResult",
+    "MentionCrosswalkPolicy",
+    "MentionCrosswalkRecord",
+    "MentionCrosswalkResult",
     "ParquetSnapshotWriter",
     "ProposalLabelerPort",
     "PolicyDecision",
@@ -147,10 +158,13 @@ __all__ = [
     "VersionPolicy",
     "build_dataset_profile",
     "build_mention_inventory",
+    "crosswalk_mentions",
     "connector_from_definition",
     "ConsensusProposalLabeler",
     "JsonlReviewBackend",
     "load_source_registry",
+    "load_crosswalk_policies",
+    "load_mention_inventory",
     "load_mining_plan",
     "parser_from_definition",
     "profile_blocking_issue_count",

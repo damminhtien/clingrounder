@@ -1,0 +1,9 @@
+schema_version: medical-mention-crosswalk-policy.v1
+policies:
+  - policy_id: vietbioner-finding-to-tt06-disease-v1
+    source_entity_type: FINDING
+    source_label: Symptom_and_Disease
+    # VietBioNER merges diseases and symptoms. TT06 hits remain review proposals
+    # even when exact; no mapping from this policy is promoted automatically.
+    target_entity_types: [DISEASE]
+    code_systems: [ICD-10]

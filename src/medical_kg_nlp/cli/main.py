@@ -26,6 +26,10 @@ _HANDLERS = {
         "reconcile_duplicates",
     ),
     "data_lexicon_build": ("medical_kg_nlp.cli.commands.data", "build_lexicon"),
+    "data_lexicon_crosswalk": (
+        "medical_kg_nlp.cli.commands.data",
+        "crosswalk_lexicon",
+    ),
     "data_label_propose": ("medical_kg_nlp.cli.commands.data", "propose_labels"),
     "data_review_export": ("medical_kg_nlp.cli.commands.data", "export_review"),
     "data_review_import": ("medical_kg_nlp.cli.commands.data", "import_review"),
