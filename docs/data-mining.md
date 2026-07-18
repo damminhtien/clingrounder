@@ -435,6 +435,43 @@ concepts. On 12 source-held-out development documents, the enriched dictionary r
 0.610, recall 0.613, and F1 0.612, but produced 161 false positives; 111 were overlapping boundary
 errors. It remains proposal/training knowledge and is not enabled in the runtime recognizer.
 
+### Phase 1 Reviewed Recognition Mining
+
+The completed Phase 1 manual gold corpus is also a useful small, high-quality mining source. The
+benchmark adapter namespaces the documents, marks them `local_private`, validates raw offsets, and
+uses only the frozen `train` split (76 documents, 2,112 annotations) to build the inventory. The 24
+holdout documents (665 annotations) are read only by the recognition benchmark. Strict aliases from
+`data/manual_gold/compiled/phase1_annotation_policy.yaml` act as a source-aware review allowlist;
+unsupported or ambiguous inventory rows remain rejected.
+
+The run on 18 July 2026 produced 1,102 train inventory rows and promoted 31 code-free recognition
+concepts: 4 diagnoses, 1 drug, 9 lab-test names, and 17 symptoms. Recognition-only exact F1 on the
+holdout rose from `0.5631` to `0.5832` (`+14` true positives and `-5` false positives). The end-to-end
+Phase 1 manual-gold replay also improved on the same pipeline composition:
+
+| Split | Score | Text | Assertions | Candidates |
+|---|---:|---:|---:|---:|
+| All, baseline | 52.8175 | 0.4973 | 0.5238 | 0.5546 |
+| All, mined recognition | 55.8432 | 0.5320 | 0.5503 | 0.5844 |
+| Holdout, baseline | 52.9403 | 0.5065 | 0.5349 | 0.5425 |
+| Holdout, mined recognition | 54.1591 | 0.5228 | 0.5440 | 0.5538 |
+
+These are local manual-gold metrics, not a public competition score. The recognition overlay stays
+opt-in until a public probe confirms the hidden-label convention. The content-addressed artifact and
+all compiler decisions are under:
+`outputs/mining/knowledge/phase1-recognition-115886bf9d22/`.
+
+Reproduce the mining gate:
+
+```bash
+uv run python scripts/mine_phase1_recognition_knowledge.py
+```
+
+The generated `pipeline_profile_fragment.yaml` can be merged into a pipeline profile. The checked-in
+snapshot profile used for the end-to-end replay is
+`configs/pipeline/full_terminology_manual_gold_recognition.yaml`; it intentionally points to the
+hashed artifact rather than silently rebuilding or replacing a dictionary at startup.
+
 For model NER, export the reconciled raw spans without changing offsets or leaking the development
 split:
 
