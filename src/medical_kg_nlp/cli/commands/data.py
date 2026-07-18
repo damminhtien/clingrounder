@@ -354,6 +354,7 @@ def crosswalk_lexicon(args: argparse.Namespace) -> int:
     repository = SQLiteTerminologyRepository(
         args.index,
         expected_source_paths=tuple(args.source),
+        expected_alias_overlay_paths=tuple(args.alias_overlay_source),
     )
     try:
         result = crosswalk_mentions(

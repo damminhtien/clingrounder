@@ -318,6 +318,12 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         required=True,
         help="Canonical terminology JSONL used to validate the index fingerprint.",
     )
+    lexicon_crosswalk.add_argument(
+        "--alias-overlay-source",
+        action="append",
+        default=[],
+        help="Alias-overlay JSONL used to validate the complete index fingerprint.",
+    )
     lexicon_crosswalk.add_argument("--policy", required=True)
     lexicon_crosswalk.add_argument("--output", required=True)
     lexicon_crosswalk.add_argument("--report-output", required=True)

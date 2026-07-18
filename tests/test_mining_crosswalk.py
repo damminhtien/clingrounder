@@ -199,7 +199,26 @@ def test_crosswalk_cli_validates_index_and_writes_deterministic_artifacts(
         encoding="utf-8",
     )
     index = tmp_path / "terminology.sqlite3"
-    build_terminology_index((source,), output_path=index)
+    overlay = tmp_path / "aliases.jsonl"
+    overlay.write_text(
+        json.dumps(
+            {
+                "alias": "cough",
+                "target_concept_id": "ICD:R05",
+                "semantic_type": "DISEASE",
+                "code_system": "ICD-10",
+                "code": "R05",
+                "source": "fixture-overlay",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    build_terminology_index(
+        (source,),
+        alias_overlay_paths=(overlay,),
+        output_path=index,
+    )
     inventory_path = tmp_path / "inventory.jsonl"
     write_jsonl(inventory_path, (_inventory("term:ho", "ho").to_dict(),))
     policy_path = tmp_path / "policy.yaml"
@@ -236,6 +255,8 @@ def test_crosswalk_cli_validates_index_and_writes_deterministic_artifacts(
             str(index),
             "--source",
             str(source),
+            "--alias-overlay-source",
+            str(overlay),
             "--policy",
             str(policy_path),
             "--output",
@@ -270,6 +291,8 @@ def test_crosswalk_cli_validates_index_and_writes_deterministic_artifacts(
                 str(index),
                 "--source",
                 str(source),
+                "--alias-overlay-source",
+                str(overlay),
                 "--policy",
                 str(policy_path),
                 "--output",
