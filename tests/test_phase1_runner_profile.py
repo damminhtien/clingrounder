@@ -1,0 +1,47 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+from medical_kg_nlp.benchmarks.phase1.runner import (
+    Phase1BenchmarkConfig,
+    build_phase1_factory_config,
+)
+
+
+def test_phase1_profile_preserves_mined_sources_and_disables_relations(tmp_path: Path) -> None:
+    profile = tmp_path / "profile.yaml"
+    profile.write_text(
+        """
+terminology:
+  recognition_path: profile-seed.jsonl
+  additional_recognition_paths:
+    - mined-a.jsonl
+    - mined-b.jsonl
+  normalization_paths:
+    - icd.jsonl
+  normalization_index_path: terminology.sqlite3
+pipeline:
+  enable_relations: true
+  enable_relation_kg_validation: true
+  candidate_sources: [exact, bm25]
+""",
+        encoding="utf-8",
+    )
+    config = build_phase1_factory_config(
+        Phase1BenchmarkConfig(
+            input_dir=tmp_path,
+            output_dir=tmp_path / "output",
+            zip_path=tmp_path / "output.zip",
+            dictionary_path=tmp_path / "seed.jsonl",
+            abbreviation_path=tmp_path / "abbr.jsonl",
+            pipeline_config_path=profile,
+        )
+    )
+
+    assert config.recognition_dictionary_path == str(tmp_path / "seed.jsonl")
+    assert config.abbreviation_path == str(tmp_path / "abbr.jsonl")
+    assert config.additional_recognition_dictionary_paths == ("mined-a.jsonl", "mined-b.jsonl")
+    assert config.normalization_dictionary_paths == ("icd.jsonl",)
+    assert config.options.candidate_sources == ("exact", "bm25")
+    assert config.options.enable_relations is False
+    assert config.options.enable_relation_kg_validation is False

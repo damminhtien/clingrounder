@@ -27,6 +27,9 @@ def run_phase1(args: argparse.Namespace) -> int:
             zip_path=Path(args.zip),
             dictionary_path=Path(args.dictionary),
             abbreviation_path=Path(args.abbreviations),
+            pipeline_config_path=(
+                Path(args.pipeline_config) if args.pipeline_config else None
+            ),
             assertion_policy=cast(BenchmarkExportPolicy, args.assertion_policy),
             candidate_policy=cast(BenchmarkExportPolicy, args.candidate_policy),
             max_candidates=args.max_candidates,

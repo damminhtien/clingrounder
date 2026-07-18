@@ -178,6 +178,13 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     phase1.add_argument("--zip", required=True)
     phase1.add_argument("--dictionary", default="data/dictionaries/seed_concepts.jsonl")
     phase1.add_argument("--abbreviations", default="data/dictionaries/abbreviations.jsonl")
+    phase1.add_argument(
+        "--pipeline-config",
+        help=(
+            "Optional reusable pipeline profile. Its mined recognition sources and full "
+            "terminology index are preserved while benchmark paths override the base files."
+        ),
+    )
     phase1.add_argument("--assertion-policy", choices=("empty", "pipeline"), default="pipeline")
     phase1.add_argument("--candidate-policy", choices=("empty", "pipeline"), default="pipeline")
     phase1.add_argument("--max-candidates", type=int, default=5)
