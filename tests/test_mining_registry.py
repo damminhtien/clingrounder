@@ -26,6 +26,8 @@ def test_checked_in_mining_registry_is_strict_and_unique() -> None:
     registry = load_source_registry("data/sources/mining_registry.yaml")
 
     assert registry.schema_version == "medical-source-registry.v2"
+    assert registry.by_id("vietbioner").license_id == "CC-BY-4.0"
+    assert registry.by_id("vietbioner").parser_options["language"] == "vi"
     assert registry.by_id("mimic_iv_note").hosted_processing_allowed is False
     assert registry.by_id("pmc_oa").license_mode.value == "per_artifact"
 

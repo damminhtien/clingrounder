@@ -20,18 +20,22 @@ resources:
   - id: vietbioner
     name: VietBioNER
     category: vietnamese_biomedical_ner
-    version: lrec-2022
-    version_policy: manual_import
-    access_class: quarantine
-    license_id: verify_dataset_license
-    license_url: https://aclanthology.org/2022.lrec-1.385/
-    redistribution: unknown
-    hosted_processing_allowed: false
-    retention: local_only
-    connector: local_archive
-    parser: vietbioner
-    allowed_uses: [license_review]
-    notes: Paper license does not automatically establish the dataset artifact license.
+    version: git-19ba70a5947d1be72906d407c860b1666b9337e9
+    version_policy: pinned
+    access_class: open
+    license_id: CC-BY-4.0
+    license_url: https://github.com/ptpuyen1511/VietBioNER#license
+    redistribution: attribution
+    hosted_processing_allowed: true
+    retention: immutable
+    connector: static_http
+    parser: brat
+    parser_options:
+      language: vi
+      note_type: biomedical_literature
+    urls: [https://github.com/ptpuyen1511/VietBioNER]
+    allowed_uses: [entity_training, terminology_mining, external_benchmark]
+    notes: Dataset repository license is pinned separately from the LREC paper license.
   - id: vietmed_ner
     name: VietMed-NER
     category: vietnamese_spoken_medical_ner

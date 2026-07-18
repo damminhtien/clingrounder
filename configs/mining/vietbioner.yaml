@@ -1,0 +1,22 @@
+schema_version: medical-mining-plan.v1
+registry: ../../data/sources/mining_registry.yaml
+work_dir: ../../outputs/mining/vietbioner-19ba70a
+artifact_store:
+  # This corpus is small and open; production campaigns should override this with
+  # MEDICAL_KG_ARTIFACT_STORE on external storage.
+  uri: ../../outputs/mining/artifact-store
+  storage_options: {}
+  encrypted_at_rest: false
+sources:
+  - source_id: vietbioner
+    source_version: git-19ba70a5947d1be72906d407c860b1666b9337e9
+    enabled: true
+    parse_documents: true
+    parameters:
+      artifacts:
+        - uri: https://github.com/ptpuyen1511/VietBioNER/archive/19ba70a5947d1be72906d407c860b1666b9337e9.zip
+          media_type: application/zip
+          sha256: 4a863c9659bdf97754d5f335133e9a0f6f748d69be4902c3af40f25d6f49738a
+          metadata:
+            git_commit: 19ba70a5947d1be72906d407c860b1666b9337e9
+            corpus_format: brat

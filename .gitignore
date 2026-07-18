@@ -120,6 +120,7 @@ outputs/ablations/
 outputs/benchmarks/
 outputs/evaluation/
 outputs/loops/
+outputs/mining/
 outputs/profiles/
 
 # poetry

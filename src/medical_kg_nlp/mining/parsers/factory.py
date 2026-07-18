@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from medical_kg_nlp.mining.parsers.brat import BratArchiveParser
 from medical_kg_nlp.mining.parsers.archives import CodiEspArchiveParser, PlainTextParser
 from medical_kg_nlp.mining.parsers.json_formats import (
     BiocJsonParser,
@@ -31,6 +32,11 @@ def parser_from_definition(source: SourceDefinition) -> DocumentParserPort:
     parser_factory = parser_factories.get(source.parser)
     if parser_factory is not None:
         return parser_factory()
+    if source.parser == "brat":
+        return BratArchiveParser(
+            language=source.parser_options.get("language", "und"),
+            note_type=source.parser_options.get("note_type", "annotated_text"),
+        )
     if source.parser in {"vietnamese_guideline", "mimic_iv_note", "n2c2"}:
         return PlainTextParser(language="vi" if source.parser == "vietnamese_guideline" else "en")
     raise ValueError(

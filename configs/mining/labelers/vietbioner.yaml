@@ -1,0 +1,15 @@
+artifacts: outputs/mining/vietbioner-19ba70a/artifacts.jsonl
+store: outputs/mining/artifact-store
+labeler_id: vietbioner-brat@19ba70a5947d1be72906d407c860b1666b9337e9
+layer: silver
+review_status: proposed
+
+# Source labels are deliberately mapped to broad internal types. Disease and
+# symptom separation, and lab-test versus procedure separation, require a later
+# adjudication layer rather than an irreversible import-time guess.
+label_map:
+  Symptom_and_Disease: FINDING
+  DiagnosticProcedure: PROCEDURE
+  Organisation: OTHER
+  Location: OTHER
+  DateTime: OTHER

@@ -63,6 +63,7 @@ class SourceDefinition(BaseModel):
     retention: RetentionPolicy
     connector: str = Field(min_length=1)
     parser: str = Field(min_length=1)
+    parser_options: dict[str, str] = Field(default_factory=dict)
     urls: tuple[str, ...] = ()
     allowed_uses: tuple[str, ...]
     credentials: tuple[str, ...] = ()
@@ -89,6 +90,8 @@ class SourceDefinition(BaseModel):
                 raise ValueError("quarantine sources must keep redistribution unknown")
         if not self.allowed_uses or any(not value.strip() for value in self.allowed_uses):
             raise ValueError("allowed_uses must contain non-empty values")
+        if any(not key.strip() or not value.strip() for key, value in self.parser_options.items()):
+            raise ValueError("parser_options must contain non-empty keys and values")
         if self.version_policy is VersionPolicy.PINNED and self.version.lower() == "latest":
             raise ValueError("pinned sources require an explicit version")
         return self

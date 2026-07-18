@@ -47,11 +47,17 @@ sources:
       paths: []
       media_type: application/json
   - source_id: vietbioner
-    source_version: local-license-reviewed-snapshot
+    source_version: git-19ba70a5947d1be72906d407c860b1666b9337e9
     enabled: false
-    parse_documents: false
+    parse_documents: true
     parameters:
-      paths: []
+      artifacts:
+        - uri: https://github.com/ptpuyen1511/VietBioNER/archive/19ba70a5947d1be72906d407c860b1666b9337e9.zip
+          media_type: application/zip
+          sha256: 4a863c9659bdf97754d5f335133e9a0f6f748d69be4902c3af40f25d6f49738a
+          metadata:
+            git_commit: 19ba70a5947d1be72906d407c860b1666b9337e9
+            corpus_format: brat
   - source_id: vietmed_ner
     source_version: local-license-reviewed-snapshot
     enabled: false
