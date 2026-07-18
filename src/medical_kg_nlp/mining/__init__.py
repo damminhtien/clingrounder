@@ -16,7 +16,11 @@ from medical_kg_nlp.mining.crosswalk import (
     crosswalk_mentions,
     load_crosswalk_policies,
 )
-from medical_kg_nlp.mining.dedup import StableTextDeduplicator
+from medical_kg_nlp.mining.dedup import (
+    DuplicateGroup,
+    DuplicateGroupKind,
+    StableTextDeduplicator,
+)
 from medical_kg_nlp.mining.labeling import (
     BatchedProposalLabelerAdapter,
     ConsensusProposalLabeler,
@@ -152,6 +156,8 @@ __all__ = [
     "DocumentParserPort",
     "DocumentCanonicalMapping",
     "DuckDBMiningCatalog",
+    "DuplicateGroup",
+    "DuplicateGroupKind",
     "DuplicateReconciliationReport",
     "ExactDuplicateReconciliationResult",
     "FsspecArtifactStore",

@@ -7,12 +7,45 @@ import re
 import unicodedata
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any
 
 from medical_kg_nlp.mining.records import MinedDocument
 
-__all__ = ["StableTextDeduplicator"]
+__all__ = ["DuplicateGroup", "DuplicateGroupKind", "StableTextDeduplicator"]
 
 _TOKEN_PATTERN = re.compile(r"\w+", flags=re.UNICODE)
+
+
+class DuplicateGroupKind(str, Enum):
+    """The strongest text-equivalence claim supported for one cluster."""
+
+    SINGLETON = "singleton"
+    RAW_EXACT = "raw_exact"
+    NORMALIZED_EXACT = "normalized_exact"
+    NEAR = "near"
+
+
+@dataclass(frozen=True)
+class DuplicateGroup:
+    """One deterministic duplicate cluster used for audit and split isolation."""
+
+    group_id: str
+    kind: DuplicateGroupKind
+    document_ids: tuple[str, ...]
+    raw_text_sha256s: tuple[str, ...]
+    normalized_text_sha256s: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "group_id": self.group_id,
+            "kind": self.kind.value,
+            "document_ids": list(self.document_ids),
+            "document_count": len(self.document_ids),
+            "raw_text_sha256s": list(self.raw_text_sha256s),
+            "normalized_text_sha256s": list(self.normalized_text_sha256s),
+        }
 
 
 class StableTextDeduplicator:
@@ -27,6 +60,24 @@ class StableTextDeduplicator:
         self.bands = bands
 
     def group(self, documents: Sequence[MinedDocument]) -> Mapping[str, str]:
+        """Return document-to-group assignments for leakage-safe splitting."""
+
+        return {
+            document_id: group.group_id
+            for group in self.describe_groups(documents)
+            for document_id in group.document_ids
+        }
+
+    def describe_groups(
+        self, documents: Sequence[MinedDocument]
+    ) -> tuple[DuplicateGroup, ...]:
+        """Return auditable clusters without claiming near-duplicate offset equivalence.
+
+        Only ``RAW_EXACT`` groups share a character coordinate system and are safe to
+        collapse. ``NORMALIZED_EXACT`` and ``NEAR`` groups exist solely to keep related
+        records in the same dataset split.
+        """
+
         document_ids = [document.document_id for document in documents]
         if len(document_ids) != len(set(document_ids)):
             raise ValueError("Cannot deduplicate documents with duplicate IDs")
@@ -65,15 +116,33 @@ class StableTextDeduplicator:
         members: dict[int, list[int]] = defaultdict(list)
         for index in range(len(ordered)):
             members[_find(parent, index)].append(index)
-        group_ids: dict[int, str] = {}
-        for root, indexes in members.items():
+        groups: list[DuplicateGroup] = []
+        for indexes in members.values():
             # INVARIANT: every member of a duplicate cluster receives the same split group.
             identity = "\n".join(sorted(normalized_hashes[index] for index in indexes))
-            group_ids[root] = f"duplicate:{hashlib.sha256(identity.encode()).hexdigest()[:24]}"
-        return {
-            document.document_id: group_ids[_find(parent, index)]
-            for index, document in enumerate(ordered)
-        }
+            group_id = f"duplicate:{hashlib.sha256(identity.encode()).hexdigest()[:24]}"
+            raw_hashes = tuple(sorted({ordered[index].text_sha256 for index in indexes}))
+            group_normalized_hashes = tuple(
+                sorted({normalized_hashes[index] for index in indexes})
+            )
+            if len(indexes) == 1:
+                kind = DuplicateGroupKind.SINGLETON
+            elif len(raw_hashes) == 1:
+                kind = DuplicateGroupKind.RAW_EXACT
+            elif len(group_normalized_hashes) == 1:
+                kind = DuplicateGroupKind.NORMALIZED_EXACT
+            else:
+                kind = DuplicateGroupKind.NEAR
+            groups.append(
+                DuplicateGroup(
+                    group_id=group_id,
+                    kind=kind,
+                    document_ids=tuple(ordered[index].document_id for index in indexes),
+                    raw_text_sha256s=raw_hashes,
+                    normalized_text_sha256s=group_normalized_hashes,
+                )
+            )
+        return tuple(sorted(groups, key=lambda item: item.group_id))
 
 
 def _normalize(text: str) -> str:
