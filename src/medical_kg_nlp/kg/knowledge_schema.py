@@ -9,6 +9,7 @@ from typing import Any
 __all__ = [
     "KnowledgeEdge",
     "KnowledgeEvidence",
+    "KnowledgeNeighbor",
     "KnowledgeNode",
     "KnowledgeNodeKind",
 ]
@@ -170,3 +171,16 @@ class KnowledgeEvidence:
             "head_annotation_id": self.head_annotation_id,
             "tail_annotation_id": self.tail_annotation_id,
         }
+
+
+@dataclass(frozen=True)
+class KnowledgeNeighbor:
+    """An adjacent node plus the directed edge used to reach it."""
+
+    node: KnowledgeNode
+    edge: KnowledgeEdge
+    direction: str
+
+    def __post_init__(self) -> None:
+        if self.direction not in {"outgoing", "incoming"}:
+            raise ValueError("Knowledge neighbor direction must be outgoing or incoming")

@@ -16,11 +16,48 @@ def build_parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="command", required=True)
     _pipeline_parser(commands)
     _terminology_parser(commands)
+    _kg_parser(commands)
     _evaluate_parser(commands)
     _validate_parser(commands)
     _benchmark_parser(commands)
     _data_parser(commands)
     return parser
+
+
+def _kg_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    kg = commands.add_parser("kg", help="Build or query persistent knowledge graphs.")
+    operations = kg.add_subparsers(dest="kg_command", required=True)
+    build = operations.add_parser("build", help="Build a versioned SQLite graph index.")
+    build.set_defaults(handler="kg_build")
+    build.add_argument("--nodes", required=True)
+    build.add_argument("--edges", required=True)
+    build.add_argument("--evidence", required=True)
+    build.add_argument("--output")
+    build.add_argument("--manifest-output")
+    build.add_argument("--cache-dir", default=".cache/medical-kg/knowledge-graph")
+
+    inspect = operations.add_parser("inspect", help="Search or traverse a graph index.")
+    inspect.set_defaults(handler="kg_inspect")
+    inspect.add_argument("--index", required=True)
+    inspect.add_argument("--nodes")
+    inspect.add_argument("--edges")
+    inspect.add_argument("--evidence")
+    inspect.add_argument("--query")
+    inspect.add_argument("--entity-type")
+    inspect.add_argument("--code-system")
+    inspect.add_argument("--code")
+    inspect.add_argument("--node-id")
+    inspect.add_argument("--edge-id")
+    inspect.add_argument("--relation-type", action="append", default=[])
+    inspect.add_argument(
+        "--direction",
+        choices=("outgoing", "incoming", "both"),
+        default="outgoing",
+    )
+    inspect.add_argument("--min-support", type=int, default=1)
+    inspect.add_argument("--ancestors", action="store_true")
+    inspect.add_argument("--max-depth", type=int, default=20)
+    inspect.add_argument("--limit", type=int, default=20)
 
 
 def _pipeline_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:

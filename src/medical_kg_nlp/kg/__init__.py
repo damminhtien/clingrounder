@@ -7,8 +7,18 @@ from typing import TYPE_CHECKING, Any
 from medical_kg_nlp.kg.knowledge_schema import (
     KnowledgeEdge,
     KnowledgeEvidence,
+    KnowledgeNeighbor,
     KnowledgeNode,
     KnowledgeNodeKind,
+)
+from medical_kg_nlp.kg.ports import KnowledgeGraphRepositoryPort
+from medical_kg_nlp.kg.sqlite_builder import (
+    KNOWLEDGE_GRAPH_SCHEMA_VERSION,
+    KnowledgeGraphIndexManifest,
+    build_knowledge_graph_index,
+)
+from medical_kg_nlp.kg.sqlite_repository import (
+    SQLiteKnowledgeGraphRepository,
 )
 
 if TYPE_CHECKING:
@@ -17,11 +27,17 @@ if TYPE_CHECKING:
 
 __all__ = [
     "KGValidator",
+    "KNOWLEDGE_GRAPH_SCHEMA_VERSION",
     "KnowledgeEdge",
     "KnowledgeEvidence",
+    "KnowledgeGraphIndexManifest",
+    "KnowledgeGraphRepositoryPort",
+    "KnowledgeNeighbor",
     "KnowledgeNode",
     "KnowledgeNodeKind",
     "OntologyReasoner",
+    "SQLiteKnowledgeGraphRepository",
+    "build_knowledge_graph_index",
 ]
 
 

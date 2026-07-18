@@ -22,6 +22,8 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.terminology",
         "benchmark_index",
     ),
+    "kg_build": ("medical_kg_nlp.cli.commands.kg", "build_graph_index"),
+    "kg_inspect": ("medical_kg_nlp.cli.commands.kg", "inspect_graph_index"),
     "evaluate": ("medical_kg_nlp.cli.commands.evaluate", "evaluate"),
     "validate": ("medical_kg_nlp.cli.commands.validate", "validate"),
     "benchmark_phase1": ("medical_kg_nlp.cli.commands.phase1", "run_phase1"),
