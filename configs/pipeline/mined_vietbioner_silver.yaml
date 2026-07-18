@@ -1,0 +1,32 @@
+terminology:
+  # This is an opt-in silver profile for recall experiments, not the Phase 1 default.
+  recognition_path: data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
+  additional_recognition_paths:
+    - data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl
+    - outputs/mining/knowledge/vietbioner-recognition-2026-07-18/recognition_concepts.jsonl
+  abbreviation_path: data/dictionaries/abbreviations.jsonl
+  alias_overlay_path: data/dictionaries/vietnamese_medical_alias.jsonl
+
+  # SCALING: full canonical releases and code-free mined concepts share one read-only FTS index.
+  normalization_paths:
+    - data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl
+    - data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
+    - data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl
+    - outputs/mining/knowledge/vietbioner-recognition-2026-07-18/recognition_concepts.jsonl
+  normalization_alias_overlay_paths:
+    - outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl
+    - outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl
+  normalization_index_path: .cache/medical-kg/terminology/terminology-vietbioner-silver-2026-07-18.sqlite3
+  cache_dir: .cache/medical-kg/terminology
+  query_cache_size: 4096
+
+pipeline:
+  version: "0.2.0-vietbioner-silver"
+  enable_context: true
+  enable_linking: true
+  enable_candidate_reranking: true
+  enable_entity_kg_validation: true
+  enable_relations: true
+  enable_relation_kg_validation: true
+  max_candidates: 20
+  candidate_sources: [exact, abbreviation, fuzzy, char_ngram, bm25]

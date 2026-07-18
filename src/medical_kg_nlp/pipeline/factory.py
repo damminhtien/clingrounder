@@ -60,6 +60,7 @@ class PipelineFactoryConfig:
     terminology_cache_dir: str = ".cache/medical-kg/terminology"
     terminology_query_cache_size: int = 0
     additional_recognition_dictionary_path: str | None = None
+    additional_recognition_dictionary_paths: tuple[str, ...] = ()
     abbreviation_path: str = "data/dictionaries/abbreviations.jsonl"
     alias_overlay_path: str | None = "data/dictionaries/vietnamese_medical_alias.jsonl"
     pipeline_version: str = "0.2.0"
@@ -109,6 +110,10 @@ class PipelineFactoryConfig:
             additional_recognition_dictionary_path=_optional_string(
                 terminology.get("additional_recognition_path")
             ),
+            additional_recognition_dictionary_paths=_string_tuple(
+                terminology.get("additional_recognition_paths"),
+                "additional_recognition_paths",
+            ),
             abbreviation_path=_string(
                 terminology,
                 "abbreviation_path",
@@ -137,11 +142,14 @@ class PipelineFactory:
             alias_overlay_path=resolved.alias_overlay_path,
         )
         if resolved.additional_recognition_dictionary_path is not None:
-            recognition_entries.extend(
-                DictionaryStore.load_entries_jsonl(
-                    resolved.additional_recognition_dictionary_path
-                )
+            recognition_paths = (
+                resolved.additional_recognition_dictionary_path,
+                *resolved.additional_recognition_dictionary_paths,
             )
+        else:
+            recognition_paths = resolved.additional_recognition_dictionary_paths
+        for recognition_path in recognition_paths:
+            recognition_entries.extend(DictionaryStore.load_entries_jsonl(recognition_path))
         recognition_store = DictionaryStore(merge_concept_entries(recognition_entries))
 
         recognition_repository = InMemoryTerminologyRepository(recognition_store)

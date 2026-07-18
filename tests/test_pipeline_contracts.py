@@ -135,6 +135,7 @@ def test_factory_config_accepts_multiple_canonical_terminology_sources() -> None
                     "mined-disease-aliases.jsonl",
                 ],
                 "query_cache_size": 128,
+                "additional_recognition_paths": ["vn.jsonl", "mined.jsonl"],
             }
         }
     )
@@ -145,6 +146,7 @@ def test_factory_config_accepts_multiple_canonical_terminology_sources() -> None
         "mined-disease-aliases.jsonl",
     )
     assert config.terminology_query_cache_size == 128
+    assert config.additional_recognition_dictionary_paths == ("vn.jsonl", "mined.jsonl")
 
 
 def test_pipeline_factory_wraps_terminology_with_bounded_cache() -> None:
