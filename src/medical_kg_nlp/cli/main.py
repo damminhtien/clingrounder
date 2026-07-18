@@ -21,6 +21,10 @@ _HANDLERS = {
     "data_source_sync": ("medical_kg_nlp.cli.commands.data", "sync_registered_source"),
     "data_dataset_build": ("medical_kg_nlp.cli.commands.data", "build_dataset"),
     "data_dataset_inspect": ("medical_kg_nlp.cli.commands.data", "inspect_dataset"),
+    "data_dataset_reconcile_duplicates": (
+        "medical_kg_nlp.cli.commands.data",
+        "reconcile_duplicates",
+    ),
     "data_label_propose": ("medical_kg_nlp.cli.commands.data", "propose_labels"),
     "data_review_export": ("medical_kg_nlp.cli.commands.data", "export_review"),
     "data_review_import": ("medical_kg_nlp.cli.commands.data", "import_review"),

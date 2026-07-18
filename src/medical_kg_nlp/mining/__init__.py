@@ -39,6 +39,12 @@ from medical_kg_nlp.mining.records import (
     SourceRequest,
     StoredObject,
 )
+from medical_kg_nlp.mining.reconciliation import (
+    DocumentCanonicalMapping,
+    DuplicateReconciliationReport,
+    ExactDuplicateReconciliationResult,
+    reconcile_exact_duplicates,
+)
 from medical_kg_nlp.mining.storage import FsspecArtifactStore, LocalArtifactStore
 from medical_kg_nlp.mining.registry import (
     LicenseMode,
@@ -89,7 +95,10 @@ __all__ = [
     "DeduplicatorPort",
     "DiscoveredArtifact",
     "DocumentParserPort",
+    "DocumentCanonicalMapping",
     "DuckDBMiningCatalog",
+    "DuplicateReconciliationReport",
+    "ExactDuplicateReconciliationResult",
     "FsspecArtifactStore",
     "GoldAgreementGate",
     "LocalArtifactStore",
@@ -137,5 +146,6 @@ __all__ = [
     "load_mining_plan",
     "parser_from_definition",
     "profile_blocking_issue_count",
+    "reconcile_exact_duplicates",
     "run_mining_plan",
 ]

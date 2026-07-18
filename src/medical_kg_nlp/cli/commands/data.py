@@ -32,6 +32,7 @@ from medical_kg_nlp.mining.profile import (
     build_dataset_profile,
     profile_blocking_issue_count,
 )
+from medical_kg_nlp.mining.reconciliation import reconcile_exact_duplicates
 from medical_kg_nlp.mining.records import SourceRequest
 from medical_kg_nlp.mining.quality import GoldAgreementGate, ReviewAgreementEvaluator
 from medical_kg_nlp.mining.registry import load_source_registry
@@ -51,6 +52,7 @@ __all__ = [
     "import_review",
     "inspect_dataset",
     "propose_labels",
+    "reconcile_duplicates",
     "report_coverage",
     "review_quality",
     "run_plan",
@@ -145,6 +147,43 @@ def inspect_dataset(args: argparse.Namespace) -> int:
         }
     )
     return 1 if args.strict and blocking_issue_count else 0
+
+
+def reconcile_duplicates(args: argparse.Namespace) -> int:
+    """Materialize exact-text consensus and a separate disagreement queue."""
+
+    result = reconcile_exact_duplicates(
+        load_documents(args.documents),
+        load_annotations(args.annotations),
+        labeler_id=args.labeler_id,
+    )
+    write_jsonl(
+        args.documents_output,
+        (document.to_dict() for document in result.documents),
+    )
+    write_jsonl(
+        args.annotations_output,
+        (annotation.to_dict() for annotation in result.training_annotations),
+    )
+    write_jsonl(
+        args.review_output,
+        (annotation.to_dict() for annotation in result.review_annotations),
+    )
+    write_jsonl(
+        args.mapping_output,
+        (mapping.to_dict() for mapping in result.document_mappings),
+    )
+    write_json(args.report_output, result.report.to_dict())
+    _print_json(
+        {
+            "document_count": len(result.documents),
+            "training_annotation_count": len(result.training_annotations),
+            "review_annotation_count": len(result.review_annotations),
+            "exact_micro_jaccard": result.report.exact_micro_jaccard,
+            "report": args.report_output,
+        }
+    )
+    return 0
 
 
 def propose_labels(args: argparse.Namespace) -> int:

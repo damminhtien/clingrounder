@@ -156,6 +156,21 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         action="store_true",
         help="Return a failing status when structural issues are present.",
     )
+    dataset_reconcile = dataset_operations.add_parser(
+        "reconcile-duplicates",
+        help="Collapse exact-text duplicates and separate consensus from disagreements.",
+    )
+    dataset_reconcile.set_defaults(handler="data_dataset_reconcile_duplicates")
+    dataset_reconcile.add_argument("--documents", required=True)
+    dataset_reconcile.add_argument("--annotations", required=True)
+    dataset_reconcile.add_argument("--documents-output", required=True)
+    dataset_reconcile.add_argument("--annotations-output", required=True)
+    dataset_reconcile.add_argument("--review-output", required=True)
+    dataset_reconcile.add_argument("--mapping-output", required=True)
+    dataset_reconcile.add_argument("--report-output", required=True)
+    dataset_reconcile.add_argument(
+        "--labeler-id", default="exact-duplicate-consensus:v1"
+    )
 
     label = operations.add_parser("label", help="Run a local proposal-labeler adapter.")
     label_operations = label.add_subparsers(dest="data_label_command", required=True)
