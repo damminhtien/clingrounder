@@ -79,6 +79,7 @@ class SnapshotPlan(BaseModel):
     annotations: str | None = None
     relations: str | None = None
     development_fraction: float = Field(default=0.1, ge=0.0, lt=1.0)
+    development_sources: tuple[str, ...] = ()
     challenge_sources: tuple[str, ...] = ()
     challenge_templates: tuple[str, ...] = ()
     hash_salt: str = "medical-kg-phase2-v1"
@@ -269,6 +270,7 @@ def run_mining_plan(path: str | Path) -> MiningPlanResult:
         builder = SnapshotBuilder(
             split_config=SnapshotSplitConfig(
                 development_fraction=snapshot_plan.development_fraction,
+                development_sources=frozenset(snapshot_plan.development_sources),
                 challenge_sources=frozenset(snapshot_plan.challenge_sources),
                 challenge_templates=frozenset(snapshot_plan.challenge_templates),
                 hash_salt=snapshot_plan.hash_salt,

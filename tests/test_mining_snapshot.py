@@ -90,6 +90,36 @@ def test_snapshot_promotes_connected_duplicate_cluster_to_challenge(tmp_path: Pa
     assert snapshot.split_counts == (("challenge", 2), ("train", 1))
 
 
+def test_snapshot_holds_out_complete_development_source(tmp_path: Path) -> None:
+    development = _document("development", "Ca nguồn mới.", source="new_source")
+    duplicate = _document("duplicate", "  CA nguồn mới.  ")
+    train = _document("train", "Ca huấn luyện.")
+    documents = [development, duplicate, train]
+    annotations = [_gold(document, f"ann-{document.document_id}") for document in documents]
+
+    SnapshotBuilder(
+        split_config=SnapshotSplitConfig(
+            development_fraction=0.0,
+            development_sources=frozenset({"new_source"}),
+        )
+    ).freeze(
+        version="source-held-out-v1",
+        created_at="2026-07-18T00:00:00+00:00",
+        output_dir=tmp_path / "source-held-out",
+        documents=documents,
+        annotations=annotations,
+        write_parquet=False,
+    )
+    manifest = json.loads(
+        (tmp_path / "source-held-out" / "manifest.json").read_text()
+    )
+
+    assert manifest["splits"]["development"] == "development"
+    assert manifest["splits"]["duplicate"] == "development"
+    assert manifest["splits"]["train"] == "train"
+    assert manifest["split_config"]["development_sources"] == ["new_source"]
+
+
 def test_snapshot_manifest_is_deterministic_and_freeze_is_idempotent(tmp_path: Path) -> None:
     document = _document("doc", "Tăng huyết áp")
     annotation = _gold(document, "ann")

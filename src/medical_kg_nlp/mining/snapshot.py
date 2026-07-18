@@ -35,6 +35,7 @@ class SnapshotSplitConfig:
     """Frozen grouping and held-out rules for one dataset campaign."""
 
     development_fraction: float = 0.1
+    development_sources: frozenset[str] = frozenset()
     challenge_sources: frozenset[str] = frozenset()
     challenge_templates: frozenset[str] = frozenset()
     hash_salt: str = "medical-kg-snapshot-v1"
@@ -137,6 +138,16 @@ class SnapshotBuilder:
                 "relations": len(ordered_relations),
             },
             "split_counts": dict(split_counts),
+            "split_config": {
+                "development_fraction": self.split_config.development_fraction,
+                "development_sources": sorted(self.split_config.development_sources),
+                "challenge_sources": sorted(self.split_config.challenge_sources),
+                "challenge_templates": sorted(self.split_config.challenge_templates),
+                "hash_salt": self.split_config.hash_salt,
+                "max_synthetic_train_fraction": (
+                    self.split_config.max_synthetic_train_fraction
+                ),
+            },
             "splits": dict(sorted(splits.items())),
             "split_groups": dict(sorted(split_groups.items())),
             "content_fingerprints": {
@@ -207,9 +218,16 @@ class SnapshotBuilder:
         by_id = {document.document_id: document for document in documents}
         for component_id, document_ids in sorted(components.items()):
             component_documents = [by_id[document_id] for document_id in document_ids]
-            held_out = any(self._is_challenge(document) for document in component_documents)
-            if held_out:
+            challenge = any(
+                self._is_challenge(document) for document in component_documents
+            )
+            development = any(
+                self._is_development(document) for document in component_documents
+            )
+            if challenge:
                 split = "challenge"
+            elif development:
+                split = "development"
             else:
                 bucket = int(
                     hashlib.sha256(
@@ -226,6 +244,12 @@ class SnapshotBuilder:
                 splits[document_id] = split
                 split_groups[document_id] = component_id
         return splits, split_groups
+
+    def _is_development(self, document: MinedDocument) -> bool:
+        source_id = document.metadata.get(
+            "source_id", document.source_artifact_id.split(":", 1)[0]
+        )
+        return source_id in self.split_config.development_sources
 
     def _is_challenge(self, document: MinedDocument) -> bool:
         source_id = document.metadata.get(

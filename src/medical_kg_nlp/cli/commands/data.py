@@ -847,6 +847,7 @@ def freeze_snapshot(args: argparse.Namespace) -> int:
     snapshot = SnapshotBuilder(
         split_config=SnapshotSplitConfig(
             development_fraction=args.development_fraction,
+            development_sources=frozenset(args.development_source),
             challenge_sources=frozenset(args.challenge_source),
             challenge_templates=frozenset(args.challenge_template),
             hash_salt=args.hash_salt,
