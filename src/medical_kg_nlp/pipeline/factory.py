@@ -291,6 +291,7 @@ class PipelineFactory:
                     relation_types=options.graph_evidence_relation_types,
                     min_support=options.graph_evidence_min_support,
                     max_bonus=options.graph_evidence_max_bonus,
+                    cache_size=options.graph_evidence_cache_size,
                 )
             )
 

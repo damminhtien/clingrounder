@@ -189,6 +189,7 @@ def test_pipeline_options_parse_graph_evidence_second_pass() -> None:
             "graph_evidence_max_bonus": 0.03,
             "graph_evidence_min_support": 3,
             "graph_evidence_relation_types": ["CO_OCCURS_WITH", "TREATS"],
+            "graph_evidence_cache_size": 128,
         }
     )
 
@@ -196,6 +197,7 @@ def test_pipeline_options_parse_graph_evidence_second_pass() -> None:
     assert options.graph_evidence_max_bonus == 0.03
     assert options.graph_evidence_min_support == 3
     assert options.graph_evidence_relation_types == ("CO_OCCURS_WITH", "TREATS")
+    assert options.graph_evidence_cache_size == 128
 
 
 def test_graph_evidence_second_pass_requires_graph_index() -> None:

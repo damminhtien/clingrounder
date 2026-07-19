@@ -29,6 +29,7 @@ class PipelineOptions:
     graph_evidence_max_bonus: float = 0.04
     graph_evidence_min_support: int = 2
     graph_evidence_relation_types: tuple[str, ...] = ("CO_OCCURS_WITH",)
+    graph_evidence_cache_size: int = 4096
     enable_entity_kg_validation: bool = True
     enable_relations: bool = True
     enable_relation_kg_validation: bool = True
@@ -40,6 +41,8 @@ class PipelineOptions:
             raise ValueError("graph_evidence_max_bonus must be between 0 and 1")
         if self.graph_evidence_min_support < 1:
             raise ValueError("graph_evidence_min_support must be at least 1")
+        if self.graph_evidence_cache_size < 1:
+            raise ValueError("graph_evidence_cache_size must be at least 1")
         if not self.graph_evidence_relation_types or any(
             not relation_type.strip()
             for relation_type in self.graph_evidence_relation_types
@@ -125,6 +128,11 @@ class PipelineOptions:
                 payload,
                 "graph_evidence_relation_types",
                 cls.graph_evidence_relation_types,
+            ),
+            graph_evidence_cache_size=_positive_int_value(
+                payload,
+                "graph_evidence_cache_size",
+                cls.graph_evidence_cache_size,
             ),
             enable_entity_kg_validation=_bool_value(
                 payload,

@@ -7,9 +7,11 @@ the surrounding clinical context as evidence.
 
 from __future__ import annotations
 
+from collections import OrderedDict
 from dataclasses import dataclass, replace
 from math import log1p
-from typing import TYPE_CHECKING
+from threading import RLock
+from typing import TYPE_CHECKING, TypeVar
 
 from medical_kg_nlp.kg.knowledge_schema import KnowledgeNeighbor
 from medical_kg_nlp.kg.ports import KnowledgeGraphRepositoryPort
@@ -19,11 +21,24 @@ from medical_kg_nlp.schema.types import CodeSystem
 if TYPE_CHECKING:
     from medical_kg_nlp.pipeline.ports import CandidateRerankerPort
 
+_CacheKey = TypeVar("_CacheKey")
+_CacheValue = TypeVar("_CacheValue")
+
 __all__ = [
+    "GraphEvidenceCacheInfo",
     "GraphContextConcept",
     "GraphEvidenceMatch",
     "GraphEvidenceReranker",
 ]
+
+
+@dataclass(frozen=True)
+class GraphEvidenceCacheInfo:
+    """Bounded-cache occupancy exposed for runtime diagnostics."""
+
+    max_size: int
+    node_entries: int
+    neighbor_entries: int
 
 
 @dataclass(frozen=True)
@@ -70,6 +85,7 @@ class GraphEvidenceReranker:
         max_bonus: float = 0.04,
         support_saturation: int = 10,
         neighbor_limit: int = 500,
+        cache_size: int = 4096,
     ) -> None:
         if not relation_types or any(not value.strip() for value in relation_types):
             raise ValueError("Graph relation types must be non-empty")
@@ -77,6 +93,8 @@ class GraphEvidenceReranker:
             raise ValueError("Graph support and neighbor limits must be positive")
         if not 0.0 <= max_bonus <= 1.0:
             raise ValueError("Graph max_bonus must be in [0, 1]")
+        if cache_size < 1:
+            raise ValueError("Graph cache_size must be positive")
         self.repository = repository
         self.base_reranker = base_reranker
         self.relation_types = relation_types
@@ -84,8 +102,22 @@ class GraphEvidenceReranker:
         self.max_bonus = max_bonus
         self.support_saturation = support_saturation
         self.neighbor_limit = neighbor_limit
-        self._node_cache: dict[tuple[str, str], str | None] = {}
-        self._neighbor_cache: dict[str, dict[str, KnowledgeNeighbor]] = {}
+        self.cache_size = cache_size
+        self._cache_lock = RLock()
+        self._node_cache: OrderedDict[tuple[str, str], str | None] = OrderedDict()
+        self._neighbor_cache: OrderedDict[
+            str, dict[str, KnowledgeNeighbor]
+        ] = OrderedDict()
+
+    def cache_info(self) -> GraphEvidenceCacheInfo:
+        """Return cache occupancy without exposing mutable cache state."""
+
+        with self._cache_lock:
+            return GraphEvidenceCacheInfo(
+                max_size=self.cache_size,
+                node_entries=len(self._node_cache),
+                neighbor_entries=len(self._neighbor_cache),
+            )
 
     def rerank(
         self,
@@ -218,16 +250,27 @@ class GraphEvidenceReranker:
         if code is None or code_system == CodeSystem.NONE:
             return None
         key = (code_system.value, code)
-        if key not in self._node_cache:
-            node = self.repository.get_by_code(*key)
-            self._node_cache[key] = None if node is None else node.node_id
-        return self._node_cache[key]
+        with self._cache_lock:
+            if key in self._node_cache:
+                cached = self._node_cache.pop(key)
+                self._node_cache[key] = cached
+                return cached
+        # SCALING: do not hold the cache lock during SQLite IO. Concurrent misses may
+        # duplicate one read, but all threads retain deterministic query results.
+        node = self.repository.get_by_code(*key)
+        result = None if node is None else node.node_id
+        with self._cache_lock:
+            self._node_cache[key] = result
+            self._evict_oldest(self._node_cache)
+        return result
 
     def _neighbors(self, node_id: str) -> dict[str, KnowledgeNeighbor]:
-        cached = self._neighbor_cache.get(node_id)
-        if cached is not None:
-            return cached
-        # SCALING: cache bounded index reads per context node for document-level reranking.
+        with self._cache_lock:
+            if node_id in self._neighbor_cache:
+                cached = self._neighbor_cache.pop(node_id)
+                self._neighbor_cache[node_id] = cached
+                return cached
+        # SCALING: neighbor lists are bounded both by query limit and LRU occupancy.
         neighbors = self.repository.neighbors(
             node_id,
             direction="both",
@@ -240,8 +283,17 @@ class GraphEvidenceReranker:
             current = by_node.get(neighbor.node.node_id)
             if current is None or _neighbor_order(neighbor) > _neighbor_order(current):
                 by_node[neighbor.node.node_id] = neighbor
-        self._neighbor_cache[node_id] = by_node
+        with self._cache_lock:
+            self._neighbor_cache[node_id] = by_node
+            self._evict_oldest(self._neighbor_cache)
         return by_node
+
+    def _evict_oldest(
+        self,
+        cache: OrderedDict[_CacheKey, _CacheValue],
+    ) -> None:
+        while len(cache) > self.cache_size:
+            cache.popitem(last=False)
 
 
 def _neighbor_order(neighbor: KnowledgeNeighbor) -> tuple[int, int, float, str]:

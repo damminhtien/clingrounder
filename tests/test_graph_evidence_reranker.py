@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from medical_kg_nlp.kg.knowledge_schema import KnowledgeEdge, KnowledgeNode, KnowledgeNodeKind
@@ -57,6 +58,34 @@ def test_graph_evidence_is_deterministic_and_cached(tmp_path: Path) -> None:
 
     assert first == second
     assert [candidate.code for candidate in first] == ["B", "C"]
+    assert reranker.cache_info().node_entries == 3
+    assert reranker.cache_info().neighbor_entries == 1
+    repository.close()
+
+
+def test_graph_evidence_cache_is_bounded_and_thread_safe(tmp_path: Path) -> None:
+    repository = _repository(tmp_path)
+    reranker = GraphEvidenceReranker(
+        repository,
+        min_support=1,
+        max_bonus=0.05,
+        cache_size=2,
+    )
+    context = (GraphContextConcept(CodeSystem.ICD10, "A"),)
+    candidates = [_candidate("B", 0.5), _candidate("C", 0.5)]
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        results = list(
+            executor.map(
+                lambda _: reranker.rerank(candidates, context_concepts=context),
+                range(32),
+            )
+        )
+
+    assert all([candidate.code for candidate in result] == ["B", "C"] for result in results)
+    info = reranker.cache_info()
+    assert info.node_entries <= 2
+    assert info.neighbor_entries <= 2
     repository.close()
 
 
