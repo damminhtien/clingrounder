@@ -14,13 +14,74 @@ from medical_kg_nlp.kg.benchmark import (
     benchmark_graph_aliases,
     benchmark_graph_relations,
 )
+from medical_kg_nlp.kg.reranker_benchmark import benchmark_graph_candidate_reranking
+from medical_kg_nlp.terminology.sqlite_repository import SQLiteTerminologyRepository
 
 __all__ = [
     "benchmark_graph_aliases_command",
     "benchmark_graph_relations_command",
+    "benchmark_graph_reranker_command",
     "build_graph_index",
     "inspect_graph_index",
 ]
+
+
+def benchmark_graph_reranker_command(args: argparse.Namespace) -> int:
+    """Run a split-safe graph-feature calibration and held-out benchmark."""
+
+    graph = SQLiteKnowledgeGraphRepository(
+        args.index,
+        expected_nodes_path=args.nodes,
+        expected_edges_path=args.edges,
+        expected_evidence_path=args.evidence,
+    )
+    terminology = SQLiteTerminologyRepository(
+        args.terminology_index,
+        expected_source_paths=tuple(args.terminology_source),
+        expected_alias_overlay_paths=tuple(args.terminology_alias_overlay),
+    )
+    try:
+        report = benchmark_graph_candidate_reranking(
+            graph,
+            terminology,
+            documents_path=args.documents,
+            annotations_path=args.annotations,
+            graph_evidence_path=args.evidence,
+            calibration_split=args.calibration_split,
+            evaluation_split=args.evaluation_split,
+            graph_source_splits=tuple(dict.fromkeys(args.graph_source_split)),
+            document_prefix=args.document_prefix,
+            source_label=args.source_label,
+            relation_types=tuple(dict.fromkeys(args.relation_type)),
+            min_support=args.min_support,
+            candidate_limit=args.candidate_limit,
+            max_bonus_grid=tuple(args.max_bonus_grid),
+            max_errors=args.max_errors,
+        )
+    finally:
+        terminology.close()
+        graph.close()
+    output = Path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print(
+        json.dumps(
+            {
+                "selected_max_bonus": report["feature"]["selected_max_bonus"],
+                "calibration_split": report["calibration"]["split"],
+                "evaluation_split": report["evaluation"]["split"],
+                "evaluation_delta": report["evaluation"]["delta"],
+                "report": str(output),
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    return 0
 
 
 def benchmark_graph_aliases_command(args: argparse.Namespace) -> int:

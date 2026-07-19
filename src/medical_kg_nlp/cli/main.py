@@ -31,6 +31,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.kg",
         "benchmark_graph_relations_command",
     ),
+    "kg_benchmark_reranker": (
+        "medical_kg_nlp.cli.commands.kg",
+        "benchmark_graph_reranker_command",
+    ),
     "kg_inspect": ("medical_kg_nlp.cli.commands.kg", "inspect_graph_index"),
     "evaluate": ("medical_kg_nlp.cli.commands.evaluate", "evaluate"),
     "validate": ("medical_kg_nlp.cli.commands.validate", "validate"),

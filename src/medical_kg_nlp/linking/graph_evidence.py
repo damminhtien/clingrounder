@@ -9,12 +9,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from math import log1p
+from typing import TYPE_CHECKING
 
 from medical_kg_nlp.kg.knowledge_schema import KnowledgeNeighbor
 from medical_kg_nlp.kg.ports import KnowledgeGraphRepositoryPort
 from medical_kg_nlp.linking.candidate import Candidate, CandidateEvidence
-from medical_kg_nlp.pipeline.ports import CandidateRerankerPort
 from medical_kg_nlp.schema.types import CodeSystem
+
+if TYPE_CHECKING:
+    from medical_kg_nlp.pipeline.ports import CandidateRerankerPort
 
 __all__ = [
     "GraphContextConcept",

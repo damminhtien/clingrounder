@@ -85,6 +85,41 @@ def _kg_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     relation_benchmark.add_argument("--limit", type=int, default=100)
     relation_benchmark.add_argument("--max-misses", type=int, default=50)
 
+    reranker_benchmark = operations.add_parser(
+        "benchmark-reranker",
+        help="Calibrate and evaluate graph evidence over terminology candidates.",
+    )
+    reranker_benchmark.set_defaults(handler="kg_benchmark_reranker")
+    reranker_benchmark.add_argument("--index", required=True)
+    reranker_benchmark.add_argument("--nodes", required=True)
+    reranker_benchmark.add_argument("--edges", required=True)
+    reranker_benchmark.add_argument("--evidence", required=True)
+    reranker_benchmark.add_argument("--terminology-index", required=True)
+    reranker_benchmark.add_argument("--terminology-source", action="append", required=True)
+    reranker_benchmark.add_argument("--terminology-alias-overlay", action="append", default=[])
+    reranker_benchmark.add_argument("--documents", required=True)
+    reranker_benchmark.add_argument("--annotations", required=True)
+    reranker_benchmark.add_argument("--output", required=True)
+    reranker_benchmark.add_argument("--calibration-split", default="dev")
+    reranker_benchmark.add_argument("--evaluation-split", default="test")
+    reranker_benchmark.add_argument("--graph-source-split", action="append", default=["train"])
+    reranker_benchmark.add_argument("--document-prefix", default="codiesp:")
+    reranker_benchmark.add_argument("--source-label", default="DIAGNOSTICO")
+    reranker_benchmark.add_argument(
+        "--relation-type",
+        action="append",
+        default=["CO_OCCURS_WITH"],
+    )
+    reranker_benchmark.add_argument("--min-support", type=int, default=2)
+    reranker_benchmark.add_argument("--candidate-limit", type=int, default=20)
+    reranker_benchmark.add_argument(
+        "--max-bonus-grid",
+        type=float,
+        nargs="+",
+        default=[0.0, 0.01, 0.02, 0.04, 0.08],
+    )
+    reranker_benchmark.add_argument("--max-errors", type=int, default=50)
+
 
 def _pipeline_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     pipeline = commands.add_parser("pipeline", help="Run pipeline operations.")
