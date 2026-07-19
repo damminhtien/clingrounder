@@ -35,7 +35,7 @@ class _LinkedAnnotation:
 class _BenchmarkQuery:
     annotation: _LinkedAnnotation
     split: str
-    context: tuple[GraphContextConcept, ...]
+    neighbors: tuple[_LinkedAnnotation, ...]
 
 
 def benchmark_graph_candidate_reranking(
@@ -50,6 +50,7 @@ def benchmark_graph_candidate_reranking(
     graph_source_splits: tuple[str, ...] = ("train",),
     document_prefix: str = "codiesp:",
     source_label: str = "DIAGNOSTICO",
+    context_mode: str = "oracle",
     relation_types: tuple[str, ...] = ("CO_OCCURS_WITH",),
     min_support: int = 2,
     candidate_limit: int = 20,
@@ -58,8 +59,9 @@ def benchmark_graph_candidate_reranking(
 ) -> dict[str, Any]:
     """Calibrate on one split and evaluate once on a disjoint held-out split.
 
-    Same-sentence gold links provide an oracle context for measuring feature
-    potential.  The report deliberately does not claim production reranker quality.
+    Oracle mode measures feature potential. Predicted mode uses only exact-unique
+    first-pass links from neighboring gold mentions, so no neighboring gold code is
+    passed into the reranker.
     """
 
     if calibration_split == evaluation_split:
@@ -70,6 +72,8 @@ def benchmark_graph_candidate_reranking(
         raise ValueError("Graph source splits must be disjoint from benchmark splits")
     if candidate_limit < 1 or min_support < 1 or max_errors < 0:
         raise ValueError("Candidate/support limits must be positive")
+    if context_mode not in {"oracle", "predicted_exact_unique"}:
+        raise ValueError("context_mode must be oracle or predicted_exact_unique")
     if not max_bonus_grid or any(not 0.0 <= value <= 1.0 for value in max_bonus_grid):
         raise ValueError("max_bonus_grid must contain values in [0, 1]")
 
@@ -106,6 +110,7 @@ def benchmark_graph_candidate_reranking(
             retrieval,
             graph_repository,
             candidate_cache,
+            context_mode=context_mode,
             relation_types=relation_types,
             min_support=min_support,
             max_bonus=bonus,
@@ -119,6 +124,7 @@ def benchmark_graph_candidate_reranking(
         retrieval,
         graph_repository,
         candidate_cache,
+        context_mode=context_mode,
         relation_types=relation_types,
         min_support=min_support,
         max_bonus=selected_bonus,
@@ -126,7 +132,7 @@ def benchmark_graph_candidate_reranking(
     )
     return {
         "schema_version": "graph-evidence-reranker-benchmark.v1",
-        "semantic_contract": "oracle_linked_context_upper_bound_not_production_performance",
+        "semantic_contract": _semantic_contract(context_mode),
         "leakage_contract": {
             "graph_source_splits": list(graph_source_splits),
             "calibration_split": calibration_split,
@@ -145,6 +151,7 @@ def benchmark_graph_candidate_reranking(
             "sources": list(retrieval.retrieval_sources),
         },
         "feature": {
+            "context_mode": context_mode,
             "relation_types": list(relation_types),
             "min_support": min_support,
             "max_bonus_grid": sorted(set(max_bonus_grid)),
@@ -238,22 +245,15 @@ def _load_queries(
         for sentence_index, values in sorted(sentence_annotations.items()):
             del sentence_index
             for target in values:
-                context = tuple(
-                    GraphContextConcept(CodeSystem.ICD10, code)
-                    for code in sorted(
-                        {
-                            item.code
-                            for item in values
-                            if item.annotation_id != target.annotation_id
-                            and item.code != target.code
-                        }
-                    )
-                )
                 queries.append(
                     _BenchmarkQuery(
                         annotation=target,
                         split=split_by_document[document_id],
-                        context=context,
+                        neighbors=tuple(
+                            item
+                            for item in values
+                            if item.annotation_id != target.annotation_id
+                        ),
                     )
                 )
     return tuple(queries)
@@ -304,6 +304,7 @@ def _evaluate_queries(
     graph_repository: KnowledgeGraphRepositoryPort,
     candidate_cache: dict[str, tuple[Candidate, ...]],
     *,
+    context_mode: str,
     relation_types: tuple[str, ...],
     min_support: int,
     max_bonus: float,
@@ -318,15 +319,18 @@ def _evaluate_queries(
     rows: list[dict[str, Any]] = []
     for query in queries:
         mention = query.annotation.text
-        cached = candidate_cache.get(mention)
-        if cached is None:
-            cached = tuple(retrieval.retrieve(mention, EntityType.DISEASE))
-            candidate_cache[mention] = cached
+        cached = _retrieve_candidates(mention, retrieval, candidate_cache)
+        context, anchor_count, correct_anchor_count = _resolve_context(
+            query,
+            context_mode=context_mode,
+            retrieval=retrieval,
+            candidate_cache=candidate_cache,
+        )
         baseline_candidates = list(cached)
         reranked_candidates = reranker.rerank(
             baseline_candidates,
             mention=mention,
-            context_concepts=query.context,
+            context_concepts=context,
         )
         rows.append(
             {
@@ -334,7 +338,10 @@ def _evaluate_queries(
                 "document_id": query.annotation.document_id,
                 "mention": mention,
                 "expected_code": query.annotation.code,
-                "context_count": len(query.context),
+                "neighbor_mention_count": len(query.neighbors),
+                "context_count": len(context),
+                "context_anchor_count": anchor_count,
+                "correct_context_anchor_count": correct_anchor_count,
                 "baseline_rank": _candidate_rank(
                     baseline_candidates, query.annotation.code
                 ),
@@ -364,6 +371,15 @@ def _evaluate_queries(
         "query_count": len(rows),
         "queries_with_context": sum(row["context_count"] > 0 for row in rows),
         "queries_with_graph_feature": sum(row["graph_feature_used"] for row in rows),
+        "context_anchors": {
+            "mode": context_mode,
+            "emitted": sum(row["context_anchor_count"] for row in rows),
+            "correct": sum(row["correct_context_anchor_count"] for row in rows),
+            "precision": _rate(
+                sum(row["correct_context_anchor_count"] for row in rows),
+                sum(row["context_anchor_count"] for row in rows),
+            ),
+        },
         "baseline": baseline_metrics,
         "reranked": reranked_metrics,
         "delta": {
@@ -390,6 +406,76 @@ def _rank_metrics(rows: list[dict[str, Any]], key: str) -> dict[str, float]:
         "recall_at_10": _rate(sum(rank is not None and rank <= 10 for rank in ranks), total),
         "recall_at_20": _rate(sum(rank is not None and rank <= 20 for rank in ranks), total),
     }
+
+
+def _resolve_context(
+    query: _BenchmarkQuery,
+    *,
+    context_mode: str,
+    retrieval: RetrievalPipeline,
+    candidate_cache: dict[str, tuple[Candidate, ...]],
+) -> tuple[tuple[GraphContextConcept, ...], int, int]:
+    if context_mode == "oracle":
+        codes = sorted(
+            {
+                neighbor.code
+                for neighbor in query.neighbors
+                if neighbor.code != query.annotation.code
+            }
+        )
+        context = tuple(
+            GraphContextConcept(CodeSystem.ICD10, code) for code in codes
+        )
+        return context, len(context), len(context)
+
+    anchors: dict[str, tuple[str, bool]] = {}
+    for neighbor in query.neighbors:
+        candidates = _retrieve_candidates(neighbor.text, retrieval, candidate_cache)
+        anchor = _exact_unique_anchor(candidates)
+        if anchor is None or anchor.code is None:
+            continue
+        key = f"{anchor.code_system.value}:{anchor.code}"
+        is_correct = anchor.code == neighbor.code
+        current = anchors.get(key)
+        anchors[key] = (
+            anchor.code,
+            is_correct if current is None else current[1] or is_correct,
+        )
+    context = tuple(
+        GraphContextConcept(CodeSystem.ICD10, code)
+        for code in sorted(value[0] for value in anchors.values())
+    )
+    return context, len(context), sum(value[1] for value in anchors.values())
+
+
+def _retrieve_candidates(
+    mention: str,
+    retrieval: RetrievalPipeline,
+    cache: dict[str, tuple[Candidate, ...]],
+) -> tuple[Candidate, ...]:
+    cached = cache.get(mention)
+    if cached is None:
+        cached = tuple(retrieval.retrieve(mention, EntityType.DISEASE))
+        cache[mention] = cached
+    return cached
+
+
+def _exact_unique_anchor(candidates: tuple[Candidate, ...]) -> Candidate | None:
+    exact = [
+        candidate
+        for candidate in candidates
+        if candidate.code is not None
+        and candidate.code_system == CodeSystem.ICD10
+        and "exact" in candidate.sources
+    ]
+    keys = {(candidate.code_system, candidate.code) for candidate in exact}
+    return exact[0] if len(keys) == 1 else None
+
+
+def _semantic_contract(context_mode: str) -> str:
+    if context_mode == "oracle":
+        return "oracle_linked_context_upper_bound_not_production_performance"
+    return "gold_mentions_with_predicted_exact_unique_context_links"
 
 
 def _select_bonus(variants: dict[str, dict[str, Any]]) -> float:

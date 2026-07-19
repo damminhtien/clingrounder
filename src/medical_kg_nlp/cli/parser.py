@@ -106,6 +106,11 @@ def _kg_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     reranker_benchmark.add_argument("--document-prefix", default="codiesp:")
     reranker_benchmark.add_argument("--source-label", default="DIAGNOSTICO")
     reranker_benchmark.add_argument(
+        "--context-mode",
+        choices=("oracle", "predicted_exact_unique"),
+        default="oracle",
+    )
+    reranker_benchmark.add_argument(
         "--relation-type",
         action="append",
         default=["CO_OCCURS_WITH"],

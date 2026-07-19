@@ -52,6 +52,7 @@ def benchmark_graph_reranker_command(args: argparse.Namespace) -> int:
             graph_source_splits=tuple(dict.fromkeys(args.graph_source_split)),
             document_prefix=args.document_prefix,
             source_label=args.source_label,
+            context_mode=args.context_mode,
             relation_types=tuple(dict.fromkeys(args.relation_type)),
             min_support=args.min_support,
             candidate_limit=args.candidate_limit,

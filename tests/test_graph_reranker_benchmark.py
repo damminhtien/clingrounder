@@ -45,6 +45,7 @@ def test_graph_reranker_benchmark_cli_is_discoverable() -> None:
 
     assert args.handler == "kg_benchmark_reranker"
     assert args.max_bonus_grid == [0.0, 0.01, 0.02, 0.04, 0.08]
+    assert args.context_mode == "oracle"
 
 
 def test_graph_reranker_calibrates_on_dev_and_improves_heldout_test(tmp_path: Path) -> None:
@@ -81,6 +82,50 @@ def test_graph_reranker_calibrates_on_dev_and_improves_heldout_test(tmp_path: Pa
     assert report["evaluation"]["delta"]["accuracy_at_1"] == 0.5
     assert report["evaluation"]["rank_changes"]["worsened"] == 0
     assert report["leakage_contract"]["status"] == "passed"
+    graph.close()
+
+
+def test_graph_reranker_uses_predicted_exact_unique_context(tmp_path: Path) -> None:
+    graph, evidence = _graph(tmp_path)
+    documents = tmp_path / "documents.jsonl"
+    annotations = tmp_path / "annotations.jsonl"
+    write_jsonl(
+        documents,
+        (
+            _document("train", "train", "source"),
+            _document("dev", "dev", "context ambiguous."),
+            _document("test", "test", "context ambiguous."),
+        ),
+    )
+    write_jsonl(
+        annotations,
+        (
+            *_annotations("dev", "context ambiguous."),
+            *_annotations("test", "context ambiguous."),
+        ),
+    )
+
+    report = benchmark_graph_candidate_reranking(
+        graph,
+        _TerminologyFixture(),
+        documents_path=documents,
+        annotations_path=annotations,
+        graph_evidence_path=evidence,
+        context_mode="predicted_exact_unique",
+        max_bonus_grid=(0.0, 0.04),
+        min_support=2,
+    )
+
+    assert report["semantic_contract"] == (
+        "gold_mentions_with_predicted_exact_unique_context_links"
+    )
+    assert report["evaluation"]["context_anchors"] == {
+        "mode": "predicted_exact_unique",
+        "emitted": 1,
+        "correct": 1,
+        "precision": 1.0,
+    }
+    assert report["evaluation"]["delta"]["accuracy_at_1"] == 0.5
     graph.close()
 
 
