@@ -805,6 +805,7 @@ pipeline:
   graph_evidence_max_bonus: 0.04
   graph_evidence_min_support: 2
   graph_evidence_relation_types: [CO_OCCURS_WITH]
+  graph_evidence_cache_size: 4096
 ```
 
 Runtime order is mention retrieval, optional lexical/model reranking, graph second pass, then code
@@ -812,3 +813,5 @@ assignment. Only exact-unique linked neighbors in the same sentence become conte
 Unresolved sentence spans are excluded instead of being grouped under a synthetic sentence. The
 second pass records `anchor_entities`, `queries_with_context`, `queries_with_graph_feature`, and
 `changed_top1` in `PipelineTrace`; it never creates terminology candidates or changes raw spans.
+Node and neighbor reads use bounded thread-safe LRU caches, so a long-running worker does not retain
+the full graph in process memory.

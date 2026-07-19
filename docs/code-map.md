@@ -95,6 +95,7 @@ pipeline:
   graph_evidence_max_bonus: 0.04
   graph_evidence_min_support: 2
   graph_evidence_relation_types: [CO_OCCURS_WITH]
+  graph_evidence_cache_size: 4096
   enable_entity_kg_validation: true
   enable_relations: true
   enable_relation_kg_validation: true
@@ -122,7 +123,8 @@ pass accepts only exact-unique first-pass links as same-sentence context anchors
 candidate, cross sentence boundaries, or use entities that could not be assigned to a sentence.
 Its trace stage is `graph_evidence_reranking`, with counters for anchors, context events, graph
 features, and changed top-1 predictions. Keep the option disabled until the graph source and model
-NER distribution have passed a held-out benchmark.
+NER distribution have passed a held-out benchmark. Node and neighbor caches use a thread-safe LRU;
+set `graph_evidence_cache_size` from the expected active concept working set instead of graph size.
 
 Model blocks are optional. They lazy-load the `ml` extra and set `local_files_only=true`; core
 imports do not import PyTorch or Transformers.
