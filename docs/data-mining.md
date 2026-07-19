@@ -780,5 +780,15 @@ The dev-selected maximum bonus was `0.04`. On 2,052 mapped, contiguous test diag
 accuracy increased from `67.3002%` to `67.7388%` and MRR from `0.686894` to `0.688835`.
 Recall@5/10/20 stayed unchanged by design. The feature affected 358 test queries, improved 14 ranks,
 and worsened 9. This is a small positive upper bound because same-sentence context links are gold;
-production promotion still requires a two-pass benchmark using only high-confidence predicted
-context concepts.
+production promotion therefore also uses a two-pass benchmark with predicted context links. Repeat
+the pinned command above with `--context-mode predicted_exact_unique` and write to
+`graph_reranker_predicted_context_benchmark.json` instead of overwriting the oracle report.
+
+This mode still uses gold mention spans to isolate linking behavior, but neighboring codes are not
+read from gold. Only one type-compatible ICD-10 output with `exact` provenance can become a context
+anchor; toneless, FTS, and ambiguous outputs abstain. On test, 1,614 anchors reached `99.13%`
+precision. The selected `0.04` bonus improved top-1 from `67.3002%` to `67.6901%` and MRR from
+`0.686894` to `0.688591`; 14 ranks improved and 10 worsened. The predicted-context gain retains
+about 89% of the oracle top-1 gain. The feature is suitable for an opt-in second-pass linker, but it
+must remain off by default until a full predicted-NER benchmark confirms that span errors do not
+erase this small gain.
