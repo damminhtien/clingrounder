@@ -47,6 +47,7 @@ def benchmark_graph_reranker_command(args: argparse.Namespace) -> int:
             documents_path=args.documents,
             annotations_path=args.annotations,
             graph_evidence_path=args.evidence,
+            predictions_path=args.predictions,
             calibration_split=args.calibration_split,
             evaluation_split=args.evaluation_split,
             graph_source_splits=tuple(dict.fromkeys(args.graph_source_split)),

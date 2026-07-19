@@ -38,14 +38,19 @@ def test_graph_reranker_benchmark_cli_is_discoverable() -> None:
             "documents.jsonl",
             "--annotations",
             "annotations.jsonl",
+            "--predictions",
+            "predictions.jsonl",
             "--output",
             "report.json",
+            "--context-mode",
+            "predicted_ner_exact_unique",
         ]
     )
 
     assert args.handler == "kg_benchmark_reranker"
     assert args.max_bonus_grid == [0.0, 0.01, 0.02, 0.04, 0.08]
-    assert args.context_mode == "oracle"
+    assert args.context_mode == "predicted_ner_exact_unique"
+    assert args.predictions == "predictions.jsonl"
 
 
 def test_graph_reranker_calibrates_on_dev_and_improves_heldout_test(tmp_path: Path) -> None:
@@ -126,6 +131,85 @@ def test_graph_reranker_uses_predicted_exact_unique_context(tmp_path: Path) -> N
         "precision": 1.0,
     }
     assert report["evaluation"]["delta"]["accuracy_at_1"] == 0.5
+    graph.close()
+
+
+def test_graph_reranker_scores_predicted_ner_targets_and_context(tmp_path: Path) -> None:
+    graph, evidence = _graph(tmp_path)
+    documents = tmp_path / "documents.jsonl"
+    annotations = tmp_path / "annotations.jsonl"
+    predictions = tmp_path / "predictions.jsonl"
+    write_jsonl(
+        documents,
+        (
+            _document("train", "train", "source"),
+            _document("dev", "dev", "context ambiguous."),
+            _document("test", "test", "context ambiguous."),
+        ),
+    )
+    write_jsonl(
+        annotations,
+        (
+            *_annotations("dev", "context ambiguous."),
+            *_annotations("test", "context ambiguous."),
+        ),
+    )
+    write_jsonl(
+        predictions,
+        (
+            _prediction("dev", include_target=True),
+            _prediction("test", include_target=False),
+        ),
+    )
+
+    report = benchmark_graph_candidate_reranking(
+        graph,
+        _TerminologyFixture(),
+        documents_path=documents,
+        annotations_path=annotations,
+        predictions_path=predictions,
+        graph_evidence_path=evidence,
+        context_mode="predicted_ner_exact_unique",
+        max_bonus_grid=(0.0, 0.04),
+        min_support=2,
+    )
+
+    assert report["semantic_contract"] == (
+        "predicted_disease_spans_with_predicted_exact_unique_context_links"
+    )
+    assert report["evaluation"]["target_detection"] == {
+        "detected": 1,
+        "total": 2,
+        "recall": 0.5,
+    }
+    assert report["evaluation"]["baseline"]["accuracy_at_1"] == 0.5
+    assert report["evaluation"]["context_anchors"]["emitted"] == 0
+    graph.close()
+
+
+def test_predicted_ner_context_requires_prediction_file(tmp_path: Path) -> None:
+    graph, evidence = _graph(tmp_path)
+    documents = tmp_path / "documents.jsonl"
+    annotations = tmp_path / "annotations.jsonl"
+    write_jsonl(
+        documents,
+        (
+            _document("train", "train", "source"),
+            _document("dev", "dev", "context ambiguous."),
+            _document("test", "test", "context ambiguous."),
+        ),
+    )
+    write_jsonl(annotations, ())
+
+    with pytest.raises(ValueError, match="requires predictions_path"):
+        benchmark_graph_candidate_reranking(
+            graph,
+            _TerminologyFixture(),
+            documents_path=documents,
+            annotations_path=annotations,
+            graph_evidence_path=evidence,
+            context_mode="predicted_ner_exact_unique",
+        )
     graph.close()
 
 
@@ -285,3 +369,24 @@ def _annotation(
         "span": [start, end],
         "text": text,
     }
+
+
+def _prediction(suffix: str, *, include_target: bool) -> dict[str, object]:
+    entities: list[dict[str, object]] = [
+        {
+            "id": f"{suffix}:prediction:A",
+            "span": [0, 7],
+            "text": "context",
+            "type": "DISEASE",
+        }
+    ]
+    if include_target:
+        entities.append(
+            {
+                "id": f"{suffix}:prediction:B",
+                "span": [8, 17],
+                "text": "ambiguous",
+                "type": "DISEASE",
+            }
+        )
+    return {"document_id": f"codiesp:{suffix}", "entities": entities}

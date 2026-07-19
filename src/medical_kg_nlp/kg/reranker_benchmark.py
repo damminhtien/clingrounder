@@ -32,10 +32,19 @@ class _LinkedAnnotation:
 
 
 @dataclass(frozen=True)
+class _ContextMention:
+    mention_id: str
+    text: str
+    span: tuple[int, int]
+    expected_code: str | None
+
+
+@dataclass(frozen=True)
 class _BenchmarkQuery:
     annotation: _LinkedAnnotation
     split: str
-    neighbors: tuple[_LinkedAnnotation, ...]
+    neighbors: tuple[_ContextMention, ...]
+    target_detected: bool = True
 
 
 def benchmark_graph_candidate_reranking(
@@ -45,6 +54,7 @@ def benchmark_graph_candidate_reranking(
     documents_path: str | Path,
     annotations_path: str | Path,
     graph_evidence_path: str | Path,
+    predictions_path: str | Path | None = None,
     calibration_split: str = "dev",
     evaluation_split: str = "test",
     graph_source_splits: tuple[str, ...] = ("train",),
@@ -72,8 +82,17 @@ def benchmark_graph_candidate_reranking(
         raise ValueError("Graph source splits must be disjoint from benchmark splits")
     if candidate_limit < 1 or min_support < 1 or max_errors < 0:
         raise ValueError("Candidate/support limits must be positive")
-    if context_mode not in {"oracle", "predicted_exact_unique"}:
-        raise ValueError("context_mode must be oracle or predicted_exact_unique")
+    allowed_context_modes = {
+        "oracle",
+        "predicted_exact_unique",
+        "predicted_ner_exact_unique",
+    }
+    if context_mode not in allowed_context_modes:
+        raise ValueError(f"context_mode must be one of {sorted(allowed_context_modes)}")
+    if context_mode == "predicted_ner_exact_unique" and predictions_path is None:
+        raise ValueError("predicted_ner_exact_unique requires predictions_path")
+    if context_mode != "predicted_ner_exact_unique" and predictions_path is not None:
+        raise ValueError("predictions_path requires predicted_ner_exact_unique context mode")
     if not max_bonus_grid or any(not 0.0 <= value <= 1.0 for value in max_bonus_grid):
         raise ValueError("max_bonus_grid must contain values in [0, 1]")
 
@@ -87,11 +106,17 @@ def benchmark_graph_candidate_reranking(
         split_by_document,
         allowed_splits=set(graph_source_splits),
     )
+    predicted_mentions = (
+        _load_predicted_mentions(Path(predictions_path), documents)
+        if predictions_path is not None
+        else None
+    )
     queries = _load_queries(
         Path(annotations_path),
         documents,
         split_by_document,
         source_label=source_label,
+        predicted_mentions_by_document=predicted_mentions,
     )
     retrieval = RetrievalPipeline(
         terminology_repository,
@@ -144,6 +169,11 @@ def benchmark_graph_candidate_reranking(
             "documents": _file_identity(Path(documents_path)),
             "annotations": _file_identity(Path(annotations_path)),
             "graph_evidence": _file_identity(Path(graph_evidence_path)),
+            **(
+                {"predictions": _file_identity(Path(predictions_path))}
+                if predictions_path is not None
+                else {}
+            ),
         },
         "graph_metadata": dict(getattr(graph_repository, "metadata", {})),
         "retrieval": {
@@ -223,6 +253,7 @@ def _load_queries(
     split_by_document: dict[str, str],
     *,
     source_label: str,
+    predicted_mentions_by_document: dict[str, tuple[_ContextMention, ...]] | None,
 ) -> tuple[_BenchmarkQuery, ...]:
     annotations_by_document: dict[str, list[_LinkedAnnotation]] = defaultdict(list)
     for raw in _iter_jsonl(path):
@@ -242,21 +273,110 @@ def _load_queries(
             sentence_index = _containing_sentence(sentences, annotation.span)
             if sentence_index is not None:
                 sentence_annotations[sentence_index].append(annotation)
+        predicted_by_sentence: dict[int, list[_ContextMention]] = defaultdict(list)
+        if predicted_mentions_by_document is not None:
+            gold_codes_by_span = _unique_gold_codes_by_span(document_annotations)
+            for mention in predicted_mentions_by_document.get(document_id, ()):
+                sentence_index = _containing_sentence(sentences, mention.span)
+                if sentence_index is None:
+                    continue
+                predicted_by_sentence[sentence_index].append(
+                    _ContextMention(
+                        mention_id=mention.mention_id,
+                        text=mention.text,
+                        span=mention.span,
+                        expected_code=gold_codes_by_span.get(mention.span),
+                    )
+                )
         for sentence_index, values in sorted(sentence_annotations.items()):
-            del sentence_index
             for target in values:
+                if predicted_mentions_by_document is None:
+                    neighbors = tuple(
+                        _ContextMention(
+                            mention_id=item.annotation_id,
+                            text=item.text,
+                            span=item.span,
+                            expected_code=item.code,
+                        )
+                        for item in values
+                        if item.annotation_id != target.annotation_id
+                    )
+                    target_detected = True
+                else:
+                    predicted_values = predicted_by_sentence.get(sentence_index, ())
+                    target_detected = any(
+                        item.span == target.span for item in predicted_values
+                    )
+                    neighbors = tuple(
+                        item for item in predicted_values if item.span != target.span
+                    )
                 queries.append(
                     _BenchmarkQuery(
                         annotation=target,
                         split=split_by_document[document_id],
-                        neighbors=tuple(
-                            item
-                            for item in values
-                            if item.annotation_id != target.annotation_id
-                        ),
+                        neighbors=neighbors,
+                        target_detected=target_detected,
                     )
                 )
     return tuple(queries)
+
+
+def _load_predicted_mentions(
+    path: Path,
+    documents: dict[str, str],
+) -> dict[str, tuple[_ContextMention, ...]]:
+    mentions_by_document: dict[str, tuple[_ContextMention, ...]] = {}
+    for raw in _iter_jsonl(path):
+        document_id = str(raw.get("document_id", ""))
+        if document_id not in documents:
+            continue
+        if document_id in mentions_by_document:
+            raise ValueError(f"Duplicate prediction document {document_id}")
+        entities = raw.get("entities")
+        if not isinstance(entities, list):
+            raise ValueError(f"Prediction {document_id} must contain an entities list")
+        source_text = documents[document_id]
+        deduplicated: dict[tuple[int, int, str], _ContextMention] = {}
+        for index, entity in enumerate(entities):
+            if not isinstance(entity, dict) or entity.get("type") != EntityType.DISEASE.value:
+                continue
+            span = entity.get("span")
+            if not isinstance(span, list) or len(span) != 2:
+                raise ValueError(f"Prediction {document_id} entity {index} has invalid span")
+            start, end = int(span[0]), int(span[1])
+            text = str(entity.get("text", ""))
+            # INVARIANT: model output must resolve back to the immutable benchmark text.
+            if start < 0 or end <= start or source_text[start:end] != text:
+                raise ValueError(
+                    f"Prediction {document_id} entity {index} has invalid raw offsets"
+                )
+            key = (start, end, text)
+            deduplicated.setdefault(
+                key,
+                _ContextMention(
+                    mention_id=str(entity.get("id", f"{document_id}:entity:{index}")),
+                    text=text,
+                    span=(start, end),
+                    expected_code=None,
+                ),
+            )
+        mentions_by_document[document_id] = tuple(
+            deduplicated[key] for key in sorted(deduplicated)
+        )
+    return mentions_by_document
+
+
+def _unique_gold_codes_by_span(
+    annotations: list[_LinkedAnnotation],
+) -> dict[tuple[int, int], str]:
+    codes: dict[tuple[int, int], set[str]] = defaultdict(set)
+    for annotation in annotations:
+        codes[annotation.span].add(annotation.code)
+    return {
+        span: next(iter(values))
+        for span, values in codes.items()
+        if len(values) == 1
+    }
 
 
 def _linked_annotation(raw: dict[str, Any], source_text: str) -> _LinkedAnnotation | None:
@@ -319,13 +439,17 @@ def _evaluate_queries(
     rows: list[dict[str, Any]] = []
     for query in queries:
         mention = query.annotation.text
-        cached = _retrieve_candidates(mention, retrieval, candidate_cache)
-        context, anchor_count, correct_anchor_count = _resolve_context(
-            query,
-            context_mode=context_mode,
-            retrieval=retrieval,
-            candidate_cache=candidate_cache,
-        )
+        if query.target_detected:
+            cached = _retrieve_candidates(mention, retrieval, candidate_cache)
+            context, anchor_count, correct_anchor_count = _resolve_context(
+                query,
+                context_mode=context_mode,
+                retrieval=retrieval,
+                candidate_cache=candidate_cache,
+            )
+        else:
+            cached = ()
+            context, anchor_count, correct_anchor_count = (), 0, 0
         baseline_candidates = list(cached)
         reranked_candidates = reranker.rerank(
             baseline_candidates,
@@ -338,6 +462,7 @@ def _evaluate_queries(
                 "document_id": query.annotation.document_id,
                 "mention": mention,
                 "expected_code": query.annotation.code,
+                "target_detected": query.target_detected,
                 "neighbor_mention_count": len(query.neighbors),
                 "context_count": len(context),
                 "context_anchor_count": anchor_count,
@@ -369,6 +494,11 @@ def _evaluate_queries(
     return {
         "max_bonus": max_bonus,
         "query_count": len(rows),
+        "target_detection": {
+            "detected": sum(row["target_detected"] for row in rows),
+            "total": len(rows),
+            "recall": _rate(sum(row["target_detected"] for row in rows), len(rows)),
+        },
         "queries_with_context": sum(row["context_count"] > 0 for row in rows),
         "queries_with_graph_feature": sum(row["graph_feature_used"] for row in rows),
         "context_anchors": {
@@ -418,9 +548,10 @@ def _resolve_context(
     if context_mode == "oracle":
         codes = sorted(
             {
-                neighbor.code
+                neighbor.expected_code
                 for neighbor in query.neighbors
-                if neighbor.code != query.annotation.code
+                if neighbor.expected_code is not None
+                and neighbor.expected_code != query.annotation.code
             }
         )
         context = tuple(
@@ -435,7 +566,7 @@ def _resolve_context(
         if anchor is None or anchor.code is None:
             continue
         key = f"{anchor.code_system.value}:{anchor.code}"
-        is_correct = anchor.code == neighbor.code
+        is_correct = anchor.code == neighbor.expected_code
         current = anchors.get(key)
         anchors[key] = (
             anchor.code,
@@ -475,6 +606,8 @@ def _exact_unique_anchor(candidates: tuple[Candidate, ...]) -> Candidate | None:
 def _semantic_contract(context_mode: str) -> str:
     if context_mode == "oracle":
         return "oracle_linked_context_upper_bound_not_production_performance"
+    if context_mode == "predicted_ner_exact_unique":
+        return "predicted_disease_spans_with_predicted_exact_unique_context_links"
     return "gold_mentions_with_predicted_exact_unique_context_links"
 
 

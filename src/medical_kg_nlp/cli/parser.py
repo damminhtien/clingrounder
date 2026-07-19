@@ -99,6 +99,12 @@ def _kg_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     reranker_benchmark.add_argument("--terminology-alias-overlay", action="append", default=[])
     reranker_benchmark.add_argument("--documents", required=True)
     reranker_benchmark.add_argument("--annotations", required=True)
+    reranker_benchmark.add_argument(
+        "--predictions",
+        help=(
+            "Pipeline prediction JSONL required by predicted_ner_exact_unique mode."
+        ),
+    )
     reranker_benchmark.add_argument("--output", required=True)
     reranker_benchmark.add_argument("--calibration-split", default="dev")
     reranker_benchmark.add_argument("--evaluation-split", default="test")
@@ -107,7 +113,7 @@ def _kg_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     reranker_benchmark.add_argument("--source-label", default="DIAGNOSTICO")
     reranker_benchmark.add_argument(
         "--context-mode",
-        choices=("oracle", "predicted_exact_unique"),
+        choices=("oracle", "predicted_exact_unique", "predicted_ner_exact_unique"),
         default="oracle",
     )
     reranker_benchmark.add_argument(
