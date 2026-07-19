@@ -56,6 +56,7 @@ The replaceable contracts live in [`pipeline/ports.py`](../src/medical_kg_nlp/pi
 - `AssertionClassifierPort`
 - `CandidateRetrieverPort`
 - `CandidateRerankerPort`
+- `DocumentCandidateRerankerPort`
 - `CandidateAssignerPort`
 - `RelationExtractorPort`
 - `KnowledgeValidatorPort`
@@ -89,6 +90,11 @@ pipeline:
   enable_context: true
   enable_linking: true
   enable_candidate_reranking: true
+  # Optional second pass. It only reorders retrieved candidates by graph evidence.
+  enable_graph_evidence_reranking: false
+  graph_evidence_max_bonus: 0.04
+  graph_evidence_min_support: 2
+  graph_evidence_relation_types: [CO_OCCURS_WITH]
   enable_entity_kg_validation: true
   enable_relations: true
   enable_relation_kg_validation: true
@@ -110,6 +116,13 @@ models:
     model_weight: 0.75
     positive_label_index: 1
 ```
+
+When graph evidence is enabled, `terminology.knowledge_graph_index_path` is required. The second
+pass accepts only exact-unique first-pass links as same-sentence context anchors. It cannot add a
+candidate, cross sentence boundaries, or use entities that could not be assigned to a sentence.
+Its trace stage is `graph_evidence_reranking`, with counters for anchors, context events, graph
+features, and changed top-1 predictions. Keep the option disabled until the graph source and model
+NER distribution have passed a held-out benchmark.
 
 Model blocks are optional. They lazy-load the `ml` extra and set `local_files_only=true`; core
 imports do not import PyTorch or Transformers.

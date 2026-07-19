@@ -792,3 +792,23 @@ precision. The selected `0.04` bonus improved top-1 from `67.3002%` to `67.6901%
 about 89% of the oracle top-1 gain. The feature is suitable for an opt-in second-pass linker, but it
 must remain off by default until a full predicted-NER benchmark confirms that span errors do not
 erase this small gain.
+
+The reusable pipeline second pass is configured independently of `kg_exact` retrieval:
+
+```yaml
+terminology:
+  knowledge_graph_index_path: .cache/medical-kg/knowledge-graph/<fingerprint>.sqlite3
+
+pipeline:
+  enable_linking: true
+  enable_graph_evidence_reranking: true
+  graph_evidence_max_bonus: 0.04
+  graph_evidence_min_support: 2
+  graph_evidence_relation_types: [CO_OCCURS_WITH]
+```
+
+Runtime order is mention retrieval, optional lexical/model reranking, graph second pass, then code
+assignment. Only exact-unique linked neighbors in the same sentence become context anchors.
+Unresolved sentence spans are excluded instead of being grouped under a synthetic sentence. The
+second pass records `anchor_entities`, `queries_with_context`, `queries_with_graph_feature`, and
+`changed_top1` in `PipelineTrace`; it never creates terminology candidates or changes raw spans.
