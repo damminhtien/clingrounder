@@ -101,6 +101,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.data",
         "propose_relations",
     ),
+    "data_relation_mine_cooccurrence": (
+        "medical_kg_nlp.cli.commands.data",
+        "mine_cooccurrence",
+    ),
     "data_review_export": ("medical_kg_nlp.cli.commands.data", "export_review"),
     "data_review_import": ("medical_kg_nlp.cli.commands.data", "import_review"),
     "data_review_quality": ("medical_kg_nlp.cli.commands.data", "review_quality"),

@@ -2,6 +2,12 @@
 
 from medical_kg_nlp.mining.catalog import DuckDBMiningCatalog, ParquetSnapshotWriter
 from medical_kg_nlp.mining.connectors import connector_from_definition
+from medical_kg_nlp.mining.cooccurrence import (
+    CooccurrenceMiningPolicy,
+    CooccurrenceMiningResult,
+    load_cooccurrence_policy,
+    mine_cooccurrence_relations,
+)
 from medical_kg_nlp.mining.coverage import CoverageCubePlanner, CoverageTarget, ReviewPriority
 from medical_kg_nlp.mining.curation import (
     AnnotationCurationPolicy,
@@ -165,6 +171,8 @@ __all__ = [
     "AliasKnowledgeCompilationResult",
     "BatchedProposalLabelerAdapter",
     "ConceptLink",
+    "CooccurrenceMiningPolicy",
+    "CooccurrenceMiningResult",
     "CorpusFusionPlan",
     "CorpusFusionResult",
     "CorpusPartition",
@@ -256,6 +264,7 @@ __all__ = [
     "load_mention_inventory",
     "load_mining_plan",
     "load_linked_alias_policy",
+    "load_cooccurrence_policy",
     "export_span_dataset",
     "fuse_corpora",
     "harmonize_annotations",
@@ -265,6 +274,7 @@ __all__ = [
     "load_annotation_harmonization_policy",
     "load_recognition_knowledge_policy",
     "load_alias_promotion_policy",
+    "mine_cooccurrence_relations",
     "parser_from_definition",
     "profile_blocking_issue_count",
     "reconcile_exact_duplicates",

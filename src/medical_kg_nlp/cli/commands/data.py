@@ -13,6 +13,10 @@ from typing import Any, cast
 import yaml
 
 from medical_kg_nlp.mining.coverage import CoverageCubePlanner, CoverageTarget
+from medical_kg_nlp.mining.cooccurrence import (
+    load_cooccurrence_policy,
+    mine_cooccurrence_relations,
+)
 from medical_kg_nlp.mining.crosswalk import crosswalk_mentions, load_crosswalk_policies
 from medical_kg_nlp.mining.curation import (
     curate_annotations,
@@ -110,6 +114,7 @@ __all__ = [
     "harmonize_dataset",
     "import_review",
     "inspect_dataset",
+    "mine_cooccurrence",
     "propose_labels",
     "propose_linked_aliases",
     "propose_relations",
@@ -749,6 +754,66 @@ def propose_relations(args: argparse.Namespace) -> int:
     ordered = sorted(relations, key=lambda item: item.relation_id)
     write_jsonl(args.output, (relation.to_dict() for relation in ordered))
     _print_json({"relation_count": len(ordered), "output": args.output})
+    return 0
+
+
+def mine_cooccurrence(args: argparse.Namespace) -> int:
+    """Mine auditable sentence co-occurrence from a source-pinned training slice."""
+
+    documents = load_documents(args.documents)
+    annotations = load_annotations(args.annotations)
+    if (args.split_manifest is None) != (args.split is None):
+        raise ValueError("--split-manifest and --split must be provided together")
+    selected_document_ids = (
+        None
+        if args.split_manifest is None
+        else load_split_document_ids(args.split_manifest, args.split)
+    )
+    result = mine_cooccurrence_relations(
+        documents,
+        annotations,
+        load_cooccurrence_policy(args.policy),
+        selected_document_ids=selected_document_ids,
+    )
+    relations_sha256 = write_jsonl(
+        args.output,
+        (relation.to_dict() for relation in result.relations),
+    )
+    report = {
+        **result.report,
+        "inputs": {
+            "documents": str(Path(args.documents)),
+            "documents_sha256": sha256_file(args.documents),
+            "annotations": str(Path(args.annotations)),
+            "annotations_sha256": sha256_file(args.annotations),
+            "policy": str(Path(args.policy)),
+            "policy_sha256": sha256_file(args.policy),
+            "split_manifest": (
+                None if args.split_manifest is None else str(Path(args.split_manifest))
+            ),
+            "split_manifest_sha256": (
+                None
+                if args.split_manifest is None
+                else sha256_file(args.split_manifest)
+            ),
+            "split": args.split,
+        },
+        "outputs": {
+            "relations": str(Path(args.output)),
+            "relations_sha256": relations_sha256,
+        },
+    }
+    write_json(args.report_output, report)
+    _print_json(
+        {
+            "relation_count": len(result.relations),
+            "supported_semantic_pair_count": result.report["counters"][
+                "supported_semantic_pairs"
+            ],
+            "output": args.output,
+            "report": args.report_output,
+        }
+    )
     return 0
 
 

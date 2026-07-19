@@ -1,0 +1,31 @@
+schema_version: medical-cooccurrence-policy.v1
+policy_id: codiesp-train-concept-cooccurrence-2026-07-19
+relation_type: CO_OCCURS_WITH
+
+# Source and official split gates are independent from later balanced model splits.
+accepted_source_ids:
+  - codiesp
+document_metadata_filters:
+  corpus_split:
+    - train
+
+accepted_layers:
+  - silver
+accepted_review_statuses:
+  - proposed
+  - accepted
+
+# These observations can become graph/reranker evidence, never causal relations.
+allowed_entity_pairs:
+  - [DISEASE, DISEASE]
+  - [DISEASE, PROCEDURE]
+require_single_concept_link: true
+require_contiguous: true
+require_source_text_match: true
+
+# SCALING: bound quadratic same-sentence pairing and reject one-document accidents.
+minimum_documents: 2
+max_gap_characters: 240
+max_annotations_per_sentence: 24
+max_pairs_per_document: 300
+max_report_pairs: 100

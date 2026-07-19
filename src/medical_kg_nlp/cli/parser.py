@@ -620,6 +620,26 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         "--adapter-config", help="YAML/JSON factory config mapping."
     )
     relation_propose.add_argument("--output", required=True)
+    relation_cooccurrence = relation_operations.add_parser(
+        "mine-cooccurrence",
+        help=(
+            "Mine non-causal same-sentence evidence from a source-pinned training slice."
+        ),
+    )
+    relation_cooccurrence.set_defaults(handler="data_relation_mine_cooccurrence")
+    relation_cooccurrence.add_argument("--documents", required=True)
+    relation_cooccurrence.add_argument("--annotations", required=True)
+    relation_cooccurrence.add_argument("--policy", required=True)
+    relation_cooccurrence.add_argument("--output", required=True)
+    relation_cooccurrence.add_argument("--report-output", required=True)
+    relation_cooccurrence.add_argument(
+        "--split-manifest",
+        help="Optional frozen snapshot manifest applied in addition to source policy.",
+    )
+    relation_cooccurrence.add_argument(
+        "--split",
+        help="Named frozen split; requires --split-manifest.",
+    )
 
     review = operations.add_parser("review", help="Exchange deterministic review queues.")
     review_operations = review.add_subparsers(dest="data_review_command", required=True)
