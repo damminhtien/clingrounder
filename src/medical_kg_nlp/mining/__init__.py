@@ -133,6 +133,14 @@ from medical_kg_nlp.mining.registry import (
     VersionPolicy,
     load_source_registry,
 )
+from medical_kg_nlp.mining.source_status import (
+    PromotionBoundary,
+    SourceProcessingIndex,
+    SourceProcessingRecord,
+    SourceProcessingState,
+    load_source_processing_index,
+    validate_source_processing_paths,
+)
 from medical_kg_nlp.mining.review import JsonlReviewBackend
 from medical_kg_nlp.mining.quality import (
     AgreementThresholds,
@@ -201,6 +209,7 @@ __all__ = [
     "LinkedAliasProposalPolicy",
     "LinkedAliasProposalResult",
     "MinedDocument",
+    "PromotionBoundary",
     "MinimalPairGenerator",
     "MiningQualityGate",
     "MinedAliasPromotionPolicy",
@@ -233,6 +242,9 @@ __all__ = [
     "SourceJob",
     "SourceConnectorPort",
     "SourceDefinition",
+    "SourceProcessingIndex",
+    "SourceProcessingRecord",
+    "SourceProcessingState",
     "SourcePolicyGate",
     "SourceRegistry",
     "SourceRequest",
@@ -259,6 +271,7 @@ __all__ = [
     "ConsensusProposalLabeler",
     "JsonlReviewBackend",
     "load_source_registry",
+    "load_source_processing_index",
     "load_crosswalk_policies",
     "load_annotation_curation_policy",
     "load_mention_inventory",
@@ -280,4 +293,5 @@ __all__ = [
     "reconcile_exact_duplicates",
     "run_corpus_fusion_plan",
     "run_mining_plan",
+    "validate_source_processing_paths",
 ]

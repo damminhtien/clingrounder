@@ -369,6 +369,15 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     registry_validate.add_argument(
         "--registry", default="data/sources/mining_registry.yaml"
     )
+    registry_validate.add_argument(
+        "--processing-index",
+        help="Optional source-processing status file whose docs/config paths must exist.",
+    )
+    registry_validate.add_argument(
+        "--repository-root",
+        default=".",
+        help="Repository root used to validate processing-index paths.",
+    )
 
     source = operations.add_parser("source", help="Synchronize one registered source.")
     source_operations = source.add_subparsers(dest="data_source_command", required=True)

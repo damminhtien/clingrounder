@@ -1,5 +1,10 @@
 # Data Mining
 
+Source-specific processing evidence is indexed in
+[`docs/mining-sources/README.md`](mining-sources/README.md). Use those dossiers to distinguish a
+registered connector, an executed snapshot, model proposals, curated labels, and runtime-promoted
+knowledge. This document remains the end-to-end command runbook.
+
 `medical_kg_nlp.mining` builds reusable clinical NLP datasets without depending on a competition
 schema. The lifecycle is:
 

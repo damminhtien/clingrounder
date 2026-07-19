@@ -85,6 +85,10 @@ from medical_kg_nlp.mining.records import (
 )
 from medical_kg_nlp.mining.quality import GoldAgreementGate, ReviewAgreementEvaluator
 from medical_kg_nlp.mining.registry import load_source_registry
+from medical_kg_nlp.mining.source_status import (
+    load_source_processing_index,
+    validate_source_processing_paths,
+)
 from medical_kg_nlp.mining.review import JsonlReviewBackend
 from medical_kg_nlp.mining.runner import (
     artifact_store_from_uri,
@@ -135,9 +139,22 @@ __all__ = [
 
 def validate_registry(args: argparse.Namespace) -> int:
     registry = load_source_registry(args.registry)
+    processing = None
+    if args.processing_index:
+        processing = load_source_processing_index(args.processing_index)
+        path_errors = validate_source_processing_paths(
+            processing,
+            registry,
+            repository_root=args.repository_root,
+        )
+        if path_errors:
+            raise ValueError(
+                "Source processing index is not discoverable: " + ", ".join(path_errors)
+            )
     payload = {
         "schema_version": registry.schema_version,
         "source_count": len(registry.resources),
+        "processing_source_count": 0 if processing is None else len(processing.sources),
         "sources": [
             {
                 "id": source.id,
@@ -149,6 +166,16 @@ def validate_registry(args: argparse.Namespace) -> int:
             for source in registry.resources
         ],
     }
+    if processing is not None:
+        payload["processing"] = [
+            {
+                "source_id": record.source_id,
+                "state": record.state.value,
+                "promotion_boundary": record.promotion_boundary.value,
+                "dossier": record.dossier,
+            }
+            for record in processing.sources
+        ]
     _print_json(payload)
     return 0
 

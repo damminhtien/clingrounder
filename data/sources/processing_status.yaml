@@ -1,0 +1,108 @@
+schema_version: medical-source-processing.v1
+sources:
+  - source_id: vn_moh_guidelines
+    state: registered
+    promotion_boundary: none
+    dossier: docs/mining-sources/backlog.md
+    verified_on: 2026-07-19
+    summary: Connector policy exists; no versioned document snapshot has been accepted.
+  - source_id: vietbioner
+    state: curated
+    promotion_boundary: training_only
+    dossier: docs/mining-sources/vietbioner.md
+    verified_on: 2026-07-19
+    summary: Duplicate-reconciled Vietnamese biomedical spans are available for training and review.
+    run_configs: [configs/mining/vietbioner.yaml]
+    artifact_roots: [outputs/mining/vietbioner-19ba70a]
+  - source_id: vietmed_ner
+    state: quarantined
+    promotion_boundary: none
+    dossier: docs/mining-sources/backlog.md
+    verified_on: 2026-07-19
+    summary: Dataset annotation license is not explicit enough for acquisition or redistribution.
+  - source_id: pmc_oa
+    state: proposed
+    promotion_boundary: review_only
+    dossier: docs/mining-sources/pmc-oa.md
+    verified_on: 2026-07-19
+    summary: Fifty CC BY rare-case JATS articles have an offset-safe bronze proposal snapshot.
+    run_configs: [configs/mining/pmc-rare-cases-ccby-2026-07-19.yaml]
+    artifact_roots:
+      - outputs/mining/pmc-rare-cases-ccby-2026-07-19
+      - outputs/mining/snapshots/pmc-rare-cases-ccby-2026-07-19-bronze-v1
+  - source_id: dailymed
+    state: promoted
+    promotion_boundary: runtime_opt_in
+    dossier: docs/mining-sources/dailymed.md
+    verified_on: 2026-07-19
+    summary: Structured SPL medication fields and relations are mined with exact rendered offsets.
+    run_configs: [configs/mining/dailymed-daily-2026-07-17.yaml]
+    artifact_roots: [outputs/mining/dailymed-daily-2026-07-17]
+  - source_id: dailymed_rxnorm_mappings
+    state: promoted
+    promotion_boundary: runtime_opt_in
+    dossier: docs/mining-sources/dailymed.md
+    verified_on: 2026-07-19
+    summary: Official SPL-to-RxNorm rows are compiled and release-audited before alias promotion.
+    run_configs: [configs/mining/dailymed-rxnorm-2026-07-17.yaml]
+    artifact_roots:
+      - outputs/mining/dailymed-rxnorm-2026-07-17
+      - outputs/mining/knowledge/dailymed-rxnorm-2026-07-17
+  - source_id: clinicaltrials_v2
+    state: registered
+    promotion_boundary: none
+    dossier: docs/mining-sources/backlog.md
+    verified_on: 2026-07-19
+    summary: Connector and parser exist; a disease-area-specific snapshot has not been selected.
+  - source_id: loinc_2_82
+    state: registered
+    promotion_boundary: none
+    dossier: docs/mining-sources/backlog.md
+    verified_on: 2026-07-19
+    summary: Local import awaits an accepted LOINC license and pinned archive.
+  - source_id: mondo
+    state: registered
+    promotion_boundary: none
+    dossier: docs/mining-sources/backlog.md
+    verified_on: 2026-07-19
+    summary: A release and ontology parser benchmark have not been pinned.
+  - source_id: hpo
+    state: registered
+    promotion_boundary: none
+    dossier: docs/mining-sources/backlog.md
+    verified_on: 2026-07-19
+    summary: A release and disease-phenotype import policy have not been pinned.
+  - source_id: codiesp
+    state: promoted
+    promotion_boundary: runtime_opt_in
+    dossier: docs/mining-sources/codiesp.md
+    verified_on: 2026-07-19
+    summary: Contiguous NER, train-only aliases, and non-causal graph evidence are reproducible.
+    run_configs: [configs/mining/codiesp.yaml]
+    artifact_roots:
+      - outputs/mining/codiesp-zenodo-3837305
+      - outputs/mining/knowledge/codiesp-icd10-split-2026-07-18
+  - source_id: biored
+    state: quarantined
+    promotion_boundary: none
+    dossier: docs/mining-sources/backlog.md
+    verified_on: 2026-07-19
+    summary: License review must finish before importing source annotations.
+  - source_id: synthea
+    state: registered
+    promotion_boundary: none
+    dossier: docs/mining-sources/backlog.md
+    verified_on: 2026-07-19
+    summary: Generator commit and FHIR scenario policy have not been pinned.
+  - source_id: mimic_iv_note
+    state: registered
+    promotion_boundary: none
+    dossier: docs/mining-sources/backlog.md
+    verified_on: 2026-07-19
+    summary: DUA-only local lane is ready in policy but no user archive has been imported.
+  - source_id: n2c2_i2b2
+    state: registered
+    promotion_boundary: none
+    dossier: docs/mining-sources/backlog.md
+    verified_on: 2026-07-19
+    summary: Dataset-specific approval and local archive are required before import.
