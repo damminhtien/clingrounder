@@ -1,0 +1,41 @@
+# MODEL: source is the official Hugging Face repository; revision is an immutable commit.
+schema_version: token-classifier-run.v1
+run_id: open-corpus-full-type-xlmr-base-2026-07-19
+
+dataset:
+  path: outputs/mining/model-datasets/open-corpus-v1-full-ner-harmonized-2026-07-18/spans.jsonl
+  manifest: outputs/mining/model-datasets/open-corpus-v1-full-ner-harmonized-2026-07-18/manifest.json
+  train_split: train
+  evaluation_split: development
+
+model:
+  model_id: FacebookAI/xlm-roberta-base
+  revision: e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
+  source_url: https://huggingface.co/FacebookAI/xlm-roberta-base
+  license: MIT
+
+# SCALING: batch 4 plus accumulation 4 fits a 16+ GiB Ampere GPU while retaining
+# an effective train batch of 16 sequences. Arrow preprocessing remains process-safe.
+training:
+  output_dir: outputs/models/open-corpus-full-type-xlmr-base-2026-07-19
+  cache_dir: .cache/medical-kg/model-training
+  max_length: 512
+  stride: 64
+  train_batch_size: 4
+  evaluation_batch_size: 8
+  gradient_accumulation_steps: 4
+  epochs: 3.0
+  learning_rate: 0.00002
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  preprocessing_workers: 4
+  seed: 42
+  overwrite_output: false
+
+runtime:
+  operating_system: linux
+  accelerator: cuda
+  minimum_devices: 1
+  minimum_vram_gib: 16
+  minimum_compute_capability: [8, 0]
+  precision: bf16

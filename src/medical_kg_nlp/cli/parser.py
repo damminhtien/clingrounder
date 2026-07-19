@@ -297,6 +297,20 @@ def _model_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser])
     train.add_argument("--resume-from-checkpoint")
     train.add_argument("--overwrite-output", action="store_true")
 
+    inspect_run = operations.add_parser(
+        "inspect-token-classifier-run",
+        help="Validate a pinned token-classifier run spec without ML imports.",
+    )
+    inspect_run.set_defaults(handler="model_inspect_token_classifier_run")
+    inspect_run.add_argument("--config", required=True)
+
+    train_run = operations.add_parser(
+        "train-token-classifier-run",
+        help="Validate Linux/CUDA and execute one pinned token-classifier run spec.",
+    )
+    train_run.set_defaults(handler="model_train_token_classifier_run")
+    train_run.add_argument("--config", required=True)
+
 
 def _token_training_identity_arguments(
     parser: argparse.ArgumentParser,

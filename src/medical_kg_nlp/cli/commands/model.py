@@ -8,11 +8,97 @@ from pathlib import Path
 
 from medical_kg_nlp.training import (
     TokenClassifierTrainingConfig,
+    assert_local_gpu_runtime,
+    inspect_local_runtime,
     inspect_token_classifier_training_inputs,
+    load_token_classifier_run_spec,
     train_huggingface_token_classifier,
 )
+from medical_kg_nlp.mining.io import write_json
+from medical_kg_nlp.utils.hashing import sha256_file
 
-__all__ = ["train_token_classifier", "validate_token_dataset"]
+__all__ = [
+    "inspect_token_classifier_run",
+    "train_token_classifier",
+    "train_token_classifier_run",
+    "validate_token_dataset",
+]
+
+
+def inspect_token_classifier_run(args: argparse.Namespace) -> int:
+    """Validate a run spec and render exact prefetch/train commands."""
+
+    config_path = Path(args.config)
+    spec = load_token_classifier_run_spec(config_path)
+    summary, vocabulary = inspect_token_classifier_training_inputs(spec.training)
+    print(
+        json.dumps(
+            {
+                "status": "validated_not_executed",
+                "run_id": spec.run_id,
+                "run_spec": {
+                    "path": str(config_path),
+                    "sha256": sha256_file(config_path),
+                },
+                "dataset": summary.to_dict(),
+                "label_vocabulary": list(vocabulary),
+                "model": {
+                    "model_id": spec.training.model_id,
+                    "revision": spec.training.revision,
+                    "source_url": spec.model_source_url,
+                    "license": spec.model_license,
+                },
+                "runtime_requirements": spec.runtime.to_dict(),
+                "local_runtime": inspect_local_runtime(spec.runtime),
+                "commands": {
+                    "prefetch": list(spec.prefetch_command),
+                    "train": [
+                        "medical-kg",
+                        "model",
+                        "train-token-classifier-run",
+                        "--config",
+                        str(config_path),
+                    ],
+                },
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    return 0
+
+
+def train_token_classifier_run(args: argparse.Namespace) -> int:
+    """Execute a run spec only after its Linux/CUDA gate passes."""
+
+    config_path = Path(args.config)
+    spec = load_token_classifier_run_spec(config_path)
+    gpu_runtime = assert_local_gpu_runtime(spec.runtime)
+    manifest = dict(train_huggingface_token_classifier(spec.training))
+    manifest["run_spec"] = {
+        "path": str(config_path),
+        "sha256": sha256_file(config_path),
+        "run_id": spec.run_id,
+    }
+    manifest["gpu_runtime"] = gpu_runtime
+    write_json(spec.training.output_dir / "run_manifest.json", manifest)
+    print(
+        json.dumps(
+            {
+                "status": "trained",
+                "run_id": spec.run_id,
+                "manifest": str(spec.training.output_dir / "run_manifest.json"),
+                "model": manifest["model"],
+                "metrics": manifest["metrics"],
+                "gpu_runtime": gpu_runtime,
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    return 0
 
 
 def validate_token_dataset(args: argparse.Namespace) -> int:
