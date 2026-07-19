@@ -17,6 +17,7 @@ def test_pipeline_trace_records_algorithm_stages() -> None:
         "context_assertion_classification",
         "candidate_generation",
         "candidate_reranking",
+        "graph_evidence_reranking",
         "normalization_assignment",
         "icd_rxnorm_umls_validation",
         "relation_extraction",
@@ -33,6 +34,7 @@ def test_pipeline_trace_records_algorithm_stages() -> None:
     assert by_stage["offset_preserving_preprocessing"].counters["diagnostic_only"] == 1
     candidate_counters = by_stage["candidate_generation"].counters
     assert candidate_counters["generated_candidates"] + candidate_counters["pinned_entities"] > 0
+    assert by_stage["graph_evidence_reranking"].counters["skipped_entities"] > 0
     assignment_counters = by_stage["normalization_assignment"].counters
     assert assignment_counters["qualified_candidates"] >= 0
     assert assignment_counters["entities_with_qualified_candidates"] >= 0

@@ -8,10 +8,12 @@ from medical_kg_nlp.linking.graph_evidence import (
     GraphEvidenceMatch,
     GraphEvidenceReranker,
 )
+from medical_kg_nlp.linking.graph_second_pass import GraphEvidenceSecondPass
 
 __all__ = [
     "Candidate",
     "GraphContextConcept",
     "GraphEvidenceMatch",
     "GraphEvidenceReranker",
+    "GraphEvidenceSecondPass",
 ]

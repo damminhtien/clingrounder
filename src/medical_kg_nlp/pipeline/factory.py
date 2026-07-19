@@ -22,6 +22,8 @@ from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.merge import merge_concept_entries
 from medical_kg_nlp.kg.validator import KGValidator
 from medical_kg_nlp.kg.sqlite_repository import SQLiteKnowledgeGraphRepository
+from medical_kg_nlp.linking.graph_evidence import GraphEvidenceReranker
+from medical_kg_nlp.linking.graph_second_pass import GraphEvidenceSecondPass
 from medical_kg_nlp.linking.linker import EntityLinker
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
 from medical_kg_nlp.pipeline.components import PipelineComponents
@@ -189,11 +191,15 @@ class PipelineFactory:
 
         options = resolved.options
         knowledge_graph_repository = None
-        if "kg_exact" in options.candidate_sources:
+        needs_knowledge_graph = (
+            "kg_exact" in options.candidate_sources
+            or options.enable_graph_evidence_reranking
+        )
+        if needs_knowledge_graph:
             if resolved.knowledge_graph_index_path is None:
                 raise ValueError(
-                    "candidate_sources includes kg_exact but terminology."
-                    "knowledge_graph_index_path is missing"
+                    "Graph-backed retrieval/reranking requires terminology."
+                    "knowledge_graph_index_path"
                 )
             knowledge_graph_repository = SQLiteKnowledgeGraphRepository(
                 resolved.knowledge_graph_index_path
@@ -275,6 +281,19 @@ class PipelineFactory:
                 positive_label_index=resolved.models.candidate_positive_label_index,
             )
 
+        document_candidate_reranker = None
+        if options.enable_graph_evidence_reranking:
+            if knowledge_graph_repository is None:
+                raise RuntimeError("Knowledge graph repository was not composed")
+            document_candidate_reranker = GraphEvidenceSecondPass(
+                GraphEvidenceReranker(
+                    knowledge_graph_repository,
+                    relation_types=options.graph_evidence_relation_types,
+                    min_support=options.graph_evidence_min_support,
+                    max_bonus=options.graph_evidence_max_bonus,
+                )
+            )
+
         relation_extractor = (
             RuleRelationExtractorAdapter(RuleRelationExtractor())
             if options.enable_relations
@@ -298,6 +317,7 @@ class PipelineFactory:
             assertion_classifier=assertion_classifier,
             candidate_retriever=candidate_adapter,
             candidate_reranker=candidate_reranker,
+            document_candidate_reranker=document_candidate_reranker,
             candidate_assigner=candidate_adapter,
             relation_extractor=relation_extractor,
             knowledge_validator=knowledge_validator,

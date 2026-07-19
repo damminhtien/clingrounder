@@ -25,9 +25,26 @@ class PipelineOptions:
     enable_context: bool = True
     enable_linking: bool = True
     enable_candidate_reranking: bool = True
+    enable_graph_evidence_reranking: bool = False
+    graph_evidence_max_bonus: float = 0.04
+    graph_evidence_min_support: int = 2
+    graph_evidence_relation_types: tuple[str, ...] = ("CO_OCCURS_WITH",)
     enable_entity_kg_validation: bool = True
     enable_relations: bool = True
     enable_relation_kg_validation: bool = True
+
+    def __post_init__(self) -> None:
+        if self.enable_graph_evidence_reranking and not self.enable_linking:
+            raise ValueError("Graph evidence reranking requires linking")
+        if not 0.0 <= self.graph_evidence_max_bonus <= 1.0:
+            raise ValueError("graph_evidence_max_bonus must be between 0 and 1")
+        if self.graph_evidence_min_support < 1:
+            raise ValueError("graph_evidence_min_support must be at least 1")
+        if not self.graph_evidence_relation_types or any(
+            not relation_type.strip()
+            for relation_type in self.graph_evidence_relation_types
+        ):
+            raise ValueError("graph_evidence_relation_types must be non-empty")
 
     @classmethod
     def from_mapping(cls, payload: dict[str, object]) -> "PipelineOptions":
@@ -88,6 +105,26 @@ class PipelineOptions:
                 payload,
                 "enable_candidate_reranking",
                 cls.enable_candidate_reranking,
+            ),
+            enable_graph_evidence_reranking=_bool_value(
+                payload,
+                "enable_graph_evidence_reranking",
+                cls.enable_graph_evidence_reranking,
+            ),
+            graph_evidence_max_bonus=_probability_value(
+                payload,
+                "graph_evidence_max_bonus",
+                cls.graph_evidence_max_bonus,
+            ),
+            graph_evidence_min_support=_positive_int_value(
+                payload,
+                "graph_evidence_min_support",
+                cls.graph_evidence_min_support,
+            ),
+            graph_evidence_relation_types=_string_tuple_value(
+                payload,
+                "graph_evidence_relation_types",
+                cls.graph_evidence_relation_types,
             ),
             enable_entity_kg_validation=_bool_value(
                 payload,
@@ -163,3 +200,16 @@ def _threshold_items(
             raise ValueError(f"{key}.{name} must be between 0 and 1")
         items.append((name, threshold))
     return tuple(sorted(items))
+
+
+def _string_tuple_value(
+    payload: dict[str, object],
+    key: str,
+    default: tuple[str, ...],
+) -> tuple[str, ...]:
+    value = payload.get(key, default)
+    if not isinstance(value, list | tuple) or not all(
+        isinstance(item, str) and item.strip() for item in value
+    ):
+        raise ValueError(f"{key} must be a list of non-empty strings")
+    return tuple(value)

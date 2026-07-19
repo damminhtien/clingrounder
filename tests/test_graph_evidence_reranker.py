@@ -9,7 +9,10 @@ from medical_kg_nlp.kg.sqlite_builder import build_knowledge_graph_index
 from medical_kg_nlp.kg.sqlite_repository import SQLiteKnowledgeGraphRepository
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.linking.graph_evidence import GraphContextConcept, GraphEvidenceReranker
+from medical_kg_nlp.linking.graph_second_pass import GraphEvidenceSecondPass
 from medical_kg_nlp.mining.io import write_jsonl
+from medical_kg_nlp.schema.annotation import EntityAnnotation
+from medical_kg_nlp.schema.document import Sentence
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.utils.text import normalize_for_match
 
@@ -54,6 +57,71 @@ def test_graph_evidence_is_deterministic_and_cached(tmp_path: Path) -> None:
 
     assert first == second
     assert [candidate.code for candidate in first] == ["B", "C"]
+    repository.close()
+
+
+def test_document_second_pass_uses_same_sentence_exact_unique_anchor(
+    tmp_path: Path,
+) -> None:
+    repository = _repository(tmp_path)
+    second_pass = GraphEvidenceSecondPass(
+        GraphEvidenceReranker(repository, min_support=2, max_bonus=0.05)
+    )
+    entities = [
+        _entity("anchor", (0, 7), "context"),
+        _entity("target", (8, 17), "ambiguous"),
+    ]
+    candidates = {
+        "anchor": [_candidate("A", 1.0, source="exact")],
+        "target": [_candidate("C", 0.50), _candidate("B", 0.49)],
+    }
+
+    reranked, counters = second_pass.rerank_document(
+        entities,
+        candidates,
+        [Sentence(span=(0, 18), text="context ambiguous.")],
+        {"anchor": "context", "target": "ambiguous"},
+    )
+
+    assert [candidate.code for candidate in reranked["target"]] == ["B", "C"]
+    assert {candidate.code for candidate in reranked["target"]} == {"B", "C"}
+    assert counters == {
+        "anchor_entities": 1,
+        "context_events": 1,
+        "queries_with_context": 1,
+        "queries_with_graph_feature": 1,
+        "changed_top1": 1,
+        "reranked_entities": 2,
+    }
+    repository.close()
+
+
+def test_document_second_pass_does_not_share_context_between_orphan_spans(
+    tmp_path: Path,
+) -> None:
+    repository = _repository(tmp_path)
+    second_pass = GraphEvidenceSecondPass(
+        GraphEvidenceReranker(repository, min_support=2, max_bonus=0.05)
+    )
+    entities = [
+        _entity("anchor", (0, 7), "context"),
+        _entity("target", (8, 17), "ambiguous"),
+    ]
+    candidates = {
+        "anchor": [_candidate("A", 1.0, source="exact")],
+        "target": [_candidate("C", 0.50), _candidate("B", 0.49)],
+    }
+
+    reranked, counters = second_pass.rerank_document(
+        entities,
+        candidates,
+        [],
+        {"anchor": "context", "target": "ambiguous"},
+    )
+
+    assert [candidate.code for candidate in reranked["target"]] == ["C", "B"]
+    assert counters["anchor_entities"] == 0
+    assert counters["queries_with_context"] == 0
     repository.close()
 
 
@@ -114,7 +182,21 @@ def _edge(
     )
 
 
-def _candidate(code: str, score: float) -> Candidate:
+def _entity(
+    entity_id: str,
+    span: tuple[int, int],
+    text: str,
+) -> EntityAnnotation:
+    return EntityAnnotation(
+        id=entity_id,
+        span=span,
+        text=text,
+        normalized_text=normalize_for_match(text),
+        type=EntityType.DISEASE,
+    )
+
+
+def _candidate(code: str, score: float, *, source: str = "bm25") -> Candidate:
     return Candidate(
         concept_id=f"ICD10:{code}",
         code=code,
@@ -122,5 +204,5 @@ def _candidate(code: str, score: float) -> Candidate:
         canonical_name=f"Disease {code}",
         semantic_type=EntityType.DISEASE,
         score=score,
-        source="bm25",
+        source=source,
     )

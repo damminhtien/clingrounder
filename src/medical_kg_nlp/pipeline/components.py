@@ -9,6 +9,7 @@ from medical_kg_nlp.pipeline.ports import (
     AssertionClassifierPort,
     CandidateAssignerPort,
     CandidateRerankerPort,
+    DocumentCandidateRerankerPort,
     CandidateRetrieverPort,
     EntityExtractorPort,
     KnowledgeValidatorPort,
@@ -31,6 +32,7 @@ class PipelineComponents:
     assertion_classifier: AssertionClassifierPort | None = None
     candidate_retriever: CandidateRetrieverPort | None = None
     candidate_reranker: CandidateRerankerPort | None = None
+    document_candidate_reranker: DocumentCandidateRerankerPort | None = None
     candidate_assigner: CandidateAssignerPort | None = None
     relation_extractor: RelationExtractorPort | None = None
     knowledge_validator: KnowledgeValidatorPort | None = None
@@ -51,6 +53,14 @@ class PipelineComponents:
                 raise ValueError(
                     "enable_candidate_reranking requires a candidate_reranker component"
                 )
+            if (
+                self.options.enable_graph_evidence_reranking
+                and self.document_candidate_reranker is None
+            ):
+                raise ValueError(
+                    "enable_graph_evidence_reranking requires a "
+                    "document_candidate_reranker component"
+                )
         if self.options.enable_relations and self.relation_extractor is None:
             raise ValueError("enable_relations requires a relation_extractor component")
         if (
@@ -58,4 +68,3 @@ class PipelineComponents:
             or self.options.enable_relation_kg_validation
         ) and self.knowledge_validator is None:
             raise ValueError("KG validation requires a knowledge_validator component")
-

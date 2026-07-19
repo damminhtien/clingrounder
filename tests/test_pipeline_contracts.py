@@ -180,3 +180,28 @@ def test_factory_config_rejects_negative_terminology_cache_size() -> None:
         PipelineFactoryConfig.from_mapping(
             {"terminology": {"query_cache_size": -1}}
         )
+
+
+def test_pipeline_options_parse_graph_evidence_second_pass() -> None:
+    options = PipelineOptions.from_mapping(
+        {
+            "enable_graph_evidence_reranking": True,
+            "graph_evidence_max_bonus": 0.03,
+            "graph_evidence_min_support": 3,
+            "graph_evidence_relation_types": ["CO_OCCURS_WITH", "TREATS"],
+        }
+    )
+
+    assert options.enable_graph_evidence_reranking is True
+    assert options.graph_evidence_max_bonus == 0.03
+    assert options.graph_evidence_min_support == 3
+    assert options.graph_evidence_relation_types == ("CO_OCCURS_WITH", "TREATS")
+
+
+def test_graph_evidence_second_pass_requires_graph_index() -> None:
+    with pytest.raises(ValueError, match="knowledge_graph_index_path"):
+        PipelineFactory.from_config(
+            PipelineFactoryConfig(
+                options=PipelineOptions(enable_graph_evidence_reranking=True)
+            )
+        )

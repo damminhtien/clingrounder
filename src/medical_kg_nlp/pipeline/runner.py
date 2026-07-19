@@ -115,6 +115,7 @@ class PipelineRunner:
                 counters["skipped_entities"] = len(entities)
 
         contexts_by_entity: dict[str, str] = {}
+        mentions_by_entity: dict[str, str] = {}
         generated_candidates: dict[str, list[Candidate]] = {}
         with trace.stage("candidate_generation") as counters:
             if self.options.enable_linking:
@@ -131,10 +132,12 @@ class PipelineRunner:
                         loaded_document.text, entity.span, radius=self.options.context_window
                     )
                     contexts_by_entity[entity.id] = context
+                    mention = _linking_mention(loaded_document.text, entity)
+                    mentions_by_entity[entity.id] = mention
                     candidates = retriever.retrieve(
                         entity,
                         context,
-                        _linking_mention(loaded_document.text, entity),
+                        mention,
                     )
                     generated_candidates[entity.id] = candidates
                     generated_total += len(candidates)
@@ -163,7 +166,12 @@ class PipelineRunner:
                         ranked = reranker.rerank(
                             candidates,
                             contexts_by_entity.get(entity_id, ""),
-                            _linking_mention(loaded_document.text, entities_by_id[entity_id]),
+                            mentions_by_entity.get(
+                                entity_id,
+                                _linking_mention(
+                                    loaded_document.text, entities_by_id[entity_id]
+                                ),
+                            ),
                         )
                     else:
                         ranked = candidates
@@ -175,6 +183,23 @@ class PipelineRunner:
                 counters["skipped_reranking"] = (
                     0 if self.options.enable_candidate_reranking else len(reranked_candidates)
                 )
+            else:
+                counters["skipped_entities"] = len(entities)
+
+        with trace.stage("graph_evidence_reranking") as counters:
+            if self.options.enable_linking and self.options.enable_graph_evidence_reranking:
+                document_reranker = self.components.document_candidate_reranker
+                if document_reranker is None:
+                    raise RuntimeError("Document candidate reranker component is unavailable.")
+                reranked_candidates, graph_counters = document_reranker.rerank_document(
+                    entities,
+                    reranked_candidates,
+                    sentences,
+                    mentions_by_entity,
+                )
+                counters.update(graph_counters)
+            elif self.options.enable_linking:
+                counters["skipped_entities"] = len(reranked_candidates)
             else:
                 counters["skipped_entities"] = len(entities)
 

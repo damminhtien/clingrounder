@@ -19,6 +19,7 @@ __all__ = [
     "AssertionClassifierPort",
     "CandidateAssignerPort",
     "CandidateRerankerPort",
+    "DocumentCandidateRerankerPort",
     "CandidateRetrieverPort",
     "EntityExtractorPort",
     "KnowledgeValidatorPort",
@@ -65,6 +66,18 @@ class CandidateRerankerPort(Protocol):
     ) -> list[Candidate]: ...
 
 
+class DocumentCandidateRerankerPort(Protocol):
+    """Apply document-level evidence after mention-level candidate reranking."""
+
+    def rerank_document(
+        self,
+        entities: list[EntityAnnotation],
+        candidates_by_entity: dict[str, list[Candidate]],
+        sentences: list[Sentence],
+        mentions_by_entity: dict[str, str],
+    ) -> tuple[dict[str, list[Candidate]], dict[str, int]]: ...
+
+
 class CandidateAssignerPort(Protocol):
     """Qualify candidates and assign the winning code to an entity."""
 
@@ -100,4 +113,3 @@ class KnowledgeValidatorPort(Protocol):
         entities: list[EntityAnnotation],
         relations: list[RelationAnnotation],
     ) -> tuple[list[RelationAnnotation], list[ValidationIssue]]: ...
-
