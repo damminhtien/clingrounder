@@ -27,11 +27,16 @@ annotations use raw `[start,end)` offsets against that text. The completed run c
 | median document length | 16,515.5 |
 | maximum document length | 45,844 |
 | exact duplicate documents | 0 |
+| normalized/SimHash-near groups | 0 |
 | unique text hashes | 50 |
 | schema/offset issues | 0 |
 
 All documents are English `case_report_article` records, parsed by `jats_xml`, with attribution
 redistribution. Raw artifacts are content-addressed under the configured artifact store.
+
+The source-only fusion run `pmc-rare-cases-ccby-2026-07-19-e58fb0e2c28b` produced 50 singleton
+groups. No article was collapsed and no near-duplicate split barrier was required at the configured
+SimHash threshold. The fusion plan remains checked in so a larger tranche is audited the same way.
 
 ## Knowledge Extraction
 
@@ -54,6 +59,17 @@ singletons.
 These counts measure proposal coverage only. The local pipeline is the label source, so the records
 cannot independently validate that pipeline and cannot become gold merely because a concept link is
 present. In particular, numeric lab results and broad English disease terms require review.
+
+The frozen 42-document train split has 381 inventory entries, including 125 multi-document entries.
+The fail-closed recognition compiler excludes lab results and medication attributes, then requires
+at least two occurrences in two train documents. Eighty-five entries passed those row gates, but all
+85 already existed with the same type in the baseline recognition dictionaries. The compiler
+therefore emitted **zero new recognition concepts**. This negative result blocks dictionary growth
+from this tranche; it also shows that more articles alone would mostly repeat existing English
+clinical vocabulary.
+
+The deterministic review export contains one queue record per article and has SHA-256
+`994b603e844abbf682c62f558756f514dea2da85d21628a35bbdf83b625f5b06`.
 
 ## Promotion Boundary
 
@@ -89,4 +105,16 @@ uv run medical-kg data dataset inspect \
   --annotations outputs/mining/pmc-rare-cases-ccby-2026-07-19/pipeline_proposals.jsonl \
   --output outputs/mining/pmc-rare-cases-ccby-2026-07-19/source_profile.json \
   --strict
+
+uv run medical-kg data dataset fuse \
+  --plan configs/mining/fusion/pmc-rare-cases-ccby-2026-07-19.yaml
+
+uv run medical-kg data knowledge compile-recognition \
+  --inventory outputs/mining/pmc-rare-cases-ccby-2026-07-19/train_mention_inventory.jsonl \
+  --policy configs/mining/recognition/pmc-rare-cases-ccby-2026-07-19.yaml \
+  --baseline-dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl \
+  --baseline-dictionary data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl \
+  --output outputs/mining/pmc-rare-cases-ccby-2026-07-19/train_recognition_concepts.jsonl \
+  --decisions-output outputs/mining/pmc-rare-cases-ccby-2026-07-19/train_recognition_decisions.jsonl \
+  --report-output outputs/mining/pmc-rare-cases-ccby-2026-07-19/train_recognition_report.json
 ```

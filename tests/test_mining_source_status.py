@@ -9,6 +9,9 @@ from pydantic import ValidationError
 
 from medical_kg_nlp.cli.main import main
 from medical_kg_nlp.mining.registry import SourceRegistry, load_source_registry
+from medical_kg_nlp.mining.recognition_knowledge import (
+    load_recognition_knowledge_policy,
+)
 from medical_kg_nlp.mining.source_status import (
     SourceProcessingIndex,
     load_source_processing_index,
@@ -116,3 +119,15 @@ def test_registry_cli_reports_checked_in_processing_status(capsys) -> None:
     assert exit_code == 0
     assert '"processing_source_count": 15' in output
     assert '"source_id": "pmc_oa"' in output
+
+
+def test_pmc_recognition_policy_is_train_pinned_and_excludes_lab_results() -> None:
+    policy = load_recognition_knowledge_policy(
+        "configs/mining/recognition/pmc-rare-cases-ccby-2026-07-19.yaml"
+    )
+
+    assert policy.accepted_inventory_sha256 == (
+        "4e66b8487ce5bf9615128737b8731a024430eb8d833e32b14e767f0a94fb9878",
+    )
+    assert policy.mapped_type("DISEASE") is not None
+    assert policy.mapped_type("LAB_RESULT") is None

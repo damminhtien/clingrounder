@@ -1,0 +1,13 @@
+schema_version: medical-corpus-fusion-plan.v1
+output_root: ../../../outputs/mining/fused
+run_label: pmc-rare-cases-ccby-2026-07-19
+
+# INVARIANT: raw-identical JATS renderings are the only records safe to collapse.
+# Normalized and SimHash-near articles remain independent but share a split barrier.
+hamming_threshold: 3
+bands: 4
+
+sources:
+  - source_id: pmc_oa
+    documents: ../../../outputs/mining/pmc-rare-cases-ccby-2026-07-19/documents.jsonl
+    annotations: ../../../outputs/mining/pmc-rare-cases-ccby-2026-07-19/pipeline_proposals.jsonl

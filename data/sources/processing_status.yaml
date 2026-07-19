@@ -26,10 +26,14 @@ sources:
     dossier: docs/mining-sources/pmc-oa.md
     verified_on: 2026-07-19
     summary: Fifty CC BY rare-case JATS articles have an offset-safe bronze proposal snapshot.
-    run_configs: [configs/mining/pmc-rare-cases-ccby-2026-07-19.yaml]
+    run_configs:
+      - configs/mining/pmc-rare-cases-ccby-2026-07-19.yaml
+      - configs/mining/fusion/pmc-rare-cases-ccby-2026-07-19.yaml
+      - configs/mining/recognition/pmc-rare-cases-ccby-2026-07-19.yaml
     artifact_roots:
       - outputs/mining/pmc-rare-cases-ccby-2026-07-19
       - outputs/mining/snapshots/pmc-rare-cases-ccby-2026-07-19-bronze-v1
+      - outputs/mining/fused/pmc-rare-cases-ccby-2026-07-19-e58fb0e2c28b
   - source_id: dailymed
     state: promoted
     promotion_boundary: runtime_opt_in
