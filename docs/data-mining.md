@@ -715,3 +715,70 @@ The current export has 217 chunks and 2,307 entities: 1,880 findings and 427 pro
 train chunks and 39 development chunks. Chunk limits are soft only when necessary to avoid cutting
 an entity. Every local span round-trips to its original document offset, and overlapping labels are
 rejected because a BIO token classifier cannot represent them safely.
+
+## Full-Type NER Linux/GPU Run
+
+The full-type run is pinned by
+`configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml`. It uses the official
+`FacebookAI/xlm-roberta-base` checkpoint at immutable revision
+`e73636d4f797dec63c3081bb6ed5c7b0bb3f2089`, not a mutable `main` branch. The source dataset has
+3,823 chunks and 15,847 entities; the labels present in both train and development are `DISEASE`,
+`DRUG`, `FINDING`, and `PROCEDURE`. The manifest-pinned span JSONL SHA-256 is
+`90e1b05cac683046a88e58ab26bb090cd58c7d54077a6845f9fa49ccb59c2ca8`.
+
+Inspecting the spec validates dataset offsets, manifest identity, split label compatibility,
+checkpoint identity, and the exact Linux/CUDA requirements without importing Torch:
+
+```bash
+uv run medical-kg model inspect-token-classifier-run \
+  --config configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml
+```
+
+On a networked Linux host, prefetch the immutable checkpoint once. Training itself remains
+`local_files_only=true`, so a compute worker cannot silently switch model revisions:
+
+```bash
+uv sync --extra ml
+uv run hf download FacebookAI/xlm-roberta-base \
+  --revision e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
+
+CUDA_VISIBLE_DEVICES=0 uv run medical-kg model train-token-classifier-run \
+  --config configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml
+```
+
+The run requires Linux, one CUDA device with at least 16 GiB VRAM, compute capability 8.0, and
+BF16 support. It uses batch 4 with gradient accumulation 4. Before loading the model, the command
+checks OS, device count, VRAM, compute capability, and BF16 support. The final manifest records GPU
+identity, CUDA/Torch versions, run-spec SHA, dataset SHA, model revision, metrics, and saved-model
+fingerprint. The current macOS x86_64 workspace correctly reports `validated_not_executed`; it is
+not a Linux/CUDA result.
+
+## Graph Evidence Reranker Benchmark
+
+Graph evidence is evaluated only as a bounded reranker feature. It cannot create a candidate and
+therefore cannot change recall@K. The benchmark uses TT06 plus the CodiEsp train-only alias overlay,
+calibrates the bonus on official dev, and evaluates the selected bonus once on official test. Every
+document-backed graph evidence row is checked to belong to `corpus_split=train`.
+
+```bash
+uv run medical-kg kg benchmark-reranker \
+  --index .cache/medical-kg/knowledge-graph/knowledge-graph-d2b7d076728655e78e13.sqlite3 \
+  --nodes outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19/nodes.jsonl \
+  --edges outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19/edges.jsonl \
+  --evidence outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19/evidence.jsonl \
+  --terminology-index .cache/medical-kg/terminology/terminology-codiesp-train-2026-07-18.sqlite3 \
+  --terminology-source data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
+  --terminology-source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl \
+  --terminology-alias-overlay outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl \
+  --terminology-alias-overlay outputs/mining/knowledge/codiesp-icd10-split-2026-07-18/train/alias_overlay.jsonl \
+  --documents outputs/mining/fused/open-corpus-v1-39106c1cc9d0/documents.jsonl \
+  --annotations outputs/mining/fused/open-corpus-v1-39106c1cc9d0/harmonized_annotations.jsonl \
+  --output outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19/graph_reranker_benchmark.json
+```
+
+The dev-selected maximum bonus was `0.04`. On 2,052 mapped, contiguous test diagnoses, top-1
+accuracy increased from `67.3002%` to `67.7388%` and MRR from `0.686894` to `0.688835`.
+Recall@5/10/20 stayed unchanged by design. The feature affected 358 test queries, improved 14 ranks,
+and worsened 9. This is a small positive upper bound because same-sentence context links are gold;
+production promotion still requires a two-pass benchmark using only high-confidence predicted
+context concepts.
