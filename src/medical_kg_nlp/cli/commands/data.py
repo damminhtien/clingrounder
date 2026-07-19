@@ -76,7 +76,13 @@ from medical_kg_nlp.mining.recognition_knowledge import (
     load_recognition_knowledge_policy,
 )
 from medical_kg_nlp.mining.reconciliation import reconcile_exact_duplicates
-from medical_kg_nlp.mining.records import AnnotationProposal, MinedDocument, SourceRequest
+from medical_kg_nlp.mining.records import (
+    AnnotationLayer,
+    AnnotationProposal,
+    MinedDocument,
+    ReviewStatus,
+    SourceRequest,
+)
 from medical_kg_nlp.mining.quality import GoldAgreementGate, ReviewAgreementEvaluator
 from medical_kg_nlp.mining.registry import load_source_registry
 from medical_kg_nlp.mining.review import JsonlReviewBackend
@@ -603,6 +609,7 @@ def compile_graph_knowledge(args: argparse.Namespace) -> int:
     documents = () if args.documents is None else load_documents(args.documents)
     annotations = () if args.annotations is None else load_annotations(args.annotations)
     relations = () if args.relations is None else load_relations(args.relations)
+    defaults = GraphCompilationConfig()
     report = compile_knowledge_graph(
         terminology_paths=tuple(args.terminology_source),
         alias_overlay_paths=tuple(args.alias_overlay),
@@ -610,11 +617,23 @@ def compile_graph_knowledge(args: argparse.Namespace) -> int:
         annotations=annotations,
         relations=relations,
         config=GraphCompilationConfig(
+            accepted_layers=(
+                tuple(AnnotationLayer(value) for value in args.accepted_layer)
+                or defaults.accepted_layers
+            ),
+            accepted_review_statuses=(
+                tuple(
+                    ReviewStatus(value) for value in args.accepted_review_status
+                )
+                or defaults.accepted_review_statuses
+            ),
             include_entity_types=tuple(args.entity_type),
             include_unlinked_terms=not args.linked_only,
             include_structured_terminology_relations=(
                 not args.no_structured_terminology_relations
             ),
+            relation_endpoints_only=args.relation_endpoints_only,
+            require_canonical_concepts=args.canonical_concepts_only,
         ),
         nodes_output=args.nodes_output,
         edges_output=args.edges_output,

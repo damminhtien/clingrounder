@@ -71,6 +71,20 @@ def _kg_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     benchmark.add_argument("--limit", type=int, default=5)
     benchmark.add_argument("--max-misses", type=int, default=50)
 
+    relation_benchmark = operations.add_parser(
+        "benchmark-relations",
+        help="Benchmark relation-edge coverage, latency, and concurrent graph reads.",
+    )
+    relation_benchmark.set_defaults(handler="kg_benchmark_relations")
+    relation_benchmark.add_argument("--index", required=True)
+    relation_benchmark.add_argument("--edges", required=True)
+    relation_benchmark.add_argument("--relation-type", required=True)
+    relation_benchmark.add_argument("--output", required=True)
+    relation_benchmark.add_argument("--workers", type=int, default=8)
+    relation_benchmark.add_argument("--repeats", type=int, default=3)
+    relation_benchmark.add_argument("--limit", type=int, default=100)
+    relation_benchmark.add_argument("--max-misses", type=int, default=50)
+
 
 def _pipeline_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     pipeline = commands.add_parser("pipeline", help="Run pipeline operations.")
@@ -571,7 +585,34 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     graph_compile.add_argument("--annotations")
     graph_compile.add_argument("--relations")
     graph_compile.add_argument("--entity-type", action="append", default=[])
+    graph_compile.add_argument(
+        "--accepted-layer",
+        action="append",
+        choices=("bronze", "silver", "gold", "challenge"),
+        default=[],
+        help=(
+            "Explicit annotation/relation layers for an experiment. When omitted, "
+            "the fail-closed graph defaults remain active."
+        ),
+    )
+    graph_compile.add_argument(
+        "--accepted-review-status",
+        action="append",
+        choices=("proposed", "accepted", "rejected"),
+        default=[],
+        help="Explicit review statuses; defaults to proposed and accepted.",
+    )
     graph_compile.add_argument("--linked-only", action="store_true")
+    graph_compile.add_argument(
+        "--relation-endpoints-only",
+        action="store_true",
+        help="Exclude unrelated annotations while retaining relation endpoint evidence.",
+    )
+    graph_compile.add_argument(
+        "--canonical-concepts-only",
+        action="store_true",
+        help="Reject linked annotations whose code is absent from canonical terminology.",
+    )
     graph_compile.add_argument(
         "--no-structured-terminology-relations",
         action="store_true",

@@ -220,6 +220,67 @@ def test_graph_compiler_skips_relations_with_quality_filtered_endpoints(
     assert report["output_counts"]["edges"] == 0
 
 
+def test_graph_compiler_endpoint_only_mode_excludes_unrelated_annotations(
+    tmp_path: Path,
+) -> None:
+    document = _document("doc-1", "Drug A | ORAL | unrelated")
+    head = _annotation("head", document, (0, 6), "DRUG", ("NDC", "111"))
+    tail = _annotation("tail", document, (9, 13), "ROUTE", ("NCI", "C1"))
+    unrelated = _annotation(
+        "unrelated",
+        document,
+        (16, 25),
+        "DISEASE",
+        ("ICD-10", "I10"),
+    )
+
+    report = compile_knowledge_graph(
+        terminology_paths=(),
+        alias_overlay_paths=(),
+        documents=(document,),
+        annotations=(head, tail, unrelated),
+        relations=(_relation("rel", document, head, tail, "HAS_ROUTE"),),
+        config=GraphCompilationConfig(relation_endpoints_only=True),
+        nodes_output=tmp_path / "nodes.jsonl",
+        edges_output=tmp_path / "edges.jsonl",
+        evidence_output=tmp_path / "evidence.jsonl",
+        report_output=tmp_path / "report.json",
+    )
+
+    nodes = read_jsonl(tmp_path / "nodes.jsonl")
+    assert {node["code"] for node in nodes} == {"111", "C1"}
+    assert report["decision_counts"]["annotation_non_endpoint_skipped"] == 1
+    assert report["config"]["relation_endpoints_only"] is True
+
+
+def test_graph_compiler_can_reject_codes_absent_from_canonical_terminology(
+    tmp_path: Path,
+) -> None:
+    document = _document("doc-1", "Drug A | ORAL")
+    head = _annotation("head", document, (0, 6), "DRUG", ("NDC", "111"))
+    tail = _annotation("tail", document, (9, 13), "ROUTE", ("NCI", "C1"))
+
+    report = compile_knowledge_graph(
+        terminology_paths=(),
+        alias_overlay_paths=(),
+        documents=(document,),
+        annotations=(head, tail),
+        relations=(_relation("rel", document, head, tail, "HAS_ROUTE"),),
+        config=GraphCompilationConfig(require_canonical_concepts=True),
+        nodes_output=tmp_path / "nodes.jsonl",
+        edges_output=tmp_path / "edges.jsonl",
+        evidence_output=tmp_path / "evidence.jsonl",
+        report_output=tmp_path / "report.json",
+    )
+
+    assert report["output_counts"]["nodes"] == 0
+    assert report["output_counts"]["edges"] == 0
+    assert report["decision_counts"] == {
+        "annotation_unknown_canonical_concept_skipped": 2,
+        "relation_filtered_endpoint_skipped": 1,
+    }
+
+
 def test_graph_compiler_promotes_unique_rxnorm_attributes(tmp_path: Path) -> None:
     terminology = tmp_path / "rxnorm.jsonl"
     write_jsonl(

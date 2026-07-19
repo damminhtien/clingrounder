@@ -48,6 +48,8 @@ class GraphCompilationConfig:
     include_entity_types: tuple[str, ...] = ()
     include_unlinked_terms: bool = True
     include_structured_terminology_relations: bool = True
+    relation_endpoints_only: bool = False
+    require_canonical_concepts: bool = False
 
 
 @dataclass
@@ -253,6 +255,18 @@ def compile_knowledge_graph(
         config,
         nodes,
         counters,
+        relation_endpoint_ids=(
+            {
+                annotation_id
+                for relation in relations
+                for annotation_id in (
+                    relation.head_annotation_id,
+                    relation.tail_annotation_id,
+                )
+            }
+            if config.relation_endpoints_only
+            else None
+        ),
     )
     annotation_nodes: dict[str, str] = {}
     for annotation in annotations_by_id.values():
@@ -375,6 +389,8 @@ def compile_knowledge_graph(
             "include_structured_terminology_relations": (
                 config.include_structured_terminology_relations
             ),
+            "relation_endpoints_only": config.relation_endpoints_only,
+            "require_canonical_concepts": config.require_canonical_concepts,
         },
         "input_counts": {
             "terminology_concepts": len(entries),
@@ -648,6 +664,7 @@ def _valid_annotations(
     config: GraphCompilationConfig,
     nodes: Mapping[str, _NodeAccumulator],
     counters: Counter[str],
+    relation_endpoint_ids: set[str] | None,
 ) -> tuple[dict[str, AnnotationProposal], dict[str, AnnotationProposal]]:
     all_annotations: dict[str, AnnotationProposal] = {}
     accepted: dict[str, AnnotationProposal] = {}
@@ -660,6 +677,14 @@ def _valid_annotations(
             raise ValueError(f"Unknown annotation document {annotation.document_id!r}")
         annotation.validate_offsets(document)
         all_annotations[annotation.annotation_id] = annotation
+        if (
+            relation_endpoint_ids is not None
+            and annotation.annotation_id not in relation_endpoint_ids
+        ):
+            # INVARIANT: endpoint-only experiments validate every source row but cannot
+            # leak labels or aliases from unrelated held-out annotations into the graph.
+            counters["annotation_non_endpoint_skipped"] += 1
+            continue
         if annotation.layer not in config.accepted_layers:
             counters["annotation_layer_filter_skipped"] += 1
             continue
@@ -675,6 +700,11 @@ def _valid_annotations(
             concept = annotation.concepts[0]
             node_id = concept_node_id(concept.code_system, concept.code)
             existing = nodes.get(node_id)
+            if existing is None and config.require_canonical_concepts:
+                # INVARIANT: a mined source can propose a code, but a runtime graph cannot
+                # create it unless the loaded canonical terminology contains that code.
+                counters["annotation_unknown_canonical_concept_skipped"] += 1
+                continue
             if existing is not None:
                 _merge_node_type(existing, annotation.entity_type)
         accepted[annotation.annotation_id] = annotation

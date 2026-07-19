@@ -15,7 +15,10 @@ from medical_kg_nlp.kg.knowledge_schema import (
     KnowledgeNode,
     KnowledgeNodeKind,
 )
-from medical_kg_nlp.kg.benchmark import benchmark_graph_aliases
+from medical_kg_nlp.kg.benchmark import (
+    benchmark_graph_aliases,
+    benchmark_graph_relations,
+)
 from medical_kg_nlp.kg.sqlite_builder import build_knowledge_graph_index
 from medical_kg_nlp.kg.sqlite_repository import SQLiteKnowledgeGraphRepository
 from medical_kg_nlp.cli import main
@@ -192,6 +195,28 @@ def test_graph_alias_benchmark_reports_coverage_and_rank(tmp_path: Path) -> None
     assert source["covered_targets"] == 1
     assert source["unknown_targets"] == 1
     assert source["top1_rate"] == 1.0
+    repository.close()
+
+
+def test_graph_relation_benchmark_checks_concurrent_traversal(tmp_path: Path) -> None:
+    nodes_path, edges_path, evidence_path, _ = _write_graph(tmp_path)
+    manifest = build_knowledge_graph_index(
+        nodes_path, edges_path, evidence_path, cache_dir=tmp_path
+    )
+    repository = SQLiteKnowledgeGraphRepository(manifest.index_path)
+
+    report = benchmark_graph_relations(
+        repository,
+        edges_path,
+        relation_type="HAS_ROUTE",
+        workers=4,
+        repeats=3,
+    )
+
+    assert report["expected_edge_count"] == 1
+    assert report["coverage_rate"] == 1.0
+    assert report["deterministic"] is True
+    assert report["sample_misses"] == []
     repository.close()
 
 

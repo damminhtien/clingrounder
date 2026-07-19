@@ -10,10 +10,14 @@ from medical_kg_nlp.kg import (
     SQLiteKnowledgeGraphRepository,
     build_knowledge_graph_index,
 )
-from medical_kg_nlp.kg.benchmark import benchmark_graph_aliases
+from medical_kg_nlp.kg.benchmark import (
+    benchmark_graph_aliases,
+    benchmark_graph_relations,
+)
 
 __all__ = [
     "benchmark_graph_aliases_command",
+    "benchmark_graph_relations_command",
     "build_graph_index",
     "inspect_graph_index",
 ]
@@ -53,6 +57,46 @@ def benchmark_graph_aliases_command(args: argparse.Namespace) -> int:
         "report": str(output),
     }
     print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def benchmark_graph_relations_command(args: argparse.Namespace) -> int:
+    """Benchmark immutable relation-edge traversal and concurrent read stability."""
+
+    repository = SQLiteKnowledgeGraphRepository(args.index)
+    try:
+        report = benchmark_graph_relations(
+            repository,
+            args.edges,
+            relation_type=args.relation_type,
+            workers=args.workers,
+            repeats=args.repeats,
+            limit=args.limit,
+            max_misses=args.max_misses,
+        )
+    finally:
+        repository.close()
+    output = Path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print(
+        json.dumps(
+            {
+                "coverage_rate": report["coverage_rate"],
+                "deterministic": report["deterministic"],
+                "expected_edge_count": report["expected_edge_count"],
+                "latency_ms": report["latency_ms"],
+                "queries_per_second": report["queries_per_second"],
+                "report": str(output),
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
     return 0
 
 

@@ -4,13 +4,111 @@ from __future__ import annotations
 
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor
+from collections import defaultdict
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
 from medical_kg_nlp.kg.knowledge_schema import KnowledgeNode
 from medical_kg_nlp.kg.ports import KnowledgeGraphRepositoryPort
 
-__all__ = ["benchmark_graph_aliases"]
+__all__ = ["benchmark_graph_aliases", "benchmark_graph_relations"]
+
+
+def benchmark_graph_relations(
+    repository: KnowledgeGraphRepositoryPort,
+    edge_path: str | Path,
+    *,
+    relation_type: str,
+    workers: int = 8,
+    repeats: int = 3,
+    limit: int = 100,
+    max_misses: int = 50,
+) -> dict[str, Any]:
+    """Verify indexed edge coverage, deterministic reads, and traversal latency.
+
+    This is an index-consistency benchmark, not a clinical relation-quality metric.  It
+    checks that an immutable edge artifact is queryable through the read-only repository.
+    """
+
+    if not relation_type.strip():
+        raise ValueError("relation_type must be non-empty")
+    if workers < 1 or repeats < 1 or limit < 1 or max_misses < 0:
+        raise ValueError("workers, repeats, and limit must be positive")
+    expected_by_head = _expected_relation_neighbors(Path(edge_path), relation_type)
+    query_limit = max(limit, max((len(values) for values in expected_by_head.values()), default=0))
+
+    def query(head_node_id: str) -> tuple[str, tuple[str, ...], float]:
+        started = time.perf_counter()
+        neighbors = repository.neighbors(
+            head_node_id,
+            direction="outgoing",
+            relation_types=(relation_type,),
+            min_support=1,
+            limit=query_limit,
+        )
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        return (
+            head_node_id,
+            tuple(sorted(neighbor.node.node_id for neighbor in neighbors)),
+            elapsed_ms,
+        )
+
+    heads = sorted(expected_by_head)
+    tasks = [head for _ in range(repeats) for head in heads]
+    started = time.perf_counter()
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        results = list(pool.map(query, tasks))
+    elapsed_ms = (time.perf_counter() - started) * 1000
+
+    observed_by_head: dict[str, list[tuple[str, ...]]] = defaultdict(list)
+    latencies = []
+    for head, observed, latency in results:
+        observed_by_head[head].append(observed)
+        latencies.append(latency)
+    deterministic = all(
+        len(set(observations)) == 1 for observations in observed_by_head.values()
+    )
+    covered = 0
+    missing: list[dict[str, str]] = []
+    for head in heads:
+        observed_nodes = (
+            set(observed_by_head[head][0]) if observed_by_head[head] else set()
+        )
+        for tail in sorted(expected_by_head[head]):
+            if tail in observed_nodes:
+                covered += 1
+            elif len(missing) < max_misses:
+                missing.append({"head_node_id": head, "tail_node_id": tail})
+    expected_edge_count = sum(len(values) for values in expected_by_head.values())
+    return {
+        "schema_version": "knowledge-graph-relation-benchmark.v1",
+        "index_metadata": dict(getattr(repository, "metadata", {})),
+        "edge_source": str(Path(edge_path)),
+        "relation_type": relation_type,
+        "expected_edge_count": expected_edge_count,
+        "covered_edge_count": covered,
+        "coverage_rate": _rate(covered, expected_edge_count),
+        "head_node_count": len(heads),
+        "query_count": len(results),
+        "query_limit": query_limit,
+        "workers": workers,
+        "repeats": repeats,
+        "deterministic": deterministic,
+        "elapsed_ms": round(elapsed_ms, 3),
+        "queries_per_second": (
+            round(len(results) / (elapsed_ms / 1000), 3) if elapsed_ms else 0.0
+        ),
+        "latency_ms": {
+            "mean": round(sum(latencies) / len(latencies), 6) if latencies else 0.0,
+            "p50": round(_percentile(latencies, 0.50), 6),
+            "p95": round(_percentile(latencies, 0.95), 6),
+            "max": round(max(latencies), 6) if latencies else 0.0,
+        },
+        "sample_misses": missing,
+        "semantic_contract": "index_consistency_not_clinical_relation_quality",
+    }
 
 
 def benchmark_graph_aliases(
@@ -145,6 +243,38 @@ def _target_code(raw: dict[str, Any]) -> tuple[str | None, str | None]:
     if not isinstance(raw_system, str) or not isinstance(raw_code, str):
         return None, None
     return raw_system, raw_code
+
+
+def _expected_relation_neighbors(
+    path: Path,
+    relation_type: str,
+) -> dict[str, set[str]]:
+    expected: dict[str, set[str]] = defaultdict(set)
+    with path.open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            if not line.strip():
+                continue
+            raw = json.loads(line)
+            if not isinstance(raw, Mapping):
+                raise ValueError(f"{path}:{line_number}: expected JSON object")
+            if raw.get("relation_type") != relation_type:
+                continue
+            head = raw.get("head_node_id")
+            tail = raw.get("tail_node_id")
+            if not isinstance(head, str) or not head.strip():
+                raise ValueError(f"{path}:{line_number}: invalid head_node_id")
+            if not isinstance(tail, str) or not tail.strip():
+                raise ValueError(f"{path}:{line_number}: invalid tail_node_id")
+            expected[head].add(tail)
+    return dict(expected)
+
+
+def _percentile(values: list[float], fraction: float) -> float:
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    index = max(0, min(len(ordered) - 1, int(len(ordered) * fraction + 0.999999) - 1))
+    return ordered[index]
 
 
 def _rate(numerator: int, denominator: int) -> float:

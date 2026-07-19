@@ -11,7 +11,10 @@ from medical_kg_nlp.kg.knowledge_schema import (
     KnowledgeNode,
     KnowledgeNodeKind,
 )
-from medical_kg_nlp.kg.benchmark import benchmark_graph_aliases
+from medical_kg_nlp.kg.benchmark import (
+    benchmark_graph_aliases,
+    benchmark_graph_relations,
+)
 from medical_kg_nlp.kg.ports import KnowledgeGraphRepositoryPort
 from medical_kg_nlp.kg.sqlite_builder import (
     KNOWLEDGE_GRAPH_SCHEMA_VERSION,
@@ -40,6 +43,7 @@ __all__ = [
     "SQLiteKnowledgeGraphRepository",
     "build_knowledge_graph_index",
     "benchmark_graph_aliases",
+    "benchmark_graph_relations",
 ]
 
 
