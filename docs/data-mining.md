@@ -612,6 +612,50 @@ corpus and are not promoted into this quality-gated view. They must use a separa
 supervision artifact or human review before becoming evaluation labels; this prevents proposed
 PMC annotations from being mistaken for clinical gold.
 
+### Source-pinned co-occurrence evidence
+
+The first relation-mining pass uses only the 500 official CodiEsp train documents. It mines
+concept-linked entities in the same sentence and emits the literal symmetric relation
+`CO_OCCURS_WITH`; it never promotes a co-occurrence into `TREATS`, `CAUSES`, or `HAS_SYMPTOM`.
+Official `corpus_split=train` filtering is part of the policy, independent of later balanced model
+splits.
+
+```bash
+uv run medical-kg data relation mine-cooccurrence \
+  --documents outputs/mining/fused/open-corpus-v1-39106c1cc9d0/documents.jsonl \
+  --annotations outputs/mining/fused/open-corpus-v1-39106c1cc9d0/harmonized_annotations.jsonl \
+  --policy configs/mining/relations/codiesp-train-cooccurrence.yaml \
+  --output outputs/mining/relations/codiesp-train-cooccurrence-2026-07-19/relations.jsonl \
+  --report-output outputs/mining/relations/codiesp-train-cooccurrence-2026-07-19/report.json
+```
+
+This produced 225 semantic pairs and 721 source occurrences from 5,142 eligible annotations. The
+relation artifact SHA-256 is
+`c80ce0cfd09a2a0c31b4da53889d08327388abe43c5be9d5d33096be5dd4bc50`. Each pair is supported by at
+least two train documents; dense sentences, overlapping spans, large character gaps, unlinked
+annotations, and dev/test/background records are counted and skipped.
+
+The benchmark graph uses `--relation-endpoints-only` to prevent unrelated annotation aliases from
+leaking into the graph and `--canonical-concepts-only` to reject codes absent from TT06. It retained
+180 disease-disease edges with 604 evidence occurrences. Another 117 relation occurrences, mainly
+ICD-10-PCS procedures, were rejected because no pinned PCS terminology was loaded. They must not be
+reintroduced by code shape.
+
+```bash
+uv run medical-kg kg benchmark-relations \
+  --index .cache/medical-kg/knowledge-graph/knowledge-graph-d2b7d076728655e78e13.sqlite3 \
+  --edges outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19/edges.jsonl \
+  --relation-type CO_OCCURS_WITH \
+  --workers 8 \
+  --repeats 5 \
+  --output outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19/relation_benchmark.json
+```
+
+The immutable SQLite graph reached 100% edge traversal coverage, deterministic results across eight
+workers, about 1,228 queries/second, and p95 latency of 18.69 ms. This is an index consistency and
+scaling result, not a clinical relation-quality score. The graph remains an experiment and is not
+enabled in the default pipeline until a relation or reranking benchmark shows downstream gain.
+
 ## Compiled Knowledge Graph
 
 The terminology and mined relation layers are also compiled into a provenance-bearing graph. The

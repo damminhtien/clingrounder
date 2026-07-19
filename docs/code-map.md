@@ -151,10 +151,13 @@ medical-kg data source sync
 medical-kg data dataset build
 medical-kg data dataset export-spans
 medical-kg data label propose
+medical-kg data relation propose|mine-cooccurrence
+medical-kg data knowledge compile-graph
 medical-kg data review export|import
 medical-kg data coverage report
 medical-kg data snapshot freeze
 medical-kg data run
+medical-kg kg build|inspect|benchmark-aliases|benchmark-relations
 ```
 
 Validation profiles:
