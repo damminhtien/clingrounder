@@ -1,0 +1,179 @@
+schema_version: medical-mining-plan.v1
+# SOURCE DOSSIER: docs/mining-sources/pmc-oa.md
+registry: ../../data/sources/mining_registry.yaml
+work_dir: ../../outputs/mining/pmc-rare-cases-ccby-2026-07-19
+artifact_store:
+  # SCALING: callers should override this with a mounted object store for larger tranches.
+  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  storage_options: {}
+  encrypted_at_rest: false
+
+sources:
+  - source_id: pmc_oa
+    source_version: europe-pmc-rare-case-query-2026-07-19-v1
+    parse_documents: true
+    parameters:
+      # LICENSE: Europe PMC discovery returned 100 OA full-text records; this tranche keeps
+      # only the first 50 records whose per-article license was exactly CC BY.
+      # Query: (TITLE:"case report" OR PUB_TYPE:"Case Reports") AND
+      # (TITLE:rare OR TITLE:unusual OR TITLE:novel) AND OPEN_ACCESS:Y AND HAS_FT:Y
+      # AND FIRST_PDATE:[2024-01-01 TO 2026-12-31]
+      # Discovery response SHA-256: 849b1e1b42a02ad2df25e8e657f5b11b88557f3d69acef4cbf2153076e264773
+      artifacts:
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13225949/fullTextXML
+          media_type: application/xml
+          metadata:
+            <<: &pmc_ccby
+              license_id: CC BY
+              redistribution: attribution
+              content_format: jats_xml
+              discovery_provider: Europe PMC REST 6.9
+              discovery_response_sha256: 849b1e1b42a02ad2df25e8e657f5b11b88557f3d69acef4cbf2153076e264773
+            pmc_id: PMC13225949
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13244231/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13244231}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13298184/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13298184}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13237663/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13237663}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13294475/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13294475}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13265334/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13265334}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13293827/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13293827}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13264439/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13264439}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13243045/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13243045}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13243314/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13243314}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13149272/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13149272}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13212465/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13212465}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12998225/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC12998225}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13127233/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13127233}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13242278/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13242278}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13201064/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13201064}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13250330/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13250330}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13229760/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13229760}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13283838/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13283838}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13248711/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13248711}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13294089/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13294089}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13208473/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13208473}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13298587/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13298587}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13272065/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13272065}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13226595/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13226595}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13243318/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13243318}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13243309/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13243309}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13274779/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13274779}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13275233/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13275233}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13193822/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13193822}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13226518/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13226518}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13227841/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13227841}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13298030/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13298030}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13249042/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13249042}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13299720/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13299720}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13264428/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13264428}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13294240/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13294240}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13100453/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13100453}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12954945/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC12954945}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13276735/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13276735}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13237782/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13237782}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13237785/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13237785}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13272000/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13272000}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13082300/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13082300}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13242051/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13242051}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12950569/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC12950569}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13198733/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13198733}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13298425/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13298425}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13222511/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC13222511}
+        - uri: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12753897/fullTextXML
+          media_type: application/xml
+          metadata: {<<: *pmc_ccby, pmc_id: PMC12753897}
