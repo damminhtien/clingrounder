@@ -172,7 +172,7 @@ medical-kg data review export|import
 medical-kg data coverage report
 medical-kg data snapshot freeze
 medical-kg data run
-medical-kg kg build|inspect|benchmark-aliases|benchmark-relations
+medical-kg kg build|inspect|benchmark-aliases|benchmark-relations|benchmark-reranker
 ```
 
 Validation profiles:

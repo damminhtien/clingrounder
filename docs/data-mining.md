@@ -753,6 +753,42 @@ identity, CUDA/Torch versions, run-spec SHA, dataset SHA, model revision, metric
 fingerprint. The current macOS x86_64 workspace correctly reports `validated_not_executed`; it is
 not a Linux/CUDA result.
 
+After training, run inference with an NER-only pipeline config. Set `model_id` to the saved
+`final-model` directory and set `revision` to `model.fingerprint` from its `run_manifest.json`:
+
+```yaml
+pipeline:
+  version: open-corpus-full-type-xlmr-base-2026-07-19
+  enable_context: false
+  enable_linking: false
+  enable_candidate_reranking: false
+  enable_graph_evidence_reranking: false
+  enable_entity_kg_validation: false
+  enable_relations: false
+  enable_relation_kg_validation: false
+
+models:
+  entity_extractor:
+    model_id: outputs/models/open-corpus-full-type-xlmr-base-2026-07-19/final-model
+    revision: <model.fingerprint from run_manifest.json>
+    device: cuda
+    batch_size: 8
+    max_length: 512
+    stride: 64
+```
+
+```bash
+uv run medical-kg pipeline run \
+  --input outputs/mining/fused/open-corpus-v1-39106c1cc9d0/documents.jsonl \
+  --config /path/to/full-type-inference.yaml \
+  --output outputs/models/open-corpus-full-type-xlmr-base-2026-07-19/predictions.jsonl \
+  --parallel-backend serial
+```
+
+Use serial document orchestration because the adapter already batches token windows on one GPU;
+process workers would load one model copy per worker. The model adapter rejects offsets that do not
+round-trip to source text.
+
 ## Graph Evidence Reranker Benchmark
 
 Graph evidence is evaluated only as a bounded reranker feature. It cannot create a candidate and
@@ -815,3 +851,28 @@ second pass records `anchor_entities`, `queries_with_context`, `queries_with_gra
 `changed_top1` in `PipelineTrace`; it never creates terminology candidates or changes raw spans.
 Node and neighbor reads use bounded thread-safe LRU caches, so a long-running worker does not retain
 the full graph in process memory.
+
+To remove the remaining gold-span assumption, rerun the held-out benchmark with the pipeline
+predictions created above:
+
+```bash
+uv run medical-kg kg benchmark-reranker \
+  --index .cache/medical-kg/knowledge-graph/knowledge-graph-d2b7d076728655e78e13.sqlite3 \
+  --nodes outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19/nodes.jsonl \
+  --edges outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19/edges.jsonl \
+  --evidence outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19/evidence.jsonl \
+  --terminology-index .cache/medical-kg/terminology/terminology-codiesp-train-2026-07-18.sqlite3 \
+  --terminology-source data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
+  --terminology-source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl \
+  --terminology-alias-overlay outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl \
+  --terminology-alias-overlay outputs/mining/knowledge/codiesp-icd10-split-2026-07-18/train/alias_overlay.jsonl \
+  --documents outputs/mining/fused/open-corpus-v1-39106c1cc9d0/documents.jsonl \
+  --annotations outputs/mining/fused/open-corpus-v1-39106c1cc9d0/harmonized_annotations.jsonl \
+  --predictions outputs/models/open-corpus-full-type-xlmr-base-2026-07-19/predictions.jsonl \
+  --context-mode predicted_ner_exact_unique \
+  --output outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19/graph_reranker_predicted_ner_benchmark.json
+```
+
+This regime scores every mapped gold diagnosis. A missed exact disease span receives no candidate
+rank, while spurious predicted neighbors remain eligible anchors and therefore reduce reported
+anchor precision. The report separates target NER recall, baseline linking, and graph delta.
