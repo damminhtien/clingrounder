@@ -76,18 +76,21 @@ sources:
     promotion_boundary: training_only
     dossier: docs/mining-sources/clinicaltrials.md
     verified_on: 2026-07-20
-    summary: Rare-disease trial fields and neutral condition-intervention relations are frozen.
+    summary: Rare-disease trial fields, exact Mondo review links, and neutral graph evidence are frozen.
     run_configs:
       - configs/mining/clinicaltrials-rare-interventional-2026-07-19.yaml
       - configs/mining/labelers/clinicaltrials-structured.yaml
       - configs/mining/labelers/clinicaltrials-relations.yaml
       - configs/mining/crosswalk/clinicaltrials.yaml
+      - configs/mining/crosswalk/clinicaltrials-mondo.yaml
+      - configs/mining/linking/clinicaltrials-mondo.yaml
       - configs/mining/fusion/clinicaltrials-rare-interventional-2026-07-19.yaml
     artifact_roots:
       - outputs/mining/clinicaltrials-rare-interventional-2026-07-19
       - outputs/mining/snapshots/clinicaltrials-rare-interventional-2026-07-19-silver-v1
       - outputs/mining/fused/clinicaltrials-rare-interventional-2026-07-19-1e07af376898
       - outputs/mining/knowledge/clinicaltrials-rare-interventional-2026-07-19
+      - outputs/mining/knowledge/clinicaltrials-mondo-2026-07-19
   - source_id: loinc_2_82
     state: registered
     promotion_boundary: none

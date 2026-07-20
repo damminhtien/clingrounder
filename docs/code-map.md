@@ -45,7 +45,7 @@ composition root that turns config into a runnable component graph.
 | `experiments/` | Ablations, journals, and agent-facing experiment loops | Reusable metrics |
 | `benchmarks/phase1/` | Phase 1 schema, scoring, export, and campaign code | Generic evaluation behavior |
 | `validation/` | Core/development/release severity and generic artifact checks | Task-specific ZIP layout |
-| `mining/` | Licensed acquisition, immutable artifacts, parsers, curation, review, model datasets, and snapshots | Competition schemas or hosted services |
+| `mining/` | Licensed acquisition, immutable artifacts, parsers, curation, terminology evidence, review, model datasets, and snapshots | Competition schemas or hosted services |
 | `cli/` | `argparse` command routing and thin IO handlers | Metrics or pipeline algorithms |
 
 ## Public Ports
@@ -167,12 +167,23 @@ medical-kg data dataset build
 medical-kg data dataset export-spans
 medical-kg data label propose
 medical-kg data relation propose|mine-cooccurrence
+medical-kg data lexicon build|crosswalk|attach-exact-links|propose-linked-aliases
 medical-kg data knowledge compile-graph
 medical-kg data review export|import
 medical-kg data coverage report
 medical-kg data snapshot freeze
 medical-kg data run
 medical-kg kg build|inspect|benchmark-aliases|benchmark-relations|benchmark-reranker
+```
+
+Terminology mining deliberately has separate stages. `mining/crosswalk.py` emits exact, ambiguous,
+lexical, and unmatched lookup evidence. `mining/crosswalk_links.py` can attach only policy-pinned,
+exact-unique rows to source annotations without changing spans or overwriting existing concepts.
+Alias promotion remains a later reviewed operation. Search these boundaries with:
+
+```bash
+rg "crosswalk_mentions|materialize_exact_crosswalk_links|propose_linked_aliases" \
+  src/medical_kg_nlp/mining src/medical_kg_nlp/cli tests
 ```
 
 Validation profiles:
