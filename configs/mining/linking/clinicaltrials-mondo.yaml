@@ -1,0 +1,16 @@
+schema_version: medical-crosswalk-link-policy.v1
+policy_id: clinicaltrials-condition-mondo-exact-v1
+
+accepted_crosswalk_policy_ids:
+  - clinicaltrials-condition-to-mondo-v1
+accepted_candidate_sources:
+  - mondo:2026-07-06
+accepted_code_systems:
+  - MONDO
+accepted_promotion_statuses:
+  - review_required
+confidence: 1.0
+
+# SOURCE DOSSIER: docs/mining-sources/clinicaltrials.md
+# INVARIANT: links remain proposed source evidence. The source relation continues to mean
+# STUDIES_INTERVENTION, never TREATS, efficacy, approval, or standard of care.

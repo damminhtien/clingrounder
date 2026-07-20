@@ -92,6 +92,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.data",
         "propose_linked_aliases",
     ),
+    "data_lexicon_attach_exact_links": (
+        "medical_kg_nlp.cli.commands.data",
+        "attach_exact_crosswalk_links",
+    ),
     "data_mapping_compile_dailymed_rxnorm": (
         "medical_kg_nlp.cli.commands.data",
         "compile_dailymed_rxnorm",

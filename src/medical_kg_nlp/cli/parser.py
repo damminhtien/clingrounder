@@ -549,6 +549,16 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
             "these rows are never promoted automatically."
         ),
     )
+    attach_links = lexicon_operations.add_parser(
+        "attach-exact-links",
+        help="Attach pinned exact-unique crosswalk evidence to mined annotations.",
+    )
+    attach_links.set_defaults(handler="data_lexicon_attach_exact_links")
+    attach_links.add_argument("--annotations", required=True)
+    attach_links.add_argument("--crosswalk", required=True)
+    attach_links.add_argument("--policy", required=True)
+    attach_links.add_argument("--output", required=True)
+    attach_links.add_argument("--report-output", required=True)
     linked_aliases = lexicon_operations.add_parser(
         "propose-linked-aliases",
         help="Aggregate source annotations with explicit concept links into alias proposals.",

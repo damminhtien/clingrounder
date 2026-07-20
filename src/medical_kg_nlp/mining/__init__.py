@@ -22,6 +22,13 @@ from medical_kg_nlp.mining.crosswalk import (
     crosswalk_mentions,
     load_crosswalk_policies,
 )
+from medical_kg_nlp.mining.crosswalk_links import (
+    CrosswalkLinkMaterializationPolicy,
+    CrosswalkLinkMaterializationResult,
+    load_crosswalk_link_policy,
+    load_crosswalk_rows,
+    materialize_exact_crosswalk_links,
+)
 from medical_kg_nlp.mining.dedup import (
     DuplicateGroup,
     DuplicateGroupKind,
@@ -184,6 +191,8 @@ __all__ = [
     "CorpusFusionPlan",
     "CorpusFusionResult",
     "CorpusPartition",
+    "CrosswalkLinkMaterializationPolicy",
+    "CrosswalkLinkMaterializationResult",
     "CoverageCell",
     "CoverageCubePlanner",
     "CoveragePlannerPort",
@@ -273,6 +282,8 @@ __all__ = [
     "load_source_registry",
     "load_source_processing_index",
     "load_crosswalk_policies",
+    "load_crosswalk_link_policy",
+    "load_crosswalk_rows",
     "load_annotation_curation_policy",
     "load_mention_inventory",
     "load_mining_plan",
@@ -288,6 +299,7 @@ __all__ = [
     "load_recognition_knowledge_policy",
     "load_alias_promotion_policy",
     "mine_cooccurrence_relations",
+    "materialize_exact_crosswalk_links",
     "parser_from_definition",
     "profile_blocking_issue_count",
     "reconcile_exact_duplicates",

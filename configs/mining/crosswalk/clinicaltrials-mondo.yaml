@@ -1,0 +1,11 @@
+schema_version: medical-mention-crosswalk-policy.v1
+policies:
+  - policy_id: clinicaltrials-condition-to-mondo-v1
+    source_entity_type: DISEASE
+    source_label: CTGOV_CONDITION
+    target_entity_types: [DISEASE]
+    code_systems: [MONDO]
+
+# SOURCE DOSSIER: docs/mining-sources/clinicaltrials.md
+# INVARIANT: a registry condition-to-MONDO match is terminology evidence. It does not establish
+# treatment efficacy or permit STUDIES_INTERVENTION to be retyped as TREATS.

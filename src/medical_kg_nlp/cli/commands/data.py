@@ -18,6 +18,11 @@ from medical_kg_nlp.mining.cooccurrence import (
     mine_cooccurrence_relations,
 )
 from medical_kg_nlp.mining.crosswalk import crosswalk_mentions, load_crosswalk_policies
+from medical_kg_nlp.mining.crosswalk_links import (
+    load_crosswalk_link_policy,
+    load_crosswalk_rows,
+    materialize_exact_crosswalk_links,
+)
 from medical_kg_nlp.mining.curation import (
     curate_annotations,
     load_annotation_curation_policy,
@@ -122,6 +127,7 @@ __all__ = [
     "benchmark_recognition_knowledge",
     "crosswalk_lexicon",
     "audit_dailymed_rxnorm",
+    "attach_exact_crosswalk_links",
     "compile_dailymed_rxnorm",
     "compile_graph_knowledge",
     "compile_hpo_association_knowledge",
@@ -537,6 +543,41 @@ def crosswalk_lexicon(args: argparse.Namespace) -> int:
             "report": args.report_output,
             "status_entry_counts": result.report["status_entry_counts"],
             "unique_exact_entry_count": result.report["unique_exact_entry_count"],
+        }
+    )
+    return 0
+
+
+def attach_exact_crosswalk_links(args: argparse.Namespace) -> int:
+    """Materialize exact crosswalk evidence without changing source spans."""
+
+    result = materialize_exact_crosswalk_links(
+        load_annotations(args.annotations),
+        load_crosswalk_rows(args.crosswalk),
+        load_crosswalk_link_policy(args.policy),
+    )
+    output_sha256 = write_jsonl(
+        args.output, (annotation.to_dict() for annotation in result.annotations)
+    )
+    report = {
+        **result.report,
+        "inputs": {
+            "annotations": str(Path(args.annotations)),
+            "annotations_sha256": sha256_file(args.annotations),
+            "crosswalk": str(Path(args.crosswalk)),
+            "crosswalk_sha256": sha256_file(args.crosswalk),
+            "policy": str(Path(args.policy)),
+            "policy_sha256": sha256_file(args.policy),
+        },
+        "output": str(Path(args.output)),
+        "output_sha256": output_sha256,
+    }
+    write_json(args.report_output, report)
+    _print_json(
+        {
+            "annotation_decision_counts": report["annotation_decision_counts"],
+            "output": args.output,
+            "report": args.report_output,
         }
     )
     return 0
