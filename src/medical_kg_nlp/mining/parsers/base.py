@@ -32,14 +32,18 @@ class ArtifactParserAdapter:
         note_type: str,
         group_ids: tuple[str, ...] = (),
         metadata: dict[str, str] | None = None,
+        source_unit_sha256: str | None = None,
     ) -> MinedDocument:
         if not text.strip():
             raise ValueError(f"Parser {self.parser_id!r} produced an empty document")
+        identity_sha256 = source_unit_sha256 or artifact.object.sha256
+        _validate_sha256(identity_sha256)
         identity = (
-            f"{artifact.object.sha256}\0{self.parser_id}\0{self.parser_revision}\0{external_id}"
+            f"{identity_sha256}\0{self.parser_id}\0{self.parser_revision}\0{external_id}"
         )
         digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:24]
-        # INVARIANT: parsed text is frozen here; later normalization must create a child document.
+        # INVARIANT: a member digest makes document identity independent of the multipart archive
+        # that carried it. Parsed text remains frozen; normalization must create a child document.
         return MinedDocument(
             document_id=f"{artifact.source_id}:{digest}",
             text=text,
@@ -54,6 +58,7 @@ class ArtifactParserAdapter:
                 "external_id": external_id,
                 "parser_id": self.parser_id,
                 "parser_revision": self.parser_revision,
+                "source_unit_sha256": identity_sha256,
                 **(metadata or {}),
             },
         )
@@ -64,3 +69,8 @@ def _read_bounded(stream: BinaryIO, limit: int) -> bytes:
     if len(payload) > limit:
         raise ValueError(f"Artifact exceeds parser limit of {limit} bytes")
     return payload
+
+
+def _validate_sha256(value: str) -> None:
+    if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
+        raise ValueError("source_unit_sha256 must be a lowercase SHA-256 digest")

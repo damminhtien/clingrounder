@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import tarfile
 import xml.etree.ElementTree as ET
+import zipfile
 from collections.abc import Iterable
+from typing import BinaryIO
 
 from medical_kg_nlp.mining.formats.dailymed import (
     extract_spl_products,
@@ -62,10 +65,20 @@ class JatsXmlParser(ArtifactParserAdapter):
 
 
 class SplXmlParser(ArtifactParserAdapter):
-    """Render DailyMed narrative text and source-structured product records."""
+    """Render DailyMed XML or multipart ZIP releases without loading an archive into RAM.
+
+    DailyMed distributes individual labels as ZIP files containing one SPL XML document and
+    optional images. Full human releases are multi-gigabyte ZIP parts. The parser therefore
+    bounds every XML member and aggregate declared size while retaining only one label payload
+    in memory at a time.
+    """
 
     parser_id = "spl_xml"
-    parser_revision = "2"
+    parser_revision = "3"
+    max_archive_members = 100_000
+    max_xml_member_bytes = 64 * 1024 * 1024
+    max_nested_archive_bytes = 256 * 1024 * 1024
+    max_total_member_bytes = 128 * 1024 * 1024 * 1024
 
     def parse(
         self,
@@ -73,7 +86,42 @@ class SplXmlParser(ArtifactParserAdapter):
         *,
         store: ArtifactStorePort,
     ) -> Iterable[MinedDocument]:
-        root = ET.fromstring(self.read_artifact(artifact, store))
+        seen_payloads: set[str] = set()
+        with store.open(artifact.object.sha256) as stream:
+            if _is_zip_artifact(artifact, stream):
+                for member_name, payload in self._zip_payloads(stream, artifact.source_uri):
+                    source_unit_sha256 = hashlib.sha256(payload).hexdigest()
+                    if source_unit_sha256 in seen_payloads:
+                        continue
+                    seen_payloads.add(source_unit_sha256)
+                    yield from self._parse_payload(
+                        artifact,
+                        payload,
+                        archive_member=member_name,
+                        source_unit_sha256=source_unit_sha256,
+                    )
+                return
+            payload = _read_stream_bounded(stream, self.max_xml_member_bytes)
+        yield from self._parse_payload(
+            artifact,
+            payload,
+            archive_member="",
+            source_unit_sha256=hashlib.sha256(payload).hexdigest(),
+        )
+
+    def _parse_payload(
+        self,
+        artifact: SourceArtifact,
+        payload: bytes,
+        *,
+        archive_member: str,
+        source_unit_sha256: str,
+    ) -> Iterable[MinedDocument]:
+        try:
+            root = ET.fromstring(payload)
+        except ET.ParseError as error:
+            location = archive_member or artifact.source_uri
+            raise ValueError(f"Invalid DailyMed SPL XML in {location!r}: {error}") from error
         set_id_node = _first_local(root, "setId")
         set_id = ""
         if set_id_node is not None:
@@ -118,7 +166,9 @@ class SplXmlParser(ArtifactParserAdapter):
                 "dailymed_spl_version": spl_version or artifact.metadata.get("spl_version", ""),
                 "effective_time": effective_time,
                 "published_date": artifact.metadata.get("published_date", ""),
+                "archive_member": archive_member,
             },
+            source_unit_sha256=source_unit_sha256,
         )
         for product_index, product in enumerate(extract_spl_products(root)):
             rendered = render_spl_product(product)
@@ -144,8 +194,148 @@ class SplXmlParser(ArtifactParserAdapter):
                     ),
                     "spl_ndc": product.ndc,
                     "spl_product_index": str(product_index),
+                    "archive_member": archive_member,
                 },
+                source_unit_sha256=source_unit_sha256,
             )
+
+    def _zip_payloads(
+        self,
+        stream: BinaryIO,
+        source_name: str,
+    ) -> Iterable[tuple[str, bytes]]:
+        if not stream.seekable():
+            raise ValueError(
+                "DailyMed ZIP parsing requires a seekable artifact stream; stage remote "
+                "archives in the content-addressed cache before parsing"
+            )
+        try:
+            with zipfile.ZipFile(stream) as archive:
+                yield from self._archive_xml_payloads(
+                    archive,
+                    source_name=source_name,
+                    depth=0,
+                )
+        except zipfile.BadZipFile as error:
+            raise ValueError(f"Invalid DailyMed ZIP artifact {source_name!r}") from error
+
+    def _archive_xml_payloads(
+        self,
+        archive: zipfile.ZipFile,
+        *,
+        source_name: str,
+        depth: int,
+    ) -> Iterable[tuple[str, bytes]]:
+        infos = archive.infolist()
+        if len(infos) > self.max_archive_members:
+            raise ValueError(
+                f"DailyMed archive {source_name!r} has {len(infos)} members; "
+                f"limit is {self.max_archive_members}"
+            )
+        names: set[str] = set()
+        declared_bytes = 0
+        xml_members = 0
+        for info in sorted(infos, key=lambda item: item.filename):
+            if info.is_dir():
+                continue
+            if info.filename in names:
+                raise ValueError(
+                    f"DailyMed archive {source_name!r} contains duplicate member "
+                    f"{info.filename!r}"
+                )
+            names.add(info.filename)
+            if info.flag_bits & 0x1:
+                raise ValueError(
+                    f"DailyMed archive member {info.filename!r} is encrypted"
+                )
+            suffix = info.filename.lower()
+            if not suffix.endswith((".xml", ".zip")):
+                continue
+            declared_bytes += info.file_size
+            if declared_bytes > self.max_total_member_bytes:
+                raise ValueError(
+                    f"DailyMed archive {source_name!r} exceeds the declared extraction limit"
+                )
+            if suffix.endswith(".xml"):
+                xml_members += 1
+                payload = _read_zip_member(
+                    archive,
+                    info,
+                    limit=self.max_xml_member_bytes,
+                )
+                yield info.filename, payload
+                continue
+            if depth >= 1:
+                raise ValueError(
+                    f"DailyMed archive nesting exceeds one level at {info.filename!r}"
+                )
+            nested_payload = _read_zip_member(
+                archive,
+                info,
+                limit=self.max_nested_archive_bytes,
+            )
+            try:
+                with zipfile.ZipFile(io.BytesIO(nested_payload)) as nested:
+                    nested_source = f"{source_name}!{info.filename}"
+                    for nested_name, payload in self._archive_xml_payloads(
+                        nested,
+                        source_name=nested_source,
+                        depth=depth + 1,
+                    ):
+                        xml_members += 1
+                        yield f"{info.filename}!{nested_name}", payload
+            except zipfile.BadZipFile as error:
+                raise ValueError(
+                    f"Invalid nested DailyMed ZIP member {info.filename!r}"
+                ) from error
+        if xml_members == 0:
+            raise ValueError(f"DailyMed archive {source_name!r} contains no SPL XML member")
+
+
+def _is_zip_artifact(artifact: SourceArtifact, stream: BinaryIO) -> bool:
+    if artifact.media_type.lower() in {
+        "application/zip",
+        "application/x-zip-compressed",
+    } or artifact.source_uri.lower().endswith(".zip"):
+        return True
+    if not stream.seekable():
+        return False
+    position = stream.tell()
+    signature = stream.read(4)
+    stream.seek(position)
+    return signature.startswith(b"PK\x03\x04")
+
+
+def _read_stream_bounded(stream: BinaryIO, limit: int) -> bytes:
+    payload = stream.read(limit + 1)
+    if len(payload) > limit:
+        raise ValueError(f"DailyMed SPL XML exceeds member limit of {limit} bytes")
+    return payload
+
+
+def _read_zip_member(
+    archive: zipfile.ZipFile,
+    info: zipfile.ZipInfo,
+    *,
+    limit: int,
+) -> bytes:
+    if info.file_size > limit:
+        raise ValueError(
+            f"DailyMed archive member {info.filename!r} exceeds size limit of {limit} bytes"
+        )
+    # SCALING: read one bounded label package at a time; the multi-gigabyte outer release is
+    # never copied into process memory.
+    with archive.open(info) as stream:
+        payload = stream.read(limit + 1)
+    if len(payload) > limit:
+        raise ValueError(
+            f"DailyMed archive member {info.filename!r} exceeds size limit of {limit} bytes"
+        )
+    if len(payload) != info.file_size:
+        raise ValueError(
+            f"DailyMed archive member {info.filename!r} size differs from its ZIP metadata"
+        )
+    return payload
 
 
 def _jats_payloads(payload: bytes, media_type: str) -> tuple[tuple[str, bytes], ...]:

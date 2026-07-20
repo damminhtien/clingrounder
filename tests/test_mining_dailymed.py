@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import io
+import zipfile
 from pathlib import Path
+
+import pytest
 
 from medical_kg_nlp.mining.labelers.dailymed import (
     DailyMedStructuredLabelerAdapter,
@@ -95,9 +98,113 @@ def test_spl_parser_and_labeler_project_structured_medication_fields(
     assert by_id[strength.tail_annotation_id].source_label == "SPL_INGREDIENT_STRENGTH"
 
 
+def test_spl_parser_streams_zip_members_and_skips_exact_duplicates(tmp_path: Path) -> None:
+    first = _spl_payload(set_id="set-42")
+    second = _spl_payload(set_id="set-43")
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, mode="w", compression=zipfile.ZIP_DEFLATED) as output:
+        output.writestr("labels/set-42.xml", first)
+        output.writestr("labels/set-42-copy.xml", first)
+        output.writestr("labels/set-43.xml", second)
+        output.writestr("labels/image.jpg", b"not parsed")
+    artifact, store = _artifact_from_payload(
+        tmp_path,
+        archive.getvalue(),
+        artifact_id="dailymed:zip-fixture",
+        source_uri="memory://dailymed/labels.zip",
+        media_type="application/zip",
+    )
+
+    documents = tuple(SplXmlParser().parse(artifact, store=store))
+
+    assert len(documents) == 4
+    assert {document.metadata["dailymed_set_id"] for document in documents} == {
+        "set-42",
+        "set-43",
+    }
+    assert {
+        document.metadata["archive_member"] for document in documents
+    } == {"labels/set-42-copy.xml", "labels/set-43.xml"}
+
+
+def test_spl_member_identity_is_independent_of_archive_wrapper(tmp_path: Path) -> None:
+    payload = _spl_payload(set_id="set-42")
+    direct, direct_store = _artifact_from_payload(
+        tmp_path / "direct",
+        payload,
+        artifact_id="dailymed:direct",
+        source_uri="memory://dailymed/set-42.xml",
+        media_type="application/xml",
+    )
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, mode="w") as output:
+        output.writestr("different/path/set-42.xml", payload)
+    wrapped, wrapped_store = _artifact_from_payload(
+        tmp_path / "wrapped",
+        archive.getvalue(),
+        artifact_id="dailymed:wrapped",
+        source_uri="memory://dailymed/part-01.zip",
+        media_type="application/zip",
+    )
+
+    direct_ids = [
+        document.document_id for document in SplXmlParser().parse(direct, store=direct_store)
+    ]
+    wrapped_ids = [
+        document.document_id
+        for document in SplXmlParser().parse(wrapped, store=wrapped_store)
+    ]
+
+    assert direct_ids == wrapped_ids
+
+
+def test_spl_parser_rejects_zip_without_xml(tmp_path: Path) -> None:
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, mode="w") as output:
+        output.writestr("label.jpg", b"image")
+    artifact, store = _artifact_from_payload(
+        tmp_path,
+        archive.getvalue(),
+        artifact_id="dailymed:no-xml",
+        source_uri="memory://dailymed/no-xml.zip",
+        media_type="application/zip",
+    )
+
+    with pytest.raises(ValueError, match="contains no SPL XML member"):
+        tuple(SplXmlParser().parse(artifact, store=store))
+
+
+def test_spl_parser_rejects_oversized_xml_member(tmp_path: Path) -> None:
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, mode="w") as output:
+        output.writestr("label.xml", _spl_payload(set_id="set-42"))
+    artifact, store = _artifact_from_payload(
+        tmp_path,
+        archive.getvalue(),
+        artifact_id="dailymed:oversized",
+        source_uri="memory://dailymed/oversized.zip",
+        media_type="application/zip",
+    )
+    parser = SplXmlParser()
+    parser.max_xml_member_bytes = 32
+
+    with pytest.raises(ValueError, match="exceeds size limit"):
+        tuple(parser.parse(artifact, store=store))
+
+
 def _spl_artifact(tmp_path: Path) -> tuple[SourceArtifact, LocalArtifactStore]:
-    payload = b"""<document xmlns="urn:hl7-org:v3" xml:lang="en">
-      <setId root="set-42"/><versionNumber value="7"/><effectiveTime value="20260717"/>
+    return _artifact_from_payload(
+        tmp_path,
+        _spl_payload(set_id="set-42"),
+        artifact_id="dailymed:fixture",
+        source_uri="memory://dailymed/set-42.xml",
+        media_type="application/xml",
+    )
+
+
+def _spl_payload(*, set_id: str) -> bytes:
+    return f"""<document xmlns="urn:hl7-org:v3" xml:lang="en">
+      <setId root="{set_id}"/><versionNumber value="7"/><effectiveTime value="20260717"/>
       <title>Amoxicillin label</title><component><structuredBody><component><section>
         <title>Product data</title><text>Amoxicillin product information.</text>
         <subject><manufacturedProduct><manufacturedProduct>
@@ -118,16 +225,26 @@ def _spl_artifact(tmp_path: Path) -> tuple[SourceArtifact, LocalArtifactStore]:
                      codeSystem="2.16.840.1.113883.3.26.1.1"/>
         </substanceAdministration></consumedIn></manufacturedProduct></subject>
       </section></component></structuredBody></component>
-    </document>"""
+    </document>""".encode()
+
+
+def _artifact_from_payload(
+    tmp_path: Path,
+    payload: bytes,
+    *,
+    artifact_id: str,
+    source_uri: str,
+    media_type: str,
+) -> tuple[SourceArtifact, LocalArtifactStore]:
     store = LocalArtifactStore(tmp_path / "objects")
     stored = store.put_stream(io.BytesIO(payload), metadata={})
     artifact = SourceArtifact(
-        artifact_id="dailymed:fixture",
+        artifact_id=artifact_id,
         source_id="dailymed",
         source_version="catalog-2026-07-17",
-        source_uri="memory://dailymed/set-42.xml",
+        source_uri=source_uri,
         object=stored,
-        media_type="application/xml",
+        media_type=media_type,
         license_id="nlm_dailymed_terms",
         access_class=AccessClass.OPEN_WITH_TERMS,
         redistribution=RedistributionPolicy.ATTRIBUTION,
