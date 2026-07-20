@@ -76,17 +76,25 @@ sources:
     verified_on: 2026-07-19
     summary: Local import awaits an accepted LOINC license and pinned archive.
   - source_id: mondo
-    state: registered
-    promotion_boundary: none
-    dossier: docs/mining-sources/backlog.md
-    verified_on: 2026-07-19
-    summary: A release and ontology parser benchmark have not been pinned.
+    state: curated
+    promotion_boundary: training_only
+    dossier: docs/mining-sources/mondo.md
+    verified_on: 2026-07-20
+    summary: Pinned terminology, hierarchy, deprecations, xrefs, and query indexes are reproducible.
+    run_configs: [configs/mining/mondo-2026-07-06.yaml]
+    artifact_roots:
+      - outputs/mining/mondo-2026-07-06
+      - outputs/mining/knowledge/mondo-2026-07-06
   - source_id: hpo
-    state: registered
-    promotion_boundary: none
-    dossier: docs/mining-sources/backlog.md
-    verified_on: 2026-07-19
-    summary: A release and disease-phenotype import policy have not been pinned.
+    state: curated
+    promotion_boundary: training_only
+    dossier: docs/mining-sources/hpo.md
+    verified_on: 2026-07-20
+    summary: Pinned phenotype hierarchy and full disease-phenotype/gene evidence are reproducible.
+    run_configs: [configs/mining/hpo-2026-06-23.yaml]
+    artifact_roots:
+      - outputs/mining/hpo-2026-06-23
+      - outputs/mining/knowledge/hpo-2026-06-23
   - source_id: codiesp
     state: promoted
     promotion_boundary: runtime_opt_in
