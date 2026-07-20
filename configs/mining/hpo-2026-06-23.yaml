@@ -1,0 +1,36 @@
+schema_version: medical-mining-plan.v1
+registry: ../../data/sources/mining_registry.yaml
+work_dir: ../../outputs/mining/hpo-2026-06-23
+artifact_store:
+  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  storage_options: {}
+  encrypted_at_rest: false
+
+sources:
+  - source_id: hpo
+    source_version: "2026-06-23"
+    # HPO ontology and association tables are structured knowledge, not documents.
+    parse_documents: false
+    parameters:
+      artifacts:
+        - uri: https://github.com/obophenotype/human-phenotype-ontology/releases/download/v2026-06-23/hp.json
+          media_type: application/json
+          sha256: 3b646565695329aa399e937883c68d5d424d0df5eaab2f22baa0e08d44fdbe87
+          metadata:
+            release_tag: v2026-06-23
+            release_asset: hp.json
+            ontology_format: obographs-json
+        - uri: https://github.com/obophenotype/human-phenotype-ontology/releases/download/v2026-06-23/phenotype.hpoa
+          media_type: text/tab-separated-values
+          sha256: 89004f85b253f980ffe84218d2c080665cbf67a57bbb322111d6a2db5eb31dff
+          metadata:
+            release_tag: v2026-06-23
+            release_asset: phenotype.hpoa
+            role: disease_phenotype_annotations
+        - uri: https://github.com/obophenotype/human-phenotype-ontology/releases/download/v2026-06-23/genes_to_disease.txt
+          media_type: text/tab-separated-values
+          sha256: a247027ae9944e34545e0a91060243ff6c118681c06379b9721af1ee4f39286a
+          metadata:
+            release_tag: v2026-06-23
+            release_asset: genes_to_disease.txt
+            role: disease_gene_associations

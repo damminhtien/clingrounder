@@ -135,30 +135,37 @@ resources:
   - id: mondo
     name: Mondo Disease Ontology
     category: rare_disease_ontology
-    version: pinned-release-required
-    version_policy: manual_import
+    version: "2026-07-06"
+    version_policy: pinned
     access_class: open
     license_id: CC-BY-4.0
     license_url: https://mondo.monarchinitiative.org/pages/download/
     redistribution: attribution
     hosted_processing_allowed: true
     retention: immutable
-    connector: local_archive
+    connector: static_http
     parser: obo_json
+    urls:
+      - https://github.com/monarch-initiative/mondo/releases/download/v2026-07-06/mondo.json
+      - https://github.com/monarch-initiative/mondo/releases/download/v2026-07-06/source-versions.tsv
     allowed_uses: [rare_disease_coverage, ontology_relations]
   - id: hpo
     name: Human Phenotype Ontology and annotations
     category: phenotype_ontology
-    version: pinned-release-required
-    version_policy: manual_import
+    version: "2026-06-23"
+    version_policy: pinned
     access_class: open_with_terms
     license_id: hpo-source-terms
     license_url: https://hpo.jax.org/app/license
     redistribution: attribution
     hosted_processing_allowed: true
     retention: immutable
-    connector: local_archive
+    connector: static_http
     parser: hpo_release
+    urls:
+      - https://github.com/obophenotype/human-phenotype-ontology/releases/download/v2026-06-23/hp.json
+      - https://github.com/obophenotype/human-phenotype-ontology/releases/download/v2026-06-23/phenotype.hpoa
+      - https://github.com/obophenotype/human-phenotype-ontology/releases/download/v2026-06-23/genes_to_disease.txt
     allowed_uses: [phenotype_coverage, disease_phenotype_relations]
   - id: codiesp
     name: CodiEsp corpus

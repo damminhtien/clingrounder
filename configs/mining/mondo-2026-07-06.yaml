@@ -1,0 +1,29 @@
+schema_version: medical-mining-plan.v1
+registry: ../../data/sources/mining_registry.yaml
+work_dir: ../../outputs/mining/mondo-2026-07-06
+artifact_store:
+  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  storage_options: {}
+  encrypted_at_rest: false
+
+sources:
+  - source_id: mondo
+    source_version: "2026-07-06"
+    # Ontology releases are terminology/graph inputs, not offset-bearing documents.
+    parse_documents: false
+    parameters:
+      artifacts:
+        - uri: https://github.com/monarch-initiative/mondo/releases/download/v2026-07-06/mondo.json
+          media_type: application/json
+          sha256: 80b8658b4ec7da7699f7f8f6460425396e42f1bb7fbead837469ebf1907f7c30
+          metadata:
+            release_tag: v2026-07-06
+            release_asset: mondo.json
+            ontology_format: obographs-json
+        - uri: https://github.com/monarch-initiative/mondo/releases/download/v2026-07-06/source-versions.tsv
+          media_type: text/tab-separated-values
+          sha256: 3bc9cf0369b257803bd79b34cfab98346c385569aaaf9af6b742f0af39ec0e98
+          metadata:
+            release_tag: v2026-07-06
+            release_asset: source-versions.tsv
+            role: upstream_source_manifest
