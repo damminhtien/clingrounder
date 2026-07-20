@@ -109,12 +109,16 @@ sources:
     state: promoted
     promotion_boundary: runtime_opt_in
     dossier: docs/mining-sources/codiesp.md
-    verified_on: 2026-07-19
-    summary: Contiguous NER, train-only aliases, and non-causal graph evidence are reproducible.
-    run_configs: [configs/mining/codiesp.yaml]
+    verified_on: 2026-07-20
+    summary: Contiguous NER, train-only aliases and measured graph reranking are reproducible.
+    run_configs:
+      - configs/mining/codiesp.yaml
+      - configs/mining/curation/codiesp-contiguous-ner.yaml
+      - configs/mining/relations/codiesp-train-cooccurrence.yaml
     artifact_roots:
       - outputs/mining/codiesp-zenodo-3837305
       - outputs/mining/knowledge/codiesp-icd10-split-2026-07-18
+      - outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19
   - source_id: biored
     state: quarantined
     promotion_boundary: none
