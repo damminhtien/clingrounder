@@ -153,6 +153,11 @@ ClinicalTrials.gov. Implemented document parsers cover JATS, SPL, ClinicalTrials
 BioC JSON, CodiEsp ZIP, BRAT ZIP, and plain text. LOINC/HPO/Mondo are terminology inputs and should
 use `parse_documents: false`.
 
+Source-specific observed counts, fingerprints, failure modes, and promotion decisions live in
+[`docs/mining-sources/`](mining-sources/README.md). A connector listed here is implementation
+coverage; it is not evidence that a source has been acquired or promoted. The machine-readable
+authority for processing state is `data/sources/processing_status.yaml`.
+
 VietBioNER is pinned at Git commit `19ba70a5947d1be72906d407c860b1666b9337e9` under CC BY 4.0.
 `configs/mining/vietbioner.yaml` acquires the checksum-pinned archive, preserves each annotator as a
 separate document, groups exact duplicate text into one split, and imports source labels as silver

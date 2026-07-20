@@ -14,6 +14,7 @@ knowledge may be promoted.
 | DailyMed SPL | promoted | runtime opt-in | [DailyMed](dailymed.md) |
 | DailyMed-RxNorm | promoted | runtime opt-in | [DailyMed](dailymed.md) |
 | PMC OA | proposed | review only | [PMC OA](pmc-oa.md) |
+| ClinicalTrials.gov | curated | training only | [ClinicalTrials](clinicaltrials.md) |
 | Other registered sources | registered/quarantined | none | [Backlog](backlog.md) |
 
 `runtime opt-in` does not mean enabled by default. It means a versioned artifact passed the

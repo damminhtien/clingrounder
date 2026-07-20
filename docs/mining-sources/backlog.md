@@ -7,7 +7,6 @@ not be counted in corpus size, terminology coverage, or model-training claims.
 | --- | --- | --- |
 | `vn_moh_guidelines` | no pinned document list or source fingerprint | select a bounded release, verify reuse terms, parse sections |
 | `vietmed_ner` | annotation-data license is not explicit | obtain license evidence; keep quarantined until then |
-| `clinicaltrials_v2` | no disease-area query/snapshot selected | pin NCT IDs and API payload hashes |
 | `loinc_2_82` | account/license acceptance and archive absent | import locally, validate release hash, build lab terminology only |
 | `mondo` | no release pinned | pin JSON/OBO release and benchmark ontology edge import |
 | `hpo` | no release pinned | pin ontology plus disease-phenotype annotations and provenance |

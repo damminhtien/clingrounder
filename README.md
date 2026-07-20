@@ -427,7 +427,9 @@ uv run medical-kg data run --plan configs/mining/phase2.yaml
 ```
 
 See [`docs/data-mining.md`](docs/data-mining.md) for source policy, storage, DUA isolation, review
-priority, and snapshot leakage rules.
+priority, and snapshot leakage rules. [`docs/mining-sources/`](docs/mining-sources/README.md) records
+the exact tranche, processing results, promotion boundary, and reproducible commands for every
+source that has actually been mined.
 
 ---
 
