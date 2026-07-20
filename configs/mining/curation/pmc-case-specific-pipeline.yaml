@@ -1,0 +1,15 @@
+schema_version: medical-annotation-curation-policy.v1
+policy_id: pmc-case-specific-pipeline-v1
+
+# LICENSE: inputs must already be restricted to per-article PMC OA licenses accepted by the
+# acquisition plan. This policy only selects source evidence; it does not change redistribution.
+allowed_review_statuses: [proposed]
+allowed_layers: [bronze]
+allowed_metadata_values:
+  evidence_tier: [case_specific]
+
+# INVARIANT: retain source proposals exactly. Overlap resolution belongs to a later model view,
+# after proposal quality and label conventions have been reviewed.
+allow_discontinuous: true
+reject_import_issues: true
+overlap_strategy: preserve

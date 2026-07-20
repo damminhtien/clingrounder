@@ -113,6 +113,24 @@ def test_curation_builds_non_overlapping_bio_view_with_audit_winner() -> None:
     }
 
 
+def test_curation_filters_source_evidence_metadata() -> None:
+    case = _annotation("case", evidence_tier="case_specific")
+    discussion = _annotation("discussion", evidence_tier="literature_context")
+    missing = _annotation("missing")
+    policy = replace(
+        _policy(),
+        allowed_metadata_values={"evidence_tier": frozenset({"case_specific"})},
+    )
+
+    result = curate_annotations((case, discussion, missing), policy)
+
+    assert result.accepted == (case,)
+    assert result.report["rejection_reason_counts"] == {"metadata:evidence_tier": 2}
+    assert result.report["policy"]["allowed_metadata_values"] == {
+        "evidence_tier": ["case_specific"]
+    }
+
+
 def test_curation_cli_writes_accepted_rejected_and_report(
     tmp_path: Path,
     capsys,

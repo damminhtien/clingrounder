@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal, cast
 
@@ -35,6 +35,7 @@ class AnnotationCurationPolicy:
     max_span_length: int | None = None
     allowed_layers: frozenset[AnnotationLayer] | None = None
     allowed_entity_types: frozenset[str] = frozenset()
+    allowed_metadata_values: dict[str, frozenset[str]] = field(default_factory=dict)
     overlap_strategy: Literal["preserve", "prefer_quality_longest"] = "preserve"
 
     def __post_init__(self) -> None:
@@ -46,6 +47,11 @@ class AnnotationCurationPolicy:
             raise ValueError("allowed_layers cannot be empty when configured")
         if any(not entity_type.strip() for entity_type in self.allowed_entity_types):
             raise ValueError("allowed_entity_types must contain non-empty values")
+        for key, values in self.allowed_metadata_values.items():
+            if not key.strip() or not values or any(not value.strip() for value in values):
+                raise ValueError(
+                    "allowed_metadata_values requires non-empty keys and value sets"
+                )
 
 
 @dataclass(frozen=True)
@@ -75,6 +81,14 @@ def load_annotation_curation_policy(path: str | Path) -> AnnotationCurationPolic
     raw_entity_types = raw.get("allowed_entity_types", [])
     if not isinstance(raw_entity_types, list):
         raise ValueError("allowed_entity_types must be a list")
+    raw_metadata_values = raw.get("allowed_metadata_values", {})
+    if not isinstance(raw_metadata_values, Mapping):
+        raise ValueError("allowed_metadata_values must be an object")
+    metadata_values: dict[str, frozenset[str]] = {}
+    for key, values in raw_metadata_values.items():
+        if not isinstance(values, list):
+            raise ValueError("allowed_metadata_values entries must be lists")
+        metadata_values[str(key)] = frozenset(str(value) for value in values)
     overlap_strategy = str(raw.get("overlap_strategy", "preserve"))
     if overlap_strategy not in {"preserve", "prefer_quality_longest"}:
         raise ValueError("Unsupported overlap_strategy")
@@ -90,6 +104,7 @@ def load_annotation_curation_policy(path: str | Path) -> AnnotationCurationPolic
             else frozenset(AnnotationLayer(str(value)) for value in raw_layers)
         ),
         allowed_entity_types=frozenset(str(value) for value in raw_entity_types),
+        allowed_metadata_values=metadata_values,
         overlap_strategy=cast(
             Literal["preserve", "prefer_quality_longest"], overlap_strategy
         ),
@@ -156,6 +171,10 @@ def curate_annotations(
                 else sorted(layer.value for layer in policy.allowed_layers)
             ),
             "allowed_entity_types": sorted(policy.allowed_entity_types),
+            "allowed_metadata_values": {
+                key: sorted(values)
+                for key, values in sorted(policy.allowed_metadata_values.items())
+            },
             "overlap_strategy": policy.overlap_strategy,
         },
         "overlap_winners": dict(sorted(overlap_winners.items())),
@@ -181,6 +200,9 @@ def _rejection_reasons(
         and annotation.entity_type not in policy.allowed_entity_types
     ):
         reasons.append(f"entity_type:{annotation.entity_type}")
+    for key, allowed_values in policy.allowed_metadata_values.items():
+        if annotation.metadata.get(key) not in allowed_values:
+            reasons.append(f"metadata:{key}")
     if not policy.allow_discontinuous and annotation.metadata.get("discontinuous") == "true":
         reasons.append("discontinuous")
     if policy.reject_import_issues and annotation.metadata.get("import_issues", "[]") not in {
