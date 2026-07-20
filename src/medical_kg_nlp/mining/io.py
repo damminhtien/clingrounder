@@ -6,7 +6,7 @@ import hashlib
 import json
 import os
 import tempfile
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from pathlib import Path
 from typing import Any, TypeVar
 
@@ -26,6 +26,7 @@ from medical_kg_nlp.mining.records import (
 __all__ = [
     "annotation_from_dict",
     "document_from_dict",
+    "iter_documents",
     "load_annotations",
     "load_documents",
     "load_relations",
@@ -147,7 +148,13 @@ def load_source_artifacts(path: str | Path) -> tuple[SourceArtifact, ...]:
 
 
 def load_documents(path: str | Path) -> tuple[MinedDocument, ...]:
-    return _load_jsonl(path, document_from_dict)
+    return tuple(iter_documents(path))
+
+
+def iter_documents(path: str | Path) -> Iterator[MinedDocument]:
+    """Yield validated documents without materializing the JSONL manifest."""
+
+    return _iter_jsonl(path, document_from_dict)
 
 
 def load_annotations(path: str | Path) -> tuple[AnnotationProposal, ...]:
@@ -206,7 +213,13 @@ def write_text(path: str | Path, payload: str) -> str:
 
 
 def _load_jsonl(path: str | Path, parser: Callable[[Mapping[str, Any]], T]) -> tuple[T, ...]:
-    values: list[T] = []
+    return tuple(_iter_jsonl(path, parser))
+
+
+def _iter_jsonl(
+    path: str | Path,
+    parser: Callable[[Mapping[str, Any]], T],
+) -> Iterator[T]:
     with Path(path).open("r", encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, start=1):
             if not line.strip():
@@ -215,10 +228,9 @@ def _load_jsonl(path: str | Path, parser: Callable[[Mapping[str, Any]], T]) -> t
             if not isinstance(raw, Mapping):
                 raise ValueError(f"JSONL row {line_number} must be an object")
             try:
-                values.append(parser(raw))
+                yield parser(raw)
             except (KeyError, TypeError, ValueError) as error:
                 raise ValueError(f"Invalid JSONL row {line_number}: {error}") from error
-    return tuple(values)
 
 
 def _atomic_write(path: Path, payload: bytes) -> None:

@@ -13,7 +13,12 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
 from medical_kg_nlp.mining.connectors import connector_from_definition
+from medical_kg_nlp.mining.document_manifest import (
+    DocumentManifestResult,
+    materialize_document_manifest,
+)
 from medical_kg_nlp.mining.io import (
+    iter_documents,
     load_annotations,
     load_documents,
     load_relations,
@@ -41,6 +46,7 @@ __all__ = [
     "artifact_store_from_uri",
     "build_documents",
     "load_mining_plan",
+    "materialize_documents",
     "run_mining_plan",
     "sync_source",
 ]
@@ -173,7 +179,7 @@ def run_mining_plan(path: str | Path) -> MiningPlanResult:
     stage_root = work_dir / "stages"
     stage_root.mkdir(parents=True, exist_ok=True)
     all_artifacts: list[SourceArtifact] = []
-    all_documents: list[MinedDocument] = []
+    document_stage_paths: list[Path] = []
     cache_hits = 0
     cache_misses = 0
 
@@ -223,27 +229,27 @@ def run_mining_plan(path: str | Path) -> MiningPlanResult:
         if not job.parse_documents:
             continue
         if document_path.is_file() and state.get("parsing") == "complete":
-            documents = load_documents(document_path)
             cache_hits += 1
         else:
-            documents = build_documents(
+            manifest = materialize_documents(
                 source=source,
                 artifacts=artifacts,
                 store=store,
-            )
-            write_jsonl(
-                document_path,
-                (document.to_dict() for document in documents),
+                output_path=document_path,
             )
             write_json(
                 state_path,
-                {**state, "parsing": "complete"},
+                {
+                    **state,
+                    "parsing": "complete",
+                    "document_count": str(manifest.document_count),
+                    "document_sha256": manifest.sha256,
+                },
             )
             cache_misses += 1
-        all_documents.extend(documents)
+        document_stage_paths.append(document_path)
 
     unique_artifacts = _unique_artifacts(all_artifacts)
-    unique_documents = _unique_documents(all_documents)
     work_dir.mkdir(parents=True, exist_ok=True)
     artifact_manifest = work_dir / "artifacts.jsonl"
     document_manifest = work_dir / "documents.jsonl"
@@ -251,14 +257,21 @@ def run_mining_plan(path: str | Path) -> MiningPlanResult:
         artifact_manifest,
         (artifact.to_dict() for artifact in unique_artifacts),
     )
-    write_jsonl(
+    final_documents = materialize_document_manifest(
         document_manifest,
-        (document.to_dict() for document in unique_documents),
+        (
+            document
+            for stage_path in document_stage_paths
+            for document in iter_documents(stage_path)
+        ),
     )
 
     snapshot_id = None
     if plan.snapshot is not None:
         snapshot_plan = plan.snapshot
+        # SCALING: snapshot splitting and agreement checks still require random access. Full
+        # source-ingestion plans should materialize first and freeze a curated subset separately.
+        unique_documents = load_documents(document_manifest)
         annotations = (
             ()
             if snapshot_plan.annotations is None
@@ -299,7 +312,7 @@ def run_mining_plan(path: str | Path) -> MiningPlanResult:
         artifact_manifest=str(artifact_manifest),
         document_manifest=str(document_manifest),
         artifact_count=len(unique_artifacts),
-        document_count=len(unique_documents),
+        document_count=final_documents.document_count,
         cache_hits=cache_hits,
         cache_misses=cache_misses,
         snapshot_id=snapshot_id,
@@ -373,6 +386,26 @@ def build_documents(
         for document in parser.parse(artifact, store=store)
     )
     return _unique_documents(documents)
+
+
+def materialize_documents(
+    *,
+    source: SourceDefinition,
+    artifacts: Sequence[SourceArtifact],
+    store: ArtifactStorePort,
+    output_path: str | Path,
+) -> DocumentManifestResult:
+    """Parse and deduplicate source documents through a bounded disk-backed index."""
+
+    parser = parser_from_definition(source)
+    return materialize_document_manifest(
+        output_path,
+        (
+            document
+            for artifact in sorted(artifacts, key=lambda item: item.artifact_id)
+            for document in parser.parse(artifact, store=store)
+        ),
+    )
 
 
 def artifact_store_from_uri(

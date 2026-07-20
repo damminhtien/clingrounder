@@ -102,7 +102,7 @@ from medical_kg_nlp.mining.source_status import (
 from medical_kg_nlp.mining.review import JsonlReviewBackend
 from medical_kg_nlp.mining.runner import (
     artifact_store_from_uri,
-    build_documents,
+    materialize_documents,
     run_mining_plan,
     sync_source,
 )
@@ -237,13 +237,13 @@ def build_dataset(args: argparse.Namespace) -> int:
     )
     if wrong_sources:
         raise ValueError(f"Artifact manifest contains other sources: {', '.join(wrong_sources)}")
-    documents = build_documents(
+    manifest = materialize_documents(
         source=source,
         artifacts=artifacts,
         store=artifact_store_from_uri(args.store),
+        output_path=args.output,
     )
-    write_jsonl(args.output, (document.to_dict() for document in documents))
-    _print_json({"document_count": len(documents), "output": args.output})
+    _print_json({"document_count": manifest.document_count, "output": args.output})
     return 0
 
 
