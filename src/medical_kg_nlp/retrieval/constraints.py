@@ -10,8 +10,18 @@ __all__ = ["ALLOWED_CODE_SYSTEMS", "allowed_code_systems"]
 
 ALLOWED_CODE_SYSTEMS: dict[EntityType, set[CodeSystem]] = {
     EntityType.DRUG: {CodeSystem.RXNORM},
-    EntityType.DISEASE: {CodeSystem.ICD10, CodeSystem.UMLS, CodeSystem.SNOMED},
-    EntityType.SYMPTOM: {CodeSystem.UMLS, CodeSystem.SNOMED, CodeSystem.LOCAL},
+    EntityType.DISEASE: {
+        CodeSystem.ICD10,
+        CodeSystem.MONDO,
+        CodeSystem.UMLS,
+        CodeSystem.SNOMED,
+    },
+    EntityType.SYMPTOM: {
+        CodeSystem.HPO,
+        CodeSystem.UMLS,
+        CodeSystem.SNOMED,
+        CodeSystem.LOCAL,
+    },
     EntityType.LAB_TEST: {CodeSystem.LOCAL},
     EntityType.LAB_RESULT: {CodeSystem.NONE, CodeSystem.LOCAL},
     EntityType.DOSAGE: {CodeSystem.NONE},
@@ -26,7 +36,12 @@ ALLOWED_CODE_SYSTEMS: dict[EntityType, set[CodeSystem]] = {
         CodeSystem.SNOMED,
         CodeSystem.LOCAL,
     },
-    EntityType.FINDING: {CodeSystem.UMLS, CodeSystem.SNOMED, CodeSystem.LOCAL},
+    EntityType.FINDING: {
+        CodeSystem.HPO,
+        CodeSystem.UMLS,
+        CodeSystem.SNOMED,
+        CodeSystem.LOCAL,
+    },
 }
 
 

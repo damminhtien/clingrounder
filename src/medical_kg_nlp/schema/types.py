@@ -36,6 +36,8 @@ class AssertionStatus(str, Enum):
 class CodeSystem(str, Enum):
     ICD10 = "ICD-10"
     RXNORM = "RxNorm"
+    MONDO = "MONDO"
+    HPO = "HPO"
     UMLS = "UMLS"
     SNOMED = "SNOMED"
     LOCAL = "LOCAL"

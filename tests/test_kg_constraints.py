@@ -1,4 +1,9 @@
-from medical_kg_nlp.kg.constraints import entity_code_system_valid, relation_type_valid
+from medical_kg_nlp.kg.constraints import (
+    code_system_valid_for_entity_type,
+    entity_code_system_valid,
+    relation_type_valid,
+)
+from medical_kg_nlp.retrieval.constraints import allowed_code_systems
 from medical_kg_nlp.kg.reasoning import is_confirmed_patient_condition
 from medical_kg_nlp.kg.validator import KGValidator
 from medical_kg_nlp.schema.annotation import CandidateConcept
@@ -18,6 +23,17 @@ def test_drug_cannot_map_to_icd10() -> None:
         code="E11",
     )
     assert not entity_code_system_valid(entity)
+
+
+def test_ontology_code_systems_are_type_constrained() -> None:
+    assert code_system_valid_for_entity_type(EntityType.DISEASE, CodeSystem.MONDO)
+    assert not code_system_valid_for_entity_type(EntityType.DRUG, CodeSystem.MONDO)
+    assert code_system_valid_for_entity_type(EntityType.FINDING, CodeSystem.HPO)
+    assert code_system_valid_for_entity_type(EntityType.SYMPTOM, CodeSystem.HPO)
+    assert not code_system_valid_for_entity_type(EntityType.DISEASE, CodeSystem.HPO)
+
+    assert CodeSystem.MONDO in (allowed_code_systems(EntityType.DISEASE) or ())
+    assert CodeSystem.HPO in (allowed_code_systems(EntityType.FINDING) or ())
 
 
 def test_kg_validator_resets_invalid_code_system_to_none() -> None:

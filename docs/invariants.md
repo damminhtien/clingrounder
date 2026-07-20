@@ -17,8 +17,10 @@
 - Output codes must exist in the loaded dictionary.
 - Entity type and code system must be compatible.
 - `DRUG` can map to `RxNorm` or `NONE`, never ICD-10.
-- `DISEASE` can map to ICD-10, UMLS, SNOMED, or `NONE`, never RxNorm.
-- `SYMPTOM` can map to UMLS, SNOMED, LOCAL, or `NONE`.
+- `DISEASE` can map to ICD-10, MONDO, UMLS, SNOMED, or `NONE`, never RxNorm or HPO.
+- `SYMPTOM` and `FINDING` can map to HPO, UMLS, SNOMED, LOCAL, or `NONE`.
+- MONDO and HPO are opt-in ontology systems; importing their English labels does not make those
+  labels eligible for Vietnamese runtime recognition without a separate benchmarked alias policy.
 - `LAB_RESULT` can map to LOCAL or `NONE`.
 
 ## Context Safety

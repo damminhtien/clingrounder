@@ -5,10 +5,22 @@ from medical_kg_nlp.schema.types import CodeSystem, EntityType, RelationType
 
 ENTITY_CODE_SYSTEMS: dict[EntityType, frozenset[CodeSystem]] = {
     EntityType.DISEASE: frozenset(
-        {CodeSystem.ICD10, CodeSystem.UMLS, CodeSystem.SNOMED, CodeSystem.NONE}
+        {
+            CodeSystem.ICD10,
+            CodeSystem.MONDO,
+            CodeSystem.UMLS,
+            CodeSystem.SNOMED,
+            CodeSystem.NONE,
+        }
     ),
     EntityType.SYMPTOM: frozenset(
-        {CodeSystem.UMLS, CodeSystem.SNOMED, CodeSystem.LOCAL, CodeSystem.NONE}
+        {
+            CodeSystem.HPO,
+            CodeSystem.UMLS,
+            CodeSystem.SNOMED,
+            CodeSystem.LOCAL,
+            CodeSystem.NONE,
+        }
     ),
     EntityType.DRUG: frozenset({CodeSystem.RXNORM, CodeSystem.NONE}),
     EntityType.LAB_TEST: frozenset({CodeSystem.LOCAL, CodeSystem.NONE}),
@@ -27,7 +39,13 @@ ENTITY_CODE_SYSTEMS: dict[EntityType, frozenset[CodeSystem]] = {
         {CodeSystem.UMLS, CodeSystem.SNOMED, CodeSystem.LOCAL, CodeSystem.NONE}
     ),
     EntityType.FINDING: frozenset(
-        {CodeSystem.UMLS, CodeSystem.SNOMED, CodeSystem.LOCAL, CodeSystem.NONE}
+        {
+            CodeSystem.HPO,
+            CodeSystem.UMLS,
+            CodeSystem.SNOMED,
+            CodeSystem.LOCAL,
+            CodeSystem.NONE,
+        }
     ),
     EntityType.OTHER: frozenset({CodeSystem.LOCAL, CodeSystem.NONE}),
 }
