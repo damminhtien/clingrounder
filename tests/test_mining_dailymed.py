@@ -192,6 +192,23 @@ def test_spl_parser_rejects_oversized_xml_member(tmp_path: Path) -> None:
         tuple(parser.parse(artifact, store=store))
 
 
+def test_spl_parser_validates_source_published_label_count(tmp_path: Path) -> None:
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, mode="w") as output:
+        output.writestr("label.xml", _spl_payload(set_id="set-42"))
+    artifact, store = _artifact_from_payload(
+        tmp_path,
+        archive.getvalue(),
+        artifact_id="dailymed:count-mismatch",
+        source_uri="memory://dailymed/part-01.zip",
+        media_type="application/zip",
+        metadata={"expected_spl_count": "2"},
+    )
+
+    with pytest.raises(ValueError, match="SPL count mismatch"):
+        tuple(SplXmlParser().parse(artifact, store=store))
+
+
 def _spl_artifact(tmp_path: Path) -> tuple[SourceArtifact, LocalArtifactStore]:
     return _artifact_from_payload(
         tmp_path,
@@ -235,6 +252,7 @@ def _artifact_from_payload(
     artifact_id: str,
     source_uri: str,
     media_type: str,
+    metadata: dict[str, str] | None = None,
 ) -> tuple[SourceArtifact, LocalArtifactStore]:
     store = LocalArtifactStore(tmp_path / "objects")
     stored = store.put_stream(io.BytesIO(payload), metadata={})
@@ -250,6 +268,10 @@ def _artifact_from_payload(
         redistribution=RedistributionPolicy.ATTRIBUTION,
         hosted_processing_allowed=True,
         retrieved_at="2026-07-18T00:00:00+00:00",
-        metadata={"published_date": "Jul 17, 2026", "set_id": "set-42"},
+        metadata={
+            "published_date": "Jul 17, 2026",
+            "set_id": "set-42",
+            **(metadata or {}),
+        },
     )
     return artifact, store

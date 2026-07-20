@@ -87,9 +87,11 @@ class SplXmlParser(ArtifactParserAdapter):
         store: ArtifactStorePort,
     ) -> Iterable[MinedDocument]:
         seen_payloads: set[str] = set()
+        source_payload_count = 0
         with store.open(artifact.object.sha256) as stream:
             if _is_zip_artifact(artifact, stream):
                 for member_name, payload in self._zip_payloads(stream, artifact.source_uri):
+                    source_payload_count += 1
                     source_unit_sha256 = hashlib.sha256(payload).hexdigest()
                     if source_unit_sha256 in seen_payloads:
                         continue
@@ -100,6 +102,7 @@ class SplXmlParser(ArtifactParserAdapter):
                         archive_member=member_name,
                         source_unit_sha256=source_unit_sha256,
                     )
+                _validate_expected_spl_count(artifact, source_payload_count)
                 return
             payload = _read_stream_bounded(stream, self.max_xml_member_bytes)
         yield from self._parse_payload(
@@ -336,6 +339,24 @@ def _read_zip_member(
             f"DailyMed archive member {info.filename!r} size differs from its ZIP metadata"
         )
     return payload
+
+
+def _validate_expected_spl_count(artifact: SourceArtifact, actual: int) -> None:
+    raw = artifact.metadata.get("expected_spl_count")
+    if raw is None:
+        return
+    try:
+        expected = int(raw)
+    except ValueError as error:
+        raise ValueError("DailyMed expected_spl_count must be an integer") from error
+    if expected <= 0:
+        raise ValueError("DailyMed expected_spl_count must be positive")
+    if actual != expected:
+        # INVARIANT: a mutable bulk URL must not silently produce a partial or replaced release.
+        raise ValueError(
+            f"DailyMed SPL count mismatch for {artifact.source_uri!r}: "
+            f"expected {expected}, received {actual}"
+        )
 
 
 def _jats_payloads(payload: bytes, media_type: str) -> tuple[tuple[str, bytes], ...]:

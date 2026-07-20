@@ -243,6 +243,69 @@ def test_fetch_rejects_checksum_mismatch(tmp_path: Path) -> None:
         connector.fetch(discovered, store=LocalArtifactStore(tmp_path))
 
 
+def test_fetch_validates_source_published_md5_without_second_read(tmp_path: Path) -> None:
+    source = _registry().by_id("dailymed")
+    uri = "https://example.invalid/dailymed.zip"
+    payload = b"official release bytes"
+    connector = DailyMedConnector(source, MemoryTransport({uri: payload}))
+    discovered = next(
+        iter(
+            connector.discover(
+                SourceRequest(
+                    source_id=source.id,
+                    source_version="full-human-2026-07-17",
+                    parameters={
+                        "artifacts": [
+                            {
+                                "uri": uri,
+                                "media_type": "application/zip",
+                                "metadata": {
+                                    "source_md5": hashlib.md5(  # noqa: S324
+                                        payload,
+                                        usedforsecurity=False,
+                                    ).hexdigest()
+                                },
+                            }
+                        ]
+                    },
+                )
+            )
+        )
+    )
+
+    artifact = connector.fetch(discovered, store=LocalArtifactStore(tmp_path))
+
+    assert artifact.object.sha256 == hashlib.sha256(payload).hexdigest()
+
+
+def test_fetch_rejects_source_published_md5_mismatch(tmp_path: Path) -> None:
+    source = _registry().by_id("dailymed")
+    uri = "https://example.invalid/dailymed.zip"
+    connector = DailyMedConnector(source, MemoryTransport({uri: b"actual"}))
+    discovered = next(
+        iter(
+            connector.discover(
+                SourceRequest(
+                    source_id=source.id,
+                    source_version="full-human-2026-07-17",
+                    parameters={
+                        "artifacts": [
+                            {
+                                "uri": uri,
+                                "media_type": "application/zip",
+                                "metadata": {"source_md5": "0" * 32},
+                            }
+                        ]
+                    },
+                )
+            )
+        )
+    )
+
+    with pytest.raises(ValueError, match="Source MD5 mismatch"):
+        connector.fetch(discovered, store=LocalArtifactStore(tmp_path))
+
+
 def test_local_connector_only_imports_explicit_paths(tmp_path: Path) -> None:
     source = _registry().by_id("codiesp")
     archive = tmp_path / "codiesp.zip"

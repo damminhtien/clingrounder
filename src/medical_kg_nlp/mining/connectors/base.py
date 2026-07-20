@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import threading
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from contextlib import closing
 from datetime import UTC, datetime
-from typing import BinaryIO, Callable, Protocol
+from typing import Any, BinaryIO, Callable, Protocol, cast
 
 from medical_kg_nlp.mining.ports import ArtifactStorePort
 from medical_kg_nlp.mining.records import (
@@ -86,9 +87,20 @@ class RegisteredConnectorAdapter(ABC):
                 f"Connector {self.source.id!r} cannot fetch source {artifact.source_id!r}"
             )
         self._rate_limiter.wait()
+        expected_md5 = _expected_source_md5(artifact)
+        source_md5 = (
+            None
+            if expected_md5 is None
+            else hashlib.md5(usedforsecurity=False)  # noqa: S324 - source integrity contract
+        )
         with closing(self.transport.open(artifact.uri)) as stream:
+            source_stream = (
+                stream
+                if source_md5 is None
+                else cast(BinaryIO, _DigestingStream(stream, source_md5))
+            )
             stored = store.put_stream(
-                stream,
+                source_stream,
                 metadata={
                     "source_id": artifact.source_id,
                     "source_version": artifact.source_version,
@@ -100,6 +112,11 @@ class RegisteredConnectorAdapter(ABC):
             raise ValueError(
                 f"Checksum mismatch for {artifact.uri}: "
                 f"expected {artifact.expected_sha256}, received {stored.sha256}"
+            )
+        if source_md5 is not None and source_md5.hexdigest() != expected_md5:
+            raise ValueError(
+                f"Source MD5 mismatch for {artifact.uri}: "
+                f"expected {expected_md5}, received {source_md5.hexdigest()}"
             )
 
         license_id = self._resolve_license(artifact)
@@ -153,6 +170,29 @@ class RegisteredConnectorAdapter(ABC):
             # LICENSE: per-artifact sources are blocked until the actual license is known.
             raise ValueError(f"Artifact {artifact.uri!r} has no per-artifact license")
         return license_id
+
+
+class _DigestingStream:
+    """Update a source-published digest while the artifact store consumes the stream."""
+
+    def __init__(self, stream: BinaryIO, digest: Any) -> None:
+        self._stream = stream
+        self._digest = digest
+
+    def read(self, size: int = -1) -> bytes:
+        payload = self._stream.read(size)
+        self._digest.update(payload)
+        return payload
+
+
+def _expected_source_md5(artifact: DiscoveredArtifact) -> str | None:
+    value = artifact.metadata.get("source_md5")
+    if value is None:
+        return None
+    normalized = value.strip().lower()
+    if re.fullmatch(r"[0-9a-f]{32}", normalized) is None:
+        raise ValueError(f"Invalid source_md5 for {artifact.uri!r}")
+    return normalized
 
 
 def _metadata_redistribution(
