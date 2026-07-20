@@ -1,0 +1,16 @@
+schema_version: medical-mention-crosswalk-policy.v1
+policies:
+  - policy_id: pmc-case-disease-to-mondo-v1
+    source_entity_type: DISEASE
+    source_label: DISEASE
+    target_entity_types: [DISEASE]
+    code_systems: [MONDO]
+
+  - policy_id: pmc-case-symptom-to-hpo-v1
+    source_entity_type: SYMPTOM
+    source_label: SYMPTOM
+    target_entity_types: [FINDING]
+    code_systems: [HPO]
+
+# MODEL: this crosswalk is terminology evidence for review. Exact lexical identity does not prove
+# that a mined span is correctly typed, asserted for the patient, or suitable as a runtime alias.
