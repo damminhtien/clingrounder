@@ -72,7 +72,8 @@ def test_jats_parser_renders_article_sections(tmp_path: Path) -> None:
     assert document.text == "Rare case\n\nPatient had fever.\n\nCase\n\nA finding."
     assert document.group_ids == ("article:PMC42",)
     assert document.metadata["parser_revision"] == "2"
-    blocks = json.loads(document.metadata["jats_blocks"])
+    assert document.metadata["source_block_format"] == "jats"
+    blocks = json.loads(document.metadata["source_blocks"])
     assert [block["section_path"] for block in blocks] == [
         [],
         ["Abstract"],

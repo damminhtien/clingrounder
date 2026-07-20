@@ -59,6 +59,10 @@ _HANDLERS = {
     "data_source_sync": ("medical_kg_nlp.cli.commands.data", "sync_registered_source"),
     "data_dataset_build": ("medical_kg_nlp.cli.commands.data", "build_dataset"),
     "data_dataset_inspect": ("medical_kg_nlp.cli.commands.data", "inspect_dataset"),
+    "data_dataset_attach_block_evidence": (
+        "medical_kg_nlp.cli.commands.data",
+        "attach_dataset_block_evidence",
+    ),
     "data_dataset_reconcile_duplicates": (
         "medical_kg_nlp.cli.commands.data",
         "reconcile_duplicates",

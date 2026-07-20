@@ -419,6 +419,16 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         action="store_true",
         help="Return a failing status when structural issues are present.",
     )
+    dataset_evidence = dataset_operations.add_parser(
+        "attach-block-evidence",
+        help="Attach source-section evidence tiers without changing annotation spans.",
+    )
+    dataset_evidence.set_defaults(handler="data_dataset_attach_block_evidence")
+    dataset_evidence.add_argument("--documents", required=True)
+    dataset_evidence.add_argument("--annotations", required=True)
+    dataset_evidence.add_argument("--policy", required=True)
+    dataset_evidence.add_argument("--output", required=True)
+    dataset_evidence.add_argument("--report-output", required=True)
     dataset_reconcile = dataset_operations.add_parser(
         "reconcile-duplicates",
         help="Collapse exact-text duplicates and separate consensus from disagreements.",

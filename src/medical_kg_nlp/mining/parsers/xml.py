@@ -51,7 +51,8 @@ class JatsXmlParser(ArtifactParserAdapter):
                     "publication_year": rendered.publication_year,
                     "keywords": json.dumps(rendered.keywords, ensure_ascii=False),
                     "subjects": json.dumps(rendered.subjects, ensure_ascii=False),
-                    "jats_blocks": json.dumps(
+                    "source_block_format": "jats",
+                    "source_blocks": json.dumps(
                         [block.to_dict() for block in rendered.blocks],
                         ensure_ascii=False,
                         separators=(",", ":"),

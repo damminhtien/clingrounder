@@ -1,0 +1,43 @@
+schema_version: medical-block-evidence-policy.v1
+policy_id: pmc-jats-case-evidence-v1
+source_block_format: jats
+default_tier: other_article_context
+uncontained_tier: uncontained
+
+# Ordered source-structure rules. They classify evidence provenance; they do not create labels.
+rules:
+  - rule_id: pmc-article-title
+    evidence_tier: article_summary
+    block_kinds: [article_title]
+
+  - rule_id: pmc-non-clinical-back-matter
+    evidence_tier: non_clinical
+    section_type_patterns:
+      - '^(ref-list|fn-group|kwd-group|contrib-info|ack|data-availability-statement|COI-statement|associated-data|supplementary-materials?)$'
+
+  - rule_id: pmc-non-clinical-heading
+    evidence_tier: non_clinical
+    section_path_patterns:
+      - '(references|footnotes|funding|acknowledg|author contributions?|conflicts? of interest|ethics statement|consent|data availability|publisher.?s note|generative ai)'
+
+  - rule_id: pmc-abstract
+    evidence_tier: article_summary
+    section_path_patterns: ['^Abstract(?: >|$)']
+
+  - rule_id: pmc-case-specific
+    evidence_tier: case_specific
+    section_type_patterns: ['^cases$']
+
+  - rule_id: pmc-case-heading
+    evidence_tier: case_specific
+    section_path_patterns:
+      - '(^| > )(case (presentation|report|description|history|summary)|detailed case description|clinical presentation|diagnostic assessment|clinical findings|investigations?|therapeutic interventions?|follow-up and outcomes?|surgical treatment)( >|$)'
+
+  - rule_id: pmc-literature-context
+    evidence_tier: literature_context
+    section_type_patterns: ['^(intro|discussion|conclusions?|methods)$']
+
+  - rule_id: pmc-literature-heading
+    evidence_tier: literature_context
+    section_path_patterns:
+      - '(^| > )([0-9]+\. )?(introduction|background|discussions?|conclusions?|literature review)( >|$)'

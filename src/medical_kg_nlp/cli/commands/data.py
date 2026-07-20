@@ -101,6 +101,10 @@ from medical_kg_nlp.mining.runner import (
     run_mining_plan,
     sync_source,
 )
+from medical_kg_nlp.mining.section_evidence import (
+    attach_block_evidence,
+    load_block_evidence_policy,
+)
 from medical_kg_nlp.mining.snapshot import SnapshotBuilder, SnapshotSplitConfig
 from medical_kg_nlp.mining.splits import (
     load_split_document_ids,
@@ -113,6 +117,7 @@ from medical_kg_nlp.utils.hashing import sha256_file
 
 __all__ = [
     "build_dataset",
+    "attach_dataset_block_evidence",
     "build_lexicon",
     "benchmark_recognition_knowledge",
     "crosswalk_lexicon",
@@ -253,6 +258,45 @@ def inspect_dataset(args: argparse.Namespace) -> int:
         }
     )
     return 1 if args.strict and blocking_issue_count else 0
+
+
+def attach_dataset_block_evidence(args: argparse.Namespace) -> int:
+    """Enrich proposals with source-section provenance and evidence tiers."""
+
+    result = attach_block_evidence(
+        load_documents(args.documents),
+        load_annotations(args.annotations),
+        load_block_evidence_policy(args.policy),
+    )
+    annotations_sha256 = write_jsonl(
+        args.output,
+        (annotation.to_dict() for annotation in result.annotations),
+    )
+    report = {
+        **result.report,
+        "inputs": {
+            "documents": str(Path(args.documents)),
+            "documents_sha256": sha256_file(args.documents),
+            "annotations": str(Path(args.annotations)),
+            "annotations_sha256": sha256_file(args.annotations),
+            "policy": str(Path(args.policy)),
+            "policy_sha256": sha256_file(args.policy),
+        },
+        "outputs": {
+            "annotations": str(Path(args.output)),
+            "annotations_sha256": annotations_sha256,
+        },
+    }
+    write_json(args.report_output, report)
+    _print_json(
+        {
+            "annotation_count": len(result.annotations),
+            "annotation_tier_counts": result.report["annotation_tier_counts"],
+            "output": args.output,
+            "report": args.report_output,
+        }
+    )
+    return 0
 
 
 def reconcile_duplicates(args: argparse.Namespace) -> int:
