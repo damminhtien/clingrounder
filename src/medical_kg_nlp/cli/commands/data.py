@@ -62,6 +62,10 @@ from medical_kg_nlp.mining.model_dataset import (
     export_span_dataset,
     load_dataset_splits,
 )
+from medical_kg_nlp.mining.ontologies import (
+    OBOGraphCompilationConfig,
+    compile_obo_graph_release,
+)
 from medical_kg_nlp.mining.policy import SourcePolicyGate
 from medical_kg_nlp.mining.ports import ProposalLabelerPort, RelationLabelerPort
 from medical_kg_nlp.mining.profile import (
@@ -103,7 +107,7 @@ from medical_kg_nlp.mining.splits import (
 )
 from medical_kg_nlp.terminology import SQLiteTerminologyRepository
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.schema.types import EntityType
+from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.utils.hashing import sha256_file
 
 __all__ = [
@@ -114,6 +118,7 @@ __all__ = [
     "audit_dailymed_rxnorm",
     "compile_dailymed_rxnorm",
     "compile_graph_knowledge",
+    "compile_obo_ontology",
     "compile_alias_knowledge",
     "compile_recognition_knowledge_artifact",
     "curate_annotation_dataset",
@@ -669,6 +674,24 @@ def compile_graph_knowledge(args: argparse.Namespace) -> int:
         documents_path=args.documents,
         annotations_path=args.annotations,
         relations_path=args.relations,
+    )
+    _print_json(report)
+    return 0
+
+
+def compile_obo_ontology(args: argparse.Namespace) -> int:
+    """Compile a source namespace without promoting its labels into runtime NER."""
+
+    report = compile_obo_graph_release(
+        input_path=args.input,
+        output_dir=args.output_dir,
+        config=OBOGraphCompilationConfig(
+            source_id=args.source_id,
+            source_version=args.source_version,
+            iri_prefix=args.iri_prefix,
+            code_system=CodeSystem(args.code_system),
+            entity_type=EntityType(args.entity_type),
+        ),
     )
     _print_json(report)
     return 0

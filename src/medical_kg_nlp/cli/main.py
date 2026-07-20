@@ -96,6 +96,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.data",
         "audit_dailymed_rxnorm",
     ),
+    "data_ontology_compile_obo": (
+        "medical_kg_nlp.cli.commands.data",
+        "compile_obo_ontology",
+    ),
     "data_knowledge_compile_aliases": (
         "medical_kg_nlp.cli.commands.data",
         "compile_alias_knowledge",

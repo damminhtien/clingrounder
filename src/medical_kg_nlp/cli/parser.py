@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 
+from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.validation.profiles import ValidationProfile
 
 __all__ = ["build_parser"]
@@ -583,6 +584,35 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     )
     mapping_audit.add_argument("--proposals-output", required=True)
     mapping_audit.add_argument("--report-output", required=True)
+
+    ontology = operations.add_parser(
+        "ontology",
+        help="Compile pinned ontology releases into terminology and graph artifacts.",
+    )
+    ontology_operations = ontology.add_subparsers(
+        dest="data_ontology_command",
+        required=True,
+    )
+    ontology_obo = ontology_operations.add_parser(
+        "compile-obo",
+        help="Stream one OBO Graph JSON namespace into rich concepts and canonical IS_A edges.",
+    )
+    ontology_obo.set_defaults(handler="data_ontology_compile_obo")
+    ontology_obo.add_argument("--input", required=True)
+    ontology_obo.add_argument("--output-dir", required=True)
+    ontology_obo.add_argument("--source-id", required=True)
+    ontology_obo.add_argument("--source-version", required=True)
+    ontology_obo.add_argument("--iri-prefix", required=True)
+    ontology_obo.add_argument(
+        "--code-system",
+        required=True,
+        choices=tuple(system.value for system in CodeSystem),
+    )
+    ontology_obo.add_argument(
+        "--entity-type",
+        required=True,
+        choices=tuple(entity_type.value for entity_type in EntityType),
+    )
 
     knowledge = operations.add_parser(
         "knowledge",
