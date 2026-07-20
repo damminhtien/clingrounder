@@ -37,7 +37,9 @@ def _annotation(*, concepts: tuple[ConceptLink, ...] = ()) -> AnnotationProposal
     )
 
 
-def _policy() -> CrosswalkLinkMaterializationPolicy:
+def _policy(
+    *, append_non_conflicting_code_systems: bool = False
+) -> CrosswalkLinkMaterializationPolicy:
     return CrosswalkLinkMaterializationPolicy(
         policy_id="clinicaltrials-mondo-fixture",
         accepted_crosswalk_policy_ids=frozenset(
@@ -46,6 +48,7 @@ def _policy() -> CrosswalkLinkMaterializationPolicy:
         accepted_candidate_sources=frozenset({"mondo:2026-07-06"}),
         accepted_code_systems=frozenset({CodeSystem.MONDO}),
         accepted_promotion_statuses=frozenset({"review_required"}),
+        append_non_conflicting_code_systems=append_non_conflicting_code_systems,
     )
 
 
@@ -106,7 +109,25 @@ def test_ambiguous_crosswalk_and_existing_link_are_never_overwritten() -> None:
     }
     assert conflicting.annotations[0].concepts == (existing,)
     assert conflicting.report["annotation_decision_counts"] == {
-        "existing_concept_conflict": 1
+        "existing_code_system_conflict": 1
+    }
+
+
+def test_policy_can_append_new_code_system_without_overwriting_existing_link() -> None:
+    icd_link = ConceptLink("ICD-10", "E83.01", "tt06:2026")
+
+    result = materialize_exact_crosswalk_links(
+        [_annotation(concepts=(icd_link,))],
+        [_row()],
+        _policy(append_non_conflicting_code_systems=True),
+    )
+
+    assert result.annotations[0].concepts == (
+        icd_link,
+        ConceptLink("MONDO", "0010200", "mondo:2026-07-06"),
+    )
+    assert result.report["annotation_decision_counts"] == {
+        "linked_additional_code_system": 1
     }
 
 
@@ -117,3 +138,18 @@ def test_checked_in_clinicaltrials_policy_pins_mondo_release() -> None:
 
     assert policy.accepted_candidate_sources == frozenset({"mondo:2026-07-06"})
     assert policy.accepted_code_systems == frozenset({CodeSystem.MONDO})
+    assert policy.append_non_conflicting_code_systems is False
+
+
+def test_checked_in_pmc_policy_allows_only_cross_system_append() -> None:
+    policy = load_crosswalk_link_policy(
+        "configs/mining/linking/pmc-case-mondo-hpo.yaml"
+    )
+
+    assert policy.accepted_candidate_sources == frozenset(
+        {"mondo:2026-07-06", "hpo:2026-06-23"}
+    )
+    assert policy.accepted_code_systems == frozenset(
+        {CodeSystem.MONDO, CodeSystem.HPO}
+    )
+    assert policy.append_non_conflicting_code_systems is True

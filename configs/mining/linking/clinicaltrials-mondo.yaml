@@ -9,6 +9,7 @@ accepted_code_systems:
   - MONDO
 accepted_promotion_statuses:
   - review_required
+append_non_conflicting_code_systems: false
 confidence: 1.0
 
 # SOURCE DOSSIER: docs/mining-sources/clinicaltrials.md

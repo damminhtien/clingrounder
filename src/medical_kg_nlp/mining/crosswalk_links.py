@@ -42,6 +42,7 @@ class CrosswalkLinkMaterializationPolicy:
     accepted_candidate_sources: frozenset[str]
     accepted_code_systems: frozenset[CodeSystem]
     accepted_promotion_statuses: frozenset[str]
+    append_non_conflicting_code_systems: bool = False
     confidence: float = 1.0
 
     def __post_init__(self) -> None:
@@ -105,6 +106,9 @@ def load_crosswalk_link_policy(path: str | Path) -> CrosswalkLinkMaterialization
         ),
         accepted_promotion_statuses=frozenset(
             _string_list(raw, "accepted_promotion_statuses")
+        ),
+        append_non_conflicting_code_systems=_optional_bool(
+            raw, "append_non_conflicting_code_systems", default=False
         ),
         confidence=float(raw.get("confidence", 1.0)),
     )
@@ -179,12 +183,20 @@ def materialize_exact_crosswalk_links(
             terminology_version=link.candidate_source,
             confidence=policy.confidence,
         )
-        if annotation.concepts:
+        if any(_same_concept_identity(existing, concept) for existing in annotation.concepts):
             output.append(annotation)
-            if annotation.concepts == (concept,):
-                annotation_reasons["already_linked"] += 1
-            else:
-                annotation_reasons["existing_concept_conflict"] += 1
+            annotation_reasons["already_linked"] += 1
+            continue
+        if any(
+            existing.code_system == concept.code_system
+            for existing in annotation.concepts
+        ):
+            output.append(annotation)
+            annotation_reasons["existing_code_system_conflict"] += 1
+            continue
+        if annotation.concepts and not policy.append_non_conflicting_code_systems:
+            output.append(annotation)
+            annotation_reasons["existing_concept_conflict"] += 1
             continue
 
         metadata = dict(annotation.metadata)
@@ -202,8 +214,17 @@ def materialize_exact_crosswalk_links(
                     f"Annotation {annotation.annotation_id!r} has conflicting {name!r}"
                 )
             metadata[name] = value
-        output.append(replace(annotation, concepts=(concept,), metadata=metadata))
-        annotation_reasons["linked"] += 1
+        output.append(
+            replace(
+                annotation,
+                concepts=(*annotation.concepts, concept),
+                metadata=metadata,
+            )
+        )
+        decision = (
+            "linked_additional_code_system" if annotation.concepts else "linked"
+        )
+        annotation_reasons[decision] += 1
         concept_counts[f"{link.code_system.value}:{link.code}"] += 1
 
     report = {
@@ -221,6 +242,20 @@ def materialize_exact_crosswalk_links(
         "semantic_contract": "exact_terminology_review_evidence_not_clinical_gold",
     }
     return CrosswalkLinkMaterializationResult(tuple(output), report)
+
+
+def _same_concept_identity(left: ConceptLink, right: ConceptLink) -> bool:
+    """Compare terminology identity without treating confidence as identity."""
+
+    return (
+        left.code_system,
+        left.code,
+        left.terminology_version,
+    ) == (
+        right.code_system,
+        right.code,
+        right.terminology_version,
+    )
 
 
 def _eligible_link(
@@ -307,3 +342,12 @@ def _string_list(raw: Mapping[str, Any], field_name: str) -> tuple[str, ...]:
     if any(not item.strip() for item in output):
         raise ValueError(f"{field_name} must contain non-empty strings")
     return output
+
+
+def _optional_bool(
+    raw: Mapping[str, Any], field_name: str, *, default: bool
+) -> bool:
+    value = raw.get(field_name, default)
+    if not isinstance(value, bool):
+        raise ValueError(f"{field_name} must be a boolean")
+    return value

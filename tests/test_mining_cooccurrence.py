@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from pathlib import Path
+
+import pytest
 
 from medical_kg_nlp.cli.parser import build_parser
 from medical_kg_nlp.mining.cooccurrence import (
@@ -181,7 +184,96 @@ def test_cooccurrence_skips_dense_sentences_before_quadratic_pairing() -> None:
     result = mine_cooccurrence_relations((document,), annotations, policy)
 
     assert not result.relations
-    assert result.report["counters"]["sentences_rejected:annotation_density"] == 1
+    assert result.report["counters"]["sentence_rejected:annotation_density"] == 1
+
+
+def test_source_block_scope_connects_bounded_cross_sentence_evidence() -> None:
+    document = _document(
+        "codiesp:block",
+        "wilson disease was confirmed. tremor was observed.",
+    )
+    block_span = f"[0,{len(document.text)}]"
+    disease = replace(
+        _annotation(
+            document,
+            "block-disease",
+            "wilson disease",
+            "DISEASE",
+            "E83.01",
+        ),
+        metadata={"source_block_span": block_span},
+    )
+    symptom = replace(
+        _annotation(document, "block-symptom", "tremor", "SYMPTOM", "R25.1"),
+        metadata={"source_block_span": block_span},
+    )
+    policy = replace(
+        _policy(),
+        allowed_entity_pairs=(("DISEASE", "SYMPTOM"),),
+        context_scope="source_block",
+        minimum_documents=1,
+    )
+
+    result = mine_cooccurrence_relations((document,), (disease, symptom), policy)
+
+    assert len(result.relations) == 1
+    assert result.relations[0].evidence_span == (0, len(document.text))
+    assert result.relations[0].metadata["context_scope"] == "source_block"
+    assert result.report["semantic_contract"] == (
+        "same_source_block_observation_without_causal_inference"
+    )
+
+
+def test_cooccurrence_selects_preferred_cross_system_links_and_rejects_context() -> None:
+    document = _document("codiesp:ontology", "wilson disease caused tremor.")
+    disease = replace(
+        _annotation(
+            document,
+            "disease",
+            "wilson disease",
+            "DISEASE",
+            "E83.01",
+        ),
+        concepts=(
+            ConceptLink("ICD-10", "E83.01", "TT06-2026-BYT"),
+            ConceptLink("MONDO", "0010200", "mondo:2026-07-06"),
+        ),
+    )
+    symptom = replace(
+        _annotation(document, "symptom", "tremor", "SYMPTOM", "R25.1"),
+        concepts=(
+            ConceptLink("LOCAL", "symptom:tremor", "local:v1"),
+            ConceptLink("HPO", "0001337", "hpo:2026-06-23"),
+        ),
+    )
+    policy = replace(
+        _policy(),
+        allowed_entity_pairs=(("DISEASE", "SYMPTOM"),),
+        preferred_code_systems_by_entity_type=(
+            ("DISEASE", ("MONDO",)),
+            ("SYMPTOM", ("HPO",)),
+        ),
+        rejected_assertions=("NEGATED", "FAMILY", "POSSIBLE"),
+        minimum_documents=1,
+    )
+
+    accepted = mine_cooccurrence_relations(
+        (document,), (disease, symptom), policy
+    )
+    rejected = mine_cooccurrence_relations(
+        (document,),
+        (disease, replace(symptom, assertions=("NEGATED",))),
+        policy,
+    )
+
+    assert len(accepted.relations) == 1
+    pair = accepted.report["top_supported_pairs"][0]
+    assert {
+        (pair[endpoint]["entity_type"], pair[endpoint]["code_system"])
+        for endpoint in ("head", "tail")
+    } == {("DISEASE", "MONDO"), ("SYMPTOM", "HPO")}
+    assert not rejected.relations
+    assert rejected.report["counters"]["annotations_rejected:assertion"] == 1
 
 
 def test_cooccurrence_policy_and_cli_are_discoverable() -> None:
@@ -208,3 +300,37 @@ def test_cooccurrence_policy_and_cli_are_discoverable() -> None:
 
     assert policy.relation_type == "CO_OCCURS_WITH"
     assert args.handler == "data_relation_mine_cooccurrence"
+
+
+def test_cooccurrence_policy_rejects_unknown_schema_values() -> None:
+    with pytest.raises(ValueError, match="NOT-A-SYSTEM"):
+        replace(
+            _policy(),
+            preferred_code_systems_by_entity_type=(
+                ("DISEASE", ("NOT-A-SYSTEM",)),
+            ),
+        )
+    with pytest.raises(ValueError, match="NOT-AN-ASSERTION"):
+        replace(_policy(), rejected_assertions=("NOT-AN-ASSERTION",))
+
+
+def test_cooccurrence_policy_loader_rejects_truthy_boolean_strings(
+    tmp_path: Path,
+) -> None:
+    policy_path = tmp_path / "policy.yaml"
+    policy_path.write_text(
+        """\
+schema_version: medical-cooccurrence-policy.v1
+policy_id: invalid-boolean
+relation_type: CO_OCCURS_WITH
+accepted_source_ids: [codiesp]
+accepted_layers: [silver]
+accepted_review_statuses: [proposed]
+allowed_entity_pairs: [[DISEASE, PROCEDURE]]
+require_contiguous: "false"
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="require_contiguous.*boolean"):
+        load_cooccurrence_policy(policy_path)

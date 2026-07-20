@@ -743,6 +743,16 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         help="Reject linked annotations whose code is absent from canonical terminology.",
     )
     graph_compile.add_argument(
+        "--preferred-code-system",
+        action="append",
+        default=[],
+        metavar="ENTITY_TYPE=CODE_SYSTEM",
+        help=(
+            "Select a canonical endpoint from cross-system annotation links; repeat to "
+            "allow multiple systems for one entity type."
+        ),
+    )
+    graph_compile.add_argument(
         "--no-structured-terminology-relations",
         action="store_true",
         help="Keep canonical concepts but skip RxNorm attribute edges.",

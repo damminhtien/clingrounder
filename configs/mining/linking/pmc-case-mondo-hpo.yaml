@@ -1,0 +1,22 @@
+schema_version: medical-crosswalk-link-policy.v1
+policy_id: pmc-case-mondo-hpo-exact-v1
+
+accepted_crosswalk_policy_ids:
+  - pmc-case-disease-to-mondo-v1
+  - pmc-case-symptom-to-hpo-v1
+accepted_candidate_sources:
+  - mondo:2026-07-06
+  - hpo:2026-06-23
+accepted_code_systems:
+  - MONDO
+  - HPO
+accepted_promotion_statuses:
+  - review_required
+
+# INVARIANT: preserve the local pipeline's ICD/LOCAL concept evidence and append at most one
+# exact Mondo or HPO identity. A conflicting code in the same target system remains untouched.
+append_non_conflicting_code_systems: true
+confidence: 1.0
+
+# SOURCE DOSSIER: docs/mining-sources/pmc-oa.md
+# MODEL: these are review-stage terminology links on pipeline proposals, not human case gold.

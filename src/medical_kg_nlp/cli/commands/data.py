@@ -753,6 +753,9 @@ def compile_graph_knowledge(args: argparse.Namespace) -> int:
             ),
             relation_endpoints_only=args.relation_endpoints_only,
             require_canonical_concepts=args.canonical_concepts_only,
+            preferred_code_systems_by_entity_type=(
+                _parse_preferred_code_systems(args.preferred_code_system)
+            ),
         ),
         nodes_output=args.nodes_output,
         edges_output=args.edges_output,
@@ -764,6 +767,32 @@ def compile_graph_knowledge(args: argparse.Namespace) -> int:
     )
     _print_json(report)
     return 0
+
+
+def _parse_preferred_code_systems(
+    values: list[str],
+) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    """Parse typed graph endpoint selectors and reject malformed CLI values."""
+
+    grouped: dict[str, list[str]] = {}
+    for raw in values:
+        entity_text, separator, system_text = raw.partition("=")
+        if not separator:
+            raise ValueError(
+                "--preferred-code-system must use ENTITY_TYPE=CODE_SYSTEM"
+            )
+        entity_type = EntityType(entity_text.strip()).value
+        code_system = CodeSystem(system_text.strip()).value
+        systems = grouped.setdefault(entity_type, [])
+        if code_system in systems:
+            raise ValueError(
+                f"Duplicate preferred code system {code_system!r} for {entity_type!r}"
+            )
+        systems.append(code_system)
+    return tuple(
+        (entity_type, tuple(systems))
+        for entity_type, systems in sorted(grouped.items())
+    )
 
 
 def compile_obo_ontology(args: argparse.Namespace) -> int:

@@ -1,13 +1,15 @@
-"""Mine bounded sentence co-occurrence evidence without inferring clinical causality.
+"""Mine bounded context co-occurrence evidence without inferring clinical causality.
 
-The miner intentionally emits only ``CO_OCCURS_WITH``.  A same-sentence observation can
-support search, review prioritization, or a later reranker, but it is not evidence that a
-procedure treats a disease or that one condition causes another.
+The miner intentionally emits only ``CO_OCCURS_WITH``. A same-sentence or verified
+source-block observation can support search, review prioritization, or a later reranker,
+but it is not evidence that a procedure treats a disease or that one condition causes
+another.
 """
 
 from __future__ import annotations
 
 import hashlib
+import json
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence, Set
 from dataclasses import dataclass
@@ -26,6 +28,7 @@ from medical_kg_nlp.mining.records import (
     ReviewStatus,
 )
 from medical_kg_nlp.preprocessing.sentence_splitter import split_sentences
+from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
 from medical_kg_nlp.utils.text import normalize_for_match
 
 __all__ = [
@@ -50,12 +53,18 @@ class CooccurrenceMiningPolicy:
     accepted_layers: tuple[AnnotationLayer, ...]
     accepted_review_statuses: tuple[ReviewStatus, ...]
     allowed_entity_pairs: tuple[tuple[str, str], ...]
+    preferred_code_systems_by_entity_type: tuple[
+        tuple[str, tuple[str, ...]], ...
+    ] = ()
+    rejected_assertions: tuple[str, ...] = ()
+    context_scope: str = "sentence"
     require_single_concept_link: bool = True
     require_contiguous: bool = True
     require_source_text_match: bool = True
     minimum_documents: int = 2
     max_gap_characters: int = 240
     max_annotations_per_sentence: int = 24
+    max_context_characters: int = 4000
     max_pairs_per_document: int = 300
     max_report_pairs: int = 100
 
@@ -76,6 +85,34 @@ class CooccurrenceMiningPolicy:
             raise ValueError("allowed_entity_pairs must use canonical lexical order")
         if len(self.allowed_entity_pairs) != len(set(self.allowed_entity_pairs)):
             raise ValueError("allowed_entity_pairs must be unique")
+        for pair in self.allowed_entity_pairs:
+            for entity_type in pair:
+                EntityType(entity_type)
+        preferred_entity_types = [
+            entity_type for entity_type, _ in self.preferred_code_systems_by_entity_type
+        ]
+        if len(preferred_entity_types) != len(set(preferred_entity_types)):
+            raise ValueError("Preferred code-system entity types must be unique")
+        if any(
+            not entity_type.strip() or not code_systems
+            for entity_type, code_systems in self.preferred_code_systems_by_entity_type
+        ):
+            raise ValueError("Preferred code-system mappings must be explicit")
+        for entity_type, code_systems in self.preferred_code_systems_by_entity_type:
+            # INVARIANT: relation identities must use schema-owned entity and code-system
+            # values; a typo must fail before any pair support is aggregated.
+            EntityType(entity_type)
+            parsed_systems = tuple(CodeSystem(value) for value in code_systems)
+            if len(parsed_systems) != len(set(parsed_systems)):
+                raise ValueError(
+                    f"Preferred code systems for {entity_type} must be unique"
+                )
+        if len(self.rejected_assertions) != len(set(self.rejected_assertions)):
+            raise ValueError("rejected_assertions must be unique")
+        for assertion in self.rejected_assertions:
+            AssertionStatus(assertion)
+        if self.context_scope not in {"sentence", "source_block"}:
+            raise ValueError("context_scope must be sentence or source_block")
         metadata_keys = [key for key, _ in self.document_metadata_filters]
         if len(metadata_keys) != len(set(metadata_keys)):
             raise ValueError("Document metadata filter keys must be unique")
@@ -88,6 +125,7 @@ class CooccurrenceMiningPolicy:
             ("minimum_documents", self.minimum_documents),
             ("max_gap_characters", self.max_gap_characters),
             ("max_annotations_per_sentence", self.max_annotations_per_sentence),
+            ("max_context_characters", self.max_context_characters),
             ("max_pairs_per_document", self.max_pairs_per_document),
             ("max_report_pairs", self.max_report_pairs),
         ):
@@ -128,6 +166,14 @@ class _Occurrence:
         return (self.head_node, self.tail_node)
 
 
+@dataclass(frozen=True)
+class _EvidenceContext:
+    """One bounded sentence or source block used to construct candidate pairs."""
+
+    span: tuple[int, int]
+    annotations: tuple[AnnotationProposal, ...]
+
+
 def load_cooccurrence_policy(path: str | Path) -> CooccurrenceMiningPolicy:
     """Load the strict, versioned policy used by the sentence relation miner."""
 
@@ -157,14 +203,35 @@ def load_cooccurrence_policy(path: str | Path) -> CooccurrenceMiningPolicy:
             for value in _string_tuple(raw, "accepted_review_statuses")
         ),
         allowed_entity_pairs=entity_pairs,
-        require_single_concept_link=bool(raw.get("require_single_concept_link", True)),
-        require_contiguous=bool(raw.get("require_contiguous", True)),
-        require_source_text_match=bool(raw.get("require_source_text_match", True)),
+        preferred_code_systems_by_entity_type=tuple(
+            sorted(
+                (
+                    str(entity_type),
+                    _string_values(
+                        code_systems,
+                        f"preferred_code_systems_by_entity_type.{entity_type}",
+                    ),
+                )
+                for entity_type, code_systems in _optional_mapping(
+                    raw, "preferred_code_systems_by_entity_type"
+                ).items()
+            )
+        ),
+        rejected_assertions=_optional_string_tuple(raw, "rejected_assertions"),
+        context_scope=str(raw.get("context_scope", "sentence")),
+        require_single_concept_link=_optional_bool(
+            raw, "require_single_concept_link", default=True
+        ),
+        require_contiguous=_optional_bool(raw, "require_contiguous", default=True),
+        require_source_text_match=_optional_bool(
+            raw, "require_source_text_match", default=True
+        ),
         minimum_documents=int(raw.get("minimum_documents", 2)),
         max_gap_characters=int(raw.get("max_gap_characters", 240)),
         max_annotations_per_sentence=int(
             raw.get("max_annotations_per_sentence", 24)
         ),
+        max_context_characters=int(raw.get("max_context_characters", 4000)),
         max_pairs_per_document=int(raw.get("max_pairs_per_document", 300)),
         max_report_pairs=int(raw.get("max_report_pairs", 100)),
     )
@@ -177,7 +244,7 @@ def mine_cooccurrence_relations(
     *,
     selected_document_ids: Set[str] | None = None,
 ) -> CooccurrenceMiningResult:
-    """Mine repeatable sentence-level concept co-occurrence from selected documents.
+    """Mine repeatable bounded-context concept co-occurrence from selected documents.
 
     ``selected_document_ids`` is an optional frozen snapshot gate.  Source metadata gates in
     the policy are applied independently, so an official train/dev/test split cannot be
@@ -300,22 +367,17 @@ def _document_occurrences(
 ) -> tuple[_Occurrence, ...]:
     occurrences: list[_Occurrence] = []
     assigned_annotation_ids: set[str] = set()
-    for sentence in split_sentences(document.text):
-        sentence_annotations = [
-            annotation
-            for annotation in annotations
-            if sentence.span[0] <= annotation.span[0]
-            and annotation.span[1] <= sentence.span[1]
-        ]
+    for context in _evidence_contexts(document, annotations, policy, counters):
+        context_annotations = context.annotations
         assigned_annotation_ids.update(
-            annotation.annotation_id for annotation in sentence_annotations
+            annotation.annotation_id for annotation in context_annotations
         )
-        if len(sentence_annotations) > policy.max_annotations_per_sentence:
+        if len(context_annotations) > policy.max_annotations_per_sentence:
             # SCALING: dense generated lists can create O(n^2) pairs with little useful
-            # context. Skip the complete sentence instead of truncating it asymmetrically.
-            counters["sentences_rejected:annotation_density"] += 1
+            # context. Skip the complete context instead of truncating it asymmetrically.
+            counters[f"{policy.context_scope}_rejected:annotation_density"] += 1
             continue
-        for left, right in combinations(sentence_annotations, 2):
+        for left, right in combinations(context_annotations, 2):
             if len(occurrences) >= policy.max_pairs_per_document:
                 counters["documents_truncated:pair_limit"] += 1
                 return tuple(occurrences)
@@ -348,15 +410,82 @@ def _document_occurrences(
                     tail=tail,
                     head_node=head_node,
                     tail_node=tail_node,
-                    evidence_span=sentence.span,
+                    evidence_span=context.span,
                     gap_characters=gap,
                 )
             )
-    counters["annotations_rejected:not_in_single_sentence"] += len(
+    counters["annotations_rejected:not_in_context"] += len(
         {annotation.annotation_id for annotation in annotations}
         - assigned_annotation_ids
     )
     return tuple(occurrences)
+
+
+def _evidence_contexts(
+    document: MinedDocument,
+    annotations: Sequence[AnnotationProposal],
+    policy: CooccurrenceMiningPolicy,
+    counters: Counter[str],
+) -> tuple[_EvidenceContext, ...]:
+    if policy.context_scope == "sentence":
+        contexts: list[_EvidenceContext] = []
+        for sentence in split_sentences(document.text):
+            if sentence.span[1] - sentence.span[0] > policy.max_context_characters:
+                counters["sentence_rejected:character_limit"] += 1
+                continue
+            members = tuple(
+                annotation
+                for annotation in annotations
+                if sentence.span[0] <= annotation.span[0]
+                and annotation.span[1] <= sentence.span[1]
+            )
+            contexts.append(_EvidenceContext(sentence.span, members))
+        return tuple(contexts)
+
+    grouped: dict[tuple[int, int], list[AnnotationProposal]] = defaultdict(list)
+    for annotation in annotations:
+        block_span = _annotation_source_block_span(annotation, len(document.text))
+        if block_span is None:
+            counters["annotations_rejected:invalid_source_block"] += 1
+            continue
+        if block_span[1] - block_span[0] > policy.max_context_characters:
+            counters["annotations_rejected:source_block_character_limit"] += 1
+            continue
+        grouped[block_span].append(annotation)
+    return tuple(
+        _EvidenceContext(
+            span,
+            tuple(sorted(members, key=lambda item: (item.span, item.annotation_id))),
+        )
+        for span, members in sorted(grouped.items())
+    )
+
+
+def _annotation_source_block_span(
+    annotation: AnnotationProposal, document_length: int
+) -> tuple[int, int] | None:
+    raw = annotation.metadata.get("source_block_span")
+    if raw is None:
+        return None
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+    if (
+        not isinstance(value, list)
+        or len(value) != 2
+        or not all(isinstance(item, int) for item in value)
+    ):
+        return None
+    span = (value[0], value[1])
+    if (
+        span[0] < 0
+        or span[1] <= span[0]
+        or span[1] > document_length
+        or not (span[0] <= annotation.span[0] and annotation.span[1] <= span[1])
+    ):
+        return None
+    return span
 
 
 def _document_rejection_reason(
@@ -390,6 +519,8 @@ def _annotation_gate(
         return "review_status", None
     if annotation.entity_type not in accepted_entity_types:
         return "entity_type", None
+    if set(annotation.assertions).intersection(policy.rejected_assertions):
+        return "assertion", None
     if policy.require_contiguous and annotation.metadata.get("discontinuous") == "true":
         return "discontinuous", None
     if (
@@ -397,11 +528,26 @@ def _annotation_gate(
         and annotation.metadata.get("source_text_match") == "false"
     ):
         return "source_text_mismatch", None
-    if len(annotation.concepts) > 1:
+    concepts = annotation.concepts
+    preferred_systems = dict(policy.preferred_code_systems_by_entity_type).get(
+        annotation.entity_type
+    )
+    if preferred_systems is not None:
+        concepts = tuple(
+            concept
+            for concept in concepts
+            if concept.code_system in preferred_systems
+        )
+    if len(concepts) > 1:
         return "ambiguous_concept_links", None
-    if not annotation.concepts:
+    if not concepts:
         if policy.require_single_concept_link:
-            return "missing_concept_link", None
+            reason = (
+                "missing_preferred_concept_link"
+                if preferred_systems is not None
+                else "missing_concept_link"
+            )
+            return reason, None
         normalized = normalize_for_match(annotation.text)
         if not normalized:
             return "empty_normalized_term", None
@@ -409,7 +555,7 @@ def _annotation_gate(
             None,
             _SemanticNode("term", "", normalized, annotation.entity_type),
         )
-    concept = annotation.concepts[0]
+    concept = concepts[0]
     return (
         None,
         _SemanticNode(
@@ -446,11 +592,12 @@ def _relation_from_occurrence(
         relation_type=policy.relation_type,
         confidence=1.0,
         layer=AnnotationLayer.BRONZE,
-        label_source="sentence_cooccurrence",
+        label_source=f"{policy.context_scope}_cooccurrence",
         evidence_span=occurrence.evidence_span,
         labeler_id=f"{policy.policy_id}@v1",
         review_status=ReviewStatus.PROPOSED,
         metadata={
+            "context_scope": policy.context_scope,
             "gap_characters": str(occurrence.gap_characters),
             "pair_occurrence_count": str(pair_occurrence_count),
             "policy_id": policy.policy_id,
@@ -483,12 +630,20 @@ def _build_report(
         "schema_version": "medical-cooccurrence-report.v1",
         "policy_id": policy.policy_id,
         "relation_type": policy.relation_type,
-        "semantic_contract": "same_sentence_observation_without_causal_inference",
+        "semantic_contract": (
+            f"same_{policy.context_scope}_observation_without_causal_inference"
+        ),
         "counters": dict(sorted(counters.items())),
         "supported_entity_pair_counts": dict(sorted(entity_pair_counts.items())),
         "document_metadata_filters": {
             key: list(values) for key, values in policy.document_metadata_filters
         },
+        "preferred_code_systems_by_entity_type": {
+            entity_type: list(code_systems)
+            for entity_type, code_systems in policy.preferred_code_systems_by_entity_type
+        },
+        "rejected_assertions": list(policy.rejected_assertions),
+        "context_scope": policy.context_scope,
         "top_supported_pairs": [
             {
                 "head": _semantic_node_dict(pair[0]),
@@ -550,6 +705,13 @@ def _string_tuple(raw: Mapping[str, Any], key: str) -> tuple[str, ...]:
     return _string_values(raw.get(key), key)
 
 
+def _optional_string_tuple(raw: Mapping[str, Any], key: str) -> tuple[str, ...]:
+    value = raw.get(key)
+    if value is None:
+        return ()
+    return _string_values(value, key)
+
+
 def _string_values(value: Any, key: str) -> tuple[str, ...]:
     if not isinstance(value, list) or not value or not all(
         isinstance(item, str) and item.strip() for item in value
@@ -562,4 +724,13 @@ def _optional_mapping(raw: Mapping[str, Any], key: str) -> Mapping[str, Any]:
     value = raw.get(key, {})
     if not isinstance(value, Mapping):
         raise ValueError(f"Co-occurrence policy field {key!r} must be an object")
+    return value
+
+
+def _optional_bool(raw: Mapping[str, Any], key: str, *, default: bool) -> bool:
+    """Read a YAML boolean without accepting truthy strings or integers."""
+
+    value = raw.get(key, default)
+    if not isinstance(value, bool):
+        raise ValueError(f"Co-occurrence policy field {key!r} must be a boolean")
     return value

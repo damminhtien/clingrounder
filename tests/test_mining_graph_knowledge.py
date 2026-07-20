@@ -6,6 +6,8 @@ import json
 from dataclasses import replace
 from pathlib import Path
 
+import pytest
+
 from medical_kg_nlp.mining.graph_knowledge import (
     GraphCompilationConfig,
     compile_knowledge_graph,
@@ -251,6 +253,111 @@ def test_graph_compiler_endpoint_only_mode_excludes_unrelated_annotations(
     assert {node["code"] for node in nodes} == {"111", "C1"}
     assert report["decision_counts"]["annotation_non_endpoint_skipped"] == 1
     assert report["config"]["relation_endpoints_only"] is True
+
+
+def test_graph_compiler_selects_typed_endpoint_from_cross_system_links(
+    tmp_path: Path,
+) -> None:
+    terminology = tmp_path / "ontology.jsonl"
+    write_jsonl(
+        terminology,
+        [
+            {
+                "concept_id": "MONDO:0010200",
+                "code": "0010200",
+                "code_system": "MONDO",
+                "canonical_name": "Wilson disease",
+                "semantic_type": "DISEASE",
+            },
+            {
+                "concept_id": "HP:0001337",
+                "code": "0001337",
+                "code_system": "HPO",
+                "canonical_name": "Tremor",
+                "semantic_type": "FINDING",
+            },
+        ],
+    )
+    document = _document("doc-ontology", "Wilson disease with tremor")
+    disease = replace(
+        _annotation(
+            "disease",
+            document,
+            (0, 14),
+            "DISEASE",
+            ("ICD-10", "E83.01"),
+        ),
+        concepts=(
+            ConceptLink("ICD-10", "E83.01", "tt06:2026"),
+            ConceptLink("MONDO", "0010200", "mondo:2026-07-06"),
+        ),
+    )
+    symptom = replace(
+        _annotation(
+            "symptom",
+            document,
+            (20, 26),
+            "SYMPTOM",
+            ("LOCAL", "symptom:tremor"),
+        ),
+        concepts=(
+            ConceptLink("LOCAL", "symptom:tremor", "local:v1"),
+            ConceptLink("HPO", "0001337", "hpo:2026-06-23"),
+        ),
+    )
+    relation = _relation(
+        "relation",
+        document,
+        disease,
+        symptom,
+        "CO_OCCURS_WITH",
+    )
+
+    report = compile_knowledge_graph(
+        terminology_paths=(terminology,),
+        alias_overlay_paths=(),
+        documents=(document,),
+        annotations=(disease, symptom),
+        relations=(relation,),
+        config=GraphCompilationConfig(
+            require_canonical_concepts=True,
+            preferred_code_systems_by_entity_type=(
+                ("DISEASE", ("MONDO",)),
+                ("SYMPTOM", ("HPO",)),
+            ),
+        ),
+        nodes_output=tmp_path / "nodes.jsonl",
+        edges_output=tmp_path / "edges.jsonl",
+        evidence_output=tmp_path / "evidence.jsonl",
+        report_output=tmp_path / "report.json",
+    )
+
+    nodes = read_jsonl(tmp_path / "nodes.jsonl")
+    edges = read_jsonl(tmp_path / "edges.jsonl")
+    assert {node["code_system"] for node in nodes} == {"MONDO", "HPO"}
+    assert next(node for node in nodes if node["code_system"] == "HPO")[
+        "entity_type"
+    ] == "FINDING"
+    assert [edge["relation_type"] for edge in edges] == ["CO_OCCURS_WITH"]
+    assert report["decision_counts"]["multi_concept_annotation_preferred"] == 2
+    assert report["decision_counts"]["annotation_noncanonical_link_skipped"] == 2
+    assert report["decision_counts"]["selected_annotation_concept:HPO"] == 1
+    assert report["decision_counts"]["selected_annotation_concept:MONDO"] == 1
+
+
+def test_graph_config_rejects_unknown_or_duplicate_preferred_code_systems() -> None:
+    with pytest.raises(ValueError, match="NOT-A-SYSTEM"):
+        GraphCompilationConfig(
+            preferred_code_systems_by_entity_type=(
+                ("DISEASE", ("NOT-A-SYSTEM",)),
+            )
+        )
+    with pytest.raises(ValueError, match="must be unique"):
+        GraphCompilationConfig(
+            preferred_code_systems_by_entity_type=(
+                ("DISEASE", ("MONDO", "MONDO")),
+            )
+        )
 
 
 def test_graph_compiler_can_reject_codes_absent_from_canonical_terminology(

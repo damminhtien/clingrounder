@@ -21,11 +21,12 @@ from medical_kg_nlp.mining.io import write_json, write_jsonl
 from medical_kg_nlp.mining.records import (
     AnnotationLayer,
     AnnotationProposal,
+    ConceptLink,
     MinedDocument,
     RelationProposal,
     ReviewStatus,
 )
-from medical_kg_nlp.schema.types import CodeSystem
+from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
 from medical_kg_nlp.utils.text import normalize_for_match
 
@@ -50,6 +51,30 @@ class GraphCompilationConfig:
     include_structured_terminology_relations: bool = True
     relation_endpoints_only: bool = False
     require_canonical_concepts: bool = False
+    preferred_code_systems_by_entity_type: tuple[
+        tuple[str, tuple[str, ...]], ...
+    ] = ()
+
+    def __post_init__(self) -> None:
+        entity_types = [
+            entity_type for entity_type, _ in self.preferred_code_systems_by_entity_type
+        ]
+        if len(entity_types) != len(set(entity_types)):
+            raise ValueError("Preferred graph code-system entity types must be unique")
+        if any(
+            not entity_type.strip() or not code_systems
+            for entity_type, code_systems in self.preferred_code_systems_by_entity_type
+        ):
+            raise ValueError("Preferred graph code-system mappings must be explicit")
+        for entity_type, code_systems in self.preferred_code_systems_by_entity_type:
+            # INVARIANT: endpoint selection is a typed graph policy, not a free-form
+            # string convention that may silently stop matching source annotations.
+            EntityType(entity_type)
+            parsed_systems = tuple(CodeSystem(value) for value in code_systems)
+            if len(parsed_systems) != len(set(parsed_systems)):
+                raise ValueError(
+                    f"Preferred graph code systems for {entity_type} must be unique"
+                )
 
 
 @dataclass
@@ -270,21 +295,30 @@ def compile_knowledge_graph(
     )
     annotation_nodes: dict[str, str] = {}
     for annotation in annotations_by_id.values():
-        annotation_node_id = _annotation_node_id(annotation, config)
+        selected_concept = _selected_annotation_concept(annotation, config)
+        annotation_node_id = _annotation_node_id(annotation, config, selected_concept)
         if annotation_node_id is None:
             counters["unlinked_annotation_skipped"] += 1
             continue
         annotation_nodes[annotation.annotation_id] = annotation_node_id
-        node = _annotation_node(nodes, annotation, annotation_node_id)
+        node = _annotation_node(nodes, annotation, annotation_node_id, selected_concept)
         node.occurrence_count += 1
         node.documents.add(annotation.document_id)
         node.sources.add(f"annotation:{annotation.labeler_id}")
         node.add_label(annotation.text, priority=3)
-        for concept in annotation.concepts:
-            node.versions.add(concept.terminology_version)
+        if selected_concept is not None:
+            node.versions.add(selected_concept.terminology_version)
+        else:
+            for concept in annotation.concepts:
+                node.versions.add(concept.terminology_version)
         if len(annotation.concepts) > 1:
             for concept in annotation.concepts:
                 concept_id = concept_node_id(concept.code_system, concept.code)
+                if concept_id == annotation_node_id:
+                    continue
+                if config.require_canonical_concepts and concept_id not in nodes:
+                    counters["annotation_noncanonical_link_skipped"] += 1
+                    continue
                 concept_node = nodes.setdefault(
                     concept_id,
                     _NodeAccumulator(
@@ -295,7 +329,11 @@ def compile_knowledge_graph(
                         code=concept.code,
                     ),
                 )
-                _merge_node_type(concept_node, annotation.entity_type)
+                _merge_annotation_type(
+                    concept_node,
+                    annotation.entity_type,
+                    concept.code_system,
+                )
                 concept_node.add_label(annotation.text, priority=3)
                 concept_node.versions.add(concept.terminology_version)
                 concept_node.sources.add(f"annotation-link:{annotation.labeler_id}")
@@ -391,6 +429,10 @@ def compile_knowledge_graph(
             ),
             "relation_endpoints_only": config.relation_endpoints_only,
             "require_canonical_concepts": config.require_canonical_concepts,
+            "preferred_code_systems_by_entity_type": {
+                entity_type: list(code_systems)
+                for entity_type, code_systems in config.preferred_code_systems_by_entity_type
+            },
         },
         "input_counts": {
             "terminology_concepts": len(entries),
@@ -694,10 +736,16 @@ def _valid_annotations(
         if include_types and annotation.entity_type not in include_types:
             counters["annotation_type_filter_skipped"] += 1
             continue
+        selected_concept = _selected_annotation_concept(annotation, config)
         if len(annotation.concepts) > 1:
-            counters["multi_concept_annotation_as_term"] += 1
-        if len(annotation.concepts) == 1:
-            concept = annotation.concepts[0]
+            counter = (
+                "multi_concept_annotation_preferred"
+                if selected_concept is not None
+                else "multi_concept_annotation_as_term"
+            )
+            counters[counter] += 1
+        if selected_concept is not None:
+            concept = selected_concept
             node_id = concept_node_id(concept.code_system, concept.code)
             existing = nodes.get(node_id)
             if existing is None and config.require_canonical_concepts:
@@ -706,7 +754,12 @@ def _valid_annotations(
                 counters["annotation_unknown_canonical_concept_skipped"] += 1
                 continue
             if existing is not None:
-                _merge_node_type(existing, annotation.entity_type)
+                _merge_annotation_type(
+                    existing,
+                    annotation.entity_type,
+                    concept.code_system,
+                )
+            counters[f"selected_annotation_concept:{concept.code_system}"] += 1
         accepted[annotation.annotation_id] = annotation
     return all_annotations, accepted
 
@@ -721,10 +774,10 @@ def _accepted_relation(relation: RelationProposal, config: GraphCompilationConfi
 def _annotation_node_id(
     annotation: AnnotationProposal,
     config: GraphCompilationConfig,
+    selected_concept: ConceptLink | None,
 ) -> str | None:
-    if len(annotation.concepts) == 1:
-        concept = annotation.concepts[0]
-        return concept_node_id(concept.code_system, concept.code)
+    if selected_concept is not None:
+        return concept_node_id(selected_concept.code_system, selected_concept.code)
     if not config.include_unlinked_terms:
         return None
     return term_node_id(annotation.entity_type, annotation.text)
@@ -734,9 +787,10 @@ def _annotation_node(
     nodes: dict[str, _NodeAccumulator],
     annotation: AnnotationProposal,
     node_id: str,
+    selected_concept: ConceptLink | None,
 ) -> _NodeAccumulator:
-    if len(annotation.concepts) == 1:
-        concept = annotation.concepts[0]
+    if selected_concept is not None:
+        concept = selected_concept
         node = nodes.setdefault(
             node_id,
             _NodeAccumulator(
@@ -756,8 +810,44 @@ def _annotation_node(
                 entity_type=annotation.entity_type,
             ),
         )
-    _merge_node_type(node, annotation.entity_type)
+    if selected_concept is not None:
+        _merge_annotation_type(node, annotation.entity_type, concept.code_system)
+    else:
+        _merge_node_type(node, annotation.entity_type)
     return node
+
+
+def _selected_annotation_concept(
+    annotation: AnnotationProposal,
+    config: GraphCompilationConfig,
+) -> ConceptLink | None:
+    preferred = dict(config.preferred_code_systems_by_entity_type).get(
+        annotation.entity_type
+    )
+    if preferred is None:
+        return annotation.concepts[0] if len(annotation.concepts) == 1 else None
+    matching = tuple(
+        concept for concept in annotation.concepts if concept.code_system in preferred
+    )
+    return matching[0] if len(matching) == 1 else None
+
+
+def _merge_annotation_type(
+    node: _NodeAccumulator,
+    annotation_entity_type: str,
+    code_system: str,
+) -> None:
+    if node.entity_type == annotation_entity_type:
+        return
+    # INVARIANT: HPO canonical concepts remain FINDING nodes even when a source schema calls
+    # their concrete textual occurrences SYMPTOM. No other cross-type merge is implicit.
+    if (
+        code_system == CodeSystem.HPO.value
+        and node.entity_type == "FINDING"
+        and annotation_entity_type == "SYMPTOM"
+    ):
+        return
+    _merge_node_type(node, annotation_entity_type)
 
 
 def _merge_node_type(node: _NodeAccumulator, entity_type: str) -> None:

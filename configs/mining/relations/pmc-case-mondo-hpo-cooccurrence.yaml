@@ -1,0 +1,48 @@
+schema_version: medical-cooccurrence-policy.v1
+policy_id: pmc-case-mondo-hpo-cooccurrence-2026-07-20
+relation_type: CO_OCCURS_WITH
+
+accepted_source_ids:
+  - jats_xml
+accepted_layers:
+  - bronze
+accepted_review_statuses:
+  - proposed
+allowed_entity_pairs:
+  - [DISEASE, SYMPTOM]
+
+# INVARIANT: choose the ontology identity explicitly when an annotation also retains an ICD or
+# LOCAL link. Tuple order is not a linking decision.
+preferred_code_systems_by_entity_type:
+  DISEASE: [MONDO]
+  SYMPTOM: [HPO]
+
+# CONTEXT: neutral co-occurrence still must not turn absent, family, or uncertain phenotypes into
+# positive case evidence. Historical patient findings remain eligible and keep endpoint provenance.
+rejected_assertions:
+  - NEGATED
+  - FAMILY
+  - POSSIBLE
+  - CONDITIONAL
+  - PLANNED
+
+# Source-block spans come from the hash-validated JATS paragraph map. Endpoint distance remains
+# bounded below, so this does not turn a whole case section or article into one context.
+context_scope: source_block
+
+require_single_concept_link: true
+require_contiguous: true
+require_source_text_match: true
+
+# Rare-case observations are intentionally retained with one-document support for offline review.
+# Runtime graph features must apply a stricter support threshold and remain disabled by default.
+minimum_documents: 1
+max_gap_characters: 240
+# SCALING: the field name is retained for the shared miner; under source_block scope it caps
+# annotations per block before the quadratic pair loop.
+max_annotations_per_sentence: 24
+max_context_characters: 4000
+max_pairs_per_document: 300
+max_report_pairs: 100
+
+# SOURCE DOSSIER: docs/mining-sources/pmc-oa.md
