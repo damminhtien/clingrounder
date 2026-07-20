@@ -94,6 +94,15 @@ This checks storage and concurrent lookup, not clinical correctness or reranker 
 - **Deduplication:** MONDO CURIE is the canonical source identity; deprecated CURIEs are redirected
   only after explicit replacement review.
 
+### PMC Case Evidence Integration
+
+Exact case-specific disease mentions from the PMC rare-case tranche produced 41 unique Mondo
+mappings across 124 occurrences. The compiler selects Mondo as the canonical `DISEASE` endpoint
+while preserving an annotation's original ICD-10 link for audit. The resulting disease-symptom
+edges are neutral source-block co-occurrences, not Mondo ontology axioms or causal facts. They stay
+outside runtime defaults until evaluated on independent human-linked data; see
+`docs/mining-sources/pmc-oa.md` for counts, hashes and reproduction commands.
+
 ## Promotion Boundary
 
 The source is `curated / training_only`. The terminology and graph indexes are reproducible but are

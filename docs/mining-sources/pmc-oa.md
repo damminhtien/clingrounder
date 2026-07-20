@@ -111,8 +111,54 @@ Mondo 2026-07-06 and HPO 2026-06-23 SQLite index. The policy is
 Of the 70 unique exact terms, 41 are Mondo disease mappings (124 occurrences) and 29 are HPO
 phenotype mappings (103 occurrences). Every row has `automatic_promotion_allowed: false` and
 `promotion_status: review_required`. Exact terminology identity does not prove that the pipeline
-found the right span/type or that a mention is asserted for the case patient. No crosswalk result
-has been written into the runtime dictionary or canonical graph.
+found the right span/type or that a mention is asserted for the case patient.
+
+`configs/mining/linking/pmc-case-mondo-hpo.yaml` materializes all 227 exact-unique occurrences into
+a review artifact. Twenty-three annotations received their first concept link; 204 retained their
+existing ICD-10 or LOCAL link and gained a non-conflicting Mondo/HPO identity. Existing concepts,
+spans, types, assertions, layer and review status are never overwritten. Ambiguous, unmatched and
+non-policy rows remain unchanged. The linked artifact contains all 970 source proposals and has
+SHA-256 `02d2223df3c1a04986916598f47331d99fed063f86d33671296decd837e7f7a9`.
+
+### Case-to-Ontology Evidence Graph
+
+The linked proposals are compiled with Mondo selected for `DISEASE` endpoints and HPO selected for
+`SYMPTOM` endpoints. This avoids tuple-order behavior when a proposal retains both its original
+ICD/LOCAL link and its exact ontology identity. The compiler accepted exactly 124 Mondo and 103 HPO
+occurrences; codes absent from the pinned canonical releases were rejected rather than turned into
+new graph concepts.
+
+Co-occurrence mining uses the hash-validated JATS source block, a maximum endpoint gap of 240
+characters, and a 4,000-character block cap. Negated, family, possible, conditional and planned
+mentions are excluded. Its output is deliberately `CO_OCCURS_WITH`, never `HAS_PHENOTYPE`,
+`CAUSED_BY` or a treatment relation.
+
+| Evidence measure | Value |
+| --- | ---: |
+| ontology-linked, context-clean annotations | 168 |
+| rejected by assertion gate | 72 |
+| candidate relation occurrences | 10 |
+| deduplicated semantic pairs | 9 |
+| pairs supported by at least two documents | 1 |
+
+The only two-document pair is HPO fatigue (`HPO:0012378`) with Mondo anemia (`MONDO:0002280`).
+The other eight pairs have one-document support and remain review-only. This sparse result is
+useful as hard-case evidence, but it is not enough to establish general disease-phenotype facts.
+
+The combined graph under `outputs/mining/knowledge/pmc-mondo-hpo-2026-07-20` contains 51,933
+canonical nodes, 70,825 hierarchy edges, nine neutral co-occurrence edges and 70,835 evidence rows.
+There are no free-text term nodes. Artifact hashes are:
+
+- nodes: `34386208ac261889b22c90b29f01bf30849a10afbadc78d5d01613f41ab11cc5`;
+- edges: `a29b794c03f7913b63ace549ed654cf8e003f510afcd3ef3c486393bfb9880e6`;
+- evidence: `b37c6e8c0bfa6f845fad403a4a9887dd03a6da140f0aa18f4ded383b32f36bbc`.
+
+SQLite consistency benchmarks covered 9/9 co-occurrence edges at 2,346 queries/second with p95
+10.22 ms, and 70,825/70,825 hierarchy edges at 2,781 queries/second with p95 5.34 ms using eight
+workers. These measurements prove deterministic storage and concurrent lookup only. The existing
+reranker benchmark requires independent gold codes and disjoint graph/calibration/evaluation
+splits; running it on bronze PMC proposals and their own exact crosswalk would leak labels. No
+reranker quality gain is claimed from this tranche.
 
 The frozen 42-document train split has 381 inventory entries, including 125 multi-document entries.
 The fail-closed recognition compiler excludes lab results and medication attributes, then requires
@@ -128,9 +174,9 @@ The deterministic review export contains one queue record per article and has SH
 ## Promotion Boundary
 
 - Allowed now: review prioritization, rare-case vocabulary analysis, weak-label experiments on the
-  train split, and synthetic scenario grounding.
-- Blocked now: runtime dictionary promotion, canonical graph facts, challenge evaluation, or claims
-  of NER precision/recall.
+  train split, synthetic scenario grounding, and offline neutral graph-feature experiments.
+- Blocked now: runtime dictionary promotion, patient-specific canonical facts, challenge
+  evaluation, or claims of NER precision/recall or reranker gain.
 - A term must occur in multiple train documents, pass type/context review, and win a held-out
   recognition or retrieval benchmark before an opt-in artifact can be created.
 - Relations require reviewed endpoints and explicit relation evidence. Same-article occurrence is
@@ -189,6 +235,48 @@ uv run medical-kg data lexicon crosswalk \
   --policy configs/mining/crosswalk/pmc-case-mondo-hpo.yaml \
   --output outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_crosswalk.jsonl \
   --report-output outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_crosswalk_report.json
+
+uv run medical-kg data lexicon attach-exact-links \
+  --annotations outputs/mining/pmc-rare-cases-ccby-2026-07-19/case_specific_proposals.jsonl \
+  --crosswalk outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_crosswalk.jsonl \
+  --policy configs/mining/linking/pmc-case-mondo-hpo.yaml \
+  --output outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_linked_case_proposals.jsonl \
+  --report-output outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_link_materialization_report.json
+
+uv run medical-kg data relation mine-cooccurrence \
+  --documents outputs/mining/pmc-rare-cases-ccby-2026-07-19/documents_v2.jsonl \
+  --annotations outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_linked_case_proposals.jsonl \
+  --policy configs/mining/relations/pmc-case-mondo-hpo-cooccurrence.yaml \
+  --output outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_case_cooccurrence_relations.jsonl \
+  --report-output outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_case_cooccurrence_report.json
+
+uv run medical-kg data knowledge compile-graph \
+  --terminology-source outputs/mining/knowledge/mondo-2026-07-06/terminology.jsonl \
+  --terminology-source outputs/mining/knowledge/hpo-2026-06-23/ontology/terminology.jsonl \
+  --documents outputs/mining/pmc-rare-cases-ccby-2026-07-19/documents_v2.jsonl \
+  --annotations outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_linked_case_proposals.jsonl \
+  --relations outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_case_cooccurrence_relations.jsonl \
+  --accepted-layer bronze --accepted-review-status proposed \
+  --linked-only --canonical-concepts-only \
+  --preferred-code-system DISEASE=MONDO \
+  --preferred-code-system SYMPTOM=HPO \
+  --nodes-output outputs/mining/knowledge/pmc-mondo-hpo-2026-07-20/nodes.jsonl \
+  --edges-output outputs/mining/knowledge/pmc-mondo-hpo-2026-07-20/edges.jsonl \
+  --evidence-output outputs/mining/knowledge/pmc-mondo-hpo-2026-07-20/evidence.jsonl \
+  --report-output outputs/mining/knowledge/pmc-mondo-hpo-2026-07-20/report.json
+
+uv run medical-kg kg build \
+  --nodes outputs/mining/knowledge/pmc-mondo-hpo-2026-07-20/nodes.jsonl \
+  --edges outputs/mining/knowledge/pmc-mondo-hpo-2026-07-20/edges.jsonl \
+  --evidence outputs/mining/knowledge/pmc-mondo-hpo-2026-07-20/evidence.jsonl \
+  --output outputs/mining/knowledge/pmc-mondo-hpo-2026-07-20/graph.sqlite3 \
+  --manifest-output outputs/mining/knowledge/pmc-mondo-hpo-2026-07-20/graph_manifest.json
+
+uv run medical-kg kg benchmark-relations \
+  --index outputs/mining/knowledge/pmc-mondo-hpo-2026-07-20/graph.sqlite3 \
+  --edges outputs/mining/knowledge/pmc-mondo-hpo-2026-07-20/edges.jsonl \
+  --relation-type CO_OCCURS_WITH --workers 8 --repeats 20 \
+  --output outputs/mining/knowledge/pmc-mondo-hpo-2026-07-20/cooccurrence_benchmark.json
 
 uv run medical-kg data dataset fuse \
   --plan configs/mining/fusion/pmc-rare-cases-ccby-2026-07-19.yaml

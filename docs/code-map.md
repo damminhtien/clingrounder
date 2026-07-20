@@ -186,6 +186,16 @@ rg "crosswalk_mentions|materialize_exact_crosswalk_links|propose_linked_aliases"
   src/medical_kg_nlp/mining src/medical_kg_nlp/cli tests
 ```
 
+`mining/cooccurrence.py` can aggregate neutral evidence within a sentence or a hash-validated
+source block. Typed preferred code systems select one canonical endpoint when an annotation keeps
+multiple provenance links. `mining/graph_knowledge.py` uses the same selector during graph
+compilation and rejects selected codes absent from loaded canonical terminology. Search with:
+
+```bash
+rg "preferred_code_systems_by_entity_type|context_scope|canonical-concepts-only" \
+  src/medical_kg_nlp/mining src/medical_kg_nlp/cli tests
+```
+
 Validation profiles:
 
 - `core`: hard schema, offset, type/code-system, duplicate-ID, and relation invariants.

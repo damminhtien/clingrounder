@@ -107,6 +107,20 @@ phenotype fan-out. This is a measured bottleneck: the full association graph is 
 unbounded online reranker query. Future runtime experiments must preselect diseases, cap neighbors,
 or materialize compact phenotype signatures.
 
+### PMC Case Evidence Integration
+
+The PMC rare-case tranche queries case-specific `SYMPTOM` proposals against the pinned HPO index.
+Twenty-nine normalized mentions matched one unique HPO concept, covering 103 occurrences. Those
+links are appended to review proposals without replacing existing LOCAL links. After assertion and
+source-block gates, ten disease-symptom observations produced nine neutral `CO_OCCURS_WITH` pairs
+in the combined Mondo/HPO graph.
+
+This integration does not add `HAS_PHENOTYPE` edges to HPO. Eight pairs have only one-document
+support, and all endpoints originate from local bronze proposals rather than source human labels.
+The graph is therefore useful for review and future held-out feature tests, not as a new canonical
+phenotype-association release. Full counts, hashes and commands are in
+`docs/mining-sources/pmc-oa.md`.
+
 ## How The Source Is Used
 
 - **Terminology:** English phenotype labels and synonyms support opt-in retrieval and annotation
