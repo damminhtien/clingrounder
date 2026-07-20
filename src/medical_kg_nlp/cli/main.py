@@ -100,6 +100,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.data",
         "compile_obo_ontology",
     ),
+    "data_ontology_compile_hpo_associations": (
+        "medical_kg_nlp.cli.commands.data",
+        "compile_hpo_association_knowledge",
+    ),
     "data_knowledge_compile_aliases": (
         "medical_kg_nlp.cli.commands.data",
         "compile_alias_knowledge",

@@ -64,6 +64,7 @@ from medical_kg_nlp.mining.model_dataset import (
 )
 from medical_kg_nlp.mining.ontologies import (
     OBOGraphCompilationConfig,
+    compile_hpo_associations,
     compile_obo_graph_release,
 )
 from medical_kg_nlp.mining.policy import SourcePolicyGate
@@ -118,6 +119,7 @@ __all__ = [
     "audit_dailymed_rxnorm",
     "compile_dailymed_rxnorm",
     "compile_graph_knowledge",
+    "compile_hpo_association_knowledge",
     "compile_obo_ontology",
     "compile_alias_knowledge",
     "compile_recognition_knowledge_artifact",
@@ -692,6 +694,20 @@ def compile_obo_ontology(args: argparse.Namespace) -> int:
             code_system=CodeSystem(args.code_system),
             entity_type=EntityType(args.entity_type),
         ),
+    )
+    _print_json(report)
+    return 0
+
+
+def compile_hpo_association_knowledge(args: argparse.Namespace) -> int:
+    """Compile full HPOA evidence while keeping negated phenotypes separate."""
+
+    report = compile_hpo_associations(
+        hpoa_path=args.hpoa,
+        genes_path=args.genes,
+        hpo_concepts_path=args.hpo_concepts,
+        output_dir=args.output_dir,
+        source_version=args.source_version,
     )
     _print_json(report)
     return 0

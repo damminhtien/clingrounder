@@ -8,6 +8,7 @@ import pytest
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.mining.ontologies import (
     OBOGraphCompilationConfig,
+    compile_hpo_associations,
     compile_obo_graph_release,
 )
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
@@ -86,6 +87,77 @@ def test_obo_graph_config_rejects_invalid_code_type_pair() -> None:
         )
 
 
+def test_compile_hpo_associations_preserves_negation_and_evidence(tmp_path: Path) -> None:
+    concepts_path = tmp_path / "hpo_concepts.jsonl"
+    concepts_path.write_text(
+        "\n".join(
+            json.dumps(row)
+            for row in (
+                _hpo_concept("HP:0000001", "All"),
+                _hpo_concept("HP:0000002", "Abnormality"),
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    hpoa_path = tmp_path / "phenotype.hpoa"
+    hpoa_path.write_text(
+        "#version: test-release\n"
+        + "\t".join(
+            (
+                "database_id",
+                "disease_name",
+                "qualifier",
+                "hpo_id",
+                "reference",
+                "evidence",
+                "onset",
+                "frequency",
+                "sex",
+                "modifier",
+                "aspect",
+                "biocuration",
+            )
+        )
+        + "\n"
+        + "OMIM:1\tDisease one\t\tHP:0000002\tPMID:1\tPCS\t\t1/2\t\t\tP\tHPO:test\n"
+        + "OMIM:1\tDisease one\t\tHP:0000002\tPMID:1\tPCS\t\t1/2\t\t\tP\tHPO:test\n"
+        + "OMIM:1\tDisease one\tNOT\tHP:0000001\tPMID:2\tPCS\t\t\t\t\tP\tHPO:test\n"
+        + "ORPHA:2\tDisease two\t\tHP:9999999\tPMID:3\tIEA\t\t\t\t\tP\tHPO:test\n",
+        encoding="utf-8",
+    )
+    genes_path = tmp_path / "genes_to_disease.txt"
+    genes_path.write_text(
+        "ncbi_gene_id\tgene_symbol\tassociation_type\tdisease_id\tsource\n"
+        "NCBIGene:10\tGENE1\tMENDELIAN\tOMIM:1\ttest\n",
+        encoding="utf-8",
+    )
+
+    report = compile_hpo_associations(
+        hpoa_path=hpoa_path,
+        genes_path=genes_path,
+        hpo_concepts_path=concepts_path,
+        output_dir=tmp_path / "compiled_associations",
+        source_version="test-release",
+    )
+
+    output = tmp_path / "compiled_associations"
+    associations = _read_jsonl(output / "phenotype_associations.jsonl")
+    edges = _read_jsonl(output / "edges.jsonl")
+    evidence = _read_jsonl(output / "evidence.jsonl")
+    edge_types = [str(row["relation_type"]) for row in edges]
+    positive = next(row for row in edges if row["relation_type"] == "HAS_PHENOTYPE")
+    assert len(associations) == 4
+    assert sorted(edge_types) == ["ASSOCIATED_GENE", "HAS_PHENOTYPE", "NOT_HAS_PHENOTYPE"]
+    assert positive["support_count"] == 2
+    assert len(evidence) == 4
+    assert associations[2]["relation_type"] == "NOT_HAS_PHENOTYPE"
+    assert associations[3]["graph_eligible"] is False
+    assert report["counts"]["duplicate_phenotype_row_count"] == 1
+    assert report["counts"]["unknown_hpo_id_count"] == 1
+    assert report["counts"]["graph_edge_count"] == 3
+
+
 def _read_jsonl(path: Path) -> list[dict[str, object]]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
 
@@ -156,4 +228,18 @@ def _obo_fixture(prefix: str = "MONDO") -> dict[str, object]:
                 ],
             }
         ]
+    }
+
+
+def _hpo_concept(concept_id: str, label: str) -> dict[str, object]:
+    return {
+        "concept_id": concept_id,
+        "code": concept_id.partition(":")[2],
+        "code_system": "HPO",
+        "canonical_name": label,
+        "semantic_type": "FINDING",
+        "aliases": [],
+        "terminology_eligible": True,
+        "source": "hpo",
+        "source_version": "test-release",
     }

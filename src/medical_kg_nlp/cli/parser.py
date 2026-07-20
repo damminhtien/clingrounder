@@ -613,6 +613,16 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         required=True,
         choices=tuple(entity_type.value for entity_type in EntityType),
     )
+    ontology_hpo = ontology_operations.add_parser(
+        "compile-hpo-associations",
+        help="Preserve and aggregate HPO disease-phenotype and disease-gene evidence.",
+    )
+    ontology_hpo.set_defaults(handler="data_ontology_compile_hpo_associations")
+    ontology_hpo.add_argument("--hpoa", required=True)
+    ontology_hpo.add_argument("--genes", required=True)
+    ontology_hpo.add_argument("--hpo-concepts", required=True)
+    ontology_hpo.add_argument("--source-version", required=True)
+    ontology_hpo.add_argument("--output-dir", required=True)
 
     knowledge = operations.add_parser(
         "knowledge",
