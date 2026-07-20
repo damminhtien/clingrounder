@@ -1,0 +1,14 @@
+schema_version: medical-corpus-fusion-plan.v1
+output_root: ../../../outputs/mining/fused
+run_label: clinicaltrials-rare-interventional-2026-07-19
+
+# INVARIANT: exact raw-text duplicates may share annotations; near duplicates only
+# receive a split barrier and retain their independent offset coordinate systems.
+hamming_threshold: 3
+bands: 4
+
+sources:
+  - source_id: clinicaltrials_v2
+    documents: ../../../outputs/mining/clinicaltrials-rare-interventional-2026-07-19/documents.jsonl
+    annotations: ../../../outputs/mining/clinicaltrials-rare-interventional-2026-07-19/structured_annotations.jsonl
+    relations: ../../../outputs/mining/clinicaltrials-rare-interventional-2026-07-19/structured_relations.jsonl

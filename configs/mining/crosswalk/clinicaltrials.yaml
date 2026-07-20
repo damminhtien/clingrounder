@@ -1,0 +1,17 @@
+schema_version: medical-mention-crosswalk-policy.v1
+policies:
+  - policy_id: clinicaltrials-condition-to-tt06-v1
+    source_entity_type: DISEASE
+    source_label: CTGOV_CONDITION
+    target_entity_types: [DISEASE]
+    code_systems: [ICD-10]
+  - policy_id: clinicaltrials-drug-to-rxnorm-v1
+    source_entity_type: DRUG
+    source_label: CTGOV_INTERVENTION_DRUG
+    target_entity_types: [DRUG]
+    code_systems: [RxNorm]
+  - policy_id: clinicaltrials-biological-to-rxnorm-v1
+    source_entity_type: DRUG
+    source_label: CTGOV_INTERVENTION_BIOLOGICAL
+    target_entity_types: [DRUG]
+    code_systems: [RxNorm]

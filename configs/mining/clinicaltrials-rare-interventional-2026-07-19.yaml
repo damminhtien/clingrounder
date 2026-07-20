@@ -1,0 +1,48 @@
+schema_version: medical-mining-plan.v1
+registry: ../../data/sources/mining_registry.yaml
+work_dir: ../../outputs/mining/clinicaltrials-rare-interventional-2026-07-19
+artifact_store:
+  # SCALING: move this URI to mounted storage or S3 for a larger API tranche.
+  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  storage_options: {}
+  encrypted_at_rest: false
+
+sources:
+  - source_id: clinicaltrials_v2
+    source_version: rare-disease-interventional-query-2026-07-19-v1
+    parse_documents: true
+    parameters:
+      # Query: condition "Rare Diseases"; statuses COMPLETED, ACTIVE_NOT_RECRUITING,
+      # RECRUITING; page size 50. The API returned 774 total / 50 records. This tranche
+      # pins the 28 interventional records from that first response rather than replaying
+      # an unstable search order.
+      # Discovery response SHA-256: f8e634c7955c34c24a89ea519ffd0950041afb4ecab76caaeea300f11d53d7b0
+      nct_ids:
+        - NCT00004339
+        - NCT00004359
+        - NCT00004367
+        - NCT00004390
+        - NCT00004402
+        - NCT00004416
+        - NCT00004423
+        - NCT00004454
+        - NCT00004490
+        - NCT00004495
+        - NCT00004658
+        - NCT00004686
+        - NCT00004795
+        - NCT00004797
+        - NCT00004800
+        - NCT00004808
+        - NCT00004939
+        - NCT01046487
+        - NCT01414985
+        - NCT03333616
+        - NCT03635294
+        - NCT05805202
+        - NCT05998395
+        - NCT06337396
+        - NCT06926127
+        - NCT07128199
+        - NCT07654114
+        - NCT07668856
