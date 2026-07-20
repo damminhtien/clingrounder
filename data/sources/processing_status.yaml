@@ -10,10 +10,19 @@ sources:
     state: curated
     promotion_boundary: training_only
     dossier: docs/mining-sources/vietbioner.md
-    verified_on: 2026-07-19
-    summary: Duplicate-reconciled Vietnamese biomedical spans are available for training and review.
-    run_configs: [configs/mining/vietbioner.yaml]
-    artifact_roots: [outputs/mining/vietbioner-19ba70a]
+    verified_on: 2026-07-20
+    summary: Reconciled spans are materialized for model training; recognition remains diagnostic-only.
+    run_configs:
+      - configs/mining/vietbioner.yaml
+      - configs/mining/labelers/vietbioner.yaml
+      - configs/mining/crosswalk/vietbioner.yaml
+      - configs/mining/curation/vietbioner-ner.yaml
+      - configs/mining/knowledge/vietbioner-recognition-v4.yaml
+    artifact_roots:
+      - outputs/mining/vietbioner-19ba70a
+      - outputs/mining/snapshots/vietbioner-19ba70a-reconciled-silver-v4
+      - outputs/mining/model_datasets/vietbioner-19ba70a-reconciled-silver-v4
+      - outputs/mining/knowledge/vietbioner-recognition-v4
   - source_id: vietmed_ner
     state: quarantined
     promotion_boundary: none

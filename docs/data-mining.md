@@ -219,9 +219,12 @@ uv run medical-kg data snapshot freeze \
   --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
   --annotations outputs/mining/vietbioner-19ba70a/reconciled/training_annotations.jsonl \
   --artifacts outputs/mining/vietbioner-19ba70a/artifacts.jsonl \
-  --version vietbioner-19ba70a-reconciled-silver-v1 \
-  --created-at 2026-07-18T15:22:54+07:00 \
-  --output-dir outputs/mining/snapshots/vietbioner-19ba70a-reconciled-silver-v1 \
+  --source-fingerprint 3dbc1f703f3b7d8ca080ad9bfb324596b10a1cf7ac82456c04bf594062a1f01d \
+  --source-fingerprint fe22b5358e7b974a88a6c75bcc3dc8f876255e3bbc45aff55d9765a59295ab2d \
+  --version vietbioner-19ba70a-reconciled-silver-v4 \
+  --created-at 2026-07-20T04:49:09Z \
+  --development-fraction 0.3 \
+  --output-dir outputs/mining/snapshots/vietbioner-19ba70a-reconciled-silver-v4 \
   --skip-agreement-gate
 ```
 
@@ -476,10 +479,12 @@ uv run medical-kg terminology query-set \
   --manifest-output outputs/mining/knowledge/codiesp-icd10-split-2026-07-18/dev/query_manifest.json
 ```
 
-VietBioNER follows a different promotion decision. A train-only compiler accepted 100 recognition
-concepts. On 12 source-held-out development documents, the enriched dictionary reached precision
-0.610, recall 0.613, and F1 0.612, but produced 161 false positives; 111 were overlapping boundary
-errors. It remains proposal/training knowledge and is not enabled in the runtime recognizer.
+VietBioNER follows a different promotion decision. The materialized v4 split's train-only compiler
+accepted 87 recognition concepts. On 12 development documents, the dictionary reached precision
+0.540, recall 0.505, and F1 0.522; procedure F1 was only 0.107 and 78 of 166 false positives were
+boundary overlaps. The historical split reached F1 0.612, but neither result is strong enough for
+runtime promotion. The full source audit and exact commands are in
+[`docs/mining-sources/vietbioner.md`](mining-sources/vietbioner.md).
 
 ### Phase 1 Reviewed Recognition Mining
 
@@ -524,10 +529,10 @@ split:
 ```bash
 uv run medical-kg data dataset export-spans \
   --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
-  --annotations outputs/mining/vietbioner-19ba70a/reconciled/training_annotations.jsonl \
-  --split-manifest outputs/mining/snapshots/vietbioner-19ba70a-reconciled-silver-v2/manifest.json \
-  --output outputs/mining/model_datasets/vietbioner-19ba70a-reconciled-silver-v2/spans.jsonl \
-  --manifest-output outputs/mining/model_datasets/vietbioner-19ba70a-reconciled-silver-v2/manifest.json \
+  --annotations outputs/mining/vietbioner-19ba70a/reconciled/model_ner_annotations.jsonl \
+  --split-manifest outputs/mining/snapshots/vietbioner-19ba70a-reconciled-silver-v4/manifest.json \
+  --output outputs/mining/model_datasets/vietbioner-19ba70a-reconciled-silver-v4/spans.jsonl \
+  --manifest-output outputs/mining/model_datasets/vietbioner-19ba70a-reconciled-silver-v4/manifest.json \
   --entity-type FINDING \
   --entity-type PROCEDURE \
   --max-characters 1200
