@@ -115,3 +115,20 @@ def test_data_registry_cli_is_installed_and_task_neutral(
     assert exit_code == 0
     assert output["schema_version"] == "medical-source-registry.v2"
     assert output["sources"][0]["id"] == "fixture_codiesp"
+
+
+def test_full_dailymed_plan_pins_every_human_release_part(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("MEDICAL_KG_ARTIFACT_STORE", str(tmp_path / "external-store"))
+
+    plan = load_mining_plan("configs/mining/dailymed-full-human-2026-07-17.yaml")
+    artifacts = plan.sources[0].parameters["artifacts"]
+
+    assert len(artifacts) == 17
+    assert sum(int(artifact["metadata"]["expected_spl_count"]) for artifact in artifacts) == (
+        143_247
+    )
+    assert all(len(artifact["metadata"]["source_md5"]) == 32 for artifact in artifacts)
+    assert plan.snapshot is None

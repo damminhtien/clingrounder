@@ -18,6 +18,55 @@ Both sources are `open_with_terms`, attribution-redistributable records in the r
 are immutable content-addressed objects. The SPL slice contains 105 XML artifacts and 12,774,108
 source bytes.
 
+## Processing Status And Full-Release Boundary
+
+The checked-in evidence is intentionally split between work already executed and work only
+prepared for the external data plane:
+
+| Lane | Official release | Scale | Repository state |
+| --- | --- | ---: | --- |
+| Daily API slice | 17 Jul 2026 | 105 labels | processed and measured |
+| Human prescription | 17 Jul 2026, 6 ZIP parts | 54,530 files, about 16.5 GB | pinned plan; not acquired |
+| Human OTC | 17 Jul 2026, 11 ZIP parts | 88,717 files, about 32.6 GB | pinned plan; not acquired |
+| Homeopathic | 17 Jul 2026 | 15,995 files | excluded pending a separate quality policy |
+| Animal | 17 Jul 2026 | 3,567 files | excluded from the human clinical lane |
+| Remainder/device/vaccine | 17 Jul 2026 | 2,499 files | excluded pending type-specific handling |
+
+Therefore, "DailyMed processed" currently means the 105-label daily tranche plus the complete
+official SPL-to-RxNorm mapping archive. It does **not** mean all SPL narrative labels have been
+parsed. The 17-part human plan covers 143,247 files and about 49 GB compressed. Its authoritative
+file counts, modification date and MD5 values come from the
+[DailyMed full-release manifest](https://dailymed.nlm.nih.gov/dailymed/spl-resources-all-drug-labels.cfm).
+`configs/mining/dailymed-full-human-2026-07-17.yaml` records every part.
+
+The source publishes MD5 rather than SHA-256. Acquisition validates MD5 while streaming bytes
+once into the content-addressed store; the store records SHA-256 as the durable internal identity.
+Each part also declares `expected_spl_count`, so a replaced or partial archive fails before its
+document manifest is promoted.
+
+## Full-Scale Processing Contract
+
+DailyMed individual packages contain one SPL XML member and optional images. Bulk parts may contain
+direct XML members or one level of label ZIP packages. Parser revision `spl_xml:3` applies these
+rules:
+
+1. Never read a multi-gigabyte outer ZIP into Python memory.
+2. Reject encrypted members, duplicate names, more than 100,000 members, XML over 64 MB, nested ZIP
+   over 256 MB, or over 128 GB declared relevant payload per part.
+3. Ignore images; parse XML in stable member-name order and retain one bounded XML payload at a
+   time.
+4. Hash each XML payload and use that digest in document identity. Identical labels repeated across
+   release parts become one document family rather than two unrelated records.
+5. Materialize stage/final manifests through temporary SQLite, not an in-memory document tuple.
+   Duplicate content merges source artifact, archive member and release provenance; an ID collision
+   with different text fails closed.
+6. Preserve the rendered document as immutable offset text. Any normalization must create a child
+   document.
+
+This makes acquisition and parsing resumable on the external volume. Snapshot freezing still loads
+the selected document manifest for split/agreement logic, so the full release should first be
+materialized, profiled and filtered; only the curated subset should be frozen.
+
 ## SPL Parsing And Structured Labels
 
 The SPL parser emits the complete narrative label and a compact
@@ -122,6 +171,22 @@ lookup and hard-negative generation; it does not add narrative clinical relation
   narrative adverse-effect/indication claims.
 - Never automatic: converting an NDC/UNII/NCI link into RxNorm without an official mapping row.
 
+## What Has Not Yet Been Mined
+
+- Full-release narrative sections for indications, contraindications, warnings, adverse reactions
+  and drug interactions have not been converted into entity/relation supervision.
+- Co-occurrence inside narrative prose is not a clinical relation. Section-aware extraction and a
+  held-out relation benchmark are required before graph promotion.
+- The full release has not been coverage-audited against the July RxNorm release, so no claim is
+  made about full NDC, ingredient, branded-drug or dose-form coverage.
+- Homeopathic, animal and remainder archives are not silently mixed into human medication data.
+- Images and OCR are not mined; they are ignored by the SPL parser.
+
+The next DailyMed-specific tranche is: materialize the 17 human parts, profile structured field and
+section coverage, join only official set/version mapping rows, and benchmark section evidence as a
+reranker feature. Runtime dictionary promotion remains opt-in until that benchmark wins on a
+source-held-out medication set.
+
 Artifacts live under `outputs/mining/dailymed-daily-2026-07-17/` and
 `outputs/mining/dailymed-rxnorm-2026-07-17/`; compiled aliases and graphs are under
 `outputs/mining/knowledge/`.
@@ -131,6 +196,9 @@ Artifacts live under `outputs/mining/dailymed-daily-2026-07-17/` and
 ```bash
 export MEDICAL_KG_ARTIFACT_STORE=/Volumes/medical-kg-mining
 uv run medical-kg data run --plan configs/mining/dailymed-daily-2026-07-17.yaml
+
+# Requires the external >=250 GB data plane. This has not been executed in the checked-in status.
+uv run medical-kg data run --plan configs/mining/dailymed-full-human-2026-07-17.yaml
 
 uv run medical-kg data label propose \
   --documents outputs/mining/dailymed-daily-2026-07-17/documents.jsonl \

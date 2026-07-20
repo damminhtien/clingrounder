@@ -39,6 +39,30 @@ The dossier must describe observed output, not planned capability. A connector w
 run remains `registered`; model predictions remain `proposed`; a terminology exact match remains a
 review proposal unless a source-specific promotion policy passes.
 
+Use explicit evidence labels whenever a dossier also records the next tranche:
+
+- **processed**: command completed and the dossier records counts plus artifact fingerprints;
+- **planned**: version/checksum/config are pinned, but no output metric may be reported as observed;
+- **blocked**: license, credentials, storage, parser, or quality gate prevents execution;
+- **excluded**: a source lane was deliberately left out and the clinical/quality reason is stated.
+
+For deep source mining, document each transformation separately rather than saying only "imported":
+
+```text
+remote artifact and source checksum
+-> CAS SHA-256 and acquisition manifest
+-> parser revision and immutable document view
+-> duplicate/leakage handling
+-> source-label projection
+-> terminology or ontology reconciliation
+-> graph/model/evaluation artifacts
+-> measured quality and promotion boundary
+```
+
+Counts must be attached to the stage that produced them. For example, source rows, parsed
+documents, entity proposals, accepted aliases and graph edges are different populations and must
+not be combined into a single "records" count.
+
 Validate registry policy and dossier discoverability together:
 
 ```bash
