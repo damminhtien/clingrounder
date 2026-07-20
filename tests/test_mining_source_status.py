@@ -8,6 +8,7 @@ import pytest
 from pydantic import ValidationError
 
 from medical_kg_nlp.cli.main import main
+from medical_kg_nlp.mining.curation import load_annotation_curation_policy
 from medical_kg_nlp.mining.registry import SourceRegistry, load_source_registry
 from medical_kg_nlp.mining.recognition_knowledge import (
     load_recognition_knowledge_policy,
@@ -131,3 +132,20 @@ def test_pmc_recognition_policy_is_train_pinned_and_excludes_lab_results() -> No
     )
     assert policy.mapped_type("DISEASE") is not None
     assert policy.mapped_type("LAB_RESULT") is None
+
+
+def test_vietbioner_training_views_preserve_broad_source_semantics() -> None:
+    curation = load_annotation_curation_policy(
+        "configs/mining/curation/vietbioner-ner.yaml"
+    )
+    recognition = load_recognition_knowledge_policy(
+        "configs/mining/knowledge/vietbioner-recognition-v4.yaml"
+    )
+
+    assert curation.allowed_entity_types == frozenset({"FINDING", "PROCEDURE"})
+    assert curation.allow_discontinuous is True
+    assert recognition.accepted_inventory_sha256 == (
+        "d8b89bff924fd6b2f8ea189f10c50e6cb7064156cf933b330601897d9154a49b",
+    )
+    assert recognition.mapped_type("Symptom_and_Disease") is not None
+    assert recognition.mapped_type("DateTime") is None

@@ -1,0 +1,19 @@
+schema_version: medical-annotation-curation-policy.v1
+policy_id: vietbioner-19ba70a-ner-v1
+
+# SOURCE DOSSIER: docs/mining-sources/vietbioner.md
+# INVARIANT: source labels remain broad; this view does not split FINDING into disease/symptom.
+allowed_review_statuses:
+  - proposed
+allowed_layers:
+  - silver
+allowed_entity_types:
+  - FINDING
+  - PROCEDURE
+
+# The source's discontinuous BRAT records only bridge whitespace/newlines for these two labels.
+# The raw envelope therefore remains a contiguous model span without inserting medical tokens.
+allow_discontinuous: true
+reject_import_issues: true
+max_span_length: 160
+overlap_strategy: preserve
