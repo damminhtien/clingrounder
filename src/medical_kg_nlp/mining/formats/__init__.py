@@ -31,3 +31,10 @@ __all__ = [
     "read_codiesp_archive",
     "render_clinical_trial",
 ]
+from medical_kg_nlp.mining.formats.jats import (
+    RenderedJatsArticle,
+    RenderedJatsBlock,
+    render_jats_article,
+)
+
+__all__ = ["RenderedJatsArticle", "RenderedJatsBlock", "render_jats_article"]

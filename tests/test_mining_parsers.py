@@ -71,6 +71,20 @@ def test_jats_parser_renders_article_sections(tmp_path: Path) -> None:
 
     assert document.text == "Rare case\n\nPatient had fever.\n\nCase\n\nA finding."
     assert document.group_ids == ("article:PMC42",)
+    assert document.metadata["parser_revision"] == "2"
+    blocks = json.loads(document.metadata["jats_blocks"])
+    assert [block["section_path"] for block in blocks] == [
+        [],
+        ["Abstract"],
+        ["Case"],
+        ["Case"],
+    ]
+    assert [document.text[start:end] for start, end in (block["span"] for block in blocks)] == [
+        "Rare case",
+        "Patient had fever.",
+        "Case",
+        "A finding.",
+    ]
 
 
 def test_spl_parser_renders_label_sections(tmp_path: Path) -> None:

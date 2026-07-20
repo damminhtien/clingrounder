@@ -12,6 +12,7 @@ from medical_kg_nlp.mining.formats.dailymed import (
     extract_spl_products,
     render_spl_product,
 )
+from medical_kg_nlp.mining.formats.jats import render_jats_article
 from medical_kg_nlp.mining.parsers.base import ArtifactParserAdapter
 from medical_kg_nlp.mining.ports import ArtifactStorePort
 from medical_kg_nlp.mining.records import MinedDocument, SourceArtifact
@@ -23,7 +24,7 @@ class JatsXmlParser(ArtifactParserAdapter):
     """Render PMC JATS XML or OA tarballs into immutable article text."""
 
     parser_id = "jats_xml"
-    parser_revision = "1"
+    parser_revision = "2"
     max_xml_member_bytes = 64 * 1024 * 1024
 
     def parse(
@@ -35,17 +36,27 @@ class JatsXmlParser(ArtifactParserAdapter):
         payload = self.read_artifact(artifact, store)
         for member_name, xml_payload in _jats_payloads(payload, artifact.media_type):
             root = ET.fromstring(xml_payload)
-            article_id = _first_text(root, ".//article-id[@pub-id-type='pmc']")
-            article_id = article_id or _first_text(root, ".//article-id") or member_name
-            blocks = _jats_blocks(root)
+            rendered = render_jats_article(root, fallback_id=member_name)
             yield self.make_document(
                 artifact,
-                external_id=article_id,
-                text="\n\n".join(blocks),
+                external_id=rendered.article_id,
+                text=rendered.text,
                 language=_xml_language(root, default="en"),
                 note_type="case_report_article",
-                group_ids=(f"article:{article_id}",),
-                metadata={"archive_member": member_name},
+                group_ids=(f"article:{rendered.article_id}",),
+                metadata={
+                    "archive_member": member_name,
+                    "article_type": rendered.article_type,
+                    "journal_title": rendered.journal_title,
+                    "publication_year": rendered.publication_year,
+                    "keywords": json.dumps(rendered.keywords, ensure_ascii=False),
+                    "subjects": json.dumps(rendered.subjects, ensure_ascii=False),
+                    "jats_blocks": json.dumps(
+                        [block.to_dict() for block in rendered.blocks],
+                        ensure_ascii=False,
+                        separators=(",", ":"),
+                    ),
+                },
             )
 
 
@@ -155,23 +166,6 @@ def _jats_payloads(payload: bytes, media_type: str) -> tuple[tuple[str, bytes], 
     if not members:
         raise ValueError("PMC OA package contains no JATS XML member")
     return tuple(members)
-
-
-def _jats_blocks(root: ET.Element) -> list[str]:
-    blocks: list[str] = []
-    title = root.find(".//article-title")
-    if title is not None and (text := _node_text(title)):
-        blocks.append(text)
-    for container_path in (".//abstract", ".//body"):
-        container = root.find(container_path)
-        if container is None:
-            continue
-        for node in container.iter():
-            if _local_name(node.tag) not in {"title", "p"}:
-                continue
-            if text := _node_text(node):
-                blocks.append(text)
-    return _deduplicate_adjacent(blocks)
 
 
 def _node_text(node: ET.Element) -> str:
