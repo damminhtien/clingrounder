@@ -9,6 +9,12 @@ from medical_kg_nlp.mining.labelers.codiesp import (
     CodiEspLabelMapping,
     create_codiesp_archive_labeler,
 )
+from medical_kg_nlp.mining.labelers.clinicaltrials import (
+    ClinicalTrialsStructuredLabelerAdapter,
+    ClinicalTrialsStructuredRelationLabelerAdapter,
+    create_clinicaltrials_structured_labeler,
+    create_clinicaltrials_structured_relation_labeler,
+)
 from medical_kg_nlp.mining.labelers.dailymed import (
     DailyMedStructuredLabelerAdapter,
     DailyMedStructuredRelationLabelerAdapter,
@@ -24,10 +30,14 @@ __all__ = [
     "BratArchiveLabelerAdapter",
     "CodiEspArchiveLabelerAdapter",
     "CodiEspLabelMapping",
+    "ClinicalTrialsStructuredLabelerAdapter",
+    "ClinicalTrialsStructuredRelationLabelerAdapter",
     "DailyMedStructuredLabelerAdapter",
     "DailyMedStructuredRelationLabelerAdapter",
     "create_brat_archive_labeler",
     "create_codiesp_archive_labeler",
+    "create_clinicaltrials_structured_labeler",
+    "create_clinicaltrials_structured_relation_labeler",
     "create_dailymed_structured_labeler",
     "create_dailymed_structured_relation_labeler",
     "LocalPipelineProposalLabeler",

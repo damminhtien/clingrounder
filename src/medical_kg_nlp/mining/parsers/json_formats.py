@@ -8,6 +8,7 @@ from html.parser import HTMLParser
 from typing import Any
 
 from medical_kg_nlp.mining.parsers.base import ArtifactParserAdapter
+from medical_kg_nlp.mining.formats.clinicaltrials import render_clinical_trial
 from medical_kg_nlp.mining.ports import ArtifactStorePort
 from medical_kg_nlp.mining.records import MinedDocument, SourceArtifact
 
@@ -18,7 +19,7 @@ class ClinicalTrialsJsonParser(ArtifactParserAdapter):
     """Render API v2 study records as condition/intervention/outcome documents."""
 
     parser_id = "clinicaltrials_json"
-    parser_revision = "1"
+    parser_revision = "2"
 
     def parse(
         self,
@@ -40,14 +41,26 @@ class ClinicalTrialsJsonParser(ArtifactParserAdapter):
             nct_id = str(identification.get("nctId", "")).strip()
             if not nct_id:
                 raise ValueError("ClinicalTrials study has no nctId")
-            sections = _clinical_trial_sections(protocol)
+            rendered = render_clinical_trial(protocol)
+            status = _mapping(protocol.get("statusModule", {}), "status")
+            design = _mapping(protocol.get("designModule", {}), "design")
             yield self.make_document(
                 artifact,
                 external_id=nct_id,
-                text="\n\n".join(sections),
+                text=rendered.text,
                 language="en",
                 note_type="clinical_trial",
                 group_ids=(f"clinical_trial:{nct_id}",),
+                metadata={
+                    "clinicaltrials_nct_id": nct_id,
+                    "clinicaltrials_status": str(status.get("overallStatus", "")),
+                    "clinicaltrials_study_type": str(design.get("studyType", "")),
+                    "clinicaltrials_fields": json.dumps(
+                        [field.to_dict() for field in rendered.fields],
+                        ensure_ascii=False,
+                        separators=(",", ":"),
+                    ),
+                },
             )
 
 
@@ -145,39 +158,6 @@ def _bioc_documents(payload: Any) -> tuple[Mapping[str, Any], ...]:
                 raise ValueError("BioC document must be an object")
             documents.append(document)
     return tuple(documents)
-
-
-def _clinical_trial_sections(protocol: Mapping[str, Any]) -> list[str]:
-    identification = _mapping(protocol.get("identificationModule", {}), "identification")
-    description = _mapping(protocol.get("descriptionModule", {}), "description")
-    conditions = _mapping(protocol.get("conditionsModule", {}), "conditions")
-    arms = _mapping(protocol.get("armsInterventionsModule", {}), "arms")
-    outcomes = _mapping(protocol.get("outcomesModule", {}), "outcomes")
-    sections: list[str] = []
-    _append_section(sections, "Title", identification.get("briefTitle"))
-    _append_section(sections, "Summary", description.get("briefSummary"))
-    _append_list_section(sections, "Conditions", conditions.get("conditions"))
-    interventions = arms.get("interventions", [])
-    if isinstance(interventions, Sequence):
-        rendered = []
-        for intervention in interventions:
-            if isinstance(intervention, Mapping):
-                name = str(intervention.get("name", "")).strip()
-                description_text = str(intervention.get("description", "")).strip()
-                rendered.append(": ".join(value for value in (name, description_text) if value))
-        _append_list_section(sections, "Interventions", rendered)
-    for key, title in (("primaryOutcomes", "Primary outcomes"), ("secondaryOutcomes", "Secondary outcomes")):
-        values = outcomes.get(key, [])
-        if isinstance(values, Sequence):
-            rendered = [
-                str(item.get("measure", "")).strip()
-                for item in values
-                if isinstance(item, Mapping) and item.get("measure")
-            ]
-            _append_list_section(sections, title, rendered)
-    if not sections:
-        raise ValueError("ClinicalTrials study produced no text sections")
-    return sections
 
 
 def _fhir_resources(bundle: Mapping[str, Any]) -> list[Mapping[str, Any]]:
@@ -280,17 +260,3 @@ def _mapping(value: Any, field_name: str) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
         raise ValueError(f"{field_name} must be an object")
     return value
-
-
-def _append_section(sections: list[str], title: str, value: Any) -> None:
-    text = "" if value is None else str(value).strip()
-    if text:
-        sections.append(f"{title}\n{text}")
-
-
-def _append_list_section(sections: list[str], title: str, values: Any) -> None:
-    if not isinstance(values, Sequence) or isinstance(values, (str, bytes)):
-        return
-    rendered = [str(value).strip() for value in values if str(value).strip()]
-    if rendered:
-        sections.append(f"{title}\n" + "\n".join(f"- {value}" for value in rendered))

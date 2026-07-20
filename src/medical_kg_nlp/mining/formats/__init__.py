@@ -12,6 +12,11 @@ from medical_kg_nlp.mining.formats.codiesp import (
     CodiEspSpanAnnotation,
     read_codiesp_archive,
 )
+from medical_kg_nlp.mining.formats.clinicaltrials import (
+    ClinicalTrialRenderedField,
+    ClinicalTrialRenderedStudy,
+    render_clinical_trial,
+)
 
 __all__ = [
     "BratDocumentBundle",
@@ -19,7 +24,10 @@ __all__ = [
     "CodiEspArchiveBundle",
     "CodiEspDocumentBundle",
     "CodiEspSpanAnnotation",
+    "ClinicalTrialRenderedField",
+    "ClinicalTrialRenderedStudy",
     "parse_brat_text_bound_annotations",
     "read_brat_archive",
     "read_codiesp_archive",
+    "render_clinical_trial",
 ]

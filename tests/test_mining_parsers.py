@@ -16,6 +16,10 @@ from medical_kg_nlp.mining.parsers import (
     PmcOaParser,
     SplXmlParser,
 )
+from medical_kg_nlp.mining.labelers import (
+    ClinicalTrialsStructuredLabelerAdapter,
+    ClinicalTrialsStructuredRelationLabelerAdapter,
+)
 from medical_kg_nlp.mining.records import (
     AccessClass,
     RedistributionPolicy,
@@ -91,7 +95,9 @@ def test_clinical_trials_parser_renders_relation_fields(tmp_path: Path) -> None:
             "descriptionModule": {"briefSummary": "A short summary."},
             "conditionsModule": {"conditions": ["Rare disease"]},
             "armsInterventionsModule": {
-                "interventions": [{"name": "Drug A", "description": "Oral"}]
+                "interventions": [
+                    {"type": "DRUG", "name": "Drug A", "description": "Oral"}
+                ]
             },
             "outcomesModule": {"primaryOutcomes": [{"measure": "Survival"}]},
         }
@@ -108,6 +114,26 @@ def test_clinical_trials_parser_renders_relation_fields(tmp_path: Path) -> None:
     assert "Conditions\n- Rare disease" in document.text
     assert "Interventions\n- Drug A: Oral" in document.text
     assert "Primary outcomes\n- Survival" in document.text
+    annotations = tuple(
+        ClinicalTrialsStructuredLabelerAdapter(labeler_id="fixture@1").propose(
+            (document,)
+        )
+    )
+    relations = tuple(
+        ClinicalTrialsStructuredRelationLabelerAdapter(
+            labeler_id="fixture-relations@1"
+        ).propose((document,), annotations)
+    )
+
+    assert [(item.text, item.entity_type) for item in annotations] == [
+        ("Rare disease", "DISEASE"),
+        ("Drug A", "DRUG"),
+        ("Survival", "OTHER"),
+    ]
+    assert all(document.text[item.span[0] : item.span[1]] == item.text for item in annotations)
+    assert [relation.relation_type for relation in relations] == [
+        "STUDIES_INTERVENTION"
+    ]
 
 
 def test_fhir_parser_is_deterministic_and_patient_grouped(tmp_path: Path) -> None:
