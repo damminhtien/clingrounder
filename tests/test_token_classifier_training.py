@@ -17,6 +17,7 @@ from medical_kg_nlp.training import (
     TokenBoundaryAlignmentError,
     build_bio_label_vocabulary,
     compute_bio_span_metrics,
+    find_unaligned_annotations,
     project_record_to_token_windows,
     scan_span_dataset,
     validate_span_dataset_manifest,
@@ -116,6 +117,30 @@ def test_projection_rejects_token_boundary_drift() -> None:
         )
 
 
+def test_projection_masks_unrepresentable_boundary_without_widening_gold() -> None:
+    record = _record("alpha beta", start=1, end=5)
+    tokenizer = _SingleWindowTokenizer()
+
+    issues = find_unaligned_annotations(
+        record,
+        tokenizer,
+        max_length=8,
+        stride=2,
+    )
+    windows = project_record_to_token_windows(
+        record,
+        tokenizer,
+        ("O", "B-DISEASE", "I-DISEASE"),
+        max_length=8,
+        stride=2,
+        unaligned_span_policy="mask",
+    )
+
+    assert [entity.annotation_id for entity in issues] == ["annotation-1"]
+    assert windows[0].labels == (-100, -100, 0, -100)
+    assert record.text[record.entities[0].start : record.entities[0].end] == "lpha"
+
+
 def test_exact_bio_span_metrics_ignore_special_and_overflow_tokens() -> None:
     metrics = compute_bio_span_metrics(
         predicted_label_ids=[[-100, 1, 2, 0, -100], [-100, 1, 0, -100]],
@@ -168,11 +193,14 @@ def test_cpu_smoke_cli_requires_explicit_cpu_and_verification_text() -> None:
             "--cpu",
             "--cpu-smoke-text",
             "note.txt",
+            "--unaligned-span-policy",
+            "mask",
         ]
     )
 
     assert args.cpu is True
     assert args.cpu_smoke_text == "note.txt"
+    assert args.unaligned_span_policy == "mask"
 
 
 def test_saved_model_verification_checks_projected_raw_offsets(

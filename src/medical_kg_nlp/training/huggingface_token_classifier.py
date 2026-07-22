@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import importlib
 import json
+from collections import Counter
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -26,11 +27,15 @@ from medical_kg_nlp.training.span_dataset import (
     SpanDatasetSummary,
     SpanTrainingRecord,
     build_bio_label_vocabulary,
+    iter_span_training_records,
     scan_span_dataset,
     validate_span_dataset_manifest,
 )
 from medical_kg_nlp.training.token_labels import (
+    TokenAlignmentPolicy,
+    TokenBoundaryAlignmentError,
     compute_bio_span_metrics,
+    find_unaligned_annotations,
     project_record_to_token_windows,
 )
 from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
@@ -94,6 +99,16 @@ def train_huggingface_token_classifier(
     )
     if not bool(getattr(tokenizer, "is_fast", False)):
         raise ValueError("Token-classifier training requires a fast tokenizer")
+    alignment_report = _inspect_token_alignment(
+        config,
+        tokenizer,
+        entity_count=summary.entity_count,
+    )
+    if alignment_report["ignored_annotation_count"] and config.unaligned_span_policy == "error":
+        raise TokenBoundaryAlignmentError(
+            "Tokenizer cannot preserve every exact annotation boundary; "
+            "inspect the alignment report or explicitly use unaligned_span_policy='mask'"
+        )
 
     raw_dataset = datasets.load_dataset(
         "json",
@@ -147,6 +162,7 @@ def train_huggingface_token_classifier(
         "label_vocabulary": vocabulary,
         "max_length": config.max_length,
         "stride": config.stride,
+        "unaligned_span_policy": config.unaligned_span_policy,
     }
     # SCALING: datasets writes mapped token windows to Arrow and memory-maps them.
     train_dataset = train_records.map(
@@ -257,6 +273,7 @@ def train_huggingface_token_classifier(
         "dataset": summary.to_dict(),
         "dataset_manifest_sha256": sha256_file(config.dataset_manifest_path),
         "label_vocabulary": list(vocabulary),
+        "token_alignment": alignment_report,
         "window_counts": {
             "train": len(train_dataset),
             "evaluation": 0 if evaluation_dataset is None else len(evaluation_dataset),
@@ -372,6 +389,7 @@ def _tokenize_batch(
     label_vocabulary: Sequence[str],
     max_length: int,
     stride: int,
+    unaligned_span_policy: TokenAlignmentPolicy,
 ) -> dict[str, list[list[int]]]:
     if "text" not in batch:
         raise ValueError("Tokenization batch is missing text")
@@ -390,6 +408,7 @@ def _tokenize_batch(
             label_vocabulary,
             max_length=max_length,
             stride=stride,
+            unaligned_span_policy=unaligned_span_policy,
         )
         for window in windows:
             model_row = window.to_model_dict()
@@ -403,6 +422,49 @@ def _tokenize_batch(
             for key, values in model_row.items():
                 output[key].append(values)
     return output
+
+
+def _inspect_token_alignment(
+    config: TokenClassifierTrainingConfig,
+    tokenizer: Any,
+    *,
+    entity_count: int,
+) -> dict[str, Any]:
+    """Audit tokenizer-only label loss before expensive framework training starts."""
+
+    by_split: Counter[str] = Counter()
+    by_label: Counter[str] = Counter()
+    examples: list[dict[str, Any]] = []
+    for record in iter_span_training_records(config.dataset_path):
+        issues = find_unaligned_annotations(
+            record,
+            tokenizer,
+            max_length=config.max_length,
+            stride=config.stride,
+        )
+        for entity in issues:
+            by_split[record.split] += 1
+            by_label[entity.label] += 1
+            if len(examples) < 20:
+                examples.append(
+                    {
+                        "record_id": record.record_id,
+                        "document_id": record.document_id,
+                        "annotation_id": entity.annotation_id,
+                        "label": entity.label,
+                        "span": [entity.start, entity.end],
+                        "text": entity.text,
+                    }
+                )
+    count = sum(by_split.values())
+    return {
+        "policy": config.unaligned_span_policy,
+        "ignored_annotation_count": count,
+        "ignored_fraction": count / max(1, entity_count),
+        "by_split": dict(sorted(by_split.items())),
+        "by_label": dict(sorted(by_label.items())),
+        "examples": examples,
+    }
 
 
 def _metric_function(label_vocabulary: Sequence[str]) -> Any:

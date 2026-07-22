@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 __all__ = ["TokenClassifierTrainingConfig"]
 
@@ -39,6 +39,7 @@ class TokenClassifierTrainingConfig:
     resume_from_checkpoint: Path | None = None
     overwrite_output: bool = False
     cache_dir: Path | None = None
+    unaligned_span_policy: Literal["error", "mask"] = "error"
 
     def __post_init__(self) -> None:
         if not self.model_id.strip():
@@ -77,6 +78,8 @@ class TokenClassifierTrainingConfig:
             raise ValueError("preprocessing_workers must be at least 1")
         if self.fp16 and self.bf16:
             raise ValueError("fp16 and bf16 cannot both be enabled")
+        if self.unaligned_span_policy not in {"error", "mask"}:
+            raise ValueError("unaligned_span_policy must be 'error' or 'mask'")
 
     def to_dict(self, *, path_root: Path | None = None) -> dict[str, Any]:
         """Return behavior-affecting values with optionally portable paths.
@@ -122,6 +125,7 @@ class TokenClassifierTrainingConfig:
             "cache_dir": (
                 None if self.cache_dir is None else _manifest_path(self.cache_dir, root=path_root)
             ),
+            "unaligned_span_policy": self.unaligned_span_policy,
         }
 
 

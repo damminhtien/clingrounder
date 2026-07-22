@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Literal, cast
 
 from medical_kg_nlp.training import (
     TokenClassifierTrainingConfig,
@@ -216,4 +217,8 @@ def _config_from_args(
         ),
         overwrite_output=bool(getattr(args, "overwrite_output", False)),
         cache_dir=(None if getattr(args, "cache_dir", None) is None else Path(args.cache_dir)),
+        unaligned_span_policy=cast(
+            Literal["error", "mask"],
+            str(getattr(args, "unaligned_span_policy", "error")),
+        ),
     )

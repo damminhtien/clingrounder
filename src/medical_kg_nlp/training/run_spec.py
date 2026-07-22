@@ -8,7 +8,7 @@ import platform
 import re
 from dataclasses import dataclass
 from pathlib import Path, PureWindowsPath
-from typing import Any
+from typing import Any, Literal
 
 from medical_kg_nlp.adapters.huggingface.runtime import OptionalModelDependencyError
 from medical_kg_nlp.training.config import TokenClassifierTrainingConfig
@@ -192,6 +192,7 @@ def load_token_classifier_run_spec(path: str | Path) -> TokenClassifierRunSpec:
                 field="training.cache_dir",
             )
         ),
+        unaligned_span_policy=_alignment_policy(training.get("unaligned_span_policy", "error")),
     )
     return TokenClassifierRunSpec(
         schema_version=schema_version,
@@ -300,6 +301,14 @@ def _boolean(raw: dict[str, Any], key: str, *, default: bool) -> bool:
     if not isinstance(value, bool):
         raise ValueError(f"Run spec {key} must be a boolean")
     return value
+
+
+def _alignment_policy(value: object) -> Literal["error", "mask"]:
+    if value == "error":
+        return "error"
+    if value == "mask":
+        return "mask"
+    raise ValueError("training.unaligned_span_policy must be 'error' or 'mask'")
 
 
 def _resolve_run_root(config_path: Path, raw_root: str) -> Path:

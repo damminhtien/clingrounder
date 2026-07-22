@@ -417,6 +417,14 @@ def _model_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser])
     train.add_argument("--resume-from-checkpoint")
     train.add_argument("--overwrite-output", action="store_true")
     train.add_argument(
+        "--unaligned-span-policy",
+        choices=("error", "mask"),
+        default="error",
+        help=(
+            "Fail on tokenizer-inexpressible gold boundaries, or mask crossing tokens from loss."
+        ),
+    )
+    train.add_argument(
         "--cpu-smoke-text",
         help=(
             "Raw UTF-8 text file used to reload the saved model and validate inference offsets; "

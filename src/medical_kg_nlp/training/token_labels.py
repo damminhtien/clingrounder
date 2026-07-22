@@ -4,20 +4,23 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
 from medical_kg_nlp.training.span_dataset import SpanTrainingEntity, SpanTrainingRecord
 
 __all__ = [
     "FastTokenizerPort",
+    "TokenAlignmentPolicy",
     "TokenBoundaryAlignmentError",
     "TokenizedTrainingWindow",
     "compute_bio_span_metrics",
     "decode_bio_spans",
+    "find_unaligned_annotations",
     "project_record_to_token_windows",
 ]
 
 _IGNORE_INDEX = -100
+TokenAlignmentPolicy = Literal["error", "mask"]
 
 
 class FastTokenizerPort(Protocol):
@@ -64,6 +67,7 @@ def project_record_to_token_windows(
     *,
     max_length: int,
     stride: int,
+    unaligned_span_policy: TokenAlignmentPolicy = "error",
 ) -> tuple[TokenizedTrainingWindow, ...]:
     """Tokenize one record and project character labels without duplicating entities.
 
@@ -98,7 +102,11 @@ def project_record_to_token_windows(
     if attention_rows is None:
         attention_rows = tuple(tuple(1 for _ in row) for row in input_rows)
 
-    owners = _assign_entity_owners(record.entities, offset_rows)
+    owners = _assign_entity_owners(
+        record.entities,
+        offset_rows,
+        unaligned_span_policy=unaligned_span_policy,
+    )
     windows: list[TokenizedTrainingWindow] = []
     for window_index, (input_ids, attention_mask, offsets) in enumerate(
         zip(input_rows, attention_rows, offset_rows, strict=True)
@@ -109,9 +117,15 @@ def project_record_to_token_windows(
             _IGNORE_INDEX if start == end else label_to_id["O"]
             for start, end in offsets
         ]
+        masked_token_indices: set[int] = set()
         for entity_index, entity in enumerate(record.entities):
             token_indices = _overlapping_token_indices(entity, offsets)
             if not token_indices:
+                continue
+            if owners[entity_index] is None:
+                # MODEL: a subword crossing a gold boundary cannot carry a truthful BIO label.
+                # Mask it from loss instead of widening the immutable raw annotation.
+                masked_token_indices.update(token_indices)
                 continue
             if owners[entity_index] != window_index:
                 for token_index in token_indices:
@@ -121,6 +135,8 @@ def project_record_to_token_windows(
             for entity_token_index, token_index in enumerate(token_indices):
                 prefix = "B" if entity_token_index == 0 else "I"
                 labels[token_index] = label_to_id[f"{prefix}-{entity.label}"]
+        for token_index in masked_token_indices:
+            labels[token_index] = _IGNORE_INDEX
 
         token_type_ids = None
         if token_type_rows is not None:
@@ -142,6 +158,43 @@ def project_record_to_token_windows(
     if not windows:
         raise ValueError(f"Tokenizer produced no windows for record {record.record_id!r}")
     return tuple(windows)
+
+
+def find_unaligned_annotations(
+    record: SpanTrainingRecord,
+    tokenizer: FastTokenizerPort,
+    *,
+    max_length: int,
+    stride: int,
+) -> tuple[SpanTrainingEntity, ...]:
+    """Return exact raw spans that this tokenizer cannot represent as BIO tokens.
+
+    The source annotation remains valid. This diagnostic only describes a limitation of the
+    selected tokenizer, such as a drug ending inside a malformed concatenated word.
+    """
+
+    if not bool(getattr(tokenizer, "is_fast", False)):
+        raise ValueError("Token-classifier training requires a fast tokenizer")
+    encoded = tokenizer(
+        record.text,
+        truncation=True,
+        max_length=max_length,
+        stride=stride,
+        return_offsets_mapping=True,
+        return_overflowing_tokens=True,
+        padding=False,
+    )
+    offset_rows = _offset_rows(encoded.get("offset_mapping"))
+    owners = _assign_entity_owners(
+        record.entities,
+        offset_rows,
+        unaligned_span_policy="mask",
+    )
+    return tuple(
+        entity
+        for entity_index, entity in enumerate(record.entities)
+        if owners[entity_index] is None
+    )
 
 
 def decode_bio_spans(
@@ -234,8 +287,12 @@ def compute_bio_span_metrics(
 def _assign_entity_owners(
     entities: Sequence[SpanTrainingEntity],
     offset_rows: Sequence[Sequence[tuple[int, int]]],
-) -> dict[int, int]:
-    owners: dict[int, int] = {}
+    *,
+    unaligned_span_policy: TokenAlignmentPolicy,
+) -> dict[int, int | None]:
+    if unaligned_span_policy not in {"error", "mask"}:
+        raise ValueError(f"Unsupported unaligned span policy {unaligned_span_policy!r}")
+    owners: dict[int, int | None] = {}
     for entity_index, entity in enumerate(entities):
         candidates: list[tuple[int, int]] = []
         alignment_errors: list[TokenBoundaryAlignmentError] = []
@@ -255,6 +312,9 @@ def _assign_entity_owners(
             right_context = visible[-1][1] - entity.end
             candidates.append((min(left_context, right_context), window_index))
         if not candidates:
+            if unaligned_span_policy == "mask":
+                owners[entity_index] = None
+                continue
             if alignment_errors:
                 raise alignment_errors[0]
             raise TokenBoundaryAlignmentError(

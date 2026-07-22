@@ -47,6 +47,7 @@ def test_phase1_run_spec_pins_five_type_dataset_and_full_gpu_schedule() -> None:
     assert spec.training.epochs == 3.0
     assert spec.training.bf16 is True
     assert spec.training.full_determinism is True
+    assert spec.training.unaligned_span_policy == "mask"
 
 
 def test_run_spec_paths_are_stable_from_another_working_directory(

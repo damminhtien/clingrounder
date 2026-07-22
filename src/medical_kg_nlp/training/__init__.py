@@ -24,10 +24,12 @@ from medical_kg_nlp.training.span_dataset import (
 )
 from medical_kg_nlp.training.token_labels import (
     FastTokenizerPort,
+    TokenAlignmentPolicy,
     TokenBoundaryAlignmentError,
     TokenizedTrainingWindow,
     compute_bio_span_metrics,
     decode_bio_spans,
+    find_unaligned_annotations,
     project_record_to_token_windows,
 )
 
@@ -37,6 +39,7 @@ __all__ = [
     "SpanDatasetSummary",
     "SpanTrainingEntity",
     "SpanTrainingRecord",
+    "TokenAlignmentPolicy",
     "TokenBoundaryAlignmentError",
     "TokenClassifierTrainingConfig",
     "TokenClassifierRunSpec",
@@ -45,6 +48,7 @@ __all__ = [
     "assert_local_gpu_runtime",
     "compute_bio_span_metrics",
     "decode_bio_spans",
+    "find_unaligned_annotations",
     "inspect_token_classifier_training_inputs",
     "inspect_local_runtime",
     "iter_span_training_records",
