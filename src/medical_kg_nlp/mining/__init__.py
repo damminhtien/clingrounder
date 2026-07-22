@@ -119,6 +119,7 @@ from medical_kg_nlp.mining.records import (
     SourceArtifact,
     SourceRequest,
     StoredObject,
+    content_addressed_object_uri,
 )
 from medical_kg_nlp.mining.reconciliation import (
     DocumentCanonicalMapping,
@@ -291,6 +292,7 @@ __all__ = [
     "build_mining_release_lock",
     "build_linked_alias_proposals",
     "compile_knowledge_graph",
+    "content_addressed_object_uri",
     "benchmark_recognition_dictionary",
     "build_mention_inventory",
     "crosswalk_mentions",

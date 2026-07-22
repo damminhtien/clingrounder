@@ -24,6 +24,7 @@ __all__ = [
     "SourceArtifact",
     "SourceRequest",
     "StoredObject",
+    "content_addressed_object_uri",
 ]
 
 
@@ -80,6 +81,13 @@ class StoredObject:
             raise ValueError("Stored object byte_size must be non-negative")
         if not self.uri.strip():
             raise ValueError("Stored object uri must be non-empty")
+
+
+def content_addressed_object_uri(sha256: str) -> str:
+    """Return a storage-root-independent URI for one immutable object."""
+
+    _validate_sha256(sha256, field_name="stored object sha256")
+    return f"medical-kg-cas://sha256/{sha256}"
 
 
 @dataclass(frozen=True)

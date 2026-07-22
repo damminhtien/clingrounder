@@ -19,6 +19,7 @@ from medical_kg_nlp.mining import (
     RedistributionPolicy,
     ReviewStatus,
 )
+from medical_kg_nlp.mining.io import load_source_artifacts
 
 
 def test_local_artifact_store_is_content_addressed_and_idempotent(tmp_path: Path) -> None:
@@ -29,11 +30,47 @@ def test_local_artifact_store_is_content_addressed_and_idempotent(tmp_path: Path
 
     assert first == second
     assert first.sha256 == hashlib.sha256(b"clinical text").hexdigest()
+    assert first.uri == f"medical-kg-cas://sha256/{first.sha256}"
+    assert str(tmp_path) not in first.uri
     assert store.exists(first.sha256)
     with store.open(first.sha256) as handle:
         assert handle.read() == b"clinical text"
     metadata = next((tmp_path / "data" / "metadata").rglob("*.json"))
     assert json.loads(metadata.read_text(encoding="utf-8"))["metadata"]["source"] == "fixture"
+
+
+def test_legacy_source_manifest_uri_is_migrated_to_portable_cas(tmp_path: Path) -> None:
+    digest = "a" * 64
+    manifest = tmp_path / "artifacts.jsonl"
+    manifest.write_text(
+        json.dumps(
+            {
+                "artifact_id": "fixture:artifact",
+                "source_id": "fixture",
+                "source_version": "v1",
+                "source_uri": "https://example.test/source.zip",
+                "object": {
+                    "sha256": digest,
+                    "uri": f"file://{tmp_path}/objects/{digest}",
+                    "byte_size": 1,
+                },
+                "media_type": "application/zip",
+                "license_id": "fixture-license",
+                "access_class": "open",
+                "redistribution": "allowed",
+                "hosted_processing_allowed": True,
+                "retrieved_at": "2026-07-22T00:00:00+00:00",
+                "metadata": {},
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    artifact = load_source_artifacts(manifest)[0]
+
+    assert artifact.object.uri == f"medical-kg-cas://sha256/{digest}"
 
 
 def test_annotation_proposal_validates_raw_offsets() -> None:

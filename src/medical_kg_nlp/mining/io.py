@@ -21,6 +21,7 @@ from medical_kg_nlp.mining.records import (
     ReviewStatus,
     SourceArtifact,
     StoredObject,
+    content_addressed_object_uri,
 )
 
 __all__ = [
@@ -44,14 +45,17 @@ T = TypeVar("T")
 def source_artifact_from_dict(raw: Mapping[str, Any]) -> SourceArtifact:
     stored = _mapping(raw.get("object"), "object")
     metadata = _string_mapping(raw.get("metadata", {}), "metadata")
+    object_sha256 = str(stored["sha256"])
     return SourceArtifact(
         artifact_id=str(raw["artifact_id"]),
         source_id=str(raw["source_id"]),
         source_version=str(raw["source_version"]),
         source_uri=str(raw["source_uri"]),
         object=StoredObject(
-            sha256=str(stored["sha256"]),
-            uri=str(stored["uri"]),
+            sha256=object_sha256,
+            # INVARIANT: reading an older manifest migrates host/S3 paths into
+            # the portable CAS namespace. The configured store resolves bytes.
+            uri=content_addressed_object_uri(object_sha256),
             byte_size=int(stored["byte_size"]),
         ),
         media_type=str(raw["media_type"]),

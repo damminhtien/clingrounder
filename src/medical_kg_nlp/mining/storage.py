@@ -11,7 +11,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, BinaryIO, cast
 
-from medical_kg_nlp.mining.records import StoredObject
+from medical_kg_nlp.mining.records import StoredObject, content_addressed_object_uri
 
 __all__ = ["FsspecArtifactStore", "LocalArtifactStore"]
 
@@ -55,7 +55,8 @@ class LocalArtifactStore:
             self._write_metadata(sha256, byte_size=byte_size, metadata=metadata)
             return StoredObject(
                 sha256=sha256,
-                uri=object_path.resolve().as_uri(),
+                # INVARIANT: artifact manifests identify bytes, not workstation mounts.
+                uri=content_addressed_object_uri(sha256),
                 byte_size=byte_size,
             )
         finally:
@@ -108,7 +109,6 @@ class FsspecArtifactStore:
         filesystem, root = fsspec.core.url_to_fs(root_uri, **dict(storage_options or {}))
         self._filesystem = filesystem
         self._root = str(root).rstrip("/")
-        self._protocol = str(filesystem.protocol[0] if isinstance(filesystem.protocol, tuple) else filesystem.protocol)
 
     def put_stream(self, stream: BinaryIO, *, metadata: Mapping[str, str]) -> StoredObject:
         digest = hashlib.sha256()
@@ -139,7 +139,8 @@ class FsspecArtifactStore:
                     handle.write(payload)
             return StoredObject(
                 sha256=sha256,
-                uri=f"{self._protocol}://{destination}",
+                # PRIVACY: bucket names and credentials do not belong in portable manifests.
+                uri=content_addressed_object_uri(sha256),
                 byte_size=byte_size,
             )
         finally:

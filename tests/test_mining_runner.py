@@ -94,6 +94,10 @@ def test_plan_resolves_relative_paths_and_resumes_completed_stages(
     assert (tmp_path / "snapshot" / "manifest.json").is_file()
     result = json.loads((tmp_path / "work" / "run_result.json").read_text())
     assert result["document_count"] == 2
+    assert result["path_base"] == "mining_plan_directory"
+    assert result["work_dir"] == "work"
+    assert result["artifact_manifest"] == "work/artifacts.jsonl"
+    assert str(tmp_path) not in json.dumps(result)
 
 
 def test_data_registry_cli_is_installed_and_task_neutral(
@@ -123,12 +127,18 @@ def test_full_dailymed_plan_pins_every_human_release_part(
 ) -> None:
     monkeypatch.setenv("MEDICAL_KG_ARTIFACT_STORE", str(tmp_path / "external-store"))
 
-    plan = load_mining_plan("configs/mining/dailymed-full-human-2026-07-17.yaml")
+    plan = load_mining_plan("configs/mining/dailymed-full-human-2026-07-21.yaml")
     artifacts = plan.sources[0].parameters["artifacts"]
 
     assert len(artifacts) == 17
     assert sum(int(artifact["metadata"]["expected_spl_count"]) for artifact in artifacts) == (
-        143_247
+        143_329
     )
     assert all(len(artifact["metadata"]["source_md5"]) == 32 for artifact in artifacts)
     assert plan.snapshot is None
+
+    pilot = load_mining_plan(
+        "configs/mining/dailymed-human-rx-part6-2026-07-21.yaml"
+    )
+    pilot_artifact = pilot.sources[0].parameters["artifacts"][0]
+    assert pilot_artifact == artifacts[5]

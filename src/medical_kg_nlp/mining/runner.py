@@ -112,6 +112,7 @@ class MiningPlanResult(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    path_base: Literal["mining_plan_directory"] = "mining_plan_directory"
     work_dir: str
     artifact_manifest: str
     document_manifest: str
@@ -168,6 +169,7 @@ def load_mining_plan(path: str | Path) -> MiningPlan:
 def run_mining_plan(path: str | Path) -> MiningPlanResult:
     """Execute acquisition, parsing, and optional freezing with stage-level resume."""
 
+    plan_path = Path(path).resolve()
     plan = load_mining_plan(path)
     registry = load_source_registry(plan.registry)
     policy_gate = SourcePolicyGate(registry)
@@ -205,6 +207,12 @@ def run_mining_plan(path: str | Path) -> MiningPlanResult:
         state = _load_stage_state(state_path)
         if artifact_path.is_file() and state.get("acquisition") == "complete":
             artifacts = load_source_artifacts(artifact_path)
+            # INVARIANT: rewriting also migrates legacy file:// or bucket URIs
+            # to the storage-root-independent CAS namespace.
+            write_jsonl(
+                artifact_path,
+                (artifact.to_dict() for artifact in artifacts),
+            )
             cache_hits += 1
         else:
             stage_dir.mkdir(parents=True, exist_ok=True)
@@ -308,9 +316,15 @@ def run_mining_plan(path: str | Path) -> MiningPlanResult:
         snapshot_id = snapshot.snapshot_id
 
     result = MiningPlanResult(
-        work_dir=str(work_dir),
-        artifact_manifest=str(artifact_manifest),
-        document_manifest=str(document_manifest),
+        work_dir=_relative_plan_path(work_dir, base=plan_path.parent),
+        artifact_manifest=_relative_plan_path(
+            artifact_manifest,
+            base=plan_path.parent,
+        ),
+        document_manifest=_relative_plan_path(
+            document_manifest,
+            base=plan_path.parent,
+        ),
         artifact_count=len(unique_artifacts),
         document_count=final_documents.document_count,
         cache_hits=cache_hits,
@@ -319,6 +333,11 @@ def run_mining_plan(path: str | Path) -> MiningPlanResult:
     )
     write_json(work_dir / "run_result.json", result.model_dump(mode="json"))
     return result
+
+
+def _relative_plan_path(path: str | Path, *, base: Path) -> str:
+    # INVARIANT: run metadata must survive relocating the repository or data tree.
+    return Path(os.path.relpath(Path(path).resolve(), start=base.resolve())).as_posix()
 
 
 def sync_source(
