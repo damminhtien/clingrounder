@@ -17,6 +17,7 @@ from medical_kg_nlp.adapters import (
     HuggingFaceTextEncoderAdapter,
     HuggingFaceTokenClassifierAdapter,
     HybridEntityExtractorAdapter,
+    MedicationMentionEntityExtractorAdapter,
     OptionalModelDependencyError,
 )
 from medical_kg_nlp.adapters.huggingface import runtime as huggingface_runtime
@@ -45,6 +46,8 @@ def test_model_config_requires_pinned_identity() -> None:
                 "batch_size": 4,
                 "max_length": 128,
                 "label_map": {"PROBLEM": "DISEASE"},
+                "default_confidence_threshold": 0.4,
+                "confidence_thresholds": {"SYMPTOM": 0.85, "LAB_RESULT": 0.9},
             }
         }
     )
@@ -52,7 +55,23 @@ def test_model_config_requires_pinned_identity() -> None:
     assert config.entity_extractor is not None
     assert config.entity_extractor.provenance == "local/model@abc123"
     assert config.entity_label_map == (("PROBLEM", EntityType.DISEASE),)
+    assert config.entity_default_confidence_threshold == 0.4
+    assert config.entity_confidence_thresholds == (
+        (EntityType.LAB_RESULT, 0.9),
+        (EntityType.SYMPTOM, 0.85),
+    )
     assert config.entity_combine_with_dictionary is False
+
+    with pytest.raises(ValueError, match="unknown entity type"):
+        PipelineModelConfig.from_mapping(
+            {
+                "entity_extractor": {
+                    "model_id": "local/model",
+                    "revision": "abc123",
+                    "confidence_thresholds": {"NOT_A_TYPE": 0.5},
+                }
+            }
+        )
 
 
 def test_model_adapter_construction_does_not_import_optional_dependencies(
@@ -128,6 +147,23 @@ def test_token_classifier_projects_fast_tokenizer_offsets(
     entities[0].validate_offsets("đau ngực")
 
 
+def test_token_classifier_applies_per_type_threshold_before_emission(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    adapter = HuggingFaceTokenClassifierAdapter(
+        _model_config(),
+        stride=8,
+        confidence_thresholds={EntityType.SYMPTOM: 0.95},
+    )
+    monkeypatch.setattr(
+        adapter,
+        "_runtime",
+        lambda: (_FakeTorch(), _FakeTokenizer(), _FakeTokenModel()),
+    )
+
+    assert adapter.extract("đau ngực") == []
+
+
 def test_cross_encoder_reranks_without_changing_candidate_identity(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -177,7 +213,9 @@ def test_factory_wires_model_extractor_without_loading_weights(tmp_path: Path) -
 
     runner = PipelineFactory.from_config(config)
 
-    assert isinstance(runner.components.entity_extractor, HuggingFaceTokenClassifierAdapter)
+    extractor = runner.components.entity_extractor
+    assert isinstance(extractor, MedicationMentionEntityExtractorAdapter)
+    assert isinstance(extractor.extractor, HuggingFaceTokenClassifierAdapter)
 
 
 def test_factory_can_combine_model_with_reviewed_dictionary(tmp_path: Path) -> None:
@@ -205,7 +243,9 @@ def test_factory_can_combine_model_with_reviewed_dictionary(tmp_path: Path) -> N
 
     runner = PipelineFactory.from_config(config)
 
-    assert isinstance(runner.components.entity_extractor, HybridEntityExtractorAdapter)
+    extractor = runner.components.entity_extractor
+    assert isinstance(extractor, HybridEntityExtractorAdapter)
+    assert isinstance(extractor.model, MedicationMentionEntityExtractorAdapter)
 
 
 def test_factory_wires_cross_encoder_without_loading_weights(tmp_path: Path) -> None:

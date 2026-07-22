@@ -29,12 +29,16 @@ class HuggingFaceTokenClassifierAdapter:
         *,
         label_map: Mapping[str, EntityType] | None = None,
         stride: int = 64,
+        confidence_thresholds: Mapping[EntityType, float] | None = None,
+        default_confidence_threshold: float = 0.0,
     ) -> None:
         if stride < 0 or stride >= config.max_length - 2:
             raise ValueError("stride must fit inside max_length")
         self.config = config
         self.label_map = dict(label_map or {})
         self.stride = stride
+        self.confidence_thresholds = dict(confidence_thresholds or {})
+        self.default_confidence_threshold = default_confidence_threshold
         self._loaded: tuple[Any, Any, Any] | None = None
 
     def extract(self, source_text: str) -> list[EntityAnnotation]:
@@ -100,6 +104,8 @@ class HuggingFaceTokenClassifierAdapter:
             source_text,
             predictions,
             label_map=self.label_map,
+            confidence_thresholds=self.confidence_thresholds,
+            default_confidence_threshold=self.default_confidence_threshold,
         )
         entities: list[EntityAnnotation] = []
         for index, item in enumerate(projected, start=1):

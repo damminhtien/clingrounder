@@ -40,6 +40,8 @@ def project_bio_predictions(
     predictions: Sequence[TokenPrediction],
     *,
     label_map: Mapping[str, EntityType] | None = None,
+    confidence_thresholds: Mapping[EntityType, float] | None = None,
+    default_confidence_threshold: float = 0.0,
 ) -> list[ProjectedEntity]:
     """Merge BIO/BIOES tokens and reject projections not backed by raw text.
 
@@ -48,7 +50,12 @@ def project_bio_predictions(
     are resolved by confidence and span length.
     """
 
+    if not 0.0 <= default_confidence_threshold <= 1.0:
+        raise ValueError("default_confidence_threshold must be between 0 and 1")
     mapped_labels = label_map or {}
+    thresholds = confidence_thresholds or {}
+    if any(not 0.0 <= threshold <= 1.0 for threshold in thresholds.values()):
+        raise ValueError("confidence thresholds must be between 0 and 1")
     best_by_span: dict[tuple[int, int], TokenPrediction] = {}
     for prediction in predictions:
         if not 0 <= prediction.start < prediction.end <= len(source_text):
@@ -113,7 +120,15 @@ def project_bio_predictions(
             flush()
 
     flush()
-    return _resolve_entity_overlaps(decoded)
+    # MODEL: threshold before overlap resolution so a rejected high-scoring type cannot suppress
+    # a valid proposal of another type that occupies the same source region.
+    accepted = [
+        entity
+        for entity in decoded
+        if entity.confidence
+        >= thresholds.get(entity.entity_type, default_confidence_threshold)
+    ]
+    return _resolve_entity_overlaps(accepted)
 
 
 def _decode_label(

@@ -17,6 +17,7 @@ from medical_kg_nlp.adapters.huggingface import (
     HuggingFaceCrossEncoderAdapter,
     HuggingFaceTokenClassifierAdapter,
 )
+from medical_kg_nlp.adapters.medication import MedicationMentionEntityExtractorAdapter
 from medical_kg_nlp.context.assertion import AssertionClassifier
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.merge import merge_concept_entries
@@ -206,10 +207,20 @@ class PipelineFactory:
             )
         entity_extractor: EntityExtractorPort
         if resolved.models.entity_extractor is not None:
-            model_entity_extractor = HuggingFaceTokenClassifierAdapter(
-                resolved.models.entity_extractor,
-                label_map=dict(resolved.models.entity_label_map),
-                stride=resolved.models.entity_stride,
+            model_entity_extractor: EntityExtractorPort = (
+                MedicationMentionEntityExtractorAdapter(
+                    HuggingFaceTokenClassifierAdapter(
+                        resolved.models.entity_extractor,
+                        label_map=dict(resolved.models.entity_label_map),
+                        stride=resolved.models.entity_stride,
+                        confidence_thresholds=dict(
+                            resolved.models.entity_confidence_thresholds
+                        ),
+                        default_confidence_threshold=(
+                            resolved.models.entity_default_confidence_threshold
+                        ),
+                    )
+                )
             )
             if resolved.models.entity_combine_with_dictionary:
                 entity_extractor = HybridEntityExtractorAdapter(

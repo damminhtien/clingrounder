@@ -18,6 +18,8 @@ class PipelineModelConfig:
     entity_extractor: HuggingFaceModelConfig | None = None
     entity_label_map: tuple[tuple[str, EntityType], ...] = ()
     entity_stride: int = 64
+    entity_default_confidence_threshold: float = 0.0
+    entity_confidence_thresholds: tuple[tuple[EntityType, float], ...] = ()
     entity_combine_with_dictionary: bool = False
     candidate_reranker: HuggingFaceModelConfig | None = None
     candidate_reranker_weight: float = 0.75
@@ -47,6 +49,12 @@ class PipelineModelConfig:
         )
         entity_label_map = _label_map(entity_payload or {})
         entity_stride = _integer(entity_payload or {}, "stride", cls.entity_stride)
+        default_confidence_threshold = _probability(
+            entity_payload or {},
+            "default_confidence_threshold",
+            cls.entity_default_confidence_threshold,
+        )
+        confidence_thresholds = _confidence_thresholds(entity_payload or {})
         combine_with_dictionary = _boolean(
             entity_payload or {},
             "combine_with_dictionary",
@@ -72,6 +80,8 @@ class PipelineModelConfig:
             entity_extractor=entity_model,
             entity_label_map=entity_label_map,
             entity_stride=entity_stride,
+            entity_default_confidence_threshold=default_confidence_threshold,
+            entity_confidence_thresholds=confidence_thresholds,
             entity_combine_with_dictionary=combine_with_dictionary,
             candidate_reranker=reranker_model,
             candidate_reranker_weight=reranker_weight,
@@ -102,6 +112,29 @@ def _label_map(payload: Mapping[str, object]) -> tuple[tuple[str, EntityType], .
     )
 
 
+def _confidence_thresholds(
+    payload: Mapping[str, object],
+) -> tuple[tuple[EntityType, float], ...]:
+    raw = payload.get("confidence_thresholds", {})
+    if not isinstance(raw, Mapping):
+        raise ValueError("models.entity_extractor.confidence_thresholds must be a mapping")
+    thresholds: list[tuple[EntityType, float]] = []
+    for raw_entity_type, raw_threshold in raw.items():
+        try:
+            entity_type = EntityType(str(raw_entity_type).upper())
+        except ValueError as exc:
+            raise ValueError(
+                "models.entity_extractor.confidence_thresholds has unknown entity type "
+                f"{raw_entity_type!r}"
+            ) from exc
+        threshold = _probability_value(
+            raw_threshold,
+            f"models.entity_extractor.confidence_thresholds.{entity_type.value}",
+        )
+        thresholds.append((entity_type, threshold))
+    return tuple(sorted(thresholds, key=lambda item: item[0].value))
+
+
 def _integer(payload: Mapping[str, object], key: str, default: int) -> int:
     value = payload.get(key, default)
     if isinstance(value, bool) or not isinstance(value, int):
@@ -117,10 +150,13 @@ def _boolean(payload: Mapping[str, object], key: str, default: bool) -> bool:
 
 
 def _probability(payload: Mapping[str, object], key: str, default: float) -> float:
-    value = payload.get(key, default)
+    return _probability_value(payload.get(key, default), f"models.{key}")
+
+
+def _probability_value(value: object, path: str) -> float:
     if isinstance(value, bool) or not isinstance(value, int | float):
-        raise ValueError(f"models.{key} must be numeric")
+        raise ValueError(f"{path} must be numeric")
     result = float(value)
     if not 0.0 <= result <= 1.0:
-        raise ValueError(f"models.{key} must be between 0 and 1")
+        raise ValueError(f"{path} must be between 0 and 1")
     return result
