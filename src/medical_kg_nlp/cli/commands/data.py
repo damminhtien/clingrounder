@@ -26,6 +26,7 @@ from medical_kg_nlp.mining.crosswalk_links import (
     load_crosswalk_rows,
     materialize_exact_crosswalk_links,
 )
+from medical_kg_nlp.mining.dedup import StableTextDeduplicator
 from medical_kg_nlp.mining.curation import (
     curate_annotations,
     load_annotation_curation_policy,
@@ -1231,6 +1232,9 @@ def freeze_snapshot(args: argparse.Namespace) -> int:
             hash_salt=args.hash_salt,
             max_synthetic_train_fraction=args.max_synthetic_fraction,
         ),
+        # SCALING: source group IDs already isolate DailyMed label families, so
+        # callers may skip expensive whole-document SimHash while retaining exact dedup.
+        deduplicator=StableTextDeduplicator(include_near=args.dedup_mode == "near"),
         agreement_gate=(None if args.skip_agreement_gate else GoldAgreementGate()),
     ).freeze(
         version=args.version,

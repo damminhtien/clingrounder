@@ -56,3 +56,22 @@ def test_group_api_is_derived_from_auditable_group_records() -> None:
     assert len(groups) == 1
     assert groups[0].kind is DuplicateGroupKind.NEAR
     assert assignments == {"left": groups[0].group_id, "right": groups[0].group_id}
+
+
+def test_exact_mode_skips_near_matching_but_keeps_normalized_duplicates() -> None:
+    documents = (
+        _document("left", "đau đầu dữ dội kéo dài " * 5 + "ba ngày"),
+        _document("right", "đau đầu dữ dội kéo dài " * 5 + "bốn ngày"),
+        _document("normalized-a", " Sốt   và ho "),
+        _document("normalized-b", "sốt và ho"),
+    )
+
+    groups = StableTextDeduplicator(include_near=False).describe_groups(documents)
+    by_members = {group.document_ids: group for group in groups}
+
+    assert by_members[("left",)].kind is DuplicateGroupKind.SINGLETON
+    assert by_members[("right",)].kind is DuplicateGroupKind.SINGLETON
+    assert (
+        by_members[("normalized-a", "normalized-b")].kind
+        is DuplicateGroupKind.NORMALIZED_EXACT
+    )

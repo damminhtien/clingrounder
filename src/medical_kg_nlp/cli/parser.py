@@ -908,6 +908,15 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     snapshot_freeze.add_argument("--challenge-source", action="append", default=[])
     snapshot_freeze.add_argument("--challenge-template", action="append", default=[])
     snapshot_freeze.add_argument("--hash-salt", default="medical-kg-snapshot-v1")
+    snapshot_freeze.add_argument(
+        "--dedup-mode",
+        choices=("near", "exact"),
+        default="near",
+        help=(
+            "Use exact for very large source-grouped corpora; near computes SimHash "
+            "over every document."
+        ),
+    )
     snapshot_freeze.add_argument("--max-synthetic-fraction", type=float, default=0.4)
     snapshot_freeze.add_argument("--manifest-only", action="store_true")
     snapshot_freeze.add_argument("--skip-agreement-gate", action="store_true")

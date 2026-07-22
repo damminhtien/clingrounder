@@ -49,15 +49,22 @@ class DuplicateGroup:
 
 
 class StableTextDeduplicator:
-    """Group normalized duplicates and SimHash-near documents without quadratic scans."""
+    """Group normalized duplicates and optionally SimHash-near documents."""
 
-    def __init__(self, *, hamming_threshold: int = 3, bands: int = 4) -> None:
+    def __init__(
+        self,
+        *,
+        hamming_threshold: int = 3,
+        bands: int = 4,
+        include_near: bool = True,
+    ) -> None:
         if not 0 <= hamming_threshold <= 16:
             raise ValueError("hamming_threshold must be between 0 and 16")
         if bands <= 0 or 64 % bands:
             raise ValueError("bands must be a positive divisor of 64")
         self.hamming_threshold = hamming_threshold
         self.bands = bands
+        self.include_near = include_near
 
     def group(self, documents: Sequence[MinedDocument]) -> Mapping[str, str]:
         """Return document-to-group assignments for leakage-safe splitting."""
@@ -92,26 +99,29 @@ class StableTextDeduplicator:
         for index, document in enumerate(ordered):
             normalized = _normalize(document.text)
             normalized_hash = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
-            fingerprint = _simhash(normalized)
             normalized_hashes.append(normalized_hash)
-            fingerprints.append(fingerprint)
 
             for candidate in exact_buckets[normalized_hash]:
                 _union(parent, index, candidate)
             exact_buckets[normalized_hash].append(index)
 
-            candidates: set[int] = set()
-            for band in range(self.bands):
-                shift = band * band_width
-                key = (band, (fingerprint >> shift) & ((1 << band_width) - 1))
-                candidates.update(lsh_buckets[key])
-            for candidate in sorted(candidates):
-                if (fingerprint ^ fingerprints[candidate]).bit_count() <= self.hamming_threshold:
-                    _union(parent, index, candidate)
-            for band in range(self.bands):
-                shift = band * band_width
-                key = (band, (fingerprint >> shift) & ((1 << band_width) - 1))
-                lsh_buckets[key].append(index)
+            if self.include_near:
+                fingerprint = _simhash(normalized)
+                candidates: set[int] = set()
+                for band in range(self.bands):
+                    shift = band * band_width
+                    key = (band, (fingerprint >> shift) & ((1 << band_width) - 1))
+                    candidates.update(lsh_buckets[key])
+                for candidate in sorted(candidates):
+                    if (
+                        fingerprint ^ fingerprints[candidate]
+                    ).bit_count() <= self.hamming_threshold:
+                        _union(parent, index, candidate)
+                for band in range(self.bands):
+                    shift = band * band_width
+                    key = (band, (fingerprint >> shift) & ((1 << band_width) - 1))
+                    lsh_buckets[key].append(index)
+                fingerprints.append(fingerprint)
 
         members: dict[int, list[int]] = defaultdict(list)
         for index in range(len(ordered)):
