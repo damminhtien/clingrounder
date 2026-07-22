@@ -2,7 +2,8 @@ terminology:
   # General pipeline profile: compact seed recognition plus reviewed VN clinical terms.
   recognition_path: data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
   additional_recognition_path: data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl
-  abbreviation_path: data/dictionaries/abbreviations.jsonl
+  # English source abbreviations complement the VN lexicon and remain type-filtered at retrieval.
+  abbreviation_path: outputs/mining/knowledge/dailymed-rx-part6-abbreviations-2026-07-22/runtime_abbreviations.jsonl
   alias_overlay_path: data/dictionaries/vietnamese_medical_alias.jsonl
   normalization_paths:
     - data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl

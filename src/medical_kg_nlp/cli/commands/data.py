@@ -15,6 +15,13 @@ import yaml
 from medical_kg_nlp.mining.annotation_manifest import (
     materialize_annotation_manifest,
 )
+from medical_kg_nlp.mining.abbreviations import (
+    benchmark_abbreviation_knowledge,
+    build_runtime_abbreviation_table,
+    load_abbreviation_mining_policy,
+    load_snapshot_splits,
+    mine_abbreviations,
+)
 from medical_kg_nlp.mining.coverage import CoverageCubePlanner, CoverageTarget
 from medical_kg_nlp.mining.cooccurrence import (
     load_cooccurrence_policy,
@@ -161,6 +168,7 @@ __all__ = [
     "link_dailymed_products",
     "lock_mining_release",
     "materialize_artifact",
+    "mine_abbreviation_knowledge",
     "mine_cooccurrence",
     "propose_labels",
     "propose_dailymed_product_aliases",
@@ -454,9 +462,7 @@ def harmonize_dataset(args: argparse.Namespace) -> int:
             "policy": str(Path(args.policy)),
             "policy_sha256": sha256_file(args.policy),
             "terminology_index": str(Path(args.index)),
-            "terminology_input_fingerprint": repository.metadata.get(
-                "input_fingerprint", ""
-            ),
+            "terminology_input_fingerprint": repository.metadata.get("input_fingerprint", ""),
         },
         "outputs": {
             "annotations": str(Path(args.output)),
@@ -561,9 +567,7 @@ def build_lexicon(args: argparse.Namespace) -> int:
                 None if args.split_manifest is None else str(Path(args.split_manifest))
             ),
             "split_manifest_sha256": (
-                None
-                if args.split_manifest is None
-                else sha256_file(args.split_manifest)
+                None if args.split_manifest is None else sha256_file(args.split_manifest)
             ),
             "split": args.split,
         },
@@ -655,9 +659,7 @@ def propose_dailymed_product_aliases(args: argparse.Namespace) -> int:
         {
             "split": args.split,
             "proposal_count": len(result.proposals),
-            "ambiguous_target_alias_count": result.report[
-                "ambiguous_target_alias_count"
-            ],
+            "ambiguous_target_alias_count": result.report["ambiguous_target_alias_count"],
             "output": args.output,
             "report": args.report_output,
         }
@@ -798,6 +800,108 @@ def compile_rxnorm_ndc(args: argparse.Namespace) -> int:
     return 0
 
 
+def mine_abbreviation_knowledge(args: argparse.Namespace) -> int:
+    """Mine split-safe definitions and benchmark their retrieval contribution."""
+
+    if bool(args.index) != bool(args.source):
+        raise ValueError("--index and at least one --source must be provided together")
+    policy = load_abbreviation_mining_policy(args.policy)
+    base_rows = tuple(row for path in args.base_abbreviations for row in _load_jsonl_mappings(path))
+    result = mine_abbreviations(
+        iter_documents(args.documents),
+        load_source_artifacts(args.artifacts),
+        load_snapshot_splits(args.split_manifest),
+        policy,
+        base_abbreviation_rows=base_rows,
+    )
+    definitions_sha256 = write_jsonl(args.definitions_output, result.definitions)
+    candidates_sha256 = write_jsonl(args.candidates_output, result.candidates)
+    table_sha256 = write_jsonl(args.table_output, result.abbreviation_table)
+    runtime_table = build_runtime_abbreviation_table(base_rows, result.abbreviation_table)
+    runtime_table_sha256 = write_jsonl(args.runtime_table_output, runtime_table)
+    conflicts_sha256 = write_jsonl(args.conflicts_output, result.conflicts)
+
+    repository = None
+    terminology_metadata: dict[str, str] = {}
+    if args.index:
+        repository = SQLiteTerminologyRepository(
+            args.index,
+            expected_source_paths=tuple(args.source),
+            expected_alias_overlay_paths=tuple(args.alias_overlay),
+        )
+        terminology_metadata = dict(repository.metadata)
+    try:
+        benchmark = benchmark_abbreviation_knowledge(
+            result.definitions,
+            base_rows,
+            result.abbreviation_table,
+            evaluation_splits=policy.evaluation_splits,
+            repository=repository,
+            retrieval_limit=args.retrieval_limit,
+        )
+    finally:
+        if repository is not None:
+            repository.close()
+    benchmark_sha256 = write_json(args.benchmark_output, benchmark)
+
+    # Rebuild evidence uses content fingerprints rather than machine-specific absolute paths.
+    report = {
+        **result.report,
+        "runtime_abbreviation_table_count": len(runtime_table),
+        "inputs": {
+            "documents": str(Path(args.documents)),
+            "documents_sha256": sha256_file(args.documents),
+            "artifacts": str(Path(args.artifacts)),
+            "artifacts_sha256": sha256_file(args.artifacts),
+            "split_manifest": str(Path(args.split_manifest)),
+            "split_manifest_sha256": sha256_file(args.split_manifest),
+            "policy": str(Path(args.policy)),
+            "policy_sha256": sha256_file(args.policy),
+            "base_abbreviations": [str(Path(path)) for path in args.base_abbreviations],
+            "base_abbreviation_sha256": [sha256_file(path) for path in args.base_abbreviations],
+            "terminology_index": None if not args.index else str(Path(args.index)),
+            "terminology_input_fingerprint": terminology_metadata.get("input_fingerprint", ""),
+        },
+        "outputs": {
+            "definitions": str(Path(args.definitions_output)),
+            "definitions_sha256": definitions_sha256,
+            "candidates": str(Path(args.candidates_output)),
+            "candidates_sha256": candidates_sha256,
+            "abbreviation_table": str(Path(args.table_output)),
+            "abbreviation_table_sha256": table_sha256,
+            "runtime_abbreviation_table": str(Path(args.runtime_table_output)),
+            "runtime_abbreviation_table_sha256": runtime_table_sha256,
+            "conflicts": str(Path(args.conflicts_output)),
+            "conflicts_sha256": conflicts_sha256,
+            "benchmark": str(Path(args.benchmark_output)),
+            "benchmark_sha256": benchmark_sha256,
+        },
+    }
+    write_json(args.report_output, report)
+    retrieval_summary = benchmark.get("retrieval", {})
+    _print_json(
+        {
+            "definition_count": report["definition_count"],
+            "candidate_count": report["candidate_count"],
+            "abbreviation_table_count": report["abbreviation_table_count"],
+            "runtime_abbreviation_table_count": len(runtime_table),
+            "conflict_count": report["conflict_count"],
+            "benchmark": {
+                "baseline": benchmark["baseline"],
+                "enriched": benchmark["enriched"],
+                "unique_pairs": benchmark["unique_pairs"],
+                "retrieval": {
+                    key: value
+                    for key, value in retrieval_summary.items()
+                    if key != "cases"
+                },
+            },
+            "report": args.report_output,
+        }
+    )
+    return 0
+
+
 def link_dailymed_products(args: argparse.Namespace) -> int:
     """Join two official source identities and withhold every ambiguous product."""
 
@@ -889,16 +993,12 @@ def compile_graph_knowledge(args: argparse.Namespace) -> int:
                 or defaults.accepted_layers
             ),
             accepted_review_statuses=(
-                tuple(
-                    ReviewStatus(value) for value in args.accepted_review_status
-                )
+                tuple(ReviewStatus(value) for value in args.accepted_review_status)
                 or defaults.accepted_review_statuses
             ),
             include_entity_types=tuple(args.entity_type),
             include_unlinked_terms=not args.linked_only,
-            include_structured_terminology_relations=(
-                not args.no_structured_terminology_relations
-            ),
+            include_structured_terminology_relations=(not args.no_structured_terminology_relations),
             relation_endpoints_only=args.relation_endpoints_only,
             require_canonical_concepts=args.canonical_concepts_only,
             preferred_code_systems_by_entity_type=(
@@ -926,21 +1026,14 @@ def _parse_preferred_code_systems(
     for raw in values:
         entity_text, separator, system_text = raw.partition("=")
         if not separator:
-            raise ValueError(
-                "--preferred-code-system must use ENTITY_TYPE=CODE_SYSTEM"
-            )
+            raise ValueError("--preferred-code-system must use ENTITY_TYPE=CODE_SYSTEM")
         entity_type = EntityType(entity_text.strip()).value
         code_system = CodeSystem(system_text.strip()).value
         systems = grouped.setdefault(entity_type, [])
         if code_system in systems:
-            raise ValueError(
-                f"Duplicate preferred code system {code_system!r} for {entity_type!r}"
-            )
+            raise ValueError(f"Duplicate preferred code system {code_system!r} for {entity_type!r}")
         systems.append(code_system)
-    return tuple(
-        (entity_type, tuple(systems))
-        for entity_type, systems in sorted(grouped.items())
-    )
+    return tuple((entity_type, tuple(systems)) for entity_type, systems in sorted(grouped.items()))
 
 
 def compile_obo_ontology(args: argparse.Namespace) -> int:
@@ -998,9 +1091,7 @@ def compile_recognition_knowledge_artifact(args: argparse.Namespace) -> int:
             "inventory": str(Path(args.inventory)),
             "inventory_sha256": inventory_sha256,
             "policy": str(Path(args.policy)),
-            "baseline_dictionaries": [
-                str(Path(path)) for path in args.baseline_dictionary
-            ],
+            "baseline_dictionaries": [str(Path(path)) for path in args.baseline_dictionary],
         },
         "outputs": {
             "recognition_dictionary": str(Path(args.output)),
@@ -1120,8 +1211,7 @@ def _validated_batch_proposals(
         document = documents_by_id.get(proposal.document_id)
         if document is None:
             raise ValueError(
-                f"Proposal references a document outside its input batch: "
-                f"{proposal.document_id!r}"
+                f"Proposal references a document outside its input batch: {proposal.document_id!r}"
             )
         proposal.validate_offsets(document)
         yield proposal
@@ -1150,9 +1240,7 @@ def propose_relations(args: argparse.Namespace) -> int:
         if relation.evidence_span is not None:
             start, end = relation.evidence_span
             if start < 0 or end <= start or end > len(document.text):
-                raise ValueError(
-                    f"Relation {relation.relation_id!r} has invalid evidence span"
-                )
+                raise ValueError(f"Relation {relation.relation_id!r} has invalid evidence span")
     ordered = sorted(relations, key=lambda item: item.relation_id)
     write_jsonl(args.output, (relation.to_dict() for relation in ordered))
     _print_json({"relation_count": len(ordered), "output": args.output})
@@ -1194,9 +1282,7 @@ def mine_cooccurrence(args: argparse.Namespace) -> int:
                 None if args.split_manifest is None else str(Path(args.split_manifest))
             ),
             "split_manifest_sha256": (
-                None
-                if args.split_manifest is None
-                else sha256_file(args.split_manifest)
+                None if args.split_manifest is None else sha256_file(args.split_manifest)
             ),
             "split": args.split,
         },
@@ -1209,9 +1295,7 @@ def mine_cooccurrence(args: argparse.Namespace) -> int:
     _print_json(
         {
             "relation_count": len(result.relations),
-            "supported_semantic_pair_count": result.report["counters"][
-                "supported_semantic_pairs"
-            ],
+            "supported_semantic_pair_count": result.report["counters"]["supported_semantic_pairs"],
             "output": args.output,
             "report": args.report_output,
         }

@@ -1,7 +1,7 @@
 terminology:
   # Recognition remains compact; the graph is a constrained normalization retriever only.
   recognition_path: data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
-  abbreviation_path: data/dictionaries/abbreviations.jsonl
+  abbreviation_path: outputs/mining/knowledge/dailymed-rx-part6-abbreviations-2026-07-22/runtime_abbreviations.jsonl
   alias_overlay_path: data/dictionaries/vietnamese_medical_alias.jsonl
   normalization_paths:
     - data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl

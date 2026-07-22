@@ -102,9 +102,7 @@ def _kg_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     reranker_benchmark.add_argument("--annotations", required=True)
     reranker_benchmark.add_argument(
         "--predictions",
-        help=(
-            "Pipeline prediction JSONL required by predicted_ner_exact_unique mode."
-        ),
+        help=("Pipeline prediction JSONL required by predicted_ner_exact_unique mode."),
     )
     reranker_benchmark.add_argument("--output", required=True)
     reranker_benchmark.add_argument("--calibration-split", default="dev")
@@ -145,7 +143,9 @@ def _pipeline_parser(commands: argparse._SubParsersAction[argparse.ArgumentParse
     run.add_argument("--abbreviations")
     run.add_argument("--run-root")
     run.add_argument("--run-label", default="pipeline")
-    run.add_argument("--parallel-backend", choices=("serial", "thread", "process"), default="process")
+    run.add_argument(
+        "--parallel-backend", choices=("serial", "thread", "process"), default="process"
+    )
     run.add_argument("--workers", type=int, default=1)
     run.add_argument("--chunksize", type=int, default=4)
     run.add_argument("--no-fail-fast", action="store_true")
@@ -268,7 +268,9 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     phase1.add_argument("--assertion-policy", choices=("empty", "pipeline"), default="pipeline")
     phase1.add_argument("--candidate-policy", choices=("empty", "pipeline"), default="pipeline")
     phase1.add_argument("--max-candidates", type=int, default=5)
-    phase1.add_argument("--parallel-backend", choices=("serial", "thread", "process"), default="process")
+    phase1.add_argument(
+        "--parallel-backend", choices=("serial", "thread", "process"), default="process"
+    )
     phase1.add_argument("--workers", type=int, default=1)
     phase1.add_argument("--chunksize", type=int, default=4)
 
@@ -360,16 +362,12 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     operations = data.add_subparsers(dest="data_command", required=True)
 
     registry = operations.add_parser("registry", help="Validate source-registry policy.")
-    registry_operations = registry.add_subparsers(
-        dest="data_registry_command", required=True
-    )
+    registry_operations = registry.add_subparsers(dest="data_registry_command", required=True)
     registry_validate = registry_operations.add_parser(
         "validate", help="Validate registry v2 and print a source summary."
     )
     registry_validate.set_defaults(handler="data_registry_validate")
-    registry_validate.add_argument(
-        "--registry", default="data/sources/mining_registry.yaml"
-    )
+    registry_validate.add_argument("--registry", default="data/sources/mining_registry.yaml")
     registry_validate.add_argument(
         "--processing-index",
         help="Optional source-processing status file whose docs/config paths must exist.",
@@ -384,9 +382,7 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         "artifact",
         help="Restore immutable content-addressed source bytes for local processing.",
     )
-    artifact_operations = artifact.add_subparsers(
-        dest="data_artifact_command", required=True
-    )
+    artifact_operations = artifact.add_subparsers(dest="data_artifact_command", required=True)
     artifact_materialize = artifact_operations.add_parser(
         "materialize",
         help="Atomically hydrate one CAS object to a verified local file.",
@@ -412,9 +408,7 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     source_sync.add_argument("--output", required=True)
 
     dataset = operations.add_parser("dataset", help="Build documents from acquired artifacts.")
-    dataset_operations = dataset.add_subparsers(
-        dest="data_dataset_command", required=True
-    )
+    dataset_operations = dataset.add_subparsers(dest="data_dataset_command", required=True)
     dataset_build = dataset_operations.add_parser(
         "build", help="Parse a source artifact manifest into immutable documents."
     )
@@ -458,9 +452,7 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     dataset_reconcile.add_argument("--review-output", required=True)
     dataset_reconcile.add_argument("--mapping-output", required=True)
     dataset_reconcile.add_argument("--report-output", required=True)
-    dataset_reconcile.add_argument(
-        "--labeler-id", default="exact-duplicate-consensus:v1"
-    )
+    dataset_reconcile.add_argument("--labeler-id", default="exact-duplicate-consensus:v1")
     dataset_fuse = dataset_operations.add_parser(
         "fuse",
         help="Fuse source corpora, collapse raw duplicates, and isolate near duplicates.",
@@ -476,9 +468,7 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     dataset_harmonize.add_argument("--annotations", required=True)
     dataset_harmonize.add_argument("--index", required=True)
     dataset_harmonize.add_argument("--source", action="append", required=True)
-    dataset_harmonize.add_argument(
-        "--alias-overlay-source", action="append", default=[]
-    )
+    dataset_harmonize.add_argument("--alias-overlay-source", action="append", default=[])
     dataset_harmonize.add_argument("--policy", required=True)
     dataset_harmonize.add_argument("--output", required=True)
     dataset_harmonize.add_argument("--decisions-output", required=True)
@@ -511,9 +501,7 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     lexicon = operations.add_parser(
         "lexicon", help="Build mined mention inventories for terminology review."
     )
-    lexicon_operations = lexicon.add_subparsers(
-        dest="data_lexicon_command", required=True
-    )
+    lexicon_operations = lexicon.add_subparsers(dest="data_lexicon_command", required=True)
     lexicon_build = lexicon_operations.add_parser(
         "build", help="Aggregate source mentions without assigning medical codes."
     )
@@ -592,9 +580,7 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         "propose-dailymed-product-aliases",
         help="Aggregate exact DailyMed product links within one frozen split.",
     )
-    dailymed_product_aliases.set_defaults(
-        handler="data_lexicon_propose_dailymed_product_aliases"
-    )
+    dailymed_product_aliases.set_defaults(handler="data_lexicon_propose_dailymed_product_aliases")
     dailymed_product_aliases.add_argument("--links", required=True)
     dailymed_product_aliases.add_argument("--split-manifest", required=True)
     dailymed_product_aliases.add_argument("--split", required=True)
@@ -605,9 +591,7 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     mapping = operations.add_parser(
         "mapping", help="Compile source crosswalk releases into queryable indexes."
     )
-    mapping_operations = mapping.add_subparsers(
-        dest="data_mapping_command", required=True
-    )
+    mapping_operations = mapping.add_subparsers(dest="data_mapping_command", required=True)
     mapping_dailymed = mapping_operations.add_parser(
         "compile-dailymed-rxnorm",
         help="Deduplicate and index the official SPL-to-RxNorm mapping archive.",
@@ -707,6 +691,45 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         dest="data_knowledge_command",
         required=True,
     )
+    knowledge_abbreviations = knowledge_operations.add_parser(
+        "mine-abbreviations",
+        help="Mine explicit definitions from frozen splits and benchmark retrieval impact.",
+    )
+    knowledge_abbreviations.set_defaults(handler="data_knowledge_mine_abbreviations")
+    knowledge_abbreviations.add_argument("--documents", required=True)
+    knowledge_abbreviations.add_argument("--artifacts", required=True)
+    knowledge_abbreviations.add_argument("--split-manifest", required=True)
+    knowledge_abbreviations.add_argument("--policy", required=True)
+    knowledge_abbreviations.add_argument(
+        "--base-abbreviations",
+        action="append",
+        default=[],
+        help="Existing abbreviation JSONL used to reject duplicate or conflicting definitions.",
+    )
+    knowledge_abbreviations.add_argument(
+        "--index",
+        help="Optional pinned terminology SQLite index for held-out retrieval evaluation.",
+    )
+    knowledge_abbreviations.add_argument(
+        "--source",
+        action="append",
+        default=[],
+        help="Canonical terminology JSONL used to validate --index; repeat as needed.",
+    )
+    knowledge_abbreviations.add_argument(
+        "--alias-overlay",
+        action="append",
+        default=[],
+        help="Alias overlay used to build --index; repeat as needed.",
+    )
+    knowledge_abbreviations.add_argument("--retrieval-limit", type=int, default=20)
+    knowledge_abbreviations.add_argument("--definitions-output", required=True)
+    knowledge_abbreviations.add_argument("--candidates-output", required=True)
+    knowledge_abbreviations.add_argument("--table-output", required=True)
+    knowledge_abbreviations.add_argument("--runtime-table-output", required=True)
+    knowledge_abbreviations.add_argument("--conflicts-output", required=True)
+    knowledge_abbreviations.add_argument("--benchmark-output", required=True)
+    knowledge_abbreviations.add_argument("--report-output", required=True)
     knowledge_aliases = knowledge_operations.add_parser(
         "compile-aliases",
         help="Compile conflict-free aliases against a pinned terminology index.",
@@ -725,9 +748,7 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         "compile-recognition",
         help="Compile split-frozen mention inventories into code-free NER concepts.",
     )
-    knowledge_recognition.set_defaults(
-        handler="data_knowledge_compile_recognition"
-    )
+    knowledge_recognition.set_defaults(handler="data_knowledge_compile_recognition")
     knowledge_recognition.add_argument("--inventory", required=True)
     knowledge_recognition.add_argument("--policy", required=True)
     knowledge_recognition.add_argument(
@@ -845,12 +866,8 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     label_propose.add_argument("--output", required=True)
     label_propose.add_argument("--batch-size", type=int, default=16)
 
-    relation = operations.add_parser(
-        "relation", help="Run a local relation-labeler adapter."
-    )
-    relation_operations = relation.add_subparsers(
-        dest="data_relation_command", required=True
-    )
+    relation = operations.add_parser("relation", help="Run a local relation-labeler adapter.")
+    relation_operations = relation.add_subparsers(dest="data_relation_command", required=True)
     relation_propose = relation_operations.add_parser(
         "propose", help="Generate provenance-bearing relation proposals."
     )
@@ -860,15 +877,11 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     relation_propose.add_argument(
         "--adapter", required=True, help="Local factory in module:attribute form."
     )
-    relation_propose.add_argument(
-        "--adapter-config", help="YAML/JSON factory config mapping."
-    )
+    relation_propose.add_argument("--adapter-config", help="YAML/JSON factory config mapping.")
     relation_propose.add_argument("--output", required=True)
     relation_cooccurrence = relation_operations.add_parser(
         "mine-cooccurrence",
-        help=(
-            "Mine non-causal same-sentence evidence from a source-pinned training slice."
-        ),
+        help=("Mine non-causal same-sentence evidence from a source-pinned training slice."),
     )
     relation_cooccurrence.set_defaults(handler="data_relation_mine_cooccurrence")
     relation_cooccurrence.add_argument("--documents", required=True)
@@ -908,9 +921,7 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     review_quality.add_argument("--output", required=True)
 
     coverage = operations.add_parser("coverage", help="Measure coverage and review priority.")
-    coverage_operations = coverage.add_subparsers(
-        dest="data_coverage_command", required=True
-    )
+    coverage_operations = coverage.add_subparsers(dest="data_coverage_command", required=True)
     coverage_report = coverage_operations.add_parser(
         "report", help="Write coverage-cube cells and ranked review records."
     )
@@ -922,9 +933,7 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     coverage_report.add_argument("--output", required=True)
 
     snapshot = operations.add_parser("snapshot", help="Freeze a leakage-safe snapshot.")
-    snapshot_operations = snapshot.add_subparsers(
-        dest="data_snapshot_command", required=True
-    )
+    snapshot_operations = snapshot.add_subparsers(dest="data_snapshot_command", required=True)
     snapshot_freeze = snapshot_operations.add_parser(
         "freeze", help="Validate and atomically freeze Parquet snapshot shards."
     )
@@ -964,9 +973,7 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         "release",
         help="Lock or verify a portable mining-derived data/model release.",
     )
-    release_operations = release.add_subparsers(
-        dest="data_release_command", required=True
-    )
+    release_operations = release.add_subparsers(dest="data_release_command", required=True)
     release_lock = release_operations.add_parser(
         "lock",
         help="Fingerprint declared datasets, knowledge, benchmarks, and code inputs.",

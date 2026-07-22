@@ -4,6 +4,15 @@ from medical_kg_nlp.mining.annotation_manifest import (
     AnnotationManifestResult,
     materialize_annotation_manifest,
 )
+from medical_kg_nlp.mining.abbreviations import (
+    AbbreviationMiningPolicy,
+    AbbreviationMiningResult,
+    benchmark_abbreviation_knowledge,
+    build_runtime_abbreviation_table,
+    load_abbreviation_mining_policy,
+    load_snapshot_splits,
+    mine_abbreviations,
+)
 from medical_kg_nlp.mining.catalog import DuckDBMiningCatalog, ParquetSnapshotWriter
 from medical_kg_nlp.mining.connectors import connector_from_definition
 from medical_kg_nlp.mining.cooccurrence import (
@@ -194,6 +203,8 @@ from medical_kg_nlp.mining.synthetic import (
 
 __all__ = [
     "AccessClass",
+    "AbbreviationMiningPolicy",
+    "AbbreviationMiningResult",
     "AgreementThresholds",
     "AnnotationLayer",
     "AnnotationManifestResult",
@@ -295,6 +306,8 @@ __all__ = [
     "SpanDatasetConfig",
     "VersionPolicy",
     "build_dataset_profile",
+    "benchmark_abbreviation_knowledge",
+    "build_runtime_abbreviation_table",
     "build_mining_release_lock",
     "build_linked_alias_proposals",
     "compile_knowledge_graph",
@@ -330,13 +343,16 @@ __all__ = [
     "load_annotation_harmonization_policy",
     "load_recognition_knowledge_policy",
     "load_alias_promotion_policy",
+    "load_abbreviation_mining_policy",
     "mine_cooccurrence_relations",
+    "mine_abbreviations",
     "materialize_exact_crosswalk_links",
     "parser_from_definition",
     "profile_blocking_issue_count",
     "reconcile_exact_duplicates",
     "run_corpus_fusion_plan",
     "run_mining_plan",
+    "load_snapshot_splits",
     "validate_source_processing_paths",
     "verify_mining_release_lock",
 ]

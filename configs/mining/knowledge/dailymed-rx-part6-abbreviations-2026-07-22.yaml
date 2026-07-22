@@ -1,0 +1,34 @@
+schema_version: abbreviation-mining-policy.v1
+policy_id: dailymed-human-rx-part6-explicit-abbreviations-2026-07-22-v1
+
+# SOURCE DOSSIER: docs/mining-sources/dailymed.md
+# LICENSE: definitions come only from the pinned DailyMed human prescription SPL archive.
+accepted_source_ids:
+  - dailymed
+accepted_source_versions:
+  - full-human-rx-part6-2026-07-21
+accepted_source_sha256:
+  - 3c72512e43c1e298c53874bb1d0884dcd8a695c9234890fc769c5054f58bdeb6
+accepted_languages:
+  - en
+
+# INVARIANT: development definitions are read only by the benchmark and never update the table.
+knowledge_splits:
+  - train
+evaluation_splits:
+  - development
+
+# SCALING: repeated evidence must cross both document and SPL set boundaries. This prevents a
+# duplicated warning section or one manufacturer's templates from creating runtime knowledge.
+min_supporting_documents: 2
+min_supporting_groups: 2
+# Character-level alignment supports cases such as CBZ -> carbamazepine, but is more permissive
+# than token initials. Require broader independent evidence before it can reach runtime retrieval.
+min_character_alignment_documents: 5
+min_character_alignment_groups: 5
+min_short_characters: 2
+max_short_characters: 20
+max_long_characters: 180
+max_long_words: 24
+max_examples: 20
+reject_pure_roman_numerals: true

@@ -128,6 +128,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.data",
         "compile_hpo_association_knowledge",
     ),
+    "data_knowledge_mine_abbreviations": (
+        "medical_kg_nlp.cli.commands.data",
+        "mine_abbreviation_knowledge",
+    ),
     "data_knowledge_compile_aliases": (
         "medical_kg_nlp.cli.commands.data",
         "compile_alias_knowledge",
