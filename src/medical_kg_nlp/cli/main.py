@@ -50,6 +50,14 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.phase1",
         "build_phase1_model_data",
     ),
+    "benchmark_phase1_model_data_calibrate": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "calibrate_phase1_model_data",
+    ),
+    "benchmark_phase1_model_data_compare": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "compare_phase1_model_variants",
+    ),
     "model_validate_token_dataset": (
         "medical_kg_nlp.cli.commands.model",
         "validate_token_dataset",

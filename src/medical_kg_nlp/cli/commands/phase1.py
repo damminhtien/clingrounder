@@ -11,6 +11,13 @@ from medical_kg_nlp.benchmarks.phase1.model_dataset import (
     Phase1ModelDatasetConfig,
     build_phase1_model_dataset,
 )
+from medical_kg_nlp.benchmarks.phase1.model_selection import (
+    Phase1ModelSelectionConfig,
+    calibrate_phase1_model_thresholds,
+    compare_phase1_ner_variants,
+    load_internal_predictions,
+    write_phase1_model_selection_report,
+)
 from medical_kg_nlp.benchmarks.phase1.round2 import (
     build_phase1_round2_audit,
     write_phase1_round2_audit,
@@ -26,6 +33,8 @@ from medical_kg_nlp.pipeline.parallel_batch import ParallelBackend
 __all__ = [
     "audit_phase1_round2",
     "build_phase1_model_data",
+    "calibrate_phase1_model_data",
+    "compare_phase1_model_variants",
     "run_phase1_submission",
 ]
 
@@ -103,3 +112,59 @@ def build_phase1_model_data(args: argparse.Namespace) -> int:
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
+
+
+def calibrate_phase1_model_data(args: argparse.Namespace) -> int:
+    """Calibrate model thresholds without reading frozen holdout labels."""
+
+    config = _model_selection_config(args)
+    predictions_path = Path(args.pred)
+    report = calibrate_phase1_model_thresholds(
+        load_internal_predictions(predictions_path),
+        config=config,
+        prediction_path=predictions_path,
+    )
+    write_phase1_model_selection_report(report, Path(args.output))
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def compare_phase1_model_variants(args: argparse.Namespace) -> int:
+    """Rank exactly three entity compositions and optionally open the holdout gate."""
+
+    variants: dict[str, Path] = {}
+    for raw in args.variant:
+        name, separator, value = str(raw).partition("=")
+        if not separator or not name or not value:
+            raise ValueError("--variant must use NAME=DIR_OR_ZIP")
+        if name in variants:
+            raise ValueError(f"Duplicate --variant name {name!r}")
+        variants[name] = Path(value)
+    report = compare_phase1_ner_variants(
+        variants,
+        config=_model_selection_config(args),
+        open_frozen_holdout=bool(args.open_frozen_holdout),
+    )
+    write_phase1_model_selection_report(report, Path(args.output))
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def _model_selection_config(args: argparse.Namespace) -> Phase1ModelSelectionConfig:
+    thresholds = getattr(args, "thresholds", None)
+    if thresholds is None:
+        return Phase1ModelSelectionConfig(
+            input_dir=Path(args.input_dir),
+            gold_dir=Path(args.gold_dir),
+            model_split_manifest=Path(args.model_split_manifest),
+            frozen_split_manifest=Path(args.frozen_split_manifest),
+        )
+    return Phase1ModelSelectionConfig(
+        input_dir=Path(args.input_dir),
+        gold_dir=Path(args.gold_dir),
+        model_split_manifest=Path(args.model_split_manifest),
+        frozen_split_manifest=Path(args.frozen_split_manifest),
+        threshold_grid=tuple(
+            sorted(set(float(value) for value in thresholds))
+        )
+    )

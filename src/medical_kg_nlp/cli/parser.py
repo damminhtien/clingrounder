@@ -345,6 +345,41 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         help="Drop chunks without an entity after deterministic chunking.",
     )
 
+    model_data_calibrate = model_data_operations.add_parser(
+        "calibrate",
+        help="Select per-type model thresholds on the sealed model development split.",
+    )
+    model_data_calibrate.set_defaults(handler="benchmark_phase1_model_data_calibrate")
+    model_data_calibrate.add_argument("--pred", required=True)
+    _phase1_model_selection_arguments(model_data_calibrate)
+    model_data_calibrate.add_argument("--output", required=True)
+    model_data_calibrate.add_argument(
+        "--threshold",
+        action="append",
+        type=float,
+        dest="thresholds",
+        help="Confidence value in an increasing calibration grid; may be repeated.",
+    )
+
+    model_data_compare = model_data_operations.add_parser(
+        "compare",
+        help="Compare rule, model, and hybrid NER outputs on development.",
+    )
+    model_data_compare.set_defaults(handler="benchmark_phase1_model_data_compare")
+    _phase1_model_selection_arguments(model_data_compare)
+    model_data_compare.add_argument(
+        "--variant",
+        action="append",
+        required=True,
+        help="One NAME=DIR_OR_ZIP input; provide rule, model, and hybrid.",
+    )
+    model_data_compare.add_argument("--output", required=True)
+    model_data_compare.add_argument(
+        "--open-frozen-holdout",
+        action="store_true",
+        help="Explicitly score the final frozen holdout after development selection.",
+    )
+
 
 def _model_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     model = commands.add_parser("model", help="Validate datasets and train local models.")
@@ -395,6 +430,22 @@ def _model_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser])
     )
     train_run.set_defaults(handler="model_train_token_classifier_run")
     train_run.add_argument("--config", required=True)
+
+
+def _phase1_model_selection_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--input-dir", default="data/raw/input")
+    parser.add_argument("--gold-dir", default="data/manual_gold")
+    parser.add_argument(
+        "--model-split-manifest",
+        default=(
+            "outputs/mining/model-datasets/phase1-manual-five-type-v1/"
+            "split_manifest.json"
+        ),
+    )
+    parser.add_argument(
+        "--frozen-split-manifest",
+        default="data/manual_gold/holdout_manifest.json",
+    )
 
 
 def _token_training_identity_arguments(

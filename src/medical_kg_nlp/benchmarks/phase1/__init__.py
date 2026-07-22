@@ -27,6 +27,13 @@ from medical_kg_nlp.benchmarks.phase1.model_dataset import (
     build_phase1_model_dataset,
     build_phase1_model_splits,
 )
+from medical_kg_nlp.benchmarks.phase1.model_selection import (
+    PHASE1_NER_VARIANTS,
+    Phase1HoldoutGate,
+    Phase1ModelSelectionConfig,
+    calibrate_phase1_model_thresholds,
+    compare_phase1_ner_variants,
+)
 from medical_kg_nlp.benchmarks.phase1.recognition_mining import (
     Phase1RecognitionMiningConfig,
     run_phase1_recognition_mining,
@@ -43,14 +50,19 @@ __all__ = [
     "Phase1Record",
     "Phase1ManualGoldMiningCorpus",
     "Phase1ModelDatasetConfig",
+    "Phase1HoldoutGate",
+    "Phase1ModelSelectionConfig",
     "Phase1RecognitionMiningConfig",
     "PHASE1_FIVE_TYPE_LABELS",
+    "PHASE1_NER_VARIANTS",
     "ROUND2_NOVELTY_SOURCE_IDS",
     "build_phase1_round2_audit",
     "build_phase1_reviewed_recognition_policy",
     "build_phase1_report",
     "build_phase1_model_dataset",
     "build_phase1_model_splits",
+    "calibrate_phase1_model_thresholds",
+    "compare_phase1_ner_variants",
     "load_phase1_text_documents",
     "prediction_to_phase1_entities",
     "score_phase1_documents",
