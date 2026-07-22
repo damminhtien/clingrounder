@@ -198,3 +198,26 @@ def test_rxnorm_plan_resolves_runtime_paths_but_pins_source_identity(
     assert source.parameters["sha256"]["RxNorm_full_07062026.zip"] == (
         "53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c"
     )
+
+
+def test_phase1_round2_plan_requires_runtime_archive_and_pins_sha256(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    archive = tmp_path / "private" / "input_turn2_vong1.zip"
+    monkeypatch.setenv("PHASE1_ROUND2_ARCHIVE", str(archive))
+    monkeypatch.setenv(
+        "MEDICAL_KG_ARTIFACT_STORE",
+        f"file://{tmp_path / 'encrypted-artifact-store'}",
+    )
+
+    plan = load_mining_plan("configs/mining/phase1-round2-2026-07-22.yaml")
+    source = plan.sources[0]
+
+    assert source.source_id == "phase1_round2_input"
+    assert source.source_version == "round2-phase1-2026-07-22"
+    assert source.parameters["paths"] == [str(archive.resolve())]
+    assert source.parameters["sha256"]["input_turn2_vong1.zip"] == (
+        "989d82404a9c1f3739e15d68a1e69d0f1f90d35c93c04ab0988e071fc1525545"
+    )
+    assert plan.artifact_store.encrypted_at_rest is True

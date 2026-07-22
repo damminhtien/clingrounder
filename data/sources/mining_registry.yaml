@@ -50,6 +50,29 @@ resources:
     connector: local_archive
     parser: vietmed_ner
     allowed_uses: [license_review]
+  - id: phase1_round2_input
+    name: Phase 1 Round 2 competition input
+    category: local_competition_input
+    version: round2-phase1-2026-07-22
+    version_policy: pinned
+    access_class: local_private
+    license_id: competition_input_restricted
+    license_url: local-source://phase1-round2-input/terms
+    redistribution: prohibited
+    hosted_processing_allowed: false
+    retention: local_only
+    connector: local_archive
+    parser: plain_text_archive
+    parser_options:
+      language: vi
+      note_type: mixed_medical_text
+      require_numeric_ids: "true"
+      max_members: "1000"
+      max_member_bytes: "8388608"
+      max_total_uncompressed_bytes: "67108864"
+      max_compression_ratio: "200"
+    allowed_uses: [local_competition_inference, local_distribution_audit]
+    notes: Raw Round 2 input is never a training, pseudo-label, or runtime-memory source.
   - id: pmc_oa
     name: PubMed Central Open Access Subset
     category: case_reports_and_literature

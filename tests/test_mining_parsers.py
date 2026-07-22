@@ -7,12 +7,15 @@ import json
 import zipfile
 from pathlib import Path
 
+import pytest
+
 from medical_kg_nlp.mining.parsers import (
     BiocJsonParser,
     ClinicalTrialsJsonParser,
     CodiEspArchiveParser,
     FhirBundleParser,
     JatsXmlParser,
+    PlainTextArchiveParser,
     PmcOaParser,
     SplXmlParser,
 )
@@ -263,3 +266,100 @@ def test_codiesp_parser_reads_notes_without_extracting_paths(tmp_path: Path) -> 
         "Caso de fondo",
     ]
     assert all(document.language == "es" for document in documents)
+
+
+def test_plain_text_archive_preserves_bytes_newlines_and_numeric_identity(
+    tmp_path: Path,
+) -> None:
+    first = "\ufeffDòng một\r\nDòng hai\r\n".encode()
+    second = "Sốt cao\n".encode()
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("input/2.txt", second)
+        archive.writestr("input/1.txt", first)
+        archive.writestr("input/README.md", "ignored")
+    artifact, store = _artifact(
+        tmp_path,
+        buffer.getvalue(),
+        source_id="phase1_round2_input",
+        media_type="application/zip",
+    )
+
+    documents = list(PlainTextArchiveParser().parse(artifact, store=store))
+
+    assert [item.metadata["source_document_id"] for item in documents] == ["1", "2"]
+    assert documents[0].text.encode() == first
+    assert documents[0].metadata == {
+        "archive_member": "input/1.txt",
+        "external_id": "1",
+        "newline_normalization": "none",
+        "parser_id": "plain_text_archive",
+        "parser_revision": "1",
+        "raw_byte_size": str(len(first)),
+        "raw_bytes_sha256": documents[0].text_sha256,
+        "raw_encoding": "utf-8",
+        "source_archive_sha256": artifact.object.sha256,
+        "source_document_id": "1",
+        "source_unit_sha256": documents[0].text_sha256,
+    }
+    assert documents[0].group_ids == ("source_record:phase1_round2_input:1",)
+
+
+@pytest.mark.parametrize(
+    "unsafe_name",
+    ("../1.txt", "/absolute/1.txt", "C:/input/1.txt", "input/../../1.txt"),
+)
+def test_plain_text_archive_rejects_unsafe_paths(
+    tmp_path: Path,
+    unsafe_name: str,
+) -> None:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr(unsafe_name, "Sốt")
+    artifact, store = _artifact(
+        tmp_path,
+        buffer.getvalue(),
+        source_id="phase1_round2_input",
+        media_type="application/zip",
+    )
+
+    with pytest.raises(ValueError, match="Unsafe ZIP member path"):
+        tuple(PlainTextArchiveParser().parse(artifact, store=store))
+
+
+def test_plain_text_archive_rejects_duplicate_canonical_numeric_ids(
+    tmp_path: Path,
+) -> None:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr("input/1.txt", "Sốt")
+        archive.writestr("other/01.txt", "Ho")
+    artifact, store = _artifact(
+        tmp_path,
+        buffer.getvalue(),
+        source_id="phase1_round2_input",
+        media_type="application/zip",
+    )
+
+    with pytest.raises(ValueError, match="Duplicate source document ID '1'"):
+        tuple(PlainTextArchiveParser().parse(artifact, store=store))
+
+
+def test_plain_text_archive_rejects_high_expansion_ratio(tmp_path: Path) -> None:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("input/1.txt", "A" * 16_384)
+    artifact, store = _artifact(
+        tmp_path,
+        buffer.getvalue(),
+        source_id="phase1_round2_input",
+        media_type="application/zip",
+    )
+    parser = PlainTextArchiveParser(
+        max_member_bytes=32_768,
+        max_total_uncompressed_bytes=32_768,
+        max_compression_ratio=2.0,
+    )
+
+    with pytest.raises(ValueError, match="unsafe compression ratio"):
+        tuple(parser.parse(artifact, store=store))
