@@ -728,6 +728,15 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         "--split",
         help="Named evaluation split; requires --split-manifest.",
     )
+    recognition_benchmark.add_argument(
+        "--require-document-metadata",
+        action="append",
+        default=[],
+        help=(
+            "Evaluate only documents carrying this metadata key. Repeat for multiple keys; "
+            "use this when a source has representation-specific annotation coverage."
+        ),
+    )
     graph_compile = knowledge_operations.add_parser(
         "compile-graph",
         help="Deduplicate canonical ontology and mined relation evidence.",

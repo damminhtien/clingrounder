@@ -124,6 +124,7 @@ from medical_kg_nlp.mining.snapshot import SnapshotBuilder, SnapshotSplitConfig
 from medical_kg_nlp.mining.splits import (
     load_split_document_ids,
     select_mined_records,
+    select_mined_records_with_metadata,
 )
 from medical_kg_nlp.terminology import SQLiteTerminologyRepository
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
@@ -954,6 +955,14 @@ def benchmark_recognition_knowledge(args: argparse.Namespace) -> int:
         split_manifest=args.split_manifest,
         split=args.split,
     )
+    required_metadata = tuple(args.require_document_metadata)
+    if required_metadata:
+        selection = select_mined_records_with_metadata(
+            documents,
+            annotations,
+            required_metadata,
+        )
+        documents, annotations = selection.documents, selection.annotations
     report = benchmark_recognition_dictionary(
         documents,
         annotations,
@@ -961,6 +970,11 @@ def benchmark_recognition_knowledge(args: argparse.Namespace) -> int:
         DictionaryStore.from_jsonl(args.additional_dictionary),
         entity_types=tuple(EntityType(value) for value in args.entity_type),
     )
+    report["selection"] = {
+        "split_manifest": args.split_manifest,
+        "split": args.split,
+        "required_document_metadata": list(required_metadata),
+    }
     write_json(args.output, report)
     _print_json(
         {

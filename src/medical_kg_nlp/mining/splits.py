@@ -14,6 +14,7 @@ __all__ = [
     "MinedRecordSelection",
     "load_split_document_ids",
     "select_mined_records",
+    "select_mined_records_with_metadata",
 ]
 
 
@@ -93,3 +94,33 @@ def select_mined_records(
         if annotation.document_id in document_ids
     )
     return MinedRecordSelection(selected_documents, selected_annotations)
+
+
+def select_mined_records_with_metadata(
+    documents: Sequence[MinedDocument],
+    annotations: Sequence[AnnotationProposal],
+    required_keys: Sequence[str],
+) -> MinedRecordSelection:
+    """Keep documents carrying all required metadata and their annotations.
+
+    Some source parsers emit several representations with different annotation coverage. For
+    example, a structured product record may be exhaustively labeled while its sibling narrative
+    record is not. Evaluating both as if they had the same gold coverage would turn unlabeled
+    mentions into false positives.
+    """
+
+    normalized_keys = tuple(dict.fromkeys(key.strip() for key in required_keys))
+    if not normalized_keys or any(not key for key in normalized_keys):
+        raise ValueError("Required document metadata keys must be non-empty")
+    selected_ids = frozenset(
+        document.document_id
+        for document in documents
+        if all(key in document.metadata for key in normalized_keys)
+    )
+    if not selected_ids:
+        raise ValueError(
+            "No mined documents contain all required metadata keys: "
+            f"{list(normalized_keys)}"
+        )
+    # INVARIANT: delegate record selection so annotation identity and raw spans remain unchanged.
+    return select_mined_records(documents, annotations, selected_ids)

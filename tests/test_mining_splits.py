@@ -17,10 +17,15 @@ from medical_kg_nlp.mining.records import (
 from medical_kg_nlp.mining.splits import (
     load_split_document_ids,
     select_mined_records,
+    select_mined_records_with_metadata,
 )
 
 
-def _document(document_id: str) -> MinedDocument:
+def _document(
+    document_id: str,
+    *,
+    metadata: dict[str, str] | None = None,
+) -> MinedDocument:
     return MinedDocument(
         document_id=document_id,
         text="lao phổi",
@@ -30,6 +35,7 @@ def _document(document_id: str) -> MinedDocument:
         access_class=AccessClass.OPEN,
         redistribution=RedistributionPolicy.ATTRIBUTION,
         hosted_processing_allowed=True,
+        metadata=metadata or {},
     )
 
 
@@ -81,3 +87,28 @@ def test_split_selection_rejects_stale_manifest_document_ids(tmp_path: Path) -> 
     ids = load_split_document_ids(manifest, "development")
     with pytest.raises(ValueError, match="unknown documents"):
         select_mined_records((_document("known"),), (), ids)
+
+
+def test_metadata_selection_keeps_only_records_with_complete_annotation_coverage() -> None:
+    structured = _document("structured", metadata={"spl_fields": "[]"})
+    narrative = _document("narrative")
+    annotations = (_annotation("structured"), _annotation("narrative"))
+
+    selection = select_mined_records_with_metadata(
+        (structured, narrative),
+        annotations,
+        ("spl_fields",),
+    )
+
+    assert selection.documents == (structured,)
+    assert [row.document_id for row in selection.annotations] == ["structured"]
+    selection.annotations[0].validate_offsets(selection.documents[0])
+
+
+def test_metadata_selection_rejects_an_empty_evaluation_population() -> None:
+    with pytest.raises(ValueError, match="No mined documents"):
+        select_mined_records_with_metadata(
+            (_document("narrative"),),
+            (),
+            ("spl_fields",),
+        )
