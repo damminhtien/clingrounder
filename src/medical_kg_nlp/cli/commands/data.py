@@ -63,6 +63,10 @@ from medical_kg_nlp.mining.mappings.dailymed_rxnorm import (
     audit_dailymed_rxnorm_mapping,
     compile_dailymed_rxnorm_mapping,
 )
+from medical_kg_nlp.mining.mappings.dailymed_product_rxnorm import (
+    link_dailymed_products_to_rxnorm,
+)
+from medical_kg_nlp.mining.mappings.rxnorm_ndc import compile_rxnorm_ndc_index
 from medical_kg_nlp.mining.model_dataset import (
     SpanDatasetConfig,
     export_span_dataset,
@@ -134,6 +138,7 @@ __all__ = [
     "audit_dailymed_rxnorm",
     "attach_exact_crosswalk_links",
     "compile_dailymed_rxnorm",
+    "compile_rxnorm_ndc",
     "compile_graph_knowledge",
     "compile_hpo_association_knowledge",
     "compile_obo_ontology",
@@ -147,6 +152,7 @@ __all__ = [
     "harmonize_dataset",
     "import_review",
     "inspect_dataset",
+    "link_dailymed_products",
     "lock_mining_release",
     "mine_cooccurrence",
     "propose_labels",
@@ -693,6 +699,37 @@ def audit_dailymed_rxnorm(args: argparse.Namespace) -> int:
         args.index,
         args.terminology_index,
         proposals_path=args.proposals_output,
+        report_path=args.report_output,
+    )
+    _print_json(report)
+    return 0
+
+
+def compile_rxnorm_ndc(args: argparse.Namespace) -> int:
+    """Compile package-level NDC evidence from one immutable RxNorm archive."""
+
+    report = compile_rxnorm_ndc_index(
+        args.source,
+        source_version=args.source_version,
+        expected_source_sha256=args.expected_source_sha256,
+        archive_member=args.archive_member,
+        output_path=args.output,
+        index_path=args.index_output,
+        report_path=args.report_output,
+    )
+    _print_json(report)
+    return 0
+
+
+def link_dailymed_products(args: argparse.Namespace) -> int:
+    """Join two official source identities and withhold every ambiguous product."""
+
+    report = link_dailymed_products_to_rxnorm(
+        args.documents,
+        dailymed_mapping_index_path=args.dailymed_mapping_index,
+        rxnorm_ndc_index_path=args.rxnorm_ndc_index,
+        links_path=args.links_output,
+        decisions_path=args.decisions_output,
         report_path=args.report_output,
     )
     _print_json(report)

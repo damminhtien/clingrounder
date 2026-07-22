@@ -589,6 +589,31 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     mapping_dailymed.add_argument("--index-output", required=True)
     mapping_dailymed.add_argument("--report-output", required=True)
 
+    mapping_ndc = mapping_operations.add_parser(
+        "compile-rxnorm-ndc",
+        help="Compile active package NDC attributes from a pinned RxNorm full release.",
+    )
+    mapping_ndc.set_defaults(handler="data_mapping_compile_rxnorm_ndc")
+    mapping_ndc.add_argument("--source", required=True)
+    mapping_ndc.add_argument("--source-version", required=True)
+    mapping_ndc.add_argument("--expected-source-sha256", required=True)
+    mapping_ndc.add_argument("--archive-member", default="rrf/RXNSAT.RRF")
+    mapping_ndc.add_argument("--output", required=True)
+    mapping_ndc.add_argument("--index-output", required=True)
+    mapping_ndc.add_argument("--report-output", required=True)
+
+    mapping_products = mapping_operations.add_parser(
+        "link-dailymed-products",
+        help="Link products only when exact SPL/version and RxNorm NDC evidence agree.",
+    )
+    mapping_products.set_defaults(handler="data_mapping_link_dailymed_products")
+    mapping_products.add_argument("--documents", required=True)
+    mapping_products.add_argument("--dailymed-mapping-index", required=True)
+    mapping_products.add_argument("--rxnorm-ndc-index", required=True)
+    mapping_products.add_argument("--links-output", required=True)
+    mapping_products.add_argument("--decisions-output", required=True)
+    mapping_products.add_argument("--report-output", required=True)
+
     mapping_audit = mapping_operations.add_parser(
         "audit-dailymed-rxnorm",
         help="Compare a compiled DailyMed mapping with a pinned terminology index.",

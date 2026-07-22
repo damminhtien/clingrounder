@@ -100,6 +100,14 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.data",
         "compile_dailymed_rxnorm",
     ),
+    "data_mapping_compile_rxnorm_ndc": (
+        "medical_kg_nlp.cli.commands.data",
+        "compile_rxnorm_ndc",
+    ),
+    "data_mapping_link_dailymed_products": (
+        "medical_kg_nlp.cli.commands.data",
+        "link_dailymed_products",
+    ),
     "data_mapping_audit_dailymed_rxnorm": (
         "medical_kg_nlp.cli.commands.data",
         "audit_dailymed_rxnorm",
