@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
 from medical_kg_nlp.benchmarks.phase1.round2 import (
     build_phase1_round2_audit,
+    load_phase1_round2_documents,
     write_phase1_round2_audit,
 )
 from medical_kg_nlp.mining.io import write_jsonl
@@ -28,12 +30,30 @@ def _document(source_id: str, text: str) -> MinedDocument:
         redistribution=RedistributionPolicy.PROHIBITED,
         hosted_processing_allowed=False,
         metadata={
+            "archive_member": f"input/{source_id}.txt",
             "source_document_id": source_id,
             "source_archive_sha256": "a" * 64,
+            "raw_bytes_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
             "parser_id": "plain_text_archive",
             "newline_normalization": "none",
         },
     )
+
+
+def test_round2_manifest_loader_preserves_private_raw_text_contract() -> None:
+    mined = tuple(_document(str(index), f"Dòng {index}\r\nDòng hai") for index in range(1, 101))
+
+    documents = load_phase1_round2_documents(
+        mined,
+        expected_archive_sha256="a" * 64,
+    )
+
+    assert [document.document_id for document in documents] == [
+        str(index) for index in range(1, 101)
+    ]
+    assert documents[0].text == "Dòng 1\r\nDòng hai"
+    assert documents[0].metadata["archive_member"] == "input/1.txt"
+    assert documents[0].metadata["access_class"] == "local_private"
 
 
 def test_round2_audit_emits_no_runtime_annotation_memory(tmp_path: Path) -> None:

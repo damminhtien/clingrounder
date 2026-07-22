@@ -18,13 +18,19 @@ from medical_kg_nlp.benchmarks.phase1.manual_gold import load_phase1_directory
 from medical_kg_nlp.mining.dedup import StableTextDeduplicator
 from medical_kg_nlp.mining.io import write_json, write_jsonl
 from medical_kg_nlp.mining.profile import build_dataset_profile
-from medical_kg_nlp.mining.records import MinedDocument
+from medical_kg_nlp.mining.records import (
+    AccessClass,
+    MinedDocument,
+    RedistributionPolicy,
+)
+from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.utils.hashing import sha256_file
 from medical_kg_nlp.utils.io import read_source_text
 
 __all__ = [
     "ROUND2_NOVELTY_SOURCE_IDS",
     "build_phase1_round2_audit",
+    "load_phase1_round2_documents",
     "write_phase1_round2_audit",
 ]
 
@@ -59,6 +65,59 @@ _EDUCATIONAL_MARKERS = (
     "có nguy hiểm không?",
     "phòng ngừa ",
 )
+
+
+def load_phase1_round2_documents(
+    documents: Sequence[MinedDocument],
+    *,
+    expected_archive_sha256: str,
+    expected_count: int = 100,
+) -> list[ClinicalDocument]:
+    """Convert a private mined manifest into benchmark documents after provenance checks."""
+
+    if not re.fullmatch(r"[0-9a-f]{64}", expected_archive_sha256):
+        raise ValueError("Expected Round 2 archive SHA-256 must be 64 lowercase hex characters")
+    by_source_id = _documents_by_numeric_source_id(documents)
+    expected_ids = {str(index) for index in range(1, expected_count + 1)}
+    if set(by_source_id) != expected_ids:
+        missing = sorted(expected_ids - set(by_source_id), key=int)
+        extra = sorted(set(by_source_id) - expected_ids, key=int)
+        raise ValueError(f"Round 2 source IDs differ: missing={missing}, extra={extra}")
+    archive_sha256 = _single_archive_sha256(documents)
+    if archive_sha256 != expected_archive_sha256:
+        raise ValueError(
+            "Round 2 archive fingerprint differs: "
+            f"expected {expected_archive_sha256}, observed {archive_sha256}"
+        )
+
+    output: list[ClinicalDocument] = []
+    for source_id in sorted(by_source_id, key=int):
+        document = by_source_id[source_id]
+        if document.access_class is not AccessClass.LOCAL_PRIVATE:
+            raise ValueError(f"Round 2 document {source_id} is not local_private")
+        if document.redistribution is not RedistributionPolicy.PROHIBITED:
+            raise ValueError(f"Round 2 document {source_id} permits redistribution")
+        if document.hosted_processing_allowed:
+            raise ValueError(f"Round 2 document {source_id} permits hosted processing")
+        raw_bytes_sha256 = document.metadata.get("raw_bytes_sha256")
+        # INVARIANT: re-encoding must recover the exact imported UTF-8 bytes. This also proves
+        # no newline normalization occurred between archive parsing and model inference.
+        if raw_bytes_sha256 != document.text_sha256:
+            raise ValueError(f"Round 2 raw-byte hash mismatch for document {source_id}")
+        output.append(
+            ClinicalDocument(
+                document_id=source_id,
+                text=document.text,
+                metadata={
+                    "source_manifest_document_id": document.document_id,
+                    "source_archive_sha256": archive_sha256,
+                    "archive_member": document.metadata.get("archive_member", ""),
+                    "raw_bytes_sha256": raw_bytes_sha256,
+                    "access_class": document.access_class.value,
+                },
+            )
+        )
+    return output
 
 
 def build_phase1_round2_audit(

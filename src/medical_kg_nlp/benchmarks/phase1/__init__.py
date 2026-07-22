@@ -11,6 +11,7 @@ from medical_kg_nlp.benchmarks.phase1.phase1 import (
     prediction_to_phase1_entities,
     score_phase1_documents,
     validate_phase1_entities,
+    validate_phase1_submission_documents,
     validate_phase1_submission_dir,
     validate_phase1_submission_zip,
     write_phase1_output_dir,
@@ -41,6 +42,7 @@ from medical_kg_nlp.benchmarks.phase1.recognition_mining import (
 from medical_kg_nlp.benchmarks.phase1.round2 import (
     ROUND2_NOVELTY_SOURCE_IDS,
     build_phase1_round2_audit,
+    load_phase1_round2_documents,
     write_phase1_round2_audit,
 )
 
@@ -64,9 +66,11 @@ __all__ = [
     "calibrate_phase1_model_thresholds",
     "compare_phase1_ner_variants",
     "load_phase1_text_documents",
+    "load_phase1_round2_documents",
     "prediction_to_phase1_entities",
     "score_phase1_documents",
     "validate_phase1_entities",
+    "validate_phase1_submission_documents",
     "validate_phase1_submission_dir",
     "validate_phase1_submission_zip",
     "write_phase1_output_dir",

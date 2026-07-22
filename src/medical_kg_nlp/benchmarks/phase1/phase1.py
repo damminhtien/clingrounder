@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import zipfile
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal, cast
@@ -296,11 +296,27 @@ def validate_phase1_submission_dir(
     *,
     dictionary: DictionaryStore | None = None,
 ) -> list[Phase1ValidationIssue]:
-    input_path = Path(input_dir)
+    return validate_phase1_submission_documents(
+        load_phase1_text_documents(input_dir),
+        output_dir,
+        dictionary=dictionary,
+    )
+
+
+def validate_phase1_submission_documents(
+    documents: Sequence[ClinicalDocument],
+    output_dir: str | Path,
+    *,
+    dictionary: DictionaryStore | None = None,
+) -> list[Phase1ValidationIssue]:
+    """Validate flat output against immutable in-memory source documents."""
+
     output_path = Path(output_dir)
     issues: list[Phase1ValidationIssue] = []
-    input_files = _phase1_input_files(input_path)
-    expected_json_names = {f"{txt_path.stem}.json" for txt_path in input_files}
+    by_id = {document.document_id: document for document in documents}
+    if len(by_id) != len(documents):
+        raise ValueError("Phase 1 source documents contain duplicate document IDs")
+    expected_json_names = {f"{document_id}.json" for document_id in by_id}
     for json_path in output_path.glob("*.json"):
         if json_path.name not in expected_json_names:
             issues.append(
@@ -311,15 +327,14 @@ def validate_phase1_submission_dir(
                     json_path.stem,
                 )
             )
-    for txt_path in input_files:
-        document_id = txt_path.stem
+    for document_id, document in sorted(by_id.items(), key=lambda item: _numeric_stem(item[0])):
         json_path = output_path / f"{document_id}.json"
         if not json_path.exists():
             issues.append(
                 _issue(
                     "phase1_missing_output_file",
                     str(json_path),
-                    f"Missing output file for {txt_path.name}.",
+                    f"Missing output file for {document_id}.",
                     document_id,
                 )
             )
@@ -332,7 +347,7 @@ def validate_phase1_submission_dir(
         issues.extend(
             validate_phase1_entities(
                 payload,
-                read_source_text(txt_path),
+                document.text,
                 document_id=document_id,
                 dictionary=dictionary,
             )
@@ -344,6 +359,7 @@ def validate_phase1_submission_zip(
     zip_path: str | Path,
     *,
     input_dir: str | Path | None = None,
+    documents: Sequence[ClinicalDocument] | None = None,
     dictionary: DictionaryStore | None = None,
     expected_count: int = 100,
 ) -> list[Phase1ValidationIssue]:
@@ -351,11 +367,24 @@ def validate_phase1_submission_zip(
     issues: list[Phase1ValidationIssue] = []
     if not path.exists():
         return [_issue("phase1_missing_zip", str(path), "Submission zip does not exist.", None)]
+    if input_dir is not None and documents is not None:
+        raise ValueError("Provide either input_dir or documents, not both")
     with zipfile.ZipFile(path, "r") as archive:
         names = sorted(name for name in archive.namelist() if not name.endswith("/"))
         issues.extend(_zip_structure_issues(path, names, expected_count))
-        if input_dir is not None:
-            issues.extend(_zip_payload_issues(archive, input_dir, dictionary=dictionary))
+        source_documents = (
+            load_phase1_text_documents(input_dir)
+            if input_dir is not None
+            else documents
+        )
+        if source_documents is not None:
+            issues.extend(
+                _zip_payload_issues(
+                    archive,
+                    source_documents,
+                    dictionary=dictionary,
+                )
+            )
     return issues
 
 
@@ -383,21 +412,23 @@ def _zip_structure_issues(
 
 def _zip_payload_issues(
     archive: zipfile.ZipFile,
-    input_dir: str | Path,
+    documents: Sequence[ClinicalDocument],
     *,
     dictionary: DictionaryStore | None,
 ) -> list[Phase1ValidationIssue]:
     issues: list[Phase1ValidationIssue] = []
     names = set(archive.namelist())
-    for txt_path in _phase1_input_files(Path(input_dir)):
-        document_id = txt_path.stem
+    by_id = {document.document_id: document for document in documents}
+    if len(by_id) != len(documents):
+        raise ValueError("Phase 1 source documents contain duplicate document IDs")
+    for document_id, document in sorted(by_id.items(), key=lambda item: _numeric_stem(item[0])):
         archive_name = f"output/{document_id}.json"
         if archive_name not in names:
             issues.append(
                 _issue(
                     "phase1_missing_output_file",
                     archive_name,
-                    f"Missing output file for {txt_path.name}.",
+                    f"Missing output file for {document_id}.",
                     document_id,
                 )
             )
@@ -410,7 +441,7 @@ def _zip_payload_issues(
         issues.extend(
             validate_phase1_entities(
                 payload,
-                read_source_text(txt_path),
+                document.text,
                 document_id=document_id,
                 dictionary=dictionary,
             )

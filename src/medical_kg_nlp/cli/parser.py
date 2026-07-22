@@ -249,7 +249,16 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         help="Build and release-validate a strict submission ZIP.",
     )
     submission.set_defaults(handler="benchmark_phase1_submission")
-    submission.add_argument("--input-dir", required=True)
+    source = submission.add_mutually_exclusive_group(required=True)
+    source.add_argument("--input-dir")
+    source.add_argument(
+        "--documents",
+        help="Private mined documents.jsonl with source-document metadata.",
+    )
+    submission.add_argument(
+        "--source-archive-sha256",
+        help="Required pinned archive SHA-256 when --documents is used.",
+    )
     submission.add_argument("--output-dir", required=True)
     submission.add_argument("--zip", required=True)
     submission.add_argument("--dictionary", default="data/dictionaries/seed_concepts.jsonl")

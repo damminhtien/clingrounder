@@ -44,11 +44,13 @@ def run_phase1_submission(args: argparse.Namespace) -> int:
 
     report = run_phase1_benchmark(
         Phase1BenchmarkConfig(
-            input_dir=Path(args.input_dir),
+            input_dir=None if args.input_dir is None else Path(args.input_dir),
             output_dir=Path(args.output_dir),
             zip_path=Path(args.zip),
             dictionary_path=Path(args.dictionary),
             abbreviation_path=Path(args.abbreviations),
+            documents_path=None if args.documents is None else Path(args.documents),
+            expected_source_archive_sha256=args.source_archive_sha256,
             pipeline_config_path=(
                 Path(args.pipeline_config) if args.pipeline_config else None
             ),

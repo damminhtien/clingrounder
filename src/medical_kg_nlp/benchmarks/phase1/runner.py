@@ -11,18 +11,21 @@ import yaml
 
 from medical_kg_nlp.benchmarks.phase1.phase1 import (
     load_phase1_text_documents,
-    validate_phase1_submission_dir,
+    validate_phase1_submission_documents,
     validate_phase1_submission_zip,
     write_phase1_output_dir,
     zip_phase1_output_dir,
 )
+from medical_kg_nlp.benchmarks.phase1.round2 import load_phase1_round2_documents
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.mining.io import load_documents
 from medical_kg_nlp.pipeline.factory import PipelineFactoryConfig
 from medical_kg_nlp.pipeline.parallel_batch import (
     ParallelBatchOptions,
     ParallelBackend,
     run_batch_with_trace_parallel,
 )
+from medical_kg_nlp.schema.document import ClinicalDocument
 
 __all__ = [
     "BenchmarkExportPolicy",
@@ -38,11 +41,13 @@ BenchmarkExportPolicy = Literal["empty", "pipeline"]
 class Phase1BenchmarkConfig:
     """Inputs and conservative export policies for one benchmark artifact."""
 
-    input_dir: Path
+    input_dir: Path | None
     output_dir: Path
     zip_path: Path
     dictionary_path: Path
     abbreviation_path: Path
+    documents_path: Path | None = None
+    expected_source_archive_sha256: str | None = None
     pipeline_config_path: Path | None = None
     validation_dictionary_paths: tuple[Path, ...] = ()
     assertion_policy: BenchmarkExportPolicy = "pipeline"
@@ -56,7 +61,7 @@ class Phase1BenchmarkConfig:
 def run_phase1_benchmark(config: Phase1BenchmarkConfig) -> dict[str, Any]:
     """Run, release-validate, and deterministically archive a Phase 1 submission."""
 
-    documents = load_phase1_text_documents(config.input_dir)
+    documents = _load_benchmark_documents(config)
     results = run_batch_with_trace_parallel(
         documents,
         factory_config=build_phase1_factory_config(config),
@@ -79,8 +84,8 @@ def run_phase1_benchmark(config: Phase1BenchmarkConfig) -> dict[str, Any]:
         candidate_policy=config.candidate_policy,
     )
     dictionary = _load_validation_dictionary(config)
-    directory_issues = validate_phase1_submission_dir(
-        config.input_dir,
+    directory_issues = validate_phase1_submission_documents(
+        documents,
         config.output_dir,
         dictionary=dictionary,
     )
@@ -91,7 +96,7 @@ def run_phase1_benchmark(config: Phase1BenchmarkConfig) -> dict[str, Any]:
     zip_phase1_output_dir(config.output_dir, config.zip_path)
     zip_issues = validate_phase1_submission_zip(
         config.zip_path,
-        input_dir=config.input_dir,
+        documents=documents,
         dictionary=dictionary,
         expected_count=len(documents),
     )
@@ -99,6 +104,11 @@ def run_phase1_benchmark(config: Phase1BenchmarkConfig) -> dict[str, Any]:
         raise ValueError(f"Phase 1 ZIP validation failed with {len(zip_issues)} issue(s)")
     return {
         "documents": len(documents),
+        "source": (
+            {"kind": "mined_manifest", "path": str(config.documents_path)}
+            if config.documents_path is not None
+            else {"kind": "text_directory", "path": str(config.input_dir)}
+        ),
         "predictions": len(predictions),
         "output_dir": str(config.output_dir),
         "zip_path": str(config.zip_path),
@@ -110,6 +120,24 @@ def run_phase1_benchmark(config: Phase1BenchmarkConfig) -> dict[str, Any]:
         "validation_dictionaries": [str(path) for path in _validation_paths(config)],
         "validation_issues": 0,
     }
+
+
+def _load_benchmark_documents(config: Phase1BenchmarkConfig) -> list[ClinicalDocument]:
+    """Load one mutually exclusive source while retaining Round 2 privacy checks."""
+
+    if (config.input_dir is None) == (config.documents_path is None):
+        raise ValueError("Provide exactly one of input_dir or documents_path")
+    if config.documents_path is None:
+        assert config.input_dir is not None
+        if config.expected_source_archive_sha256 is not None:
+            raise ValueError("Source archive SHA-256 is valid only with documents_path")
+        return load_phase1_text_documents(config.input_dir)
+    if config.expected_source_archive_sha256 is None:
+        raise ValueError("Round 2 documents_path requires expected_source_archive_sha256")
+    return load_phase1_round2_documents(
+        load_documents(config.documents_path),
+        expected_archive_sha256=config.expected_source_archive_sha256,
+    )
 
 
 def build_phase1_factory_config(config: Phase1BenchmarkConfig) -> PipelineFactoryConfig:
