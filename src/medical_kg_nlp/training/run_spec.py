@@ -7,7 +7,7 @@ import importlib.util
 import platform
 import re
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any
 
 from medical_kg_nlp.adapters.huggingface.runtime import OptionalModelDependencyError
@@ -63,13 +63,15 @@ class TokenClassifierRunSpec:
 
     schema_version: str
     run_id: str
+    config_path: Path
+    run_root: Path
     training: TokenClassifierTrainingConfig
     runtime: GPURequirements
     model_source_url: str
     model_license: str
 
     def __post_init__(self) -> None:
-        if self.schema_version != "token-classifier-run.v1":
+        if self.schema_version != "token-classifier-run.v2":
             raise ValueError("Unsupported token-classifier run schema")
         if not self.run_id.strip():
             raise ValueError("run_id must be non-empty")
@@ -82,6 +84,23 @@ class TokenClassifierRunSpec:
             raise ValueError("Training precision does not match the GPU runtime contract")
         if self.training.use_cpu:
             raise ValueError("A Linux/GPU run spec cannot enable use_cpu")
+        if not self.training.full_determinism:
+            raise ValueError("A reproducible Linux/GPU run must enable full_determinism")
+
+    @property
+    def config_relative_path(self) -> str:
+        """Return the run-spec path without leaking the checkout location."""
+
+        return self.relative_path(self.config_path)
+
+    def relative_path(self, path: str | Path) -> str:
+        """Project one resolved runtime path into the portable run-root namespace."""
+
+        try:
+            # INVARIANT: all scientific inputs and outputs belong to one movable tree.
+            return Path(path).resolve().relative_to(self.run_root).as_posix()
+        except ValueError as error:
+            raise ValueError(f"Run path escapes declared run_root: {path}") from error
 
     @property
     def prefetch_command(self) -> tuple[str, ...]:
@@ -102,14 +121,23 @@ class TokenClassifierRunSpec:
             "model",
             "train-token-classifier-run",
             "--config",
-            f"configs/models/{self.run_id}.yaml",
+            self.config_relative_path,
         )
 
 
 def load_token_classifier_run_spec(path: str | Path) -> TokenClassifierRunSpec:
     """Parse one strict YAML run spec without importing an ML framework."""
 
-    raw = read_yaml(path)
+    config_path = Path(path).resolve()
+    raw = read_yaml(config_path)
+    schema_version = _required_string(raw, "schema_version")
+    if schema_version != "token-classifier-run.v2":
+        raise ValueError("Unsupported token-classifier run schema")
+    run_root = _resolve_run_root(
+        config_path,
+        _required_string(raw, "run_root"),
+    )
+    _relative_to_run_root(config_path, run_root)
     dataset = _mapping(raw, "dataset")
     model = _mapping(raw, "model")
     training = _mapping(raw, "training")
@@ -119,16 +147,26 @@ def load_token_classifier_run_spec(path: str | Path) -> TokenClassifierRunSpec:
         raise ValueError("minimum_compute_capability must be [major, minor]")
     precision = str(runtime.get("precision", "bf16"))
     config = TokenClassifierTrainingConfig(
-        dataset_path=Path(_required_string(dataset, "path")),
-        dataset_manifest_path=Path(_required_string(dataset, "manifest")),
-        output_dir=Path(_required_string(training, "output_dir")),
+        dataset_path=_resolve_run_path(
+            run_root,
+            _required_string(dataset, "path"),
+            field="dataset.path",
+        ),
+        dataset_manifest_path=_resolve_run_path(
+            run_root,
+            _required_string(dataset, "manifest"),
+            field="dataset.manifest",
+        ),
+        output_dir=_resolve_run_path(
+            run_root,
+            _required_string(training, "output_dir"),
+            field="training.output_dir",
+        ),
         model_id=_required_string(model, "model_id"),
         revision=_required_string(model, "revision"),
         train_split=str(dataset.get("train_split", "train")),
         evaluation_split=_optional_string(dataset.get("evaluation_split")),
-        internal_validation_fraction=float(
-            dataset.get("internal_validation_fraction", 0.0)
-        ),
+        internal_validation_fraction=float(dataset.get("internal_validation_fraction", 0.0)),
         max_length=int(training.get("max_length", 512)),
         stride=int(training.get("stride", 64)),
         train_batch_size=int(training.get("train_batch_size", 8)),
@@ -137,24 +175,29 @@ def load_token_classifier_run_spec(path: str | Path) -> TokenClassifierRunSpec:
         learning_rate=float(training.get("learning_rate", 2e-5)),
         weight_decay=float(training.get("weight_decay", 0.01)),
         warmup_ratio=float(training.get("warmup_ratio", 0.1)),
-        gradient_accumulation_steps=int(
-            training.get("gradient_accumulation_steps", 1)
-        ),
+        gradient_accumulation_steps=int(training.get("gradient_accumulation_steps", 1)),
         preprocessing_workers=int(training.get("preprocessing_workers", 1)),
         seed=int(training.get("seed", 42)),
         fp16=precision == "fp16",
         bf16=precision == "bf16",
         use_cpu=False,
-        overwrite_output=bool(training.get("overwrite_output", False)),
+        full_determinism=_boolean(training, "full_determinism", default=False),
+        overwrite_output=_boolean(training, "overwrite_output", default=False),
         cache_dir=(
             None
             if training.get("cache_dir") is None
-            else Path(str(training["cache_dir"]))
+            else _resolve_run_path(
+                run_root,
+                str(training["cache_dir"]),
+                field="training.cache_dir",
+            )
         ),
     )
     return TokenClassifierRunSpec(
-        schema_version=_required_string(raw, "schema_version"),
+        schema_version=schema_version,
         run_id=_required_string(raw, "run_id"),
+        config_path=config_path,
+        run_root=run_root,
         training=config,
         runtime=GPURequirements(
             operating_system=str(runtime.get("operating_system", "linux")),
@@ -250,3 +293,37 @@ def _optional_string(value: object) -> str | None:
     if not isinstance(value, str) or not value.strip():
         raise ValueError("Optional run-spec string must be non-empty")
     return value
+
+
+def _boolean(raw: dict[str, Any], key: str, *, default: bool) -> bool:
+    value = raw.get(key, default)
+    if not isinstance(value, bool):
+        raise ValueError(f"Run spec {key} must be a boolean")
+    return value
+
+
+def _resolve_run_root(config_path: Path, raw_root: str) -> Path:
+    if Path(raw_root).is_absolute() or PureWindowsPath(raw_root).is_absolute():
+        raise ValueError("run_root must be relative to the run specification")
+    root = (config_path.parent / raw_root).resolve()
+    if not root.is_dir():
+        raise ValueError(f"run_root does not exist: {raw_root}")
+    return root
+
+
+def _resolve_run_path(root: Path, raw_path: str, *, field: str) -> Path:
+    if Path(raw_path).is_absolute() or PureWindowsPath(raw_path).is_absolute():
+        raise ValueError(f"{field} must be relative to run_root")
+    path = (root / raw_path).resolve()
+    try:
+        path.relative_to(root)
+    except ValueError as error:
+        raise ValueError(f"{field} escapes declared run_root") from error
+    return path
+
+
+def _relative_to_run_root(path: Path, root: Path) -> str:
+    try:
+        return path.resolve().relative_to(root).as_posix()
+    except ValueError as error:
+        raise ValueError("Run specification must be inside run_root") from error

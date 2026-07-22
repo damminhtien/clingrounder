@@ -1,6 +1,8 @@
 # MODEL: source is the official Hugging Face repository; revision is an immutable commit.
-schema_version: token-classifier-run.v1
+schema_version: token-classifier-run.v2
 run_id: open-corpus-full-type-xlmr-base-2026-07-19
+# INVARIANT: every path below resolves from this movable repository root, not the shell CWD.
+run_root: ../..
 
 dataset:
   path: outputs/mining/model-datasets/open-corpus-v1-full-ner-harmonized-2026-07-18/spans.jsonl
@@ -30,6 +32,7 @@ training:
   warmup_ratio: 0.1
   preprocessing_workers: 4
   seed: 42
+  full_determinism: true
   overwrite_output: false
 
 runtime:

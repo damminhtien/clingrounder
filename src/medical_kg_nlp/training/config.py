@@ -35,6 +35,7 @@ class TokenClassifierTrainingConfig:
     fp16: bool = False
     bf16: bool = False
     use_cpu: bool = False
+    full_determinism: bool = False
     resume_from_checkpoint: Path | None = None
     overwrite_output: bool = False
     cache_dir: Path | None = None
@@ -77,13 +78,21 @@ class TokenClassifierTrainingConfig:
         if self.fp16 and self.bf16:
             raise ValueError("fp16 and bf16 cannot both be enabled")
 
-    def to_dict(self) -> dict[str, Any]:
-        """Return all behavior-affecting values for the experiment manifest."""
+    def to_dict(self, *, path_root: Path | None = None) -> dict[str, Any]:
+        """Return behavior-affecting values with optionally portable paths.
+
+        ``path_root`` is used by checked-in run specifications. It prevents an
+        otherwise reproducible manifest from embedding the workstation checkout
+        path while preserving resolved absolute paths for runtime IO.
+        """
 
         return {
-            "dataset_path": str(self.dataset_path),
-            "dataset_manifest_path": str(self.dataset_manifest_path),
-            "output_dir": str(self.output_dir),
+            "dataset_path": _manifest_path(self.dataset_path, root=path_root),
+            "dataset_manifest_path": _manifest_path(
+                self.dataset_manifest_path,
+                root=path_root,
+            ),
+            "output_dir": _manifest_path(self.output_dir, root=path_root),
             "model_id": self.model_id,
             "revision": self.revision,
             "train_split": self.train_split,
@@ -103,11 +112,25 @@ class TokenClassifierTrainingConfig:
             "fp16": self.fp16,
             "bf16": self.bf16,
             "use_cpu": self.use_cpu,
+            "full_determinism": self.full_determinism,
             "resume_from_checkpoint": (
                 None
                 if self.resume_from_checkpoint is None
-                else str(self.resume_from_checkpoint)
+                else _manifest_path(self.resume_from_checkpoint, root=path_root)
             ),
             "overwrite_output": self.overwrite_output,
-            "cache_dir": None if self.cache_dir is None else str(self.cache_dir),
+            "cache_dir": (
+                None if self.cache_dir is None else _manifest_path(self.cache_dir, root=path_root)
+            ),
         }
+
+
+def _manifest_path(path: Path, *, root: Path | None) -> str:
+    if root is None:
+        return str(path)
+    resolved_root = root.resolve()
+    try:
+        # INVARIANT: portable manifests cannot reference data outside the run root.
+        return path.resolve().relative_to(resolved_root).as_posix()
+    except ValueError as error:
+        raise ValueError(f"Training path escapes manifest root: {path}") from error

@@ -28,8 +28,7 @@ __all__ = [
 def inspect_token_classifier_run(args: argparse.Namespace) -> int:
     """Validate a run spec and render exact prefetch/train commands."""
 
-    config_path = Path(args.config)
-    spec = load_token_classifier_run_spec(config_path)
+    spec = load_token_classifier_run_spec(args.config)
     summary, vocabulary = inspect_token_classifier_training_inputs(spec.training)
     print(
         json.dumps(
@@ -37,8 +36,9 @@ def inspect_token_classifier_run(args: argparse.Namespace) -> int:
                 "status": "validated_not_executed",
                 "run_id": spec.run_id,
                 "run_spec": {
-                    "path": str(config_path),
-                    "sha256": sha256_file(config_path),
+                    "path": spec.config_relative_path,
+                    "path_base": "run_root",
+                    "sha256": sha256_file(spec.config_path),
                 },
                 "dataset": summary.to_dict(),
                 "label_vocabulary": list(vocabulary),
@@ -51,13 +51,14 @@ def inspect_token_classifier_run(args: argparse.Namespace) -> int:
                 "runtime_requirements": spec.runtime.to_dict(),
                 "local_runtime": inspect_local_runtime(spec.runtime),
                 "commands": {
+                    "working_directory": "run_root",
                     "prefetch": list(spec.prefetch_command),
                     "train": [
                         "medical-kg",
                         "model",
                         "train-token-classifier-run",
                         "--config",
-                        str(config_path),
+                        spec.config_relative_path,
                     ],
                 },
             },
@@ -72,13 +73,18 @@ def inspect_token_classifier_run(args: argparse.Namespace) -> int:
 def train_token_classifier_run(args: argparse.Namespace) -> int:
     """Execute a run spec only after its Linux/CUDA gate passes."""
 
-    config_path = Path(args.config)
-    spec = load_token_classifier_run_spec(config_path)
+    spec = load_token_classifier_run_spec(args.config)
     gpu_runtime = assert_local_gpu_runtime(spec.runtime)
-    manifest = dict(train_huggingface_token_classifier(spec.training))
+    manifest = dict(
+        train_huggingface_token_classifier(
+            spec.training,
+            manifest_root=spec.run_root,
+        )
+    )
     manifest["run_spec"] = {
-        "path": str(config_path),
-        "sha256": sha256_file(config_path),
+        "path": spec.config_relative_path,
+        "path_base": "run_root",
+        "sha256": sha256_file(spec.config_path),
         "run_id": spec.run_id,
     }
     manifest["gpu_runtime"] = gpu_runtime
@@ -88,7 +94,7 @@ def train_token_classifier_run(args: argparse.Namespace) -> int:
             {
                 "status": "trained",
                 "run_id": spec.run_id,
-                "manifest": str(spec.training.output_dir / "run_manifest.json"),
+                "manifest": spec.relative_path(spec.training.output_dir / "run_manifest.json"),
                 "model": manifest["model"],
                 "metrics": manifest["metrics"],
                 "gpu_runtime": gpu_runtime,
@@ -153,13 +159,9 @@ def _config_from_args(
     *,
     output_dir: Path,
 ) -> TokenClassifierTrainingConfig:
-    internal_validation_fraction = float(
-        getattr(args, "internal_validation_fraction", 0.0)
-    )
+    internal_validation_fraction = float(getattr(args, "internal_validation_fraction", 0.0))
     evaluation_split = (
-        None
-        if args.no_evaluation or internal_validation_fraction
-        else str(args.evaluation_split)
+        None if args.no_evaluation or internal_validation_fraction else str(args.evaluation_split)
     )
     return TokenClassifierTrainingConfig(
         dataset_path=Path(args.dataset),
@@ -178,9 +180,7 @@ def _config_from_args(
         learning_rate=float(getattr(args, "learning_rate", 2e-5)),
         weight_decay=float(getattr(args, "weight_decay", 0.01)),
         warmup_ratio=float(getattr(args, "warmup_ratio", 0.1)),
-        gradient_accumulation_steps=int(
-            getattr(args, "gradient_accumulation_steps", 1)
-        ),
+        gradient_accumulation_steps=int(getattr(args, "gradient_accumulation_steps", 1)),
         preprocessing_workers=int(getattr(args, "preprocessing_workers", 1)),
         seed=int(getattr(args, "seed", 42)),
         fp16=bool(getattr(args, "fp16", False)),
@@ -192,7 +192,5 @@ def _config_from_args(
             else Path(args.resume_from_checkpoint)
         ),
         overwrite_output=bool(getattr(args, "overwrite_output", False)),
-        cache_dir=(
-            None if getattr(args, "cache_dir", None) is None else Path(args.cache_dir)
-        ),
+        cache_dir=(None if getattr(args, "cache_dir", None) is None else Path(args.cache_dir)),
     )

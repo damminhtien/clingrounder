@@ -51,11 +51,7 @@ def inspect_token_classifier_training_inputs(
     vocabulary = build_bio_label_vocabulary(
         summary,
         train_split=config.train_split,
-        evaluation_split=(
-            None
-            if config.internal_validation_fraction
-            else config.evaluation_split
-        ),
+        evaluation_split=(None if config.internal_validation_fraction else config.evaluation_split),
     )
     if config.train_split not in summary.split_record_counts:
         raise ValueError(f"Training split {config.train_split!r} is absent")
@@ -69,8 +65,14 @@ def inspect_token_classifier_training_inputs(
 
 def train_huggingface_token_classifier(
     config: TokenClassifierTrainingConfig,
+    *,
+    manifest_root: Path | None = None,
 ) -> Mapping[str, Any]:
-    """Train, evaluate, save, and fingerprint one local token classifier."""
+    """Train, evaluate, save, and fingerprint one local token classifier.
+
+    A checked-in run spec passes ``manifest_root`` so persisted paths remain
+    repository-relative even though runtime IO uses fully resolved paths.
+    """
 
     summary, vocabulary = inspect_token_classifier_training_inputs(config)
     _validate_output_directory(config)
@@ -205,6 +207,7 @@ def train_huggingface_token_classifier(
         fp16=config.fp16,
         bf16=config.bf16,
         use_cpu=config.use_cpu,
+        full_determinism=config.full_determinism,
     )
     trainer = transformers.Trainer(
         model=model,
@@ -217,9 +220,7 @@ def train_huggingface_token_classifier(
     )
     train_result = trainer.train(
         resume_from_checkpoint=(
-            None
-            if config.resume_from_checkpoint is None
-            else str(config.resume_from_checkpoint)
+            None if config.resume_from_checkpoint is None else str(config.resume_from_checkpoint)
         )
     )
     evaluation_metrics = trainer.evaluate() if has_evaluation else {}
@@ -229,20 +230,24 @@ def train_huggingface_token_classifier(
     tokenizer.save_pretrained(str(final_model_dir))
     model_fingerprint = _fingerprint_directory(final_model_dir)
     completed_at = datetime.now(UTC).isoformat()
+    manifest_configuration = config.to_dict(path_root=manifest_root)
     manifest: dict[str, Any] = {
-        "schema_version": "token-classifier-training.v1",
+        "schema_version": "token-classifier-training.v2",
         "started_at": started_at,
         "completed_at": completed_at,
+        "path_contract": {
+            "base": "run_root" if manifest_root is not None else "literal",
+        },
         "model": {
             "model_id": config.model_id,
             "revision": config.revision,
             "local_files_only": True,
-            "output": str(final_model_dir),
+            "output": _manifest_path(final_model_dir, root=manifest_root),
             "fingerprint": model_fingerprint,
         },
-        "configuration": config.to_dict(),
+        "configuration": manifest_configuration,
         "configuration_sha256": sha256_text(
-            json.dumps(config.to_dict(), ensure_ascii=False, sort_keys=True)
+            json.dumps(manifest_configuration, ensure_ascii=False, sort_keys=True)
         ),
         "dataset": summary.to_dict(),
         "dataset_manifest_sha256": sha256_file(config.dataset_manifest_path),
@@ -272,8 +277,7 @@ def _load_training_dependencies() -> tuple[Any, Any, Any]:
         transformers = importlib.import_module("transformers")
     except (ImportError, ModuleNotFoundError) as error:
         raise OptionalModelDependencyError(
-            "Token-classifier training requires the local 'ml' extra: "
-            "uv sync --extra ml"
+            "Token-classifier training requires the local 'ml' extra: uv sync --extra ml"
         ) from error
     return torch, datasets, transformers
 
@@ -301,9 +305,7 @@ def _matches_internal_evaluation(
     split_name: str,
     fraction: float,
 ) -> bool:
-    return str(split) == split_name and _is_internal_validation_document(
-        str(document_id), fraction
-    )
+    return str(split) == split_name and _is_internal_validation_document(str(document_id), fraction)
 
 
 def _is_internal_validation_document(document_id: str, fraction: float) -> bool:
@@ -367,11 +369,7 @@ def _metric_function(label_vocabulary: Sequence[str]) -> Any:
 def _validate_output_directory(config: TokenClassifierTrainingConfig) -> None:
     output = config.output_dir
     has_existing_files = output.exists() and any(output.iterdir())
-    if (
-        has_existing_files
-        and not config.overwrite_output
-        and config.resume_from_checkpoint is None
-    ):
+    if has_existing_files and not config.overwrite_output and config.resume_from_checkpoint is None:
         raise ValueError(
             f"Output directory {output} is not empty; choose a new run directory, "
             "resume a checkpoint, or pass overwrite_output"
@@ -405,3 +403,13 @@ def _json_metrics(values: Mapping[str, object]) -> dict[str, float | int | str]:
             if isinstance(scalar, (int, float, str)):
                 output[str(key)] = scalar
     return output
+
+
+def _manifest_path(path: Path, *, root: Path | None) -> str:
+    if root is None:
+        return str(path)
+    try:
+        # INVARIANT: model provenance may move between hosts as one release tree.
+        return path.resolve().relative_to(root.resolve()).as_posix()
+    except ValueError as error:
+        raise ValueError(f"Model output escapes manifest root: {path}") from error
