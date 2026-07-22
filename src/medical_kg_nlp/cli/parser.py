@@ -259,8 +259,19 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         "--source-archive-sha256",
         help="Required pinned archive SHA-256 when --documents is used.",
     )
-    submission.add_argument("--output-dir", required=True)
-    submission.add_argument("--zip", required=True)
+    submission.add_argument("--output-dir", default="output")
+    submission.add_argument("--zip", default="output.zip")
+    submission.add_argument(
+        "--run-root",
+        help="Create a unique content-hashed run below this directory.",
+    )
+    submission.add_argument("--run-label", default="phase1")
+    submission.add_argument(
+        "--provenance-input",
+        action="append",
+        default=[],
+        help="Additional immutable input, such as a trained-model manifest; repeat as needed.",
+    )
     submission.add_argument("--dictionary", default="data/dictionaries/seed_concepts.jsonl")
     submission.add_argument("--abbreviations", default="data/dictionaries/abbreviations.jsonl")
     submission.add_argument(

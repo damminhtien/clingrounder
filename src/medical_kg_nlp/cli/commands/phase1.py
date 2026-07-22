@@ -27,8 +27,10 @@ from medical_kg_nlp.benchmarks.phase1.runner import (
     Phase1BenchmarkConfig,
     run_phase1_benchmark,
 )
-from medical_kg_nlp.mining.io import load_documents
+from medical_kg_nlp.mining.io import load_documents, write_json
 from medical_kg_nlp.pipeline.parallel_batch import ParallelBackend
+from medical_kg_nlp.utils.hashing import sha256_file
+from medical_kg_nlp.utils.run_output import create_hashed_run_dir, path_in_run
 
 __all__ = [
     "audit_phase1_round2",
@@ -42,11 +44,40 @@ __all__ = [
 def run_phase1_submission(args: argparse.Namespace) -> int:
     """Build, strict-validate, and archive a Phase 1 artifact."""
 
+    run_output = None
+    if args.run_root:
+        if Path(args.output_dir).is_absolute() or Path(args.zip).is_absolute():
+            raise ValueError("Hashed Phase 1 output and ZIP paths must be relative")
+        source_input = args.input_dir or args.documents
+        provenance_inputs = [
+            source_input,
+            args.pipeline_config or "pipeline-config:none",
+            args.dictionary,
+            args.abbreviations,
+            *args.validation_dictionaries,
+            *args.provenance_input,
+        ]
+        run_output = create_hashed_run_dir(
+            args.run_root,
+            label=args.run_label,
+            inputs=provenance_inputs,
+            resolved_config={
+                "source_archive_sha256": args.source_archive_sha256,
+                "assertion_policy": args.assertion_policy,
+                "candidate_policy": args.candidate_policy,
+                "max_candidates": args.max_candidates,
+                "parallel_backend": args.parallel_backend,
+                "workers": args.workers,
+                "chunksize": args.chunksize,
+            },
+        )
+    output_dir = path_in_run(args.output_dir, run_output)
+    zip_path = path_in_run(args.zip, run_output)
     report = run_phase1_benchmark(
         Phase1BenchmarkConfig(
             input_dir=None if args.input_dir is None else Path(args.input_dir),
-            output_dir=Path(args.output_dir),
-            zip_path=Path(args.zip),
+            output_dir=output_dir,
+            zip_path=zip_path,
             dictionary_path=Path(args.dictionary),
             abbreviation_path=Path(args.abbreviations),
             documents_path=None if args.documents is None else Path(args.documents),
@@ -65,6 +96,18 @@ def run_phase1_submission(args: argparse.Namespace) -> int:
             chunksize=args.chunksize,
         )
     )
+    if run_output is not None:
+        manifest = json.loads(run_output.manifest_path.read_text(encoding="utf-8"))
+        manifest["benchmark"] = report
+        manifest["outputs"] = {
+            "directory": str(output_dir),
+            "zip": str(zip_path),
+            "zip_sha256": sha256_file(zip_path),
+        }
+        write_json(run_output.manifest_path, manifest)
+        report["run_id"] = run_output.run_id
+        report["run_dir"] = str(run_output.run_dir)
+        report["run_manifest"] = str(run_output.manifest_path)
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 

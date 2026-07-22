@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from medical_kg_nlp.cli.parser import build_parser
 from medical_kg_nlp.benchmarks.phase1.runner import (
     Phase1BenchmarkConfig,
     build_phase1_factory_config,
@@ -70,3 +71,27 @@ def test_validation_dictionary_paths_are_explicit_and_ordered(tmp_path: Path) ->
         tmp_path / "icd.jsonl",
         tmp_path / "rxnorm.jsonl",
     )
+
+
+def test_submission_cli_accepts_private_manifest_and_hashed_output() -> None:
+    args = build_parser().parse_args(
+        [
+            "benchmark",
+            "phase1",
+            "submission",
+            "--documents",
+            "round2/documents.jsonl",
+            "--source-archive-sha256",
+            "a" * 64,
+            "--run-root",
+            "outputs/phase1/round2",
+            "--provenance-input",
+            "outputs/models/run_manifest.json",
+        ]
+    )
+
+    assert args.documents == "round2/documents.jsonl"
+    assert args.input_dir is None
+    assert args.output_dir == "output"
+    assert args.zip == "output.zip"
+    assert args.provenance_input == ["outputs/models/run_manifest.json"]
