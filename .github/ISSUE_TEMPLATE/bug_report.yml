@@ -19,7 +19,7 @@ body:
       label: Reproduction
       description: Commands, input shape, and minimal synthetic example.
       placeholder: |
-        python scripts/run_pipeline.py --input ... --output ...
+        medical-kg pipeline run --input ... --output ...
     validations:
       required: true
   - type: textarea

@@ -41,10 +41,11 @@ jobs:
 
       - name: Pipeline smoke
         run: |
-          python scripts/run_pipeline.py \
+          python -m medical_kg_nlp.cli pipeline run \
             --input data/samples/sample_notes.jsonl \
             --output outputs/predictions.jsonl
-          python scripts/validate_predictions.py \
+          python -m medical_kg_nlp.cli validate \
+            --profile development \
             --pred outputs/predictions.jsonl \
             --documents data/samples/sample_notes.jsonl \
             --dictionary data/dictionaries/seed_concepts.jsonl
