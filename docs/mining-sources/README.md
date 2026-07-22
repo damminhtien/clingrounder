@@ -14,6 +14,7 @@ knowledge may be promoted.
 | Source | State | Strongest allowed use | Dossier |
 | --- | --- | --- | --- |
 | VietBioNER | curated | training only | [VietBioNER](vietbioner.md) |
+| Phase 1 Round 2 input | acquired | local inference/audit only | [Phase 1 Round 2](phase1-round2.md) |
 | CodiEsp | promoted | runtime opt-in | [CodiEsp](codiesp.md) |
 | DailyMed SPL | promoted | runtime opt-in | [DailyMed](dailymed.md) |
 | DailyMed-RxNorm | promoted | runtime opt-in | [DailyMed](dailymed.md) |

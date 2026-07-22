@@ -29,6 +29,18 @@ sources:
     dossier: docs/mining-sources/backlog.md
     verified_on: 2026-07-19
     summary: Dataset annotation license is not explicit enough for acquisition or redistribution.
+  - source_id: phase1_round2_input
+    state: acquired
+    promotion_boundary: none
+    dossier: docs/mining-sources/phase1-round2.md
+    verified_on: 2026-07-22
+    summary: >-
+      The private 100-document archive is checksum-pinned and byte-preserving; derived profile,
+      duplicate, and novelty reports are audit-only and cannot supply labels or runtime memory.
+    run_configs:
+      - configs/mining/phase1-round2-2026-07-22.yaml
+    artifact_roots:
+      - outputs/mining/phase1-round2-2026-07-22
   - source_id: pmc_oa
     state: proposed
     promotion_boundary: review_only
