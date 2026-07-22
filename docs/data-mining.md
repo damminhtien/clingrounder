@@ -736,6 +736,39 @@ train chunks and 39 development chunks. Chunk limits are soft only when necessar
 an entity. Every local span round-trips to its original document offset, and overlapping labels are
 rejected because a BIO token classifier cannot represent them safely.
 
+## Phase 1 Five-Type Model Dataset
+
+The benchmark-owned builder converts only the frozen 76-document manual-gold train split into a
+neutral span dataset. It does not read the 24 holdout annotations for model fitting and it rejects
+Round 2 documents. Duplicate groups are assigned together using SHA-256 buckets, development
+fraction `0.2`, and salt `42`.
+
+```bash
+uv run medical-kg benchmark phase1 model-data build \
+  --input-dir data/raw/input \
+  --gold-dir data/manual_gold \
+  --frozen-split-manifest data/manual_gold/holdout_manifest.json \
+  --output-dir outputs/mining/model-datasets/phase1-manual-five-type-v1
+```
+
+The materialized build key is
+`3bf2365ec1745b9c7fd89cca2ed52035e8f34f3223a4c52d9fd5e8adbb07a1b7`.
+It contains 60 train and 16 development documents, 101 chunks, and 2,112 raw-offset spans:
+
+| Internal label | Spans |
+| --- | ---: |
+| `SYMPTOM` | 912 |
+| `DISEASE` | 448 |
+| `LAB_TEST` | 317 |
+| `LAB_RESULT` | 258 |
+| `DRUG` | 177 |
+
+The span JSONL SHA-256 is
+`d87384dfdd8ee93bb26f24da0e96f2497acf6b4a3a00e0f27abfd4a0feb64f30`.
+Its manifest stores only dataset-relative paths. The public BTC medication example is fingerprinted
+as an executable convention test with `included_in_training: false` and
+`runtime_lookup_memory: false`.
+
 ## Full-Type NER Linux/GPU Run
 
 The full-type run is pinned by

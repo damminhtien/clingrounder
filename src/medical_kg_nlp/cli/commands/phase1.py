@@ -7,17 +7,30 @@ import json
 from pathlib import Path
 from typing import cast
 
+from medical_kg_nlp.benchmarks.phase1.model_dataset import (
+    Phase1ModelDatasetConfig,
+    build_phase1_model_dataset,
+)
+from medical_kg_nlp.benchmarks.phase1.round2 import (
+    build_phase1_round2_audit,
+    write_phase1_round2_audit,
+)
 from medical_kg_nlp.benchmarks.phase1.runner import (
     BenchmarkExportPolicy,
     Phase1BenchmarkConfig,
     run_phase1_benchmark,
 )
+from medical_kg_nlp.mining.io import load_documents
 from medical_kg_nlp.pipeline.parallel_batch import ParallelBackend
 
-__all__ = ["run_phase1"]
+__all__ = [
+    "audit_phase1_round2",
+    "build_phase1_model_data",
+    "run_phase1_submission",
+]
 
 
-def run_phase1(args: argparse.Namespace) -> int:
+def run_phase1_submission(args: argparse.Namespace) -> int:
     """Build, strict-validate, and archive a Phase 1 artifact."""
 
     report = run_phase1_benchmark(
@@ -40,6 +53,53 @@ def run_phase1(args: argparse.Namespace) -> int:
             workers=args.workers,
             chunksize=args.chunksize,
         )
+    )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def audit_phase1_round2(args: argparse.Namespace) -> int:
+    """Write audit-only Round 2 distribution and overlap evidence."""
+
+    documents_path = Path(args.documents)
+    audit = build_phase1_round2_audit(
+        load_documents(documents_path),
+        reference_input_dir=Path(args.reference_input_dir),
+        reference_gold_dir=Path(args.reference_gold_dir),
+        reference_split_manifest=Path(args.reference_split_manifest),
+    )
+    manifest = write_phase1_round2_audit(
+        audit,
+        Path(args.output_dir),
+        documents_manifest_path=documents_path,
+    )
+    summary = {
+        "document_count": audit["profile"]["documents"]["count"],
+        "novelty_document_count": len(audit["novelty_queue"]),
+        "runtime_eligible": False,
+        "manifest": manifest,
+    }
+    print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def build_phase1_model_data(args: argparse.Namespace) -> int:
+    """Build the five-type NER view from the frozen manual-gold train split."""
+
+    report = build_phase1_model_dataset(
+        Path(args.output_dir),
+        config=Phase1ModelDatasetConfig(
+            input_dir=Path(args.input_dir),
+            gold_dir=Path(args.gold_dir),
+            frozen_split_manifest=Path(args.frozen_split_manifest),
+            public_spec_input=Path(args.public_spec_input),
+            public_spec_expected=Path(args.public_spec_expected),
+            development_fraction=args.development_fraction,
+            split_salt=args.split_salt,
+            max_characters=args.max_characters,
+            include_empty_chunks=not args.exclude_empty_chunks,
+            empty_chunk_rate=args.empty_chunk_rate,
+        ),
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0

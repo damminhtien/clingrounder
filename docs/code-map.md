@@ -160,7 +160,9 @@ medical-kg pipeline run
 medical-kg terminology build|inspect|query-set|benchmark
 medical-kg evaluate
 medical-kg validate
-medical-kg benchmark phase1
+medical-kg benchmark phase1 submission
+medical-kg benchmark phase1 round2 audit
+medical-kg benchmark phase1 model-data build
 medical-kg data registry validate
 medical-kg data source sync
 medical-kg data dataset build

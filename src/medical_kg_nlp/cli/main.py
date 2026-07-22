@@ -38,7 +38,18 @@ _HANDLERS = {
     "kg_inspect": ("medical_kg_nlp.cli.commands.kg", "inspect_graph_index"),
     "evaluate": ("medical_kg_nlp.cli.commands.evaluate", "evaluate"),
     "validate": ("medical_kg_nlp.cli.commands.validate", "validate"),
-    "benchmark_phase1": ("medical_kg_nlp.cli.commands.phase1", "run_phase1"),
+    "benchmark_phase1_submission": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "run_phase1_submission",
+    ),
+    "benchmark_phase1_round2_audit": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "audit_phase1_round2",
+    ),
+    "benchmark_phase1_model_data_build": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "build_phase1_model_data",
+    ),
     "model_validate_token_dataset": (
         "medical_kg_nlp.cli.commands.model",
         "validate_token_dataset",

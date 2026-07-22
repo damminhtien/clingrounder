@@ -128,8 +128,13 @@ def export_span_dataset(
     documents_path: str | Path,
     annotations_path: str | Path,
     split_manifest_path: str | Path,
+    manifest_root: str | Path | None = None,
 ) -> dict[str, Any]:
-    """Stream a deterministic JSONL dataset and write its pinned manifest."""
+    """Stream a deterministic JSONL dataset and write its pinned manifest.
+
+    ``manifest_root`` makes generated paths portable when a caller builds in an atomic staging
+    directory. Existing callers retain their original path representation when it is omitted.
+    """
 
     split_counts: Counter[str] = Counter()
     type_counts: Counter[str] = Counter()
@@ -170,11 +175,14 @@ def export_span_dataset(
             "empty_chunk_rate": config.empty_chunk_rate,
         },
         "inputs": {
-            "documents": _fingerprinted_path(documents_path),
-            "annotations": _fingerprinted_path(annotations_path),
-            "split_manifest": _fingerprinted_path(split_manifest_path),
+            "documents": _fingerprinted_path(documents_path, manifest_root=manifest_root),
+            "annotations": _fingerprinted_path(annotations_path, manifest_root=manifest_root),
+            "split_manifest": _fingerprinted_path(
+                split_manifest_path,
+                manifest_root=manifest_root,
+            ),
         },
-        "output": str(Path(output_path)),
+        "output": _manifest_path(output_path, manifest_root=manifest_root),
         "output_sha256": output_sha256,
     }
     write_json(manifest_path, manifest)
@@ -292,5 +300,26 @@ def _validate_training_record(record: Mapping[str, Any], document: MinedDocument
             raise ValueError("Training entity end does not round-trip to the source document")
 
 
-def _fingerprinted_path(path: str | Path) -> dict[str, str]:
-    return {"path": str(Path(path)), "sha256": sha256_file(path)}
+def _fingerprinted_path(
+    path: str | Path,
+    *,
+    manifest_root: str | Path | None = None,
+) -> dict[str, str]:
+    return {
+        "path": _manifest_path(path, manifest_root=manifest_root),
+        "sha256": sha256_file(path),
+    }
+
+
+def _manifest_path(
+    path: str | Path,
+    *,
+    manifest_root: str | Path | None,
+) -> str:
+    source = Path(path)
+    if manifest_root is None:
+        return str(source)
+    try:
+        return source.resolve().relative_to(Path(manifest_root).resolve()).as_posix()
+    except ValueError as exc:
+        raise ValueError(f"Manifest path is outside its portable root: {source}") from exc

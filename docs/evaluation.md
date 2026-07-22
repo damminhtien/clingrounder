@@ -62,7 +62,7 @@ python scripts/evaluate_pipeline_steps.py \
   --run-root outputs/runs \
   --output-dir evaluation/sample
 
-uv run medical-kg benchmark phase1 \
+uv run medical-kg benchmark phase1 submission \
   --input-dir data/raw/input \
   --output-dir outputs/phase1/current/output \
   --zip outputs/phase1/current/output.zip \

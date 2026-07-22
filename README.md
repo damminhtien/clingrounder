@@ -366,7 +366,7 @@ The default suite contains fast unit and contract tests. Run every public test b
 # Build a Phase 1 submission
 
 ```bash
-uv run medical-kg benchmark phase1 \
+uv run medical-kg benchmark phase1 submission \
   --input-dir data/raw/input \
   --output-dir outputs/phase1/current/output \
   --zip outputs/phase1/current/output.zip \
@@ -383,6 +383,23 @@ The submission builder:
 4. validates schema, offsets, and candidates;
 5. creates the ZIP archive;
 6. validates the final archive structure.
+
+Round 2 private input is imported and audited without transferring old annotations:
+
+```bash
+uv run medical-kg benchmark phase1 round2 audit \
+  --documents outputs/mining/phase1-round2-2026-07-22/documents.jsonl \
+  --output-dir outputs/mining/phase1-round2-2026-07-22/audit
+```
+
+Build the five-type model dataset from only the frozen 76-document training split:
+
+```bash
+uv run medical-kg benchmark phase1 model-data build \
+  --output-dir outputs/mining/model-datasets/phase1-manual-five-type-v1
+```
+
+The command excludes the 24-document holdout and all Round 2 text by contract.
 
 ---
 

@@ -12,7 +12,7 @@ provided.
 | `scripts/build_terminology_index.py` | `medical-kg terminology build` |
 | `scripts/evaluate.py` | `medical-kg evaluate` |
 | `scripts/validate_predictions.py` | `medical-kg validate` |
-| `scripts/build_phase1_submission.py` | `medical-kg benchmark phase1` |
+| `scripts/build_phase1_submission.py` | `medical-kg benchmark phase1 submission` |
 
 Run installed commands through `uv run`, for example:
 
@@ -33,7 +33,7 @@ such as selective calibration, proposal sources, and run manifests stay in dedic
 experiment scripts or package APIs instead of the stable CLI:
 
 ```bash
-uv run medical-kg benchmark phase1 \
+uv run medical-kg benchmark phase1 submission \
   --input-dir data/raw/input \
   --output-dir outputs/phase1/current/output \
   --zip outputs/phase1/current/output.zip \

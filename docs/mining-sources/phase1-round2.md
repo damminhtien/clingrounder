@@ -111,30 +111,15 @@ uv run medical-kg data run \
   --plan configs/mining/phase1-round2-2026-07-22.yaml
 ```
 
-Until the benchmark CLI exposes the audit command, reproduce the deterministic reports through its
-public Python API:
+Write the deterministic audit reports through the benchmark-owned CLI:
 
 ```bash
-uv run python - <<'PY'
-from medical_kg_nlp.benchmarks.phase1.round2 import (
-    build_phase1_round2_audit,
-    write_phase1_round2_audit,
-)
-from medical_kg_nlp.mining.io import load_documents
-
-documents_path = "outputs/mining/phase1-round2-2026-07-22/documents.jsonl"
-audit = build_phase1_round2_audit(
-    load_documents(documents_path),
-    reference_input_dir="data/raw/input",
-    reference_gold_dir="data/manual_gold",
-    reference_split_manifest="data/manual_gold/holdout_manifest.json",
-)
-write_phase1_round2_audit(
-    audit,
-    "outputs/mining/phase1-round2-2026-07-22/audit",
-    documents_manifest_path=documents_path,
-)
-PY
+uv run medical-kg benchmark phase1 round2 audit \
+  --documents outputs/mining/phase1-round2-2026-07-22/documents.jsonl \
+  --reference-input-dir data/raw/input \
+  --reference-gold-dir data/manual_gold \
+  --reference-split-manifest data/manual_gold/holdout_manifest.json \
+  --output-dir outputs/mining/phase1-round2-2026-07-22/audit
 ```
 
 The output root is local and ignored by Git:

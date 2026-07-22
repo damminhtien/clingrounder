@@ -285,6 +285,7 @@ def test_phase1_benchmark_command_builds_strict_zip(tmp_path: Path) -> None:
             [
                 "benchmark",
                 "phase1",
+                "submission",
                 "--input-dir",
                 str(input_dir),
                 "--output-dir",

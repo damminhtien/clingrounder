@@ -241,21 +241,27 @@ def _validate_parser(commands: argparse._SubParsersAction[argparse.ArgumentParse
 def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     benchmark = commands.add_parser("benchmark", help="Run task-specific benchmark plugins.")
     plugins = benchmark.add_subparsers(dest="benchmark_name", required=True)
-    phase1 = plugins.add_parser("phase1", help="Build a strict Phase 1 submission artifact.")
-    phase1.set_defaults(handler="benchmark_phase1")
-    phase1.add_argument("--input-dir", required=True)
-    phase1.add_argument("--output-dir", required=True)
-    phase1.add_argument("--zip", required=True)
-    phase1.add_argument("--dictionary", default="data/dictionaries/seed_concepts.jsonl")
-    phase1.add_argument("--abbreviations", default="data/dictionaries/abbreviations.jsonl")
-    phase1.add_argument(
+    phase1 = plugins.add_parser("phase1", help="Run Phase 1 benchmark workflows.")
+    operations = phase1.add_subparsers(dest="phase1_command", required=True)
+
+    submission = operations.add_parser(
+        "submission",
+        help="Build and release-validate a strict submission ZIP.",
+    )
+    submission.set_defaults(handler="benchmark_phase1_submission")
+    submission.add_argument("--input-dir", required=True)
+    submission.add_argument("--output-dir", required=True)
+    submission.add_argument("--zip", required=True)
+    submission.add_argument("--dictionary", default="data/dictionaries/seed_concepts.jsonl")
+    submission.add_argument("--abbreviations", default="data/dictionaries/abbreviations.jsonl")
+    submission.add_argument(
         "--pipeline-config",
         help=(
             "Optional reusable pipeline profile. Its mined recognition sources and full "
             "terminology index are preserved while benchmark paths override the base files."
         ),
     )
-    phase1.add_argument(
+    submission.add_argument(
         "--validation-dictionary",
         dest="validation_dictionaries",
         action="append",
@@ -265,14 +271,79 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
             "RxNorm when a full terminology profile emits both systems."
         ),
     )
-    phase1.add_argument("--assertion-policy", choices=("empty", "pipeline"), default="pipeline")
-    phase1.add_argument("--candidate-policy", choices=("empty", "pipeline"), default="pipeline")
-    phase1.add_argument("--max-candidates", type=int, default=5)
-    phase1.add_argument(
+    submission.add_argument(
+        "--assertion-policy",
+        choices=("empty", "pipeline"),
+        default="pipeline",
+    )
+    submission.add_argument(
+        "--candidate-policy",
+        choices=("empty", "pipeline"),
+        default="pipeline",
+    )
+    submission.add_argument("--max-candidates", type=int, default=5)
+    submission.add_argument(
         "--parallel-backend", choices=("serial", "thread", "process"), default="process"
     )
-    phase1.add_argument("--workers", type=int, default=1)
-    phase1.add_argument("--chunksize", type=int, default=4)
+    submission.add_argument("--workers", type=int, default=1)
+    submission.add_argument("--chunksize", type=int, default=4)
+
+    round2 = operations.add_parser(
+        "round2",
+        help="Inspect private Round 2 input without creating annotation memory.",
+    )
+    round2_operations = round2.add_subparsers(dest="phase1_round2_command", required=True)
+    audit = round2_operations.add_parser(
+        "audit",
+        help="Write aggregate profile, duplicate evidence, and novelty queue.",
+    )
+    audit.set_defaults(handler="benchmark_phase1_round2_audit")
+    audit.add_argument("--documents", required=True)
+    audit.add_argument("--reference-input-dir", default="data/raw/input")
+    audit.add_argument("--reference-gold-dir", default="data/manual_gold")
+    audit.add_argument(
+        "--reference-split-manifest",
+        default="data/manual_gold/holdout_manifest.json",
+    )
+    audit.add_argument("--output-dir", required=True)
+
+    model_data = operations.add_parser(
+        "model-data",
+        help="Build leakage-safe Phase 1 model supervision.",
+    )
+    model_data_operations = model_data.add_subparsers(
+        dest="phase1_model_data_command",
+        required=True,
+    )
+    model_data_build = model_data_operations.add_parser(
+        "build",
+        help="Build the five-type NER train/development dataset.",
+    )
+    model_data_build.set_defaults(handler="benchmark_phase1_model_data_build")
+    model_data_build.add_argument("--input-dir", default="data/raw/input")
+    model_data_build.add_argument("--gold-dir", default="data/manual_gold")
+    model_data_build.add_argument(
+        "--frozen-split-manifest",
+        default="data/manual_gold/holdout_manifest.json",
+    )
+    model_data_build.add_argument(
+        "--public-spec-input",
+        default="tests/fixtures/phase1/btc_medication_list_crlf.txt",
+    )
+    model_data_build.add_argument(
+        "--public-spec-expected",
+        default="tests/fixtures/phase1/btc_medication_list_expected.json",
+    )
+    model_data_build.add_argument("--output-dir", required=True)
+    model_data_build.add_argument("--development-fraction", type=float, default=0.2)
+    model_data_build.add_argument("--split-salt", default="42")
+    model_data_build.add_argument("--max-characters", type=int, default=1600)
+    model_data_build.add_argument("--empty-chunk-rate", type=float, default=1.0)
+    model_data_build.add_argument(
+        "--exclude-empty-chunks",
+        action="store_true",
+        help="Drop chunks without an entity after deterministic chunking.",
+    )
 
 
 def _model_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
