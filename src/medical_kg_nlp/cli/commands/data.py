@@ -86,6 +86,10 @@ from medical_kg_nlp.mining.recognition_knowledge import (
     load_recognition_knowledge_policy,
 )
 from medical_kg_nlp.mining.reconciliation import reconcile_exact_duplicates
+from medical_kg_nlp.mining.release import (
+    build_mining_release_lock,
+    verify_mining_release_lock,
+)
 from medical_kg_nlp.mining.records import (
     AnnotationLayer,
     AnnotationProposal,
@@ -142,6 +146,7 @@ __all__ = [
     "harmonize_dataset",
     "import_review",
     "inspect_dataset",
+    "lock_mining_release",
     "mine_cooccurrence",
     "propose_labels",
     "propose_linked_aliases",
@@ -152,6 +157,7 @@ __all__ = [
     "run_plan",
     "sync_registered_source",
     "validate_registry",
+    "verify_mining_release",
 ]
 
 
@@ -196,6 +202,33 @@ def validate_registry(args: argparse.Namespace) -> int:
         ]
     _print_json(payload)
     return 0
+
+
+def lock_mining_release(args: argparse.Namespace) -> int:
+    """Create a machine-portable byte lock for one materialized release spec."""
+
+    manifest = build_mining_release_lock(args.spec, args.output)
+    _print_json(
+        {
+            "artifact_count": len(manifest["artifacts"]),
+            "output": str(Path(args.output)),
+            "release_fingerprint": manifest["release_fingerprint"],
+            "release_id": manifest["release_id"],
+        }
+    )
+    return 0
+
+
+def verify_mining_release(args: argparse.Namespace) -> int:
+    """Verify the same release bytes under a caller-selected local root."""
+
+    report = verify_mining_release_lock(
+        args.manifest,
+        release_root=args.root,
+        require_optional=args.require_optional,
+    )
+    _print_json(report)
+    return 0 if report["valid"] else 1
 
 
 def sync_registered_source(args: argparse.Namespace) -> int:

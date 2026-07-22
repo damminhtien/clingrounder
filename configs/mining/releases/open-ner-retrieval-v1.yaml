@@ -1,0 +1,166 @@
+schema_version: medical-mining-release-spec.v1
+release_id: open-ner-retrieval-v1
+description: >-
+  Open mined corpus, full-type NER supervision, source-held-out recognition evidence,
+  and exact terminology/graph retrieval overlays available on 2026-07-22.
+release_root: ../../..
+
+# The lock hashes both implementation and data artifacts. A clean checkout can rebuild
+# outputs from the pinned source plans; a copied artifact tree can be verified byte-for-byte.
+artifacts:
+  - id: package-metadata
+    role: implementation
+    path: pyproject.toml
+    description: Python and optional-dependency contract.
+  - id: dependency-lock
+    role: dependency_lock
+    path: uv.lock
+    description: Exact transitive Python dependency resolution.
+  - id: mining-implementation
+    role: implementation
+    path: src/medical_kg_nlp
+    description: Pipeline, mining, NER, retrieval, and evaluation implementation.
+    # Runtime bytecode is Python/platform-specific and is never source provenance.
+    exclude:
+      - __pycache__
+      - "**/__pycache__"
+      - "*.pyc"
+      - "**/*.pyc"
+  - id: source-registry
+    role: source_policy
+    path: data/sources/mining_registry.yaml
+    description: Source version, access, license, connector, and parser policy.
+  - id: source-processing-status
+    role: source_policy
+    path: data/sources/processing_status.yaml
+    description: Processed/planned/quarantined state and promotion boundaries.
+  - id: source-dossiers
+    role: reproduction_documentation
+    path: docs/mining-sources
+    description: Per-source acquisition, parsing, curation, metrics, and reproduction evidence.
+
+  - id: vietbioner-source-plan
+    role: source_plan
+    path: configs/mining/vietbioner.yaml
+    description: Commit- and archive-pinned Vietnamese biomedical NER acquisition.
+  - id: vietbioner-labeler
+    role: labeling_policy
+    path: configs/mining/labelers/vietbioner.yaml
+    description: BRAT source-label import policy.
+  - id: vietbioner-curation
+    role: curation_policy
+    path: configs/mining/curation/vietbioner-ner.yaml
+    description: Training-only FINDING and PROCEDURE view.
+  - id: vietbioner-recognition-policy
+    role: recognition_policy
+    path: configs/mining/knowledge/vietbioner-recognition-v4.yaml
+    description: Leakage-safe train-only recognition experiment policy.
+  - id: codiesp-source-plan
+    role: source_plan
+    path: configs/mining/codiesp.yaml
+    description: Zenodo-release-pinned Spanish clinical coding corpus acquisition.
+  - id: codiesp-curation
+    role: curation_policy
+    path: configs/mining/curation/codiesp-contiguous-ner.yaml
+    description: Exact contiguous CodiEsp span policy.
+  - id: codiesp-alias-policy
+    role: retrieval_policy
+    path: configs/mining/knowledge/codiesp-icd10-train-aliases-2026-07-18.yaml
+    description: Train-only exact alias promotion policy.
+  - id: codiesp-graph-policy
+    role: retrieval_policy
+    path: configs/mining/relations/codiesp-train-cooccurrence.yaml
+    description: Literal train-only co-occurrence evidence policy.
+  - id: dailymed-mapping-plan
+    role: source_plan
+    path: configs/mining/dailymed-rxnorm-2026-07-17.yaml
+    description: Official SPL-to-RxNorm mapping acquisition and checksum contract.
+  - id: dailymed-alias-policy
+    role: retrieval_policy
+    path: configs/mining/knowledge/dailymed-rxnorm-aliases-2026-07-17.yaml
+    description: Exact official drug-alias promotion policy.
+  - id: open-corpus-fusion-plan
+    role: fusion_policy
+    path: configs/mining/open_corpus_v1.yaml
+    description: Deterministic cross-source fusion and deduplication plan.
+  - id: open-corpus-harmonization-policy
+    role: harmonization_policy
+    path: configs/mining/harmonization/open_corpus_v1.yaml
+    description: Source-aware internal label and code alignment.
+  - id: open-corpus-full-ner-policy
+    role: curation_policy
+    path: configs/mining/curation/open-corpus-full-ner.yaml
+    description: Quality-gated full-type model view.
+  - id: controlled-terminology
+    role: terminology_source
+    path: data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
+    description: Pinned TT06 and RxNorm concepts used by mined knowledge gates.
+
+  - id: fused-open-corpus
+    role: mined_corpus
+    path: outputs/mining/fused/open-corpus-v1-39106c1cc9d0
+    description: Deduplicated documents, harmonized annotations, relations, and provenance.
+  - id: open-corpus-snapshot
+    role: dataset_snapshot
+    path: outputs/mining/snapshots/open-corpus-v1-balanced-2026-07-18
+    description: Immutable group-safe train/development split.
+  - id: full-type-ner-dataset
+    role: model_dataset
+    path: outputs/mining/model-datasets/open-corpus-v1-full-ner-harmonized-2026-07-18
+    description: Raw-offset DISEASE, DRUG, FINDING, and PROCEDURE training chunks.
+  - id: vietbioner-snapshot
+    role: dataset_snapshot
+    path: outputs/mining/snapshots/vietbioner-19ba70a-reconciled-silver-v4
+    description: Source-held-out VietBioNER split and source fingerprints.
+  - id: vietbioner-model-dataset
+    role: model_dataset
+    path: outputs/mining/model_datasets/vietbioner-19ba70a-reconciled-silver-v4
+    description: Reconciled Vietnamese FINDING and PROCEDURE span chunks.
+  - id: vietbioner-recognition-evidence
+    role: ner_benchmark
+    path: outputs/mining/knowledge/vietbioner-recognition-v4
+    description: Training-only dictionary, decisions, conflicts, and development benchmark.
+  - id: codiesp-retrieval-evidence
+    role: retrieval_benchmark
+    path: outputs/mining/knowledge/codiesp-icd10-split-2026-07-18
+    description: Train alias overlay plus untouched dev/test query benchmarks.
+  - id: codiesp-graph-evidence
+    role: retrieval_reranker_benchmark
+    path: outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19
+    description: Train-only graph, evidence, and calibrated held-out reranker reports.
+  - id: dailymed-rxnorm-knowledge
+    role: retrieval_aliases
+    path: outputs/mining/knowledge/dailymed-rxnorm-2026-07-17
+    description: Official exact RxNorm alias overlay, decisions, and terminology manifest.
+  - id: local-full-type-checkpoint
+    role: model_checkpoint
+    path: outputs/models/open-ner-retrieval-v1
+    description: Optional Linux/GPU full-type checkpoint; absent until a run passes promotion gates.
+    required: false
+
+rebuild_steps:
+  - id: install-environment
+    description: Restore the exact Python environment and all local data/model adapters.
+    command: uv sync --extra dev --extra data --extra retrieval --extra ml
+  - id: validate-source-policy
+    description: Validate source licenses, processing dossiers, and checked-in run configs.
+    command: >-
+      uv run medical-kg data registry validate --registry data/sources/mining_registry.yaml
+      --processing-index data/sources/processing_status.yaml --repository-root .
+  - id: acquire-vietbioner
+    description: Restore the immutable Vietnamese source archive and parsed documents.
+    command: uv run medical-kg data run --plan configs/mining/vietbioner.yaml
+  - id: acquire-codiesp
+    description: Restore the immutable CodiEsp source archive and parsed documents.
+    command: uv run medical-kg data run --plan configs/mining/codiesp.yaml
+  - id: acquire-dailymed-rxnorm
+    description: Restore the official SPL-to-RxNorm crosswalk.
+    command: uv run medical-kg data run --plan configs/mining/dailymed-rxnorm-2026-07-17.yaml
+  - id: fuse-open-corpus
+    description: Fuse the source-specific curated outputs after following their dossiers.
+    command: uv run medical-kg data dataset fuse --plan configs/mining/open_corpus_v1.yaml
+  - id: verify-release
+    description: Verify all restored or rebuilt release bytes without machine-local paths.
+    command: >-
+      uv run medical-kg data release verify
+      --manifest data/releases/open-ner-retrieval-v1.lock.json --root .

@@ -887,6 +887,37 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     snapshot_freeze.add_argument("--manifest-only", action="store_true")
     snapshot_freeze.add_argument("--skip-agreement-gate", action="store_true")
 
+    release = operations.add_parser(
+        "release",
+        help="Lock or verify a portable mining-derived data/model release.",
+    )
+    release_operations = release.add_subparsers(
+        dest="data_release_command", required=True
+    )
+    release_lock = release_operations.add_parser(
+        "lock",
+        help="Fingerprint declared datasets, knowledge, benchmarks, and code inputs.",
+    )
+    release_lock.set_defaults(handler="data_release_lock")
+    release_lock.add_argument("--spec", required=True)
+    release_lock.add_argument("--output", required=True)
+    release_verify = release_operations.add_parser(
+        "verify",
+        help="Verify a lock after restoring or rebuilding artifacts on another machine.",
+    )
+    release_verify.set_defaults(handler="data_release_verify")
+    release_verify.add_argument("--manifest", required=True)
+    release_verify.add_argument(
+        "--root",
+        default=".",
+        help="Local release root; it is never persisted in the portable lock.",
+    )
+    release_verify.add_argument(
+        "--require-optional",
+        action="store_true",
+        help="Treat artifacts intentionally absent when locked as required during verification.",
+    )
+
     run = operations.add_parser("run", help="Run a resumable declarative mining plan.")
     run.set_defaults(handler="data_run")
     run.add_argument("--plan", required=True)

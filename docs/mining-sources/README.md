@@ -1,5 +1,9 @@
 # Mining Source Dossiers
 
+Source dossiers are executable provenance, not narrative status notes. The cross-machine release
+workflow and byte-lock contract are defined in `docs/mining-reproducibility.md`; each promoted or
+training source must expose a complete `Reproduce` section before it can enter a release spec.
+
 This directory records what the repository has actually done with each registered source. The
 license registry in `data/sources/mining_registry.yaml` says what is permitted; the machine-readable
 status in `data/sources/processing_status.yaml` says what has been executed and how far derived

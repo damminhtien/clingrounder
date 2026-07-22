@@ -1,5 +1,10 @@
 # Data Mining
 
+Cross-machine reconstruction and byte-level verification are documented in
+[`docs/mining-reproducibility.md`](mining-reproducibility.md). Use a portable release lock for any
+dataset, terminology overlay, benchmark, or model artifact that will be reused outside the machine
+where it was built.
+
 Source-specific processing evidence is indexed in
 [`docs/mining-sources/README.md`](mining-sources/README.md). Use those dossiers to distinguish a
 registered connector, an executed snapshot, model proposals, curated labels, and runtime-promoted

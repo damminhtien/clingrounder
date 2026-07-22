@@ -122,6 +122,16 @@ from medical_kg_nlp.mining.reconciliation import (
     ExactDuplicateReconciliationResult,
     reconcile_exact_duplicates,
 )
+from medical_kg_nlp.mining.release import (
+    LoadedMiningReleaseSpec,
+    MiningReleaseLock,
+    MiningReleaseSpec,
+    ReleaseArtifactSpec,
+    ReleaseRebuildStep,
+    build_mining_release_lock,
+    load_mining_release_spec,
+    verify_mining_release_lock,
+)
 from medical_kg_nlp.mining.recognition_benchmark import (
     benchmark_recognition_dictionary,
 )
@@ -217,6 +227,7 @@ __all__ = [
     "LicenseMode",
     "LinkedAliasProposalPolicy",
     "LinkedAliasProposalResult",
+    "LoadedMiningReleaseSpec",
     "MinedDocument",
     "PromotionBoundary",
     "MinimalPairGenerator",
@@ -224,6 +235,8 @@ __all__ = [
     "MinedAliasPromotionPolicy",
     "MiningPlan",
     "MiningPlanResult",
+    "MiningReleaseLock",
+    "MiningReleaseSpec",
     "MentionInventoryEntry",
     "MentionInventoryResult",
     "MentionCrosswalkPolicy",
@@ -247,6 +260,8 @@ __all__ = [
     "ReviewAgreementReport",
     "ReviewBackendPort",
     "ReviewStatus",
+    "ReleaseArtifactSpec",
+    "ReleaseRebuildStep",
     "SourceArtifact",
     "SourceJob",
     "SourceConnectorPort",
@@ -268,6 +283,7 @@ __all__ = [
     "SpanDatasetConfig",
     "VersionPolicy",
     "build_dataset_profile",
+    "build_mining_release_lock",
     "build_linked_alias_proposals",
     "compile_knowledge_graph",
     "benchmark_recognition_dictionary",
@@ -287,6 +303,7 @@ __all__ = [
     "load_annotation_curation_policy",
     "load_mention_inventory",
     "load_mining_plan",
+    "load_mining_release_spec",
     "load_linked_alias_policy",
     "load_cooccurrence_policy",
     "export_span_dataset",
@@ -306,4 +323,5 @@ __all__ = [
     "run_corpus_fusion_plan",
     "run_mining_plan",
     "validate_source_processing_paths",
+    "verify_mining_release_lock",
 ]
