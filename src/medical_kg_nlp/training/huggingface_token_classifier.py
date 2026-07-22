@@ -16,6 +16,10 @@ from pathlib import Path
 from typing import Any
 
 from medical_kg_nlp.adapters.huggingface.runtime import OptionalModelDependencyError
+from medical_kg_nlp.adapters.huggingface.config import HuggingFaceModelConfig
+from medical_kg_nlp.adapters.huggingface.token_classifier import (
+    HuggingFaceTokenClassifierAdapter,
+)
 from medical_kg_nlp.mining.io import write_json
 from medical_kg_nlp.training.config import TokenClassifierTrainingConfig
 from medical_kg_nlp.training.span_dataset import (
@@ -34,6 +38,7 @@ from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
 __all__ = [
     "inspect_token_classifier_training_inputs",
     "train_huggingface_token_classifier",
+    "verify_saved_token_classifier",
 ]
 
 
@@ -268,6 +273,52 @@ def train_huggingface_token_classifier(
     }
     write_json(config.output_dir / "run_manifest.json", manifest)
     return manifest
+
+
+def verify_saved_token_classifier(
+    model_dir: str | Path,
+    source_text: str,
+    *,
+    max_length: int = 512,
+    stride: int = 64,
+    batch_size: int = 1,
+) -> Mapping[str, Any]:
+    """Reload a saved model and prove its emitted spans use raw-text coordinates.
+
+    This is intentionally an inference check rather than another metric pass. A CPU smoke job
+    calls it after ``Trainer.save_model`` so tokenizer serialization, weight serialization,
+    overflow inference, and offset projection all execute in a fresh adapter runtime.
+    """
+
+    if not source_text:
+        raise ValueError("CPU smoke verification text must be non-empty")
+    path = Path(model_dir).resolve()
+    if not path.is_dir():
+        raise ValueError(f"Saved token-classifier directory does not exist: {path}")
+    adapter = HuggingFaceTokenClassifierAdapter(
+        HuggingFaceModelConfig(
+            model_id=str(path),
+            # MODEL: local directories are content-fingerprinted by the training manifest;
+            # revision remains explicit to satisfy the adapter provenance contract.
+            revision="local-saved-artifact",
+            device="cpu",
+            batch_size=batch_size,
+            max_length=max_length,
+        ),
+        stride=stride,
+    )
+    entities = adapter.extract(source_text)
+    for entity in entities:
+        # INVARIANT: a saved/reloaded model is accepted only if every projected span round-trips.
+        entity.validate_offsets(source_text)
+    return {
+        "status": "passed",
+        "source_text_sha256": sha256_text(source_text),
+        "source_character_count": len(source_text),
+        "projected_entity_count": len(entities),
+        "offset_mismatch_count": 0,
+        "model_directory": str(path),
+    }
 
 
 def _load_training_dependencies() -> tuple[Any, Any, Any]:

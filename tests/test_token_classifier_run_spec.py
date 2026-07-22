@@ -33,6 +33,22 @@ def test_checked_in_full_type_run_spec_pins_dataset_and_checkpoint() -> None:
     assert spec.training.dataset_path.is_absolute()
 
 
+def test_phase1_run_spec_pins_five_type_dataset_and_full_gpu_schedule() -> None:
+    spec = load_token_classifier_run_spec(
+        "configs/models/phase1-five-type-xlmr-base-2026-07-22.yaml"
+    )
+
+    assert spec.training.model_id == "FacebookAI/xlm-roberta-base"
+    assert spec.training.revision == "e73636d4f797dec63c3081bb6ed5c7b0bb3f2089"
+    assert spec.training.dataset_path.name == "spans.jsonl"
+    assert "phase1-manual-five-type-v1" in str(spec.training.dataset_path)
+    assert spec.training.train_batch_size == 4
+    assert spec.training.gradient_accumulation_steps == 4
+    assert spec.training.epochs == 3.0
+    assert spec.training.bf16 is True
+    assert spec.training.full_determinism is True
+
+
 def test_run_spec_paths_are_stable_from_another_working_directory(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

@@ -416,6 +416,13 @@ def _model_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser])
     train.add_argument("--cache-dir")
     train.add_argument("--resume-from-checkpoint")
     train.add_argument("--overwrite-output", action="store_true")
+    train.add_argument(
+        "--cpu-smoke-text",
+        help=(
+            "Raw UTF-8 text file used to reload the saved model and validate inference offsets; "
+            "requires --cpu and marks the run as non-submittable."
+        ),
+    )
 
     inspect_run = operations.add_parser(
         "inspect-token-classifier-run",

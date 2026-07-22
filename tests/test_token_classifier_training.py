@@ -20,7 +20,12 @@ from medical_kg_nlp.training import (
     project_record_to_token_windows,
     scan_span_dataset,
     validate_span_dataset_manifest,
+    verify_saved_token_classifier,
 )
+from medical_kg_nlp.training import huggingface_token_classifier as training_runtime
+from medical_kg_nlp.schema.annotation import EntityAnnotation
+from medical_kg_nlp.schema.types import EntityType
+from medical_kg_nlp.utils.text import normalize_for_match
 from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
 
 
@@ -143,6 +148,67 @@ def test_model_training_cli_is_discoverable() -> None:
 
     assert args.handler == "model_train_token_classifier"
     assert args.revision == "deadbeef"
+
+
+def test_cpu_smoke_cli_requires_explicit_cpu_and_verification_text() -> None:
+    args = build_parser().parse_args(
+        [
+            "model",
+            "train-token-classifier",
+            "--dataset",
+            "spans.jsonl",
+            "--dataset-manifest",
+            "manifest.json",
+            "--model-id",
+            "local/model",
+            "--revision",
+            "deadbeef",
+            "--output-dir",
+            "outputs/model-smoke",
+            "--cpu",
+            "--cpu-smoke-text",
+            "note.txt",
+        ]
+    )
+
+    assert args.cpu is True
+    assert args.cpu_smoke_text == "note.txt"
+
+
+def test_saved_model_verification_checks_projected_raw_offsets(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model_dir = tmp_path / "final-model"
+    model_dir.mkdir()
+
+    class FakeAdapter:
+        def __init__(self, *_args: object, **_kwargs: object) -> None:
+            pass
+
+        def extract(self, source_text: str) -> list[EntityAnnotation]:
+            return [
+                EntityAnnotation(
+                    id="M1",
+                    span=(0, 3),
+                    text=source_text[:3],
+                    normalized_text=normalize_for_match(source_text[:3]),
+                    type=EntityType.SYMPTOM,
+                    confidence=0.9,
+                )
+            ]
+
+    monkeypatch.setattr(
+        training_runtime,
+        "HuggingFaceTokenClassifierAdapter",
+        FakeAdapter,
+    )
+
+    report = verify_saved_token_classifier(model_dir, "đau ngực")
+
+    assert report["status"] == "passed"
+    assert report["projected_entity_count"] == 1
+    assert report["offset_mismatch_count"] == 0
 
 
 def test_training_import_does_not_import_model_frameworks() -> None:

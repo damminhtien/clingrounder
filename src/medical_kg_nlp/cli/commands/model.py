@@ -13,6 +13,7 @@ from medical_kg_nlp.training import (
     inspect_token_classifier_training_inputs,
     load_token_classifier_run_spec,
     train_huggingface_token_classifier,
+    verify_saved_token_classifier,
 )
 from medical_kg_nlp.mining.io import write_json
 from medical_kg_nlp.utils.hashing import sha256_file
@@ -137,7 +138,29 @@ def train_token_classifier(args: argparse.Namespace) -> int:
     """Train one locally cached, revision-pinned Hugging Face NER model."""
 
     config = _config_from_args(args, output_dir=Path(args.output_dir))
-    manifest = train_huggingface_token_classifier(config)
+    smoke_text_path = getattr(args, "cpu_smoke_text", None)
+    if smoke_text_path and not config.use_cpu:
+        raise ValueError("--cpu-smoke-text requires --cpu")
+    manifest = dict(train_huggingface_token_classifier(config))
+    if smoke_text_path:
+        text_path = Path(smoke_text_path)
+        # Keep newline semantics identical to pipeline input; Path.read_text does not normalize
+        # newline bytes on this explicit UTF-8 path.
+        source_text = text_path.read_bytes().decode("utf-8")
+        verification = dict(
+            verify_saved_token_classifier(
+                config.output_dir / "final-model",
+                source_text,
+                max_length=config.max_length,
+                stride=config.stride,
+                batch_size=config.evaluation_batch_size,
+            )
+        )
+        verification["source_path"] = str(text_path)
+        manifest["cpu_smoke"] = verification
+        manifest["purpose"] = "cpu_smoke"
+        manifest["submission_eligible"] = False
+        write_json(config.output_dir / "run_manifest.json", manifest)
     print(
         json.dumps(
             {
