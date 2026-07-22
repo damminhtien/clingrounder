@@ -20,6 +20,9 @@ sources:
       artifacts:
         - uri: https://dailymed-data.nlm.nih.gov/public-release-files/dm_spl_release_human_rx_part6.zip
           media_type: application/zip
+          # INVARIANT: DailyMed publishes mutable bulk URLs. MD5 detects upstream changes,
+          # while SHA-256 is the cross-machine identity retained by our CAS and release lock.
+          sha256: 3c72512e43c1e298c53874bb1d0884dcd8a695c9234890fc769c5054f58bdeb6
           metadata:
             label_lane: human_prescription
             part: "6/6"

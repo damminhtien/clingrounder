@@ -59,19 +59,24 @@ sources:
     verified_on: 2026-07-22
     summary: >-
       The 105-label daily tranche is relation-benchmarked. Prescription part 6 of the current
-      143,329-label human release is parsed and structured-label mined; the remaining 16 parts are
-      checksum-pinned but have not been acquired or processed.
+      143,329-label human release is parsed, exact-linked to RxNorm, and evaluated for held-out
+      NER/retrieval; the remaining 16 parts are checksum-pinned but not processed.
     run_configs:
       - configs/mining/dailymed-daily-2026-07-17.yaml
       - configs/mining/dailymed-full-human-2026-07-21.yaml
       - configs/mining/dailymed-human-rx-part6-2026-07-21.yaml
       - configs/mining/labelers/dailymed-structured.yaml
       - configs/mining/labelers/dailymed-relations.yaml
+      - configs/mining/knowledge/dailymed-rx-part6-recognition-2026-07-22.yaml
+      - configs/mining/knowledge/dailymed-rx-part6-recognition-singletons-2026-07-22.yaml
+      - configs/mining/knowledge/dailymed-rx-part6-product-aliases-2026-07-22.yaml
     artifact_roots:
       - outputs/mining/dailymed-daily-2026-07-17
       - outputs/mining/dailymed-human-rx-part6-2026-07-21
       - outputs/mining/snapshots/dailymed-daily-2026-07-17-structured-silver-v2
+      - outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1
       - outputs/mining/knowledge/dailymed-spl-structured-2026-07-17
+      - outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22
   - source_id: dailymed_rxnorm_mappings
     state: promoted
     promotion_boundary: runtime_opt_in
@@ -82,6 +87,21 @@ sources:
     artifact_roots:
       - outputs/mining/dailymed-rxnorm-2026-07-17
       - outputs/mining/knowledge/dailymed-rxnorm-2026-07-17
+  - source_id: rxnorm_full_2026_07_06
+    state: promoted
+    promotion_boundary: runtime_opt_in
+    dossier: docs/mining-sources/rxnorm.md
+    verified_on: 2026-07-22
+    summary: >-
+      The licensed July full release is imported to CAS, parsed into canonical concepts and active
+      NDC rows, and used by split-held-out DailyMed retrieval experiments.
+    run_configs:
+      - configs/mining/rxnorm-full-2026-07-06.yaml
+      - configs/mining/knowledge/dailymed-rx-part6-product-aliases-2026-07-22.yaml
+    artifact_roots:
+      - outputs/mining/rxnorm-full-2026-07-06
+      - data/standards/rxnorm/processed
+      - outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22
   - source_id: clinicaltrials_v2
     state: curated
     promotion_boundary: training_only

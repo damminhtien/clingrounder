@@ -104,8 +104,28 @@ machine.
 
 All source, document and annotation manifests were audited for `/Users/` and `/home/` paths; none
 remain. `run_result.json` declares `path_base: mining_plan_directory` and stores only paths relative
-to that base. The portable release lock additionally binds the source plan, labeler config, source
-archive bytes, processed output directory, dependency lock and implementation.
+to that base. The portable release lock binds the source plan, labeler config, canonical documents,
+annotations, split manifests, benchmark evidence, dependency lock and implementation. The 1.59 GB
+ZIP is declared separately as a SHA-256 CAS object, so verification can use any local/S3 object
+store instead of requiring the original `.cache` mount.
+
+The exact-dedup frozen snapshot is
+`dailymed-human-rx-part6-2026-07-21-structured-silver-v1-28f18a79a5ed65cd`:
+
+| Split measure | Value |
+| --- | ---: |
+| Train documents | 7,671 |
+| Development documents | 2,036 |
+| Snapshot manifest SHA-256 | `4f640dd2f9a7578c075caad3f1156bbb990081f3643fc8fb6ace920bf2eeb834` |
+| Development structured product documents | 1,252 |
+| Development structured product characters | 215,932 |
+
+Narrative and structured product documents are siblings in one source snapshot. Structured field
+annotations are exhaustive only for documents carrying `spl_fields`; every NER benchmark therefore
+uses `--require-document-metadata spl_fields`. Evaluating the narrative siblings as negative gold
+would produce invalid precision/recall. Snapshot freezing currently loads the selected manifest and
+peaked near 2.1 GB RSS for this tranche; parsing and labeling are streaming, but freezing the full
+17-part release requires a further bounded-memory snapshot pass.
 
 ## SPL Parsing And Structured Labels
 
@@ -171,6 +191,35 @@ An exact text-only crosswalk confirms why the official mapping is needed: among 
 entries, 171 match multiple exact RxNorm codes, 133 have no permitted policy, 88 are unmatched and
 only 14 have one exact concept.
 
+### Exact Part-6 Product Linking
+
+Part 6 is now joined against two independent identifiers:
+
+```text
+DailyMed set_id + spl_version → official DailyMed/RxNorm mapping
+normalized package NDC       → active RXNSAT NDC rows from RxNorm Full July 2026
+```
+
+An RxCUI is emitted only when both candidate sets have one-member intersection. NDC-only,
+SPL-only, ambiguous and disagreeing rows remain visible in the decision file and cannot become
+runtime aliases.
+
+| Product-link status | Records |
+| --- | ---: |
+| `exact_set_version_ndc_intersection` | 4,502 |
+| ambiguous intersection | 71 |
+| NDC-only evidence | 779 |
+| SPL-only evidence | 344 |
+| source disagreement | 4 |
+| unmapped | 307 |
+
+Exact-unique coverage is `74.9459%` of 6,007 structured products. The canonical link file SHA-256
+is `7d91364be34a1694b64809b4cc9d4c7d7fb59cc5e65b4a3eb8e44ccbc8a404e8`; decision SHA-256 is
+`cd2f1c71528c07c1c5ae8f2c1ea1b9510c858102b3bb477efd5af97270981dc8`. The NDC compiler read
+7,687,120 `RXNSAT.RRF` rows and retained 249,706 active NDC attributes with zero malformed rows.
+Its canonical JSONL SHA-256 is
+`59e6184287d1a4424b8599f6a45774d19768a4c60cf3d7c011a4dd961cc65cee`.
+
 ## Extracted Runtime Knowledge
 
 The source-pinned alias compiler checks every proposal against the loaded RxNorm release, requires a
@@ -181,6 +230,52 @@ RxNorm concepts; 445 shapes and four target conflicts were rejected. Overlay SHA
 On a 59-query medication diagnostic set, canonical/ingredient ranking improved exact hit@1 from
 approximately 0.203 to 0.559 and MRR from approximately 0.336 to 0.576. This measures retrieval
 integration, not medication NER or end-to-end linking accuracy.
+
+### Part-6 Recognition Mining
+
+Only the frozen train split contributes recognition terms. `SPL_PRODUCT_NAME`,
+`SPL_GENERIC_NAME` and `SPL_ACTIVE_INGREDIENT` map to `DRUG`; strength, route and dosage form stay
+medication attributes. The first policy required two documents. The winning ablation also allowed
+authoritative source-structured singletons while keeping type and alias-shape gates.
+
+| Held-out structured-document metric | Baseline | Multi-document | Singleton-inclusive |
+| --- | ---: | ---: | ---: |
+| Precision | 0.5967 | 0.8899 | **0.9062** |
+| Recall | 0.1200 | 0.7406 | **0.7947** |
+| F1 | 0.1998 | 0.8084 | **0.8468** |
+| True positives | 432 | 2,666 | **2,861** |
+| False positives | 292 | 330 | **296** |
+
+The singleton policy compiled 1,554 concepts from a 3,598-row train inventory. Relative to the
+same baseline it added 2,429 true positives and four false positives. All 296 residual false
+positives overlap a gold span; they are boundary errors rather than disjoint hallucinations. Of
+739 false negatives, 163 overlap a gold span and 576 are genuinely unseen development terms.
+Consequently the next step is a token-classification/boundary model trained on the frozen spans,
+not source-specific coordination heuristics. Mean matching latency is 1.36 ms/document and p95 is
+2.52 ms/document on the current CPU.
+
+### Part-6 Retrieval Mining
+
+Exact-linked product names are aggregated independently in train and development. The train split
+produced 2,106 alias-code hypotheses; 1,699 target conflicts and 277 collisions with canonical
+RxNorm aliases were rejected, leaving 130 overlays over 114 concepts. Development produced 379
+unique linked queries, of which only 13 aliases were seen in the train overlay.
+
+| Held-out retrieval metric | Full RxNorm | + train DailyMed overlay |
+| --- | ---: | ---: |
+| exact hit@1 | 0.0000 | **0.0237** |
+| exact MRR | 0.0668 | **0.0906** |
+| exact recall@20 | 0.1715 | **0.1953** |
+| FTS hit@1 | 0.0132 | **0.0343** |
+| FTS MRR | 0.1862 | **0.2051** |
+| FTS recall@10 | 0.5831 | **0.6069** |
+| FTS recall@20 | 0.7810 | **0.7968** |
+
+The overlay wins every listed held-out measure but the gain is modest because 366/379 aliases are
+unseen. This evidence supports opt-in exact aliases and motivates structured strength/form/route
+features or a learned reranker; it does not justify stuffing held-out aliases into the dictionary.
+SQLite FTS indexes are derived caches and are deliberately excluded from the portable release
+contract. Canonical terminology JSONL, alias JSONL, queries and benchmark reports are locked.
 
 ## Structured Evidence Graph
 
@@ -205,6 +300,10 @@ lookup and hard-negative generation; it does not add narrative clinical relation
 
 - Runtime opt-in: the official mapping-derived RxNorm alias overlay, version locked to both source
   archive and loaded RxNorm release.
+- Runtime opt-in: the 130 train-only exact product aliases; every conflicting target remains
+  rejected and held-out product aliases remain evaluation-only.
+- NER training/runtime ablation: the 1,554 singleton-inclusive code-free drug concepts. Promote
+  only behind a source-held-out metric gate; medication attributes remain separate labels.
 - Training/evaluation: exact SPL structured spans and structured relation endpoints.
 - Source-evidence graph: product/ingredient/strength/form/route relations with SPL record evidence.
 - Review only: ambiguous exact strings, missing RxCUIs, newly published unmapped labels and all
@@ -218,16 +317,16 @@ lookup and hard-negative generation; it does not add narrative clinical relation
   human release parts have not been acquired or parsed at all.
 - Co-occurrence inside narrative prose is not a clinical relation. Section-aware extraction and a
   held-out relation benchmark are required before graph promotion.
-- Part 6 has not yet been joined by SPL set/version to the official RxNorm mapping archive. The full
-  release has not been coverage-audited against the July RxNorm release, so no claim is made about
-  full NDC, ingredient, branded-drug or dose-form coverage.
+- Part 6 has exact two-source product links, but the other prescription and OTC parts have not been
+  coverage-audited against July RxNorm. No full-release claim is made about NDC, ingredient,
+  branded-drug or dose-form coverage.
 - Homeopathic, animal and remainder archives are not silently mixed into human medication data.
 - Images and OCR are not mined; they are ignored by the SPL parser.
 
-The next DailyMed-specific step is to join part 6 by exact SPL set/version to the official mapping,
-compile a leakage-safe drug mention inventory, and benchmark NER/retrieval on a source-held-out
-medication set. Only after this pilot passes should the same streaming process expand to the other
-16 human parts. Runtime dictionary promotion remains opt-in until that benchmark wins.
+The next DailyMed-specific step is exporting train/development token-classification data from the
+frozen product spans and benchmarking boundary learning on Linux/GPU. Only after that model and the
+structured reranker pass held-out gates should the same streaming process expand to the other 16
+human parts. Runtime promotion remains opt-in.
 
 Artifacts live under `outputs/mining/dailymed-daily-2026-07-17/` and
 `outputs/mining/dailymed-human-rx-part6-2026-07-21/`, while mappings live under
@@ -236,55 +335,52 @@ Artifacts live under `outputs/mining/dailymed-daily-2026-07-17/` and
 
 ## Reproduce
 
+The complete ordered command list is machine-readable under `rebuild_steps` in
+`configs/mining/releases/open-ner-retrieval-v1.yaml`. It is the authoritative recipe; this section
+shows the storage setup and the main source stages.
+
 ```bash
 export MEDICAL_KG_ARTIFACT_STORE=/mnt/medical-kg/mining-artifacts
-uv run medical-kg data run --plan configs/mining/dailymed-daily-2026-07-17.yaml
+export RXNORM_FULL_ARCHIVE=/secure/licensed/RxNorm_full_07062026.zip
 
-# Rebuild the executed full-release pilot. A cache hit and a fresh download produce
-# identical final manifest hashes.
+uv sync --frozen --extra dev --extra data --extra retrieval --extra ml
+uv run medical-kg data registry validate \
+  --registry data/sources/mining_registry.yaml \
+  --processing-index data/sources/processing_status.yaml \
+  --repository-root .
+
+# Source acquisition is checksum-gated before parsing.
 uv run medical-kg data run \
   --plan configs/mining/dailymed-human-rx-part6-2026-07-21.yaml
+uv run medical-kg data run --plan configs/mining/dailymed-rxnorm-2026-07-17.yaml
+uv run medical-kg data run --plan configs/mining/rxnorm-full-2026-07-06.yaml
+
+# A copied CAS can be mounted anywhere. Hydrate the licensed RxNorm ZIP only for
+# seek-based RRF readers; downstream manifests never retain this output path.
+uv run medical-kg data artifact materialize \
+  --store "$MEDICAL_KG_ARTIFACT_STORE" \
+  --sha256 53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c \
+  --expected-byte-size 259313098 \
+  --output .cache/medical-kg/release-inputs/RxNorm_full_07062026.zip
+
 uv run medical-kg data label propose \
   --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl \
   --adapter medical_kg_nlp.mining.labelers.dailymed:create_dailymed_structured_labeler \
   --adapter-config configs/mining/labelers/dailymed-structured.yaml \
   --output outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl \
   --batch-size 256
+
+# After running the remaining ordered steps from the release spec, verify repository
+# artifacts and both external source objects. Add --verify-cas-content for a full
+# streaming hash audit (about 1.85 GB for these two objects).
 uv run medical-kg data release verify \
-  --manifest data/releases/open-ner-retrieval-v1.lock.json --root .
+  --manifest data/releases/open-ner-retrieval-v1.lock.json \
+  --root . --store "$MEDICAL_KG_ARTIFACT_STORE" --require-cas-objects
+```
 
-# Requires the external >=250 GB data plane. Only the plan has been validated;
-# this command has not been completed for all 17 parts.
+The full 17-part command remains prepared but unexecuted and requires the external `>=250 GB` data
+plane:
+
+```bash
 uv run medical-kg data run --plan configs/mining/dailymed-full-human-2026-07-21.yaml
-
-uv run medical-kg data label propose \
-  --documents outputs/mining/dailymed-daily-2026-07-17/documents.jsonl \
-  --adapter medical_kg_nlp.mining.labelers.dailymed:create_dailymed_structured_labeler \
-  --adapter-config configs/mining/labelers/dailymed-structured.yaml \
-  --output outputs/mining/dailymed-daily-2026-07-17/structured_annotations.jsonl
-
-uv run medical-kg data relation propose \
-  --documents outputs/mining/dailymed-daily-2026-07-17/documents.jsonl \
-  --annotations outputs/mining/dailymed-daily-2026-07-17/structured_annotations.jsonl \
-  --adapter medical_kg_nlp.mining.labelers.dailymed:create_dailymed_structured_relation_labeler \
-  --adapter-config configs/mining/labelers/dailymed-relations.yaml \
-  --output outputs/mining/dailymed-daily-2026-07-17/structured_relations.jsonl
-
-uv run medical-kg data run --plan configs/mining/dailymed-rxnorm-2026-07-17.yaml
-uv run medical-kg data mapping compile-dailymed-rxnorm \
-  --artifacts outputs/mining/dailymed-rxnorm-2026-07-17/artifacts.jsonl \
-  --store "$MEDICAL_KG_ARTIFACT_STORE" \
-  --output outputs/mining/dailymed-rxnorm-2026-07-17/compiled_mappings.jsonl \
-  --index-output outputs/mining/dailymed-rxnorm-2026-07-17/dailymed_rxnorm.sqlite3 \
-  --report-output outputs/mining/dailymed-rxnorm-2026-07-17/compilation_report.json
-
-uv run medical-kg data knowledge compile-graph \
-  --documents outputs/mining/dailymed-daily-2026-07-17/documents.jsonl \
-  --annotations outputs/mining/dailymed-daily-2026-07-17/structured_annotations.jsonl \
-  --relations outputs/mining/dailymed-daily-2026-07-17/structured_relations.jsonl \
-  --accepted-layer silver --accepted-review-status proposed --relation-endpoints-only \
-  --nodes-output outputs/mining/knowledge/dailymed-spl-structured-2026-07-17/nodes.jsonl \
-  --edges-output outputs/mining/knowledge/dailymed-spl-structured-2026-07-17/edges.jsonl \
-  --evidence-output outputs/mining/knowledge/dailymed-spl-structured-2026-07-17/evidence.jsonl \
-  --report-output outputs/mining/knowledge/dailymed-spl-structured-2026-07-17/compilation_report.json
 ```

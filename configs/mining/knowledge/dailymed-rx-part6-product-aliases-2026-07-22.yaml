@@ -1,0 +1,32 @@
+schema_version: mined-alias-promotion-policy.v1
+policy_id: dailymed-human-rx-part6-product-aliases-2026-07-22-v1
+
+# SOURCE DOSSIER: docs/mining-sources/dailymed.md
+# LICENSE: proposals derive from DailyMed SPL plus the NLM RxNorm release.
+accepted_sources:
+  - DailyMed exact product identity
+accepted_source_sha256:
+  - 7d91364be34a1694b64809b4cc9d4c7d7fb59cc5e65b4a3eb8e44ccbc8a404e8
+accepted_review_statuses:
+  - source_verified
+
+# INVARIANT: target codes are resolved against the pinned full RxNorm terminology before output.
+allowed_code_systems:
+  - RxNorm
+allowed_semantic_types:
+  - DRUG
+allowed_ttys:
+  - SCD
+  - SBD
+  - PSN
+  - SY
+  - GPCK
+  - BPCK
+
+# One exact two-source product identity is enough to propose an alias. Global alias conflicts are
+# still rejected by the compiler, so an ingredient/product name cannot select an arbitrary dose.
+min_supporting_records: 1
+min_alias_characters: 3
+max_alias_characters: 240
+max_alias_tokens: 40
+allow_numeric_only: false

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import date
 
 import pytest
@@ -116,10 +117,10 @@ def test_registry_cli_reports_checked_in_processing_status(capsys) -> None:
         ]
     )
 
-    output = capsys.readouterr().out
+    output = json.loads(capsys.readouterr().out)
     assert exit_code == 0
-    assert '"processing_source_count": 15' in output
-    assert '"source_id": "pmc_oa"' in output
+    assert output["processing_source_count"] == output["source_count"]
+    assert any(item["source_id"] == "pmc_oa" for item in output["processing"])
 
 
 def test_pmc_recognition_policy_is_train_pinned_and_excludes_lab_results() -> None:

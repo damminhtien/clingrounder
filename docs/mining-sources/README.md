@@ -17,6 +17,7 @@ knowledge may be promoted.
 | CodiEsp | promoted | runtime opt-in | [CodiEsp](codiesp.md) |
 | DailyMed SPL | promoted | runtime opt-in | [DailyMed](dailymed.md) |
 | DailyMed-RxNorm | promoted | runtime opt-in | [DailyMed](dailymed.md) |
+| RxNorm Full July 2026 | promoted | runtime opt-in | [RxNorm](rxnorm.md) |
 | PMC OA | proposed | review only | [PMC OA](pmc-oa.md) |
 | ClinicalTrials.gov | curated | training only | [ClinicalTrials](clinicaltrials.md) |
 | Mondo | curated | training only | [Mondo](mondo.md) |

@@ -1,0 +1,27 @@
+# Portable import lane for a caller-supplied, licensed RxNorm full release.
+#
+# Reproduction on another machine:
+#   export RXNORM_FULL_ARCHIVE=/secure/path/RxNorm_full_07062026.zip
+#   export MEDICAL_KG_ARTIFACT_STORE=file:///mnt/medical-kg/mining-artifacts
+#   uv run medical-kg data run --plan configs/mining/rxnorm-full-2026-07-06.yaml
+#
+# SCALING: use absolute paths or file:// URIs. Relative runtime paths are resolved from this
+# plan's directory so invocation from another working directory remains deterministic.
+schema_version: medical-mining-plan.v1
+registry: ../../data/sources/mining_registry.yaml
+work_dir: ../../outputs/mining/rxnorm-full-2026-07-06
+artifact_store:
+  # PRIVACY: the backend path is runtime state and is never persisted in source manifests.
+  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  storage_options: {}
+  encrypted_at_rest: false
+sources:
+  - source_id: rxnorm_full_2026_07_06
+    source_version: "2026-07-06"
+    parse_documents: false
+    parameters:
+      paths:
+        - ${RXNORM_FULL_ARCHIVE}
+      media_type: application/zip
+      sha256:
+        RxNorm_full_07062026.zip: 53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c
