@@ -132,6 +132,7 @@ from medical_kg_nlp.mining.release import (
     MiningReleaseLock,
     MiningReleaseSpec,
     ReleaseArtifactSpec,
+    ReleaseCasObjectSpec,
     ReleaseRebuildStep,
     build_mining_release_lock,
     load_mining_release_spec,
@@ -146,7 +147,11 @@ from medical_kg_nlp.mining.recognition_knowledge import (
     compile_recognition_knowledge,
     load_recognition_knowledge_policy,
 )
-from medical_kg_nlp.mining.storage import FsspecArtifactStore, LocalArtifactStore
+from medical_kg_nlp.mining.storage import (
+    FsspecArtifactStore,
+    LocalArtifactStore,
+    materialize_stored_object,
+)
 from medical_kg_nlp.mining.registry import (
     LicenseMode,
     RetentionPolicy,
@@ -267,6 +272,7 @@ __all__ = [
     "ReviewBackendPort",
     "ReviewStatus",
     "ReleaseArtifactSpec",
+    "ReleaseCasObjectSpec",
     "ReleaseRebuildStep",
     "SourceArtifact",
     "SourceJob",
@@ -303,6 +309,7 @@ __all__ = [
     "ConsensusProposalLabeler",
     "JsonlReviewBackend",
     "load_source_registry",
+    "materialize_stored_object",
     "materialize_annotation_manifest",
     "load_source_processing_index",
     "load_crosswalk_policies",

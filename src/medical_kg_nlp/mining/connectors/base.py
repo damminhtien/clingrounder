@@ -93,6 +93,7 @@ class RegisteredConnectorAdapter(ABC):
             if expected_md5 is None
             else hashlib.md5(usedforsecurity=False)  # noqa: S324 - source integrity contract
         )
+        source_uri = self._persisted_source_uri(artifact)
         with closing(self.transport.open(artifact.uri)) as stream:
             source_stream = (
                 stream
@@ -104,7 +105,7 @@ class RegisteredConnectorAdapter(ABC):
                 metadata={
                     "source_id": artifact.source_id,
                     "source_version": artifact.source_version,
-                    "source_uri": artifact.uri,
+                    "source_uri": source_uri,
                     **artifact.metadata,
                 },
             )
@@ -132,7 +133,7 @@ class RegisteredConnectorAdapter(ABC):
             artifact_id=artifact_id,
             source_id=artifact.source_id,
             source_version=artifact.source_version,
-            source_uri=artifact.uri,
+            source_uri=source_uri,
             object=stored,
             media_type=artifact.media_type,
             license_id=license_id,
@@ -142,6 +143,15 @@ class RegisteredConnectorAdapter(ABC):
             retrieved_at=self._clock().astimezone(UTC).isoformat(),
             metadata=dict(artifact.metadata),
         )
+
+    def _persisted_source_uri(self, artifact: DiscoveredArtifact) -> str:
+        """Return source provenance safe to retain in a portable manifest.
+
+        Remote URLs are stable source identifiers. Local connectors override this hook
+        because their discovery URI points at a workstation-specific input path.
+        """
+
+        return artifact.uri
 
     def open_uri(self, uri: str) -> BinaryIO:
         """Open discovery metadata through the same source rate limiter."""

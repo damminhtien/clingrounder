@@ -6,7 +6,7 @@ import hashlib
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Any, BinaryIO
-from urllib.parse import unquote, urlparse
+from urllib.parse import quote, unquote, urlparse
 
 from medical_kg_nlp.mining.connectors.base import RegisteredConnectorAdapter
 from medical_kg_nlp.mining.records import DiscoveredArtifact, SourceRequest
@@ -28,6 +28,8 @@ class LocalFileTransport:
 
 class LocalArchiveConnector(RegisteredConnectorAdapter):
     """Discover an explicit list of local files without scanning arbitrary directories."""
+
+    connector_revision = "2"
 
     def __init__(self, source: SourceDefinition) -> None:
         super().__init__(source, LocalFileTransport())
@@ -51,6 +53,16 @@ class LocalArchiveConnector(RegisteredConnectorAdapter):
                 expected_sha256=expected_sha256,
                 metadata={"filename": path.name, "byte_size": str(path.stat().st_size)},
             )
+
+    def _persisted_source_uri(self, artifact: DiscoveredArtifact) -> str:
+        """Replace a workstation path with a source-scoped portable locator."""
+
+        filename = artifact.metadata.get("filename")
+        if not filename:
+            raise ValueError("Local artifacts require filename metadata")
+        # PRIVACY: the actual file URI is needed only by LocalFileTransport. Persisting it
+        # would bind manifests to one home directory and can disclose controlled mounts.
+        return f"local-source://{quote(artifact.source_id, safe='')}/{quote(filename, safe='')}"
 
 
 def _string_sequence(value: Any, *, field_name: str) -> tuple[str, ...]:

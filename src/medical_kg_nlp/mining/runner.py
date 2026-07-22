@@ -205,8 +205,15 @@ def run_mining_plan(path: str | Path) -> MiningPlanResult:
         document_path = stage_dir / "documents.jsonl"
         state_path = stage_dir / "state.json"
         state = _load_stage_state(state_path)
-        if artifact_path.is_file() and state.get("acquisition") == "complete":
-            artifacts = load_source_artifacts(artifact_path)
+        cached_artifacts = (
+            load_source_artifacts(artifact_path)
+            if artifact_path.is_file() and state.get("acquisition") == "complete"
+            else ()
+        )
+        # SCALING: stage manifests are portable across storage backends only when every
+        # referenced CAS object exists in the backend selected for this run.
+        if cached_artifacts and _artifacts_exist(cached_artifacts, store=store):
+            artifacts = cached_artifacts
             # INVARIANT: rewriting also migrates legacy file:// or bucket URIs
             # to the storage-root-independent CAS namespace.
             write_jsonl(
@@ -351,20 +358,38 @@ def sync_source(
     """Fetch one source request and checkpoint every completed artifact."""
 
     connector = connector_from_definition(source)
-    completed = (
+    checkpointed = (
         list(load_source_artifacts(checkpoint_path))
         if checkpoint_path is not None and Path(checkpoint_path).is_file()
         else []
     )
+    completed = [
+        artifact
+        for artifact in checkpointed
+        if store.exists(artifact.object.sha256)
+    ]
     completed_by_uri = {artifact.source_uri: artifact for artifact in completed}
+    completed_by_sha256 = {
+        artifact.object.sha256: artifact for artifact in completed
+    }
+    completed_by_id = {artifact.artifact_id: artifact for artifact in completed}
     discovered_count = 0
     for discovered in connector.discover(request):
         discovered_count += 1
         artifact = completed_by_uri.get(discovered.uri)
+        if artifact is None and discovered.expected_sha256 is not None:
+            # INVARIANT: local discovery paths vary across workstations. A pinned digest is
+            # the portable identity used to resume without coupling data to a mount point.
+            artifact = completed_by_sha256.get(discovered.expected_sha256)
         if (
             artifact is not None
-            and discovered.expected_sha256 is not None
-            and artifact.object.sha256 != discovered.expected_sha256
+            and (
+                not store.exists(artifact.object.sha256)
+                or (
+                    discovered.expected_sha256 is not None
+                    and artifact.object.sha256 != discovered.expected_sha256
+                )
+            )
         ):
             artifact = None
         if artifact is None:
@@ -375,7 +400,9 @@ def sync_source(
                 f"Artifact policy rejected {artifact.artifact_id}: {', '.join(decision.reasons)}"
             )
         completed_by_uri[discovered.uri] = artifact
-        completed = list(completed_by_uri.values())
+        completed_by_sha256[artifact.object.sha256] = artifact
+        completed_by_id[artifact.artifact_id] = artifact
+        completed = list(completed_by_id.values())
         if checkpoint_path is not None:
             # SCALING: each completed artifact is durable, so interruption resumes at CAS speed.
             write_jsonl(
@@ -464,6 +491,16 @@ def _unique_artifacts(values: Sequence[SourceArtifact]) -> tuple[SourceArtifact,
         if previous != value:
             raise ValueError(f"Conflicting artifact ID {value.artifact_id!r}")
     return tuple(sorted(by_id.values(), key=lambda item: item.artifact_id))
+
+
+def _artifacts_exist(
+    artifacts: Sequence[SourceArtifact], *, store: ArtifactStorePort
+) -> bool:
+    """Return whether a stage manifest is backed by the selected CAS backend."""
+
+    return bool(artifacts) and all(
+        store.exists(artifact.object.sha256) for artifact in artifacts
+    )
 
 
 def _unique_documents(values: Sequence[MinedDocument]) -> tuple[MinedDocument, ...]:

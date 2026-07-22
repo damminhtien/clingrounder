@@ -15,12 +15,13 @@ import os
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath, PureWindowsPath
-from typing import Any, Literal
+from typing import Any, BinaryIO, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from medical_kg_nlp.mining.io import write_json
+from medical_kg_nlp.mining.ports import ArtifactStorePort
 from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
 
 __all__ = [
@@ -28,13 +29,15 @@ __all__ = [
     "MiningReleaseLock",
     "MiningReleaseSpec",
     "ReleaseArtifactSpec",
+    "ReleaseCasObjectSpec",
     "ReleaseRebuildStep",
     "build_mining_release_lock",
     "load_mining_release_spec",
     "verify_mining_release_lock",
 ]
 
-_LOCK_SCHEMA_VERSION = "medical-mining-release-lock.v1"
+_LOCK_SCHEMA_VERSION = "medical-mining-release-lock.v2"
+_STREAM_CHUNK_SIZE = 1024 * 1024
 
 
 class ReleaseArtifactSpec(BaseModel):
@@ -47,6 +50,7 @@ class ReleaseArtifactSpec(BaseModel):
     path: str = Field(min_length=1)
     description: str = Field(min_length=1)
     required: bool = True
+    rebuild_step_id: str | None = None
     exclude: tuple[str, ...] = ()
 
     @field_validator("path")
@@ -60,6 +64,33 @@ class ReleaseArtifactSpec(BaseModel):
     @classmethod
     def validate_excludes(cls, values: tuple[str, ...]) -> tuple[str, ...]:
         return tuple(_portable_glob(value) for value in values)
+
+
+class ReleaseCasObjectSpec(BaseModel):
+    """One immutable source object stored outside the repository checkout.
+
+    Large source archives belong in a content-addressed local/S3 store, not under a
+    developer-specific ``.cache`` path in the release tree.  The digest is both the
+    portable locator and the byte identity; ``rebuild_step_id`` explains how a clean
+    machine can restore a missing object.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    id: str = Field(min_length=1)
+    role: str = Field(min_length=1)
+    sha256: str = Field(min_length=64, max_length=64)
+    byte_size: int = Field(ge=0)
+    description: str = Field(min_length=1)
+    rebuild_step_id: str = Field(min_length=1)
+    required: bool = True
+
+    @field_validator("sha256")
+    @classmethod
+    def validate_sha256(cls, value: str) -> str:
+        if not _is_sha256(value):
+            raise ValueError("CAS objects require a lowercase SHA-256")
+        return value
 
 
 class ReleaseRebuildStep(BaseModel):
@@ -93,11 +124,12 @@ class MiningReleaseSpec(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    schema_version: Literal["medical-mining-release-spec.v1"]
+    schema_version: Literal["medical-mining-release-spec.v2"]
     release_id: str = Field(min_length=1)
     description: str = Field(min_length=1)
     release_root: str = Field(min_length=1)
     artifacts: tuple[ReleaseArtifactSpec, ...] = Field(min_length=1)
+    cas_objects: tuple[ReleaseCasObjectSpec, ...] = ()
     rebuild_steps: tuple[ReleaseRebuildStep, ...] = ()
 
     @field_validator("release_root")
@@ -113,8 +145,9 @@ class MiningReleaseSpec(BaseModel):
     @model_validator(mode="after")
     def validate_unique_identifiers(self) -> "MiningReleaseSpec":
         artifact_ids = [artifact.id for artifact in self.artifacts]
+        cas_object_ids = [value.id for value in self.cas_objects]
         step_ids = [step.id for step in self.rebuild_steps]
-        all_ids = [*artifact_ids, *step_ids]
+        all_ids = [*artifact_ids, *cas_object_ids, *step_ids]
         duplicates = sorted(
             {value for value in all_ids if all_ids.count(value) > 1}
         )
@@ -131,6 +164,21 @@ class MiningReleaseSpec(BaseModel):
                 "exclude patterns are allowed only for implementation artifacts: "
                 + ", ".join(excluded_non_code)
             )
+        unknown_rebuild_steps = sorted(
+            {
+                rebuild_step_id
+                for rebuild_step_id in [
+                    *(artifact.rebuild_step_id for artifact in self.artifacts),
+                    *(value.rebuild_step_id for value in self.cas_objects),
+                ]
+                if rebuild_step_id is not None and rebuild_step_id not in step_ids
+            }
+        )
+        if unknown_rebuild_steps:
+            raise ValueError(
+                "release artifacts reference unknown rebuild step IDs: "
+                + ", ".join(unknown_rebuild_steps)
+            )
         return self
 
 
@@ -144,6 +192,7 @@ class LockedReleaseArtifact(BaseModel):
     path: str = Field(min_length=1)
     description: str = Field(min_length=1)
     required: bool
+    rebuild_step_id: str | None = None
     exclude: tuple[str, ...] = ()
     present: bool
     kind: Literal["file", "directory", "absent"]
@@ -176,11 +225,12 @@ class MiningReleaseLock(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    schema_version: Literal["medical-mining-release-lock.v1"]
+    schema_version: Literal["medical-mining-release-lock.v2"]
     release_id: str = Field(min_length=1)
     description: str = Field(min_length=1)
     spec: dict[str, str]
     artifacts: tuple[LockedReleaseArtifact, ...] = Field(min_length=1)
+    cas_objects: tuple[ReleaseCasObjectSpec, ...] = ()
     rebuild_steps: tuple[ReleaseRebuildStep, ...] = ()
     release_fingerprint: str = Field(min_length=64, max_length=64)
 
@@ -196,8 +246,22 @@ class MiningReleaseLock(BaseModel):
         if not _is_sha256(self.release_fingerprint):
             raise ValueError("release_fingerprint must be a lowercase SHA-256")
         artifact_ids = [artifact.id for artifact in self.artifacts]
-        if len(artifact_ids) != len(set(artifact_ids)):
-            raise ValueError("release lock contains duplicate artifact IDs")
+        all_ids = [*artifact_ids, *(value.id for value in self.cas_objects)]
+        if len(all_ids) != len(set(all_ids)):
+            raise ValueError("release lock contains duplicate artifact or CAS object IDs")
+        step_ids = {step.id for step in self.rebuild_steps}
+        referenced_step_ids = {
+            rebuild_step_id
+            for rebuild_step_id in [
+                *(artifact.rebuild_step_id for artifact in self.artifacts),
+                *(value.rebuild_step_id for value in self.cas_objects),
+            ]
+            if rebuild_step_id is not None
+        }
+        if unknown := sorted(referenced_step_ids - step_ids):
+            raise ValueError(
+                "release lock references unknown rebuild step IDs: " + ", ".join(unknown)
+            )
         return self
 
 
@@ -273,6 +337,9 @@ def build_mining_release_lock(
             "sha256": sha256_file(loaded.spec_path),
         },
         "artifacts": [artifact.model_dump(mode="json") for artifact in artifacts],
+        "cas_objects": [
+            value.model_dump(mode="json") for value in loaded.spec.cas_objects
+        ],
         "rebuild_steps": [step.model_dump(mode="json") for step in loaded.spec.rebuild_steps],
     }
     payload["release_fingerprint"] = _release_fingerprint(payload)
@@ -286,8 +353,20 @@ def verify_mining_release_lock(
     *,
     release_root: str | Path,
     require_optional: bool = False,
+    artifact_store: ArtifactStorePort | None = None,
+    require_cas_objects: bool = False,
+    verify_cas_content: bool = False,
 ) -> dict[str, Any]:
-    """Verify a release lock after checkout, artifact restore, or data reconstruction."""
+    """Verify a release lock after checkout, artifact restore, or data reconstruction.
+
+    Repository artifacts are always hashed.  External CAS objects are storage-independent:
+    callers may point this function at any local/S3 implementation of ``ArtifactStorePort``.
+    Content verification is opt-in because hashing a multi-gigabyte source archive can be
+    expensive; existence is still checked whenever a store is supplied.
+    """
+
+    if verify_cas_content and artifact_store is None:
+        raise ValueError("verify_cas_content requires artifact_store")
 
     manifest = _load_lock(manifest_path)
     root = Path(release_root).resolve()
@@ -296,7 +375,12 @@ def verify_mining_release_lock(
 
     errors: list[str] = []
     optional_missing: list[str] = []
+    optional_cas_missing: list[str] = []
+    unverified_cas_objects: list[str] = []
     verified_artifacts = 0
+    verified_cas_objects = 0
+    content_verified_cas_objects = 0
+    recommended_rebuild_steps: set[str] = set()
     payload_without_fingerprint = manifest.model_dump(mode="json")
     expected_fingerprint = payload_without_fingerprint.pop("release_fingerprint")
     if _release_fingerprint(payload_without_fingerprint) != expected_fingerprint:
@@ -308,6 +392,8 @@ def verify_mining_release_lock(
         if not target.exists():
             if artifact.required or require_optional:
                 errors.append(f"missing_artifact:{artifact.id}")
+                if artifact.rebuild_step_id is not None:
+                    recommended_rebuild_steps.add(artifact.rebuild_step_id)
             else:
                 optional_missing.append(artifact.id)
             continue
@@ -328,6 +414,13 @@ def verify_mining_release_lock(
         if observed.file_count != artifact.file_count:
             errors.append(f"file_count_mismatch:{artifact.id}")
         if (
+            observed.kind != artifact.kind
+            or observed.sha256 != artifact.sha256
+            or observed.byte_size != artifact.byte_size
+            or observed.file_count != artifact.file_count
+        ) and artifact.rebuild_step_id is not None:
+            recommended_rebuild_steps.add(artifact.rebuild_step_id)
+        if (
             observed.kind == artifact.kind
             and observed.sha256 == artifact.sha256
             and observed.byte_size == artifact.byte_size
@@ -335,13 +428,47 @@ def verify_mining_release_lock(
         ):
             verified_artifacts += 1
 
+    for source_object in manifest.cas_objects:
+        if artifact_store is None:
+            unverified_cas_objects.append(source_object.id)
+            if require_cas_objects:
+                errors.append(f"unverified_cas_object:{source_object.id}")
+                recommended_rebuild_steps.add(source_object.rebuild_step_id)
+            continue
+        if not artifact_store.exists(source_object.sha256):
+            if source_object.required or require_cas_objects:
+                errors.append(f"missing_cas_object:{source_object.id}")
+                recommended_rebuild_steps.add(source_object.rebuild_step_id)
+            else:
+                optional_cas_missing.append(source_object.id)
+            continue
+        verified_cas_objects += 1
+        if not verify_cas_content:
+            continue
+        with artifact_store.open(source_object.sha256) as stream:
+            observed_sha256, observed_size = _fingerprint_stream(stream)
+        if observed_sha256 != source_object.sha256:
+            errors.append(f"cas_sha256_mismatch:{source_object.id}")
+            recommended_rebuild_steps.add(source_object.rebuild_step_id)
+        if observed_size != source_object.byte_size:
+            errors.append(f"cas_byte_size_mismatch:{source_object.id}")
+            recommended_rebuild_steps.add(source_object.rebuild_step_id)
+        if observed_sha256 == source_object.sha256 and observed_size == source_object.byte_size:
+            content_verified_cas_objects += 1
+
     return {
-        "schema_version": "medical-mining-release-verification.v1",
+        "schema_version": "medical-mining-release-verification.v2",
         "release_id": manifest.release_id,
         "release_fingerprint": manifest.release_fingerprint,
         "artifact_count": len(manifest.artifacts),
         "verified_artifact_count": verified_artifacts,
+        "cas_object_count": len(manifest.cas_objects),
+        "verified_cas_object_count": verified_cas_objects,
+        "content_verified_cas_object_count": content_verified_cas_objects,
         "optional_missing_artifact_ids": sorted(optional_missing),
+        "optional_missing_cas_object_ids": sorted(optional_cas_missing),
+        "unverified_cas_object_ids": sorted(unverified_cas_objects),
+        "recommended_rebuild_step_ids": sorted(recommended_rebuild_steps),
         "errors": sorted(set(errors)),
         "valid": not errors,
     }
@@ -358,6 +485,7 @@ def _lock_artifact(root: Path, artifact: ReleaseArtifactSpec) -> LockedReleaseAr
             path=artifact.path,
             description=artifact.description,
             required=False,
+            rebuild_step_id=artifact.rebuild_step_id,
             exclude=artifact.exclude,
             present=False,
             kind="absent",
@@ -372,6 +500,7 @@ def _lock_artifact(root: Path, artifact: ReleaseArtifactSpec) -> LockedReleaseAr
         path=artifact.path,
         description=artifact.description,
         required=artifact.required,
+        rebuild_step_id=artifact.rebuild_step_id,
         exclude=artifact.exclude,
         present=True,
         kind=fingerprint.kind,
@@ -458,6 +587,17 @@ def _fingerprint_path(
         byte_size=byte_size,
         file_count=file_count,
     )
+
+
+def _fingerprint_stream(stream: BinaryIO) -> tuple[str, int]:
+    """Hash one external object without loading it into memory."""
+
+    digest = hashlib.sha256()
+    byte_size = 0
+    while chunk := stream.read(_STREAM_CHUNK_SIZE):
+        digest.update(chunk)
+        byte_size += len(chunk)
+    return digest.hexdigest(), byte_size
 
 
 def _portable_artifact_path(value: str) -> str:

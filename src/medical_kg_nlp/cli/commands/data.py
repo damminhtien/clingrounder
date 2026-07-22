@@ -130,6 +130,7 @@ from medical_kg_nlp.mining.splits import (
     select_mined_records_with_metadata,
 )
 from medical_kg_nlp.terminology import SQLiteTerminologyRepository
+from medical_kg_nlp.mining.storage import materialize_stored_object
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.utils.hashing import sha256_file
@@ -159,6 +160,7 @@ __all__ = [
     "inspect_dataset",
     "link_dailymed_products",
     "lock_mining_release",
+    "materialize_artifact",
     "mine_cooccurrence",
     "propose_labels",
     "propose_dailymed_product_aliases",
@@ -217,6 +219,27 @@ def validate_registry(args: argparse.Namespace) -> int:
     return 0
 
 
+def materialize_artifact(args: argparse.Namespace) -> int:
+    """Restore one external CAS object without persisting its backend location."""
+
+    store = artifact_store_from_uri(args.store)
+    materialized = materialize_stored_object(
+        store,
+        args.sha256,
+        args.output,
+        expected_byte_size=args.expected_byte_size,
+    )
+    _print_json(
+        {
+            "byte_size": materialized.byte_size,
+            "output": str(Path(args.output)),
+            "sha256": materialized.sha256,
+            "uri": materialized.uri,
+        }
+    )
+    return 0
+
+
 def lock_mining_release(args: argparse.Namespace) -> int:
     """Create a machine-portable byte lock for one materialized release spec."""
 
@@ -235,10 +258,14 @@ def lock_mining_release(args: argparse.Namespace) -> int:
 def verify_mining_release(args: argparse.Namespace) -> int:
     """Verify the same release bytes under a caller-selected local root."""
 
+    store = artifact_store_from_uri(args.store) if args.store else None
     report = verify_mining_release_lock(
         args.manifest,
         release_root=args.root,
         require_optional=args.require_optional,
+        artifact_store=store,
+        require_cas_objects=args.require_cas_objects,
+        verify_cas_content=args.verify_cas_content,
     )
     _print_json(report)
     return 0 if report["valid"] else 1

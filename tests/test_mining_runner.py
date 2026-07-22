@@ -9,7 +9,11 @@ from pathlib import Path
 import yaml
 
 from medical_kg_nlp.cli.main import main
-from medical_kg_nlp.mining.runner import load_mining_plan, run_mining_plan
+from medical_kg_nlp.mining.runner import (
+    artifact_store_from_uri,
+    load_mining_plan,
+    run_mining_plan,
+)
 
 
 def _write_registry(path: Path) -> None:
@@ -100,6 +104,35 @@ def test_plan_resolves_relative_paths_and_resumes_completed_stages(
     assert str(tmp_path) not in json.dumps(result)
 
 
+def test_cached_acquisition_rehydrates_a_new_artifact_store(tmp_path: Path) -> None:
+    plan_path = _fixture_plan(tmp_path)
+    first = run_mining_plan(plan_path)
+    artifact = json.loads(
+        (tmp_path / "work" / "artifacts.jsonl").read_text(encoding="utf-8").splitlines()[0]
+    )
+    sha256 = artifact["object"]["sha256"]
+
+    plan_payload = yaml.safe_load(plan_path.read_text(encoding="utf-8"))
+    plan_payload["artifact_store"]["uri"] = "relocated-artifact-store"
+    plan_path.write_text(
+        yaml.safe_dump(plan_payload, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    relocated = run_mining_plan(plan_path)
+    resumed = run_mining_plan(plan_path)
+    relocated_store = artifact_store_from_uri(
+        str(tmp_path / "relocated-artifact-store")
+    )
+
+    assert first.cache_misses == 2
+    assert relocated.cache_misses == 1
+    assert relocated.cache_hits == 1
+    assert resumed.cache_misses == 0
+    assert resumed.cache_hits == 2
+    assert relocated_store.exists(sha256)
+
+
 def test_data_registry_cli_is_installed_and_task_neutral(
     tmp_path: Path, capsys
 ) -> None:
@@ -141,4 +174,27 @@ def test_full_dailymed_plan_pins_every_human_release_part(
         "configs/mining/dailymed-human-rx-part6-2026-07-21.yaml"
     )
     pilot_artifact = pilot.sources[0].parameters["artifacts"][0]
-    assert pilot_artifact == artifacts[5]
+    assert pilot_artifact["uri"] == artifacts[5]["uri"]
+    assert pilot_artifact["metadata"] == artifacts[5]["metadata"]
+    assert pilot_artifact["sha256"] == (
+        "3c72512e43c1e298c53874bb1d0884dcd8a695c9234890fc769c5054f58bdeb6"
+    )
+
+
+def test_rxnorm_plan_resolves_runtime_paths_but_pins_source_identity(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    archive = tmp_path / "licensed" / "RxNorm_full_07062026.zip"
+    monkeypatch.setenv("RXNORM_FULL_ARCHIVE", str(archive))
+    monkeypatch.setenv("MEDICAL_KG_ARTIFACT_STORE", str(tmp_path / "external-store"))
+
+    plan = load_mining_plan("configs/mining/rxnorm-full-2026-07-06.yaml")
+    source = plan.sources[0]
+
+    assert source.source_id == "rxnorm_full_2026_07_06"
+    assert source.parse_documents is False
+    assert source.parameters["paths"] == [str(archive.resolve())]
+    assert source.parameters["sha256"]["RxNorm_full_07062026.zip"] == (
+        "53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c"
+    )

@@ -329,3 +329,10 @@ def test_local_connector_only_imports_explicit_paths(tmp_path: Path) -> None:
     }
     assert discovered[0].expected_sha256 == hashlib.sha256(b"local fixture").hexdigest()
     assert discovered[0].uri.startswith("file:")
+
+    materialized = connector.fetch(
+        discovered[0],
+        store=LocalArtifactStore(tmp_path / "artifact-store"),
+    )
+    assert materialized.source_uri == "local-source://codiesp/codiesp.zip"
+    assert str(tmp_path) not in materialized.source_uri

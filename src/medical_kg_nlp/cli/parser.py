@@ -380,6 +380,23 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         help="Repository root used to validate processing-index paths.",
     )
 
+    artifact = operations.add_parser(
+        "artifact",
+        help="Restore immutable content-addressed source bytes for local processing.",
+    )
+    artifact_operations = artifact.add_subparsers(
+        dest="data_artifact_command", required=True
+    )
+    artifact_materialize = artifact_operations.add_parser(
+        "materialize",
+        help="Atomically hydrate one CAS object to a verified local file.",
+    )
+    artifact_materialize.set_defaults(handler="data_artifact_materialize")
+    artifact_materialize.add_argument("--store", required=True)
+    artifact_materialize.add_argument("--sha256", required=True)
+    artifact_materialize.add_argument("--output", required=True)
+    artifact_materialize.add_argument("--expected-byte-size", type=int)
+
     source = operations.add_parser("source", help="Synchronize one registered source.")
     source_operations = source.add_subparsers(dest="data_source_command", required=True)
     source_sync = source_operations.add_parser(
@@ -972,6 +989,23 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         "--require-optional",
         action="store_true",
         help="Treat artifacts intentionally absent when locked as required during verification.",
+    )
+    release_verify.add_argument(
+        "--store",
+        help=(
+            "Local directory, file:// URI, or fsspec URI containing external CAS objects. "
+            "The URI is used only for this verification and is never persisted."
+        ),
+    )
+    release_verify.add_argument(
+        "--require-cas-objects",
+        action="store_true",
+        help="Fail when external source objects cannot be checked in the selected store.",
+    )
+    release_verify.add_argument(
+        "--verify-cas-content",
+        action="store_true",
+        help="Stream and hash external CAS objects in addition to checking their existence.",
     )
 
     run = operations.add_parser("run", help="Run a resumable declarative mining plan.")

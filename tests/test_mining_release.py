@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import shutil
+from io import BytesIO
 from pathlib import Path
 
 import pytest
@@ -16,6 +17,7 @@ from medical_kg_nlp.mining.release import (
     load_mining_release_spec,
     verify_mining_release_lock,
 )
+from medical_kg_nlp.mining.storage import LocalArtifactStore
 
 _REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
@@ -52,6 +54,74 @@ def test_release_lock_verifies_after_tree_moves_to_another_machine_root(
     assert report["valid"] is True
     assert report["verified_artifact_count"] == 2
     assert report["errors"] == []
+
+
+def test_release_external_cas_object_verifies_from_a_different_store_root(
+    tmp_path: Path,
+) -> None:
+    root, spec_path = _release_fixture(tmp_path / "origin")
+    source_bytes = b"immutable external source archive"
+    origin_store = LocalArtifactStore(tmp_path / "origin-store")
+    stored = origin_store.put_stream(BytesIO(source_bytes), metadata={"source": "fixture"})
+    payload = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    payload["cas_objects"] = [
+        {
+            "id": "source-archive",
+            "role": "source_archive",
+            "sha256": stored.sha256,
+            "byte_size": stored.byte_size,
+            "description": "Immutable source bytes outside the checkout.",
+            "rebuild_step_id": "build-dataset",
+        }
+    ]
+    spec_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    lock_path = root / "release.lock.json"
+    build_mining_release_lock(spec_path, lock_path)
+
+    relocated_store = LocalArtifactStore(tmp_path / "mounted-store")
+    relocated_store.put_stream(BytesIO(source_bytes), metadata={"source": "copied-fixture"})
+    report = verify_mining_release_lock(
+        lock_path,
+        release_root=root,
+        artifact_store=relocated_store,
+        require_cas_objects=True,
+        verify_cas_content=True,
+    )
+
+    assert report["valid"] is True
+    assert report["cas_object_count"] == 1
+    assert report["verified_cas_object_count"] == 1
+    assert report["content_verified_cas_object_count"] == 1
+    assert report["unverified_cas_object_ids"] == []
+
+
+def test_release_reports_unverified_external_objects_without_a_store(tmp_path: Path) -> None:
+    root, spec_path = _release_fixture(tmp_path / "origin")
+    payload = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    payload["cas_objects"] = [
+        {
+            "id": "source-archive",
+            "role": "source_archive",
+            "sha256": "1" * 64,
+            "byte_size": 42,
+            "description": "Immutable source bytes outside the checkout.",
+            "rebuild_step_id": "build-dataset",
+        }
+    ]
+    spec_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    lock_path = root / "release.lock.json"
+    build_mining_release_lock(spec_path, lock_path)
+
+    report = verify_mining_release_lock(lock_path, release_root=root)
+    strict_report = verify_mining_release_lock(
+        lock_path,
+        release_root=root,
+        require_cas_objects=True,
+    )
+
+    assert report["valid"] is True
+    assert report["unverified_cas_object_ids"] == ["source-archive"]
+    assert "unverified_cas_object:source-archive" in strict_report["errors"]
 
 
 def test_release_verification_detects_content_changes_and_missing_optional(
@@ -147,13 +217,19 @@ def test_checked_in_open_release_contract_is_portable_and_strict() -> None:
 
     assert loaded.spec.release_id == lock.release_id == "open-ner-retrieval-v1"
     artifact_ids = {artifact.id for artifact in lock.artifacts}
-    assert len(lock.artifacts) == 36
     assert {
         "dailymed-full-human-plan",
         "dailymed-rx-part6-plan",
-        "dailymed-rx-part6-source-archive",
-        "dailymed-rx-part6-processed",
+        "dailymed-rx-part6-snapshot",
+        "dailymed-rx-part6-recognition-benchmark",
+        "dailymed-rx-part6-enriched-retrieval-benchmark",
     } <= artifact_ids
+    cas_object_ids = {value.id for value in lock.cas_objects}
+    assert cas_object_ids == {
+        "dailymed-rx-part6-source-archive",
+        "rxnorm-full-source-archive",
+    }
+    assert all(not artifact.path.startswith(".cache/") for artifact in lock.artifacts)
     assert "/Users/" not in lock_text
     assert "/home/" not in lock_text
 
@@ -203,7 +279,7 @@ def _release_fixture(
             }
         )
     spec = {
-        "schema_version": "medical-mining-release-spec.v1",
+        "schema_version": "medical-mining-release-spec.v2",
         "release_id": "fixture-ner-retrieval-v1",
         "description": "Portable fixture release.",
         "release_root": "..",

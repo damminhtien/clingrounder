@@ -11,9 +11,10 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, BinaryIO, cast
 
+from medical_kg_nlp.mining.ports import ArtifactStorePort
 from medical_kg_nlp.mining.records import StoredObject, content_addressed_object_uri
 
-__all__ = ["FsspecArtifactStore", "LocalArtifactStore"]
+__all__ = ["FsspecArtifactStore", "LocalArtifactStore", "materialize_stored_object"]
 
 _CHUNK_SIZE = 1024 * 1024
 
@@ -158,6 +159,83 @@ class FsspecArtifactStore:
 
     def _metadata_path(self, sha256: str) -> str:
         return f"{self._root}/metadata/sha256/{sha256[:2]}/{sha256}.json"
+
+
+def materialize_stored_object(
+    store: ArtifactStorePort,
+    sha256: str,
+    output: str | Path,
+    *,
+    expected_byte_size: int | None = None,
+) -> StoredObject:
+    """Atomically restore one CAS object to a seekable local file.
+
+    Archive readers such as ``zipfile`` require a local seekable file, while the canonical
+    object may live in S3 or on a differently mounted external disk. This bridge preserves
+    content identity without exposing the backend path to downstream stages.
+    """
+
+    _validate_digest(sha256)
+    if expected_byte_size is not None and expected_byte_size < 0:
+        raise ValueError("expected_byte_size must be non-negative")
+    destination = Path(output)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if destination.is_file():
+        observed_sha256, observed_size = _hash_file(destination)
+        if observed_sha256 == sha256 and (
+            expected_byte_size is None or observed_size == expected_byte_size
+        ):
+            return StoredObject(
+                sha256=sha256,
+                uri=content_addressed_object_uri(sha256),
+                byte_size=observed_size,
+            )
+    if not store.exists(sha256):
+        raise FileNotFoundError(f"CAS object is missing: {sha256}")
+
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{destination.name}.",
+        suffix=".tmp",
+        dir=destination.parent,
+    )
+    temporary_path = Path(temporary_name)
+    digest = hashlib.sha256()
+    byte_size = 0
+    try:
+        with os.fdopen(descriptor, "wb") as target, store.open(sha256) as source:
+            # SCALING: stream remote archives in bounded chunks and publish only after
+            # integrity checks pass, so interrupted hydration cannot poison a later run.
+            while chunk := source.read(_CHUNK_SIZE):
+                digest.update(chunk)
+                target.write(chunk)
+                byte_size += len(chunk)
+            target.flush()
+            os.fsync(target.fileno())
+        if digest.hexdigest() != sha256:
+            raise ValueError("materialized object SHA-256 does not match its CAS identity")
+        if expected_byte_size is not None and byte_size != expected_byte_size:
+            raise ValueError(
+                "materialized object byte size does not match release metadata: "
+                f"expected {expected_byte_size}, observed {byte_size}"
+            )
+        os.replace(temporary_path, destination)
+        return StoredObject(
+            sha256=sha256,
+            uri=content_addressed_object_uri(sha256),
+            byte_size=byte_size,
+        )
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+
+def _hash_file(path: Path) -> tuple[str, int]:
+    digest = hashlib.sha256()
+    byte_size = 0
+    with path.open("rb") as handle:
+        while chunk := handle.read(_CHUNK_SIZE):
+            digest.update(chunk)
+            byte_size += len(chunk)
+    return digest.hexdigest(), byte_size
 
 
 def _validate_digest(value: str) -> None:
