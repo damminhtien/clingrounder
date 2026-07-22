@@ -159,15 +159,7 @@ def test_btc_sample_is_reproduced_end_to_end() -> None:
     assert all(row["assertions"] == ["isHistorical"] for row in drugs)
     assert all(row["assertions"] == [] for row in symptoms)
     assert all(text[row["position"][0] : row["position"][1]] == row["text"] for row in rows)
-    official_shape = [
-        {
-            key: value
-            for key, value in row.items()
-            if not (key == "candidates" and row["type"] not in {"THUỐC", "CHẨN_ĐOÁN"})
-        }
-        for row in rows
-    ]
-    assert official_shape == expected
+    assert rows == expected
     assert validate_phase1_entities(expected, text, dictionary=DictionaryStore.from_jsonl(resource)) == []
 
 

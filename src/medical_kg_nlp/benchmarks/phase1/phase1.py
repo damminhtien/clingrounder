@@ -226,7 +226,7 @@ def entity_to_phase1(
     if "selective" in {assertion_policy, candidate_policy} and selective_config is None:
         raise ValueError("selective export policy requires selective_config")
     text, span = _phase1_text_and_span(entity, phase1_type, source_text)
-    return {
+    row = {
         "text": text,
         "type": phase1_type,
         "assertions": (
@@ -236,7 +236,12 @@ def entity_to_phase1(
             if assertion_policy == "selective"
             else []
         ),
-        "candidates": (
+        "position": [span[0], span[1]],
+    }
+    if phase1_type in PHASE1_CODABLE_TYPES:
+        # INVARIANT: the official executable specification requires this field for diagnosis and
+        # medication, while omitting it for the three non-codable entity types.
+        row["candidates"] = (
             _phase1_candidates(entity, phase1_type, max_candidates=max_candidates)
             if candidate_policy == "pipeline"
             else _selective_candidates(
@@ -247,9 +252,8 @@ def entity_to_phase1(
             )
             if candidate_policy == "selective"
             else []
-        ),
-        "position": [span[0], span[1]],
-    }
+        )
+    return row
 
 
 def validate_phase1_entities(

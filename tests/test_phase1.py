@@ -88,13 +88,22 @@ def test_prediction_to_phase1_entities_exports_flat_official_schema() -> None:
     rows = prediction_to_phase1_entities(prediction, max_candidates=2)
 
     assert [row["type"] for row in rows] == ["TRIỆU_CHỨNG", "CHẨN_ĐOÁN", "THUỐC", "TÊN_XÉT_NGHIỆM"]
-    assert rows[0]["candidates"] == []
+    assert "candidates" not in rows[0]
     assert rows[1]["assertions"] == ["isNegated"]
     assert rows[1]["candidates"] == ["E11", "J18.9"]
     assert rows[2]["assertions"] == ["isHistorical"]
     assert rows[2]["candidates"] == ["6809"]
     assert rows[3]["assertions"] == []
-    assert all(set(row) == {"text", "type", "assertions", "candidates", "position"} for row in rows)
+    assert "candidates" not in rows[3]
+    assert all(
+        set(row)
+        == (
+            {"text", "type", "assertions", "candidates", "position"}
+            if row["type"] in {"THUỐC", "CHẨN_ĐOÁN"}
+            else {"text", "type", "assertions", "position"}
+        )
+        for row in rows
+    )
 
 
 def test_prediction_to_phase1_entities_supports_entity_only_abstention() -> None:
