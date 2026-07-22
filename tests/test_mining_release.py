@@ -146,7 +146,14 @@ def test_checked_in_open_release_contract_is_portable_and_strict() -> None:
     lock = MiningReleaseLock.model_validate(json.loads(lock_text))
 
     assert loaded.spec.release_id == lock.release_id == "open-ner-retrieval-v1"
-    assert len(lock.artifacts) == 31
+    artifact_ids = {artifact.id for artifact in lock.artifacts}
+    assert len(lock.artifacts) == 36
+    assert {
+        "dailymed-full-human-plan",
+        "dailymed-rx-part6-plan",
+        "dailymed-rx-part6-source-archive",
+        "dailymed-rx-part6-processed",
+    } <= artifact_ids
     assert "/Users/" not in lock_text
     assert "/home/" not in lock_text
 
