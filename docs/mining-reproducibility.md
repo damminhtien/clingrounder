@@ -22,6 +22,7 @@ The current NER/retrieval release specification is
 - VietBioNER source-held-out recognition evidence;
 - CodiEsp train-only aliases and graph-reranker evidence;
 - the official DailyMed-to-RxNorm alias overlay;
+- the deterministic full-type NER run specification;
 - an optional Linux/GPU checkpoint, which is currently absent and therefore not promoted.
 
 Create the lock after materializing the release:
@@ -81,6 +82,18 @@ datasets, terminology, benchmarks, and model checkpoints are always hashed in fu
 5. Place the archived `release.lock.json` under any local path and run `data release verify` with
    the new repository as `--root`. Verification succeeds only when every required byte agrees.
 
+The full-type NER YAML declares `run_root` relative to the YAML file. Dataset, cache, output, and
+checkpoint paths are resolved from that root rather than the shell working directory. This means a
+worker may invoke the command with an absolute config path from another directory without changing
+the run identity. Runtime code uses resolved paths, while `run_manifest.json` stores only
+run-root-relative paths and the run-spec SHA-256.
+
+The checked-in GPU run also enables Hugging Face `full_determinism`. Exact checkpoint bytes can
+still differ if the CUDA/PyTorch stack differs, so reproducibility has two levels: the release lock
+proves identical inputs and policy, while `model.fingerprint` proves identity of a materialized
+checkpoint. The manifest records framework, CUDA, and GPU metadata needed to explain a differing
+fingerprint.
+
 `outputs/mining/` is Git-ignored. Open-data lock manifests can be checked in under `data/releases/`,
 as this release is; restricted-data locks must be archived in the approved experiment store. Do not
 commit downloaded corpora merely to make a run portable.
@@ -113,6 +126,7 @@ proves content identity; benchmark gates decide whether an artifact may affect N
 - Keep train/development/challenge assignments in immutable manifests and group exact/near
   duplicates before assigning splits.
 - Pin every model by `model_id`, immutable revision, tokenizer revision, dataset hash, and training
-  config. A local directory name is not model provenance.
+  config. Resolve run paths under a declared root and persist only relative paths. A local directory
+  name is not model provenance.
 - Record missing optional artifacts explicitly. Never silently substitute another checkpoint,
   terminology release, or alias overlay.

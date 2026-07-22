@@ -113,36 +113,40 @@ def test_release_cli_lock_and_verify(tmp_path: Path, capsys: pytest.CaptureFixtu
     root, spec_path = _release_fixture(tmp_path / "origin")
     lock_path = root / "release.lock.json"
 
-    assert main(["data", "release", "lock", "--spec", str(spec_path), "--output", str(lock_path)]) == 0
+    assert (
+        main(["data", "release", "lock", "--spec", str(spec_path), "--output", str(lock_path)]) == 0
+    )
     lock_output = json.loads(capsys.readouterr().out)
     assert lock_output["artifact_count"] == 2
 
-    assert main(
-        [
-            "data",
-            "release",
-            "verify",
-            "--manifest",
-            str(lock_path),
-            "--root",
-            str(root),
-        ]
-    ) == 0
+    assert (
+        main(
+            [
+                "data",
+                "release",
+                "verify",
+                "--manifest",
+                str(lock_path),
+                "--root",
+                str(root),
+            ]
+        )
+        == 0
+    )
     verify_output = json.loads(capsys.readouterr().out)
     assert verify_output["valid"] is True
 
 
 def test_checked_in_open_release_contract_is_portable_and_strict() -> None:
     loaded = load_mining_release_spec(
-        _REPOSITORY_ROOT
-        / "configs/mining/releases/open-ner-retrieval-v1.yaml"
+        _REPOSITORY_ROOT / "configs/mining/releases/open-ner-retrieval-v1.yaml"
     )
     lock_path = _REPOSITORY_ROOT / "data/releases/open-ner-retrieval-v1.lock.json"
     lock_text = lock_path.read_text(encoding="utf-8")
     lock = MiningReleaseLock.model_validate(json.loads(lock_text))
 
     assert loaded.spec.release_id == lock.release_id == "open-ner-retrieval-v1"
-    assert len(lock.artifacts) == 30
+    assert len(lock.artifacts) == 31
     assert "/Users/" not in lock_text
     assert "/home/" not in lock_text
 

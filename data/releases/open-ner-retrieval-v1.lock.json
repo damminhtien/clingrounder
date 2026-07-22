@@ -27,7 +27,7 @@
       "sha256": "8ed9569bb6f221393de6508d2f36729f5b644b390336ab1eaf5bea7b12fcc87a"
     },
     {
-      "byte_size": 2108929,
+      "byte_size": 2113720,
       "description": "Pipeline, mining, NER, retrieval, and evaluation implementation.",
       "exclude": [
         "__pycache__",
@@ -42,7 +42,7 @@
       "present": true,
       "required": true,
       "role": "implementation",
-      "sha256": "666f668dddec880d6d89e71b1adb66d42a504fae36c4acb7f29a268d62755c23"
+      "sha256": "5046447bde26f901ab18480240dbb2ba119b52ab695ebc5fdbc884c5eeda2ae8"
     },
     {
       "byte_size": 9002,
@@ -253,6 +253,19 @@
       "sha256": "ba8e267ebe29bd13fecd559594de4610e49b61eadfe0b5531b87766b52e14c78"
     },
     {
+      "byte_size": 1465,
+      "description": "Repository-rooted deterministic Linux/GPU training contract.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "full-type-ner-run-spec",
+      "kind": "file",
+      "path": "configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml",
+      "present": true,
+      "required": true,
+      "role": "model_run_spec",
+      "sha256": "1d2546b4ef31a2a95080a3ec4838891c7c0e03cf2d59f54cc49df2d692e87ec5"
+    },
+    {
       "byte_size": 341320,
       "description": "Pinned TT06 and RxNorm concepts used by mined knowledge gates.",
       "exclude": [],
@@ -389,7 +402,7 @@
       "file_count": 0,
       "id": "local-full-type-checkpoint",
       "kind": "absent",
-      "path": "outputs/models/open-ner-retrieval-v1",
+      "path": "outputs/models/open-corpus-full-type-xlmr-base-2026-07-19",
       "present": false,
       "required": false,
       "role": "model_checkpoint",
@@ -399,7 +412,7 @@
   "description": "Open mined corpus, full-type NER supervision, source-held-out recognition evidence, and exact terminology/graph retrieval overlays available on 2026-07-22.",
   "rebuild_steps": [
     {
-      "command": "uv sync --extra dev --extra data --extra retrieval --extra ml",
+      "command": "uv sync --frozen --extra dev --extra data --extra retrieval --extra ml",
       "description": "Restore the exact Python environment and all local data/model adapters.",
       "id": "install-environment"
     },
@@ -429,16 +442,31 @@
       "id": "fuse-open-corpus"
     },
     {
+      "command": "uv run medical-kg model inspect-token-classifier-run --config configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml",
+      "description": "Validate pinned model inputs and print the immutable checkpoint prefetch command.",
+      "id": "inspect-full-type-model-run"
+    },
+    {
+      "command": "uv run hf download FacebookAI/xlm-roberta-base --revision e73636d4f797dec63c3081bb6ed5c7b0bb3f2089",
+      "description": "Cache the immutable upstream checkpoint before the offline training stage.",
+      "id": "prefetch-full-type-model"
+    },
+    {
+      "command": "uv run medical-kg model train-token-classifier-run --config configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml",
+      "description": "Optionally reproduce the local checkpoint on a compatible Linux/CUDA worker.",
+      "id": "train-full-type-model"
+    },
+    {
       "command": "uv run medical-kg data release verify --manifest data/releases/open-ner-retrieval-v1.lock.json --root .",
       "description": "Verify all restored or rebuilt release bytes without machine-local paths.",
       "id": "verify-release"
     }
   ],
-  "release_fingerprint": "9c0135968c23ed848f611c4a791942b23a82a450e75f324dc3d993955301208c",
+  "release_fingerprint": "e95a1b238137ca4d7e23f113efe92d3e3be8afb0aa43e23f741b76752dd417d2",
   "release_id": "open-ner-retrieval-v1",
   "schema_version": "medical-mining-release-lock.v1",
   "spec": {
     "path": "configs/mining/releases/open-ner-retrieval-v1.yaml",
-    "sha256": "e34e132bc66b76e9fe2c6769f4d783ca38d678208f3a337c99b8178bea5e1594"
+    "sha256": "2832dd8793ff2a4a778b461731c50bde78bf9c3763619e7082175fb17f16f828"
   }
 }

@@ -91,6 +91,10 @@ artifacts:
     role: curation_policy
     path: configs/mining/curation/open-corpus-full-ner.yaml
     description: Quality-gated full-type model view.
+  - id: full-type-ner-run-spec
+    role: model_run_spec
+    path: configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml
+    description: Repository-rooted deterministic Linux/GPU training contract.
   - id: controlled-terminology
     role: terminology_source
     path: data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
@@ -134,14 +138,14 @@ artifacts:
     description: Official exact RxNorm alias overlay, decisions, and terminology manifest.
   - id: local-full-type-checkpoint
     role: model_checkpoint
-    path: outputs/models/open-ner-retrieval-v1
+    path: outputs/models/open-corpus-full-type-xlmr-base-2026-07-19
     description: Optional Linux/GPU full-type checkpoint; absent until a run passes promotion gates.
     required: false
 
 rebuild_steps:
   - id: install-environment
     description: Restore the exact Python environment and all local data/model adapters.
-    command: uv sync --extra dev --extra data --extra retrieval --extra ml
+    command: uv sync --frozen --extra dev --extra data --extra retrieval --extra ml
   - id: validate-source-policy
     description: Validate source licenses, processing dossiers, and checked-in run configs.
     command: >-
@@ -159,6 +163,21 @@ rebuild_steps:
   - id: fuse-open-corpus
     description: Fuse the source-specific curated outputs after following their dossiers.
     command: uv run medical-kg data dataset fuse --plan configs/mining/open_corpus_v1.yaml
+  - id: inspect-full-type-model-run
+    description: Validate pinned model inputs and print the immutable checkpoint prefetch command.
+    command: >-
+      uv run medical-kg model inspect-token-classifier-run
+      --config configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml
+  - id: prefetch-full-type-model
+    description: Cache the immutable upstream checkpoint before the offline training stage.
+    command: >-
+      uv run hf download FacebookAI/xlm-roberta-base
+      --revision e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
+  - id: train-full-type-model
+    description: Optionally reproduce the local checkpoint on a compatible Linux/CUDA worker.
+    command: >-
+      uv run medical-kg model train-token-classifier-run
+      --config configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml
   - id: verify-release
     description: Verify all restored or rebuilt release bytes without machine-local paths.
     command: >-

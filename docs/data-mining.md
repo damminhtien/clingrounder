@@ -770,8 +770,9 @@ The run requires Linux, one CUDA device with at least 16 GiB VRAM, compute capab
 BF16 support. It uses batch 4 with gradient accumulation 4. Before loading the model, the command
 checks OS, device count, VRAM, compute capability, and BF16 support. The final manifest records GPU
 identity, CUDA/Torch versions, run-spec SHA, dataset SHA, model revision, metrics, and saved-model
-fingerprint. The current macOS x86_64 workspace correctly reports `validated_not_executed`; it is
-not a Linux/CUDA result.
+fingerprint. `run_root` anchors every path independently of the caller's CWD, persisted paths remain
+repository-relative, and `full_determinism` is enabled for the checked-in run. The current macOS
+x86_64 workspace correctly reports `validated_not_executed`; it is not a Linux/CUDA result.
 
 After training, run inference with an NER-only pipeline config. Set `model_id` to the saved
 `final-model` directory and set `revision` to `model.fingerprint` from its `run_manifest.json`:
