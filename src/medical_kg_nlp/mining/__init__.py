@@ -1,5 +1,9 @@
 """Reusable acquisition, curation, and dataset-snapshot primitives."""
 
+from medical_kg_nlp.mining.annotation_manifest import (
+    AnnotationManifestResult,
+    materialize_annotation_manifest,
+)
 from medical_kg_nlp.mining.catalog import DuckDBMiningCatalog, ParquetSnapshotWriter
 from medical_kg_nlp.mining.connectors import connector_from_definition
 from medical_kg_nlp.mining.cooccurrence import (
@@ -186,6 +190,7 @@ __all__ = [
     "AccessClass",
     "AgreementThresholds",
     "AnnotationLayer",
+    "AnnotationManifestResult",
     "AnnotationHarmonizationPolicy",
     "AnnotationHarmonizationResult",
     "AnnotationHarmonizationRule",
@@ -296,6 +301,7 @@ __all__ = [
     "ConsensusProposalLabeler",
     "JsonlReviewBackend",
     "load_source_registry",
+    "materialize_annotation_manifest",
     "load_source_processing_index",
     "load_crosswalk_policies",
     "load_crosswalk_link_policy",

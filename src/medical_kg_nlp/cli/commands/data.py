@@ -12,6 +12,9 @@ from typing import Any, cast
 
 import yaml
 
+from medical_kg_nlp.mining.annotation_manifest import (
+    materialize_annotation_manifest,
+)
 from medical_kg_nlp.mining.coverage import CoverageCubePlanner, CoverageTarget
 from medical_kg_nlp.mining.cooccurrence import (
     load_cooccurrence_policy,
@@ -37,6 +40,7 @@ from medical_kg_nlp.mining.harmonization import (
     load_annotation_harmonization_policy,
 )
 from medical_kg_nlp.mining.io import (
+    iter_documents,
     load_annotations,
     load_documents,
     load_relations,
@@ -45,10 +49,7 @@ from medical_kg_nlp.mining.io import (
     write_jsonl,
     write_text,
 )
-from medical_kg_nlp.mining.labeling import (
-    BatchedProposalLabelerAdapter,
-    PolicyAwareProposalLabelerAdapter,
-)
+from medical_kg_nlp.mining.labeling import PolicyAwareProposalLabelerAdapter
 from medical_kg_nlp.mining.knowledge import (
     compile_mined_aliases,
     load_alias_promotion_policy,
@@ -935,7 +936,10 @@ def benchmark_recognition_knowledge(args: argparse.Namespace) -> int:
 
 
 def propose_labels(args: argparse.Namespace) -> int:
-    documents = load_documents(args.documents)
+    """Stream document batches through a labeler and external-sort its output."""
+
+    if args.batch_size <= 0:
+        raise ValueError("--batch-size must be positive")
     config = _load_mapping(args.adapter_config) if args.adapter_config else None
     labeler = _load_labeler(args.adapter, config)
     if args.hosted:
@@ -943,18 +947,57 @@ def propose_labels(args: argparse.Namespace) -> int:
             labeler,
             allow_document=lambda document: document.hosted_processing_allowed,
         )
-    batched = BatchedProposalLabelerAdapter(labeler, batch_size=args.batch_size)
-    proposals = tuple(batched.propose(documents))
+    result = materialize_annotation_manifest(
+        args.output,
+        _iter_validated_proposals(
+            args.documents,
+            labeler,
+            batch_size=args.batch_size,
+        ),
+    )
+    _print_json(
+        {
+            "proposal_count": result.annotation_count,
+            "duplicate_count": result.duplicate_count,
+            "sha256": result.sha256,
+            "output": args.output,
+        }
+    )
+    return 0
+
+
+def _iter_validated_proposals(
+    documents_path: str | Path,
+    labeler: ProposalLabelerPort,
+    *,
+    batch_size: int,
+) -> Iterator[AnnotationProposal]:
+    """Validate proposal ownership and raw offsets one bounded batch at a time."""
+
+    batch: list[MinedDocument] = []
+    for document in iter_documents(documents_path):
+        batch.append(document)
+        if len(batch) == batch_size:
+            yield from _validated_batch_proposals(labeler, batch)
+            batch = []
+    if batch:
+        yield from _validated_batch_proposals(labeler, batch)
+
+
+def _validated_batch_proposals(
+    labeler: ProposalLabelerPort,
+    documents: list[MinedDocument],
+) -> Iterator[AnnotationProposal]:
     documents_by_id = {document.document_id: document for document in documents}
-    for proposal in proposals:
+    for proposal in labeler.propose(documents):
         document = documents_by_id.get(proposal.document_id)
         if document is None:
-            raise ValueError(f"Proposal references unknown document {proposal.document_id!r}")
+            raise ValueError(
+                f"Proposal references a document outside its input batch: "
+                f"{proposal.document_id!r}"
+            )
         proposal.validate_offsets(document)
-    ordered = sorted(proposals, key=lambda item: item.annotation_id)
-    write_jsonl(args.output, (proposal.to_dict() for proposal in ordered))
-    _print_json({"proposal_count": len(ordered), "output": args.output})
-    return 0
+        yield proposal
 
 
 def propose_relations(args: argparse.Namespace) -> int:
