@@ -27,6 +27,9 @@ from medical_kg_nlp.mining.crosswalk_links import (
     materialize_exact_crosswalk_links,
 )
 from medical_kg_nlp.mining.dedup import StableTextDeduplicator
+from medical_kg_nlp.mining.dailymed_product_aliases import (
+    build_dailymed_product_alias_proposals,
+)
 from medical_kg_nlp.mining.curation import (
     curate_annotations,
     load_annotation_curation_policy,
@@ -158,6 +161,7 @@ __all__ = [
     "lock_mining_release",
     "mine_cooccurrence",
     "propose_labels",
+    "propose_dailymed_product_aliases",
     "propose_linked_aliases",
     "propose_relations",
     "reconcile_duplicates",
@@ -585,6 +589,50 @@ def crosswalk_lexicon(args: argparse.Namespace) -> int:
             "report": args.report_output,
             "status_entry_counts": result.report["status_entry_counts"],
             "unique_exact_entry_count": result.report["unique_exact_entry_count"],
+        }
+    )
+    return 0
+
+
+def propose_dailymed_product_aliases(args: argparse.Namespace) -> int:
+    """Build train or held-out product alias hypotheses from exact identity links."""
+
+    links_sha256 = sha256_file(args.links)
+    split_manifest_sha256 = sha256_file(args.split_manifest)
+    result = build_dailymed_product_alias_proposals(
+        tuple(_load_jsonl_mappings(args.links)),
+        selected_document_ids=load_split_document_ids(args.split_manifest, args.split),
+        split_name=args.split,
+        links_sha256=links_sha256,
+        split_manifest_sha256=split_manifest_sha256,
+    )
+    proposals_sha256 = write_jsonl(args.output, result.proposals)
+    decisions_sha256 = write_jsonl(args.decisions_output, result.decisions)
+    report = {
+        **result.report,
+        "inputs": {
+            "links": str(Path(args.links)),
+            "links_sha256": links_sha256,
+            "split_manifest": str(Path(args.split_manifest)),
+            "split_manifest_sha256": split_manifest_sha256,
+        },
+        "outputs": {
+            "proposals": str(Path(args.output)),
+            "proposals_sha256": proposals_sha256,
+            "decisions": str(Path(args.decisions_output)),
+            "decisions_sha256": decisions_sha256,
+        },
+    }
+    write_json(args.report_output, report)
+    _print_json(
+        {
+            "split": args.split,
+            "proposal_count": len(result.proposals),
+            "ambiguous_target_alias_count": result.report[
+                "ambiguous_target_alias_count"
+            ],
+            "output": args.output,
+            "report": args.report_output,
         }
     )
     return 0

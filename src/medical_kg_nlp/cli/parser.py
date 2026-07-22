@@ -571,6 +571,19 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     linked_aliases.add_argument("--output", required=True)
     linked_aliases.add_argument("--decisions-output", required=True)
     linked_aliases.add_argument("--report-output", required=True)
+    dailymed_product_aliases = lexicon_operations.add_parser(
+        "propose-dailymed-product-aliases",
+        help="Aggregate exact DailyMed product links within one frozen split.",
+    )
+    dailymed_product_aliases.set_defaults(
+        handler="data_lexicon_propose_dailymed_product_aliases"
+    )
+    dailymed_product_aliases.add_argument("--links", required=True)
+    dailymed_product_aliases.add_argument("--split-manifest", required=True)
+    dailymed_product_aliases.add_argument("--split", required=True)
+    dailymed_product_aliases.add_argument("--output", required=True)
+    dailymed_product_aliases.add_argument("--decisions-output", required=True)
+    dailymed_product_aliases.add_argument("--report-output", required=True)
 
     mapping = operations.add_parser(
         "mapping", help="Compile source crosswalk releases into queryable indexes."
