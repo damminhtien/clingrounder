@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import tempfile
 from collections import Counter
@@ -310,8 +311,12 @@ def fuse_corpora(
 def run_corpus_fusion_plan(path: str | Path) -> FusionRunResult:
     """Execute one plan into a content-addressed, immutable output directory."""
 
-    plan = load_corpus_fusion_plan(path)
-    inputs = tuple(_fingerprinted_source(source) for source in plan.sources)
+    plan_path = Path(path).resolve()
+    plan = load_corpus_fusion_plan(plan_path)
+    inputs = tuple(
+        _fingerprinted_source(source, path_base=plan_path.parent)
+        for source in plan.sources
+    )
     identity = {
         "schema_version": plan.schema_version,
         "hamming_threshold": plan.hamming_threshold,
@@ -328,6 +333,12 @@ def run_corpus_fusion_plan(path: str | Path) -> FusionRunResult:
         if manifest.get("run_fingerprint") != fingerprint:
             raise ValueError(f"Stale fusion output at {output_dir}")
         _validate_cached_outputs(manifest, output_dir)
+        manifest = _upgrade_portable_manifest(
+            manifest,
+            manifest_path=manifest_path,
+            inputs=inputs,
+            plan_path=plan_path,
+        )
         return _run_result_from_manifest(manifest, output_dir, cache_hit=True)
     if output_dir.exists():
         raise FileExistsError(f"Incomplete immutable fusion output exists: {output_dir}")
@@ -385,9 +396,14 @@ def run_corpus_fusion_plan(path: str | Path) -> FusionRunResult:
             "fusion_report": write_json(staging / "fusion_report.json", result.report),
         }
         manifest = {
-            "schema_version": "medical-corpus-fusion-manifest.v1",
+            "schema_version": "medical-corpus-fusion-manifest.v2",
             "run_id": run_id,
             "run_fingerprint": fingerprint,
+            "plan": {
+                "path": plan_path.name,
+                "path_base": "fusion_plan_directory",
+                "sha256": sha256_file(plan_path),
+            },
             "config": {
                 "hamming_threshold": plan.hamming_threshold,
                 "bands": plan.bands,
@@ -463,24 +479,68 @@ def _duplicate_relation_issues(relations: Sequence[RelationProposal]) -> list[st
     )
 
 
-def _fingerprinted_source(source: FusionSourcePlan) -> dict[str, Any]:
+def _fingerprinted_source(
+    source: FusionSourcePlan,
+    *,
+    path_base: Path,
+) -> dict[str, Any]:
     return {
         "source_id": source.source_id,
-        "documents": _fingerprinted_path(source.documents),
+        "documents": _fingerprinted_path(source.documents, path_base=path_base),
         "annotations": (
-            None if source.annotations is None else _fingerprinted_path(source.annotations)
+            None
+            if source.annotations is None
+            else _fingerprinted_path(source.annotations, path_base=path_base)
         ),
         "relations": (
-            None if source.relations is None else _fingerprinted_path(source.relations)
+            None
+            if source.relations is None
+            else _fingerprinted_path(source.relations, path_base=path_base)
         ),
     }
 
 
-def _fingerprinted_path(path: str | Path) -> dict[str, str]:
-    source = Path(path)
+def _fingerprinted_path(path: str | Path, *, path_base: Path) -> dict[str, str]:
+    source = Path(path).resolve()
     if not source.is_file():
         raise FileNotFoundError(source)
-    return {"path": str(source), "sha256": sha256_file(source)}
+    # INVARIANT: the content hash carries identity; the path is only a portable locator
+    # relative to the fusion plan, never a developer's checkout or mounted-volume path.
+    portable_path = Path(os.path.relpath(source, start=path_base.resolve())).as_posix()
+    return {"path": portable_path, "sha256": sha256_file(source)}
+
+
+def _upgrade_portable_manifest(
+    manifest: Mapping[str, Any],
+    *,
+    manifest_path: Path,
+    inputs: Sequence[Mapping[str, Any]],
+    plan_path: Path,
+) -> dict[str, Any]:
+    """Migrate path-only v1 metadata while preserving the content-addressed run ID."""
+
+    upgraded = dict(manifest)
+    if (
+        upgraded.get("schema_version") == "medical-corpus-fusion-manifest.v2"
+        and upgraded.get("inputs") == list(inputs)
+    ):
+        return upgraded
+    existing_inputs = upgraded.get("inputs")
+    if not isinstance(existing_inputs, list) or tuple(
+        _source_content_identity(item) for item in existing_inputs
+    ) != tuple(_source_content_identity(item) for item in inputs):
+        raise ValueError("Cannot migrate fusion manifest with different input content")
+    upgraded["schema_version"] = "medical-corpus-fusion-manifest.v2"
+    upgraded["inputs"] = list(inputs)
+    upgraded["plan"] = {
+        "path": plan_path.name,
+        "path_base": "fusion_plan_directory",
+        "sha256": sha256_file(plan_path),
+    }
+    # MIGRATION: v1 persisted absolute host paths even though run identity was content-only.
+    # Rewriting this metadata is safe because output hashes and run_fingerprint are unchanged.
+    write_json(manifest_path, upgraded)
+    return upgraded
 
 
 def _source_content_identity(source: Mapping[str, Any]) -> dict[str, Any]:

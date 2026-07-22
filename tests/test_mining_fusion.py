@@ -171,6 +171,8 @@ def test_fusion_cli_is_content_addressed_and_idempotent(
     output_dir = Path(first["output_dir"])
     assert (output_dir / "documents.jsonl").is_file()
     assert (output_dir / "duplicate_groups.jsonl").is_file()
-    assert json.loads((output_dir / "manifest.json").read_text())["counts"][
-        "document_count"
-    ] == 1
+    manifest = json.loads((output_dir / "manifest.json").read_text())
+    assert manifest["counts"]["document_count"] == 1
+    assert manifest["schema_version"] == "medical-corpus-fusion-manifest.v2"
+    assert manifest["inputs"][0]["documents"]["path"] == "documents.jsonl"
+    assert str(tmp_path) not in (output_dir / "manifest.json").read_text()
