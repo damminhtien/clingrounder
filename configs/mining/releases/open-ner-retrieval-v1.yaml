@@ -1,4 +1,4 @@
-schema_version: medical-mining-release-spec.v1
+schema_version: medical-mining-release-spec.v2
 release_id: open-ner-retrieval-v1
 description: >-
   Open mined corpus, full-type NER supervision, source-held-out recognition evidence,
@@ -83,6 +83,10 @@ artifacts:
     role: source_plan
     path: configs/mining/dailymed-human-rx-part6-2026-07-21.yaml
     description: Executed prescription part-6 acquisition and parsing contract.
+  - id: rxnorm-full-source-plan
+    role: source_plan
+    path: configs/mining/rxnorm-full-2026-07-06.yaml
+    description: Licensed local RxNorm archive import into a storage-independent CAS object.
   - id: dailymed-structured-labeler
     role: labeling_policy
     path: configs/mining/labelers/dailymed-structured.yaml
@@ -91,6 +95,18 @@ artifacts:
     role: retrieval_policy
     path: configs/mining/knowledge/dailymed-rxnorm-aliases-2026-07-17.yaml
     description: Exact official drug-alias promotion policy.
+  - id: dailymed-rx-part6-recognition-policy
+    role: recognition_policy
+    path: configs/mining/knowledge/dailymed-rx-part6-recognition-2026-07-22.yaml
+    description: Multi-document train-only DailyMed drug recognition policy.
+  - id: dailymed-rx-part6-recognition-singletons-policy
+    role: recognition_policy
+    path: configs/mining/knowledge/dailymed-rx-part6-recognition-singletons-2026-07-22.yaml
+    description: Authoritative singleton-inclusive train-only recognition ablation.
+  - id: dailymed-rx-part6-product-alias-policy
+    role: retrieval_policy
+    path: configs/mining/knowledge/dailymed-rx-part6-product-aliases-2026-07-22.yaml
+    description: Exact two-source product identity alias policy.
   - id: open-corpus-fusion-plan
     role: fusion_policy
     path: configs/mining/open_corpus_v1.yaml
@@ -111,6 +127,14 @@ artifacts:
     role: terminology_source
     path: data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
     description: Pinned TT06 and RxNorm concepts used by mined knowledge gates.
+  - id: rxnorm-full-terminology
+    role: terminology_source
+    path: data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
+    description: Canonical July 2026 full RxNorm concepts used by product retrieval experiments.
+  - id: rxnorm-full-import-manifest
+    role: terminology_manifest
+    path: data/standards/rxnorm/processed/rxnorm_full_07062026_import_manifest.json
+    description: Parser counts, source policy, and structured RxNorm import evidence.
 
   - id: fused-open-corpus
     role: mined_corpus
@@ -148,20 +172,147 @@ artifacts:
     role: retrieval_aliases
     path: outputs/mining/knowledge/dailymed-rxnorm-2026-07-17
     description: Official exact RxNorm alias overlay, decisions, and terminology manifest.
-  - id: dailymed-rx-part6-source-archive
-    role: source_archive
-    path: >-
-      .cache/medical-kg/mining-artifacts/objects/sha256/3c/3c72512e43c1e298c53874bb1d0884dcd8a695c9234890fc769c5054f58bdeb6
-    description: Immutable 21 July prescription part-6 ZIP retained for upstream-drift recovery.
-  - id: dailymed-rx-part6-processed
+  - id: dailymed-rx-part6-documents
     role: mined_corpus
-    path: outputs/mining/dailymed-human-rx-part6-2026-07-21
-    description: Portable source, document, run, and structured-annotation manifests for part 6.
+    path: outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl
+    description: Immutable narrative and structured product documents for part 6.
+    rebuild_step_id: acquire-dailymed-rx-part6
+  - id: dailymed-rx-part6-annotations
+    role: annotation_layer
+    path: outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl
+    description: Exact source-structured medication annotations with raw offsets.
+    rebuild_step_id: label-dailymed-rx-part6
+  - id: dailymed-rx-part6-snapshot
+    role: dataset_snapshot
+    path: outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1
+    description: Frozen exact-dedup train/development split used by every DailyMed benchmark.
+    rebuild_step_id: freeze-dailymed-rx-part6
+  - id: dailymed-rx-part6-product-links
+    role: linked_corpus
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_links.jsonl
+    description: Exact DailyMed products accepted only when SPL/version and NDC evidence agree.
+    rebuild_step_id: link-dailymed-rx-part6-products
+  - id: rxnorm-full-ndc-rows
+    role: terminology_attributes
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc_rows.jsonl
+    description: Canonical active RxNorm package NDC rows streamed from the pinned full release.
+    rebuild_step_id: compile-rxnorm-full-ndc
+  - id: rxnorm-full-ndc-report
+    role: terminology_report
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc_report.json
+    description: RxNorm NDC parser counts plus source, output, and derived-index fingerprints.
+    rebuild_step_id: compile-rxnorm-full-ndc
+  - id: dailymed-rx-part6-product-link-decisions
+    role: linking_decisions
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_link_decisions.jsonl
+    description: Accepted, ambiguous, disagreement, and unmapped product-link audit rows.
+    rebuild_step_id: link-dailymed-rx-part6-products
+  - id: dailymed-rx-part6-product-link-report
+    role: linking_report
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_link_report.json
+    description: Product-link coverage and pinned source fingerprints.
+    rebuild_step_id: link-dailymed-rx-part6-products
+  - id: dailymed-rx-part6-mention-inventory
+    role: ner_training_inventory
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_inventory_all.jsonl
+    description: Train-only source-structured mention inventory including authoritative singletons.
+    rebuild_step_id: build-dailymed-rx-part6-inventory
+  - id: dailymed-rx-part6-mention-conflicts
+    role: ner_training_conflicts
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_conflicts_all.jsonl
+    description: Train-only normalized mention/type conflicts excluded from silent promotion.
+    rebuild_step_id: build-dailymed-rx-part6-inventory
+  - id: dailymed-rx-part6-mention-report
+    role: ner_training_report
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_report_all.json
+    description: Counts and fingerprints for the singleton-inclusive mention inventory.
+    rebuild_step_id: build-dailymed-rx-part6-inventory
+  - id: dailymed-rx-part6-recognition-concepts
+    role: recognition_dictionary
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_concepts.jsonl
+    description: Code-free train-only DailyMed drug recognition concepts.
+    rebuild_step_id: compile-dailymed-rx-part6-recognition
+  - id: dailymed-rx-part6-recognition-decisions
+    role: recognition_decisions
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_decisions.jsonl
+    description: Auditable keep/reject decisions for every mined mention.
+    rebuild_step_id: compile-dailymed-rx-part6-recognition
+  - id: dailymed-rx-part6-recognition-report
+    role: recognition_report
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_report.json
+    description: Recognition compilation counts and input/output hashes.
+    rebuild_step_id: compile-dailymed-rx-part6-recognition
+  - id: dailymed-rx-part6-recognition-benchmark
+    role: ner_benchmark
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_benchmark_development.json
+    description: Held-out structured-document NER precision, recall, boundary, and latency evidence.
+    rebuild_step_id: benchmark-dailymed-rx-part6-recognition
+  - id: dailymed-rx-part6-train-alias-proposals
+    role: retrieval_proposals
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_proposals.jsonl
+    description: Train-only exact product alias/code hypotheses with conflict preservation.
+    rebuild_step_id: propose-dailymed-rx-part6-aliases
+  - id: dailymed-rx-part6-development-alias-proposals
+    role: retrieval_evaluation_queries
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_proposals.jsonl
+    description: Held-out product aliases used only to build retrieval evaluation queries.
+    rebuild_step_id: propose-dailymed-rx-part6-development-aliases
+  - id: dailymed-rx-part6-alias-overlay
+    role: retrieval_aliases
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl
+    description: Conflict-free train alias overlay validated against the full RxNorm release.
+    rebuild_step_id: compile-dailymed-rx-part6-aliases
+  - id: dailymed-rx-part6-alias-decisions
+    role: retrieval_decisions
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_compilation_decisions.jsonl
+    description: Target-conflict and canonical-alias-conflict decisions for retrieval promotion.
+    rebuild_step_id: compile-dailymed-rx-part6-aliases
+  - id: dailymed-rx-part6-alias-report
+    role: retrieval_report
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_compilation_report.json
+    description: Alias compiler counts and terminology fingerprints.
+    rebuild_step_id: compile-dailymed-rx-part6-aliases
+  - id: dailymed-rx-part6-development-queries
+    role: retrieval_evaluation_queries
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries.jsonl
+    description: Frozen held-out retrieval query set with seen/unseen slices.
+    rebuild_step_id: build-dailymed-rx-part6-retrieval-queries
+  - id: dailymed-rx-part6-development-query-manifest
+    role: retrieval_evaluation_manifest
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries_manifest.json
+    description: Query count, split, and input fingerprints for retrieval evaluation.
+    rebuild_step_id: build-dailymed-rx-part6-retrieval-queries
+  - id: dailymed-rx-part6-base-retrieval-benchmark
+    role: retrieval_benchmark
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/base_product_retrieval_benchmark.json
+    description: Full-RxNorm retrieval metrics before the train-only overlay.
+    rebuild_step_id: benchmark-dailymed-rx-part6-base-retrieval
+  - id: dailymed-rx-part6-enriched-retrieval-benchmark
+    role: retrieval_benchmark
+    path: outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/enriched_product_retrieval_benchmark.json
+    description: Held-out retrieval metrics after the train-only overlay.
+    rebuild_step_id: benchmark-dailymed-rx-part6-enriched-retrieval
   - id: local-full-type-checkpoint
     role: model_checkpoint
     path: outputs/models/open-corpus-full-type-xlmr-base-2026-07-19
     description: Optional Linux/GPU full-type checkpoint; absent until a run passes promotion gates.
     required: false
+
+# SCALING: source archives remain in an external local/S3 CAS. Their identities and
+# restore commands are release data, but backend mount paths are not.
+cas_objects:
+  - id: dailymed-rx-part6-source-archive
+    role: source_archive
+    sha256: 3c72512e43c1e298c53874bb1d0884dcd8a695c9234890fc769c5054f58bdeb6
+    byte_size: 1586216624
+    description: DailyMed human prescription part-6 archive from the 21 July release.
+    rebuild_step_id: acquire-dailymed-rx-part6
+  - id: rxnorm-full-source-archive
+    role: terminology_source_archive
+    sha256: 53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c
+    byte_size: 259313098
+    description: Caller-supplied NLM RxNorm full monthly release for 6 July 2026.
+    rebuild_step_id: acquire-rxnorm-full
 
 rebuild_steps:
   - id: install-environment
@@ -181,11 +332,31 @@ rebuild_steps:
   - id: acquire-dailymed-rxnorm
     description: Restore the official SPL-to-RxNorm crosswalk.
     command: uv run medical-kg data run --plan configs/mining/dailymed-rxnorm-2026-07-17.yaml
+  - id: compile-dailymed-rxnorm
+    description: Rebuild the official versioned SPL-to-RxNorm mapping and derived query index.
+    command: >-
+      uv run medical-kg data mapping compile-dailymed-rxnorm
+      --artifacts outputs/mining/dailymed-rxnorm-2026-07-17/artifacts.jsonl
+      --store "$MEDICAL_KG_ARTIFACT_STORE"
+      --output outputs/mining/dailymed-rxnorm-2026-07-17/compiled_mappings.jsonl
+      --index-output outputs/mining/dailymed-rxnorm-2026-07-17/dailymed_rxnorm.sqlite3
+      --report-output outputs/mining/dailymed-rxnorm-2026-07-17/compilation_report.json
   - id: acquire-dailymed-rx-part6
     description: Restore and parse the executed full-release prescription tranche.
     command: >-
-      MEDICAL_KG_ARTIFACT_STORE=.cache/medical-kg/mining-artifacts uv run medical-kg data run
+      uv run medical-kg data run
       --plan configs/mining/dailymed-human-rx-part6-2026-07-21.yaml
+  - id: acquire-rxnorm-full
+    description: Import the caller-supplied licensed July RxNorm ZIP into the selected CAS.
+    command: uv run medical-kg data run --plan configs/mining/rxnorm-full-2026-07-06.yaml
+  - id: hydrate-rxnorm-full
+    description: Restore the pinned RxNorm CAS object to a local seekable archive for RRF readers.
+    command: >-
+      uv run medical-kg data artifact materialize
+      --store "$MEDICAL_KG_ARTIFACT_STORE"
+      --sha256 53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c
+      --expected-byte-size 259313098
+      --output .cache/medical-kg/release-inputs/RxNorm_full_07062026.zip
   - id: label-dailymed-rx-part6
     description: Rebuild bounded-memory exact structured annotation supervision.
     command: >-
@@ -195,6 +366,146 @@ rebuild_steps:
       --adapter-config configs/mining/labelers/dailymed-structured.yaml
       --output outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl
       --batch-size 256
+  - id: freeze-dailymed-rx-part6
+    description: Recreate the exact-dedup train/development split used by every downstream probe.
+    command: >-
+      uv run medical-kg data snapshot freeze
+      --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl
+      --annotations outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl
+      --artifacts outputs/mining/dailymed-human-rx-part6-2026-07-21/artifacts.jsonl
+      --source-fingerprint 3c72512e43c1e298c53874bb1d0884dcd8a695c9234890fc769c5054f58bdeb6
+      --version dailymed-human-rx-part6-2026-07-21-structured-silver-v1
+      --created-at 2026-07-22T00:00:00Z
+      --output-dir outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1
+      --development-fraction 0.2 --hash-salt dailymed-rx-part6-structured-v1
+      --dedup-mode exact --manifest-only --skip-agreement-gate
+  - id: compile-rxnorm-full-ndc
+    description: Stream active package NDC attributes from the pinned full RxNorm archive.
+    command: >-
+      uv run medical-kg data mapping compile-rxnorm-ndc
+      --source .cache/medical-kg/release-inputs/RxNorm_full_07062026.zip
+      --source-version rxnorm-full-2026-07-06
+      --expected-source-sha256 53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c
+      --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc_rows.jsonl
+      --index-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc.sqlite3
+      --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc_report.json
+  - id: link-dailymed-rx-part6-products
+    description: Link products only when exact SPL/version and normalized NDC evidence intersect.
+    command: >-
+      uv run medical-kg data mapping link-dailymed-products
+      --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl
+      --dailymed-mapping-index outputs/mining/dailymed-rxnorm-2026-07-17/dailymed_rxnorm.sqlite3
+      --rxnorm-ndc-index outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc.sqlite3
+      --links-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_links.jsonl
+      --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_link_decisions.jsonl
+      --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_link_report.json
+  - id: build-dailymed-rx-part6-inventory
+    description: Aggregate only the frozen train split into a source-label-aware mention inventory.
+    command: >-
+      uv run medical-kg data lexicon build
+      --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl
+      --annotations outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl
+      --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json
+      --split train --min-occurrences 1 --min-documents 1
+      --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_inventory_all.jsonl
+      --conflicts-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_conflicts_all.jsonl
+      --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_report_all.json
+  - id: compile-dailymed-rx-part6-recognition
+    description: Compile code-free DailyMed drug terms from the pinned train inventory.
+    command: >-
+      uv run medical-kg data knowledge compile-recognition
+      --inventory outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_inventory_all.jsonl
+      --policy configs/mining/knowledge/dailymed-rx-part6-recognition-singletons-2026-07-22.yaml
+      --baseline-dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
+      --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_concepts.jsonl
+      --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_decisions.jsonl
+      --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_report.json
+  - id: benchmark-dailymed-rx-part6-recognition
+    description: Evaluate the train-only dictionary on held-out structured product documents.
+    command: >-
+      uv run medical-kg data knowledge benchmark-recognition
+      --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl
+      --annotations outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl
+      --baseline-dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
+      --additional-dictionary outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_concepts.jsonl
+      --entity-type DRUG
+      --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json
+      --split development --require-document-metadata spl_fields
+      --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_benchmark_development.json
+  - id: propose-dailymed-rx-part6-aliases
+    description: Build exact product alias hypotheses from linked products in the frozen train split.
+    command: >-
+      uv run medical-kg data lexicon propose-dailymed-product-aliases
+      --links outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_links.jsonl
+      --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json
+      --split train
+      --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_proposals.jsonl
+      --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_decisions.jsonl
+      --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_report.json
+  - id: propose-dailymed-rx-part6-development-aliases
+    description: Build held-out linked aliases for retrieval evaluation without training leakage.
+    command: >-
+      uv run medical-kg data lexicon propose-dailymed-product-aliases
+      --links outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_links.jsonl
+      --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json
+      --split development
+      --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_proposals.jsonl
+      --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_decisions.jsonl
+      --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_report.json
+  - id: build-rxnorm-base-index
+    description: Build the derived full-RxNorm lexical index from canonical JSONL.
+    command: >-
+      uv run medical-kg terminology build
+      --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
+      --output .cache/medical-kg/terminology/terminology-0000a0a5bf3f1286c3f2.sqlite3
+      --manifest-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/base_terminology_manifest.json
+  - id: compile-dailymed-rx-part6-aliases
+    description: Promote only globally unique product aliases against the pinned base index.
+    command: >-
+      uv run medical-kg data knowledge compile-aliases
+      --proposals outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_proposals.jsonl
+      --index .cache/medical-kg/terminology/terminology-0000a0a5bf3f1286c3f2.sqlite3
+      --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
+      --policy configs/mining/knowledge/dailymed-rx-part6-product-aliases-2026-07-22.yaml
+      --overlay-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl
+      --recognition-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_recognition.jsonl
+      --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_compilation_decisions.jsonl
+      --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_compilation_report.json
+  - id: build-rxnorm-enriched-index
+    description: Build a derived lexical index with the train-only DailyMed overlay.
+    command: >-
+      uv run medical-kg terminology build
+      --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
+      --alias-overlay outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl
+      --output .cache/medical-kg/terminology/terminology-c750ca7121eda394a91f.sqlite3
+      --manifest-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/enriched_terminology_manifest.json
+  - id: build-dailymed-rx-part6-retrieval-queries
+    description: Freeze linked held-out aliases as neutral retrieval queries and seen/unseen slices.
+    command: >-
+      uv run medical-kg terminology query-set
+      --linked-proposal outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_proposals.jsonl
+      --reference-alias-overlay outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl
+      --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries.jsonl
+      --manifest-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries_manifest.json
+  - id: benchmark-dailymed-rx-part6-base-retrieval
+    description: Benchmark canonical full-RxNorm lexical retrieval on held-out product aliases.
+    command: >-
+      uv run medical-kg terminology benchmark
+      --index .cache/medical-kg/terminology/terminology-0000a0a5bf3f1286c3f2.sqlite3
+      --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
+      --queries outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries.jsonl
+      --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/base_product_retrieval_benchmark.json
+      --limit 20
+  - id: benchmark-dailymed-rx-part6-enriched-retrieval
+    description: Benchmark the train-only overlay on the same held-out retrieval queries.
+    command: >-
+      uv run medical-kg terminology benchmark
+      --index .cache/medical-kg/terminology/terminology-c750ca7121eda394a91f.sqlite3
+      --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
+      --alias-overlay outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl
+      --queries outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries.jsonl
+      --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/enriched_product_retrieval_benchmark.json
+      --limit 20
   - id: fuse-open-corpus
     description: Fuse the source-specific curated outputs after following their dossiers.
     command: uv run medical-kg data dataset fuse --plan configs/mining/open_corpus_v1.yaml
@@ -218,3 +529,4 @@ rebuild_steps:
     command: >-
       uv run medical-kg data release verify
       --manifest data/releases/open-ner-retrieval-v1.lock.json --root .
+      --store "$MEDICAL_KG_ARTIFACT_STORE" --require-cas-objects

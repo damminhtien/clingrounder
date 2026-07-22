@@ -9,6 +9,7 @@
       "kind": "file",
       "path": "pyproject.toml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "implementation",
       "sha256": "09e89dc0e291cb0401e7306c2609db86c16e0ee6f99934112d0cdcccba026592"
@@ -22,12 +23,13 @@
       "kind": "file",
       "path": "uv.lock",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "dependency_lock",
       "sha256": "8ed9569bb6f221393de6508d2f36729f5b644b390336ab1eaf5bea7b12fcc87a"
     },
     {
-      "byte_size": 2120679,
+      "byte_size": 2178854,
       "description": "Pipeline, mining, NER, retrieval, and evaluation implementation.",
       "exclude": [
         "__pycache__",
@@ -35,17 +37,18 @@
         "*.pyc",
         "**/*.pyc"
       ],
-      "file_count": 265,
+      "file_count": 268,
       "id": "mining-implementation",
       "kind": "directory",
       "path": "src/medical_kg_nlp",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "implementation",
-      "sha256": "55aeb50104ff5e71629b7e89105677ce9e75b309e4356d0b2e7518b13736f863"
+      "sha256": "f0c524acb0b1b7102c939a511c8be3eb92647d3922d0d4a9f9aaec6e24e68301"
     },
     {
-      "byte_size": 9002,
+      "byte_size": 9956,
       "description": "Source version, access, license, connector, and parser policy.",
       "exclude": [],
       "file_count": 1,
@@ -53,12 +56,13 @@
       "kind": "file",
       "path": "data/sources/mining_registry.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "source_policy",
-      "sha256": "73c4d4ed21ffe5239a8b5c306de432e27039c022a1a5726951122632a36937dc"
+      "sha256": "c158d4c9ff81fe159909f0f91b3dfe9dfeca6c0ecc845b5719852ff3af0bd52b"
     },
     {
-      "byte_size": 7735,
+      "byte_size": 8846,
       "description": "Processed/planned/quarantined state and promotion boundaries.",
       "exclude": [],
       "file_count": 1,
@@ -66,22 +70,24 @@
       "kind": "file",
       "path": "data/sources/processing_status.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "source_policy",
-      "sha256": "20e6d99e991caefffeb3ad2d633c0b97e56c302ddb90f66be9b795d23554900f"
+      "sha256": "41edb7267af1c375fc63fe63b4b84783eec6ea0edcc3e8a446d94aa785d5ea0e"
     },
     {
-      "byte_size": 85921,
+      "byte_size": 97283,
       "description": "Per-source acquisition, parsing, curation, metrics, and reproduction evidence.",
       "exclude": [],
-      "file_count": 9,
+      "file_count": 10,
       "id": "source-dossiers",
       "kind": "directory",
       "path": "docs/mining-sources",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "reproduction_documentation",
-      "sha256": "0ed6511efd23e1b324aedca9d7ff95ea0639753d1c601bb27cbb35090a8f7a5b"
+      "sha256": "57678d1737b3f2062fe3c6e0fe0b9271be1b7167c56069ade163a2eb7b0815d5"
     },
     {
       "byte_size": 905,
@@ -92,6 +98,7 @@
       "kind": "file",
       "path": "configs/mining/vietbioner.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "source_plan",
       "sha256": "103e63081bf287c7bf767618c177fef9d5ec30092a022996788e5463312265b8"
@@ -105,6 +112,7 @@
       "kind": "file",
       "path": "configs/mining/labelers/vietbioner.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "labeling_policy",
       "sha256": "2047b8de935941a33ac01746427de1bd1713480b185f75af8a53e05b8531db10"
@@ -118,6 +126,7 @@
       "kind": "file",
       "path": "configs/mining/curation/vietbioner-ner.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "curation_policy",
       "sha256": "578191ec521b05ae6cb9e147c0bef20c2fb39e596212a537e76558677ada05cb"
@@ -131,6 +140,7 @@
       "kind": "file",
       "path": "configs/mining/knowledge/vietbioner-recognition-v4.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "recognition_policy",
       "sha256": "7181d0e8319e15d92fd4d24c9a318ede3881db3417a0f41f7d0ce1ec7d59f6b9"
@@ -144,6 +154,7 @@
       "kind": "file",
       "path": "configs/mining/codiesp.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "source_plan",
       "sha256": "e4f6f5d541954b43395ae5266ba04476fa0b558a0343164dbfcbd8b860ec7688"
@@ -157,6 +168,7 @@
       "kind": "file",
       "path": "configs/mining/curation/codiesp-contiguous-ner.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "curation_policy",
       "sha256": "9a43e40e6f3cd0e53c6dd454b7e3f7030bd704df19d05ea5cc8714b245e869e2"
@@ -170,6 +182,7 @@
       "kind": "file",
       "path": "configs/mining/knowledge/codiesp-icd10-train-aliases-2026-07-18.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "retrieval_policy",
       "sha256": "0696e71c64de5ee0b13a665a54c5ec96a0d2f5cd0ca8b52e40b5c80362c6dae3"
@@ -183,6 +196,7 @@
       "kind": "file",
       "path": "configs/mining/relations/codiesp-train-cooccurrence.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "retrieval_policy",
       "sha256": "9bc17ed7ff64610e362ad240e4b3e50a6e05c93d017633264e7653873b55f8e0"
@@ -196,6 +210,7 @@
       "kind": "file",
       "path": "configs/mining/dailymed-rxnorm-2026-07-17.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "source_plan",
       "sha256": "b2c4f839facbac37284c8820dcea9739b79ec2eab68b6653677a58fb05e3bce9"
@@ -209,12 +224,13 @@
       "kind": "file",
       "path": "configs/mining/dailymed-full-human-2026-07-21.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "source_plan",
       "sha256": "bb0eb72b5aa07b8d9f270ad49b238e13e15d98f2ff3ec2ee0b749af3509d04da"
     },
     {
-      "byte_size": 1266,
+      "byte_size": 1534,
       "description": "Executed prescription part-6 acquisition and parsing contract.",
       "exclude": [],
       "file_count": 1,
@@ -222,9 +238,24 @@
       "kind": "file",
       "path": "configs/mining/dailymed-human-rx-part6-2026-07-21.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "source_plan",
-      "sha256": "b8b24774c64240181a6b3a7dd46501dbceeeff9ae81eee57cdb461f3ee170dd8"
+      "sha256": "68a5a363ebf3078bb5ca858ca107b936087415d080290d065b262bf676e63fb3"
+    },
+    {
+      "byte_size": 1173,
+      "description": "Licensed local RxNorm archive import into a storage-independent CAS object.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "rxnorm-full-source-plan",
+      "kind": "file",
+      "path": "configs/mining/rxnorm-full-2026-07-06.yaml",
+      "present": true,
+      "rebuild_step_id": null,
+      "required": true,
+      "role": "source_plan",
+      "sha256": "fce709280cc4001f8acedec5ecf5fe1f8408c70ead4837e3766886ceedec4633"
     },
     {
       "byte_size": 77,
@@ -235,6 +266,7 @@
       "kind": "file",
       "path": "configs/mining/labelers/dailymed-structured.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "labeling_policy",
       "sha256": "dbb400767a64ef6a0e98718eaf2aef6fbfb8539354521847b1cbcb126071a2d6"
@@ -248,9 +280,52 @@
       "kind": "file",
       "path": "configs/mining/knowledge/dailymed-rxnorm-aliases-2026-07-17.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "retrieval_policy",
       "sha256": "ac0978def1d8d3a1d53de93c231befdec449e122301bd7ab7e498cfa25dd28a0"
+    },
+    {
+      "byte_size": 1262,
+      "description": "Multi-document train-only DailyMed drug recognition policy.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-recognition-policy",
+      "kind": "file",
+      "path": "configs/mining/knowledge/dailymed-rx-part6-recognition-2026-07-22.yaml",
+      "present": true,
+      "rebuild_step_id": null,
+      "required": true,
+      "role": "recognition_policy",
+      "sha256": "018d6b5e8430cb6ff40bf4dcb9ac22b339e5abf39076326e69bb3e7a9107f110"
+    },
+    {
+      "byte_size": 1045,
+      "description": "Authoritative singleton-inclusive train-only recognition ablation.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-recognition-singletons-policy",
+      "kind": "file",
+      "path": "configs/mining/knowledge/dailymed-rx-part6-recognition-singletons-2026-07-22.yaml",
+      "present": true,
+      "rebuild_step_id": null,
+      "required": true,
+      "role": "recognition_policy",
+      "sha256": "15074f18e50d2e785ef00e945f32ea1abbc693d0b83869fef01aa897d8daebc2"
+    },
+    {
+      "byte_size": 978,
+      "description": "Exact two-source product identity alias policy.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-product-alias-policy",
+      "kind": "file",
+      "path": "configs/mining/knowledge/dailymed-rx-part6-product-aliases-2026-07-22.yaml",
+      "present": true,
+      "rebuild_step_id": null,
+      "required": true,
+      "role": "retrieval_policy",
+      "sha256": "2fbfcef520f2f87095563bfc8e407951b1531af24c6bff3b3ff13b25452c42a6"
     },
     {
       "byte_size": 1197,
@@ -261,6 +336,7 @@
       "kind": "file",
       "path": "configs/mining/open_corpus_v1.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "fusion_policy",
       "sha256": "dc925b0e53ee26c374746541b4e3674377021f68b0c35d81de42d098ee6ecb37"
@@ -274,6 +350,7 @@
       "kind": "file",
       "path": "configs/mining/harmonization/open_corpus_v1.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "harmonization_policy",
       "sha256": "457cd1f84a65ebff8a6c01510e03f74fa45296fc84412355a44e22d992203a98"
@@ -287,6 +364,7 @@
       "kind": "file",
       "path": "configs/mining/curation/open-corpus-full-ner.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "curation_policy",
       "sha256": "ba8e267ebe29bd13fecd559594de4610e49b61eadfe0b5531b87766b52e14c78"
@@ -300,6 +378,7 @@
       "kind": "file",
       "path": "configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "model_run_spec",
       "sha256": "1d2546b4ef31a2a95080a3ec4838891c7c0e03cf2d59f54cc49df2d692e87ec5"
@@ -313,9 +392,38 @@
       "kind": "file",
       "path": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "terminology_source",
       "sha256": "24d4e3943c383355571243b4c3bb100ce90cb63b4f2a055ca29bc22f60a1ccdb"
+    },
+    {
+      "byte_size": 46502437,
+      "description": "Canonical July 2026 full RxNorm concepts used by product retrieval experiments.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "rxnorm-full-terminology",
+      "kind": "file",
+      "path": "data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl",
+      "present": true,
+      "rebuild_step_id": null,
+      "required": true,
+      "role": "terminology_source",
+      "sha256": "42faaadeb12222ec099f05c398f3ff858866cb694cbb6dc0cb193f0ea23359cb"
+    },
+    {
+      "byte_size": 5446,
+      "description": "Parser counts, source policy, and structured RxNorm import evidence.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "rxnorm-full-import-manifest",
+      "kind": "file",
+      "path": "data/standards/rxnorm/processed/rxnorm_full_07062026_import_manifest.json",
+      "present": true,
+      "rebuild_step_id": null,
+      "required": true,
+      "role": "terminology_manifest",
+      "sha256": "1681c1750cd8b9af56a4a12476e8d7d2920260f6da9c51ec7dcc8cb1a07a6ebc"
     },
     {
       "byte_size": 62132275,
@@ -326,6 +434,7 @@
       "kind": "directory",
       "path": "outputs/mining/fused/open-corpus-v1-39106c1cc9d0",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "mined_corpus",
       "sha256": "73a548b823391c1f145533e67e501d692e7d2858289cb46718781038f479f953"
@@ -339,6 +448,7 @@
       "kind": "directory",
       "path": "outputs/mining/snapshots/open-corpus-v1-balanced-2026-07-18",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "dataset_snapshot",
       "sha256": "f2cdb50fe0640ced9be823f8d65e5360a06e990db9725b7d58f1d651658709bb"
@@ -352,6 +462,7 @@
       "kind": "directory",
       "path": "outputs/mining/model-datasets/open-corpus-v1-full-ner-harmonized-2026-07-18",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "model_dataset",
       "sha256": "494b22f8b50a31f02d3058ebca1ef094aa313a846d3dce20b3e0b468f9d96900"
@@ -365,6 +476,7 @@
       "kind": "directory",
       "path": "outputs/mining/snapshots/vietbioner-19ba70a-reconciled-silver-v4",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "dataset_snapshot",
       "sha256": "eed6cb4e777f3db8a20bb0398bb8a20c671c5be805684d050c0cdf8fb17cffe5"
@@ -378,6 +490,7 @@
       "kind": "directory",
       "path": "outputs/mining/model_datasets/vietbioner-19ba70a-reconciled-silver-v4",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "model_dataset",
       "sha256": "93114b53b1c33ed63def7fdcfe0945da107828f7beb5fc4fe44f5d1f7729f05c"
@@ -391,6 +504,7 @@
       "kind": "directory",
       "path": "outputs/mining/knowledge/vietbioner-recognition-v4",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "ner_benchmark",
       "sha256": "056b7df7552ac4600d36f7194b9989969fcd9189ec3d56abbce7e9ed2583d966"
@@ -404,6 +518,7 @@
       "kind": "directory",
       "path": "outputs/mining/knowledge/codiesp-icd10-split-2026-07-18",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "retrieval_benchmark",
       "sha256": "5cf0084128587fed9802fadf69f84428d90f364636defa18da96d63dc76b510d"
@@ -417,6 +532,7 @@
       "kind": "directory",
       "path": "outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "retrieval_reranker_benchmark",
       "sha256": "c8c7da105ebd46ecd9f141854c485aefff57223f79322ffccb0e4c4ef391ff4c"
@@ -430,35 +546,346 @@
       "kind": "directory",
       "path": "outputs/mining/knowledge/dailymed-rxnorm-2026-07-17",
       "present": true,
+      "rebuild_step_id": null,
       "required": true,
       "role": "retrieval_aliases",
       "sha256": "ffed59e24b0d180e6fce0768366834b53cdcfb72044b663a45f136da9a54c1a7"
     },
     {
-      "byte_size": 1586216624,
-      "description": "Immutable 21 July prescription part-6 ZIP retained for upstream-drift recovery.",
+      "byte_size": 238012447,
+      "description": "Immutable narrative and structured product documents for part 6.",
       "exclude": [],
       "file_count": 1,
-      "id": "dailymed-rx-part6-source-archive",
+      "id": "dailymed-rx-part6-documents",
       "kind": "file",
-      "path": ".cache/medical-kg/mining-artifacts/objects/sha256/3c/3c72512e43c1e298c53874bb1d0884dcd8a695c9234890fc769c5054f58bdeb6",
+      "path": "outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl",
       "present": true,
-      "required": true,
-      "role": "source_archive",
-      "sha256": "3c72512e43c1e298c53874bb1d0884dcd8a695c9234890fc769c5054f58bdeb6"
-    },
-    {
-      "byte_size": 500867345,
-      "description": "Portable source, document, run, and structured-annotation manifests for part 6.",
-      "exclude": [],
-      "file_count": 7,
-      "id": "dailymed-rx-part6-processed",
-      "kind": "directory",
-      "path": "outputs/mining/dailymed-human-rx-part6-2026-07-21",
-      "present": true,
+      "rebuild_step_id": "acquire-dailymed-rx-part6",
       "required": true,
       "role": "mined_corpus",
-      "sha256": "acc6ea7c8e7e2cf2cc89de74d7e23fc1a23d422fa2bf7b1963f8186378a1ed65"
+      "sha256": "15030c63204c1b5183edc5774302fcecefdfd44431bf0906e2685e64b196ce47"
+    },
+    {
+      "byte_size": 24840137,
+      "description": "Exact source-structured medication annotations with raw offsets.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-annotations",
+      "kind": "file",
+      "path": "outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl",
+      "present": true,
+      "rebuild_step_id": "label-dailymed-rx-part6",
+      "required": true,
+      "role": "annotation_layer",
+      "sha256": "81947ff127b0332254cabc2288edbe1a352c8409b00ad21bf58fdbb4df458a67"
+    },
+    {
+      "byte_size": 1285665,
+      "description": "Frozen exact-dedup train/development split used by every DailyMed benchmark.",
+      "exclude": [],
+      "file_count": 2,
+      "id": "dailymed-rx-part6-snapshot",
+      "kind": "directory",
+      "path": "outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1",
+      "present": true,
+      "rebuild_step_id": "freeze-dailymed-rx-part6",
+      "required": true,
+      "role": "dataset_snapshot",
+      "sha256": "f7809e31290a9a0c0754074211094513c85fdbfd801ee9f88ffaba3bf7166441"
+    },
+    {
+      "byte_size": 3934344,
+      "description": "Exact DailyMed products accepted only when SPL/version and NDC evidence agree.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-product-links",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_links.jsonl",
+      "present": true,
+      "rebuild_step_id": "link-dailymed-rx-part6-products",
+      "required": true,
+      "role": "linked_corpus",
+      "sha256": "7d91364be34a1694b64809b4cc9d4c7d7fb59cc5e65b4a3eb8e44ccbc8a404e8"
+    },
+    {
+      "byte_size": 29783660,
+      "description": "Canonical active RxNorm package NDC rows streamed from the pinned full release.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "rxnorm-full-ndc-rows",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc_rows.jsonl",
+      "present": true,
+      "rebuild_step_id": "compile-rxnorm-full-ndc",
+      "required": true,
+      "role": "terminology_attributes",
+      "sha256": "59e6184287d1a4424b8599f6a45774d19768a4c60cf3d7c011a4dd961cc65cee"
+    },
+    {
+      "byte_size": 708,
+      "description": "RxNorm NDC parser counts plus source, output, and derived-index fingerprints.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "rxnorm-full-ndc-report",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc_report.json",
+      "present": true,
+      "rebuild_step_id": "compile-rxnorm-full-ndc",
+      "required": true,
+      "role": "terminology_report",
+      "sha256": "6663cca6483cfe12f4d418b36b0c02c5c7ca745b695306fdc263c5d231035927"
+    },
+    {
+      "byte_size": 2530600,
+      "description": "Accepted, ambiguous, disagreement, and unmapped product-link audit rows.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-product-link-decisions",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_link_decisions.jsonl",
+      "present": true,
+      "rebuild_step_id": "link-dailymed-rx-part6-products",
+      "required": true,
+      "role": "linking_decisions",
+      "sha256": "cd2f1c71528c07c1c5ae8f2c1ea1b9510c858102b3bb477efd5af97270981dc8"
+    },
+    {
+      "byte_size": 1542,
+      "description": "Product-link coverage and pinned source fingerprints.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-product-link-report",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_link_report.json",
+      "present": true,
+      "rebuild_step_id": "link-dailymed-rx-part6-products",
+      "required": true,
+      "role": "linking_report",
+      "sha256": "92f7b9fa21ca59c4509ed8764a6a92ed22e136e1042dcbde59432a6694bcf5b6"
+    },
+    {
+      "byte_size": 2543275,
+      "description": "Train-only source-structured mention inventory including authoritative singletons.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-mention-inventory",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_inventory_all.jsonl",
+      "present": true,
+      "rebuild_step_id": "build-dailymed-rx-part6-inventory",
+      "required": true,
+      "role": "ner_training_inventory",
+      "sha256": "ef4ae85ba99f47e09af2908d3a4ac820be24f1676186d5fa8b97f12c14fb7d8a"
+    },
+    {
+      "byte_size": 463708,
+      "description": "Train-only normalized mention/type conflicts excluded from silent promotion.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-mention-conflicts",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_conflicts_all.jsonl",
+      "present": true,
+      "rebuild_step_id": "build-dailymed-rx-part6-inventory",
+      "required": true,
+      "role": "ner_training_conflicts",
+      "sha256": "78369be52add8db03fd797be0f0fb8a9763639b1efabeece374818b7fc5f358b"
+    },
+    {
+      "byte_size": 1803,
+      "description": "Counts and fingerprints for the singleton-inclusive mention inventory.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-mention-report",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_report_all.json",
+      "present": true,
+      "rebuild_step_id": "build-dailymed-rx-part6-inventory",
+      "required": true,
+      "role": "ner_training_report",
+      "sha256": "03f2ab4edf52bcf5dfefcff51e0cd4fed674ea89ebbcd85c362626b54ab08290"
+    },
+    {
+      "byte_size": 1018580,
+      "description": "Code-free train-only DailyMed drug recognition concepts.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-recognition-concepts",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_concepts.jsonl",
+      "present": true,
+      "rebuild_step_id": "compile-dailymed-rx-part6-recognition",
+      "required": true,
+      "role": "recognition_dictionary",
+      "sha256": "e2b0057946ae9990451cac4581a6f764f6f3de326dd7ac7affc763c8d6cf676f"
+    },
+    {
+      "byte_size": 909792,
+      "description": "Auditable keep/reject decisions for every mined mention.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-recognition-decisions",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_decisions.jsonl",
+      "present": true,
+      "rebuild_step_id": "compile-dailymed-rx-part6-recognition",
+      "required": true,
+      "role": "recognition_decisions",
+      "sha256": "ac4ee04a890bd573c716ead8522ebfd14fbab0607f3b467671874c50f43f2b00"
+    },
+    {
+      "byte_size": 1697,
+      "description": "Recognition compilation counts and input/output hashes.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-recognition-report",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_report.json",
+      "present": true,
+      "rebuild_step_id": "compile-dailymed-rx-part6-recognition",
+      "required": true,
+      "role": "recognition_report",
+      "sha256": "024dbc203e5e42b76bac866b2aaf6f7692b1945ca4561d144177df21ee2c820f"
+    },
+    {
+      "byte_size": 284503,
+      "description": "Held-out structured-document NER precision, recall, boundary, and latency evidence.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-recognition-benchmark",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_benchmark_development.json",
+      "present": true,
+      "rebuild_step_id": "benchmark-dailymed-rx-part6-recognition",
+      "required": true,
+      "role": "ner_benchmark",
+      "sha256": "8b87523ebea814d9fb2817ef7cd85b2d1fd6f54ad6173ec775dfc57cda883133"
+    },
+    {
+      "byte_size": 1674172,
+      "description": "Train-only exact product alias/code hypotheses with conflict preservation.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-train-alias-proposals",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_proposals.jsonl",
+      "present": true,
+      "rebuild_step_id": "propose-dailymed-rx-part6-aliases",
+      "required": true,
+      "role": "retrieval_proposals",
+      "sha256": "0916ac9adeb131a6f953d6fdaaed287d785e3c9f012215dc359f4b99fdace778"
+    },
+    {
+      "byte_size": 580195,
+      "description": "Held-out product aliases used only to build retrieval evaluation queries.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-development-alias-proposals",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_proposals.jsonl",
+      "present": true,
+      "rebuild_step_id": "propose-dailymed-rx-part6-development-aliases",
+      "required": true,
+      "role": "retrieval_evaluation_queries",
+      "sha256": "99644e54d77d33b96f42c3d4df1010f625b806c140c65e7232c7d444836dd086"
+    },
+    {
+      "byte_size": 85696,
+      "description": "Conflict-free train alias overlay validated against the full RxNorm release.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-alias-overlay",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl",
+      "present": true,
+      "rebuild_step_id": "compile-dailymed-rx-part6-aliases",
+      "required": true,
+      "role": "retrieval_aliases",
+      "sha256": "0b159f7d3dee5c72d0950084ef7e3f8b7536013fc3afdc1eaec3503a3f7ccf75"
+    },
+    {
+      "byte_size": 768929,
+      "description": "Target-conflict and canonical-alias-conflict decisions for retrieval promotion.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-alias-decisions",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_compilation_decisions.jsonl",
+      "present": true,
+      "rebuild_step_id": "compile-dailymed-rx-part6-aliases",
+      "required": true,
+      "role": "retrieval_decisions",
+      "sha256": "787027ec1e7ba6fd71465ced21016097965af5095c3dcaba7fa128788d5d52c7"
+    },
+    {
+      "byte_size": 1721,
+      "description": "Alias compiler counts and terminology fingerprints.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-alias-report",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_compilation_report.json",
+      "present": true,
+      "rebuild_step_id": "compile-dailymed-rx-part6-aliases",
+      "required": true,
+      "role": "retrieval_report",
+      "sha256": "2e3e1fbe89d2d8e461f7192c308142ffec7361128ca0c8f5282918b963beed8a"
+    },
+    {
+      "byte_size": 93211,
+      "description": "Frozen held-out retrieval query set with seen/unseen slices.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-development-queries",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries.jsonl",
+      "present": true,
+      "rebuild_step_id": "build-dailymed-rx-part6-retrieval-queries",
+      "required": true,
+      "role": "retrieval_evaluation_queries",
+      "sha256": "20e6d4c228ca93536fe34e6056da1d3599e56d947cadcf9fa3908a5b1827e149"
+    },
+    {
+      "byte_size": 1061,
+      "description": "Query count, split, and input fingerprints for retrieval evaluation.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-development-query-manifest",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries_manifest.json",
+      "present": true,
+      "rebuild_step_id": "build-dailymed-rx-part6-retrieval-queries",
+      "required": true,
+      "role": "retrieval_evaluation_manifest",
+      "sha256": "1fbe115ef95b3a6337385e86b288912b28fa4e1e616b022118c6680eab6f5b6a"
+    },
+    {
+      "byte_size": 451939,
+      "description": "Full-RxNorm retrieval metrics before the train-only overlay.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-base-retrieval-benchmark",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/base_product_retrieval_benchmark.json",
+      "present": true,
+      "rebuild_step_id": "benchmark-dailymed-rx-part6-base-retrieval",
+      "required": true,
+      "role": "retrieval_benchmark",
+      "sha256": "adc405fe190bc242f6fb4880dd4a533fd5fcc30b582e76fa91175cddf9996b00"
+    },
+    {
+      "byte_size": 438426,
+      "description": "Held-out retrieval metrics after the train-only overlay.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-enriched-retrieval-benchmark",
+      "kind": "file",
+      "path": "outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/enriched_product_retrieval_benchmark.json",
+      "present": true,
+      "rebuild_step_id": "benchmark-dailymed-rx-part6-enriched-retrieval",
+      "required": true,
+      "role": "retrieval_benchmark",
+      "sha256": "42ad4283cc83a1a8298564e6cac19596863e73872467d06c54cfadba7d5b95d6"
     },
     {
       "byte_size": 0,
@@ -469,9 +896,30 @@
       "kind": "absent",
       "path": "outputs/models/open-corpus-full-type-xlmr-base-2026-07-19",
       "present": false,
+      "rebuild_step_id": null,
       "required": false,
       "role": "model_checkpoint",
       "sha256": null
+    }
+  ],
+  "cas_objects": [
+    {
+      "byte_size": 1586216624,
+      "description": "DailyMed human prescription part-6 archive from the 21 July release.",
+      "id": "dailymed-rx-part6-source-archive",
+      "rebuild_step_id": "acquire-dailymed-rx-part6",
+      "required": true,
+      "role": "source_archive",
+      "sha256": "3c72512e43c1e298c53874bb1d0884dcd8a695c9234890fc769c5054f58bdeb6"
+    },
+    {
+      "byte_size": 259313098,
+      "description": "Caller-supplied NLM RxNorm full monthly release for 6 July 2026.",
+      "id": "rxnorm-full-source-archive",
+      "rebuild_step_id": "acquire-rxnorm-full",
+      "required": true,
+      "role": "terminology_source_archive",
+      "sha256": "53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c"
     }
   ],
   "description": "Open mined corpus, full-type NER supervision, source-held-out recognition evidence, and exact terminology/graph retrieval overlays available on 2026-07-22.",
@@ -502,14 +950,99 @@
       "id": "acquire-dailymed-rxnorm"
     },
     {
-      "command": "MEDICAL_KG_ARTIFACT_STORE=.cache/medical-kg/mining-artifacts uv run medical-kg data run --plan configs/mining/dailymed-human-rx-part6-2026-07-21.yaml",
+      "command": "uv run medical-kg data mapping compile-dailymed-rxnorm --artifacts outputs/mining/dailymed-rxnorm-2026-07-17/artifacts.jsonl --store \"$MEDICAL_KG_ARTIFACT_STORE\" --output outputs/mining/dailymed-rxnorm-2026-07-17/compiled_mappings.jsonl --index-output outputs/mining/dailymed-rxnorm-2026-07-17/dailymed_rxnorm.sqlite3 --report-output outputs/mining/dailymed-rxnorm-2026-07-17/compilation_report.json",
+      "description": "Rebuild the official versioned SPL-to-RxNorm mapping and derived query index.",
+      "id": "compile-dailymed-rxnorm"
+    },
+    {
+      "command": "uv run medical-kg data run --plan configs/mining/dailymed-human-rx-part6-2026-07-21.yaml",
       "description": "Restore and parse the executed full-release prescription tranche.",
       "id": "acquire-dailymed-rx-part6"
+    },
+    {
+      "command": "uv run medical-kg data run --plan configs/mining/rxnorm-full-2026-07-06.yaml",
+      "description": "Import the caller-supplied licensed July RxNorm ZIP into the selected CAS.",
+      "id": "acquire-rxnorm-full"
+    },
+    {
+      "command": "uv run medical-kg data artifact materialize --store \"$MEDICAL_KG_ARTIFACT_STORE\" --sha256 53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c --expected-byte-size 259313098 --output .cache/medical-kg/release-inputs/RxNorm_full_07062026.zip",
+      "description": "Restore the pinned RxNorm CAS object to a local seekable archive for RRF readers.",
+      "id": "hydrate-rxnorm-full"
     },
     {
       "command": "uv run medical-kg data label propose --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl --adapter medical_kg_nlp.mining.labelers.dailymed:create_dailymed_structured_labeler --adapter-config configs/mining/labelers/dailymed-structured.yaml --output outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl --batch-size 256",
       "description": "Rebuild bounded-memory exact structured annotation supervision.",
       "id": "label-dailymed-rx-part6"
+    },
+    {
+      "command": "uv run medical-kg data snapshot freeze --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl --annotations outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl --artifacts outputs/mining/dailymed-human-rx-part6-2026-07-21/artifacts.jsonl --source-fingerprint 3c72512e43c1e298c53874bb1d0884dcd8a695c9234890fc769c5054f58bdeb6 --version dailymed-human-rx-part6-2026-07-21-structured-silver-v1 --created-at 2026-07-22T00:00:00Z --output-dir outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1 --development-fraction 0.2 --hash-salt dailymed-rx-part6-structured-v1 --dedup-mode exact --manifest-only --skip-agreement-gate",
+      "description": "Recreate the exact-dedup train/development split used by every downstream probe.",
+      "id": "freeze-dailymed-rx-part6"
+    },
+    {
+      "command": "uv run medical-kg data mapping compile-rxnorm-ndc --source .cache/medical-kg/release-inputs/RxNorm_full_07062026.zip --source-version rxnorm-full-2026-07-06 --expected-source-sha256 53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc_rows.jsonl --index-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc.sqlite3 --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc_report.json",
+      "description": "Stream active package NDC attributes from the pinned full RxNorm archive.",
+      "id": "compile-rxnorm-full-ndc"
+    },
+    {
+      "command": "uv run medical-kg data mapping link-dailymed-products --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl --dailymed-mapping-index outputs/mining/dailymed-rxnorm-2026-07-17/dailymed_rxnorm.sqlite3 --rxnorm-ndc-index outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc.sqlite3 --links-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_links.jsonl --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_link_decisions.jsonl --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_link_report.json",
+      "description": "Link products only when exact SPL/version and normalized NDC evidence intersect.",
+      "id": "link-dailymed-rx-part6-products"
+    },
+    {
+      "command": "uv run medical-kg data lexicon build --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl --annotations outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json --split train --min-occurrences 1 --min-documents 1 --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_inventory_all.jsonl --conflicts-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_conflicts_all.jsonl --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_report_all.json",
+      "description": "Aggregate only the frozen train split into a source-label-aware mention inventory.",
+      "id": "build-dailymed-rx-part6-inventory"
+    },
+    {
+      "command": "uv run medical-kg data knowledge compile-recognition --inventory outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_inventory_all.jsonl --policy configs/mining/knowledge/dailymed-rx-part6-recognition-singletons-2026-07-22.yaml --baseline-dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_concepts.jsonl --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_decisions.jsonl --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_report.json",
+      "description": "Compile code-free DailyMed drug terms from the pinned train inventory.",
+      "id": "compile-dailymed-rx-part6-recognition"
+    },
+    {
+      "command": "uv run medical-kg data knowledge benchmark-recognition --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl --annotations outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl --baseline-dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl --additional-dictionary outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_concepts.jsonl --entity-type DRUG --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json --split development --require-document-metadata spl_fields --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_benchmark_development.json",
+      "description": "Evaluate the train-only dictionary on held-out structured product documents.",
+      "id": "benchmark-dailymed-rx-part6-recognition"
+    },
+    {
+      "command": "uv run medical-kg data lexicon propose-dailymed-product-aliases --links outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_links.jsonl --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json --split train --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_proposals.jsonl --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_decisions.jsonl --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_report.json",
+      "description": "Build exact product alias hypotheses from linked products in the frozen train split.",
+      "id": "propose-dailymed-rx-part6-aliases"
+    },
+    {
+      "command": "uv run medical-kg data lexicon propose-dailymed-product-aliases --links outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_links.jsonl --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json --split development --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_proposals.jsonl --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_decisions.jsonl --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_report.json",
+      "description": "Build held-out linked aliases for retrieval evaluation without training leakage.",
+      "id": "propose-dailymed-rx-part6-development-aliases"
+    },
+    {
+      "command": "uv run medical-kg terminology build --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl --output .cache/medical-kg/terminology/terminology-0000a0a5bf3f1286c3f2.sqlite3 --manifest-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/base_terminology_manifest.json",
+      "description": "Build the derived full-RxNorm lexical index from canonical JSONL.",
+      "id": "build-rxnorm-base-index"
+    },
+    {
+      "command": "uv run medical-kg data knowledge compile-aliases --proposals outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_proposals.jsonl --index .cache/medical-kg/terminology/terminology-0000a0a5bf3f1286c3f2.sqlite3 --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl --policy configs/mining/knowledge/dailymed-rx-part6-product-aliases-2026-07-22.yaml --overlay-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl --recognition-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_recognition.jsonl --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_compilation_decisions.jsonl --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_compilation_report.json",
+      "description": "Promote only globally unique product aliases against the pinned base index.",
+      "id": "compile-dailymed-rx-part6-aliases"
+    },
+    {
+      "command": "uv run medical-kg terminology build --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl --alias-overlay outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl --output .cache/medical-kg/terminology/terminology-c750ca7121eda394a91f.sqlite3 --manifest-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/enriched_terminology_manifest.json",
+      "description": "Build a derived lexical index with the train-only DailyMed overlay.",
+      "id": "build-rxnorm-enriched-index"
+    },
+    {
+      "command": "uv run medical-kg terminology query-set --linked-proposal outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_proposals.jsonl --reference-alias-overlay outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries.jsonl --manifest-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries_manifest.json",
+      "description": "Freeze linked held-out aliases as neutral retrieval queries and seen/unseen slices.",
+      "id": "build-dailymed-rx-part6-retrieval-queries"
+    },
+    {
+      "command": "uv run medical-kg terminology benchmark --index .cache/medical-kg/terminology/terminology-0000a0a5bf3f1286c3f2.sqlite3 --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl --queries outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries.jsonl --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/base_product_retrieval_benchmark.json --limit 20",
+      "description": "Benchmark canonical full-RxNorm lexical retrieval on held-out product aliases.",
+      "id": "benchmark-dailymed-rx-part6-base-retrieval"
+    },
+    {
+      "command": "uv run medical-kg terminology benchmark --index .cache/medical-kg/terminology/terminology-c750ca7121eda394a91f.sqlite3 --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl --alias-overlay outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl --queries outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries.jsonl --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/enriched_product_retrieval_benchmark.json --limit 20",
+      "description": "Benchmark the train-only overlay on the same held-out retrieval queries.",
+      "id": "benchmark-dailymed-rx-part6-enriched-retrieval"
     },
     {
       "command": "uv run medical-kg data dataset fuse --plan configs/mining/open_corpus_v1.yaml",
@@ -532,16 +1065,16 @@
       "id": "train-full-type-model"
     },
     {
-      "command": "uv run medical-kg data release verify --manifest data/releases/open-ner-retrieval-v1.lock.json --root .",
+      "command": "uv run medical-kg data release verify --manifest data/releases/open-ner-retrieval-v1.lock.json --root . --store \"$MEDICAL_KG_ARTIFACT_STORE\" --require-cas-objects",
       "description": "Verify all restored or rebuilt release bytes without machine-local paths.",
       "id": "verify-release"
     }
   ],
-  "release_fingerprint": "b1a20b08e583947ea1314e51bbd37bc89e8a4017d8f29240d09a654d783ef242",
+  "release_fingerprint": "f28856edd0516a7bf19e41f1587e13a98ae0ef0c796d1475559514ecc20316ae",
   "release_id": "open-ner-retrieval-v1",
-  "schema_version": "medical-mining-release-lock.v1",
+  "schema_version": "medical-mining-release-lock.v2",
   "spec": {
     "path": "configs/mining/releases/open-ner-retrieval-v1.yaml",
-    "sha256": "bbbcbe23dec1b93f77bef76526a5c266d12744d1d0c871e906591b56566f1aec"
+    "sha256": "6916881eba0de75a7da85860e2253949780c4d2ab702defe2e3c3806fae3c163"
   }
 }

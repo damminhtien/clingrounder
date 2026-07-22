@@ -21,7 +21,9 @@ The current NER/retrieval release specification is
 - fused documents, immutable split manifests, and raw-offset NER datasets;
 - VietBioNER source-held-out recognition evidence;
 - CodiEsp train-only aliases and graph-reranker evidence;
-- the official DailyMed-to-RxNorm alias overlay;
+- DailyMed part-6 raw-offset spans, frozen split, exact product links, train-only recognition and
+  held-out NER/retrieval evidence;
+- the official DailyMed-to-RxNorm mapping plus the licensed July full RxNorm terminology identity;
 - the deterministic full-type NER run specification;
 - an optional Linux/GPU checkpoint, which is currently absent and therefore not promoted.
 
@@ -38,7 +40,9 @@ Verify it locally:
 ```bash
 uv run medical-kg data release verify \
   --manifest data/releases/open-ner-retrieval-v1.lock.json \
-  --root .
+  --root . \
+  --store "$MEDICAL_KG_ARTIFACT_STORE" \
+  --require-cas-objects
 ```
 
 The lock is deterministic. Files are SHA-256 hashed directly; directories are hashed from sorted
@@ -46,6 +50,11 @@ relative member paths, sizes, and member SHA-256 values. Modification times do n
 fingerprint. Symlinks and paths outside the declared release root are rejected.
 Exclude patterns are permitted only for implementation artifacts (for example Python bytecode);
 datasets, terminology, benchmarks, and model checkpoints are always hashed in full.
+
+Release schema v2 separates repository artifacts from external `cas_objects`. A CAS record contains
+only ID, role, SHA-256, byte size and its restore-step ID. The lock never stores a local mount or
+bucket URI. Standard verification checks repository artifacts and external object existence;
+`--verify-cas-content` additionally streams and rehashes all external bytes.
 
 ## Reproduce On Another Machine
 
@@ -62,9 +71,23 @@ datasets, terminology, benchmarks, and model checkpoints are always hashed in fu
    export MEDICAL_KG_ARTIFACT_STORE=file:///mnt/medical-kg/mining-artifacts
    ```
 
+   Use an absolute local path or a `file://`/object-store URI. Relative paths in environment
+   variables are resolved from the mining plan directory, not from the invoking shell directory.
+   This rule makes the same plan deterministic when launched by CI, cron, or another checkout.
+
    Persisted source manifests use `medical-kg-cas://sha256/<digest>` rather than this backend URI.
    A local directory, external volume, or object-store bucket can therefore provide the same bytes
    without changing artifact identity or leaking a workstation path.
+
+   If a parser requires a seekable archive, hydrate it to a disposable local path:
+
+   ```bash
+   uv run medical-kg data artifact materialize \
+     --store "$MEDICAL_KG_ARTIFACT_STORE" \
+     --sha256 <locked-sha256> \
+     --expected-byte-size <locked-size> \
+     --output .cache/medical-kg/release-inputs/source.zip
+   ```
 
 3. Validate source governance before processing any bytes:
 
@@ -113,6 +136,8 @@ Reproducible does not mean suitable for runtime:
 | CodiEsp train aliases | Runtime opt-in | Dev/test retrieval both improve |
 | CodiEsp co-occurrence graph | Reranker opt-in | Small positive held-out top-1/MRR delta |
 | DailyMed RxNorm aliases | Runtime opt-in | Official checksum-pinned SPL crosswalk |
+| DailyMed part-6 drug recognition | Runtime/model ablation | Held-out structured F1 `0.8468` |
+| DailyMed product alias overlay | Runtime opt-in | Held-out FTS MRR `0.1862 → 0.2051` |
 | Full-type model checkpoint | Not available | Optional lock entry remains absent |
 
 These boundaries are also recorded in `data/sources/processing_status.yaml`. A release verifier
@@ -134,6 +159,11 @@ proves content identity; benchmark gates decide whether an artifact may affect N
   name is not model provenance.
 - Record missing optional artifacts explicitly. Never silently substitute another checkpoint,
   terminology release, or alias overlay.
+- Declare large raw archives as release `cas_objects`; do not add `.cache`, `/mnt`, bucket names or
+  local licensed file paths to release artifact paths.
+- Treat a stage acquisition cache as valid only when every referenced object exists in the CAS
+  selected for the current run. Moving a stage manifest to a new store must trigger source
+  rehydration once; later runs may then reuse the stage.
 
 ## Completion Checklist For An Executed Data Lane
 
