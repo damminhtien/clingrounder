@@ -75,6 +75,18 @@ artifacts:
     role: source_plan
     path: configs/mining/dailymed-rxnorm-2026-07-17.yaml
     description: Official SPL-to-RxNorm mapping acquisition and checksum contract.
+  - id: dailymed-full-human-plan
+    role: source_plan
+    path: configs/mining/dailymed-full-human-2026-07-21.yaml
+    description: Current checksum-pinned 17-part human SPL release plan; not fully executed.
+  - id: dailymed-rx-part6-plan
+    role: source_plan
+    path: configs/mining/dailymed-human-rx-part6-2026-07-21.yaml
+    description: Executed prescription part-6 acquisition and parsing contract.
+  - id: dailymed-structured-labeler
+    role: labeling_policy
+    path: configs/mining/labelers/dailymed-structured.yaml
+    description: Exact source-structured drug, strength, form, and route projection policy.
   - id: dailymed-alias-policy
     role: retrieval_policy
     path: configs/mining/knowledge/dailymed-rxnorm-aliases-2026-07-17.yaml
@@ -136,6 +148,15 @@ artifacts:
     role: retrieval_aliases
     path: outputs/mining/knowledge/dailymed-rxnorm-2026-07-17
     description: Official exact RxNorm alias overlay, decisions, and terminology manifest.
+  - id: dailymed-rx-part6-source-archive
+    role: source_archive
+    path: >-
+      .cache/medical-kg/mining-artifacts/objects/sha256/3c/3c72512e43c1e298c53874bb1d0884dcd8a695c9234890fc769c5054f58bdeb6
+    description: Immutable 21 July prescription part-6 ZIP retained for upstream-drift recovery.
+  - id: dailymed-rx-part6-processed
+    role: mined_corpus
+    path: outputs/mining/dailymed-human-rx-part6-2026-07-21
+    description: Portable source, document, run, and structured-annotation manifests for part 6.
   - id: local-full-type-checkpoint
     role: model_checkpoint
     path: outputs/models/open-corpus-full-type-xlmr-base-2026-07-19
@@ -160,6 +181,20 @@ rebuild_steps:
   - id: acquire-dailymed-rxnorm
     description: Restore the official SPL-to-RxNorm crosswalk.
     command: uv run medical-kg data run --plan configs/mining/dailymed-rxnorm-2026-07-17.yaml
+  - id: acquire-dailymed-rx-part6
+    description: Restore and parse the executed full-release prescription tranche.
+    command: >-
+      MEDICAL_KG_ARTIFACT_STORE=.cache/medical-kg/mining-artifacts uv run medical-kg data run
+      --plan configs/mining/dailymed-human-rx-part6-2026-07-21.yaml
+  - id: label-dailymed-rx-part6
+    description: Rebuild bounded-memory exact structured annotation supervision.
+    command: >-
+      uv run medical-kg data label propose
+      --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl
+      --adapter medical_kg_nlp.mining.labelers.dailymed:create_dailymed_structured_labeler
+      --adapter-config configs/mining/labelers/dailymed-structured.yaml
+      --output outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl
+      --batch-size 256
   - id: fuse-open-corpus
     description: Fuse the source-specific curated outputs after following their dossiers.
     command: uv run medical-kg data dataset fuse --plan configs/mining/open_corpus_v1.yaml

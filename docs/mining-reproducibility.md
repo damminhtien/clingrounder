@@ -62,6 +62,10 @@ datasets, terminology, benchmarks, and model checkpoints are always hashed in fu
    export MEDICAL_KG_ARTIFACT_STORE=file:///mnt/medical-kg/mining-artifacts
    ```
 
+   Persisted source manifests use `medical-kg-cas://sha256/<digest>` rather than this backend URI.
+   A local directory, external volume, or object-store bucket can therefore provide the same bytes
+   without changing artifact identity or leaking a workstation path.
+
 3. Validate source governance before processing any bytes:
 
    ```bash
@@ -130,3 +134,24 @@ proves content identity; benchmark gates decide whether an artifact may affect N
   name is not model provenance.
 - Record missing optional artifacts explicitly. Never silently substitute another checkpoint,
   terminology release, or alias overlay.
+
+## Completion Checklist For An Executed Data Lane
+
+A source is not reproducible merely because its downloader exists. Before changing its processing
+status to processed, curated, or promoted, all of the following must hold:
+
+1. The checked-in plan pins source version, expected count and upstream checksum. Mutable URLs
+   without a checksum are discovery inputs, not release inputs.
+2. The source artifact manifest records SHA-256 and a portable CAS URI; parsed/derived manifests
+   contain no `/Users/`, `/home/`, drive-letter or temporary paths.
+3. Parser, labeler, curation and split policies are checked in and included in a release spec.
+4. The source archive (or an approved restorable copy), canonical derived manifests and reports are
+   content-hashed by a release lock. Derived SQLite/DuckDB/ANN indexes remain rebuildable caches.
+5. The source dossier records exact commands, observed counts, output SHA-256 values, validation
+   results, promotion boundary and work that has not been completed.
+6. A second run from cache produces the same canonical hashes. A separate machine verifies the
+   copied artifacts with `medical-kg data release verify` before model training or benchmarking.
+
+These checks deliberately separate three claims: a source may be *registered*, a source plan may be
+*pinned*, and a particular source tranche may be *processed*. Documentation must never use these
+states interchangeably.

@@ -27,7 +27,7 @@
       "sha256": "8ed9569bb6f221393de6508d2f36729f5b644b390336ab1eaf5bea7b12fcc87a"
     },
     {
-      "byte_size": 2113720,
+      "byte_size": 2120679,
       "description": "Pipeline, mining, NER, retrieval, and evaluation implementation.",
       "exclude": [
         "__pycache__",
@@ -35,14 +35,14 @@
         "*.pyc",
         "**/*.pyc"
       ],
-      "file_count": 264,
+      "file_count": 265,
       "id": "mining-implementation",
       "kind": "directory",
       "path": "src/medical_kg_nlp",
       "present": true,
       "required": true,
       "role": "implementation",
-      "sha256": "5046447bde26f901ab18480240dbb2ba119b52ab695ebc5fdbc884c5eeda2ae8"
+      "sha256": "55aeb50104ff5e71629b7e89105677ce9e75b309e4356d0b2e7518b13736f863"
     },
     {
       "byte_size": 9002,
@@ -58,7 +58,7 @@
       "sha256": "73c4d4ed21ffe5239a8b5c306de432e27039c022a1a5726951122632a36937dc"
     },
     {
-      "byte_size": 7541,
+      "byte_size": 7735,
       "description": "Processed/planned/quarantined state and promotion boundaries.",
       "exclude": [],
       "file_count": 1,
@@ -68,10 +68,10 @@
       "present": true,
       "required": true,
       "role": "source_policy",
-      "sha256": "f05d723f4a1b61111e3b161906eeb010520ad5903e3f1ff3d7f4c38d1c237676"
+      "sha256": "20e6d99e991caefffeb3ad2d633c0b97e56c302ddb90f66be9b795d23554900f"
     },
     {
-      "byte_size": 82447,
+      "byte_size": 85921,
       "description": "Per-source acquisition, parsing, curation, metrics, and reproduction evidence.",
       "exclude": [],
       "file_count": 9,
@@ -81,7 +81,7 @@
       "present": true,
       "required": true,
       "role": "reproduction_documentation",
-      "sha256": "12038f8a1ebf47328ddd7474ab7472e926d8efbfd5f0cd75c33fd5834b604aff"
+      "sha256": "0ed6511efd23e1b324aedca9d7ff95ea0639753d1c601bb27cbb35090a8f7a5b"
     },
     {
       "byte_size": 905,
@@ -199,6 +199,45 @@
       "required": true,
       "role": "source_plan",
       "sha256": "b2c4f839facbac37284c8820dcea9739b79ec2eab68b6653677a58fb05e3bce9"
+    },
+    {
+      "byte_size": 7036,
+      "description": "Current checksum-pinned 17-part human SPL release plan; not fully executed.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-full-human-plan",
+      "kind": "file",
+      "path": "configs/mining/dailymed-full-human-2026-07-21.yaml",
+      "present": true,
+      "required": true,
+      "role": "source_plan",
+      "sha256": "bb0eb72b5aa07b8d9f270ad49b238e13e15d98f2ff3ec2ee0b749af3509d04da"
+    },
+    {
+      "byte_size": 1266,
+      "description": "Executed prescription part-6 acquisition and parsing contract.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-plan",
+      "kind": "file",
+      "path": "configs/mining/dailymed-human-rx-part6-2026-07-21.yaml",
+      "present": true,
+      "required": true,
+      "role": "source_plan",
+      "sha256": "b8b24774c64240181a6b3a7dd46501dbceeeff9ae81eee57cdb461f3ee170dd8"
+    },
+    {
+      "byte_size": 77,
+      "description": "Exact source-structured drug, strength, form, and route projection policy.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-structured-labeler",
+      "kind": "file",
+      "path": "configs/mining/labelers/dailymed-structured.yaml",
+      "present": true,
+      "required": true,
+      "role": "labeling_policy",
+      "sha256": "dbb400767a64ef6a0e98718eaf2aef6fbfb8539354521847b1cbcb126071a2d6"
     },
     {
       "byte_size": 804,
@@ -396,6 +435,32 @@
       "sha256": "ffed59e24b0d180e6fce0768366834b53cdcfb72044b663a45f136da9a54c1a7"
     },
     {
+      "byte_size": 1586216624,
+      "description": "Immutable 21 July prescription part-6 ZIP retained for upstream-drift recovery.",
+      "exclude": [],
+      "file_count": 1,
+      "id": "dailymed-rx-part6-source-archive",
+      "kind": "file",
+      "path": ".cache/medical-kg/mining-artifacts/objects/sha256/3c/3c72512e43c1e298c53874bb1d0884dcd8a695c9234890fc769c5054f58bdeb6",
+      "present": true,
+      "required": true,
+      "role": "source_archive",
+      "sha256": "3c72512e43c1e298c53874bb1d0884dcd8a695c9234890fc769c5054f58bdeb6"
+    },
+    {
+      "byte_size": 500867345,
+      "description": "Portable source, document, run, and structured-annotation manifests for part 6.",
+      "exclude": [],
+      "file_count": 7,
+      "id": "dailymed-rx-part6-processed",
+      "kind": "directory",
+      "path": "outputs/mining/dailymed-human-rx-part6-2026-07-21",
+      "present": true,
+      "required": true,
+      "role": "mined_corpus",
+      "sha256": "acc6ea7c8e7e2cf2cc89de74d7e23fc1a23d422fa2bf7b1963f8186378a1ed65"
+    },
+    {
       "byte_size": 0,
       "description": "Optional Linux/GPU full-type checkpoint; absent until a run passes promotion gates.",
       "exclude": [],
@@ -437,6 +502,16 @@
       "id": "acquire-dailymed-rxnorm"
     },
     {
+      "command": "MEDICAL_KG_ARTIFACT_STORE=.cache/medical-kg/mining-artifacts uv run medical-kg data run --plan configs/mining/dailymed-human-rx-part6-2026-07-21.yaml",
+      "description": "Restore and parse the executed full-release prescription tranche.",
+      "id": "acquire-dailymed-rx-part6"
+    },
+    {
+      "command": "uv run medical-kg data label propose --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl --adapter medical_kg_nlp.mining.labelers.dailymed:create_dailymed_structured_labeler --adapter-config configs/mining/labelers/dailymed-structured.yaml --output outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl --batch-size 256",
+      "description": "Rebuild bounded-memory exact structured annotation supervision.",
+      "id": "label-dailymed-rx-part6"
+    },
+    {
       "command": "uv run medical-kg data dataset fuse --plan configs/mining/open_corpus_v1.yaml",
       "description": "Fuse the source-specific curated outputs after following their dossiers.",
       "id": "fuse-open-corpus"
@@ -462,11 +537,11 @@
       "id": "verify-release"
     }
   ],
-  "release_fingerprint": "e95a1b238137ca4d7e23f113efe92d3e3be8afb0aa43e23f741b76752dd417d2",
+  "release_fingerprint": "b1a20b08e583947ea1314e51bbd37bc89e8a4017d8f29240d09a654d783ef242",
   "release_id": "open-ner-retrieval-v1",
   "schema_version": "medical-mining-release-lock.v1",
   "spec": {
     "path": "configs/mining/releases/open-ner-retrieval-v1.yaml",
-    "sha256": "2832dd8793ff2a4a778b461731c50bde78bf9c3763619e7082175fb17f16f828"
+    "sha256": "bbbcbe23dec1b93f77bef76526a5c266d12744d1d0c871e906591b56566f1aec"
   }
 }

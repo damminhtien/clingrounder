@@ -26,18 +26,22 @@ prepared for the external data plane:
 | Lane | Official release | Scale | Repository state |
 | --- | --- | ---: | --- |
 | Daily API slice | 17 Jul 2026 | 105 labels | processed and measured |
-| Human prescription | 17 Jul 2026, 6 ZIP parts | 54,530 files, about 16.5 GB | pinned plan; not acquired |
-| Human OTC | 17 Jul 2026, 11 ZIP parts | 88,717 files, about 32.6 GB | pinned plan; not acquired |
-| Homeopathic | 17 Jul 2026 | 15,995 files | excluded pending a separate quality policy |
-| Animal | 17 Jul 2026 | 3,567 files | excluded from the human clinical lane |
-| Remainder/device/vaccine | 17 Jul 2026 | 2,499 files | excluded pending type-specific handling |
+| Human prescription | 21 Jul 2026, 6 ZIP parts | 54,565 files | checksum-pinned; part 6 processed |
+| Human prescription part 6 | 21 Jul 2026 | 3,700 SPL files, 1,586,216,624 source bytes | processed and structured-label mined |
+| Human OTC | 21 Jul 2026, 11 ZIP parts | 88,764 files | checksum-pinned; not acquired |
 
-Therefore, "DailyMed processed" currently means the 105-label daily tranche plus the complete
-official SPL-to-RxNorm mapping archive. It does **not** mean all SPL narrative labels have been
-parsed. The 17-part human plan covers 143,247 files and about 49 GB compressed. Its authoritative
+Therefore, "DailyMed processed" currently means the 105-label daily tranche, prescription part 6,
+and the complete official SPL-to-RxNorm mapping archive. It does **not** mean all SPL narrative
+labels have been parsed. The current 17-part human plan covers 143,329 files. Its authoritative
 file counts, modification date and MD5 values come from the
 [DailyMed full-release manifest](https://dailymed.nlm.nih.gov/dailymed/spl-resources-all-drug-labels.cfm).
-`configs/mining/dailymed-full-human-2026-07-17.yaml` records every part.
+`configs/mining/dailymed-full-human-2026-07-21.yaml` records every part. Homeopathic, animal,
+device and other non-human lanes are excluded from this plan and need separate quality policies.
+
+The upstream bulk files are mutable URLs. On 22 July, acquisition correctly rejected the former
+17 July part-6 MD5 after downloading the replacement bytes. The plan was updated only after the
+official manifest reported the 21 July release. This fail-closed event is important: a filename is
+not source identity, and a new upstream release must never silently reuse an old snapshot label.
 
 The source publishes MD5 rather than SHA-256. Acquisition validates MD5 while streaming bytes
 once into the content-addressed store; the store records SHA-256 as the durable internal identity.
@@ -66,6 +70,42 @@ rules:
 This makes acquisition and parsing resumable on the external volume. Snapshot freezing still loads
 the selected document manifest for split/agreement logic, so the full release should first be
 materialized, profiled and filtered; only the curated subset should be frozen.
+
+Artifact manifests identify objects as `medical-kg-cas://sha256/<digest>`. The configured local,
+external-volume or object-store URI is deliberately absent from persisted records. Consequently,
+the same manifest resolves against a different CAS root on another machine without exposing or
+depending on the original workstation path.
+
+## Prescription Part-6 Execution Evidence
+
+Part 6 is an execution-sized pilot of the exact connector and parser used by the full 17-part plan;
+it is not a hand-selected sample and it does not imply that the other parts were processed.
+
+| Measure | Value |
+| --- | ---: |
+| Expected and validated SPL files | 3,700 |
+| Source archive bytes | 1,586,216,624 |
+| Source archive SHA-256 | `3c72512e43c1e298c53874bb1d0884dcd8a695c9234890fc769c5054f58bdeb6` |
+| Parsed documents | 9,707 |
+| Narrative SPL documents | 3,700 |
+| Structured medication documents | 6,007 |
+| Document manifest SHA-256 | `15030c63204c1b5183edc5774302fcecefdfd44431bf0906e2685e64b196ce47` |
+| Structured annotations | 35,880 |
+| Annotation manifest SHA-256 | `81947ff127b0332254cabc2288edbe1a352c8409b00ad21bf58fdbb4df458a67` |
+| Duplicate annotation IDs | 0 |
+| Schema/offset issues | 0 |
+
+The 35,880 exact source labels contain 17,718 drug spans (6,007 product names, 6,007 generic names,
+5,704 active ingredients), 5,704 strengths, 6,007 dosage forms and 6,451 routes. Labeling is
+bounded-memory: documents are read in fixed batches and proposals are externally sorted and
+deduplicated through temporary SQLite before an atomic JSONL write. A repeated run produced the
+same annotation SHA in about 7.2 seconds with approximately 64.4 MiB maximum RSS on the current
+machine.
+
+All source, document and annotation manifests were audited for `/Users/` and `/home/` paths; none
+remain. `run_result.json` declares `path_base: mining_plan_directory` and stores only paths relative
+to that base. The portable release lock additionally binds the source plan, labeler config, source
+archive bytes, processed output directory, dependency lock and implementation.
 
 ## SPL Parsing And Structured Labels
 
@@ -173,32 +213,49 @@ lookup and hard-negative generation; it does not add narrative clinical relation
 
 ## What Has Not Yet Been Mined
 
-- Full-release narrative sections for indications, contraindications, warnings, adverse reactions
-  and drug interactions have not been converted into entity/relation supervision.
+- Narrative sections from part 6 and the daily slice have not yet been converted into indication,
+  contraindication, warning, adverse-reaction or drug-interaction supervision. The remaining 16
+  human release parts have not been acquired or parsed at all.
 - Co-occurrence inside narrative prose is not a clinical relation. Section-aware extraction and a
   held-out relation benchmark are required before graph promotion.
-- The full release has not been coverage-audited against the July RxNorm release, so no claim is
-  made about full NDC, ingredient, branded-drug or dose-form coverage.
+- Part 6 has not yet been joined by SPL set/version to the official RxNorm mapping archive. The full
+  release has not been coverage-audited against the July RxNorm release, so no claim is made about
+  full NDC, ingredient, branded-drug or dose-form coverage.
 - Homeopathic, animal and remainder archives are not silently mixed into human medication data.
 - Images and OCR are not mined; they are ignored by the SPL parser.
 
-The next DailyMed-specific tranche is: materialize the 17 human parts, profile structured field and
-section coverage, join only official set/version mapping rows, and benchmark section evidence as a
-reranker feature. Runtime dictionary promotion remains opt-in until that benchmark wins on a
-source-held-out medication set.
+The next DailyMed-specific step is to join part 6 by exact SPL set/version to the official mapping,
+compile a leakage-safe drug mention inventory, and benchmark NER/retrieval on a source-held-out
+medication set. Only after this pilot passes should the same streaming process expand to the other
+16 human parts. Runtime dictionary promotion remains opt-in until that benchmark wins.
 
 Artifacts live under `outputs/mining/dailymed-daily-2026-07-17/` and
+`outputs/mining/dailymed-human-rx-part6-2026-07-21/`, while mappings live under
 `outputs/mining/dailymed-rxnorm-2026-07-17/`; compiled aliases and graphs are under
 `outputs/mining/knowledge/`.
 
 ## Reproduce
 
 ```bash
-export MEDICAL_KG_ARTIFACT_STORE=/Volumes/medical-kg-mining
+export MEDICAL_KG_ARTIFACT_STORE=/mnt/medical-kg/mining-artifacts
 uv run medical-kg data run --plan configs/mining/dailymed-daily-2026-07-17.yaml
 
-# Requires the external >=250 GB data plane. This has not been executed in the checked-in status.
-uv run medical-kg data run --plan configs/mining/dailymed-full-human-2026-07-17.yaml
+# Rebuild the executed full-release pilot. A cache hit and a fresh download produce
+# identical final manifest hashes.
+uv run medical-kg data run \
+  --plan configs/mining/dailymed-human-rx-part6-2026-07-21.yaml
+uv run medical-kg data label propose \
+  --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl \
+  --adapter medical_kg_nlp.mining.labelers.dailymed:create_dailymed_structured_labeler \
+  --adapter-config configs/mining/labelers/dailymed-structured.yaml \
+  --output outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl \
+  --batch-size 256
+uv run medical-kg data release verify \
+  --manifest data/releases/open-ner-retrieval-v1.lock.json --root .
+
+# Requires the external >=250 GB data plane. Only the plan has been validated;
+# this command has not been completed for all 17 parts.
+uv run medical-kg data run --plan configs/mining/dailymed-full-human-2026-07-21.yaml
 
 uv run medical-kg data label propose \
   --documents outputs/mining/dailymed-daily-2026-07-17/documents.jsonl \

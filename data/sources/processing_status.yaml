@@ -56,17 +56,20 @@ sources:
     state: promoted
     promotion_boundary: runtime_opt_in
     dossier: docs/mining-sources/dailymed.md
-    verified_on: 2026-07-20
+    verified_on: 2026-07-22
     summary: >-
-      The 105-label daily tranche is mined and relation-benchmarked; the 143,247-label full human
-      release has a checksum-pinned plan but has not yet been acquired or processed.
+      The 105-label daily tranche is relation-benchmarked. Prescription part 6 of the current
+      143,329-label human release is parsed and structured-label mined; the remaining 16 parts are
+      checksum-pinned but have not been acquired or processed.
     run_configs:
       - configs/mining/dailymed-daily-2026-07-17.yaml
-      - configs/mining/dailymed-full-human-2026-07-17.yaml
+      - configs/mining/dailymed-full-human-2026-07-21.yaml
+      - configs/mining/dailymed-human-rx-part6-2026-07-21.yaml
       - configs/mining/labelers/dailymed-structured.yaml
       - configs/mining/labelers/dailymed-relations.yaml
     artifact_roots:
       - outputs/mining/dailymed-daily-2026-07-17
+      - outputs/mining/dailymed-human-rx-part6-2026-07-21
       - outputs/mining/snapshots/dailymed-daily-2026-07-17-structured-silver-v2
       - outputs/mining/knowledge/dailymed-spl-structured-2026-07-17
   - source_id: dailymed_rxnorm_mappings

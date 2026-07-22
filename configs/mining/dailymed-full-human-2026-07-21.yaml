@@ -1,6 +1,6 @@
 schema_version: medical-mining-plan.v1
 registry: ../../data/sources/mining_registry.yaml
-work_dir: ../../outputs/mining/dailymed-full-human-2026-07-17
+work_dir: ../../outputs/mining/dailymed-full-human-2026-07-21
 artifact_store:
   # SCALING: the 17 compressed parts are about 49 GB. Use the external >=250 GB data volume;
   # document manifests and later structured annotation layers are intentionally kept off the Mac.
@@ -9,7 +9,7 @@ artifact_store:
   encrypted_at_rest: false
 sources:
   - source_id: dailymed
-    source_version: full-human-2026-07-17
+    source_version: full-human-2026-07-21
     parse_documents: true
     parameters:
       # LICENSE: this plan contains human prescription and OTC labels only. Homeopathic, animal,
@@ -21,48 +21,48 @@ sources:
             label_lane: human_prescription
             part: "1/6"
             expected_spl_count: "15005"
-            source_md5: 4893abbaf5ede70a049c8a8a8066c528
-            release_last_modified: "2026-07-17"
+            source_md5: 0e21ae504428217cf6a730ee2e217e73
+            release_last_modified: "2026-07-21"
         - uri: https://dailymed-data.nlm.nih.gov/public-release-files/dm_spl_release_human_rx_part2.zip
           media_type: application/zip
           metadata:
             label_lane: human_prescription
             part: "2/6"
-            expected_spl_count: "9579"
-            source_md5: bd75fe2970036e01ebfb0e380ccdfda1
-            release_last_modified: "2026-07-17"
+            expected_spl_count: "9573"
+            source_md5: 0281dda3e10f6672a8673dfadf43d180
+            release_last_modified: "2026-07-21"
         - uri: https://dailymed-data.nlm.nih.gov/public-release-files/dm_spl_release_human_rx_part3.zip
           media_type: application/zip
           metadata:
             label_lane: human_prescription
             part: "3/6"
-            expected_spl_count: "9117"
-            source_md5: e07dcabd5b11c4ce0a2f3be1974220ec
-            release_last_modified: "2026-07-17"
+            expected_spl_count: "9115"
+            source_md5: 6880aaada1325cfa48b191c11630973a
+            release_last_modified: "2026-07-21"
         - uri: https://dailymed-data.nlm.nih.gov/public-release-files/dm_spl_release_human_rx_part4.zip
           media_type: application/zip
           metadata:
             label_lane: human_prescription
             part: "4/6"
-            expected_spl_count: "8181"
-            source_md5: 1c077cb2c7903046b7a11d8390192b35
-            release_last_modified: "2026-07-17"
+            expected_spl_count: "8196"
+            source_md5: 290695a042eaaef795e6d02e52665365
+            release_last_modified: "2026-07-21"
         - uri: https://dailymed-data.nlm.nih.gov/public-release-files/dm_spl_release_human_rx_part5.zip
           media_type: application/zip
           metadata:
             label_lane: human_prescription
             part: "5/6"
-            expected_spl_count: "8942"
-            source_md5: 3d8d549871dd30e71833857ad809d81f
-            release_last_modified: "2026-07-17"
+            expected_spl_count: "8976"
+            source_md5: a1e708238f005d8b7dea2fbc1d654843
+            release_last_modified: "2026-07-21"
         - uri: https://dailymed-data.nlm.nih.gov/public-release-files/dm_spl_release_human_rx_part6.zip
           media_type: application/zip
           metadata:
             label_lane: human_prescription
             part: "6/6"
-            expected_spl_count: "3706"
-            source_md5: a62c67777009a8e32c1b612f2bb19aae
-            release_last_modified: "2026-07-17"
+            expected_spl_count: "3700"
+            source_md5: 2486b5445ac186fd7a67bdfa335b6534
+            release_last_modified: "2026-07-21"
         - uri: https://dailymed-data.nlm.nih.gov/public-release-files/dm_spl_release_human_otc_part1.zip
           media_type: application/zip
           metadata:
@@ -70,7 +70,7 @@ sources:
             part: "1/11"
             expected_spl_count: "12140"
             source_md5: ef17d7ac6a0c9094ef0fe0cb78462ad1
-            release_last_modified: "2026-07-17"
+            release_last_modified: "2026-07-21"
         - uri: https://dailymed-data.nlm.nih.gov/public-release-files/dm_spl_release_human_otc_part2.zip
           media_type: application/zip
           metadata:
@@ -78,7 +78,7 @@ sources:
             part: "2/11"
             expected_spl_count: "8821"
             source_md5: 4a031f16f1fd0341a69dac721848b1fb
-            release_last_modified: "2026-07-17"
+            release_last_modified: "2026-07-21"
         - uri: https://dailymed-data.nlm.nih.gov/public-release-files/dm_spl_release_human_otc_part3.zip
           media_type: application/zip
           metadata:
@@ -86,7 +86,7 @@ sources:
             part: "3/11"
             expected_spl_count: "6062"
             source_md5: d7ff9763f3fb7125fdd0d8df677a13be
-            release_last_modified: "2026-07-17"
+            release_last_modified: "2026-07-21"
         - uri: https://dailymed-data.nlm.nih.gov/public-release-files/dm_spl_release_human_otc_part4.zip
           media_type: application/zip
           metadata:
@@ -94,7 +94,7 @@ sources:
             part: "4/11"
             expected_spl_count: "6337"
             source_md5: a34327d4dc4d1ad63e64058537c097a9
-            release_last_modified: "2026-07-17"
+            release_last_modified: "2026-07-21"
         - uri: https://dailymed-data.nlm.nih.gov/public-release-files/dm_spl_release_human_otc_part5.zip
           media_type: application/zip
           metadata:
@@ -102,52 +102,52 @@ sources:
             part: "5/11"
             expected_spl_count: "7160"
             source_md5: 72929c8b996faaabde4432df9b5818be
-            release_last_modified: "2026-07-17"
+            release_last_modified: "2026-07-21"
         - uri: https://dailymed-data.nlm.nih.gov/public-release-files/dm_spl_release_human_otc_part6.zip
           media_type: application/zip
           metadata:
             label_lane: human_otc
             part: "6/11"
-            expected_spl_count: "7773"
-            source_md5: f412fcf7ea78fdbbb1c31fcad8a60136
-            release_last_modified: "2026-07-17"
+            expected_spl_count: "7772"
+            source_md5: 784b5921328be8f5023e7390f45a4e54
+            release_last_modified: "2026-07-21"
         - uri: https://dailymed-data.nlm.nih.gov/public-release-files/dm_spl_release_human_otc_part7.zip
           media_type: application/zip
           metadata:
             label_lane: human_otc
             part: "7/11"
-            expected_spl_count: "10427"
-            source_md5: 17a453841683d2c12fa091eacf4be0d1
-            release_last_modified: "2026-07-17"
+            expected_spl_count: "10420"
+            source_md5: 346f9034957f6c025355295f6626baca
+            release_last_modified: "2026-07-21"
         - uri: https://dailymed-data.nlm.nih.gov/public-release-files/dm_spl_release_human_otc_part8.zip
           media_type: application/zip
           metadata:
             label_lane: human_otc
             part: "8/11"
-            expected_spl_count: "7625"
-            source_md5: 1ddd660aabab33db1ce46643f233d0e6
-            release_last_modified: "2026-07-17"
+            expected_spl_count: "7617"
+            source_md5: da83352b1b5e5964f61c122cc01ae0d8
+            release_last_modified: "2026-07-21"
         - uri: https://dailymed-data.nlm.nih.gov/public-release-files/dm_spl_release_human_otc_part9.zip
           media_type: application/zip
           metadata:
             label_lane: human_otc
             part: "9/11"
-            expected_spl_count: "7794"
-            source_md5: adb46621d6973fd7595deffb283403ff
-            release_last_modified: "2026-07-17"
+            expected_spl_count: "7822"
+            source_md5: 3e8a83853be1393360bbedffad30c05e
+            release_last_modified: "2026-07-21"
         - uri: https://dailymed-data.nlm.nih.gov/public-release-files/dm_spl_release_human_otc_part10.zip
           media_type: application/zip
           metadata:
             label_lane: human_otc
             part: "10/11"
-            expected_spl_count: "8312"
-            source_md5: 403117c5837143410e46d69e342316f1
-            release_last_modified: "2026-07-17"
+            expected_spl_count: "8309"
+            source_md5: fd75f29b5c7fc9fd69cafe12d19a96d7
+            release_last_modified: "2026-07-21"
         - uri: https://dailymed-data.nlm.nih.gov/public-release-files/dm_spl_release_human_otc_part11.zip
           media_type: application/zip
           metadata:
             label_lane: human_otc
             part: "11/11"
-            expected_spl_count: "6266"
-            source_md5: d5c42f72b5c19f21645fdd75e568b24e
-            release_last_modified: "2026-07-17"
+            expected_spl_count: "6304"
+            source_md5: 4049ca8e9f09009eb6a51423ea17b22e
+            release_last_modified: "2026-07-21"

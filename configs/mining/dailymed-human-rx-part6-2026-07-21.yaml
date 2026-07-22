@@ -1,0 +1,28 @@
+# Execution-sized tranche from the pinned full human prescription release.
+#
+# This plan exercises the exact bulk connector/parser contract used by the 17-part
+# release while fitting the current workstation. It is training/evaluation evidence,
+# not a claim that the complete DailyMed human release has been processed.
+schema_version: medical-mining-plan.v1
+registry: ../../data/sources/mining_registry.yaml
+work_dir: ../../outputs/mining/dailymed-human-rx-part6-2026-07-21
+artifact_store:
+  # SCALING: callers choose a local, external-volume, or S3-compatible CAS root.
+  # The source and derived manifests contain only content identities, never this mount path.
+  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  storage_options: {}
+  encrypted_at_rest: false
+sources:
+  - source_id: dailymed
+    source_version: full-human-rx-part6-2026-07-21
+    parse_documents: true
+    parameters:
+      artifacts:
+        - uri: https://dailymed-data.nlm.nih.gov/public-release-files/dm_spl_release_human_rx_part6.zip
+          media_type: application/zip
+          metadata:
+            label_lane: human_prescription
+            part: "6/6"
+            expected_spl_count: "3700"
+            source_md5: 2486b5445ac186fd7a67bdfa335b6534
+            release_last_modified: "2026-07-21"
