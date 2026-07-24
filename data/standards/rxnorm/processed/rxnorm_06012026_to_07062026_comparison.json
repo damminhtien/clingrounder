@@ -27,8 +27,9 @@
     "status_changes": 0
   },
   "decision": {
-    "status": "imported_not_promoted",
-    "reason": "The July release is structurally valid and improves fallback coverage, but the locked June Phase 1 baseline must remain reproducible until a controlled ablation approves promotion."
+    "status": "promoted",
+    "promoted_date": "2026-07-25",
+    "reason": "Runtime full-terminology profiles are pinned to the audited July prescribable and full sources; June remains available only for historical reproduction."
   },
   "raw_bundle": {
     "archive_member_roots": [

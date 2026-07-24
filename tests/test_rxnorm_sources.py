@@ -6,16 +6,18 @@ from pathlib import Path
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.rxnorm_sources import (
+    RXNORM_CURRENT_FULL_SOURCE_ID,
+    RXNORM_CURRENT_PRESCRIBABLE_SOURCE_ID,
+    RXNORM_CURRENT_RELEASE_DATE,
     RXNORM_ENRICHMENT_TTYS,
     RXNORM_FULL_FALLBACK_TTYS,
-    RXNORM_FULL_2026_06_01_SOURCE_ID,
-    RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID,
     build_rxnorm_concept_rows,
     parse_rxnorm_rxnconso,
     parse_rxnorm_rxnrel,
     parse_rxnorm_rxnsat,
     profile_rxnorm_release,
     resolve_rxnorm_archive_member_root,
+    rxnorm_source_policy,
 )
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 
@@ -29,7 +31,7 @@ def test_parse_rxnorm_rxnconso_filters_and_builds_dictionary_rows(tmp_path: Path
             _rxnconso_line("1000", "IN", "External Source Drug", sab="MSH"),
         ]
     )
-    zip_path = tmp_path / "RxNorm_full_prescribe_06012026.zip"
+    zip_path = tmp_path / "RxNorm_full_07062026.zip"
     with zipfile.ZipFile(zip_path, "w") as archive:
         archive.writestr("rrf/RXNCONSO.RRF", rxnconso)
 
@@ -46,12 +48,12 @@ def test_parse_rxnorm_rxnconso_filters_and_builds_dictionary_rows(tmp_path: Path
     assert row["canonical_name"] == "Amlodipine 10 MG Oral Tablet"
     assert row["aliases"] == ["Amlodipine"]
     assert row["rxnorm_tty"] == "SCD"
-    assert row["source"] == RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID
+    assert row["source"] == RXNORM_CURRENT_PRESCRIBABLE_SOURCE_ID
     assert row["rxnorm_status"] == "active"
 
 
 def test_build_rxnorm_rows_enriches_relations_and_attributes(tmp_path: Path) -> None:
-    zip_path = tmp_path / "RxNorm_full_prescribe_06012026.zip"
+    zip_path = tmp_path / "RxNorm_full_07062026.zip"
     with zipfile.ZipFile(zip_path, "w") as archive:
         archive.writestr(
             "rrf/RXNCONSO.RRF",
@@ -111,8 +113,8 @@ def test_build_rxnorm_rows_enriches_relations_and_attributes(tmp_path: Path) -> 
 
 
 def test_import_rxnorm_dictionary_cli_accepts_prescribable_and_full_sources(tmp_path: Path) -> None:
-    prescribable_zip = tmp_path / "RxNorm_full_prescribe_06012026.zip"
-    full_zip = tmp_path / "RxNorm_full_06012026.zip"
+    prescribable_zip = tmp_path / "RxNorm_prescribable_07062026.zip"
+    full_zip = tmp_path / "RxNorm_full_07062026.zip"
     with zipfile.ZipFile(prescribable_zip, "w") as archive:
         archive.writestr("RXNCONSO.RRF", _rxnconso_line("308135", "SCD", "Amlodipine 10 MG Oral Tablet"))
         archive.writestr("RXNREL.RRF", _rxnrel_line("6809", "308135", rel="RO", rela="HAS_INGREDIENT"))
@@ -147,8 +149,11 @@ def test_import_rxnorm_dictionary_cli_accepts_prescribable_and_full_sources(tmp_
     amlodipine = store.by_concept_id["RXNORM:308135"]
 
     assert summary["output"] == str(output_path)
-    assert manifest["source_counts"][RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID] == 1
-    assert manifest["source_counts"][RXNORM_FULL_2026_06_01_SOURCE_ID] == 1
+    assert manifest["source_counts"][RXNORM_CURRENT_PRESCRIBABLE_SOURCE_ID] == 1
+    assert manifest["source_counts"][RXNORM_CURRENT_FULL_SOURCE_ID] == 1
+    assert manifest["source_policy"]["source"]["release_date"] == (
+        RXNORM_CURRENT_RELEASE_DATE
+    )
     assert manifest["release_profiles"][0]["required_files"]["RXNREL.RRF"] is True
     assert manifest["release_profiles"][0]["rxnrel"]["rela_counts"]["HAS_INGREDIENT"] == 1
     assert manifest["release_profiles"][0]["rxnsat"]["attribute_counts"]["TTY"] == 1
@@ -160,7 +165,7 @@ def test_import_rxnorm_dictionary_cli_accepts_prescribable_and_full_sources(tmp_
 
 
 def test_profile_rxnorm_release_counts_conso_rel_and_sat(tmp_path: Path) -> None:
-    zip_path = tmp_path / "RxNorm_full_prescribe_06012026.zip"
+    zip_path = tmp_path / "RxNorm_full_07062026.zip"
     with zipfile.ZipFile(zip_path, "w") as archive:
         archive.writestr(
             "rrf/RXNCONSO.RRF",
@@ -241,6 +246,19 @@ def test_bundle_selects_full_and_prescribable_rrf_subtrees(tmp_path: Path) -> No
     )
     assert full_profile["rxnconso"]["accepted_concepts"] == 2
     assert profile_rxnorm_release(zip_path, archive_member_root=prescribe_root)["rxnconso"]["accepted_concepts"] == 1
+
+
+def test_default_rxnorm_policy_is_the_current_july_release() -> None:
+    source = rxnorm_source_policy()["source"]
+
+    assert source == {
+        "fallback_file": "RxNorm_full_07062026.zip",
+        "fallback_source_id": "rxnorm_full_2026_07_06",
+        "primary_file": "RxNorm_full_07062026.zip",
+        "primary_source_id": "rxnorm_prescribable_2026_07_06",
+        "release_date": "2026-07-06",
+        "source": "NLM RxNorm",
+    }
 
 
 def _rxnconso_line(

@@ -15,13 +15,19 @@ from medical_kg_nlp.utils.io import write_jsonl
 
 RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID = "rxnorm_prescribable_2026_06_01"
 RXNORM_FULL_2026_06_01_SOURCE_ID = "rxnorm_full_2026_06_01"
+RXNORM_PRESCRIBABLE_2026_07_06_SOURCE_ID = "rxnorm_prescribable_2026_07_06"
+RXNORM_FULL_2026_07_06_SOURCE_ID = "rxnorm_full_2026_07_06"
+RXNORM_CURRENT_PRESCRIBABLE_SOURCE_ID = RXNORM_PRESCRIBABLE_2026_07_06_SOURCE_ID
+RXNORM_CURRENT_FULL_SOURCE_ID = RXNORM_FULL_2026_07_06_SOURCE_ID
+RXNORM_CURRENT_RELEASE_DATE = "2026-07-06"
+RXNORM_CURRENT_ARCHIVE_FILE = "RxNorm_full_07062026.zip"
 RXNORM_2026_SOURCE = {
-    "primary_source_id": RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID,
-    "fallback_source_id": RXNORM_FULL_2026_06_01_SOURCE_ID,
+    "primary_source_id": RXNORM_CURRENT_PRESCRIBABLE_SOURCE_ID,
+    "fallback_source_id": RXNORM_CURRENT_FULL_SOURCE_ID,
     "source": "NLM RxNorm",
-    "release_date": "2026-06-01",
-    "primary_file": "RxNorm_full_prescribe_06012026.zip",
-    "fallback_file": "RxNorm_full_06012026.zip",
+    "release_date": RXNORM_CURRENT_RELEASE_DATE,
+    "primary_file": RXNORM_CURRENT_ARCHIVE_FILE,
+    "fallback_file": RXNORM_CURRENT_ARCHIVE_FILE,
 }
 RXNORM_DEFAULT_TTYS = frozenset({"SCD", "SBD", "IN", "PIN", "MIN", "SCDF", "SBDF", "GPCK", "BPCK"})
 RXNORM_FULL_FALLBACK_TTYS = frozenset({*RXNORM_DEFAULT_TTYS, "BN"})
@@ -91,7 +97,7 @@ class RxNormSourceAttribute:
 def parse_rxnorm_rxnconso(
     path: str | Path,
     *,
-    source_id: str = RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID,
+    source_id: str = RXNORM_CURRENT_PRESCRIBABLE_SOURCE_ID,
     allowed_ttys: Iterable[str] = RXNORM_DEFAULT_TTYS,
     archive_member_root: str | None = None,
 ) -> list[RxNormSourceTerm]:
@@ -108,7 +114,7 @@ def parse_rxnorm_rxnconso(
 def parse_rxnorm_rxnrel(
     path: str | Path,
     *,
-    source_id: str = RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID,
+    source_id: str = RXNORM_CURRENT_PRESCRIBABLE_SOURCE_ID,
     archive_member_root: str | None = None,
 ) -> list[RxNormSourceRelation]:
     relations: dict[tuple[str, str, str], RxNormSourceRelation] = {}
@@ -123,7 +129,7 @@ def parse_rxnorm_rxnrel(
 def parse_rxnorm_rxnsat(
     path: str | Path,
     *,
-    source_id: str = RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID,
+    source_id: str = RXNORM_CURRENT_PRESCRIBABLE_SOURCE_ID,
     archive_member_root: str | None = None,
 ) -> list[RxNormSourceAttribute]:
     attributes: dict[tuple[str, str, str], RxNormSourceAttribute] = {}
@@ -142,6 +148,8 @@ def build_rxnorm_concept_rows(
     relations: Iterable[RxNormSourceRelation] = (),
     attributes: Iterable[RxNormSourceAttribute] = (),
     source_priority: Sequence[str] = (
+        RXNORM_CURRENT_PRESCRIBABLE_SOURCE_ID,
+        RXNORM_CURRENT_FULL_SOURCE_ID,
         RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID,
         RXNORM_FULL_2026_06_01_SOURCE_ID,
     ),
@@ -218,11 +226,11 @@ def write_rxnorm_import_manifest(
 
 def rxnorm_source_policy(
     *,
-    primary_source_id: str = RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID,
-    fallback_source_id: str = RXNORM_FULL_2026_06_01_SOURCE_ID,
-    release_date: str = "2026-06-01",
-    primary_file: str = "RxNorm_full_prescribe_06012026.zip",
-    fallback_file: str = "RxNorm_full_06012026.zip",
+    primary_source_id: str = RXNORM_CURRENT_PRESCRIBABLE_SOURCE_ID,
+    fallback_source_id: str = RXNORM_CURRENT_FULL_SOURCE_ID,
+    release_date: str = RXNORM_CURRENT_RELEASE_DATE,
+    primary_file: str = RXNORM_CURRENT_ARCHIVE_FILE,
+    fallback_file: str = RXNORM_CURRENT_ARCHIVE_FILE,
 ) -> dict[str, Any]:
     source = dict(RXNORM_2026_SOURCE)
     source.update(

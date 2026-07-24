@@ -31,22 +31,22 @@ _DEFAULT_LOCAL_FILES: tuple[dict[str, Any], ...] = (
         "required": True,
     },
     {
-        "source_id": "rxnorm_prescribable_2026_06_01",
+        "source_id": "rxnorm_prescribable_2026_07_06",
         "role": "raw_zip",
-        "path": "data/standards/rxnorm/raw/RxNorm_full_prescribe_06012026.zip",
+        "path": "data/standards/rxnorm/raw/RxNorm_full_07062026.zip",
         "required": True,
     },
     {
-        "source_id": "rxnorm_prescribable_2026_06_01",
+        "source_id": "rxnorm_prescribable_2026_07_06",
         "role": "processed_concepts_jsonl",
-        "path": "data/standards/rxnorm/processed/rxnorm_prescribable_06012026_concepts.jsonl",
+        "path": "data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl",
         "required": True,
     },
     {
-        "source_id": "rxnorm_full_2026_06_01",
-        "role": "raw_zip",
-        "path": "data/standards/rxnorm/raw/RxNorm_full_06012026.zip",
-        "required": False,
+        "source_id": "rxnorm_full_2026_07_06",
+        "role": "processed_concepts_jsonl",
+        "path": "data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl",
+        "required": True,
     },
 )
 
@@ -143,30 +143,21 @@ def _parse_rxnorm_release(value: str) -> str | dict[str, str]:
 
 
 def _default_rxnorm_releases() -> list[dict[str, str]]:
-    releases = [
-        {
-            "path": "data/standards/rxnorm/raw/RxNorm_full_prescribe_06012026.zip",
-            "archive_member_root": "rrf",
-            "content": "prescribable",
-        }
-    ]
     july_bundle = Path("data/standards/rxnorm/raw/RxNorm_full_07062026.zip")
-    if july_bundle.exists():
-        releases.extend(
-            [
-                {
-                    "path": str(july_bundle),
-                    "archive_member_root": "prescribe/rrf",
-                    "content": "prescribable",
-                },
-                {
-                    "path": str(july_bundle),
-                    "archive_member_root": "rrf",
-                    "content": "full",
-                },
-            ]
-        )
-    return releases
+    if not july_bundle.exists():
+        return []
+    return [
+        {
+            "path": str(july_bundle),
+            "archive_member_root": "prescribe/rrf",
+            "content": "prescribable",
+        },
+        {
+            "path": str(july_bundle),
+            "archive_member_root": "rrf",
+            "content": "full",
+        },
+    ]
 
 
 if __name__ == "__main__":

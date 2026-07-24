@@ -154,15 +154,13 @@ indexed with `scripts/build_indexes.py`.
 ## RxNorm Source Import
 
 Use `scripts/import_rxnorm_dictionary.py` when local NLM RxNorm release files are available. The
-reproducible Phase 1 baseline remains locked to:
+current runtime release is pinned to the NLM July 6, 2026 full bundle:
 
-- primary: `RxNorm_full_prescribe_06012026.zip`;
-- fallback: `RxNorm_full_06012026.zip`.
+- primary: `prescribe/rrf/` Current Prescribable Content;
+- fallback: `rrf/` full monthly terminology.
 
-The July 6 full bundle is imported as a versioned promotion candidate, not silently substituted
-into that baseline. Its root `rrf/` subtree contains the full release and `prescribe/rrf/` contains
-Current Prescribable Content. The importer detects and isolates the requested subtree so rows from
-the two products are never mixed by filename alone.
+June remains available only for historical reproduction. The importer detects and isolates the
+requested subtree so rows from the two July products are never mixed by filename alone.
 
 The importer reads `RXNCONSO.RRF`, filters to active `SAB=RXNORM` terms, and prefers TTY values in
 this order: `SCD`, `SBD`, `IN`, `PIN`, `MIN`, `SCDF`, `SBDF`, `GPCK`, `BPCK`. Full-release fallback
@@ -173,32 +171,16 @@ for ontology and QA use; it is not added to alias matching.
 
 ```bash
 python scripts/import_rxnorm_dictionary.py \
-  --prescribable-rxnorm data/standards/rxnorm/raw/RxNorm_full_prescribe_06012026.zip \
-  --full-rxnorm data/standards/rxnorm/raw/RxNorm_full_06012026.zip \
-  --output data/standards/rxnorm/processed/rxnorm_concepts.jsonl \
-  --manifest data/standards/rxnorm/processed/rxnorm_import_manifest.json
+  --prescribable-rxnorm data/standards/rxnorm/raw/RxNorm_full_07062026.zip \
+  --output data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl \
+  --manifest data/standards/rxnorm/processed/rxnorm_prescribable_07062026_import_manifest.json
 ```
 
-Import the July bundle into separate candidate layers:
+Import the full fallback from the same pinned bundle:
 
 ```bash
 python scripts/import_rxnorm_dictionary.py \
-  --prescribable-rxnorm data/standards/rxnorm/raw/RxNorm_full_07062026.zip \
-  --prescribable-source-id rxnorm_prescribable_2026_07_06 \
-  --full-source-id rxnorm_full_2026_07_06 \
-  --release-date 2026-07-06 \
-  --primary-file RxNorm_full_07062026.zip \
-  --fallback-file RxNorm_full_07062026.zip \
-  --output data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl \
-  --manifest data/standards/rxnorm/processed/rxnorm_prescribable_07062026_import_manifest.json
-
-python scripts/import_rxnorm_dictionary.py \
   --full-rxnorm data/standards/rxnorm/raw/RxNorm_full_07062026.zip \
-  --prescribable-source-id rxnorm_prescribable_2026_07_06 \
-  --full-source-id rxnorm_full_2026_07_06 \
-  --release-date 2026-07-06 \
-  --primary-file RxNorm_full_07062026.zip \
-  --fallback-file RxNorm_full_07062026.zip \
   --output data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl \
   --manifest data/standards/rxnorm/processed/rxnorm_full_07062026_import_manifest.json
 ```
@@ -230,7 +212,7 @@ exports procedures.
 python scripts/merge_standard_dictionaries.py \
   --base data/dictionaries/seed_concepts.jsonl \
   --standard data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
-  --standard data/standards/rxnorm/processed/rxnorm_prescribable_06012026_concepts.jsonl \
+  --standard data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl \
   --standard data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl \
   --phase1-input-dir data/raw/input \
   --allow-new-semantic-type DISEASE \
@@ -251,10 +233,10 @@ python scripts/build_indexes.py \
 Keep full standards separate from runtime dictionaries:
 
 - `data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl` is the full TT06 ICD layer.
-- `data/standards/rxnorm/processed/rxnorm_prescribable_06012026_concepts.jsonl` is the full
-  imported June RxNorm prescribable layer and locked Phase 1 baseline.
 - `data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl` and
-  `rxnorm_full_07062026_concepts.jsonl` are audited July promotion candidates.
+  `rxnorm_full_07062026_concepts.jsonl` are the current audited July primary/fallback layers.
+- `data/standards/rxnorm/processed/rxnorm_prescribable_06012026_concepts.jsonl` is retained only
+  to reproduce historical experiments.
 - `data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl` is the
   reviewed Vietnamese LOCAL symptom, lab, and procedure layer.
 - `data/standards/phase1_reviewed/allowed_standard_concepts.tsv` is a reviewed exception list for
@@ -323,7 +305,7 @@ python scripts/mine_vietnamese_aliases.py \
   --input-dir data/raw/input \
   --runtime-dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl \
   --standard-dictionary data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
-  --standard-dictionary data/standards/rxnorm/processed/rxnorm_prescribable_06012026_concepts.jsonl \
+  --standard-dictionary data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl \
   --standard-dictionary data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl \
   --output-dir outputs/source_audit/alias_mining
 ```

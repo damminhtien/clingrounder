@@ -9,10 +9,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from medical_kg_nlp.dictionaries.rxnorm_sources import (
-    RXNORM_FULL_2026_06_01_SOURCE_ID,
+    RXNORM_CURRENT_ARCHIVE_FILE,
+    RXNORM_CURRENT_FULL_SOURCE_ID,
+    RXNORM_CURRENT_PRESCRIBABLE_SOURCE_ID,
+    RXNORM_CURRENT_RELEASE_DATE,
     RXNORM_ENRICHMENT_TTYS,
     RXNORM_FULL_FALLBACK_TTYS,
-    RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID,
     build_rxnorm_concept_rows,
     parse_rxnorm_rxnconso,
     parse_rxnorm_rxnrel,
@@ -46,17 +48,21 @@ def main() -> None:
     )
     parser.add_argument(
         "--prescribable-source-id",
-        default=RXNORM_PRESCRIBABLE_2026_06_01_SOURCE_ID,
+        default=RXNORM_CURRENT_PRESCRIBABLE_SOURCE_ID,
         help="Provenance source id assigned to prescribable rows.",
     )
     parser.add_argument(
         "--full-source-id",
-        default=RXNORM_FULL_2026_06_01_SOURCE_ID,
+        default=RXNORM_CURRENT_FULL_SOURCE_ID,
         help="Provenance source id assigned to full-release rows.",
     )
-    parser.add_argument("--release-date", default="2026-06-01", help="ISO release date for the import manifest.")
-    parser.add_argument("--primary-file", default="RxNorm_full_prescribe_06012026.zip")
-    parser.add_argument("--fallback-file", default="RxNorm_full_06012026.zip")
+    parser.add_argument(
+        "--release-date",
+        default=RXNORM_CURRENT_RELEASE_DATE,
+        help="ISO release date for the import manifest.",
+    )
+    parser.add_argument("--primary-file", default=RXNORM_CURRENT_ARCHIVE_FILE)
+    parser.add_argument("--fallback-file", default=RXNORM_CURRENT_ARCHIVE_FILE)
     parser.add_argument("--output", required=True, help="Output RxNorm dictionary JSONL.")
     parser.add_argument("--manifest", help="Optional output import manifest JSON.")
     args = parser.parse_args()

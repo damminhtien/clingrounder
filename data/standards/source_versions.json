@@ -13,23 +13,21 @@
   },
   "rxnorm": {
     "source": "NLM RxNorm",
-    "release_date": "2026-06-01",
-    "primary_source_id": "rxnorm_prescribable_2026_06_01",
-    "primary_file": "RxNorm_full_prescribe_06012026.zip",
-    "fallback_source_id": "rxnorm_full_2026_06_01",
-    "fallback_file": "RxNorm_full_06012026.zip",
+    "release_date": "2026-07-06",
+    "primary_source_id": "rxnorm_prescribable_2026_07_06",
+    "primary_file": "data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl",
+    "fallback_source_id": "rxnorm_full_2026_07_06",
+    "fallback_file": "data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl",
+    "raw_file": "data/standards/rxnorm/raw/RxNorm_full_07062026.zip",
+    "raw_sha256": "53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c",
     "tty_priority": ["SCD", "SBD", "IN", "PIN", "MIN", "SCDF", "SBDF", "GPCK", "BPCK"],
-    "notes": "Use prescribable RxNorm as the primary drug dictionary and full monthly release as fallback coverage.",
-    "candidate_release": {
-      "status": "imported_not_promoted",
-      "release_date": "2026-07-06",
-      "primary_source_id": "rxnorm_prescribable_2026_07_06",
-      "fallback_source_id": "rxnorm_full_2026_07_06",
-      "raw_file": "data/standards/rxnorm/raw/RxNorm_full_07062026.zip",
-      "primary_file": "data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl",
-      "fallback_file": "data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl",
-      "comparison_file": "data/standards/rxnorm/processed/rxnorm_06012026_to_07062026_comparison.json",
-      "notes": "July is imported and audited as a promotion candidate; the reproducible Phase 1 baseline remains locked to June until an ablation approves the switch."
+    "notes": "Use July 6 Current Prescribable Content as primary and the same release's full terminology as fallback coverage.",
+    "previous_release": {
+      "status": "superseded",
+      "release_date": "2026-06-01",
+      "primary_source_id": "rxnorm_prescribable_2026_06_01",
+      "fallback_source_id": "rxnorm_full_2026_06_01",
+      "comparison_file": "data/standards/rxnorm/processed/rxnorm_06012026_to_07062026_comparison.json"
     }
   },
   "vn_clinical_lexicon": {

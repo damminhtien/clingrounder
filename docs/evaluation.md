@@ -72,8 +72,8 @@ uv run medical-kg benchmark phase1 submission \
 
 ### Full terminology runtime
 
-`configs/phase1_full.yaml` uses the full processed RxNorm release for normalization and exact
-retrieval. It does not use the seed dictionary as the complete linking database. The smaller
+`configs/phase1_full.yaml` uses the full TT06 ICD-10 and July 6, 2026 RxNorm releases for
+normalization. It does not use the seed dictionary as the complete linking database. The smaller
 recognition store is intentional: NER trigger coverage and normalization vocabulary are different
 precision controls.
 
@@ -84,6 +84,7 @@ more candidates.
 
 ```bash
 uv run medical-kg terminology build \
+  --source data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
   --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl \
   --cache-dir .cache/medical-kg/terminology
 
@@ -99,6 +100,16 @@ The benchmark sums counters across documents, reports initialization separately 
 and hashes output ZIP files. Matching ZIP hashes are the required regression check for a pure
 runtime optimization. See [ADR 0005](decisions/0005-terminology-retrieval-scaling.md) for the
 database, FTS, and ANN decision.
+
+`medical-kg terminology benchmark` reports rank metrics plus a fixed lexical-score abstention
+curve. Treat query semantics explicitly:
+
+- CodiEsp codes absent from TT06 are coverage gaps, not retriever errors, and must not calibrate an
+  emission threshold.
+- DailyMed bare-name queries linked to one or more specific products measure candidate recall, not
+  top-1 product assignment. A product-level target requires strength/form evidence.
+- BTC examples remain executable benchmark fixtures under `benchmarks/phase1`; they do not provide
+  default recognition terms or reviewed linking memory to the reusable pipeline.
 
 The profiler output is intended to be a cacheable experiment artifact. Use it to compare train/dev
 entity distributions, span lengths, context cue frequency, dictionary coverage, and unseen-code
