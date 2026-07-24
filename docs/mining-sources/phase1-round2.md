@@ -149,8 +149,10 @@ The public grader evaluated the exact clean-rule ZIP on 2026-07-24:
 
 The submitted file SHA-256 was
 `97a471d4d42ebaa12c3db2a1675e98695ca7714792d67c16e5edc7ac2af44a3d`, so the score is attached
-unambiguously to the artifact described above. The comparison crosses input rounds and therefore
-measures transfer failure, not a code regression.
+unambiguously to the artifact described above. The direct comparison to `43.2014` is nevertheless
+confounded: that Round 1 artifact used a pipeline/Qwen entity ensemble plus selective assertion and
+RxNorm overlays, while this artifact used the current rule pipeline and generic pipeline metadata.
+It therefore measures both a weaker artifact composition and Round 2 transfer failure.
 
 The output contained:
 
@@ -165,6 +167,22 @@ The output contained:
 | entities with assertions | `507` |
 | entities with candidates | `780` |
 | empty documents | `2` |
+
+The metadata policy differed materially from the Round 1 winner. The winning artifact emitted 354
+candidate values on 176 medication rows and no diagnosis candidates. The Round 2 rule artifact
+emitted 899 candidate values and coded every diagnosis and drug. This is a policy change, not only a
+corpus change.
+
+An explicit control run of the current configuration on the unchanged Round 1 input produced 2,028
+entities. It shared 1,890 of 2,002 entity identities with the prior rule-only proposal source, but
+only 1,508 of 2,809 identities with the `43.2014` public artifact. Consequently, the rule core is
+mostly stable against its comparable baseline; the `43.2014` composition was not frozen into the
+Round 2 run.
+
+Of the 1,909 Round 2 predictions, 1,387 lie inside lines reused exactly from Round 1 and 522 lie
+outside those lines. This is audit evidence only. Whether BTC annotates the complete mixed document
+or only labels inherited from source blocks remains unknown because the published specification
+does not define region-level annotation eligibility.
 
 Manual inspection of one novelty document found that the rule dictionary missed its central G6PD
 deficiency concept while emitting repeated secondary diagnoses. This is concrete evidence of
