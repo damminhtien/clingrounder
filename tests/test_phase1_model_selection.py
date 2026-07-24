@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -11,8 +12,10 @@ from medical_kg_nlp.benchmarks.phase1.model_selection import (
     Phase1ModelSelectionConfig,
     calibrate_phase1_model_thresholds,
     compare_phase1_ner_variants,
+    infer_phase1_development_predictions,
     load_phase1_development_documents,
 )
+from medical_kg_nlp.pipeline.runner import PipelineRunner
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.types import EntityType
@@ -70,6 +73,24 @@ def test_development_loader_never_opens_holdout_gold(tmp_path: Path) -> None:
     assert [document.document_id for document in documents] == ["1", "2"]
     assert [document.text for document in documents] == ["đau x", "hen"]
     assert all(document.metadata == {"split": "development"} for document in documents)
+
+
+def test_development_inference_uses_exact_loader_contract(tmp_path: Path) -> None:
+    config = _selection_fixture(tmp_path)
+
+    class FakeRunner:
+        def process_document(self, document: object) -> ClinicalPrediction:
+            document_id = str(getattr(document, "document_id"))
+            text = str(getattr(document, "text"))
+            return _prediction(document_id, text, [])
+
+    predictions = infer_phase1_development_predictions(
+        cast(PipelineRunner, FakeRunner()),
+        config=config,
+    )
+
+    assert list(predictions) == ["1", "2"]
+    assert predictions["1"].text_hash != predictions["2"].text_hash
 
 
 def test_variant_comparison_keeps_holdout_sealed_until_explicitly_opened(

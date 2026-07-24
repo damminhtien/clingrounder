@@ -21,6 +21,7 @@ from medical_kg_nlp.benchmarks.phase1.phase1 import (
 from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import load_phase1_output_source
 from medical_kg_nlp.mining.io import write_json
 from medical_kg_nlp.ontology.phase1 import PHASE1_ENTITY_TYPE_RULES
+from medical_kg_nlp.pipeline.runner import PipelineRunner
 from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.types import EntityType
@@ -34,6 +35,7 @@ __all__ = [
     "Phase1ModelSelectionConfig",
     "calibrate_phase1_model_thresholds",
     "compare_phase1_ner_variants",
+    "infer_phase1_development_predictions",
     "load_phase1_development_documents",
     "load_internal_predictions",
     "write_phase1_model_selection_report",
@@ -123,6 +125,24 @@ def load_phase1_development_documents(
         )
         for document_id in development_ids
     )
+
+
+def infer_phase1_development_predictions(
+    runner: PipelineRunner,
+    *,
+    config: Phase1ModelSelectionConfig | None = None,
+) -> dict[str, ClinicalPrediction]:
+    """Run one already-composed model over exactly the development documents."""
+
+    predictions: dict[str, ClinicalPrediction] = {}
+    for document in load_phase1_development_documents(config):
+        prediction = runner.process_document(document)
+        if prediction.document_id in predictions:
+            raise ValueError(
+                f"Duplicate development prediction for {prediction.document_id!r}"
+            )
+        predictions[prediction.document_id] = prediction
+    return predictions
 
 
 def calibrate_phase1_model_thresholds(

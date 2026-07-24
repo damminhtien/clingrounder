@@ -4,14 +4,19 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
+import json
 import platform
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path, PureWindowsPath
 from typing import Any, Literal
 
 from medical_kg_nlp.adapters.huggingface.runtime import OptionalModelDependencyError
 from medical_kg_nlp.training.config import TokenClassifierTrainingConfig
+from medical_kg_nlp.training.huggingface_token_classifier import (
+    verify_token_classifier_artifact,
+)
 from medical_kg_nlp.utils.hashing import sha256_file
 from medical_kg_nlp.utils.io import read_yaml
 
@@ -21,6 +26,7 @@ __all__ = [
     "assert_local_gpu_runtime",
     "inspect_local_runtime",
     "load_token_classifier_run_spec",
+    "verify_token_classifier_run_artifact",
 ]
 
 _COMMIT_SHA = re.compile(r"[0-9a-f]{40}")
@@ -235,6 +241,73 @@ def load_token_classifier_run_spec(path: str | Path) -> TokenClassifierRunSpec:
     )
 
 
+def verify_token_classifier_run_artifact(
+    spec: TokenClassifierRunSpec,
+) -> dict[str, Any]:
+    """Verify a trained GPU artifact against every immutable run input.
+
+    This check deliberately avoids importing Torch or Transformers. A transferred checkpoint must
+    pass it before development inference so a stale model directory cannot be calibrated against a
+    newer dataset, run spec, or dependency lock.
+    """
+
+    manifest_path = spec.training.output_dir / "run_manifest.json"
+    if not manifest_path.is_file():
+        raise ValueError(f"Token-classifier run manifest does not exist: {manifest_path}")
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest = _json_mapping(payload, "token-classifier run manifest")
+    if manifest.get("submission_eligible") is False or manifest.get("purpose") == "cpu_smoke":
+        raise ValueError("CPU-smoke token classifier cannot enter model selection")
+
+    model = _json_mapping(manifest.get("model"), "token-classifier model metadata")
+    expected_model_dir = spec.training.output_dir / "final-model"
+    if model.get("output") != spec.relative_path(expected_model_dir):
+        raise ValueError("Training manifest model output does not match the run specification")
+    if model.get("model_id") != spec.training.model_id:
+        raise ValueError("Training manifest model ID does not match the run specification")
+    if model.get("revision") != spec.training.revision:
+        raise ValueError("Training manifest model revision does not match the run specification")
+
+    run_spec = _json_mapping(
+        manifest.get("run_spec"),
+        "token-classifier run-spec provenance",
+    )
+    if run_spec.get("sha256") != sha256_file(spec.config_path):
+        raise ValueError("Training manifest run-spec SHA-256 does not match")
+    if run_spec.get("run_id") != spec.run_id:
+        raise ValueError("Training manifest run ID does not match")
+
+    environment = _json_mapping(
+        manifest.get("environment"),
+        "token-classifier environment provenance",
+    )
+    if environment.get("lock_sha256") != spec.environment_lock_sha256:
+        raise ValueError("Training manifest environment lock SHA-256 does not match")
+    if manifest.get("dataset_manifest_sha256") != sha256_file(
+        spec.training.dataset_manifest_path
+    ):
+        raise ValueError("Training manifest dataset-manifest SHA-256 does not match")
+
+    gpu_runtime = _json_mapping(
+        manifest.get("gpu_runtime"),
+        "token-classifier GPU provenance",
+    )
+    if gpu_runtime.get("precision") != spec.runtime.precision:
+        raise ValueError("Training manifest GPU precision does not match")
+
+    artifact = verify_token_classifier_artifact(expected_model_dir, manifest_path)
+    return {
+        "status": "verified",
+        "manifest": spec.relative_path(manifest_path),
+        "manifest_sha256": artifact["manifest_sha256"],
+        "model": spec.relative_path(expected_model_dir),
+        "model_id": spec.training.model_id,
+        "revision": spec.training.revision,
+        "fingerprint": artifact["fingerprint"],
+        "gpu_runtime": dict(gpu_runtime),
+    }
+
+
 def inspect_local_runtime(requirements: GPURequirements) -> dict[str, Any]:
     """Describe the host without importing Torch or allocating a CUDA context."""
 
@@ -300,6 +373,12 @@ def _mapping(raw: dict[str, Any], key: str) -> dict[str, Any]:
     value = raw.get(key)
     if not isinstance(value, dict):
         raise ValueError(f"Run spec {key} must be a mapping")
+    return value
+
+
+def _json_mapping(value: object, name: str) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{name} must be a JSON object")
     return value
 
 

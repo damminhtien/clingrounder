@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import argparse
 import json
-from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Literal, cast
 
 from medical_kg_nlp.training import (
     TokenClassifierRunSpec,
@@ -16,7 +15,7 @@ from medical_kg_nlp.training import (
     inspect_token_classifier_training_inputs,
     load_token_classifier_run_spec,
     train_huggingface_token_classifier,
-    verify_token_classifier_artifact,
+    verify_token_classifier_run_artifact,
     verify_saved_token_classifier,
 )
 from medical_kg_nlp.mining.io import write_json
@@ -134,42 +133,7 @@ def _inspect_trained_artifact(spec: TokenClassifierRunSpec) -> dict[str, object]
             "status": "absent",
             "manifest": spec.relative_path(manifest_path),
         }
-    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
-    manifest = _json_mapping(payload, "training manifest")
-    model = _json_mapping(manifest.get("model"), "training manifest model")
-    run_spec = _json_mapping(manifest.get("run_spec"), "training manifest run_spec")
-    environment = _json_mapping(
-        manifest.get("environment"),
-        "training manifest environment",
-    )
-
-    expected_model_path = spec.relative_path(spec.training.output_dir / "final-model")
-    if model.get("output") != expected_model_path:
-        raise ValueError("Training manifest model output does not match the run specification")
-    artifact = verify_token_classifier_artifact(
-        spec.training.output_dir / "final-model",
-        manifest_path,
-    )
-    if run_spec.get("sha256") != sha256_file(spec.config_path):
-        raise ValueError("Training manifest run-spec SHA-256 does not match")
-    if environment.get("lock_sha256") != spec.environment_lock_sha256:
-        raise ValueError("Training manifest environment lock SHA-256 does not match")
-    if manifest.get("dataset_manifest_sha256") != sha256_file(
-        spec.training.dataset_manifest_path
-    ):
-        raise ValueError("Training manifest dataset-manifest SHA-256 does not match")
-    return {
-        "status": "verified",
-        "manifest": spec.relative_path(manifest_path),
-        "model": expected_model_path,
-        "fingerprint": artifact["fingerprint"],
-    }
-
-
-def _json_mapping(value: object, name: str) -> Mapping[str, Any]:
-    if not isinstance(value, Mapping):
-        raise ValueError(f"{name} must be a JSON object")
-    return value
+    return dict(verify_token_classifier_run_artifact(spec))
 
 
 def validate_token_dataset(args: argparse.Namespace) -> int:

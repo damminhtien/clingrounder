@@ -13,6 +13,7 @@ from medical_kg_nlp.cli.commands import model as model_commands
 from medical_kg_nlp.training.run_spec import (
     assert_local_gpu_runtime,
     load_token_classifier_run_spec,
+    verify_token_classifier_run_artifact,
 )
 from medical_kg_nlp.training import fingerprint_model_directory
 from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
@@ -197,10 +198,16 @@ def test_inspection_verifies_returned_model_fingerprint(tmp_path: Path) -> None:
         "model": {
             "output": "outputs/model/final-model",
             "fingerprint": fingerprint,
+            "model_id": "local/model",
+            "revision": "a" * 40,
         },
-        "run_spec": {"sha256": sha256_file(config)},
+        "run_spec": {
+            "sha256": sha256_file(config),
+            "run_id": "fixture",
+        },
         "environment": {"lock_sha256": sha256_text(_FIXTURE_LOCK)},
         "dataset_manifest_sha256": sha256_file(tmp_path / "manifest.json"),
+        "gpu_runtime": {"precision": "bf16"},
     }
     manifest_path = tmp_path / "outputs" / "model" / "run_manifest.json"
     manifest_path.write_text(json.dumps(run_manifest), encoding="utf-8")
@@ -210,10 +217,39 @@ def test_inspection_verifies_returned_model_fingerprint(tmp_path: Path) -> None:
 
     assert report["status"] == "verified"
     assert report["fingerprint"] == fingerprint
+    assert verify_token_classifier_run_artifact(spec)["fingerprint"] == fingerprint
 
     (model_dir / "config.json").write_text('{"model_type":"changed"}\n', encoding="utf-8")
     with pytest.raises(ValueError, match="Saved model fingerprint mismatch"):
         model_commands._inspect_trained_artifact(spec)
+
+
+def test_run_artifact_rejects_cpu_smoke(tmp_path: Path) -> None:
+    config = tmp_path / "run.yaml"
+    _write_run_spec(config, revision="a" * 40)
+    (tmp_path / "manifest.json").write_text("{}\n", encoding="utf-8")
+    model_dir = tmp_path / "outputs" / "model" / "final-model"
+    model_dir.mkdir(parents=True)
+    (model_dir / "config.json").write_text("{}\n", encoding="utf-8")
+    manifest_path = tmp_path / "outputs" / "model" / "run_manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "purpose": "cpu_smoke",
+                "submission_eligible": False,
+                "model": {
+                    "output": "outputs/model/final-model",
+                    "fingerprint": fingerprint_model_directory(model_dir),
+                    "model_id": "local/model",
+                    "revision": "a" * 40,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="CPU-smoke"):
+        verify_token_classifier_run_artifact(load_token_classifier_run_spec(config))
 
 
 def _write_run_spec(

@@ -14,6 +14,7 @@ from medical_kg_nlp.training.run_spec import (
     assert_local_gpu_runtime,
     inspect_local_runtime,
     load_token_classifier_run_spec,
+    verify_token_classifier_run_artifact,
 )
 from medical_kg_nlp.training.span_dataset import (
     SpanDatasetSummary,
@@ -61,5 +62,6 @@ __all__ = [
     "train_huggingface_token_classifier",
     "validate_span_dataset_manifest",
     "verify_token_classifier_artifact",
+    "verify_token_classifier_run_artifact",
     "verify_saved_token_classifier",
 ]
