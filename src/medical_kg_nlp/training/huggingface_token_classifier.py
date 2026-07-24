@@ -41,6 +41,7 @@ from medical_kg_nlp.training.token_labels import (
 from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
 
 __all__ = [
+    "fingerprint_model_directory",
     "inspect_token_classifier_training_inputs",
     "train_huggingface_token_classifier",
     "verify_saved_token_classifier",
@@ -249,7 +250,7 @@ def train_huggingface_token_classifier(
     final_model_dir = config.output_dir / "final-model"
     trainer.save_model(str(final_model_dir))
     tokenizer.save_pretrained(str(final_model_dir))
-    model_fingerprint = _fingerprint_directory(final_model_dir)
+    model_fingerprint = fingerprint_model_directory(final_model_dir)
     completed_at = datetime.now(UTC).isoformat()
     manifest_configuration = config.to_dict(path_root=manifest_root)
     manifest: dict[str, Any] = {
@@ -490,13 +491,16 @@ def _validate_output_directory(config: TokenClassifierTrainingConfig) -> None:
     output.mkdir(parents=True, exist_ok=True)
 
 
-def _fingerprint_directory(path: Path) -> str:
+def fingerprint_model_directory(path: str | Path) -> str:
+    """Hash a saved model by relative file path and file content."""
+
+    root = Path(path)
     digest = hashlib.sha256()
-    files = sorted(value for value in path.rglob("*") if value.is_file())
+    files = sorted(value for value in root.rglob("*") if value.is_file())
     if not files:
-        raise ValueError(f"Saved model directory {path} is empty")
+        raise ValueError(f"Saved model directory {root} is missing or empty")
     for file_path in files:
-        relative = file_path.relative_to(path).as_posix()
+        relative = file_path.relative_to(root).as_posix()
         digest.update(relative.encode("utf-8"))
         digest.update(b"\0")
         digest.update(sha256_file(file_path).encode("ascii"))

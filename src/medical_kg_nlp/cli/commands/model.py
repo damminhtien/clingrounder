@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
 from medical_kg_nlp.training import (
+    TokenClassifierRunSpec,
     TokenClassifierTrainingConfig,
     assert_local_gpu_runtime,
+    fingerprint_model_directory,
     inspect_local_runtime,
     inspect_token_classifier_training_inputs,
     load_token_classifier_run_spec,
@@ -57,6 +60,7 @@ def inspect_token_classifier_run(args: argparse.Namespace) -> int:
                 },
                 "runtime_requirements": spec.runtime.to_dict(),
                 "local_runtime": inspect_local_runtime(spec.runtime),
+                "trained_artifact": _inspect_trained_artifact(spec),
                 "commands": {
                     "working_directory": "run_root",
                     "prefetch": list(spec.prefetch_command),
@@ -117,6 +121,60 @@ def train_token_classifier_run(args: argparse.Namespace) -> int:
         )
     )
     return 0
+
+
+def _inspect_trained_artifact(spec: TokenClassifierRunSpec) -> dict[str, object]:
+    """Verify a returned model without importing Torch or Transformers."""
+
+    manifest_path = spec.training.output_dir / "run_manifest.json"
+    if not manifest_path.is_file():
+        return {
+            "status": "absent",
+            "manifest": spec.relative_path(manifest_path),
+        }
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest = _json_mapping(payload, "training manifest")
+    model = _json_mapping(manifest.get("model"), "training manifest model")
+    run_spec = _json_mapping(manifest.get("run_spec"), "training manifest run_spec")
+    environment = _json_mapping(
+        manifest.get("environment"),
+        "training manifest environment",
+    )
+
+    expected_model_path = spec.relative_path(spec.training.output_dir / "final-model")
+    if model.get("output") != expected_model_path:
+        raise ValueError("Training manifest model output does not match the run specification")
+    expected_fingerprint = model.get("fingerprint")
+    if not isinstance(expected_fingerprint, str) or not expected_fingerprint:
+        raise ValueError("Training manifest model fingerprint is missing")
+    actual_fingerprint = fingerprint_model_directory(
+        spec.training.output_dir / "final-model"
+    )
+    if actual_fingerprint != expected_fingerprint:
+        raise ValueError(
+            "Saved model fingerprint mismatch: "
+            f"expected {expected_fingerprint}, got {actual_fingerprint}"
+        )
+    if run_spec.get("sha256") != sha256_file(spec.config_path):
+        raise ValueError("Training manifest run-spec SHA-256 does not match")
+    if environment.get("lock_sha256") != spec.environment_lock_sha256:
+        raise ValueError("Training manifest environment lock SHA-256 does not match")
+    if manifest.get("dataset_manifest_sha256") != sha256_file(
+        spec.training.dataset_manifest_path
+    ):
+        raise ValueError("Training manifest dataset-manifest SHA-256 does not match")
+    return {
+        "status": "verified",
+        "manifest": spec.relative_path(manifest_path),
+        "model": expected_model_path,
+        "fingerprint": actual_fingerprint,
+    }
+
+
+def _json_mapping(value: object, name: str) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{name} must be a JSON object")
+    return value
 
 
 def validate_token_dataset(args: argparse.Namespace) -> int:

@@ -14,7 +14,8 @@ from medical_kg_nlp.training.run_spec import (
     assert_local_gpu_runtime,
     load_token_classifier_run_spec,
 )
-from medical_kg_nlp.utils.hashing import sha256_text
+from medical_kg_nlp.training import fingerprint_model_directory
+from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
 
 _FIXTURE_LOCK = "version = 1\n"
 
@@ -171,6 +172,37 @@ def test_run_spec_rejects_environment_lock_drift(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="Environment lock SHA-256 mismatch"):
         load_token_classifier_run_spec(config)
+
+
+def test_inspection_verifies_returned_model_fingerprint(tmp_path: Path) -> None:
+    config = tmp_path / "run.yaml"
+    _write_run_spec(config, revision="a" * 40)
+    (tmp_path / "manifest.json").write_text("{}\n", encoding="utf-8")
+    model_dir = tmp_path / "outputs" / "model" / "final-model"
+    model_dir.mkdir(parents=True)
+    (model_dir / "config.json").write_text('{"model_type":"fixture"}\n', encoding="utf-8")
+    fingerprint = fingerprint_model_directory(model_dir)
+    run_manifest = {
+        "model": {
+            "output": "outputs/model/final-model",
+            "fingerprint": fingerprint,
+        },
+        "run_spec": {"sha256": sha256_file(config)},
+        "environment": {"lock_sha256": sha256_text(_FIXTURE_LOCK)},
+        "dataset_manifest_sha256": sha256_file(tmp_path / "manifest.json"),
+    }
+    manifest_path = tmp_path / "outputs" / "model" / "run_manifest.json"
+    manifest_path.write_text(json.dumps(run_manifest), encoding="utf-8")
+    spec = load_token_classifier_run_spec(config)
+
+    report = model_commands._inspect_trained_artifact(spec)
+
+    assert report["status"] == "verified"
+    assert report["fingerprint"] == fingerprint
+
+    (model_dir / "config.json").write_text('{"model_type":"changed"}\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="Saved model fingerprint mismatch"):
+        model_commands._inspect_trained_artifact(spec)
 
 
 def _write_run_spec(

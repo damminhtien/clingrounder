@@ -2,6 +2,7 @@
 
 from medical_kg_nlp.training.config import TokenClassifierTrainingConfig
 from medical_kg_nlp.training.huggingface_token_classifier import (
+    fingerprint_model_directory,
     inspect_token_classifier_training_inputs,
     train_huggingface_token_classifier,
     verify_saved_token_classifier,
@@ -48,6 +49,7 @@ __all__ = [
     "assert_local_gpu_runtime",
     "compute_bio_span_metrics",
     "decode_bio_spans",
+    "fingerprint_model_directory",
     "find_unaligned_annotations",
     "inspect_token_classifier_training_inputs",
     "inspect_local_runtime",
