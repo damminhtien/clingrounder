@@ -48,6 +48,33 @@ def test_candidate_merge_is_order_independent_and_deduplicates_output_code() -> 
     assert i10.sources == ("exact", "fuzzy")
 
 
+def test_single_source_fusion_preserves_lexical_score_for_linking_gate() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    generator = _retrieval(store)
+
+    merged = generator._merge([_candidate("concept-fts", "I10", 0.88, "bm25")])
+
+    assert len(merged) == 1
+    assert merged[0].score == 0.88
+    assert merged[0].sources == ("bm25",)
+
+
+def test_multi_source_fusion_adds_only_bounded_consensus_bonus() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    generator = _retrieval(store)
+
+    merged = generator._merge(
+        [
+            _candidate("concept-fts", "I10", 0.80, "bm25"),
+            _candidate("concept-fuzzy", "I10", 0.78, "fuzzy"),
+        ]
+    )
+
+    assert len(merged) == 1
+    assert 0.80 < merged[0].score <= 0.82
+    assert merged[0].sources == ("fuzzy", "bm25")
+
+
 def test_unique_exact_output_short_circuits_approximate_retrieval() -> None:
     store = DictionaryStore(
         [

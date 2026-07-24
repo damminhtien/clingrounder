@@ -21,6 +21,8 @@ __all__ = [
     "load_terminology_queries",
 ]
 
+_ABSTENTION_THRESHOLDS = (0.0, 0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95)
+
 
 @dataclass(frozen=True)
 class TerminologyQuery:
@@ -100,13 +102,17 @@ def evaluate_terminology_queries(
         latencies: list[float] = []
         for query in queries:
             started = perf_counter()
-            concepts = _query(repository, query, mode=mode, limit=limit)
+            concepts, scores = _query(repository, query, mode=mode, limit=limit)
             latencies.append((perf_counter() - started) * 1000.0)
-            codes = _ordered_codes(concepts)
+            codes, code_scores = _ordered_code_scores(concepts, scores)
             expected = set(query.expected_codes)
             rank = next(
                 (index for index, code in enumerate(codes, start=1) if code in expected),
                 None,
+            )
+            expected_score = max(
+                (score for code, score in zip(codes, code_scores) if code in expected),
+                default=None,
             )
             rows.append(
                 {
@@ -116,13 +122,18 @@ def evaluate_terminology_queries(
                     "code_system": query.code_system.value,
                     "expected_codes": list(query.expected_codes),
                     "candidate_codes": codes,
+                    "candidate_scores": code_scores,
                     "candidate_count": len(codes),
                     "expected_rank": rank,
+                    "expected_score": expected_score,
+                    "top_score": code_scores[0] if code_scores else None,
+                    "top1_correct": rank == 1,
                     "slices": list(query.slices),
                 }
             )
         mode_reports[mode] = {
             "metrics": _rank_metrics(rows),
+            "abstention_curve": _abstention_curve(rows),
             "slice_metrics": _slice_metrics(rows),
             "latency_ms": _latency_metrics(latencies),
             "errors": [row for row in rows if row["expected_rank"] is None],
@@ -137,7 +148,7 @@ def evaluate_terminology_queries(
         if repository.get_by_code(system, code) is None
     )
     return {
-        "schema_version": "terminology-retrieval-evaluation.v2",
+        "schema_version": "terminology-retrieval-evaluation.v3",
         "query_count": len(queries),
         "unique_mention_count": len({query.mention.casefold() for query in queries}),
         "entity_type_counts": dict(
@@ -164,39 +175,49 @@ def _query(
     *,
     mode: str,
     limit: int,
-) -> list[ConceptEntry]:
+) -> tuple[list[ConceptEntry], list[float]]:
     if mode == "exact":
-        return repository.exact_lookup(
+        concepts = repository.exact_lookup(
             query.mention,
             entity_type=query.entity_type,
             code_systems=(query.code_system,),
             limit=limit,
         )
+        return concepts, [1.0] * len(concepts)
     if mode == "toneless":
-        return repository.toneless_lookup(
+        concepts = repository.toneless_lookup(
             query.mention,
             entity_type=query.entity_type,
             code_systems=(query.code_system,),
             limit=limit,
         )
-    return repository.search(
+        return concepts, [0.92] * len(concepts)
+    hits = repository.search_scored(
         query.mention,
         entity_type=query.entity_type,
         code_systems=(query.code_system,),
         limit=limit,
     )
+    return [hit.entry for hit in hits], [hit.score for hit in hits]
 
 
-def _ordered_codes(concepts: Sequence[ConceptEntry]) -> list[str]:
+def _ordered_code_scores(
+    concepts: Sequence[ConceptEntry],
+    scores: Sequence[float],
+) -> tuple[list[str], list[float]]:
+    if len(concepts) != len(scores):
+        raise ValueError("Terminology concepts and scores must have equal length")
     output: list[str] = []
+    output_scores: list[float] = []
     seen: set[str] = set()
-    for concept in concepts:
+    for concept, score in zip(concepts, scores):
         code = concept.code
         if code is None or code in seen:
             continue
         seen.add(code)
         output.append(str(code))
-    return output
+        output_scores.append(score)
+    return output, output_scores
 
 
 def _rank_metrics(rows: Sequence[Mapping[str, Any]]) -> dict[str, float | int]:
@@ -213,6 +234,32 @@ def _rank_metrics(rows: Sequence[Mapping[str, Any]]) -> dict[str, float | int]:
         "empty_candidate_count": sum(not row["candidate_codes"] for row in rows),
         "ambiguous_candidate_count": sum(len(row["candidate_codes"]) > 1 for row in rows),
     }
+
+
+def _abstention_curve(
+    rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, float | int]]:
+    total = len(rows)
+    output: list[dict[str, float | int]] = []
+    for threshold in _ABSTENTION_THRESHOLDS:
+        emitted = [
+            row
+            for row in rows
+            if row.get("top_score") is not None
+            and float(row["top_score"]) >= threshold
+        ]
+        correct = sum(bool(row.get("top1_correct")) for row in emitted)
+        output.append(
+            {
+                "threshold": threshold,
+                "emitted_query_count": len(emitted),
+                "correct_query_count": correct,
+                "coverage": len(emitted) / total,
+                "precision": correct / len(emitted) if emitted else 0.0,
+                "recall": correct / total,
+            }
+        )
+    return output
 
 
 def _slice_metrics(

@@ -56,13 +56,17 @@ def inspect_index(args: argparse.Namespace) -> int:
         )
         payload["results"] = [
             {
-                "concept_id": entry.concept_id,
-                "code": entry.code,
-                "code_system": entry.code_system.value,
-                "canonical_name": entry.canonical_name,
-                "semantic_type": entry.semantic_type.value,
+                "concept_id": hit.entry.concept_id,
+                "code": hit.entry.code,
+                "code_system": hit.entry.code_system.value,
+                "canonical_name": hit.entry.canonical_name,
+                "semantic_type": hit.entry.semantic_type.value,
+                "score": hit.score,
+                "matched_alias": hit.matched_alias,
+                "match_kind": hit.match_kind,
+                "lexical_rank": hit.lexical_rank,
             }
-            for entry in repository.search(
+            for hit in repository.search_scored(
                 args.query,
                 entity_type=entity_type,
                 code_systems=code_systems,

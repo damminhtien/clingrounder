@@ -10,7 +10,10 @@ from typing import TypeVar, cast
 
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.terminology.ports import TerminologyRepository
+from medical_kg_nlp.terminology.ports import (
+    TerminologyRepository,
+    TerminologySearchHit,
+)
 from medical_kg_nlp.utils.text import normalize_for_match
 
 __all__ = ["CachedTerminologyRepository", "TerminologyCacheInfo"]
@@ -124,6 +127,28 @@ class CachedTerminologyRepository:
             ),
         )
 
+    def search_scored(
+        self,
+        mention: str,
+        *,
+        entity_type: EntityType | None = None,
+        code_systems: Sequence[CodeSystem] | None = None,
+        limit: int = 20,
+    ) -> list[TerminologySearchHit]:
+        return self._cached_query(
+            "search_scored",
+            normalize_for_match(mention),
+            entity_type,
+            code_systems,
+            limit,
+            lambda: self.repository.search_scored(
+                mention,
+                entity_type=entity_type,
+                code_systems=code_systems,
+                limit=limit,
+            ),
+        )
+
     def cache_info(self) -> TerminologyCacheInfo:
         """Return a consistent snapshot without exposing mutable cache entries."""
 
@@ -150,8 +175,8 @@ class CachedTerminologyRepository:
         entity_type: EntityType | None,
         code_systems: Sequence[CodeSystem] | None,
         limit: int,
-        loader: Callable[[], list[ConceptEntry]],
-    ) -> list[ConceptEntry]:
+        loader: Callable[[], list[_T]],
+    ) -> list[_T]:
         key = (
             operation,
             normalized_mention,

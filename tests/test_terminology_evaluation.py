@@ -55,6 +55,20 @@ def test_retrieval_evaluation_detects_alias_coverage_gain(tmp_path: Path) -> Non
         {"code_system": "RxNorm", "code": "999"}
     ]
     assert enriched_report["modes"]["search"]["latency_ms"]["p95"] >= 0.0
+    threshold = next(
+        row
+        for row in enriched_report["modes"]["search"]["abstention_curve"]
+        if row["threshold"] == 0.75
+    )
+    assert threshold == {
+        "threshold": 0.75,
+        "emitted_query_count": 2,
+        "correct_query_count": 2,
+        "coverage": pytest.approx(2 / 3),
+        "precision": 1.0,
+        "recall": pytest.approx(2 / 3),
+    }
+    assert enriched_report["schema_version"] == "terminology-retrieval-evaluation.v3"
 
 
 def test_query_loader_rejects_duplicate_ids(tmp_path: Path) -> None:

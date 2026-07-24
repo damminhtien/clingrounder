@@ -270,15 +270,20 @@ class FTSRetrieverAdapter:
         limit: int,
     ) -> list[Candidate]:
         del context_window
-        entries = self.repository.search(
+        hits = self.repository.search_scored(
             mention,
             entity_type=entity_type,
             code_systems=allowed_code_systems(entity_type),
             limit=limit,
         )
         return [
-            _candidate(entry, max(0.3, 0.5 - rank * 0.005), self.source, mention)
-            for rank, entry in enumerate(entries)
+            _candidate(
+                hit.entry,
+                hit.score,
+                self.source,
+                hit.matched_alias,
+            )
+            for hit in hits
         ]
 
 

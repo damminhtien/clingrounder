@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from medical_kg_nlp.terminology.ports import TerminologySearchHit
 
 __all__ = ["InMemoryTerminologyRepository"]
 
@@ -68,6 +69,49 @@ class InMemoryTerminologyRepository:
             limit=limit,
         )
         return [*exact, *(entry for entry in toneless if entry.concept_id not in seen)][:limit]
+
+    def search_scored(
+        self,
+        mention: str,
+        *,
+        entity_type: EntityType | None = None,
+        code_systems: Sequence[CodeSystem] | None = None,
+        limit: int = 20,
+    ) -> list[TerminologySearchHit]:
+        exact = self.exact_lookup(
+            mention,
+            entity_type=entity_type,
+            code_systems=code_systems,
+            limit=limit,
+        )
+        hits = [
+            TerminologySearchHit(
+                entry=entry,
+                score=1.0,
+                matched_alias=mention,
+                match_kind="exact",
+            )
+            for entry in exact
+        ]
+        if len(hits) >= limit:
+            return hits
+        seen = {entry.concept_id for entry in exact}
+        hits.extend(
+            TerminologySearchHit(
+                entry=entry,
+                score=0.92,
+                matched_alias=mention,
+                match_kind="toneless",
+            )
+            for entry in self.toneless_lookup(
+                mention,
+                entity_type=entity_type,
+                code_systems=code_systems,
+                limit=limit,
+            )
+            if entry.concept_id not in seen
+        )
+        return hits[:limit]
 
     @staticmethod
     def _filter(

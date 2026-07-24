@@ -7,7 +7,10 @@ from dataclasses import dataclass
 
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.terminology.ports import TerminologyRepository
+from medical_kg_nlp.terminology.ports import (
+    TerminologyRepository,
+    TerminologySearchHit,
+)
 
 __all__ = ["CompositeTerminologyRepository"]
 
@@ -80,15 +83,48 @@ class CompositeTerminologyRepository:
         code_systems: Sequence[CodeSystem] | None = None,
         limit: int = 20,
     ) -> list[ConceptEntry]:
-        return self._query(
-            lambda repository: repository.search(
+        return [
+            hit.entry
+            for hit in self.search_scored(
                 mention,
                 entity_type=entity_type,
                 code_systems=code_systems,
                 limit=limit,
+            )
+        ]
+
+    def search_scored(
+        self,
+        mention: str,
+        *,
+        entity_type: EntityType | None = None,
+        code_systems: Sequence[CodeSystem] | None = None,
+        limit: int = 20,
+    ) -> list[TerminologySearchHit]:
+        if limit < 1:
+            raise ValueError("limit must be at least 1")
+        best: dict[str, tuple[TerminologySearchHit, int]] = {}
+        for repository_index, repository in enumerate(self.repositories):
+            for hit in repository.search_scored(
+                mention,
+                entity_type=entity_type,
+                code_systems=code_systems,
+                limit=limit,
+            ):
+                current = best.get(hit.entry.concept_id)
+                if current is None or hit.score > current[0].score:
+                    best[hit.entry.concept_id] = (hit, repository_index)
+        ordered = sorted(
+            best.values(),
+            key=lambda item: (
+                -item[0].score,
+                item[1],
+                item[0].entry.code_system.value,
+                item[0].entry.code or "",
+                item[0].entry.concept_id,
             ),
-            limit,
         )
+        return [hit for hit, _ in ordered[:limit]]
 
     def _query(
         self,

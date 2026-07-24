@@ -9,6 +9,7 @@ import pytest
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.pipeline import PipelineFactory, PipelineFactoryConfig, PipelineOptions
+from medical_kg_nlp.retrieval.adapters import FTSRetrieverAdapter
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.terminology import (
     SQLiteTerminologyRepository,
@@ -112,6 +113,86 @@ def test_sqlite_fts_search_is_deterministic_across_threads(tmp_path: Path) -> No
         results = list(executor.map(query, range(32)))
 
     assert results == [["RX:6809"]] * 32
+
+
+def test_sqlite_fts_exposes_alias_similarity_instead_of_rank_placeholder(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "concepts.jsonl"
+    rows = [
+        {
+            "concept_id": "ICD:N18.9",
+            "code": "N18.9",
+            "code_system": "ICD-10",
+            "canonical_name": "chronic kidney disease",
+            "semantic_type": "DISEASE",
+            "source": "fixture",
+        },
+        {
+            "concept_id": "ICD:K76.9",
+            "code": "K76.9",
+            "code_system": "ICD-10",
+            "canonical_name": "chronic liver disease",
+            "semantic_type": "DISEASE",
+            "source": "fixture",
+        },
+    ]
+    source.write_text(
+        "".join(json.dumps(row) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+    manifest = build_terminology_index((source,), cache_dir=tmp_path / "cache")
+    repository = SQLiteTerminologyRepository(manifest.index_path)
+
+    hits = repository.search_scored(
+        "chronic kidny disease",
+        entity_type=EntityType.DISEASE,
+        code_systems=(CodeSystem.ICD10,),
+        limit=5,
+    )
+    candidates = FTSRetrieverAdapter(repository).retrieve(
+        "chronic kidny disease",
+        EntityType.DISEASE,
+        "",
+        5,
+    )
+
+    assert hits[0].entry.code == "N18.9"
+    assert hits[0].score > 0.90
+    assert hits[0].matched_alias == "chronic kidney disease"
+    assert hits[0].match_kind == "partial_tokens"
+    assert candidates[0].score == hits[0].score
+    assert candidates[0].matched_alias == hits[0].matched_alias
+
+
+def test_sqlite_fts_caps_lexical_score_for_conflicting_numbers(tmp_path: Path) -> None:
+    source = tmp_path / "concepts.jsonl"
+    source.write_text(
+        json.dumps(
+            {
+                "concept_id": "RX:200",
+                "code": "200",
+                "code_system": "RxNorm",
+                "canonical_name": "test drug 200 mg oral tablet",
+                "semantic_type": "DRUG",
+                "source": "fixture",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    manifest = build_terminology_index((source,), cache_dir=tmp_path / "cache")
+    repository = SQLiteTerminologyRepository(manifest.index_path)
+
+    hits = repository.search_scored(
+        "test drug 100 mg oral tablet",
+        entity_type=EntityType.DRUG,
+        code_systems=(CodeSystem.RXNORM,),
+        limit=5,
+    )
+
+    assert hits
+    assert hits[0].score <= 0.49
 
 
 def test_sqlite_fts_search_falls_back_to_order_independent_terms(tmp_path: Path) -> None:

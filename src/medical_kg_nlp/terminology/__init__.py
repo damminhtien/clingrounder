@@ -19,7 +19,10 @@ from medical_kg_nlp.terminology.index_builder import (
     terminology_cache_path,
 )
 from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
-from medical_kg_nlp.terminology.ports import TerminologyRepository
+from medical_kg_nlp.terminology.ports import (
+    TerminologyRepository,
+    TerminologySearchHit,
+)
 from medical_kg_nlp.terminology.query_sets import (
     build_alias_overlay_queries,
     build_linked_proposal_queries,
@@ -35,6 +38,7 @@ __all__ = [
     "SQLiteTerminologyRepository",
     "TERMINOLOGY_INDEX_SCHEMA_VERSION",
     "TerminologyRepository",
+    "TerminologySearchHit",
     "TerminologyCacheInfo",
     "TerminologyQuery",
     "TerminologyIndexManifest",

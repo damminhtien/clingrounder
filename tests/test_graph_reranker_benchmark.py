@@ -14,6 +14,7 @@ from medical_kg_nlp.kg.sqlite_builder import build_knowledge_graph_index
 from medical_kg_nlp.kg.sqlite_repository import SQLiteKnowledgeGraphRepository
 from medical_kg_nlp.mining.io import write_jsonl
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from medical_kg_nlp.terminology import TerminologySearchHit
 from medical_kg_nlp.utils.text import normalize_for_match
 
 
@@ -273,10 +274,43 @@ class _TerminologyFixture:
         return []
 
     def search(self, mention: str, **kwargs: object) -> list[ConceptEntry]:
+        return [hit.entry for hit in self.search_scored(mention, **kwargs)]
+
+    def search_scored(
+        self,
+        mention: str,
+        **kwargs: object,
+    ) -> list[TerminologySearchHit]:
         del kwargs
         if mention == "ambiguous":
-            return [self.entries["C"], self.entries["B"]]
-        return [self.entries["A"]] if mention == "context" else []
+            return [
+                TerminologySearchHit(
+                    entry=self.entries["C"],
+                    score=0.80,
+                    matched_alias="ambiguous",
+                    match_kind="fixture",
+                ),
+                TerminologySearchHit(
+                    entry=self.entries["B"],
+                    score=0.78,
+                    matched_alias="ambiguous",
+                    match_kind="fixture",
+                ),
+            ]
+        return (
+            [
+                TerminologySearchHit(
+                    entry=self.entries["A"],
+                    score=1.0,
+                    matched_alias="context",
+                    match_kind="fixture",
+                )
+            ]
+            if mention == "context"
+            else []
+        )
+
+
 def _graph(
     tmp_path: Path,
     *,

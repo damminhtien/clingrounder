@@ -22,7 +22,7 @@ SOURCE_WEIGHTS = {
     "bm25": 0.50,
 }
 _RRF_K = 60
-_PRIMARY_SCORE_WEIGHT = 0.85
+_MAX_CONSENSUS_BONUS = 0.10
 
 
 class RetrievalPipeline:
@@ -137,7 +137,6 @@ class RetrievalPipeline:
                     evidence_by_code[key][source] = (evidence, candidate)
 
         merged: list[Candidate] = []
-        rrf_normalizer = sum(weight / (_RRF_K + 1) for weight in SOURCE_WEIGHTS.values())
         for source_evidence in evidence_by_code.values():
             ordered = sorted(
                 source_evidence.values(),
@@ -150,19 +149,30 @@ class RetrievalPipeline:
             )
             primary_evidence, primary = ordered[0]
             merged_evidence = tuple(item[0] for item in ordered)
-            primary_score = max(
-                SOURCE_WEIGHTS.get(item.source, 0.0) * item.score
-                for item in merged_evidence
-            )
-            rrf_score = sum(
-                SOURCE_WEIGHTS.get(item.source, 0.0) * item.score / (_RRF_K + item.rank)
-                for item in merged_evidence
-            )
-            normalized_rrf = rrf_score / rrf_normalizer if rrf_normalizer else 0.0
+            # Retrieval scores are source-local lexical/ranking evidence, not
+            # probabilities. Fusion may add a bounded consensus bonus, but it must
+            # not suppress a strong full-store hit before source-specific linking
+            # calibration sees it.
+            primary_score = max(item.score for item in merged_evidence)
+            consensus_score = 0.0
+            if len(merged_evidence) > 1:
+                rrf_score = sum(
+                    SOURCE_WEIGHTS.get(item.source, 0.0)
+                    * item.score
+                    / (_RRF_K + item.rank)
+                    for item in merged_evidence
+                )
+                rrf_normalizer = sum(
+                    SOURCE_WEIGHTS.get(item.source, 0.0) / (_RRF_K + 1)
+                    for item in merged_evidence
+                )
+                consensus_score = (
+                    rrf_score / rrf_normalizer if rrf_normalizer else 0.0
+                )
             fused_score = min(
                 1.0,
-                _PRIMARY_SCORE_WEIGHT * primary_score
-                + (1.0 - _PRIMARY_SCORE_WEIGHT) * normalized_rrf,
+                primary_score
+                + (1.0 - primary_score) * _MAX_CONSENSUS_BONUS * consensus_score,
             )
             merged.append(
                 self._replace(
