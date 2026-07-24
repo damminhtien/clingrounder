@@ -54,3 +54,25 @@ jobs:
             --pred outputs/predictions.jsonl \
             --documents data/samples/sample_notes.jsonl \
             --dictionary data/dictionaries/seed_concepts.jsonl
+
+  release-contract:
+    name: Release and integration contracts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install locked environment
+        run: |
+          python -m pip install "uv==$UV_VERSION"
+          uv sync --frozen --extra dev --extra data --python "$pythonLocation/bin/python"
+
+      - name: Release and integration tests
+        # These exercise SQLite, process workers, reports, and deterministic Phase 1 ZIPs.
+        run: .venv/bin/pytest -o addopts='' -m "integration or release" tests

@@ -48,7 +48,7 @@ pipeline-report:
 	$(PYTHON) scripts/evaluate_pipeline_steps.py --documents data/samples/sample_notes.jsonl --gold data/samples/gold.jsonl --dictionary data/dictionaries/seed_concepts.jsonl --output-dir outputs/evaluation/sample
 
 phase1-submit:
-	$(PYTHON) -m medical_kg_nlp.cli benchmark phase1 --input-dir data/raw/input --output-dir outputs/phase1/output --zip outputs/phase1/output.zip
+	$(PYTHON) -m medical_kg_nlp.cli benchmark phase1 submission --input-dir data/raw/input --output-dir outputs/phase1/output --zip outputs/phase1/output.zip
 
 phase1-validate:
 	$(PYTHON) scripts/validate_phase1_submission.py --input-dir data/raw/input --output-dir outputs/phase1/output --zip outputs/phase1/output.zip --expected-count 100
