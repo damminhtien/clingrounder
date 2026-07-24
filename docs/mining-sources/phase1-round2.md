@@ -131,8 +131,60 @@ runtime path, not model quality.
 The clean rule run contains 100 JSON files and 1,909 entities. Its manifest records commit
 `8b6556573c9227909cce17263b864592f3019740`, `git_dirty: false`, source archive SHA, environment
 lock SHA, pipeline config, canonical validation dictionaries, and final ZIP SHA. It is the current
-usable Round 2 baseline. Model-only and hybrid artifacts do not exist yet and must not be described
-as evaluated.
+structural baseline only: it proves deterministic export and validation, but it is not a viable
+submission candidate. Model-only and hybrid artifacts do not exist yet and must not be described as
+evaluated.
+
+## Public Rule-Baseline Result
+
+The public grader evaluated the exact clean-rule ZIP on 2026-07-24:
+
+| Measure | Round 2 rule result | Prior Round 1 public baseline | Difference |
+| --- | ---: | ---: | ---: |
+| primary score | `21.3318` | `43.2014` | `-21.8696` |
+| WER | `75.3792` | `50.8167` | `+24.5625` |
+| J assertion | `26.5599` | `49.7245` | `-23.1646` |
+| J candidates | `14.9439` | `33.8226` | `-18.8787` |
+| records scored | `100` | `100` | `0` |
+
+The submitted file SHA-256 was
+`97a471d4d42ebaa12c3db2a1675e98695ca7714792d67c16e5edc7ac2af44a3d`, so the score is attached
+unambiguously to the artifact described above. The comparison crosses input rounds and therefore
+measures transfer failure, not a code regression.
+
+The output contained:
+
+| Output evidence | Value |
+| --- | ---: |
+| entities | `1,909` |
+| diagnosis | `601` |
+| symptom | `597` |
+| lab test | `369` |
+| lab result | `163` |
+| drug | `179` |
+| entities with assertions | `507` |
+| entities with candidates | `780` |
+| empty documents | `2` |
+
+Manual inspection of one novelty document found that the rule dictionary missed its central G6PD
+deficiency concept while emitting repeated secondary diagnoses. This is concrete evidence of
+recognition/domain coverage failure in the mixed education, question-and-answer, and clinical
+distribution. It is not evidence that adding more candidates to the same spans will repair WER.
+
+A metadata-only diagnostic probe preserves every `(text, type, position)` tuple from the rejected
+artifact and clears only `assertions` and `candidates`:
+
+| Probe | Value |
+| --- | --- |
+| artifact | `outputs/phase1/round2/20260724T032159Z_round2-rule-empty-metadata-probe_2496ad5dd6/output.zip` |
+| ZIP SHA-256 | `68bcf7e8a3ac3beffc8a5c3557d4af710157d296351d6525ab0fc96e00447d00` |
+| entity projection SHA-256 | `1112e583009e8acaa9f79af4eae6546ad2b0d7e6ba999cbf563905b634efd863` |
+| validation issues | `0` |
+
+Because its entity projection is identical, that probe cannot improve WER. It is useful only once
+to discover whether empty metadata is the safer Round 2 convention. The next quality-bearing
+artifact must come from a frozen five-type model or a locally gated hybrid, not from another broad
+rule/candidate overlay.
 
 ## Linux GPU Handoff
 
