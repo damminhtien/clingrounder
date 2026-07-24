@@ -7,8 +7,6 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any, Literal
 
-import yaml
-
 from medical_kg_nlp.benchmarks.phase1.phase1 import (
     load_phase1_text_documents,
     validate_phase1_submission_documents,
@@ -19,6 +17,7 @@ from medical_kg_nlp.benchmarks.phase1.phase1 import (
 from medical_kg_nlp.benchmarks.phase1.round2 import load_phase1_round2_documents
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.mining.io import load_documents
+from medical_kg_nlp.pipeline.config_loader import ResolvedPipelineConfig
 from medical_kg_nlp.pipeline.factory import PipelineFactoryConfig
 from medical_kg_nlp.pipeline.parallel_batch import (
     ParallelBatchOptions,
@@ -155,12 +154,9 @@ def build_phase1_factory_config(config: Phase1BenchmarkConfig) -> PipelineFactor
             abbreviation_path=str(config.abbreviation_path),
         )
     else:
-        payload = yaml.safe_load(
-            config.pipeline_config_path.read_text(encoding="utf-8")
-        ) or {}
-        if not isinstance(payload, dict):
-            raise ValueError("Phase 1 pipeline config must be a YAML mapping")
-        factory_config = PipelineFactoryConfig.from_mapping(payload)
+        factory_config = ResolvedPipelineConfig.load(
+            config.pipeline_config_path
+        ).factory_config
 
     # Phase 1 output has no relation field. Keep every other profile component intact while
     # avoiding needless relation extraction/validation work during submission generation.

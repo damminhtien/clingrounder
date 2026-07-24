@@ -16,6 +16,7 @@ from medical_kg_nlp.benchmarks.phase1.model_selection import (
     Phase1ModelSelectionConfig,
 )
 from medical_kg_nlp.cli.parser import build_parser
+from medical_kg_nlp.pipeline import ResolvedPipelineConfig
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.types import EntityType
@@ -77,6 +78,12 @@ def test_verified_model_calibration_writes_hashed_artifacts(
     ) == {"DISEASE", "DRUG", "LAB_RESULT", "LAB_TEST", "SYMPTOM"}
     assert calibrated["provenance"]["phase1_model_calibration"]["holdout_status"] == (
         "sealed"
+    )
+    reloaded = ResolvedPipelineConfig.load(run_dir / "pipeline_calibrated.yaml")
+    assert reloaded.factory_config.models.entity_extractor is not None
+    assert reloaded.factory_config.models.entity_extractor.model_id == str(model_dir)
+    assert reloaded.payload["models"]["entity_extractor"]["run_spec"] == str(
+        run_spec_path
     )
     manifest = json.loads((run_dir / "run_manifest.json").read_text(encoding="utf-8"))
     assert manifest["status"] == "complete"
@@ -197,8 +204,8 @@ def _write_model_pipeline(
                 },
                 "models": {
                     "entity_extractor": {
-                        "run_spec": str(run_spec_path),
-                        "model_id": str(model_dir),
+                        "run_spec": run_spec_path.name,
+                        "model_id": str(model_dir.relative_to(tmp_path)),
                         "revision": _REVISION,
                         "device": "cpu",
                         "batch_size": 2,

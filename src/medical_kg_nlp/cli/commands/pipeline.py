@@ -5,11 +5,9 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import replace
-from pathlib import Path
-
-import yaml
 
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
+from medical_kg_nlp.pipeline.config_loader import ResolvedPipelineConfig
 from medical_kg_nlp.pipeline.factory import PipelineFactoryConfig
 from medical_kg_nlp.pipeline.parallel_batch import (
     ParallelBatchOptions,
@@ -68,10 +66,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
 
 def _factory_config(args: argparse.Namespace) -> PipelineFactoryConfig:
     if args.config:
-        payload = yaml.safe_load(Path(args.config).read_text(encoding="utf-8")) or {}
-        if not isinstance(payload, dict):
-            raise ValueError("Pipeline config must be a YAML mapping")
-        config = PipelineFactoryConfig.from_mapping(payload)
+        config = ResolvedPipelineConfig.load(args.config).factory_config
     else:
         config = PipelineFactoryConfig()
     return replace(

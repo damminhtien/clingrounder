@@ -8,14 +8,30 @@ traces: phase1/full_traces.jsonl
 runtime_metrics: phase1/full_runtime.json
 mode: full
 dictionary: data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
-recognition_dictionary: src/medical_kg_nlp/resources/phase1_btc_medication_recognition.jsonl
-normalization_dictionary: data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
 abbreviations: data/dictionaries/abbreviations.jsonl
 strict_validation: true
 expected_count: 100
 max_candidates: 5
 assertion_policy: pipeline
 candidate_policy: pipeline
+
+# This file can be passed directly to --pipeline-config. Paths in reusable pipeline
+# blocks are relative to this YAML, not to the caller's working directory.
+terminology:
+  recognition_path: ../data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
+  abbreviation_path: ../data/dictionaries/abbreviations.jsonl
+  alias_overlay_path: ../data/dictionaries/vietnamese_medical_alias.jsonl
+  normalization_paths:
+    - ../data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl
+    - ../data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
+  normalization_alias_overlay_paths:
+    - ../outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl
+    - ../outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl
+  normalization_index_path: ../.cache/medical-kg/terminology/terminology-a2d5a19e83fbc9e1a305.sqlite3
+  cache_dir: ../.cache/medical-kg/terminology
+  # BTC examples are executable benchmark fixtures, not reusable runtime memory.
+  reviewed_mention_path: null
+  query_cache_size: 4096
 
 parallel:
   # Threads share the full dictionary and retrieval indexes instead of copying

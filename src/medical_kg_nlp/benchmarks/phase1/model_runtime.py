@@ -8,7 +8,6 @@ selection.
 
 from __future__ import annotations
 
-import copy
 import json
 from collections.abc import Mapping
 from dataclasses import replace
@@ -23,6 +22,7 @@ from medical_kg_nlp.benchmarks.phase1.model_selection import (
     infer_phase1_development_predictions,
 )
 from medical_kg_nlp.mining.io import write_json
+from medical_kg_nlp.pipeline.config_loader import ResolvedPipelineConfig
 from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
 from medical_kg_nlp.training import (
     TokenClassifierRunSpec,
@@ -30,7 +30,7 @@ from medical_kg_nlp.training import (
     verify_token_classifier_run_artifact,
 )
 from medical_kg_nlp.utils.hashing import sha256_file
-from medical_kg_nlp.utils.io import read_yaml, write_jsonl
+from medical_kg_nlp.utils.io import write_jsonl
 from medical_kg_nlp.utils.run_output import create_hashed_run_dir
 
 __all__ = ["run_phase1_model_calibration"]
@@ -44,11 +44,10 @@ def run_phase1_model_calibration(
 ) -> dict[str, Any]:
     """Infer the development split, calibrate five thresholds, and persist one hashed run."""
 
-    config_path = Path(pipeline_config_path)
-    raw_pipeline = read_yaml(config_path)
+    resolved_pipeline = ResolvedPipelineConfig.load(pipeline_config_path)
+    config_path = resolved_pipeline.source_path
     factory_config, run_spec, model_artifact = _verified_factory_config(
-        config_path,
-        raw_pipeline,
+        resolved_pipeline,
     )
     active_selection = selection_config or Phase1ModelSelectionConfig(
         model_split_manifest=run_spec.training.dataset_manifest_path.with_name(
@@ -99,7 +98,7 @@ def run_phase1_model_calibration(
     write_json(calibration_path, calibration)
     calibrated_pipeline_path = run_output.run_dir / "pipeline_calibrated.yaml"
     _write_calibrated_pipeline(
-        raw_pipeline,
+        resolved_pipeline,
         calibration,
         calibrated_pipeline_path,
         model_artifact=model_artifact,
@@ -146,27 +145,23 @@ def run_phase1_model_calibration(
 
 
 def _verified_factory_config(
-    config_path: Path,
-    raw_pipeline: Mapping[str, Any],
+    resolved_pipeline: ResolvedPipelineConfig,
 ) -> tuple[PipelineFactoryConfig, TokenClassifierRunSpec, dict[str, Any]]:
-    models = _mapping(raw_pipeline.get("models"), "models")
+    models = _mapping(resolved_pipeline.payload.get("models"), "models")
     entity_model = _mapping(models.get("entity_extractor"), "models.entity_extractor")
     raw_run_spec = entity_model.get("run_spec")
     if not isinstance(raw_run_spec, str) or not raw_run_spec.strip():
         raise ValueError("models.entity_extractor.run_spec is required for calibration")
 
-    run_spec = load_token_classifier_run_spec(_resolve_config_reference(config_path, raw_run_spec))
+    run_spec = load_token_classifier_run_spec(raw_run_spec)
     artifact = verify_token_classifier_run_artifact(run_spec)
-    factory_config = PipelineFactoryConfig.from_mapping(raw_pipeline)
+    factory_config = resolved_pipeline.factory_config
     model_config = factory_config.models.entity_extractor
     if model_config is None:
         raise ValueError("Phase 1 calibration requires models.entity_extractor")
 
     expected_model_dir = (run_spec.training.output_dir / "final-model").resolve()
-    configured_model_dir = _resolve_config_reference(
-        config_path,
-        model_config.model_id,
-    ).resolve()
+    configured_model_dir = Path(model_config.model_id).resolve()
     if configured_model_dir != expected_model_dir:
         raise ValueError(
             "models.entity_extractor.model_id must point to the verified final-model directory"
@@ -220,14 +215,14 @@ def _verified_factory_config(
 
 
 def _write_calibrated_pipeline(
-    raw_pipeline: Mapping[str, Any],
+    resolved_pipeline: ResolvedPipelineConfig,
     calibration: Mapping[str, Any],
     path: Path,
     *,
     model_artifact: Mapping[str, Any],
     calibration_sha256: str,
 ) -> None:
-    payload = copy.deepcopy(dict(raw_pipeline))
+    payload = resolved_pipeline.payload_for(path)
     models = _mapping(payload.get("models"), "models")
     entity_model = _mapping(models.get("entity_extractor"), "models.entity_extractor")
     thresholds = calibration.get("selected_thresholds")
@@ -251,15 +246,6 @@ def _write_calibrated_pipeline(
         yaml.safe_dump(payload, allow_unicode=True, sort_keys=False),
         encoding="utf-8",
     )
-
-
-def _resolve_config_reference(config_path: Path, value: str) -> Path:
-    candidate = Path(value)
-    if candidate.is_absolute() or candidate.exists():
-        return candidate
-    return config_path.parent / candidate
-
-
 def _mapping(value: object, name: str) -> dict[str, Any]:
     if not isinstance(value, Mapping):
         raise ValueError(f"{name} must be a mapping")

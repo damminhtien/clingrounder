@@ -9,10 +9,7 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Iterable, Mapping, Sequence
-from pathlib import Path
 from typing import Any, Protocol
-
-import yaml
 
 from medical_kg_nlp.mining.records import (
     AnnotationLayer,
@@ -21,6 +18,7 @@ from medical_kg_nlp.mining.records import (
     MinedDocument,
     ReviewStatus,
 )
+from medical_kg_nlp.pipeline.config_loader import ResolvedPipelineConfig
 from medical_kg_nlp.pipeline.factory import PipelineFactory
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem
@@ -149,12 +147,8 @@ def create_local_pipeline_labeler(
     """Build a local-only labeler from a pinned pipeline YAML configuration."""
 
     pipeline_config_path = _required_string(config, "pipeline_config")
-    pipeline_payload = yaml.safe_load(
-        Path(pipeline_config_path).read_text(encoding="utf-8")
-    )
-    if not isinstance(pipeline_payload, Mapping):
-        raise ValueError("pipeline_config must contain a mapping")
-    runner = PipelineFactory.from_config(pipeline_payload)
+    resolved_pipeline = ResolvedPipelineConfig.load(pipeline_config_path)
+    runner = PipelineFactory.from_config(resolved_pipeline.factory_config)
     versions = config.get("terminology_versions", {})
     if not isinstance(versions, Mapping):
         raise ValueError("terminology_versions must be a mapping")

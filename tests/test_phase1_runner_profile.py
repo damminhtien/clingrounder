@@ -42,8 +42,11 @@ pipeline:
 
     assert config.recognition_dictionary_path == str(tmp_path / "seed.jsonl")
     assert config.abbreviation_path == str(tmp_path / "abbr.jsonl")
-    assert config.additional_recognition_dictionary_paths == ("mined-a.jsonl", "mined-b.jsonl")
-    assert config.normalization_dictionary_paths == ("icd.jsonl",)
+    assert config.additional_recognition_dictionary_paths == (
+        str(tmp_path / "mined-a.jsonl"),
+        str(tmp_path / "mined-b.jsonl"),
+    )
+    assert config.normalization_dictionary_paths == (str(tmp_path / "icd.jsonl"),)
     assert config.options.candidate_sources == ("exact", "bm25")
     assert config.options.enable_relations is False
     assert config.options.enable_relation_kg_validation is False
