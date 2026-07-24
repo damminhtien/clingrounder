@@ -63,9 +63,10 @@ relation quality while swapping one component at a time.
 Medication-list parsing is structural rather than vocabulary-specific. It recognizes numbered,
 parenthesized, bulleted, and inline items, separates an indication clause from the medication SIG,
 and extends validated drug spans through contiguous attributes. It does not delete or recreate
-indication entities already emitted by the normal NER stage. A small provenance-tagged resource
-represents indication terms required by the organizer's executable example; a scoped matcher fills
-only missing entities, so the convention can be replaced without embedding phrases in parser code.
+indication entities already emitted by the configured NER stage. The organizer's executable
+example is isolated under the Phase 1 benchmark resources; its recognition vocabulary and reviewed
+RxNorm mappings are loaded only when a benchmark explicitly opts in. Core parsers never load that
+fixture or materialize indication entities from hidden global vocabulary.
 When the dictionary genuinely provides both disease and symptom entries for the same indication
 span, the indication context selects symptom; diagnosis-only concepts remain diagnoses. Outside a
 medication indication, the conservative disease fallback remains until a model-backed type resolver

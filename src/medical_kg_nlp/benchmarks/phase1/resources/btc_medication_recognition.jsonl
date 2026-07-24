@@ -9,3 +9,9 @@
 {"concept_id":"RXNORM:312935","code":"312935","code_system":"RxNorm","canonical_name":"sennosides, USP 8.6 MG Oral Tablet","semantic_type":"DRUG","aliases":["senna"],"rxnorm_tty":"SCD","source":"btc_sample"}
 {"concept_id":"RXNORM:197527","code":"197527","code_system":"RxNorm","canonical_name":"clonazepam 0.5 MG Oral Tablet","semantic_type":"DRUG","aliases":["clonazepam"],"rxnorm_tty":"SCD","source":"btc_sample"}
 {"concept_id":"RXNORM:197528","code":"197528","code_system":"RxNorm","canonical_name":"clonazepam 1 MG Oral Tablet","semantic_type":"DRUG","aliases":["clonazepam"],"rxnorm_tty":"SCD","source":"btc_sample"}
+{"concept_id":"BTC:SAMPLE_INDICATION_COUGH","code":null,"code_system":"NONE","canonical_name":"ho","semantic_type":"SYMPTOM","aliases":[],"source":"btc_phase1_executable_spec"}
+{"concept_id":"BTC:SAMPLE_INDICATION_ACHING","code":null,"code_system":"NONE","canonical_name":"đau nhức","semantic_type":"SYMPTOM","aliases":[],"source":"btc_phase1_executable_spec"}
+{"concept_id":"BTC:SAMPLE_INDICATION_FEVER_PAIN","code":null,"code_system":"NONE","canonical_name":"sốt đau","semantic_type":"SYMPTOM","aliases":[],"source":"btc_phase1_executable_spec"}
+{"concept_id":"BTC:SAMPLE_INDICATION_CONSTIPATION","code":null,"code_system":"NONE","canonical_name":"táo bón","semantic_type":"SYMPTOM","aliases":[],"source":"btc_phase1_executable_spec"}
+{"concept_id":"BTC:SAMPLE_INDICATION_ANXIETY","code":null,"code_system":"NONE","canonical_name":"lo âu","semantic_type":"SYMPTOM","aliases":[],"source":"btc_phase1_executable_spec"}
+{"concept_id":"BTC:SAMPLE_INDICATION_INSOMNIA","code":null,"code_system":"NONE","canonical_name":"mất ngủ","semantic_type":"SYMPTOM","aliases":[],"source":"btc_phase1_executable_spec"}

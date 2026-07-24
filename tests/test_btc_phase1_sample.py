@@ -19,6 +19,13 @@ from medical_kg_nlp.utils.io import read_source_text
 
 FIXTURE = Path("tests/fixtures/phase1/btc_medication_list_crlf.txt")
 EXPECTED = Path("tests/fixtures/phase1/btc_medication_list_expected.json")
+RECOGNITION = Path(
+    "src/medical_kg_nlp/benchmarks/phase1/resources/"
+    "btc_medication_recognition.jsonl"
+)
+MEMORY = Path(
+    "src/medical_kg_nlp/benchmarks/phase1/resources/btc_rxnorm_memory.jsonl"
+)
 
 
 def test_raw_reader_preserves_btc_crlf_offsets(tmp_path: Path) -> None:
@@ -114,7 +121,18 @@ def test_btc_rxnorm_memory_is_dictionary_constrained() -> None:
         semantic_type=EntityType.DRUG,
         rxnorm_tty="SCD",
     )
-    generator = _retrieval(DictionaryStore([entry]), retrieval_sources=("exact",))
+    assert (
+        _retrieval(
+            DictionaryStore([entry]),
+            retrieval_sources=("exact",),
+        ).retrieve("amlodipine 10 mg po daily", EntityType.DRUG)
+        == []
+    )
+    generator = _retrieval(
+        DictionaryStore([entry]),
+        retrieval_sources=("exact",),
+        mention_memory_path=MEMORY,
+    )
 
     candidates = generator.retrieve(
         "amlodipine 10 mg po daily", EntityType.DRUG
@@ -124,7 +142,11 @@ def test_btc_rxnorm_memory_is_dictionary_constrained() -> None:
         ("308135", "btc_sample")
     ]
     assert (
-        _retrieval(DictionaryStore([]), retrieval_sources=("exact",)).retrieve(
+        _retrieval(
+            DictionaryStore([]),
+            retrieval_sources=("exact",),
+            mention_memory_path=MEMORY,
+        ).retrieve(
             "amlodipine 10 mg po daily", EntityType.DRUG
         )
         == []
@@ -133,9 +155,11 @@ def test_btc_rxnorm_memory_is_dictionary_constrained() -> None:
 
 def test_btc_sample_is_reproduced_end_to_end() -> None:
     text = read_source_text(FIXTURE)
-    resource = "src/medical_kg_nlp/resources/phase1_btc_medication_recognition.jsonl"
     prediction = PipelineFactory.from_config(
-        PipelineFactoryConfig(recognition_dictionary_path=str(resource))
+        PipelineFactoryConfig(
+            recognition_dictionary_path=str(RECOGNITION),
+            reviewed_mention_path=str(MEMORY),
+        )
     ).process_text("btc", text)
     rows = prediction_to_phase1_entities(prediction, source_text=text)
     expected = json.loads(EXPECTED.read_text(encoding="utf-8"))
@@ -160,31 +184,15 @@ def test_btc_sample_is_reproduced_end_to_end() -> None:
     assert all(row["assertions"] == [] for row in symptoms)
     assert all(text[row["position"][0] : row["position"][1]] == row["text"] for row in rows)
     assert rows == expected
-    assert validate_phase1_entities(expected, text, dictionary=DictionaryStore.from_jsonl(resource)) == []
+    assert (
+        validate_phase1_entities(
+            expected,
+            text,
+            dictionary=DictionaryStore.from_jsonl(RECOGNITION),
+        )
+        == []
+    )
 
 
 def _btc_recognition_store() -> DictionaryStore:
-    names = (
-        "amlodipine",
-        "aspirin",
-        "metoprolol succinate",
-        "guaifenesin",
-        "nystatin",
-        "acetaminophen",
-        "pravastatin",
-        "docusate sodium",
-        "senna",
-        "clonazepam",
-    )
-    return DictionaryStore(
-        [
-            ConceptEntry(
-                concept_id=f"RXNORM:{index}",
-                code=str(index),
-                code_system=CodeSystem.RXNORM,
-                canonical_name=name,
-                semantic_type=EntityType.DRUG,
-            )
-            for index, name in enumerate(names, start=1)
-        ]
-    )
+    return DictionaryStore.from_jsonl(RECOGNITION)

@@ -38,9 +38,7 @@ def build_in_memory_retrieval_pipeline(
     abbreviation_path: str | Path | None = None,
     max_candidates: int = 20,
     retrieval_sources: tuple[str, ...] | None = None,
-    mention_memory_path: str | Path | None = (
-        "src/medical_kg_nlp/resources/phase1_rxnorm_memory.jsonl"
-    ),
+    mention_memory_path: str | Path | None = None,
 ) -> RetrievalPipeline:
     """Compose the default rule retrievers over an in-memory terminology."""
 
@@ -62,9 +60,7 @@ def build_rule_retrieval_pipeline(
     abbreviation_path: str | Path | None = None,
     max_candidates: int = 20,
     retrieval_sources: tuple[str, ...] | None = None,
-    mention_memory_path: str | Path | None = (
-        "src/medical_kg_nlp/resources/phase1_rxnorm_memory.jsonl"
-    ),
+    mention_memory_path: str | Path | None = None,
     use_fts_for_bm25: bool = False,
     knowledge_graph_repository: KnowledgeGraphRepositoryPort | None = None,
 ) -> RetrievalPipeline:

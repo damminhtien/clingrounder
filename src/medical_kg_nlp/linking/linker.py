@@ -75,8 +75,10 @@ class EntityLinker:
     ) -> list[Candidate]:
         full_mention = mention or entity.text
         candidates = self.retrieval.retrieve(full_mention, entity.type, context_window)
+        # Reviewed mappings are terminal for their complete structured mention. This is a generic
+        # provenance property; benchmark source names must never alter linker control flow.
         if full_mention == entity.text or any(
-            candidate.source == "btc_sample" for candidate in candidates
+            candidate.reviewed_mapping for candidate in candidates
         ):
             return candidates
         candidates.extend(self.retrieval.retrieve(entity.text, entity.type, context_window))

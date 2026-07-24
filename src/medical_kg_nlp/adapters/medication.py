@@ -27,9 +27,7 @@ class MedicationMentionEntityExtractorAdapter:
 
     extractor: EntityExtractorPort
     mention_parser: MedicationMentionParser = field(default_factory=MedicationMentionParser)
-    list_parser: MedicationListParser = field(
-        default_factory=lambda: MedicationListParser(indication_lexicon_path=None)
-    )
+    list_parser: MedicationListParser = field(default_factory=MedicationListParser)
 
     def extract(self, source_text: str) -> list[EntityAnnotation]:
         entities = self.extractor.extract(source_text)

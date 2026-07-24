@@ -42,16 +42,13 @@ def test_medication_list_adjudication_preserves_unseen_indication_entities() -> 
     drug.medication_mention.validate_offsets(text, drug.span)
 
 
-def test_medication_list_materializes_data_backed_sample_indications() -> None:
+def test_medication_list_does_not_materialize_hidden_indication_vocabulary() -> None:
     text = "1. guaifenesin po q6h:prn điều trị ho"
     drug = _entity(text, "guaifenesin", EntityType.DRUG)
 
     entities = MedicationListParser().adjudicate(text, [drug])
 
-    assert [(entity.text, entity.type) for entity in entities] == [
-        ("guaifenesin", EntityType.DRUG),
-        ("ho", EntityType.SYMPTOM),
-    ]
+    assert entities == [drug]
 
 
 def _entity(text: str, mention: str, entity_type: EntityType) -> EntityAnnotation:

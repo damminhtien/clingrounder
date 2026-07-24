@@ -2,14 +2,10 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from pathlib import Path
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatcher
 from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
 from medical_kg_nlp.schema.annotation import EntityAnnotation, MedicationMention
-from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
-from medical_kg_nlp.utils.text import normalize_for_match
+from medical_kg_nlp.schema.types import EntityType
 
 
 _ITEM_MARKER_RE = re.compile(
@@ -20,9 +16,6 @@ _INDICATION_MARKER_RE = re.compile(
     r"\s+(?:điều\s+trị|cho|for)\s+",
     re.IGNORECASE | re.UNICODE,
 )
-DEFAULT_INDICATION_LEXICON_PATH = Path(
-    "src/medical_kg_nlp/resources/phase1_btc_medication_indications.jsonl"
-)
 
 
 @dataclass(frozen=True)
@@ -32,12 +25,10 @@ class MedicationListItem:
 
 
 class MedicationListParser:
-    def __init__(
-        self,
-        indication_lexicon_path: str | Path | None = DEFAULT_INDICATION_LEXICON_PATH,
-    ) -> None:
+    """Parse medication-list structure without owning clinical vocabulary."""
+
+    def __init__(self) -> None:
         self.mention_parser = MedicationMentionParser()
-        self.indication_matcher = _load_indication_matcher(indication_lexicon_path)
 
     def items(self, source_text: str) -> tuple[MedicationListItem, ...]:
         """Parse numbered, parenthesized, bulleted, and inline medication list items."""
@@ -86,9 +77,8 @@ class MedicationListParser:
         if not items:
             return entities
 
-        # List parsing owns medication boundaries. Existing indication entities remain untouched;
-        # the optional data-backed matcher only fills concepts required by an executable schema
-        # example when the primary recognition dictionary does not contain them.
+        # List parsing owns medication boundaries. Indication recognition belongs to the configured
+        # entity extractor so a benchmark fixture cannot become hidden global runtime vocabulary.
         for entity in entities:
             if entity.type != EntityType.DRUG:
                 continue
@@ -108,66 +98,11 @@ class MedicationListParser:
                     if component.span[1] <= item.medication_span[1]
                 ),
             )
-        self._materialize_missing_indications(source_text, items, entities)
         return entities
-
-    def _materialize_missing_indications(
-        self,
-        source_text: str,
-        items: tuple[MedicationListItem, ...],
-        entities: list[EntityAnnotation],
-    ) -> None:
-        if self.indication_matcher is None:
-            return
-        occupied = [entity.span for entity in entities]
-        for item in items:
-            if item.indication_span is None:
-                continue
-            matches = self.indication_matcher.find_candidates(
-                source_text,
-                require_boundaries=True,
-                min_alias_chars=2,
-            )
-            scoped_matches = (
-                match
-                for match in matches
-                if _contains(item.indication_span, match.span)
-            )
-            for match in self.indication_matcher.resolve_longest(scoped_matches):
-                if any(_overlaps(match.span, span) for span in occupied):
-                    continue
-                mention = source_text[match.span[0] : match.span[1]]
-                entities.append(
-                    EntityAnnotation(
-                        id="",
-                        span=match.span,
-                        text=mention,
-                        normalized_text=normalize_for_match(mention),
-                        type=match.entry.semantic_type,
-                        assertion=AssertionStatus.PRESENT,
-                        code_system=CodeSystem.NONE,
-                        confidence=0.98,
-                    )
-                )
-                occupied.append(match.span)
 
 
 def _contains(container: tuple[int, int], inner: tuple[int, int]) -> bool:
     return container[0] <= inner[0] and inner[1] <= container[1]
-
-
-def _overlaps(left: tuple[int, int], right: tuple[int, int]) -> bool:
-    return left[0] < right[1] and right[0] < left[1]
-
-
-def _load_indication_matcher(path: str | Path | None) -> DictionaryMatcher | None:
-    if path is None:
-        return None
-    resource = Path(path)
-    if not resource.exists():
-        return None
-    store = DictionaryStore.from_jsonl(resource)
-    return DictionaryMatcher(store.aliases_for_ner())
 
 
 def _trim_span(text: str, span: tuple[int, int]) -> tuple[int, int]:

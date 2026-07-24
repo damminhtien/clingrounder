@@ -62,9 +62,9 @@ class PipelineFactoryConfig:
     knowledge_graph_index_path: str | None = None
     terminology_cache_dir: str = ".cache/medical-kg/terminology"
     terminology_query_cache_size: int = 0
-    reviewed_mention_path: str | None = (
-        "src/medical_kg_nlp/resources/phase1_rxnorm_memory.jsonl"
-    )
+    # Benchmark-specific reviewed memory is terminal on match, so reusable
+    # profiles must opt in with an explicit, versioned artifact.
+    reviewed_mention_path: str | None = None
     additional_recognition_dictionary_path: str | None = None
     additional_recognition_dictionary_paths: tuple[str, ...] = ()
     abbreviation_path: str = "data/dictionaries/abbreviations.jsonl"
