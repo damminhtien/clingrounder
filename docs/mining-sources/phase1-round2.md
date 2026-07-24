@@ -236,6 +236,29 @@ SHA, dependency lock SHA, and dataset-manifest SHA without loading Torch. Only a
 model may proceed to development threshold calibration, rule/model/hybrid comparison, and local
 Round 2 inference.
 
+Run verified development inference and per-type calibration as one bounded command:
+
+```bash
+uv run medical-kg benchmark phase1 model-data calibrate \
+  --pipeline-config configs/pipeline/phase1-five-type-model-only.yaml \
+  --output-dir outputs/models/phase1-five-type-calibration
+```
+
+The pipeline profile points to the pinned run spec and returned `final-model/`. The command rejects
+CPU smoke, fingerprint drift, run-spec drift, dependency-lock drift, or dataset-manifest drift
+before importing model frameworks. It then keeps one model resident, infers exactly the 16
+development documents, and writes a content-hashed directory containing:
+
+```text
+development_predictions.jsonl
+calibration.json
+pipeline_calibrated.yaml
+run_manifest.json
+```
+
+`pipeline_calibrated.yaml` records independent thresholds for all five internal types. The command
+does not deserialize holdout labels and does not read Round 2 input.
+
 **Privacy boundary:** never upload the Round 2 ZIP, parsed Round 2 documents, audit windows, or
 Round 2 predictions to Colab/Kaggle. The remote job receives only the first-round 76-document
 training view, subject to the competition terms. When hosted processing of that view is not

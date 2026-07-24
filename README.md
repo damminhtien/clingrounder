@@ -408,6 +408,18 @@ uv run medical-kg model inspect-token-classifier-run \
   --config configs/models/phase1-five-type-xlmr-base-2026-07-22.yaml
 ```
 
+After the verified `final-model/` and `run_manifest.json` return to this checkout, run development
+inference and five-type threshold calibration in one command:
+
+```bash
+uv run medical-kg benchmark phase1 model-data calibrate \
+  --output-dir outputs/models/phase1-five-type-calibration
+```
+
+The command rejects CPU-smoke/stale checkpoints, reads only the 16-document development split, and
+writes a hashed prediction, calibration, and calibrated-pipeline bundle. It never opens holdout or
+Round 2 labels.
+
 The complete source policy, artifact hashes, GPU handoff, and Round 2 privacy boundary are recorded
 in [docs/mining-sources/phase1-round2.md](docs/mining-sources/phase1-round2.md).
 

@@ -367,19 +367,15 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
 
     model_data_calibrate = model_data_operations.add_parser(
         "calibrate",
-        help="Select per-type model thresholds on the sealed model development split.",
+        help="Verify a full model and select per-type thresholds on development.",
     )
     model_data_calibrate.set_defaults(handler="benchmark_phase1_model_data_calibrate")
-    model_data_calibrate.add_argument("--pred", required=True)
-    _phase1_model_selection_arguments(model_data_calibrate)
-    model_data_calibrate.add_argument("--output", required=True)
     model_data_calibrate.add_argument(
-        "--threshold",
-        action="append",
-        type=float,
-        dest="thresholds",
-        help="Confidence value in an increasing calibration grid; may be repeated.",
+        "--pipeline-config",
+        default="configs/pipeline/phase1-five-type-model-only.yaml",
+        help="Verified model-only pipeline profile.",
     )
+    model_data_calibrate.add_argument("--output-dir", required=True)
 
     model_data_compare = model_data_operations.add_parser(
         "compare",

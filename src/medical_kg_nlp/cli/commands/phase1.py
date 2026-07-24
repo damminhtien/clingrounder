@@ -11,11 +11,12 @@ from medical_kg_nlp.benchmarks.phase1.model_dataset import (
     Phase1ModelDatasetConfig,
     build_phase1_model_dataset,
 )
+from medical_kg_nlp.benchmarks.phase1.model_runtime import (
+    run_phase1_model_calibration,
+)
 from medical_kg_nlp.benchmarks.phase1.model_selection import (
     Phase1ModelSelectionConfig,
-    calibrate_phase1_model_thresholds,
     compare_phase1_ner_variants,
-    load_internal_predictions,
     write_phase1_model_selection_report,
 )
 from medical_kg_nlp.benchmarks.phase1.round2 import (
@@ -160,16 +161,12 @@ def build_phase1_model_data(args: argparse.Namespace) -> int:
 
 
 def calibrate_phase1_model_data(args: argparse.Namespace) -> int:
-    """Calibrate model thresholds without reading frozen holdout labels."""
+    """Verify a full checkpoint and calibrate it without opening holdout labels."""
 
-    config = _model_selection_config(args)
-    predictions_path = Path(args.pred)
-    report = calibrate_phase1_model_thresholds(
-        load_internal_predictions(predictions_path),
-        config=config,
-        prediction_path=predictions_path,
+    report = run_phase1_model_calibration(
+        args.pipeline_config,
+        args.output_dir,
     )
-    write_phase1_model_selection_report(report, Path(args.output))
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 
