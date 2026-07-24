@@ -9,30 +9,17 @@ from medical_kg_nlp.ner.rule_ner import RuleBasedNER
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 
 
-def test_rule_ner_pins_unique_exact_dictionary_code() -> None:
+def test_rule_ner_keeps_unique_exact_dictionary_match_unassigned() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     entity = next(
         item
-        for item in RuleBasedNER(
-            store,
-            emit_probabilities_by_source={"RxNorm:dictionary_exact": 0.97},
-        ).extract("Dùng metformin.")
+        for item in RuleBasedNER(store).extract("Dùng metformin.")
         if item.text == "metformin"
     )
 
-    assert entity.code_system == CodeSystem.RXNORM
-    assert entity.code == "6809"
-    assert entity.candidates[0].source == "dictionary_exact"
-    assert entity.candidates[0].emit_probability == 0.97
-
-
-def test_rule_ner_abstains_from_uncalibrated_dictionary_candidate() -> None:
-    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    entity = next(
-        item for item in RuleBasedNER(store).extract("Dùng metformin.") if item.text == "metformin"
-    )
-
-    assert entity.candidates[0].emit_probability == 0.0
+    assert entity.code_system == CodeSystem.NONE
+    assert entity.code is None
+    assert entity.candidates == []
 
 
 def test_rule_ner_abstains_when_exact_alias_maps_to_multiple_codes() -> None:
@@ -138,9 +125,10 @@ def test_rule_ner_prefers_combination_drug_over_overlapping_ingredients() -> Non
     entities = RuleBasedNER(DictionaryStore(entries)).extract(text)
     drugs = [entity for entity in entities if entity.type == EntityType.DRUG]
 
-    assert [(entity.text, entity.code) for entity in drugs] == [
-        ("amoxicillin/clavulanate", "3")
-    ]
+    assert [entity.text for entity in drugs] == ["amoxicillin/clavulanate"]
+    assert drugs[0].code_system == CodeSystem.NONE
+    assert drugs[0].code is None
+    assert drugs[0].candidates == []
     medication = drugs[0].medication_mention
     assert medication is not None
     assert text[medication.full_span[0] : medication.full_span[1]] == (

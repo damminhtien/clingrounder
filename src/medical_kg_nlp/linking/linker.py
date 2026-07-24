@@ -104,6 +104,10 @@ class EntityLinker:
         *,
         mention: str | None = None,
     ) -> EntityAnnotation:
+        # INVARIANT: every assignment is recomputed from this candidate set. A recognition-stage
+        # code or a previous linking pass must never survive when the current linker abstains.
+        entity.code_system = CodeSystem.NONE
+        entity.code = None
         entity.candidates = self._qualify_candidates(
             entity,
             candidates,
@@ -114,8 +118,7 @@ class EntityLinker:
             entity.code_system = top.code_system
             entity.code = top.code
             entity.confidence = max(entity.confidence, top.score)
-        elif entity.code_system == CodeSystem.NONE:
-            entity.code = None
+        else:
             entity.confidence = max(entity.confidence, 0.5)
         return entity
 

@@ -893,8 +893,6 @@ def _phase1_candidates(
     if expected_system is None:
         return []
     codes: list[str] = []
-    if entity.code_system == expected_system and entity.code:
-        codes.append(entity.code)
     for candidate in entity.candidates:
         if (
             not candidate.qualified

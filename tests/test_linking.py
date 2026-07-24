@@ -304,10 +304,13 @@ def test_linker_keeps_candidates_but_abstains_without_score_margin() -> None:
 def test_linker_rejects_candidates_below_absolute_threshold() -> None:
     linker = _linker()
     entity = _entity()
+    entity.code_system = CodeSystem.ICD10
+    entity.code = "I99"
 
     linker.apply_candidates(entity, [_candidate("C1", "I10", 0.61, "fuzzy")])
 
     assert entity.code is None
+    assert entity.code_system == CodeSystem.NONE
     assert entity.candidates[0].qualified is False
     assert entity.candidates[0].qualification_reason == "below_absolute_threshold"
 

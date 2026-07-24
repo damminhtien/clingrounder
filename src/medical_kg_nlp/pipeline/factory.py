@@ -226,24 +226,14 @@ class PipelineFactory:
                 entity_extractor = HybridEntityExtractorAdapter(
                     model=model_entity_extractor,
                     dictionary=RuleEntityExtractorAdapter(
-                        RuleBasedNER(
-                            recognition_store,
-                            emit_probabilities_by_source=dict(
-                                options.link_emit_probabilities_by_source
-                            ),
-                        )
+                        RuleBasedNER(recognition_store)
                     ),
                 )
             else:
                 entity_extractor = model_entity_extractor
         else:
             entity_extractor = RuleEntityExtractorAdapter(
-                RuleBasedNER(
-                    recognition_store,
-                    emit_probabilities_by_source=dict(
-                        options.link_emit_probabilities_by_source
-                    ),
-                )
+                RuleBasedNER(recognition_store)
             )
         assertion_classifier = (
             RuleAssertionClassifierAdapter(AssertionClassifier())

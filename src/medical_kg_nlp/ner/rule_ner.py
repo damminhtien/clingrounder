@@ -3,7 +3,6 @@ import re
 from pathlib import Path
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatch, DictionaryMatcher
 from medical_kg_nlp.ner.lab_observation_extractor import LabObservationExtractor
 from medical_kg_nlp.ner.medication_attribute_extractor import MedicationAttributeExtractor
@@ -14,7 +13,7 @@ from medical_kg_nlp.ontology.false_positive import (
     FalsePositiveRule,
     load_false_positive_rules,
 )
-from medical_kg_nlp.schema.annotation import CandidateConcept, EntityAnnotation
+from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
 from medical_kg_nlp.utils.text import normalize_for_match
 
@@ -52,10 +51,7 @@ class RuleBasedNER:
         store: DictionaryStore,
         *,
         false_positive_path: str | Path | None = DEFAULT_FALSE_POSITIVE_PATH,
-        emit_probabilities_by_source: dict[str, float] | None = None,
     ) -> None:
-        self.store = store
-        self.emit_probabilities_by_source = emit_probabilities_by_source or {}
         self.aliases = store.aliases_for_ner()
         self.matcher = DictionaryMatcher(self.aliases)
         self.lab_observations = LabObservationExtractor()
@@ -228,29 +224,8 @@ class RuleBasedNER:
         *,
         confidence: float | None = None,
     ) -> EntityAnnotation:
-        entry = self._unique_output_entry(match)
-        score = 1.0 if match.match_kind == "exact" else 0.92
-        source = f"dictionary_{match.match_kind}"
-        candidate = (
-            CandidateConcept(
-                concept_id=entry.concept_id,
-                code_system=entry.code_system,
-                code=entry.code,
-                name=entry.canonical_name,
-                retrieval_score=score,
-                emit_probability=self.emit_probabilities_by_source.get(
-                    f"{entry.code_system.value}:{source}",
-                    self.emit_probabilities_by_source.get(source, 0.0),
-                ),
-                source=source,
-                evidence_sources=(source,),
-                matched_alias=match.alias,
-                qualified=True,
-                qualification_reason="pinned_unique_dictionary_match",
-            )
-            if entry is not None
-            else None
-        )
+        # INVARIANT: recognition establishes only raw span and semantic type. Code assignment
+        # belongs to the linker, where candidates are type-filtered, qualified, and auditable.
         return EntityAnnotation(
             id="",
             span=match.span,
@@ -258,31 +233,13 @@ class RuleBasedNER:
             normalized_text=match.normalized_text,
             type=match.entry.semantic_type,
             assertion=AssertionStatus.UNKNOWN,
-            code_system=entry.code_system if entry is not None else CodeSystem.NONE,
-            code=entry.code if entry is not None else None,
+            code_system=CodeSystem.NONE,
+            code=None,
             confidence=(0.78 if match.match_kind == "exact" else 0.76)
             if confidence is None
             else confidence,
-            candidates=[candidate] if candidate is not None else [],
+            candidates=[],
         )
-
-    def _unique_output_entry(self, match: DictionaryMatch) -> ConceptEntry | None:
-        entries = (
-            self.store.exact_lookup(match.alias)
-            if match.match_kind == "exact"
-            else self.store.toneless_lookup(match.alias)
-        )
-        compatible = [
-            entry
-            for entry in entries
-            if entry.semantic_type == match.entry.semantic_type
-            and entry.code is not None
-            and entry.code_system != CodeSystem.NONE
-        ]
-        by_output = {(entry.code_system, entry.code): entry for entry in compatible}
-        if len(by_output) != 1:
-            return None
-        return next(iter(by_output.values()))
 
     def _has_concatenated_drug_left_boundary(self, lowered: str, start: int) -> bool:
         left = lowered[max(0, start - 32) : start]

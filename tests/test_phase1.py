@@ -380,6 +380,8 @@ def test_prediction_to_phase1_entities_exports_only_qualified_candidates() -> No
                 text,
                 "tăng huyết áp",
                 EntityType.DISEASE,
+                code_system=CodeSystem.ICD10,
+                code="I99",
                 candidates=[
                     _candidate(CodeSystem.ICD10, "I10", qualified=True),
                     _candidate(CodeSystem.ICD10, "I11", qualified=False),
@@ -679,8 +681,11 @@ def test_build_phase1_report_separates_phase1_validation_from_internal_metrics()
                     "đái tháo đường type 2",
                     EntityType.DISEASE,
                     code_system=CodeSystem.ICD10,
-                    code="E11",
-                    candidates=[_candidate(CodeSystem.ICD10, "J18.9")],
+                    code="I99",
+                    candidates=[
+                        _candidate(CodeSystem.ICD10, "E11"),
+                        _candidate(CodeSystem.ICD10, "J18.9"),
+                    ],
                 )
             ],
             [],
@@ -698,8 +703,11 @@ def test_build_phase1_report_separates_phase1_validation_from_internal_metrics()
                     "đái tháo đường type 2",
                     EntityType.DISEASE,
                     code_system=CodeSystem.ICD10,
-                    code="E11",
-                    candidates=[_candidate(CodeSystem.ICD10, "J18.9")],
+                    code="I99",
+                    candidates=[
+                        _candidate(CodeSystem.ICD10, "E11"),
+                        _candidate(CodeSystem.ICD10, "J18.9"),
+                    ],
                 )
             ],
             [],
