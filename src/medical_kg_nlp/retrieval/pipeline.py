@@ -206,4 +206,5 @@ class RetrievalPipeline:
                 candidate.matched_alias if matched_alias is None else matched_alias
             ),
             evidence=candidate.evidence if evidence is None else evidence,
+            reviewed_mapping=candidate.reviewed_mapping,
         )

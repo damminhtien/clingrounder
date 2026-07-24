@@ -24,6 +24,7 @@ class Candidate:
     source: str
     matched_alias: str | None = None
     evidence: tuple[CandidateEvidence, ...] = ()
+    reviewed_mapping: bool = False
 
     @property
     def sources(self) -> tuple[str, ...]:

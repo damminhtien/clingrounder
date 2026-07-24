@@ -182,7 +182,15 @@ class ReviewedMentionRetrieverAdapter:
         entry = self.repository.get_by_code(code_system, code)
         if entry is None or entry.semantic_type != entity_type:
             return []
-        return [_candidate(entry, 1.0, provenance, mention)]
+        return [
+            _candidate(
+                entry,
+                1.0,
+                provenance,
+                mention,
+                reviewed_mapping=True,
+            )
+        ]
 
 
 @dataclass(frozen=True)
@@ -344,6 +352,8 @@ def _candidate(
     score: float,
     source: str,
     matched_alias: str,
+    *,
+    reviewed_mapping: bool = False,
 ) -> Candidate:
     return Candidate(
         concept_id=entry.concept_id,
@@ -354,6 +364,7 @@ def _candidate(
         score=score,
         source=source,
         matched_alias=matched_alias,
+        reviewed_mapping=reviewed_mapping,
     )
 
 
@@ -372,4 +383,5 @@ def _candidate_from_candidate(
         score=score,
         source=source,
         matched_alias=matched_alias,
+        reviewed_mapping=candidate.reviewed_mapping,
     )

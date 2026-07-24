@@ -131,6 +131,44 @@ def test_reviewed_memory_short_circuits_conflicting_seed_exact_match(
     assert [(candidate.code, candidate.source) for candidate in candidates] == [
         ("I25.1", "reviewed_memory:test")
     ]
+    assert candidates[0].reviewed_mapping is True
+
+
+def test_reviewed_mapping_is_not_demoted_by_generic_drug_structure_heuristics(
+    tmp_path: Path,
+) -> None:
+    entry = ConceptEntry(
+        concept_id="RXNORM:392085",
+        code="392085",
+        code_system=CodeSystem.RXNORM,
+        canonical_name="guaifenesin 800 MG Oral Tablet",
+        aliases=("guaifenesin",),
+        semantic_type=EntityType.DRUG,
+        rxnorm_tty="SCD",
+    )
+    repository = InMemoryTerminologyRepository(DictionaryStore([entry]))
+    memory = tmp_path / "reviewed.jsonl"
+    memory.write_text(
+        '{"mention":"guaifenesin ml po q6h:prn","code_system":"RxNorm",'
+        '"code":"392085","provenance":"btc_sample"}\n',
+        encoding="utf-8",
+    )
+    candidate = ReviewedMentionRetrieverAdapter.from_jsonl(
+        repository,
+        memory,
+    ).retrieve(
+        "guaifenesin ml po q6h:prn",
+        EntityType.DRUG,
+        "",
+        5,
+    )[0]
+
+    reranked = HeuristicReranker(repository).rerank(
+        [candidate],
+        mention="guaifenesin ml po q6h:prn",
+    )
+
+    assert reranked[0].score == 1.0
 
 
 def test_ambiguous_exact_output_continues_approximate_retrieval() -> None:

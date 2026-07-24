@@ -60,6 +60,11 @@ class HeuristicReranker:
         mention_structure: MedicationStructure,
         context_tokens: set[str],
     ) -> float:
+        if candidate.reviewed_mapping:
+            # INVARIANT: a reviewed full-mention mapping has already resolved the ambiguity that
+            # this generic heuristic estimates. Hard RxNorm conflicts are still enforced later by
+            # EntityLinker before the candidate can qualify.
+            return candidate.score
         entry = self.repository.get_by_concept_id(candidate.concept_id)
         if entry is None:
             return candidate.score
