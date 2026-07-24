@@ -5,7 +5,15 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 import yaml
+
+from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from medical_kg_nlp.terminology import (
+    CompositeTerminologyRepository,
+    InMemoryTerminologyRepository,
+)
 
 
 def test_runtime_source_versions_match_tt06_and_rxnorm_import_manifests() -> None:
@@ -71,6 +79,51 @@ def test_current_rxnorm_contains_july_only_concept_not_present_in_june_snapshot(
     assert current["canonical_name"] == "bulevirtide"
     assert current["source"] == "rxnorm_prescribable_2026_07_06"
     assert _find_code(june, "2743603") is None
+
+
+@pytest.mark.release
+def test_runtime_repository_queries_current_tt06_and_july_rxnorm_releases() -> None:
+    """Exercise the typed query contract on concepts absent from legacy seed/release data."""
+
+    repository = CompositeTerminologyRepository(
+        (
+            InMemoryTerminologyRepository(
+                DictionaryStore.from_jsonl(
+                    "data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl"
+                )
+            ),
+            InMemoryTerminologyRepository(
+                DictionaryStore.from_jsonl(
+                    "data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl"
+                )
+            ),
+        )
+    )
+
+    icd = repository.exact_lookup(
+        "Bệnh tả do vi khuẩn Vibrio cholerae 01, típ sinh học cholerae",
+        entity_type=EntityType.DISEASE,
+        code_systems=(CodeSystem.ICD10,),
+        limit=5,
+    )
+    rxnorm = repository.exact_lookup(
+        "bulevirtide",
+        entity_type=EntityType.DRUG,
+        code_systems=(CodeSystem.RXNORM,),
+        limit=5,
+    )
+
+    assert [(entry.code, entry.source) for entry in icd] == [
+        ("A00.0", "icd10_vn_tt06_2026")
+    ]
+    # A bare ingredient can also be an alias of a semantic clinical drug form. The repository
+    # must preserve that current-release ambiguity so assignment can use TTY/structured context
+    # instead of treating normalized string equality as a unique RxCUI.
+    assert [(entry.code, entry.rxnorm_tty) for entry in rxnorm] == [
+        ("2743603", "IN"),
+        ("2743608", "SCDF"),
+    ]
+    assert {entry.source for entry in rxnorm} == {"rxnorm_full_2026_07_06"}
 
 
 def _load_json(path: Path) -> dict[str, object]:

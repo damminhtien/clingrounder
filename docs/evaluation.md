@@ -101,6 +101,16 @@ and hashes output ZIP files. Matching ZIP hashes are the required regression che
 runtime optimization. See [ADR 0005](decisions/0005-terminology-retrieval-scaling.md) for the
 database, FTS, and ANN decision.
 
+Terminology verification has three deliberately separate roles:
+
+- `tests/test_btc_phase1_sample.py` checks the organizer's executable span/type/assertion/candidate
+  convention only. Its benchmark-local vocabulary and reviewed mappings are not runtime defaults.
+- `tests/test_standard_release_contract.py` checks current TT06 and July 6, 2026 RxNorm manifests,
+  profile paths, a July-only RxCUI, and typed repository queries against both full releases.
+- terminology query-set benchmarks measure retrieval recall/rank/abstention. They must report
+  unknown codes and ambiguous exact aliases rather than silently treating either as a top-1 error
+  or a unique assignment.
+
 `medical-kg terminology benchmark` reports rank metrics plus a fixed lexical-score abstention
 curve. Treat query semantics explicitly:
 
