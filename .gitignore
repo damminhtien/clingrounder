@@ -121,6 +121,7 @@ outputs/benchmarks/
 outputs/evaluation/
 outputs/loops/
 outputs/mining/
+outputs/models/
 outputs/profiles/
 outputs/smoke/
 
