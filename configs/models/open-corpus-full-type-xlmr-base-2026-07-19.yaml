@@ -4,6 +4,11 @@ run_id: open-corpus-full-type-xlmr-base-2026-07-19
 # INVARIANT: every path below resolves from this movable repository root, not the shell CWD.
 run_root: ../..
 
+environment:
+  # INVARIANT: fail before training if the dependency lock differs from this run identity.
+  lock_path: uv.lock
+  lock_sha256: 8ed9569bb6f221393de6508d2f36729f5b644b390336ab1eaf5bea7b12fcc87a
+
 dataset:
   path: outputs/mining/model-datasets/open-corpus-v1-full-ner-harmonized-2026-07-18/spans.jsonl
   manifest: outputs/mining/model-datasets/open-corpus-v1-full-ner-harmonized-2026-07-18/manifest.json

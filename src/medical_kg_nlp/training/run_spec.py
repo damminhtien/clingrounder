@@ -12,6 +12,7 @@ from typing import Any, Literal
 
 from medical_kg_nlp.adapters.huggingface.runtime import OptionalModelDependencyError
 from medical_kg_nlp.training.config import TokenClassifierTrainingConfig
+from medical_kg_nlp.utils.hashing import sha256_file
 from medical_kg_nlp.utils.io import read_yaml
 
 __all__ = [
@@ -67,6 +68,8 @@ class TokenClassifierRunSpec:
     run_root: Path
     training: TokenClassifierTrainingConfig
     runtime: GPURequirements
+    environment_lock_path: Path
+    environment_lock_sha256: str
     model_source_url: str
     model_license: str
 
@@ -86,6 +89,18 @@ class TokenClassifierRunSpec:
             raise ValueError("A Linux/GPU run spec cannot enable use_cpu")
         if not self.training.full_determinism:
             raise ValueError("A reproducible Linux/GPU run must enable full_determinism")
+        if not self.environment_lock_path.is_file():
+            raise ValueError(
+                f"Environment lock file does not exist: {self.environment_lock_path}"
+            )
+        if not re.fullmatch(r"[0-9a-f]{64}", self.environment_lock_sha256):
+            raise ValueError("Environment lock SHA-256 must be 64 lowercase hexadecimal characters")
+        actual_lock_sha256 = sha256_file(self.environment_lock_path)
+        if actual_lock_sha256 != self.environment_lock_sha256:
+            raise ValueError(
+                "Environment lock SHA-256 mismatch: "
+                f"expected {self.environment_lock_sha256}, got {actual_lock_sha256}"
+            )
 
     @property
     def config_relative_path(self) -> str:
@@ -139,6 +154,7 @@ def load_token_classifier_run_spec(path: str | Path) -> TokenClassifierRunSpec:
     )
     _relative_to_run_root(config_path, run_root)
     dataset = _mapping(raw, "dataset")
+    environment = _mapping(raw, "environment")
     model = _mapping(raw, "model")
     training = _mapping(raw, "training")
     runtime = _mapping(raw, "runtime")
@@ -208,6 +224,12 @@ def load_token_classifier_run_spec(path: str | Path) -> TokenClassifierRunSpec:
             minimum_compute_capability=(int(capability[0]), int(capability[1])),
             precision=precision,
         ),
+        environment_lock_path=_resolve_run_path(
+            run_root,
+            _required_string(environment, "lock_path"),
+            field="environment.lock_path",
+        ),
+        environment_lock_sha256=_required_string(environment, "lock_sha256"),
         model_source_url=_required_string(model, "source_url"),
         model_license=_required_string(model, "license"),
     )

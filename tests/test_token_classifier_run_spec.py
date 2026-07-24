@@ -14,6 +14,9 @@ from medical_kg_nlp.training.run_spec import (
     assert_local_gpu_runtime,
     load_token_classifier_run_spec,
 )
+from medical_kg_nlp.utils.hashing import sha256_text
+
+_FIXTURE_LOCK = "version = 1\n"
 
 
 def test_checked_in_full_type_run_spec_pins_dataset_and_checkpoint() -> None:
@@ -56,8 +59,7 @@ def test_run_spec_paths_are_stable_from_another_working_directory(
 ) -> None:
     repository = tmp_path / "portable-repository"
     config = repository / "configs" / "models" / "run.yaml"
-    config.parent.mkdir(parents=True)
-    config.write_text(_yaml(revision="a" * 40, run_root="../.."), encoding="utf-8")
+    _write_run_spec(config, revision="a" * 40, run_root="../..")
     elsewhere = tmp_path / "elsewhere"
     elsewhere.mkdir()
     monkeypatch.chdir(elsewhere)
@@ -74,9 +76,12 @@ def test_run_spec_paths_are_stable_from_another_working_directory(
 
 def test_run_spec_rejects_paths_outside_declared_root(tmp_path: Path) -> None:
     config = tmp_path / "repository" / "run.yaml"
-    config.parent.mkdir()
+    _write_run_spec(config, revision="a" * 40)
     config.write_text(
-        _yaml(revision="a" * 40).replace("path: spans.jsonl", "path: ../spans.jsonl"),
+        config.read_text(encoding="utf-8").replace(
+            "path: spans.jsonl",
+            "path: ../spans.jsonl",
+        ),
         encoding="utf-8",
     )
 
@@ -91,8 +96,7 @@ def test_run_cli_persists_only_run_root_relative_provenance(
 ) -> None:
     repository = tmp_path / "portable-repository"
     config = repository / "configs" / "models" / "run.yaml"
-    config.parent.mkdir(parents=True)
-    config.write_text(_yaml(revision="a" * 40, run_root="../.."), encoding="utf-8")
+    _write_run_spec(config, revision="a" * 40, run_root="../..")
     observed: dict[str, Path] = {}
 
     def fake_train(
@@ -123,16 +127,15 @@ def test_run_cli_persists_only_run_root_relative_provenance(
     assert observed["manifest_root"] == repository.resolve()
     assert manifest["run_spec"]["path"] == "configs/models/run.yaml"
     assert manifest["run_spec"]["path_base"] == "run_root"
+    assert manifest["environment"]["lock_path"] == "uv.lock"
+    assert manifest["environment"]["lock_sha256"] == sha256_text(_FIXTURE_LOCK)
     assert str(repository) not in manifest_text
     assert json.loads(capsys.readouterr().out)["manifest"] == ("outputs/model/run_manifest.json")
 
 
 def test_run_spec_rejects_mutable_model_revision(tmp_path: Path) -> None:
     config = tmp_path / "run.yaml"
-    config.write_text(
-        _yaml(revision="main"),
-        encoding="utf-8",
-    )
+    _write_run_spec(config, revision="main")
 
     with pytest.raises(ValueError, match="full 40-character commit SHA"):
         load_token_classifier_run_spec(config)
@@ -161,11 +164,38 @@ def test_run_spec_cli_is_discoverable() -> None:
     assert args.handler == "model_train_token_classifier_run"
 
 
+def test_run_spec_rejects_environment_lock_drift(tmp_path: Path) -> None:
+    config = tmp_path / "run.yaml"
+    _write_run_spec(config, revision="a" * 40)
+    (tmp_path / "uv.lock").write_text("version = 2\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="Environment lock SHA-256 mismatch"):
+        load_token_classifier_run_spec(config)
+
+
+def _write_run_spec(
+    config: Path,
+    *,
+    revision: str,
+    run_root: str = ".",
+) -> None:
+    """Write a portable fixture whose lock identity is part of the run contract."""
+
+    config.parent.mkdir(parents=True, exist_ok=True)
+    root = (config.parent / run_root).resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    (root / "uv.lock").write_text(_FIXTURE_LOCK, encoding="utf-8")
+    config.write_text(_yaml(revision=revision, run_root=run_root), encoding="utf-8")
+
+
 def _yaml(*, revision: str, run_root: str = ".") -> str:
     return f"""\
 schema_version: token-classifier-run.v2
 run_id: fixture
 run_root: {run_root}
+environment:
+  lock_path: uv.lock
+  lock_sha256: {sha256_text(_FIXTURE_LOCK)}
 dataset:
   path: spans.jsonl
   manifest: manifest.json

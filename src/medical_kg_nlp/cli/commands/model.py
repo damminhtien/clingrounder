@@ -42,6 +42,11 @@ def inspect_token_classifier_run(args: argparse.Namespace) -> int:
                     "path_base": "run_root",
                     "sha256": sha256_file(spec.config_path),
                 },
+                "environment": {
+                    "lock_path": spec.relative_path(spec.environment_lock_path),
+                    "lock_sha256": spec.environment_lock_sha256,
+                    "install_command": ["uv", "sync", "--frozen", "--extra", "ml"],
+                },
                 "dataset": summary.to_dict(),
                 "label_vocabulary": list(vocabulary),
                 "model": {
@@ -88,6 +93,11 @@ def train_token_classifier_run(args: argparse.Namespace) -> int:
         "path_base": "run_root",
         "sha256": sha256_file(spec.config_path),
         "run_id": spec.run_id,
+    }
+    manifest["environment"] = {
+        "lock_path": spec.relative_path(spec.environment_lock_path),
+        "lock_sha256": spec.environment_lock_sha256,
+        "install_command": ["uv", "sync", "--frozen", "--extra", "ml"],
     }
     manifest["gpu_runtime"] = gpu_runtime
     write_json(spec.training.output_dir / "run_manifest.json", manifest)

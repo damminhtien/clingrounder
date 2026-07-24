@@ -4,6 +4,11 @@ run_id: phase1-five-type-xlmr-base-2026-07-22
 # INVARIANT: all data, output, and cache paths resolve from this movable repository root.
 run_root: ../..
 
+environment:
+  # INVARIANT: the remote GPU job must resolve the exact dependency graph reviewed locally.
+  lock_path: uv.lock
+  lock_sha256: 8ed9569bb6f221393de6508d2f36729f5b644b390336ab1eaf5bea7b12fcc87a
+
 dataset:
   path: outputs/mining/model-datasets/phase1-manual-five-type-v1/spans.jsonl
   manifest: outputs/mining/model-datasets/phase1-manual-five-type-v1/manifest.json
