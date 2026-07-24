@@ -33,20 +33,23 @@ jobs:
           uv sync --frozen --extra dev --extra data --python "$pythonLocation/bin/python"
 
       - name: Ruff
-        run: uv run --frozen ruff check .
+        # INVARIANT: Execute the environment synced above. `uv run` would
+        # re-read the repository's local .python-version and replace the
+        # matrix interpreter.
+        run: .venv/bin/ruff check .
 
       - name: Mypy
-        run: uv run --frozen mypy src
+        run: .venv/bin/mypy src
 
       - name: Pytest
-        run: uv run --frozen pytest tests
+        run: .venv/bin/pytest tests
 
       - name: Pipeline smoke
         run: |
-          uv run --frozen medical-kg pipeline run \
+          .venv/bin/medical-kg pipeline run \
             --input data/samples/sample_notes.jsonl \
             --output outputs/predictions.jsonl
-          uv run --frozen medical-kg validate \
+          .venv/bin/medical-kg validate \
             --profile development \
             --pred outputs/predictions.jsonl \
             --documents data/samples/sample_notes.jsonl \

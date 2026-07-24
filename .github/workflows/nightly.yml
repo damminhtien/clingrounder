@@ -26,10 +26,12 @@ jobs:
           uv sync --frozen --extra dev --extra data --python "$pythonLocation/bin/python"
 
       - name: Ruff
-        run: uv run --frozen ruff check .
+        # INVARIANT: Execute the lock-synced environment without allowing
+        # `uv run` to replace its Python from the local .python-version file.
+        run: .venv/bin/ruff check .
 
       - name: Mypy
-        run: uv run --frozen mypy src
+        run: .venv/bin/mypy src
 
       - name: Full public test suite
-        run: uv run --frozen pytest -o addopts='' -m "not private and not model" tests
+        run: .venv/bin/pytest -o addopts='' -m "not private and not model" tests
