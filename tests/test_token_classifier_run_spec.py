@@ -119,6 +119,15 @@ def test_run_cli_persists_only_run_root_relative_provenance(
         "train_huggingface_token_classifier",
         fake_train,
     )
+    monkeypatch.setattr(
+        model_commands,
+        "collect_git_metadata",
+        lambda: {
+            "git_commit": "b" * 40,
+            "git_dirty": False,
+            "working_tree_hash": None,
+        },
+    )
 
     assert model_commands.train_token_classifier_run(Namespace(config=str(config))) == 0
     manifest_path = repository / "outputs" / "model" / "run_manifest.json"
@@ -130,6 +139,8 @@ def test_run_cli_persists_only_run_root_relative_provenance(
     assert manifest["run_spec"]["path_base"] == "run_root"
     assert manifest["environment"]["lock_path"] == "uv.lock"
     assert manifest["environment"]["lock_sha256"] == sha256_text(_FIXTURE_LOCK)
+    assert manifest["source_control"]["git_commit"] == "b" * 40
+    assert manifest["source_control"]["git_dirty"] is False
     assert str(repository) not in manifest_text
     assert json.loads(capsys.readouterr().out)["manifest"] == ("outputs/model/run_manifest.json")
 

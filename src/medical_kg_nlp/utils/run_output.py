@@ -11,6 +11,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+__all__ = [
+    "HashedRunOutput",
+    "collect_git_metadata",
+    "create_hashed_run_dir",
+    "path_in_run",
+]
 
 _SLUG_RE = re.compile(r"[^A-Za-z0-9_.-]+")
 _ENVIRONMENT_LOCK_CANDIDATES = (Path("uv.lock"), Path("pyproject.toml"))
@@ -21,6 +27,17 @@ class HashedRunOutput:
     run_id: str
     run_dir: Path
     manifest_path: Path
+
+
+def collect_git_metadata() -> dict[str, str | bool | None]:
+    """Return source-control identity without failing outside a Git checkout."""
+
+    commit, dirty, working_tree_hash = _git_metadata()
+    return {
+        "git_commit": commit,
+        "git_dirty": dirty,
+        "working_tree_hash": working_tree_hash,
+    }
 
 
 def create_hashed_run_dir(
@@ -35,7 +52,10 @@ def create_hashed_run_dir(
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     safe_label = _slug(label)
     input_artifacts = [_input_artifact(item) for item in inputs]
-    git_commit, git_dirty, working_tree_hash = _git_metadata()
+    git_metadata = collect_git_metadata()
+    git_commit = git_metadata["git_commit"]
+    git_dirty = git_metadata["git_dirty"]
+    working_tree_hash = git_metadata["working_tree_hash"]
     lock_hash = _environment_lock_hash()
     reproducibility_payload = {
         "label": label,
@@ -153,9 +173,8 @@ def _file_sha256(path: Path) -> str:
 def _environment_lock_hash() -> str:
     """Hash the strongest available environment definition.
 
-    ``uv.lock`` is preferred when present. The project does not currently commit
-    that file, so public CI falls back to ``pyproject.toml`` instead of emitting a
-    null reproducibility field.
+    ``uv.lock`` is preferred when present. Source checkouts without the lock fall
+    back to ``pyproject.toml`` instead of emitting a null reproducibility field.
     """
 
     for candidate in _ENVIRONMENT_LOCK_CANDIDATES:

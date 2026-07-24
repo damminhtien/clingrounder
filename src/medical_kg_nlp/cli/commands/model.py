@@ -21,6 +21,7 @@ from medical_kg_nlp.training import (
 )
 from medical_kg_nlp.mining.io import write_json
 from medical_kg_nlp.utils.hashing import sha256_file
+from medical_kg_nlp.utils.run_output import collect_git_metadata
 
 __all__ = [
     "inspect_token_classifier_run",
@@ -103,6 +104,7 @@ def train_token_classifier_run(args: argparse.Namespace) -> int:
         "lock_sha256": spec.environment_lock_sha256,
         "install_command": ["uv", "sync", "--frozen", "--extra", "ml"],
     }
+    manifest["source_control"] = collect_git_metadata()
     manifest["gpu_runtime"] = gpu_runtime
     write_json(spec.training.output_dir / "run_manifest.json", manifest)
     print(
