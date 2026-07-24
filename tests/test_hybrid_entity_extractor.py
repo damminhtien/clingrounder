@@ -1,10 +1,13 @@
-"""Hybrid NER tests for reviewed-span precedence and raw offset safety."""
+"""Hybrid NER tests for evidence arbitration and raw offset safety."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from medical_kg_nlp.adapters.hybrid import HybridEntityExtractorAdapter
+from medical_kg_nlp.adapters.hybrid import (
+    HybridArbitrationPolicy,
+    HybridEntityExtractorAdapter,
+)
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.types import EntityType
 from medical_kg_nlp.utils.text import normalize_for_match
@@ -37,7 +40,7 @@ def _entity(
     )
 
 
-def test_hybrid_dictionary_wins_overlap_and_model_adds_recall() -> None:
+def test_hybrid_stronger_model_can_correct_overlapping_dictionary_span() -> None:
     source = "bệnh đau ngực và sốt"
     fever_start = source.index("sốt")
     dictionary = _Extractor(
@@ -53,12 +56,62 @@ def test_hybrid_dictionary_wins_overlap_and_model_adds_recall() -> None:
     entities = HybridEntityExtractorAdapter(model=model, dictionary=dictionary).extract(source)
 
     assert [(entity.text, entity.type) for entity in entities] == [
-        ("bệnh đau ngực", EntityType.DISEASE),
+        ("đau ngực", EntityType.SYMPTOM),
         ("sốt", EntityType.SYMPTOM),
     ]
     assert [entity.id for entity in entities] == ["H0001", "H0002"]
     for entity in entities:
         entity.validate_offsets(source)
+
+
+def test_hybrid_dictionary_prior_breaks_small_confidence_gap() -> None:
+    source = "bệnh đau ngực"
+    dictionary = _Extractor(
+        [_entity("D1", source, 0, len(source), EntityType.DISEASE, 0.78)]
+    )
+    model = _Extractor(
+        [_entity("M1", source, 5, len(source), EntityType.SYMPTOM, 0.80)]
+    )
+
+    entities = HybridEntityExtractorAdapter(model=model, dictionary=dictionary).extract(source)
+
+    assert [(entity.text, entity.type) for entity in entities] == [
+        (source, EntityType.DISEASE)
+    ]
+
+
+def test_hybrid_exact_agreement_merges_duplicate_and_confidence() -> None:
+    source = "đau ngực"
+    dictionary = _Extractor(
+        [_entity("D1", source, 0, len(source), EntityType.SYMPTOM, 0.78)]
+    )
+    model = _Extractor(
+        [_entity("M1", source, 0, len(source), EntityType.SYMPTOM, 0.93)]
+    )
+
+    entities = HybridEntityExtractorAdapter(model=model, dictionary=dictionary).extract(source)
+
+    assert len(entities) == 1
+    assert entities[0].confidence == 0.93
+    assert entities[0].id == "H0001"
+
+
+def test_hybrid_maximizes_evidence_across_overlap_component() -> None:
+    source = "đau ngực và sốt"
+    fever_start = source.index("sốt")
+    dictionary = _Extractor(
+        [_entity("D1", source, 0, len(source), EntityType.DISEASE, 0.90)]
+    )
+    model = _Extractor(
+        [
+            _entity("M1", source, 0, 8, EntityType.SYMPTOM, 0.70),
+            _entity("M2", source, fever_start, len(source), EntityType.SYMPTOM, 0.70),
+        ]
+    )
+
+    entities = HybridEntityExtractorAdapter(model=model, dictionary=dictionary).extract(source)
+
+    assert [entity.text for entity in entities] == ["đau ngực", "sốt"]
 
 
 def test_hybrid_deterministically_resolves_overlapping_model_spans() -> None:
@@ -78,3 +131,13 @@ def test_hybrid_deterministically_resolves_overlapping_model_spans() -> None:
     assert [(entity.text, entity.span) for entity in entities] == [
         (source, (0, len(source)))
     ]
+
+
+def test_hybrid_policy_rejects_invalid_priors() -> None:
+    for value in (-0.1, 1.1, float("nan")):
+        try:
+            HybridArbitrationPolicy(dictionary_prior=value)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"accepted invalid prior {value!r}")
