@@ -401,6 +401,16 @@ uv run medical-kg benchmark phase1 model-data build \
 
 The command excludes the 24-document holdout and all Round 2 text by contract.
 
+Inspect the pinned five-type XLM-R run before moving it to an authorized Linux/BF16 GPU:
+
+```bash
+uv run medical-kg model inspect-token-classifier-run \
+  --config configs/models/phase1-five-type-xlmr-base-2026-07-22.yaml
+```
+
+The complete source policy, artifact hashes, GPU handoff, and Round 2 privacy boundary are recorded
+in [docs/mining-sources/phase1-round2.md](docs/mining-sources/phase1-round2.md).
+
 ---
 
 # Evaluation

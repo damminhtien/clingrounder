@@ -85,6 +85,110 @@ The audit output fingerprints are:
 | `duplicate_report.json` | `176bfdec087eacb99fb8ae4b21aebc1ed026cefa49993de864c88cb16fff677e` |
 | `novelty_queue.jsonl` | `460400c1b49fa3f158bd7ed93dd8577821dbbbaf354f1d62e0a9923854083d3b` |
 
+## Model Supervision Boundary
+
+The model is trained only from the 76 documents allowed by the frozen first-round manual-gold
+split. The builder assigns duplicate groups together, then creates 60 training and 16 development
+documents with hash salt `42`. The 24-document holdout stays sealed, and Round 2 contributes no
+text, labels, aliases, thresholds, or pseudo-labels.
+
+The materialized five-type dataset contains 101 chunks and 2,112 exact raw spans:
+
+| Internal type | Count |
+| --- | ---: |
+| `DISEASE` | 448 |
+| `DRUG` | 177 |
+| `SYMPTOM` | 912 |
+| `LAB_TEST` | 317 |
+| `LAB_RESULT` | 258 |
+
+The span JSONL SHA-256 is
+`d87384dfdd8ee93bb26f24da0e96f2497acf6b4a3a00e0f27abfd4a0feb64f30`.
+The official 19-entity BTC medication-list example is an executable convention test only:
+`included_in_training: false` and `runtime_lookup_memory: false`.
+
+XLM-R cannot express 10 of 2,112 gold boundaries as complete subword boundaries. The checked-in
+run masks the crossing tokens from loss; it never widens or rewrites those raw annotations. The
+distribution is 8 train and 2 development spans, or `0.4735%` of all labels.
+
+## Executed Artifacts
+
+The CPU smoke exercised tokenization, three optimizer steps, save, reload, overflow inference, and
+raw-offset validation with the pinned checkpoint
+`FacebookAI/xlm-roberta-base@e73636d4f797dec63c3081bb6ed5c7b0bb3f2089`.
+It produced zero useful entities and is explicitly `submission_eligible: false`; it validates the
+runtime path, not model quality.
+
+| Artifact | Result |
+| --- | --- |
+| CPU smoke run | `outputs/models/phase1-five-type-xlmr-base-cpu-smoke_53a056509b6f/` |
+| smoke model fingerprint | `e9ebe7bf9ea7b558bede0538a48530d1308b1d77978a26b465cc6b70156d7f62` |
+| smoke offset mismatches | `0` |
+| clean rule run | `outputs/phase1/round2/20260724T030817Z_round2-rule-frozen-public-43.2014_e1bcf980c2/` |
+| clean rule ZIP SHA-256 | `97a471d4d42ebaa12c3db2a1675e98695ca7714792d67c16e5edc7ac2af44a3d` |
+| clean rule validation issues | `0` |
+
+The clean rule run contains 100 JSON files and 1,909 entities. Its manifest records commit
+`8b6556573c9227909cce17263b864592f3019740`, `git_dirty: false`, source archive SHA, environment
+lock SHA, pipeline config, canonical validation dictionaries, and final ZIP SHA. It is the current
+usable Round 2 baseline. Model-only and hybrid artifacts do not exist yet and must not be described
+as evaluated.
+
+## Linux GPU Handoff
+
+The full run requires Linux, CUDA, at least 16 GiB VRAM, compute capability 8.0 or newer, and BF16.
+An A100 or L4 runtime is suitable. Common T4 and P100 sessions do not satisfy the checked contract.
+The current Intel macOS machine can inspect the run and perform local inference, but it cannot
+produce the required full training result.
+
+The repository tracks `uv.lock`; the run spec verifies lock SHA-256
+`8ed9569bb6f221393de6508d2f36729f5b644b390336ab1eaf5bea7b12fcc87a` before importing model
+frameworks. Prepare one local transfer archive containing only the first-round model supervision:
+
+```bash
+tar -czf outputs/models/phase1-five-type-xlmr-training-inputs.tar.gz \
+  -C outputs/mining/model-datasets/phase1-manual-five-type-v1 \
+  spans.jsonl manifest.json split_manifest.json
+shasum -a 256 outputs/models/phase1-five-type-xlmr-training-inputs.tar.gz
+```
+
+The current transfer archive SHA-256 is
+`087f88d4886fcf8213d9044eaba38a6a9fdce5378bc95ac0a4b087a5d44cf1a7`.
+Its container timestamp may differ when rebuilt; `manifest.json` remains the authoritative
+content check for `spans.jsonl`.
+
+On an authorized Colab/Kaggle/private Linux GPU checkout:
+
+```bash
+git status --porcelain
+mkdir -p outputs/mining/model-datasets/phase1-manual-five-type-v1
+tar -xzf /secure/phase1-five-type-xlmr-training-inputs.tar.gz \
+  -C outputs/mining/model-datasets/phase1-manual-five-type-v1
+
+uv sync --frozen --extra ml
+uv run hf download FacebookAI/xlm-roberta-base \
+  --revision e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
+uv run medical-kg model inspect-token-classifier-run \
+  --config configs/models/phase1-five-type-xlmr-base-2026-07-22.yaml
+CUDA_VISIBLE_DEVICES=0 uv run medical-kg model train-token-classifier-run \
+  --config configs/models/phase1-five-type-xlmr-base-2026-07-22.yaml
+```
+
+The training command uses batch 4, gradient accumulation 4, three epochs, BF16, seed 42, and full
+determinism. It records dataset, checkpoint, dependency lock, run-spec, source-control, GPU, model
+fingerprint, and metrics in `outputs/models/phase1-five-type-xlmr-base-2026-07-22/run_manifest.json`.
+
+After copying `final-model/` and `run_manifest.json` back to the same repository-relative output
+path on the Mac, rerun the inspect command. It verifies the returned model fingerprint, run-spec
+SHA, dependency lock SHA, and dataset-manifest SHA without loading Torch. Only a verified full
+model may proceed to development threshold calibration, rule/model/hybrid comparison, and local
+Round 2 inference.
+
+**Privacy boundary:** never upload the Round 2 ZIP, parsed Round 2 documents, audit windows, or
+Round 2 predictions to Colab/Kaggle. The remote job receives only the first-round 76-document
+training view, subject to the competition terms. When hosted processing of that view is not
+permitted, use a private Linux GPU host instead.
+
 ## Promotion Boundary
 
 - Allowed: local inference, aggregate profiling, duplicate diagnostics, and manual prioritization.
