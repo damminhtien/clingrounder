@@ -67,16 +67,14 @@ class PipelineRunner:
             counters["characters"] = len(loaded_document.text)
             counters["metadata_fields"] = len(loaded_document.metadata)
 
-        with trace.stage("offset_preserving_preprocessing") as counters:
+        with trace.stage("lookup_normalization_diagnostics") as counters:
             mapped_text = self.components.normalization_contract.prepare(loaded_document.text)
             counters["original_characters"] = len(mapped_text.original)
             counters["normalized_characters"] = len(mapped_text.normalized)
             counters["offset_map_entries"] = len(mapped_text.normalized_to_original)
-            # Keep this counter machine-readable for stage reports. The contract version is
-            # recorded in code/config manifests rather than this integer-only trace structure.
-            counters["diagnostic_only"] = int(
-                self.components.normalization_contract.downstream_uses_source_text
-            )
+            # INVARIANT: every downstream span still addresses the immutable source text.
+            counters["source_coordinate_spans"] = 1
+            counters["normalized_text_used_downstream"] = 0
 
         with trace.stage("section_detection") as counters:
             sections = self._sections(loaded_document.text)

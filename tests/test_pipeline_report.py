@@ -30,13 +30,14 @@ def test_pipeline_report_merges_metrics_validation_trace_and_errors(tmp_path: Pa
             document_id="sample_001",
             stages=[
                 StageMeasurement(
-                    name="offset_preserving_preprocessing",
+                    name="lookup_normalization_diagnostics",
                     elapsed_ms=2.0,
                     counters={
                         "original_characters": 224,
                         "normalized_characters": 224,
                         "offset_map_entries": 224,
-                        "diagnostic_only": 1,
+                        "source_coordinate_spans": 1,
+                        "normalized_text_used_downstream": 0,
                     },
                 ),
                 StageMeasurement(
@@ -58,6 +59,7 @@ def test_pipeline_report_merges_metrics_validation_trace_and_errors(tmp_path: Pa
     )
 
     assert report["summary"]["document_count"] == 1
+    assert report["preprocessing_metrics"]["normalized_text_used_downstream"] is False
     assert report["runtime"]["bottleneck_stage"] == "candidate_generation"
     assert report["candidate_metrics"]["gold_rank"]["min"] == 2
     assert report["candidate_metrics"]["qualified_candidate_count"]["max"] == 1

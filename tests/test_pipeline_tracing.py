@@ -10,7 +10,7 @@ def test_pipeline_trace_records_algorithm_stages() -> None:
     stage_names = [stage.name for stage in result.trace.stages]
     assert stage_names == [
         "document_loader",
-        "offset_preserving_preprocessing",
+        "lookup_normalization_diagnostics",
         "section_detection",
         "sentence_splitting",
         "entity_extraction",
@@ -30,8 +30,10 @@ def test_pipeline_trace_records_algorithm_stages() -> None:
     assert result.trace.to_json()["bottleneck_stage"] in stage_names
     assert result.prediction.document_id == document.document_id
     by_stage = {stage.name: stage for stage in result.trace.stages}
-    assert by_stage["offset_preserving_preprocessing"].counters["offset_map_entries"] > 0
-    assert by_stage["offset_preserving_preprocessing"].counters["diagnostic_only"] == 1
+    normalization = by_stage["lookup_normalization_diagnostics"].counters
+    assert normalization["offset_map_entries"] > 0
+    assert normalization["source_coordinate_spans"] == 1
+    assert normalization["normalized_text_used_downstream"] == 0
     candidate_counters = by_stage["candidate_generation"].counters
     assert candidate_counters["generated_candidates"] + candidate_counters["pinned_entities"] > 0
     assert by_stage["graph_evidence_reranking"].counters["skipped_entities"] > 0

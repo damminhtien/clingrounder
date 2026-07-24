@@ -39,7 +39,7 @@ retrieval, and experiment-analysis ecosystem is stronger in Python for this proj
 ```text
 Raw clinical text
   -> document_loader
-  -> offset_preserving_preprocessing
+  -> lookup_normalization_diagnostics
   -> section_detection
   -> sentence_splitting
   -> entity_extraction
@@ -72,10 +72,10 @@ span, the indication context selects symptom; diagnosis-only concepts remain dia
 medication indication, the conservative disease fallback remains until a model-backed type resolver
 is calibrated.
 
-The current deterministic baseline keeps `offset_preserving_preprocessing` diagnostic-only:
-downstream NER, context, linking, and relation stages consume original source text. Normalized text
-should only feed downstream stages after normalized spans are mapped back to source offsets end to
-end with offset regression tests.
+`lookup_normalization_diagnostics` records the lookup-normalization size and offset map; it is not a
+preprocessing input to later stages. Downstream NER, context, linking, and relation stages consume
+original source text. Normalized text should become a span-producing input only after every output
+is mapped back to source offsets with end-to-end regression tests.
 
 ## Retrieval
 

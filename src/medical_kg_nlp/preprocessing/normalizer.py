@@ -14,18 +14,18 @@ NORMALIZATION_CONTRACT_VERSION = "lookup-v1"
 
 @dataclass(frozen=True)
 class NormalizationContract:
-    """Versioned boundary between source text and lookup normalization.
+    """Versioned lookup normalization with an auditable source-offset map.
 
     Clinical spans always address ``source_text``. The mapped representation is suitable for
-    lookup and diagnostics only until every downstream span producer explicitly maps its output
-    back through ``normalized_to_original``. Keeping that policy in one object prevents a future
-    normalizer or retrieval backend from silently changing the offset coordinate system.
+    diagnostics and lookup-key construction, not a second pipeline coordinate system. Keeping that
+    policy in one object prevents a matcher or retrieval backend from silently changing offsets.
     """
 
     version: str = NORMALIZATION_CONTRACT_VERSION
-    downstream_uses_source_text: bool = True
 
     def prepare(self, source_text: str) -> OffsetMappedText:
+        """Build a diagnostic mapping while retaining source text as the span coordinate system."""
+
         mapped = collapse_whitespace_preserve_offsets(source_text)
         self.validate(mapped)
         return mapped

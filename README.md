@@ -626,9 +626,9 @@ uv sync --extra experiment
 - Dense retrieval is not connected as a production candidate source. Adding ANN requires a
   versioned embedding model and recall/precision benchmark; installing a vector database alone
   does not provide dense retrieval.
-- The central offset-preserving normalization stage remains diagnostic-only. Downstream modules use
-  raw text and shared lookup normalization, so an end-to-end normalized-text path still requires
-  mapped-span regression coverage.
+- Lookup normalization is explicitly diagnostic and does not pretend to be a downstream text
+  transform. NER and later stages use raw source coordinates; an end-to-end normalized-text path
+  still requires mapped-span regression coverage.
 - BTC sample recognition and reviewed mappings live under the Phase 1 benchmark package and are
   opt-in executable fixtures. Core NER/retrieval defaults never load them, and reproducing that
   example is not evidence of general clinical-linking performance.

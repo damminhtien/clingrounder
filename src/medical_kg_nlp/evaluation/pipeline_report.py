@@ -335,14 +335,19 @@ def _preprocessing_metrics(
             source_slice = document.text[start:end]
             if source_slice != entity.text and source_slice.strip() == entity.text.strip():
                 whitespace_trim_mismatches += 1
-    offset_stage = next(
-        (stage for stage in stage_aggregates if stage.stage == "offset_preserving_preprocessing"),
+    normalization_stage = next(
+        (
+            stage
+            for stage in stage_aggregates
+            if stage.stage == "lookup_normalization_diagnostics"
+        ),
         None,
     )
     return {
         "whitespace_trim_mismatch_count": whitespace_trim_mismatches,
-        "normalized_text_diagnostic_only": bool(
-            offset_stage and offset_stage.counters.get("diagnostic_only", 0) > 0
+        "normalized_text_used_downstream": bool(
+            normalization_stage
+            and normalization_stage.counters.get("normalized_text_used_downstream", 0) > 0
         ),
     }
 

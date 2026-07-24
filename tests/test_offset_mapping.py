@@ -27,7 +27,6 @@ def test_normalization_contract_preserves_source_coordinate_system() -> None:
     start = mapped.normalized.index("sốt")
     source_span = mapped.normalized_span_to_original((start, start + len("sốt")))
 
-    assert contract.downstream_uses_source_text is True
     assert source[source_span[0] : source_span[1]] == "sốt"
     assert contract.normalize_lookup_key("  SỐT! ") == "sốt"
 
