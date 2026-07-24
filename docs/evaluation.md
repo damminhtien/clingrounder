@@ -217,9 +217,10 @@ Jaccard. These are distribution diagnostics, not automatic promotion gates; unkn
 visible as `terminology_unknown` instead of being guessed from code shape.
 
 Candidate calibration also writes a config-ready `expected_jaccard_policy` block. It estimates null
-gold prevalence by code system and candidate correctness by primary source and rank. Selective
-export can then choose an empty set or a ranked prefix of one to five codes instead of requiring
-exactly one eligible code:
+gold prevalence by code system and candidate correctness by primary source and rank. The
+benchmark-only selective export API can then choose an empty set or a ranked prefix of one to five
+codes instead of requiring exactly one eligible code. This policy is intentionally absent from the
+stable submission CLI because the available calibration set is not blind:
 
 ```yaml
 selective:

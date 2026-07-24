@@ -808,8 +808,11 @@ def test_phase1_zip_is_deterministic_across_source_mtimes(tmp_path: Path) -> Non
 def test_phase1_configs_separate_entity_only_and_full_execution() -> None:
     entity_only = read_yaml("configs/phase1_submission.yaml")
     full = read_yaml("configs/phase1_full.yaml")
-    selective = read_yaml("configs/phase1_selective.yaml")
-    selective_candidates = read_yaml("configs/phase1_selective_candidates.yaml")
+    experiment_root = Path("configs/benchmarks/phase1/experiments")
+    selective = read_yaml(experiment_root / "legacy_selective.yaml")
+    selective_candidates = read_yaml(
+        experiment_root / "legacy_selective_candidates.yaml"
+    )
 
     assert entity_only["mode"] == "entity_only"
     assert entity_only["assertion_policy"] == "empty"
@@ -858,6 +861,13 @@ def test_phase1_configs_separate_entity_only_and_full_execution() -> None:
     }
     assert parsed.assertion_require_calibrated_evidence is True
     assert parsed.calibrated_assertion_evidence
+
+
+def test_stable_phase1_config_root_does_not_advertise_selective_mode() -> None:
+    stable_configs = sorted(Path("configs").glob("phase1*.yaml"))
+
+    assert stable_configs
+    assert all(read_yaml(path).get("mode") != "selective" for path in stable_configs)
 
 
 @pytest.mark.release

@@ -1,9 +1,11 @@
+# Historical benchmark experiment. The stable Phase 1 CLI accepts only empty or pipeline export;
+# use the benchmark package API to reproduce this reviewed/calibrated selective policy.
 input_dir: data/raw/input
-output_dir: phase1/selective/output
-zip: phase1/selective/output.zip
+output_dir: phase1/selective_candidates/output
+zip: phase1/selective_candidates/output.zip
 run_root: outputs/phase1
-run_label: phase1_selective
-traces: phase1/selective/traces.jsonl
+run_label: phase1_selective_candidates
+traces: phase1/selective_candidates/traces.jsonl
 mode: selective
 dictionary: data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
 abbreviations: data/dictionaries/abbreviations.jsonl
@@ -32,18 +34,13 @@ selective:
         - CHẨN_ĐOÁN
         - THUỐC
   candidates:
-    # Public probes currently favor abstention. Enable only with a reviewed map
-    # and calibrated source probabilities from the selective calibration report.
-    enabled: false
+    enabled: true
     reviewed_map: data/manual_gold/reviewed_candidate_map.jsonl
     source_thresholds:
       ICD-10:
-        exact: 0.95
-        abbreviation: 0.98
-        dictionary_exact: 0.99
+        dictionary_exact: 0.99505
       RxNorm:
-        exact: 0.98
-        abbreviation: 0.99
+        dictionary_exact: 0.989362
     require_reviewed: true
     rxnorm_require_structured_mention: false
 
@@ -58,7 +55,9 @@ pipeline:
   context_window: 80
   candidate_sources:
     - exact
-    - abbreviation
+  link_emit_probabilities_by_source:
+    "ICD-10:dictionary_exact": 0.99505
+    "RxNorm:dictionary_exact": 0.989362
   enable_context: true
   enable_linking: false
   enable_candidate_reranking: false

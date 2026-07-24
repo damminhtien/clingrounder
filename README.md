@@ -611,9 +611,10 @@ uv sync --extra experiment
 - Recognition dictionaries remain reviewed subsets. `phase1_full.yaml` uses the complete processed
   RxNorm July 2026 release for normalization, while runtime TT06 recognition/linking remains
   controlled. Recognition coverage and normalization vocabulary are separate precision controls.
-- Active Phase 1 modes are entity-only, selective reviewed candidates, or exact full-store linking.
-  Fuzzy, character n-gram, and BM25 exist as diagnostic library capabilities but have not passed
-  the public/local accuracy and latency gates for submission use.
+- Stable Phase 1 submission modes are entity-only or exact full-store linking. Historical selective
+  policies remain under `configs/benchmarks/phase1/experiments/` for reproducibility and are exposed
+  only through benchmark package APIs. Fuzzy, character n-gram, and BM25 remain diagnostic library
+  capabilities until they pass independent accuracy and latency gates.
 - Local Hugging Face NER and reranker adapters are available behind pinned, lazy-loaded model
   config. No model weights are enabled by default; entity recall and disease-versus-symptom
   ambiguity remain primarily dictionary/rule decisions until a local model passes evaluation.
