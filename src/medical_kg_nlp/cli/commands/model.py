@@ -12,11 +12,11 @@ from medical_kg_nlp.training import (
     TokenClassifierRunSpec,
     TokenClassifierTrainingConfig,
     assert_local_gpu_runtime,
-    fingerprint_model_directory,
     inspect_local_runtime,
     inspect_token_classifier_training_inputs,
     load_token_classifier_run_spec,
     train_huggingface_token_classifier,
+    verify_token_classifier_artifact,
     verify_saved_token_classifier,
 )
 from medical_kg_nlp.mining.io import write_json
@@ -146,17 +146,10 @@ def _inspect_trained_artifact(spec: TokenClassifierRunSpec) -> dict[str, object]
     expected_model_path = spec.relative_path(spec.training.output_dir / "final-model")
     if model.get("output") != expected_model_path:
         raise ValueError("Training manifest model output does not match the run specification")
-    expected_fingerprint = model.get("fingerprint")
-    if not isinstance(expected_fingerprint, str) or not expected_fingerprint:
-        raise ValueError("Training manifest model fingerprint is missing")
-    actual_fingerprint = fingerprint_model_directory(
-        spec.training.output_dir / "final-model"
+    artifact = verify_token_classifier_artifact(
+        spec.training.output_dir / "final-model",
+        manifest_path,
     )
-    if actual_fingerprint != expected_fingerprint:
-        raise ValueError(
-            "Saved model fingerprint mismatch: "
-            f"expected {expected_fingerprint}, got {actual_fingerprint}"
-        )
     if run_spec.get("sha256") != sha256_file(spec.config_path):
         raise ValueError("Training manifest run-spec SHA-256 does not match")
     if environment.get("lock_sha256") != spec.environment_lock_sha256:
@@ -169,7 +162,7 @@ def _inspect_trained_artifact(spec: TokenClassifierRunSpec) -> dict[str, object]
         "status": "verified",
         "manifest": spec.relative_path(manifest_path),
         "model": expected_model_path,
-        "fingerprint": actual_fingerprint,
+        "fingerprint": artifact["fingerprint"],
     }
 
 

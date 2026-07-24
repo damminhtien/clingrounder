@@ -21,6 +21,7 @@ from medical_kg_nlp.benchmarks.phase1.phase1 import (
 from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import load_phase1_output_source
 from medical_kg_nlp.mining.io import write_json
 from medical_kg_nlp.ontology.phase1 import PHASE1_ENTITY_TYPE_RULES
+from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.types import EntityType
 from medical_kg_nlp.schema.validator import prediction_from_json
@@ -33,6 +34,7 @@ __all__ = [
     "Phase1ModelSelectionConfig",
     "calibrate_phase1_model_thresholds",
     "compare_phase1_ner_variants",
+    "load_phase1_development_documents",
     "load_internal_predictions",
     "write_phase1_model_selection_report",
 ]
@@ -102,6 +104,25 @@ def load_internal_predictions(path: str | Path) -> dict[str, ClinicalPrediction]
             )
         predictions[prediction.document_id] = prediction
     return predictions
+
+
+def load_phase1_development_documents(
+    config: Phase1ModelSelectionConfig | None = None,
+) -> tuple[ClinicalDocument, ...]:
+    """Load only development inputs, without opening any gold or holdout file."""
+
+    active = config or Phase1ModelSelectionConfig()
+    development_ids = _load_split_contracts(active)["development_ids"]
+    source_texts = _load_source_texts(active.input_dir, development_ids)
+    # INVARIANT: inference sees exactly the IDs accepted later by threshold calibration.
+    return tuple(
+        ClinicalDocument(
+            document_id=document_id,
+            text=source_texts[document_id],
+            metadata={"split": "development"},
+        )
+        for document_id in development_ids
+    )
 
 
 def calibrate_phase1_model_thresholds(

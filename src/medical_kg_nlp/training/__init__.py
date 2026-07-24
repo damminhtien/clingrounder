@@ -5,6 +5,7 @@ from medical_kg_nlp.training.huggingface_token_classifier import (
     fingerprint_model_directory,
     inspect_token_classifier_training_inputs,
     train_huggingface_token_classifier,
+    verify_token_classifier_artifact,
     verify_saved_token_classifier,
 )
 from medical_kg_nlp.training.run_spec import (
@@ -59,5 +60,6 @@ __all__ = [
     "scan_span_dataset",
     "train_huggingface_token_classifier",
     "validate_span_dataset_manifest",
+    "verify_token_classifier_artifact",
     "verify_saved_token_classifier",
 ]

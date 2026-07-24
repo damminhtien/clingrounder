@@ -44,6 +44,7 @@ __all__ = [
     "fingerprint_model_directory",
     "inspect_token_classifier_training_inputs",
     "train_huggingface_token_classifier",
+    "verify_token_classifier_artifact",
     "verify_saved_token_classifier",
 ]
 
@@ -506,6 +507,42 @@ def fingerprint_model_directory(path: str | Path) -> str:
         digest.update(sha256_file(file_path).encode("ascii"))
         digest.update(b"\n")
     return digest.hexdigest()
+
+
+def verify_token_classifier_artifact(
+    model_dir: str | Path,
+    manifest_path: str | Path,
+) -> Mapping[str, str]:
+    """Verify transferred model bytes against their immutable training manifest."""
+
+    resolved_model_dir = Path(model_dir)
+    resolved_manifest_path = Path(manifest_path)
+    if not resolved_manifest_path.is_file():
+        raise ValueError(
+            f"Token-classifier training manifest does not exist: {resolved_manifest_path}"
+        )
+    payload = json.loads(resolved_manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(payload, Mapping):
+        raise ValueError("Token-classifier training manifest must be a JSON object")
+    model = payload.get("model")
+    if not isinstance(model, Mapping):
+        raise ValueError("Token-classifier training manifest is missing model metadata")
+    expected_fingerprint = model.get("fingerprint")
+    if not isinstance(expected_fingerprint, str) or not expected_fingerprint:
+        raise ValueError("Token-classifier training manifest is missing model fingerprint")
+    actual_fingerprint = fingerprint_model_directory(resolved_model_dir)
+    if actual_fingerprint != expected_fingerprint:
+        raise ValueError(
+            "Saved model fingerprint mismatch: "
+            f"expected {expected_fingerprint}, got {actual_fingerprint}"
+        )
+    return {
+        "status": "verified",
+        "manifest": str(resolved_manifest_path),
+        "model": str(resolved_model_dir),
+        "fingerprint": actual_fingerprint,
+        "manifest_sha256": sha256_file(resolved_manifest_path),
+    }
 
 
 def _json_metrics(values: Mapping[str, object]) -> dict[str, float | int | str]:

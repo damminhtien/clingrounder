@@ -11,6 +11,7 @@ from medical_kg_nlp.benchmarks.phase1.model_selection import (
     Phase1ModelSelectionConfig,
     calibrate_phase1_model_thresholds,
     compare_phase1_ner_variants,
+    load_phase1_development_documents,
 )
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.output import ClinicalPrediction
@@ -58,6 +59,17 @@ def test_threshold_calibration_rejects_holdout_prediction(tmp_path: Path) -> Non
 
     with pytest.raises(ValueError, match="exactly the development predictions"):
         calibrate_phase1_model_thresholds(predictions, config=config)
+
+
+def test_development_loader_never_opens_holdout_gold(tmp_path: Path) -> None:
+    config = _selection_fixture(tmp_path)
+    (config.gold_dir / "3.json").write_text("not-json", encoding="utf-8")
+
+    documents = load_phase1_development_documents(config)
+
+    assert [document.document_id for document in documents] == ["1", "2"]
+    assert [document.text for document in documents] == ["đau x", "hen"]
+    assert all(document.metadata == {"split": "development"} for document in documents)
 
 
 def test_variant_comparison_keeps_holdout_sealed_until_explicitly_opened(
