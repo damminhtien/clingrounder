@@ -156,3 +156,17 @@ the projection SHA-256
 `966c3412904f70cf7f08280223a0445634b1c21bc0f5ded6afdc186fee936506`
 and probe one entity/code-system family at a time. Drug-only RxNorm is first because the official
 sample requires medication codes while the rejected full artifact assigned 590 diagnosis codes.
+
+The drug-only probe restored 177 one-code RxNorm predictions and kept all diagnosis candidates
+empty:
+
+| Measure | Empty candidates | Drug-only RxNorm | Difference |
+| --- | ---: | ---: | ---: |
+| primary score | `23.7953` | `23.9854` | `+0.1901` |
+| WER | `72.7063` | `72.7063` | `0.0000` |
+| J assertion | `29.6765` | `29.6765` | `0.0000` |
+| J candidates | `16.7606` | `17.2357` | `+0.4751` |
+
+RxNorm drug-only is promoted, but the gain per emitted value is small. The next candidate probe
+must remove structurally inconsistent mappings: ingredient or brand codes attached to strength
+mentions, route-incompatible SCDF matches, and single-ingredient matches for multi-drug mentions.
