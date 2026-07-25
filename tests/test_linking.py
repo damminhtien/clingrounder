@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.linking.candidate import Candidate
@@ -127,6 +129,7 @@ def test_reviewed_memory_short_circuits_conflicting_seed_exact_match(
                 code_system=CodeSystem.ICD10,
                 canonical_name="bệnh động mạch vành",
                 semantic_type=EntityType.DISEASE,
+                source="tt06-test",
             ),
             ConceptEntry(
                 concept_id="ICD10:I25.1",
@@ -135,6 +138,7 @@ def test_reviewed_memory_short_circuits_conflicting_seed_exact_match(
                 canonical_name="coronary artery disease",
                 aliases=("bệnh động mạch vành",),
                 semantic_type=EntityType.DISEASE,
+                source="tt06-test",
             ),
         ]
     )
@@ -142,7 +146,10 @@ def test_reviewed_memory_short_circuits_conflicting_seed_exact_match(
     memory = tmp_path / "reviewed.jsonl"
     memory.write_text(
         '{"mention":"bệnh động mạch vành","code_system":"ICD-10",'
-        '"code":"I25.1","provenance":"reviewed_memory:test"}\n',
+        '"code":"I25.1","entity_type":"DISEASE","provenance":"reviewed_memory:test",'
+        '"review_status":"reviewed","source_sha256":["'
+        + "a" * 64
+        + '"],"source_versions":["tt06-test"]}\n',
         encoding="utf-8",
     )
     generator = RetrievalPipeline(
@@ -156,7 +163,7 @@ def test_reviewed_memory_short_circuits_conflicting_seed_exact_match(
     candidates = generator.retrieve("bệnh động mạch vành", EntityType.DISEASE)
 
     assert [(candidate.code, candidate.source) for candidate in candidates] == [
-        ("I25.1", "reviewed_memory:test")
+        ("I25.1", "reviewed_memory")
     ]
     assert candidates[0].reviewed_mapping is True
 
@@ -171,13 +178,17 @@ def test_reviewed_mapping_is_not_demoted_by_generic_drug_structure_heuristics(
         canonical_name="guaifenesin 800 MG Oral Tablet",
         aliases=("guaifenesin",),
         semantic_type=EntityType.DRUG,
+        source="rxnorm-test",
         rxnorm_tty="SCD",
     )
     repository = InMemoryTerminologyRepository(DictionaryStore([entry]))
     memory = tmp_path / "reviewed.jsonl"
     memory.write_text(
         '{"mention":"guaifenesin ml po q6h:prn","code_system":"RxNorm",'
-        '"code":"392085","provenance":"btc_sample"}\n',
+        '"code":"392085","entity_type":"DRUG","provenance":"btc_sample",'
+        '"review_status":"reviewed","source_sha256":["'
+        + "b" * 64
+        + '"],"source_versions":["rxnorm-test"]}\n',
         encoding="utf-8",
     )
     candidate = ReviewedMentionRetrieverAdapter.from_jsonl(
@@ -196,6 +207,56 @@ def test_reviewed_mapping_is_not_demoted_by_generic_drug_structure_heuristics(
     )
 
     assert reranked[0].score == 1.0
+
+
+def test_reviewed_memory_falls_through_when_terminology_release_changed(
+    tmp_path: Path,
+) -> None:
+    entry = ConceptEntry(
+        concept_id="ICD10:I10",
+        code="I10",
+        code_system=CodeSystem.ICD10,
+        canonical_name="tăng huyết áp",
+        semantic_type=EntityType.DISEASE,
+        source="tt06-current",
+    )
+    repository = InMemoryTerminologyRepository(DictionaryStore([entry]))
+    memory = tmp_path / "reviewed.jsonl"
+    memory.write_text(
+        '{"mention":"tăng huyết áp","code_system":"ICD-10","code":"I10",'
+        '"entity_type":"DISEASE","provenance":"reviewed_memory:test",'
+        '"review_status":"reviewed","source_sha256":["'
+        + "c" * 64
+        + '"],"source_versions":["tt06-old"]}\n',
+        encoding="utf-8",
+    )
+    generator = RetrievalPipeline(
+        repository,
+        (
+            ReviewedMentionRetrieverAdapter.from_jsonl(repository, memory),
+            ExactRetrieverAdapter(repository),
+        ),
+    )
+
+    candidates = generator.retrieve("tăng huyết áp", EntityType.DISEASE)
+
+    assert [(candidate.code, candidate.source) for candidate in candidates] == [
+        ("I10", "exact")
+    ]
+    assert candidates[0].reviewed_mapping is False
+
+
+def test_reviewed_memory_rejects_rows_without_review_contract(tmp_path: Path) -> None:
+    repository = InMemoryTerminologyRepository(DictionaryStore([]))
+    memory = tmp_path / "reviewed.jsonl"
+    memory.write_text(
+        '{"mention":"metformin","code_system":"RxNorm","code":"6809",'
+        '"entity_type":"DRUG","provenance":"legacy"}\n',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="review_status=reviewed"):
+        ReviewedMentionRetrieverAdapter.from_jsonl(repository, memory)
 
 
 def test_ambiguous_exact_output_continues_approximate_retrieval() -> None:

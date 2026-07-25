@@ -111,6 +111,12 @@ Generated candidates remain in internal predictions for recall/rank analysis. On
 evidence sources are stored separately. Selective Phase 1 export applies a `(code system, primary
 source)` threshold matrix and an exact reviewed whitelist after qualification.
 
+Reviewed mention memory is optional and fail-closed. Each row is keyed by normalized mention plus
+entity type and must carry reviewed status, source SHA-256, and compatible terminology releases.
+Medication rows also compare parsed strength/form/route structure before a terminal match. The
+runtime candidate source remains the stable value `reviewed_memory`; artifact provenance belongs to
+the memory contract rather than becoming a new calibration source name.
+
 RxNorm qualification receives the validated full medication span. Medication structure keeps
 ingredient/brand, product strength, administered dose, dosage form, route, frequency, and release
 type as distinct concepts. In particular, `po` is a route rather than evidence for a tablet and

@@ -47,7 +47,12 @@ def test_reviewed_map_compiles_to_typed_normalization_overlay(tmp_path: Path) ->
         ("DRUG", "6809"),
     ]
     assert all("document_id" not in row and "position" not in row for row in result.alias_overlays)
-    assert reviewed_alias_memory_rows(result)[0]["mention"] == "metformin xr"
+    memory = reviewed_alias_memory_rows(result)
+    assert memory[0]["mention"] == "metformin xr"
+    assert memory[0]["entity_type"] == "DRUG"
+    assert memory[0]["review_status"] == "reviewed"
+    assert memory[0]["source_versions"] == ["test-release"]
+    assert memory[0]["source_sha256"] == [source_sha]
 
 
 def test_reviewed_map_rejects_cross_system_and_conflicting_rows(tmp_path: Path) -> None:

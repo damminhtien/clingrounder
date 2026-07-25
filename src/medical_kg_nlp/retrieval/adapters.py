@@ -10,6 +10,10 @@ from typing import Protocol
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.kg.ports import KnowledgeGraphRepositoryPort
 from medical_kg_nlp.linking.candidate import Candidate
+from medical_kg_nlp.linking.structured_rxnorm import (
+    MedicationStructure,
+    parse_medication_structure,
+)
 from medical_kg_nlp.retrieval.bm25_retriever import BM25Retriever
 from medical_kg_nlp.retrieval.constraints import allowed_code_systems
 from medical_kg_nlp.retrieval.fuzzy_matcher import FuzzyMatcher
@@ -51,6 +55,19 @@ class MentionRetrieverAdapter(Protocol):
         context_window: str,
         limit: int,
     ) -> list[Candidate]: ...
+
+
+@dataclass(frozen=True)
+class _ReviewedMentionRecord:
+    """One fail-closed reviewed assignment loaded from a versioned memory row."""
+
+    code_system: CodeSystem
+    code: str
+    entity_type: EntityType
+    provenance: str
+    source_sha256: tuple[str, ...]
+    source_versions: tuple[str, ...]
+    medication_structure: MedicationStructure | None
 
 
 @dataclass(frozen=True)
@@ -146,7 +163,7 @@ class ReviewedMentionRetrieverAdapter:
     """Apply human-reviewed mention mappings ahead of approximate retrieval."""
 
     repository: TerminologyRepository
-    memory: dict[str, tuple[CodeSystem, str, str]]
+    memory: dict[tuple[str, EntityType], _ReviewedMentionRecord]
     source: str = "reviewed_memory"
     terminal_on_match: bool = True
     unique_output_short_circuit: bool = False
@@ -157,14 +174,50 @@ class ReviewedMentionRetrieverAdapter:
         repository: TerminologyRepository,
         path: str | Path | None,
     ) -> "ReviewedMentionRetrieverAdapter":
-        memory: dict[str, tuple[CodeSystem, str, str]] = {}
+        memory: dict[tuple[str, EntityType], _ReviewedMentionRecord] = {}
         if path is not None and Path(path).exists():
-            for row in read_jsonl(path):
-                memory[normalize_for_match(str(row["mention"]))] = (
-                    CodeSystem(str(row["code_system"])),
-                    str(row["code"]),
-                    str(row["provenance"]),
+            for line_number, row in enumerate(read_jsonl(path), start=1):
+                mention = str(row.get("mention", "")).strip()
+                if not mention:
+                    raise ValueError(f"{path}:{line_number}: mention is required")
+                entity_type = EntityType(str(row.get("entity_type", "")))
+                if row.get("review_status") != "reviewed":
+                    raise ValueError(
+                        f"{path}:{line_number}: reviewed memory requires review_status=reviewed"
+                    )
+                source_sha256 = _validated_string_tuple(
+                    row.get("source_sha256"),
+                    path,
+                    line_number,
+                    "source_sha256",
+                    sha256=True,
                 )
+                source_versions = _validated_string_tuple(
+                    row.get("source_versions"),
+                    path,
+                    line_number,
+                    "source_versions",
+                )
+                key = (normalize_for_match(mention), entity_type)
+                record = _ReviewedMentionRecord(
+                    code_system=CodeSystem(str(row["code_system"])),
+                    code=str(row["code"]),
+                    entity_type=entity_type,
+                    provenance=str(row["provenance"]),
+                    source_sha256=source_sha256,
+                    source_versions=source_versions,
+                    medication_structure=(
+                        parse_medication_structure(mention)
+                        if entity_type == EntityType.DRUG
+                        else None
+                    ),
+                )
+                previous = memory.get(key)
+                if previous is not None and previous != record:
+                    raise ValueError(
+                        f"{path}:{line_number}: conflicting reviewed mappings for {key!r}"
+                    )
+                memory[key] = record
         return cls(repository=repository, memory=memory)
 
     def retrieve(
@@ -175,18 +228,26 @@ class ReviewedMentionRetrieverAdapter:
         limit: int,
     ) -> list[Candidate]:
         del context_window, limit
-        remembered = self.memory.get(normalize_for_match(mention))
+        remembered = self.memory.get((normalize_for_match(mention), entity_type))
         if remembered is None:
             return []
-        code_system, code, provenance = remembered
-        entry = self.repository.get_by_code(code_system, code)
-        if entry is None or entry.semantic_type != entity_type:
+        if (
+            remembered.medication_structure is not None
+            and parse_medication_structure(mention) != remembered.medication_structure
+        ):
+            return []
+        entry = self.repository.get_by_code(remembered.code_system, remembered.code)
+        if (
+            entry is None
+            or entry.semantic_type != remembered.entity_type
+            or entry.source not in remembered.source_versions
+        ):
             return []
         return [
             _candidate(
                 entry,
                 1.0,
-                provenance,
+                self.source,
                 mention,
                 reviewed_mapping=True,
             )
@@ -350,6 +411,31 @@ class KnowledgeGraphExactRetrieverAdapter:
                 if len(output) >= limit:
                     return output
         return output
+
+
+def _validated_string_tuple(
+    value: object,
+    path: str | Path,
+    line_number: int,
+    field: str,
+    *,
+    sha256: bool = False,
+) -> tuple[str, ...]:
+    if not isinstance(value, list) or not value or any(
+        not isinstance(item, str) or not item for item in value
+    ):
+        raise ValueError(
+            f"{path}:{line_number}: {field} must be a non-empty list of strings"
+        )
+    values = tuple(sorted(set(value)))
+    if sha256 and any(
+        len(item) != 64 or any(character not in "0123456789abcdef" for character in item)
+        for item in values
+    ):
+        raise ValueError(
+            f"{path}:{line_number}: {field} entries must be lowercase SHA-256 digests"
+        )
+    return values
 
 
 def _candidate(

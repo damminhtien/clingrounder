@@ -170,7 +170,7 @@ def compile_reviewed_candidate_aliases(
 
 def reviewed_alias_memory_rows(
     result: AliasKnowledgeCompilationResult,
-) -> tuple[dict[str, str], ...]:
+) -> tuple[dict[str, Any], ...]:
     """Return terminal exact mappings for aliases that passed promotion.
 
     The memory file is derived from promoted overlays rather than the input map,
@@ -181,9 +181,13 @@ def reviewed_alias_memory_rows(
     rows = [
         {
             "mention": str(alias["alias"]),
+            "entity_type": str(alias["semantic_type"]),
             "code_system": str(alias["code_system"]),
             "code": str(alias["code"]),
             "provenance": f"reviewed_memory:{alias['policy_id']}",
+            "review_status": "reviewed",
+            "source_sha256": list(alias["source_sha256"]),
+            "source_versions": list(alias["source_versions"]),
         }
         for alias in result.alias_overlays
     ]
