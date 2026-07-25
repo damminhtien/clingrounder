@@ -118,3 +118,26 @@ The next probes and entity-bearing experiment are:
 
 Do not train, pseudo-label, copy prior annotations, or create document-specific rules from Round 2
 input.
+
+## Reviewed Recognition Result - 2026-07-25
+
+The reproducible full-pipeline profile in `configs/phase1_round2_full.yaml` added the reviewed VN
+clinical lexicon and the train-compiled recognition overlay that had passed the legacy holdout
+gate. It retained context, exact full-terminology linking, reranking, and entity KG validation,
+while limiting export to one candidate per entity.
+
+Public result for ZIP SHA-256
+`2aef0de993189c1cb5a7ea6fc82f4ef54cc2a1350022e17184fa74c7197ac9eb`:
+
+| Measure | Rule baseline | Reviewed recognition | Difference |
+| --- | ---: | ---: | ---: |
+| primary score | `21.3318` | `22.6633` | `+1.3315` |
+| WER | `75.3792` | `72.7063` | `-2.6729` |
+| J assertion | `26.5599` | `29.6765` | `+3.1166` |
+| J candidates | `14.9439` | `13.9305` | `-1.0134` |
+
+The entity branch is promoted: output density increased from 1,909 to 2,037 entities and public
+WER improved. The assertion delta is positive but not isolated because the entity set changed.
+The candidate branch is rejected: emitting one exact candidate for 767 entities still reduced the
+public candidate metric. The next probe freezes the winning entity/assertion projection and clears
+only candidates.
