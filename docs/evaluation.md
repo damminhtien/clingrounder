@@ -125,6 +125,11 @@ The profiler output is intended to be a cacheable experiment artifact. Use it to
 entity distributions, span lengths, context cue frequency, dictionary coverage, and unseen-code
 risks before adding larger models.
 
+Phase 1 model promotion never reads baseline numbers from Python defaults. The holdout gate loads
+`data/manual_gold/model_holdout_baseline.json` and verifies its frozen-split SHA, model-split SHA,
+corpus fingerprint, and holdout ID fingerprint before comparison. A corpus or split change therefore
+fails closed until a new baseline artifact is produced and reviewed.
+
 The stage-wise report writes:
 
 - `metrics.json` for the full machine-readable report.

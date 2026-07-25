@@ -49,17 +49,19 @@ _PHASE1_TYPE_BY_INTERNAL = {
 
 @dataclass(frozen=True)
 class Phase1HoldoutGate:
-    """Frozen rule baseline and promotion limits from the complete manual-gold audit."""
+    """Verified baseline values loaded from one fingerprinted holdout artifact."""
 
-    score: float = 53.039409
-    text_score: float = 0.530395
-    missing: int = 235
-    spurious: int = 38
-    boundary: int = 107
-    minimum_text_gain: float = 0.015
-    minimum_missing_reduction: int = 20
-    maximum_spurious: int = 43
-    maximum_boundary: int = 112
+    artifact_id: str
+    artifact_sha256: str
+    score: float
+    text_score: float
+    missing: int
+    spurious: int
+    boundary: int
+    minimum_text_gain: float
+    minimum_missing_reduction: int
+    maximum_spurious: int
+    maximum_boundary: int
 
 
 @dataclass(frozen=True)
@@ -72,6 +74,9 @@ class Phase1ModelSelectionConfig:
         "outputs/mining/model-datasets/phase1-manual-five-type-v1/split_manifest.json"
     )
     frozen_split_manifest: Path = Path("data/manual_gold/holdout_manifest.json")
+    holdout_baseline_artifact: Path = Path(
+        "data/manual_gold/model_holdout_baseline.json"
+    )
     threshold_grid: tuple[float, ...] = (
         0.0,
         0.25,
@@ -83,8 +88,6 @@ class Phase1ModelSelectionConfig:
         0.9,
         0.95,
     )
-    holdout_gate: Phase1HoldoutGate = Phase1HoldoutGate()
-
     def __post_init__(self) -> None:
         if not self.threshold_grid:
             raise ValueError("threshold_grid must contain at least one value")
@@ -287,11 +290,12 @@ def compare_phase1_ner_variants(
     if open_frozen_holdout:
         holdout_ids = contracts["holdout_ids"]
         holdout_gold = _load_gold_rows(active.gold_dir, holdout_ids)
+        holdout_gate = _load_holdout_gate(active, holdout_ids)
         for name in PHASE1_NER_VARIANTS:
             scored = _score_subset(holdout_gold, loaded[name], holdout_ids)
             scored["promotion_gate"] = _holdout_gate(
                 scored,
-                active.holdout_gate,
+                holdout_gate,
             )
             reports[name]["holdout"] = scored
 
@@ -435,6 +439,10 @@ def _holdout_gate(report: Mapping[str, Any], gate: Phase1HoldoutGate) -> dict[st
     }
     return {
         "passed": all(checks.values()),
+        "baseline": {
+            "artifact_id": gate.artifact_id,
+            "artifact_sha256": gate.artifact_sha256,
+        },
         "checks": checks,
         "deltas": {
             "score": round(float(metrics["score"]) - gate.score, 6),
@@ -483,6 +491,10 @@ def _input_fingerprints(
             "path": str(config.frozen_split_manifest),
             "sha256": sha256_file(config.frozen_split_manifest),
         },
+        "holdout_baseline_artifact": {
+            "path": str(config.holdout_baseline_artifact),
+            "sha256": sha256_file(config.holdout_baseline_artifact),
+        },
         "threshold_grid": list(config.threshold_grid),
     }
     if prediction_path is not None:
@@ -491,11 +503,109 @@ def _input_fingerprints(
     return values
 
 
+def _load_holdout_gate(
+    config: Phase1ModelSelectionConfig,
+    holdout_ids: Sequence[str],
+) -> Phase1HoldoutGate:
+    """Load a gate only after verifying every dataset contract it claims to score."""
+
+    path = config.holdout_baseline_artifact
+    payload = _read_mapping(path)
+    if payload.get("schema_version") != "phase1-ner-holdout-baseline.v1":
+        raise ValueError(f"{path}: unsupported holdout baseline schema")
+
+    contracts = payload.get("contracts")
+    baseline = payload.get("baseline")
+    limits = payload.get("promotion_limits")
+    if not all(isinstance(value, Mapping) for value in (contracts, baseline, limits)):
+        raise ValueError(f"{path}: missing contracts, baseline, or promotion_limits")
+    assert isinstance(contracts, Mapping)
+    assert isinstance(baseline, Mapping)
+    assert isinstance(limits, Mapping)
+
+    frozen = _read_mapping(config.frozen_split_manifest)
+    corpus = frozen.get("corpus")
+    if not isinstance(corpus, Mapping):
+        raise ValueError("Frozen split manifest is missing its corpus fingerprint")
+    expected_contracts = {
+        "frozen_split_manifest_sha256": sha256_file(config.frozen_split_manifest),
+        "model_split_manifest_sha256": sha256_file(config.model_split_manifest),
+        "corpus_fingerprint_sha256": str(corpus.get("fingerprint_sha256", "")),
+        "holdout_document_ids_sha256": _ids_sha256(holdout_ids),
+    }
+    mismatches = {
+        key: {"expected": expected, "actual": contracts.get(key)}
+        for key, expected in expected_contracts.items()
+        if contracts.get(key) != expected
+    }
+    if mismatches:
+        raise ValueError(f"{path}: holdout baseline contract mismatch: {mismatches}")
+
+    metrics = baseline.get("metrics")
+    errors = baseline.get("error_counts")
+    if not isinstance(metrics, Mapping) or not isinstance(errors, Mapping):
+        raise ValueError(f"{path}: baseline metrics or error_counts are missing")
+    return Phase1HoldoutGate(
+        artifact_id=_required_string(payload.get("artifact_id"), "artifact_id"),
+        artifact_sha256=sha256_file(path),
+        score=_required_float(metrics.get("score"), "baseline.metrics.score"),
+        text_score=_required_float(
+            metrics.get("text_score"), "baseline.metrics.text_score"
+        ),
+        missing=_required_int(
+            errors.get("phase1_missing_entity"),
+            "baseline.error_counts.phase1_missing_entity",
+        ),
+        spurious=_required_int(
+            errors.get("phase1_spurious_entity"),
+            "baseline.error_counts.phase1_spurious_entity",
+        ),
+        boundary=_required_int(
+            errors.get("phase1_text_boundary"),
+            "baseline.error_counts.phase1_text_boundary",
+        ),
+        minimum_text_gain=_required_float(
+            limits.get("minimum_text_gain"),
+            "promotion_limits.minimum_text_gain",
+        ),
+        minimum_missing_reduction=_required_int(
+            limits.get("minimum_missing_reduction"),
+            "promotion_limits.minimum_missing_reduction",
+        ),
+        maximum_spurious=_required_int(
+            limits.get("maximum_spurious"),
+            "promotion_limits.maximum_spurious",
+        ),
+        maximum_boundary=_required_int(
+            limits.get("maximum_boundary"),
+            "promotion_limits.maximum_boundary",
+        ),
+    )
+
+
 def _read_mapping(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError(f"{path}: expected a JSON object")
     return payload
+
+
+def _required_string(value: object, label: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise ValueError(f"{label} must be a non-empty string")
+    return value
+
+
+def _required_float(value: object, label: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise ValueError(f"{label} must be numeric")
+    return float(value)
+
+
+def _required_int(value: object, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"{label} must be an integer")
+    return value
 
 
 def _string_ids(value: object, label: str) -> tuple[str, ...]:

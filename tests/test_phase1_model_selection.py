@@ -19,7 +19,7 @@ from medical_kg_nlp.pipeline.runner import PipelineRunner
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.types import EntityType
-from medical_kg_nlp.utils.hashing import sha256_file
+from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
 from medical_kg_nlp.utils.text import normalize_for_match
 
 
@@ -130,6 +130,43 @@ def test_variant_comparison_keeps_holdout_sealed_until_explicitly_opened(
     assert all(row["holdout"] is None for row in report["variants"].values())
 
 
+def test_variant_comparison_verifies_fingerprinted_holdout_baseline(
+    tmp_path: Path,
+) -> None:
+    config = _selection_fixture(tmp_path)
+    variants = _variant_fixture(tmp_path, include_holdout=True)
+
+    report = compare_phase1_ner_variants(
+        variants,
+        config=config,
+        open_frozen_holdout=True,
+    )
+
+    gate = report["variants"]["model"]["holdout"]["promotion_gate"]
+    assert gate["baseline"]["artifact_id"] == "fixture-rule-baseline"
+    assert len(gate["baseline"]["artifact_sha256"]) == 64
+
+
+def test_variant_comparison_rejects_baseline_for_another_split(
+    tmp_path: Path,
+) -> None:
+    config = _selection_fixture(tmp_path)
+    variants = _variant_fixture(tmp_path, include_holdout=True)
+    baseline = json.loads(config.holdout_baseline_artifact.read_text(encoding="utf-8"))
+    baseline["contracts"]["holdout_document_ids_sha256"] = "0" * 64
+    config.holdout_baseline_artifact.write_text(
+        json.dumps(baseline, sort_keys=True),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="holdout baseline contract mismatch"):
+        compare_phase1_ner_variants(
+            variants,
+            config=config,
+            open_frozen_holdout=True,
+        )
+
+
 def _selection_fixture(tmp_path: Path) -> Phase1ModelSelectionConfig:
     input_dir = tmp_path / "input"
     gold_dir = tmp_path / "gold"
@@ -151,6 +188,7 @@ def _selection_fixture(tmp_path: Path) -> Phase1ModelSelectionConfig:
     frozen.write_text(
         json.dumps(
             {
+                "corpus": {"fingerprint_sha256": "a" * 64},
                 "splits": {
                     "train": {"document_ids": ["1", "2"]},
                     "holdout": {"document_ids": ["3"]},
@@ -174,13 +212,69 @@ def _selection_fixture(tmp_path: Path) -> Phase1ModelSelectionConfig:
         ),
         encoding="utf-8",
     )
+    baseline = tmp_path / "holdout-baseline.json"
+    baseline.write_text(
+        json.dumps(
+            {
+                "artifact_id": "fixture-rule-baseline",
+                "schema_version": "phase1-ner-holdout-baseline.v1",
+                "contracts": {
+                    "frozen_split_manifest_sha256": sha256_file(frozen),
+                    "model_split_manifest_sha256": sha256_file(model_split),
+                    "corpus_fingerprint_sha256": "a" * 64,
+                    "holdout_document_ids_sha256": sha256_text("3\n"),
+                },
+                "baseline": {
+                    "metrics": {"score": 0.0, "text_score": 0.0},
+                    "error_counts": {
+                        "phase1_missing_entity": 1,
+                        "phase1_spurious_entity": 0,
+                        "phase1_text_boundary": 0,
+                    },
+                },
+                "promotion_limits": {
+                    "minimum_text_gain": 0.0,
+                    "minimum_missing_reduction": 0,
+                    "maximum_spurious": 10,
+                    "maximum_boundary": 10,
+                },
+            },
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
     return Phase1ModelSelectionConfig(
         input_dir=input_dir,
         gold_dir=gold_dir,
         model_split_manifest=model_split,
         frozen_split_manifest=frozen,
+        holdout_baseline_artifact=baseline,
         threshold_grid=(0.0, 0.35, 0.5),
     )
+
+
+def _variant_fixture(
+    tmp_path: Path,
+    *,
+    include_holdout: bool,
+) -> dict[str, Path]:
+    rows_by_document = {
+        "1": [_phase1_row("đau", "TRIỆU_CHỨNG", 0)],
+        "2": [_phase1_row("hen", "CHẨN_ĐOÁN", 0)],
+        "3": [],
+    }
+    variants: dict[str, Path] = {}
+    for name in ("rule", "model", "hybrid"):
+        output = tmp_path / f"opened-{name}"
+        output.mkdir()
+        document_ids = ("1", "2", "3") if include_holdout else ("1", "2")
+        for document_id in document_ids:
+            (output / f"{document_id}.json").write_text(
+                json.dumps(rows_by_document[document_id], ensure_ascii=False),
+                encoding="utf-8",
+            )
+        variants[name] = output
+    return variants
 
 
 def _entity(
