@@ -130,6 +130,12 @@ Phase 1 model promotion never reads baseline numbers from Python defaults. The h
 corpus fingerprint, and holdout ID fingerprint before comparison. A corpus or split change therefore
 fails closed until a new baseline artifact is produced and reviewed.
 
+Threshold calibration ranks trials by the official Phase 1 score, with text score and error counts
+used only as deterministic tie-breakers. Because the current development split has only 16
+documents, every per-type search also reports support, five-repeat duplicate-group cross-validation,
+and a deterministic 200-sample bootstrap 95% interval. These fields are diagnostics; they do not
+open holdout labels or bypass the fingerprinted promotion gate.
+
 The stage-wise report writes:
 
 - `metrics.json` for the full machine-readable report.

@@ -8,11 +8,12 @@ those decisions here prevents Phase 1 scoring conventions from leaking into reus
 from __future__ import annotations
 
 import json
+import random
 from collections import Counter
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 from medical_kg_nlp.benchmarks.phase1.phase1 import (
     prediction_to_phase1_entities,
@@ -45,6 +46,15 @@ PHASE1_NER_VARIANTS = ("rule", "model", "hybrid")
 _PHASE1_TYPE_BY_INTERNAL = {
     rule.internal_type: rule.phase1_type for rule in PHASE1_ENTITY_TYPE_RULES
 }
+_CALIBRATION_CV_REPEATS = 5
+_CALIBRATION_CV_FOLDS = 4
+_CALIBRATION_BOOTSTRAP_REPLICATES = 200
+
+
+class _SplitContracts(TypedDict):
+    development_ids: tuple[str, ...]
+    holdout_ids: tuple[str, ...]
+    development_groups: dict[str, str]
 
 
 @dataclass(frozen=True)
@@ -198,18 +208,22 @@ def calibrate_phase1_model_thresholds(
             trials.append(_trial(threshold, metrics, errors))
         best = max(
             trials,
-            key=lambda row: (
-                float(row["text_score"]),
-                -int(row["spurious"]),
-                -int(row["boundary"]),
-                -int(row["missing"]),
-                float(row["threshold"]),
-            ),
+            key=_trial_order,
         )
         selected[entity_type] = float(best["threshold"])
         searches[entity_type.value] = {
             "phase1_type": phase1_type,
             "selected_threshold": best["threshold"],
+            "selection_objective": "phase1_score",
+            "stability": _threshold_stability(
+                predictions,
+                source_texts,
+                typed_gold,
+                entity_type=entity_type,
+                selected_threshold=float(best["threshold"]),
+                threshold_grid=active.threshold_grid,
+                groups=contracts["development_groups"],
+            ),
             "trials": trials,
         }
 
@@ -221,7 +235,7 @@ def calibrate_phase1_model_thresholds(
     )
     metrics, errors = score_phase1_documents(gold, calibrated_rows)
     return {
-        "schema_version": "phase1-model-threshold-calibration.v1",
+        "schema_version": "phase1-model-threshold-calibration.v2",
         "selection_split": "development",
         "holdout_status": "sealed",
         "document_count": len(development_ids),
@@ -300,7 +314,7 @@ def compare_phase1_ner_variants(
             reports[name]["holdout"] = scored
 
     return {
-        "schema_version": "phase1-ner-variant-comparison.v1",
+        "schema_version": "phase1-ner-variant-comparison.v2",
         "selection_split": "development",
         "holdout_status": "opened_for_final_gate" if open_frozen_holdout else "sealed",
         "ranking": ranked,
@@ -318,7 +332,7 @@ def write_phase1_model_selection_report(
     write_json(path, report)
 
 
-def _load_split_contracts(config: Phase1ModelSelectionConfig) -> dict[str, tuple[str, ...]]:
+def _load_split_contracts(config: Phase1ModelSelectionConfig) -> _SplitContracts:
     model = _read_mapping(config.model_split_manifest)
     frozen = _read_mapping(config.frozen_split_manifest)
     expected_frozen_hash = str(model.get("source_split_manifest_sha256", ""))
@@ -340,9 +354,11 @@ def _load_split_contracts(config: Phase1ModelSelectionConfig) -> dict[str, tuple
     holdout_ids = _string_ids(holdout.get("document_ids"), "holdout")
     if set(development_ids) & set(holdout_ids):
         raise ValueError("Model development split overlaps the frozen holdout")
+    development_groups = _development_groups(model, development_ids)
     return {
         "development_ids": development_ids,
         "holdout_ids": holdout_ids,
+        "development_groups": development_groups,
     }
 
 
@@ -473,8 +489,259 @@ def _trial(
     }
 
 
+def _trial_order(row: Mapping[str, Any]) -> tuple[float, float, int, int, int, float]:
+    """Rank thresholds by the official objective, then deterministic error tie-breaks."""
+
+    return (
+        float(row["score"]),
+        float(row["text_score"]),
+        -int(row["spurious"]),
+        -int(row["boundary"]),
+        -int(row["missing"]),
+        float(row["threshold"]),
+    )
+
+
+def _threshold_stability(
+    predictions: Mapping[str, ClinicalPrediction],
+    source_texts: Mapping[str, str],
+    typed_gold: Mapping[str, list[dict[str, Any]]],
+    *,
+    entity_type: EntityType,
+    selected_threshold: float,
+    threshold_grid: Sequence[float],
+    groups: Mapping[str, str],
+) -> dict[str, Any]:
+    """Report small-sample sensitivity without opening holdout labels.
+
+    Grouped repeated CV estimates threshold selection stability. A deterministic document
+    bootstrap reports uncertainty for the final all-development threshold. Both are diagnostics:
+    they do not manufacture extra supervision or silently relax the promotion gate.
+    """
+
+    document_ids = tuple(_sort_ids(set(typed_gold)))
+    gold_entity_count = sum(len(rows) for rows in typed_gold.values())
+    predicted_entity_count = sum(
+        1
+        for prediction in predictions.values()
+        for entity in prediction.entities
+        if entity.type == entity_type
+    )
+    support = {
+        "document_count": len(document_ids),
+        "documents_with_gold": sum(bool(rows) for rows in typed_gold.values()),
+        "gold_entities": gold_entity_count,
+        "predicted_entities": predicted_entity_count,
+        "group_count": len({groups[document_id] for document_id in document_ids}),
+    }
+    if not document_ids or gold_entity_count == 0:
+        return {
+            "status": "insufficient_gold",
+            "support": support,
+            "grouped_repeated_cv": None,
+            "bootstrap_95_ci": None,
+        }
+
+    cross_validation = _grouped_threshold_cross_validation(
+        predictions,
+        source_texts,
+        typed_gold,
+        entity_type=entity_type,
+        threshold_grid=threshold_grid,
+        groups=groups,
+    )
+    bootstrap = _bootstrap_threshold_metrics(
+        predictions,
+        source_texts,
+        typed_gold,
+        entity_type=entity_type,
+        threshold=selected_threshold,
+        seed_material=f"{entity_type.value}:{_ids_sha256(document_ids)}",
+    )
+    return {
+        "status": "diagnostic_only",
+        "small_sample_warning": len(document_ids) < 30,
+        "support": support,
+        "grouped_repeated_cv": cross_validation,
+        "bootstrap_95_ci": bootstrap,
+    }
+
+
+def _grouped_threshold_cross_validation(
+    predictions: Mapping[str, ClinicalPrediction],
+    source_texts: Mapping[str, str],
+    typed_gold: Mapping[str, list[dict[str, Any]]],
+    *,
+    entity_type: EntityType,
+    threshold_grid: Sequence[float],
+    groups: Mapping[str, str],
+) -> dict[str, Any] | None:
+    unique_groups = sorted(set(groups.values()))
+    fold_count = min(_CALIBRATION_CV_FOLDS, len(unique_groups))
+    if fold_count < 2:
+        return None
+
+    folds: list[dict[str, Any]] = []
+    selected_counts: Counter[str] = Counter()
+    for repeat in range(_CALIBRATION_CV_REPEATS):
+        fold_by_group = {
+            group: int(sha256_text(f"{repeat}:{group}")[:8], 16) % fold_count
+            for group in unique_groups
+        }
+        for fold in range(fold_count):
+            held_out = tuple(
+                document_id
+                for document_id in typed_gold
+                if fold_by_group[groups[document_id]] == fold
+            )
+            train = tuple(document_id for document_id in typed_gold if document_id not in held_out)
+            if not train or not held_out:
+                continue
+            trials = [
+                _score_type_threshold(
+                    predictions,
+                    source_texts,
+                    typed_gold,
+                    entity_type=entity_type,
+                    threshold=threshold,
+                    document_ids=train,
+                )
+                for threshold in threshold_grid
+            ]
+            selected = max(trials, key=_trial_order)
+            threshold = float(selected["threshold"])
+            selected_counts[f"{threshold:.6f}"] += 1
+            held_metrics = _score_type_threshold(
+                predictions,
+                source_texts,
+                typed_gold,
+                entity_type=entity_type,
+                threshold=threshold,
+                document_ids=held_out,
+            )
+            folds.append(
+                {
+                    "repeat": repeat,
+                    "fold": fold,
+                    "train_documents": len(train),
+                    "held_out_documents": len(held_out),
+                    "selected_threshold": threshold,
+                    "held_out_score": held_metrics["score"],
+                    "held_out_text_score": held_metrics["text_score"],
+                }
+            )
+    return {
+        "repeats": _CALIBRATION_CV_REPEATS,
+        "folds_per_repeat": fold_count,
+        "evaluated_fold_count": len(folds),
+        "selected_threshold_counts": dict(sorted(selected_counts.items())),
+        "mean_held_out_score": _mean(row["held_out_score"] for row in folds),
+        "mean_held_out_text_score": _mean(row["held_out_text_score"] for row in folds),
+        "fold_metrics": folds,
+    }
+
+
+def _bootstrap_threshold_metrics(
+    predictions: Mapping[str, ClinicalPrediction],
+    source_texts: Mapping[str, str],
+    typed_gold: Mapping[str, list[dict[str, Any]]],
+    *,
+    entity_type: EntityType,
+    threshold: float,
+    seed_material: str,
+) -> dict[str, Any]:
+    document_ids = tuple(_sort_ids(set(typed_gold)))
+    rng = random.Random(int(sha256_text(seed_material)[:16], 16))
+    scores: list[float] = []
+    text_scores: list[float] = []
+    rows_by_document = _prediction_rows(
+        predictions,
+        source_texts,
+        thresholds={entity_type: threshold},
+        include_types=frozenset({entity_type}),
+    )
+    for _ in range(_CALIBRATION_BOOTSTRAP_REPLICATES):
+        sampled = tuple(rng.choice(document_ids) for _ in document_ids)
+        sampled_gold: dict[str, list[dict[str, Any]]] = {}
+        sampled_rows: dict[str, list[dict[str, Any]]] = {}
+        for index, document_id in enumerate(sampled):
+            sample_id = f"{index}:{document_id}"
+            sampled_gold[sample_id] = typed_gold[document_id]
+            sampled_rows[sample_id] = rows_by_document[document_id]
+        metrics, _ = score_phase1_documents(sampled_gold, sampled_rows)
+        scores.append(float(metrics["score"]))
+        text_scores.append(float(metrics["text_score"]))
+    return {
+        "replicates": _CALIBRATION_BOOTSTRAP_REPLICATES,
+        "score": _percentile_interval(scores),
+        "text_score": _percentile_interval(text_scores),
+    }
+
+
+def _score_type_threshold(
+    predictions: Mapping[str, ClinicalPrediction],
+    source_texts: Mapping[str, str],
+    typed_gold: Mapping[str, list[dict[str, Any]]],
+    *,
+    entity_type: EntityType,
+    threshold: float,
+    document_ids: Sequence[str],
+) -> dict[str, Any]:
+    selected_predictions = {
+        document_id: predictions[document_id] for document_id in document_ids
+    }
+    selected_texts = {
+        document_id: source_texts[document_id] for document_id in document_ids
+    }
+    rows = _prediction_rows(
+        selected_predictions,
+        selected_texts,
+        thresholds={entity_type: threshold},
+        include_types=frozenset({entity_type}),
+    )
+    metrics, errors = score_phase1_documents(
+        {document_id: typed_gold[document_id] for document_id in document_ids},
+        rows,
+    )
+    return _trial(threshold, metrics, errors)
+
+
+def _percentile_interval(values: Sequence[float]) -> dict[str, float]:
+    ordered = sorted(values)
+    lower = ordered[int(0.025 * (len(ordered) - 1))]
+    upper = ordered[int(0.975 * (len(ordered) - 1))]
+    return {
+        "mean": round(sum(ordered) / len(ordered), 6),
+        "lower": round(lower, 6),
+        "upper": round(upper, 6),
+    }
+
+
+def _mean(values: Iterable[float]) -> float:
+    rows = [float(value) for value in values]
+    return round(sum(rows) / len(rows), 6) if rows else 0.0
+
+
 def _error_counts(errors: Sequence[Mapping[str, Any]]) -> dict[str, int]:
     return dict(sorted(Counter(str(row["error_type"]) for row in errors).items()))
+
+
+def _development_groups(
+    model_manifest: Mapping[str, Any],
+    development_ids: Sequence[str],
+) -> dict[str, str]:
+    raw_groups = model_manifest.get("split_groups")
+    if not isinstance(raw_groups, Mapping):
+        return {document_id: f"document:{document_id}" for document_id in development_ids}
+    groups: dict[str, str] = {}
+    for document_id in development_ids:
+        value = raw_groups.get(document_id)
+        if value is None:
+            value = raw_groups.get(f"phase1-manual-gold:{document_id}")
+        if not isinstance(value, str) or not value:
+            raise ValueError(f"Model split has no duplicate group for document {document_id}")
+        groups[document_id] = value
+    return groups
 
 
 def _input_fingerprints(

@@ -50,6 +50,14 @@ def test_threshold_calibration_uses_only_development_and_removes_spurious(
     assert report["selected_thresholds"]["SYMPTOM"] == 0.35
     assert report["selected_thresholds"]["DISEASE"] == 0.5
     assert report["error_counts"].get("phase1_spurious_entity", 0) == 0
+    symptom = report["searches"]["SYMPTOM"]
+    assert symptom["selection_objective"] == "phase1_score"
+    assert symptom["stability"]["small_sample_warning"] is True
+    assert symptom["stability"]["support"]["gold_entities"] == 1
+    assert symptom["stability"]["grouped_repeated_cv"]["repeats"] == 5
+    assert symptom["stability"]["bootstrap_95_ci"]["score"]["lower"] <= (
+        symptom["stability"]["bootstrap_95_ci"]["score"]["upper"]
+    )
 
 
 def test_threshold_calibration_rejects_holdout_prediction(tmp_path: Path) -> None:
@@ -62,6 +70,37 @@ def test_threshold_calibration_rejects_holdout_prediction(tmp_path: Path) -> Non
 
     with pytest.raises(ValueError, match="exactly the development predictions"):
         calibrate_phase1_model_thresholds(predictions, config=config)
+
+
+def test_threshold_stability_keeps_duplicate_group_together(tmp_path: Path) -> None:
+    config = _selection_fixture(tmp_path)
+    split = json.loads(config.model_split_manifest.read_text(encoding="utf-8"))
+    split["split_groups"] = {
+        "phase1-manual-gold:1": "duplicate:same",
+        "phase1-manual-gold:2": "duplicate:same",
+    }
+    config.model_split_manifest.write_text(
+        json.dumps(split, sort_keys=True),
+        encoding="utf-8",
+    )
+    predictions = {
+        "1": _prediction(
+            "1",
+            "đau x",
+            [_entity("M1", "đau", EntityType.SYMPTOM, 0.4, 0)],
+        ),
+        "2": _prediction(
+            "2",
+            "hen",
+            [_entity("M1", "hen", EntityType.DISEASE, 0.9, 0)],
+        ),
+    }
+
+    report = calibrate_phase1_model_thresholds(predictions, config=config)
+
+    stability = report["searches"]["SYMPTOM"]["stability"]
+    assert stability["support"]["group_count"] == 1
+    assert stability["grouped_repeated_cv"] is None
 
 
 def test_development_loader_never_opens_holdout_gold(tmp_path: Path) -> None:
