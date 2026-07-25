@@ -119,6 +119,7 @@ def test_btc_rxnorm_memory_is_dictionary_constrained() -> None:
         code_system=CodeSystem.RXNORM,
         canonical_name="amlodipine 10 MG Oral Tablet",
         semantic_type=EntityType.DRUG,
+        source="btc_sample",
         rxnorm_tty="SCD",
     )
     assert (
@@ -139,7 +140,7 @@ def test_btc_rxnorm_memory_is_dictionary_constrained() -> None:
     )
 
     assert [(candidate.code, candidate.source) for candidate in candidates] == [
-        ("308135", "btc_sample")
+        ("308135", "reviewed_memory")
     ]
     assert (
         _retrieval(
