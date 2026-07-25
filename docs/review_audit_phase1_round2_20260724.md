@@ -176,3 +176,9 @@ The first structure filter removed all three groups together, retaining 153 valu
 drug-only baseline. The grouped filter is rejected. This does not prove every removed group is
 useful; it only proves they cannot be removed together. Subsequent probes must isolate SCDF from
 ingredient/brand conflicts.
+
+The 166-value probe restored SCDF and removed only 11 ingredient/brand conflicts. It scored
+`23.8362` with J_candidates `16.8628`, decreases of `0.1492` and `0.3729` from the accepted
+drug-only baseline. Those 11 mappings are therefore restored. Relative to the 153-value grouped
+probe, restoring SCDF lowered J_candidates by `0.2963`; the next isolated probe removes only the 13
+SCDF mappings from the 177-value baseline.
