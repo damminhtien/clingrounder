@@ -8,7 +8,11 @@ from medical_kg_nlp.adapters.hybrid import (
     HybridArbitrationPolicy,
     HybridEntityExtractorAdapter,
 )
-from medical_kg_nlp.schema.annotation import EntityAnnotation
+from medical_kg_nlp.schema.annotation import (
+    AmbiguousEntityProposal,
+    EntityAnnotation,
+    EntityExtractionResult,
+)
 from medical_kg_nlp.schema.types import EntityType
 from medical_kg_nlp.utils.text import normalize_for_match
 
@@ -19,6 +23,17 @@ class _Extractor:
 
     def extract(self, source_text: str) -> list[EntityAnnotation]:
         return self.entities
+
+
+@dataclass(frozen=True)
+class _ProposalExtractor:
+    result: EntityExtractionResult
+
+    def extract(self, source_text: str) -> list[EntityAnnotation]:
+        return list(self.result.entities)
+
+    def extract_with_proposals(self, source_text: str) -> EntityExtractionResult:
+        return self.result
 
 
 def _entity(
@@ -130,6 +145,37 @@ def test_hybrid_deterministically_resolves_overlapping_model_spans() -> None:
 
     assert [(entity.text, entity.span) for entity in entities] == [
         (source, (0, len(source)))
+    ]
+
+
+def test_hybrid_uses_ambiguous_dictionary_proposal_only_as_model_support() -> None:
+    source = "khái niệm mơ hồ"
+    model = _Extractor(
+        [_entity("M1", source, 0, len(source), EntityType.DRUG, 0.70)]
+    )
+    dictionary = _ProposalExtractor(
+        EntityExtractionResult(
+            entities=(),
+            ambiguous_proposals=(
+                AmbiguousEntityProposal(
+                    span=(0, len(source)),
+                    text=source,
+                    normalized_text=normalize_for_match(source),
+                    candidate_types=(EntityType.DISEASE, EntityType.DRUG),
+                    concept_ids=("D:1", "RX:1"),
+                    confidence=0.78,
+                ),
+            ),
+        )
+    )
+
+    entities = HybridEntityExtractorAdapter(
+        model=model,
+        dictionary=dictionary,
+    ).extract(source)
+
+    assert [(entity.text, entity.type, entity.confidence) for entity in entities] == [
+        (source, EntityType.DRUG, 0.74)
     ]
 
 

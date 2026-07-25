@@ -13,7 +13,11 @@ from medical_kg_nlp.ontology.false_positive import (
     FalsePositiveRule,
     load_false_positive_rules,
 )
-from medical_kg_nlp.schema.annotation import EntityAnnotation
+from medical_kg_nlp.schema.annotation import (
+    AmbiguousEntityProposal,
+    EntityAnnotation,
+    EntityExtractionResult,
+)
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
 from medical_kg_nlp.utils.text import normalize_for_match
 
@@ -68,7 +72,15 @@ class RuleBasedNER:
         )
 
     def extract(self, text: str) -> list[EntityAnnotation]:
+        """Return only resolved entities for the standard extraction contract."""
+
+        return list(self.extract_with_proposals(text).entities)
+
+    def extract_with_proposals(self, text: str) -> EntityExtractionResult:
+        """Extract entities while retaining aliases whose semantic type is unresolved."""
+
         spans: list[EntityAnnotation] = []
+        ambiguous_proposals: list[AmbiguousEntityProposal] = []
         occupied: list[tuple[int, int]] = []
         medication_list_items = self.medication_lists.items(text)
         indication_spans = tuple(
@@ -95,6 +107,27 @@ class RuleBasedNER:
             )
             for span, entity_types in semantic_types_by_span.items()
         }
+        for span, selected_type in selected_type_by_span.items():
+            if selected_type is not None:
+                continue
+            matches = [match for match in raw_dictionary_matches if match.span == span]
+            ambiguous_proposals.append(
+                AmbiguousEntityProposal(
+                    span=span,
+                    text=text[span[0] : span[1]],
+                    normalized_text=normalize_for_match(text[span[0] : span[1]]),
+                    candidate_types=tuple(
+                        sorted(semantic_types_by_span[span], key=lambda item: item.value)
+                    ),
+                    concept_ids=tuple(
+                        sorted({match.entry.concept_id for match in matches})
+                    ),
+                    confidence=max(
+                        0.78 if match.match_kind == "exact" else 0.76
+                        for match in matches
+                    ),
+                )
+            )
         dictionary_matches = self.matcher.resolve_longest(
             match
             for match in raw_dictionary_matches
@@ -133,7 +166,19 @@ class RuleBasedNER:
         spans.sort(key=lambda entity: (entity.span[0], entity.span[1]))
         for index, entity in enumerate(spans, start=1):
             entity.id = f"E{index}"
-        return spans
+        return EntityExtractionResult(
+            entities=tuple(spans),
+            ambiguous_proposals=tuple(
+                sorted(
+                    ambiguous_proposals,
+                    key=lambda item: (
+                        item.span[0],
+                        item.span[1],
+                        tuple(value.value for value in item.candidate_types),
+                    ),
+                )
+            ),
+        )
 
     @staticmethod
     def _overlaps(span: tuple[int, int], occupied: list[tuple[int, int]]) -> bool:

@@ -14,6 +14,7 @@ from medical_kg_nlp.schema.annotation import (
     AssertionEvidence,
     AssertionFeatures,
     EntityAnnotation,
+    EntityExtractionResult,
     RelationAnnotation,
 )
 from medical_kg_nlp.schema.document import Sentence
@@ -39,6 +40,16 @@ class RuleEntityExtractorAdapter:
         for entity in entities:
             entity.validate_offsets(source_text)
         return entities
+
+    def extract_with_proposals(self, source_text: str) -> EntityExtractionResult:
+        """Retain unresolved dictionary type evidence for hybrid arbitration."""
+
+        result = self.implementation.extract_with_proposals(source_text)
+        for entity in result.entities:
+            entity.validate_offsets(source_text)
+        for proposal in result.ambiguous_proposals:
+            proposal.validate_offsets(source_text)
+        return result
 
 
 @dataclass(frozen=True)

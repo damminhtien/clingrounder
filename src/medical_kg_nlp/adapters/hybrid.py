@@ -7,7 +7,10 @@ from bisect import bisect_right
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
-from medical_kg_nlp.schema.annotation import EntityAnnotation
+from medical_kg_nlp.schema.annotation import (
+    AmbiguousEntityProposal,
+    EntityAnnotation,
+)
 from medical_kg_nlp.schema.types import EntityType
 
 if TYPE_CHECKING:
@@ -27,11 +30,13 @@ class HybridArbitrationPolicy:
 
     dictionary_prior: float = 0.04
     exact_agreement_bonus: float = 0.12
+    ambiguous_type_support_bonus: float = 0.04
 
     def __post_init__(self) -> None:
         for name, value in (
             ("dictionary_prior", self.dictionary_prior),
             ("exact_agreement_bonus", self.exact_agreement_bonus),
+            ("ambiguous_type_support_bonus", self.ambiguous_type_support_bonus),
         ):
             if not math.isfinite(value) or not 0.0 <= value <= 1.0:
                 raise ValueError(f"{name} must be finite and between 0 and 1")
@@ -50,8 +55,30 @@ class HybridEntityExtractorAdapter:
     policy: HybridArbitrationPolicy = HybridArbitrationPolicy()
 
     def extract(self, source_text: str) -> list[EntityAnnotation]:
-        dictionary_entities = self._validated(self.dictionary.extract(source_text), source_text)
+        ambiguous_proposals: tuple[AmbiguousEntityProposal, ...] = ()
+        extract_with_proposals = getattr(
+            self.dictionary,
+            "extract_with_proposals",
+            None,
+        )
+        if extract_with_proposals is not None:
+            result = extract_with_proposals(source_text)
+            dictionary_entities = self._validated(list(result.entities), source_text)
+            ambiguous_proposals = self._validated_ambiguous(
+                result.ambiguous_proposals,
+                source_text,
+            )
+        else:
+            dictionary_entities = self._validated(
+                self.dictionary.extract(source_text),
+                source_text,
+            )
         model_entities = self._validated(self.model.extract(source_text), source_text)
+        model_entities = _apply_ambiguous_type_support(
+            model_entities,
+            ambiguous_proposals,
+            bonus=self.policy.ambiguous_type_support_bonus,
+        )
         proposals = _merge_exact_proposals(
             dictionary_entities,
             model_entities,
@@ -74,6 +101,15 @@ class HybridEntityExtractorAdapter:
                     f"Entity {entity.id!r} confidence must be finite and between 0 and 1"
                 )
         return entities
+
+    @staticmethod
+    def _validated_ambiguous(
+        proposals: tuple[AmbiguousEntityProposal, ...],
+        source_text: str,
+    ) -> tuple[AmbiguousEntityProposal, ...]:
+        for proposal in proposals:
+            proposal.validate_offsets(source_text)
+        return proposals
 
 
 @dataclass(frozen=True)
@@ -181,6 +217,32 @@ def _best_entity(entities: list[EntityAnnotation]) -> EntityAnnotation | None:
             entity.id,
         ),
     )
+
+
+def _apply_ambiguous_type_support(
+    entities: list[EntityAnnotation],
+    proposals: tuple[AmbiguousEntityProposal, ...],
+    *,
+    bonus: float,
+) -> list[EntityAnnotation]:
+    """Reward model types supported by an unresolved exact dictionary span.
+
+    The ambiguous proposal never becomes a final entity on its own. This keeps rule-only behavior
+    precision-first while allowing an independent model to resolve the type without losing lexical
+    evidence.
+    """
+
+    supported = {
+        (proposal.span, entity_type)
+        for proposal in proposals
+        for entity_type in proposal.candidate_types
+    }
+    return [
+        replace(entity, confidence=min(1.0, entity.confidence + bonus))
+        if (entity.span, entity.type) in supported
+        else entity
+        for entity in entities
+    ]
 
 
 def _proposal_winner(

@@ -41,7 +41,7 @@ def test_rule_ner_abstains_when_exact_alias_maps_to_multiple_codes() -> None:
     assert entity.candidates == []
 
 
-def test_rule_ner_skips_exact_alias_with_cross_type_ambiguity() -> None:
+def test_rule_ner_retains_cross_type_alias_as_non_exportable_proposal() -> None:
     entries = [
         ConceptEntry(
             concept_id="D:A00",
@@ -61,9 +61,18 @@ def test_rule_ner_skips_exact_alias_with_cross_type_ambiguity() -> None:
         ),
     ]
 
-    entities = RuleBasedNER(DictionaryStore(entries)).extract("Có khái niệm mơ hồ.")
+    ner = RuleBasedNER(DictionaryStore(entries))
+    result = ner.extract_with_proposals("Có khái niệm mơ hồ.")
 
-    assert entities == []
+    assert result.entities == ()
+    assert len(result.ambiguous_proposals) == 1
+    proposal = result.ambiguous_proposals[0]
+    assert proposal.text == "khái niệm mơ hồ"
+    assert proposal.candidate_types == (EntityType.DISEASE, EntityType.DRUG)
+    assert proposal.concept_ids == ("D:A00", "RX:1")
+    proposal.validate_offsets("Có khái niệm mơ hồ.")
+    # The standard rule-only contract still abstains instead of guessing a type.
+    assert ner.extract("Có khái niệm mơ hồ.") == []
 
 
 def test_rule_ner_applies_data_driven_false_positive_blacklist(tmp_path) -> None:

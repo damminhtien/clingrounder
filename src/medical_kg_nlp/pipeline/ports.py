@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from medical_kg_nlp.kg.validator import ValidationIssue
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.schema.annotation import (
     AssertionEvidence,
     AssertionFeatures,
+    EntityExtractionResult,
     EntityAnnotation,
     RelationAnnotation,
 )
@@ -22,6 +23,7 @@ __all__ = [
     "DocumentCandidateRerankerPort",
     "CandidateRetrieverPort",
     "EntityExtractorPort",
+    "EntityProposalExtractorPort",
     "KnowledgeValidatorPort",
     "RelationExtractorPort",
     "TerminologyRepository",
@@ -32,6 +34,13 @@ class EntityExtractorPort(Protocol):
     """Extract raw-text-backed entities from a clinical document."""
 
     def extract(self, source_text: str) -> list[EntityAnnotation]: ...
+
+
+@runtime_checkable
+class EntityProposalExtractorPort(Protocol):
+    """Extract final entities while retaining unresolved type proposals."""
+
+    def extract_with_proposals(self, source_text: str) -> EntityExtractionResult: ...
 
 
 class AssertionClassifierPort(Protocol):

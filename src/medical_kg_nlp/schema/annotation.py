@@ -223,6 +223,66 @@ class EntityAnnotation:
         return payload
 
 
+@dataclass(frozen=True)
+class AmbiguousEntityProposal:
+    """Raw-span proposal whose dictionary evidence supports more than one type.
+
+    This is not a final entity and therefore cannot be linked or exported. Hybrid extractors may
+    use it as supporting evidence when an independent model resolves one of the candidate types.
+    """
+
+    span: tuple[int, int]
+    text: str
+    normalized_text: str
+    candidate_types: tuple[EntityType, ...]
+    concept_ids: tuple[str, ...]
+    confidence: float
+    source: str = "dictionary"
+
+    def __post_init__(self) -> None:
+        if len(self.candidate_types) < 2:
+            raise ValueError("Ambiguous proposals require at least two candidate types")
+        if tuple(sorted(set(self.candidate_types), key=lambda item: item.value)) != (
+            self.candidate_types
+        ):
+            raise ValueError("Ambiguous proposal candidate types must be unique and sorted")
+        if not self.concept_ids or tuple(sorted(set(self.concept_ids))) != self.concept_ids:
+            raise ValueError("Ambiguous proposal concept IDs must be non-empty, unique, and sorted")
+        if not math.isfinite(self.confidence) or not 0.0 <= self.confidence <= 1.0:
+            raise ValueError("Ambiguous proposal confidence must be finite and between 0 and 1")
+        if not self.source:
+            raise ValueError("Ambiguous proposal source must be non-empty")
+
+    def validate_offsets(self, source_text: str) -> None:
+        start, end = self.span
+        if not 0 <= start < end <= len(source_text):
+            raise ValueError(f"Invalid ambiguous proposal span {self.span}")
+        if source_text[start:end] != self.text:
+            raise ValueError(
+                f"Ambiguous proposal offset mismatch: expected {self.text!r}, "
+                f"got {source_text[start:end]!r}"
+            )
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "span": [self.span[0], self.span[1]],
+            "text": self.text,
+            "normalized_text": self.normalized_text,
+            "candidate_types": [item.value for item in self.candidate_types],
+            "concept_ids": list(self.concept_ids),
+            "confidence": round(self.confidence, 6),
+            "source": self.source,
+        }
+
+
+@dataclass(frozen=True)
+class EntityExtractionResult:
+    """Final entities plus non-exportable proposals retained for arbitration."""
+
+    entities: tuple[EntityAnnotation, ...]
+    ambiguous_proposals: tuple[AmbiguousEntityProposal, ...] = ()
+
+
 @dataclass
 class RelationAnnotation:
     id: str

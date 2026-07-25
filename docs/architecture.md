@@ -127,6 +127,11 @@ and can affect ranking without rejecting a valid product. Explicit product-stren
 or dose-form conflicts retain a structured rejection reason; rejected candidates remain in the
 internal list for error analysis rather than being deleted from retrieval traces.
 
+Dictionary aliases with unresolved cross-type semantics are retained as non-exportable
+`AmbiguousEntityProposal` records. Rule-only extraction abstains. A hybrid extractor may use an
+exact-span proposal as a small support bonus only when an independent model predicts one of its
+candidate types; the proposal can never become a final entity by itself.
+
 ## Assertion Rules
 
 `data/heuristics/assertion_cues.jsonl` is the source of truth for cue text, direction, section priors,
