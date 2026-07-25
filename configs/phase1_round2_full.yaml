@@ -1,0 +1,69 @@
+# Reproducible full-pipeline probe for the private Phase 1 Round 2 corpus.
+#
+# The additional recognition overlay was compiled from the frozen Phase 1 train split and passed
+# the legacy holdout gate. It improves reusable mention coverage without reading or hard-coding
+# Round 2 document IDs, text offsets, or labels.
+input_dir: data/raw/input
+output_dir: phase1/round2_full_output
+zip: phase1/round2_full_output.zip
+run_root: outputs/phase1/round2
+run_label: round2-full-reviewed-recognition
+mode: full
+dictionary: data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
+abbreviations: data/dictionaries/abbreviations.jsonl
+strict_validation: true
+expected_count: 100
+max_candidates: 1
+assertion_policy: pipeline
+candidate_policy: pipeline
+
+terminology:
+  recognition_path: ../data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
+  additional_recognition_paths:
+    - ../data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl
+    - ../outputs/mining/knowledge/phase1-recognition-115886bf9d22/recognition_concepts.jsonl
+  abbreviation_path: ../data/dictionaries/abbreviations.jsonl
+  alias_overlay_path: ../data/dictionaries/vietnamese_medical_alias.jsonl
+  normalization_paths:
+    - ../data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl
+    - ../data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
+  normalization_alias_overlay_paths:
+    - ../outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl
+    - ../outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl
+  normalization_index_path: ../.cache/medical-kg/terminology/terminology-a2d5a19e83fbc9e1a305.sqlite3
+  cache_dir: ../.cache/medical-kg/terminology
+  # INVARIANT: BTC fixtures and reviewed candidate memory are not runtime evidence for Round 2.
+  reviewed_mention_path: null
+  query_cache_size: 4096
+
+parallel:
+  # SCALING: threads share the immutable dictionary matcher and 193 MB SQLite index.
+  backend: thread
+  workers: 4
+  chunksize: 4
+  fail_fast: true
+
+pipeline:
+  version: "0.2.0-phase1-round2-full"
+  max_candidates: 20
+  context_window: 80
+  link_assignment_threshold: 0.75
+  link_assignment_margin: 0.05
+  link_candidate_threshold: 0.75
+  link_candidate_relative_margin: 0.05
+  link_max_qualified_candidates: 1
+  link_enforce_rxnorm_structure: true
+  link_candidate_thresholds_by_type: {}
+  link_candidate_thresholds_by_source: {}
+  # Exact-source probabilities are the only calibrated candidate emission contract.
+  link_emit_probabilities_by_source:
+    "ICD-10:dictionary_exact": 0.99505
+    "RxNorm:dictionary_exact": 0.989362
+  candidate_sources:
+    - exact
+  enable_context: true
+  enable_linking: true
+  enable_candidate_reranking: true
+  enable_entity_kg_validation: true
+  enable_relations: false
+  enable_relation_kg_validation: false

@@ -212,6 +212,18 @@ def test_checked_in_full_profile_composes_tt06_and_rxnorm_without_btc_memory() -
     )
 
 
+def test_round2_full_profile_adds_reviewed_recognition_sources() -> None:
+    resolved = ResolvedPipelineConfig.load("configs/phase1_round2_full.yaml")
+    factory = resolved.factory_config
+
+    assert [
+        Path(path).name for path in factory.additional_recognition_dictionary_paths
+    ] == ["vn_clinical_lexicon_concepts.jsonl", "recognition_concepts.jsonl"]
+    assert factory.reviewed_mention_path is None
+    assert factory.options.candidate_sources == ("exact",)
+    assert factory.options.link_max_qualified_candidates == 1
+
+
 def _concept_rows() -> str:
     rows = (
         {
