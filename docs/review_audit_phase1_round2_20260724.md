@@ -141,3 +141,18 @@ WER improved. The assertion delta is positive but not isolated because the entit
 The candidate branch is rejected: emitting one exact candidate for 767 entities still reduced the
 public candidate metric. The next probe freezes the winning entity/assertion projection and clears
 only candidates.
+
+The candidate-empty control was then scored with exactly the same entity/assertion projection:
+
+| Measure | Full candidates | Empty candidates | Difference |
+| --- | ---: | ---: | ---: |
+| primary score | `22.6633` | `23.7953` | `+1.1320` |
+| WER | `72.7063` | `72.7063` | `0.0000` |
+| J assertion | `29.6765` | `29.6765` | `0.0000` |
+| J candidates | `13.9305` | `16.7606` | `+2.8301` |
+
+Candidate-empty is now the accepted Round 2 baseline. Any candidate reintroduction must preserve
+the projection SHA-256
+`966c3412904f70cf7f08280223a0445634b1c21bc0f5ded6afdc186fee936506`
+and probe one entity/code-system family at a time. Drug-only RxNorm is first because the official
+sample requires medication codes while the rejected full artifact assigned 590 diagnosis codes.
