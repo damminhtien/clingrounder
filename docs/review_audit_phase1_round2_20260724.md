@@ -170,3 +170,9 @@ empty:
 RxNorm drug-only is promoted, but the gain per emitted value is small. The next candidate probe
 must remove structurally inconsistent mappings: ingredient or brand codes attached to strength
 mentions, route-incompatible SCDF matches, and single-ingredient matches for multi-drug mentions.
+
+The first structure filter removed all three groups together, retaining 153 values. It scored
+`23.9547` with J_candidates `17.1591`, decreases of `0.0307` and `0.0766` from the 177-value
+drug-only baseline. The grouped filter is rejected. This does not prove every removed group is
+useful; it only proves they cannot be removed together. Subsequent probes must isolate SCDF from
+ingredient/brand conflicts.
