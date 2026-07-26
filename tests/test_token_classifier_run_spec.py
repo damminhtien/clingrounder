@@ -10,6 +10,7 @@ import pytest
 
 from medical_kg_nlp.cli.parser import build_parser
 from medical_kg_nlp.cli.commands import model as model_commands
+from medical_kg_nlp.pipeline import ResolvedPipelineConfig
 from medical_kg_nlp.training.run_spec import (
     assert_local_gpu_runtime,
     load_token_classifier_run_spec,
@@ -53,6 +54,43 @@ def test_phase1_run_spec_pins_five_type_dataset_and_full_gpu_schedule() -> None:
     assert spec.training.bf16 is True
     assert spec.training.full_determinism is True
     assert spec.training.unaligned_span_policy == "mask"
+
+
+def test_phase1_qa_educational_run_spec_uses_isolated_augmented_dataset() -> None:
+    spec = load_token_classifier_run_spec(
+        "configs/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml"
+    )
+
+    assert spec.training.model_id == "FacebookAI/xlm-roberta-base"
+    assert spec.training.revision == "e73636d4f797dec63c3081bb6ed5c7b0bb3f2089"
+    assert "phase1-manual-five-type-qa-edu-v1" in str(
+        spec.training.dataset_path
+    )
+    assert spec.training.evaluation_split == "development"
+    assert spec.training.output_dir.name == (
+        "phase1-five-type-xlmr-qa-edu-2026-07-26"
+    )
+    assert spec.training.full_determinism is True
+    assert spec.training.unaligned_span_policy == "mask"
+
+
+def test_phase1_qa_educational_pipeline_points_to_matching_run_spec() -> None:
+    resolved = ResolvedPipelineConfig.load(
+        "configs/pipeline/phase1-five-type-qa-edu-model-only.yaml"
+    )
+    extractor = resolved.factory_config.models.entity_extractor
+
+    assert extractor is not None
+    assert Path(
+        resolved.payload["models"]["entity_extractor"]["run_spec"]
+    ).name == (
+        "phase1-five-type-xlmr-qa-edu-2026-07-26.yaml"
+    )
+    assert extractor.model_id.endswith(
+        "phase1-five-type-xlmr-qa-edu-2026-07-26/final-model"
+    )
+    assert resolved.factory_config.options.enable_context is False
+    assert resolved.factory_config.options.enable_linking is False
 
 
 def test_run_spec_paths_are_stable_from_another_working_directory(

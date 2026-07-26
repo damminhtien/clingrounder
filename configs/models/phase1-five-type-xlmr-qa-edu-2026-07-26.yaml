@@ -1,0 +1,51 @@
+# MODEL: Q&A/educational discourse adaptation over reviewed Phase 1 train spans only.
+schema_version: token-classifier-run.v2
+run_id: phase1-five-type-xlmr-qa-edu-2026-07-26
+# INVARIANT: all paths resolve from this movable repository root.
+run_root: ../..
+
+environment:
+  # INVARIANT: the remote GPU job must use the exact dependency graph reviewed locally.
+  lock_path: uv.lock
+  lock_sha256: 8ed9569bb6f221393de6508d2f36729f5b644b390336ab1eaf5bea7b12fcc87a
+
+dataset:
+  path: outputs/mining/model-datasets/phase1-manual-five-type-qa-edu-v1/spans.jsonl
+  manifest: outputs/mining/model-datasets/phase1-manual-five-type-qa-edu-v1/manifest.json
+  train_split: train
+  evaluation_split: development
+
+model:
+  model_id: FacebookAI/xlm-roberta-base
+  revision: e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
+  source_url: https://huggingface.co/FacebookAI/xlm-roberta-base
+  license: MIT
+
+# SCALING: the effective batch remains 16 on a 16 GiB Ampere-or-newer GPU. The 20 original
+# development chunks are never augmented, so model selection remains comparable with the base run.
+training:
+  output_dir: outputs/models/phase1-five-type-xlmr-qa-edu-2026-07-26
+  cache_dir: .cache/medical-kg/model-training
+  max_length: 512
+  stride: 64
+  train_batch_size: 4
+  evaluation_batch_size: 8
+  gradient_accumulation_steps: 4
+  epochs: 3.0
+  learning_rate: 0.00002
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  preprocessing_workers: 4
+  seed: 42
+  full_determinism: true
+  # MODEL: mask tokenizer-inexpressible boundaries; never widen reviewed raw spans.
+  unaligned_span_policy: mask
+  overwrite_output: false
+
+runtime:
+  operating_system: linux
+  accelerator: cuda
+  minimum_devices: 1
+  minimum_vram_gib: 16
+  minimum_compute_capability: [8, 0]
+  precision: bf16
