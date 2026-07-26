@@ -42,6 +42,56 @@ The 100 input texts have:
 This is not direct hidden gold for the current Round 2 documents. It is still unauthorized
 competition annotation data and remains quarantined.
 
+## Input-Only Comparison With Current Round 2
+
+A separate comparison opened only the nested `input.zip`; it did not open or deserialize
+`gt.zip`. Both corpora contain 100 documents, but their structural distributions differ sharply:
+
+| Input feature | Quarantined part 2 | Current Round 2 |
+| --- | ---: | ---: |
+| total characters | 984,231 | 203,817 |
+| mean characters/document | 9,842.31 | 2,038.17 |
+| mean tokens/document | 2,085.75 | 431.63 |
+| mean lines/document | 75.13 | 30.28 |
+| documents with bullets | 45 | 91 |
+| documents with masked text | 5 | 30 |
+| documents with a medication-list marker | 0 | 26 |
+| documents with a lab/imaging marker | 100 | 52 |
+| documents with a question/answer marker | 0 | 53 |
+
+Both corpora contain clinical headings, but the quarantined input is dominated by long clinical and
+test-heavy narratives. Current Round 2 is much shorter and mixes clinical sections with
+question/answer, masked, bullet-list, educational, and medication-list content.
+
+Cross-corpus lexical evidence is also weak:
+
+| Comparison | Value |
+| --- | ---: |
+| exact document hashes shared | 0 |
+| Round 2 documents sharing at least one exact line | 22 |
+| exact-line character fraction in Round 2 | 2.6434% |
+| mean best 8-word-shingle Jaccard | 0.007730 |
+| median best 8-word-shingle Jaccard | 0.000000 |
+| maximum best 8-word-shingle Jaccard | 0.207150 |
+| Round 2 documents with best Jaccard at least 0.10 | 2 |
+| Round 2 documents with best Jaccard at least 0.25 | 0 |
+| token-vocabulary Jaccard | 0.392462 |
+
+The moderate vocabulary overlap reflects shared Vietnamese medical terminology, not matching note
+templates or document content. The quarantined label distribution is therefore not a reliable
+prior for Round 2 entity density, type prevalence, or region routing. In particular, its absence of
+question/answer documents makes direct transfer inappropriate for the largest Round 2 failure
+slice.
+
+The comparison fingerprints are:
+
+| Input | SHA-256 |
+| --- | --- |
+| quarantined nested `input.zip` | `ecb0bb792ad8649b06dcfd10847a1d33c963a9332ac4690c56b0004643eceb5c` |
+| current Round 2 document manifest | `60a83690ef97a5dc6201f7877f808f593a6d86914678efeb3437814a0cba005f` |
+
+This comparison changes no model, rule, dictionary, threshold, or submission row.
+
 ## Offset Coordinate Evidence
 
 The nested TXT files contain 7,413 CRLF sequences. Across 15,444 annotation rows:
