@@ -50,9 +50,11 @@ from medical_kg_nlp.benchmarks.phase1.round2 import (
     write_phase1_round2_audit,
 )
 from medical_kg_nlp.benchmarks.phase1.round2_probes import (
+    CandidateProbePolicy,
     Phase1Round2ProbeConfig,
     Phase1TextRegion,
     RegionProposalPolicy,
+    apply_round2_candidate_policy,
     align_quoted_phase1_proposals,
     canonicalize_full_phase1_source,
     merge_region_routed_proposals,
@@ -62,6 +64,7 @@ from medical_kg_nlp.benchmarks.phase1.round2_probes import (
 
 __all__ = [
     "Phase1SelectiveExportConfig",
+    "CandidateProbePolicy",
     "Phase1EvaluationAdapter",
     "Phase1Record",
     "Phase1ManualGoldMiningCorpus",
@@ -76,6 +79,7 @@ __all__ = [
     "PHASE1_NER_VARIANTS",
     "ROUND2_NOVELTY_SOURCE_IDS",
     "build_phase1_round2_audit",
+    "apply_round2_candidate_policy",
     "build_phase1_reviewed_recognition_policy",
     "build_phase1_report",
     "build_phase1_model_dataset",

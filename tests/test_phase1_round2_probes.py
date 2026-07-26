@@ -12,6 +12,7 @@ from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import (
 )
 from medical_kg_nlp.benchmarks.phase1.round2_probes import (
     Phase1Round2ProbeConfig,
+    apply_round2_candidate_policy,
     align_quoted_phase1_proposals,
     canonicalize_full_phase1_source,
     merge_region_routed_proposals,
@@ -161,6 +162,54 @@ def test_full_source_canonicalization_filters_candidates_by_type_and_dictionary(
     assert counters["output_entity_total"] == 2
 
 
+def test_candidate_policies_abstain_without_changing_entities_or_assertions() -> None:
+    text = "Tăng huyết áp dùng aspirin và warfarin"
+    diagnosis = _row(text, "Tăng huyết áp", "CHẨN_ĐOÁN")
+    diagnosis["assertions"] = ["isHistorical"]
+    diagnosis["candidates"] = ["I10", "I11"]
+    aspirin = _row(text, "aspirin", "THUỐC")
+    aspirin["assertions"] = ["isHistorical"]
+    aspirin["candidates"] = ["1191"]
+    warfarin = _row(text, "warfarin", "THUỐC")
+    warfarin["candidates"] = ["11289", "855332"]
+    baseline = {"1": [diagnosis, aspirin, warfarin]}
+
+    rx_only, rx_decisions, rx_counters = apply_round2_candidate_policy(
+        baseline,
+        policy="rx_only",
+    )
+    unique, unique_decisions, unique_counters = apply_round2_candidate_policy(
+        baseline,
+        policy="rx_unique_only",
+    )
+
+    assert [row["candidates"] for row in rx_only["1"]] == [
+        [],
+        ["1191"],
+        ["11289", "855332"],
+    ]
+    assert [row["candidates"] for row in unique["1"]] == [[], ["1191"], []]
+    assert [row["assertions"] for row in unique["1"]] == [
+        ["isHistorical"],
+        ["isHistorical"],
+        [],
+    ]
+    assert [row["position"] for row in unique["1"]] == [
+        row["position"] for row in baseline["1"]
+    ]
+    assert [decision["reason"] for decision in rx_decisions] == [
+        "non_medication_candidate_abstention"
+    ]
+    assert [decision["reason"] for decision in unique_decisions] == [
+        "non_medication_candidate_abstention",
+        "ambiguous_medication_candidate_abstention",
+    ]
+    assert rx_counters["candidate.retained"] == 3
+    assert rx_counters["candidate.removed"] == 2
+    assert unique_counters["candidate.retained"] == 1
+    assert unique_counters["candidate.removed"] == 4
+
+
 def test_round2_probe_runner_preserves_entities_and_candidates_for_assertions(
     tmp_path: Path,
 ) -> None:
@@ -239,12 +288,17 @@ def test_round2_probe_cli_parser_accepts_named_sources() -> None:
             "xlmr=xlmr.zip",
             "--build-full-source",
             "qwen",
+            "--candidate-probe",
+            "rx_only",
+            "--candidate-probe",
+            "rx_unique_only",
         ]
     )
 
     assert args.handler == "benchmark_phase1_round2_probes"
     assert args.source == ["qwen=qwen.zip", "xlmr=xlmr.zip"]
     assert args.build_full_source == ["qwen"]
+    assert args.candidate_probe == ["rx_only", "rx_unique_only"]
 
 
 def _row(text: str, mention: str, entity_type: str) -> dict[str, object]:

@@ -1,4 +1,4 @@
-"""Isolated Round 2 assertion and region-routed entity probes.
+"""Isolated Round 2 assertion, candidate, and region-routed entity probes.
 
 This module operates on complete Phase 1 artifacts rather than composing a new core pipeline.
 That boundary is deliberate: public probes must preserve every non-target field, and private
@@ -44,9 +44,11 @@ from medical_kg_nlp.utils.hashing import sha256_file
 from medical_kg_nlp.utils.run_output import create_hashed_run_dir
 
 __all__ = [
+    "CandidateProbePolicy",
     "Phase1Round2ProbeConfig",
     "Phase1TextRegion",
     "RegionProposalPolicy",
+    "apply_round2_candidate_policy",
     "align_quoted_phase1_proposals",
     "canonicalize_full_phase1_source",
     "merge_region_routed_proposals",
@@ -61,6 +63,7 @@ Round2RegionKind = Literal[
     "educational",
     "other",
 ]
+CandidateProbePolicy = Literal["rx_only", "rx_unique_only"]
 
 _MEDICATION_HEADING_RE = re.compile(
     r"(?i)^\s*(?:danh sách\s+)?thuốc\s+(?:đang dùng\s+)?trước "
@@ -132,6 +135,7 @@ class Phase1Round2ProbeConfig:
     minimum_agreement_sources: int = 2
     expand_repeated_mentions: bool = True
     full_source_names: tuple[str, ...] = ()
+    candidate_probe_policies: tuple[CandidateProbePolicy, ...] = ()
 
     def __post_init__(self) -> None:
         if not re.fullmatch(r"[0-9a-f]{64}", self.expected_source_archive_sha256):
@@ -159,6 +163,17 @@ class Phase1Round2ProbeConfig:
             raise ValueError(
                 "Full-source variants require matching --source inputs: "
                 f"{sorted(unknown_full_sources)}"
+            )
+        if len(self.candidate_probe_policies) != len(set(self.candidate_probe_policies)):
+            raise ValueError("Candidate probe policies must be unique")
+        unsupported_candidate_policies = set(self.candidate_probe_policies) - {
+            "rx_only",
+            "rx_unique_only",
+        }
+        if unsupported_candidate_policies:
+            raise ValueError(
+                "Unsupported candidate probe policies: "
+                f"{sorted(unsupported_candidate_policies)}"
             )
 
 
@@ -470,8 +485,90 @@ def canonicalize_full_phase1_source(
     return output, decisions, dict(sorted(counters.items()))
 
 
+def apply_round2_candidate_policy(
+    rows_by_doc: Mapping[str, list[dict[str, Any]]],
+    *,
+    policy: CandidateProbePolicy,
+) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]], dict[str, int]]:
+    """Apply one abstaining candidate policy without changing entities or assertions.
+
+    `rx_only` retains every existing RxNorm list on medication entities and clears all other
+    candidate lists. `rx_unique_only` additionally requires the medication row to contain exactly
+    one candidate, avoiding an arbitrary top-one choice when source ordering has no calibrated
+    ranking contract.
+    """
+
+    if policy not in {"rx_only", "rx_unique_only"}:
+        raise ValueError(f"Unsupported Round 2 candidate policy {policy!r}")
+    output: dict[str, list[dict[str, Any]]] = {}
+    decisions: list[dict[str, Any]] = []
+    counters: Counter[str] = Counter()
+    for document_id in sorted(rows_by_doc, key=_document_sort_key):
+        transformed: list[dict[str, Any]] = []
+        for row in rows_by_doc[document_id]:
+            copied = _copy_row(row)
+            raw_candidates = copied.get("candidates", [])
+            if not isinstance(raw_candidates, list) or not all(
+                isinstance(value, str) for value in raw_candidates
+            ):
+                raise ValueError(f"{document_id}: candidates must be a string list")
+
+            entity_type = str(copied.get("type", ""))
+            retained = list(raw_candidates)
+            reason: str | None = None
+            if entity_type != "THUỐC":
+                retained = []
+                if raw_candidates:
+                    reason = "non_medication_candidate_abstention"
+                    counters["row.cleared_non_medication"] += 1
+            elif policy == "rx_unique_only" and len(raw_candidates) != 1:
+                retained = []
+                if raw_candidates:
+                    reason = "ambiguous_medication_candidate_abstention"
+                    counters["row.cleared_ambiguous_medication"] += 1
+                else:
+                    counters["row.empty_medication"] += 1
+            elif raw_candidates:
+                counters["row.retained_medication"] += 1
+
+            copied["candidates"] = retained
+            transformed.append(copied)
+            counters["candidate.input"] += len(raw_candidates)
+            counters["candidate.retained"] += len(retained)
+            counters["candidate.removed"] += len(raw_candidates) - len(retained)
+            if reason is not None:
+                decisions.append(
+                    {
+                        "document_id": document_id,
+                        "stage": "candidate_abstention",
+                        "action": "clear",
+                        "reason": reason,
+                        "candidate_count_before": len(raw_candidates),
+                        "candidate_count_after": 0,
+                        "entity": _identity_payload(row),
+                    }
+                )
+        output[document_id] = transformed
+
+    # INVARIANT: this transform is metadata-only; row order, duplicate identities, and assertions
+    # stay byte-for-byte equivalent after JSON decoding.
+    isolation_issues = validate_probe_isolation(
+        rows_by_doc,
+        output,
+        module="candidate",
+    )
+    if isolation_issues:
+        raise ValueError(f"Candidate policy isolation failed: {isolation_issues[:5]}")
+    counters["decision_total"] = len(decisions)
+    counters["output_entity_total"] = sum(len(rows) for rows in output.values())
+    counters["output_candidate_rows"] = sum(
+        bool(row.get("candidates")) for rows in output.values() for row in rows
+    )
+    return output, decisions, dict(sorted(counters.items()))
+
+
 def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
-    """Build strict, hashed A_NEG_HIST and region-routed entity probe artifacts."""
+    """Build strict, hashed assertion, candidate, and region-routed entity probes."""
 
     observed_base_sha256 = _path_sha256(config.base)
     if observed_base_sha256 != config.expected_base_sha256:
@@ -522,6 +619,7 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
             "expand_repeated_mentions": config.expand_repeated_mentions,
             "proposal_sources": [name for name, _ in config.proposal_sources],
             "full_source_names": list(config.full_source_names),
+            "candidate_probe_policies": list(config.candidate_probe_policies),
         },
     )
 
@@ -545,6 +643,24 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
             dictionary=dictionary,
         )
     )
+
+    for policy in config.candidate_probe_policies:
+        candidate_rows, candidate_decisions, candidate_counters = (
+            apply_round2_candidate_policy(base, policy=policy)
+        )
+        variants.append(
+            _materialize_variant(
+                f"C_{policy.upper()}",
+                module="candidate",
+                rows=candidate_rows,
+                base=base,
+                decisions=candidate_decisions,
+                counters=candidate_counters,
+                run_dir=run_output.run_dir,
+                documents=documents,
+                dictionary=dictionary,
+            )
+        )
 
     for name, rows_by_doc in routed_sources.items():
         routed_rows, decisions, counters = merge_region_routed_proposals(
@@ -662,6 +778,10 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
                 "minimum_j_assertion_gain": 1.0,
                 "final_must_not_decrease": True,
             },
+            "candidate": {
+                "minimum_j_candidate_gain": 0.5,
+                "final_must_not_decrease": True,
+            },
         },
     }
     write_json(run_output.manifest_path, manifest)
@@ -680,7 +800,7 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
 def _materialize_variant(
     name: str,
     *,
-    module: Literal["assertion", "entity", "source"],
+    module: Literal["assertion", "candidate", "entity", "source"],
     rows: Mapping[str, list[dict[str, Any]]],
     base: Mapping[str, list[dict[str, Any]]],
     decisions: list[dict[str, Any]],
@@ -1017,8 +1137,8 @@ def _render_summary(probe_suite: Mapping[str, Any]) -> str:
         f"- Baseline entities: {baseline['entity_count']}",
         f"- Proposal sources: {probe_suite['proposal_source_status']['count']}",
         "",
-        "| Variant | Module | Added | Assertion changes | ZIP SHA-256 |",
-        "| --- | --- | ---: | ---: | --- |",
+        "| Variant | Module | Added | Assertion changes | Candidate changes | ZIP SHA-256 |",
+        "| --- | --- | ---: | ---: | ---: | --- |",
     ]
     for variant in probe_suite["variants"]:
         changed = variant["changed"]
@@ -1026,13 +1146,15 @@ def _render_summary(probe_suite: Mapping[str, Any]) -> str:
             f"| `{variant['name']}` | {variant['module']} | "
             f"{changed.get('entity_added', 0)} | "
             f"{changed.get('assertion_changed', 0)} | "
+            f"{changed.get('candidate_changed', 0)} | "
             f"`{variant['zip_sha256']}` |"
         )
     lines.extend(
         [
             "",
             "Public promotion is isolated: entity WER must decrease by at least 2.0, while an "
-            "assertion probe must gain at least 1.0 J_assertion. Final score must not decrease.",
+            "assertion probe must gain at least 1.0 J_assertion and a candidate probe at least "
+            "0.5 J_candidates. Final score must not decrease.",
             "",
         ]
     )

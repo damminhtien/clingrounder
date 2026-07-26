@@ -374,6 +374,16 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         action="store_true",
         help="Do not recover repeated exact mentions in proposal sources.",
     )
+    probes.add_argument(
+        "--candidate-probe",
+        action="append",
+        choices=("rx_only", "rx_unique_only"),
+        default=[],
+        help=(
+            "Build a candidate-only abstention probe on the frozen baseline; repeat for "
+            "rx_only and rx_unique_only."
+        ),
+    )
 
     model_data = operations.add_parser(
         "model-data",
