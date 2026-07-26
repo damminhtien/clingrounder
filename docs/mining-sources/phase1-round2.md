@@ -189,9 +189,10 @@ deficiency concept while emitting repeated secondary diagnoses. This is concrete
 recognition/domain coverage failure in the mixed education, question-and-answer, and clinical
 distribution. It is not evidence that adding more candidates to the same spans will repair WER.
 
-## Current Frozen Baseline And Breakthrough Probe
+## Current Frozen Strict Baseline And Breakthrough Probe
 
-The best scored Round 2 artifact as of 2026-07-25 is now the immutable input to isolated probes:
+The best strict and reproducible Round 2 artifact as of 2026-07-25 is the immutable input to
+isolated probes:
 
 | Field | Value |
 | --- | --- |
@@ -220,8 +221,20 @@ The first probe applies only the previously calibrated selective negation and hi
 The entity projection SHA-256 is
 `708953f79e1e74b6de1c2495624a955d56ffe0fd88c4270fe4a2895a7b96aea5` for both artifacts.
 The run manifest records commit `5ef6739f853f2a18a6274b29884bcc6a134d132f` with
-`git_dirty: false`. Promotion still requires a public J assertion gain of at least `1.0` and no
-final-score regression.
+`git_dirty: false`.
+
+The public grader scored this exact A_NEG_HIST ZIP on 2026-07-26:
+
+| Metric | Baseline | A_NEG_HIST | Delta |
+| --- | ---: | ---: | ---: |
+| final | `23.9854` | `24.6695` | `+0.6841` |
+| WER | `72.7063` | `72.7063` | `0.0000` |
+| J assertion | `29.6765` | `31.9568` | `+2.2803` |
+| J candidates | `17.2357` | `17.2357` | `0.0000` |
+
+It passes the assertion promotion gate: J assertion gained more than `1.0`, final score increased,
+and the entity/candidate metrics remained isolated. A_NEG_HIST is therefore retained for a later
+combination only after the entity module wins independently.
 
 The probe runner also implements the model-source routing contract:
 
@@ -245,19 +258,63 @@ The legacy Round 1 Qwen-derived output was recovered and matches ZIP SHA-256
 `c4eddd1bd0162cc52c29132a9b6c51e844cada5c557d4d47b324efae317128e8`. The generator script,
 prompt, model identifier, model revision, and decoding parameters were not recovered from the
 repository, shell history, or adjacent artifact directories. It is therefore evidence of prior
-performance, not a reproducible proposal source. Round 2 Qwen probing remains blocked rather than
-substituting an uncalibrated model.
+performance, not a reproducible generator.
 
-When a complete local source is recovered, pass its Phase 1 directory or ZIP explicitly:
+A separate Round 2 artifact produced by Qwen plus another pipeline is now available as frozen
+proposal evidence:
+
+| Field | Value |
+| --- | --- |
+| local source | `/Users/macbook/Downloads/output_new_27.zip` |
+| ZIP SHA-256 | `952daebd79e5b591761d330f377cc5b00d4929bf2be3963a560803b2c17d2abf` |
+| public score | `27.3044` |
+| WER | `67.7225` |
+| J assertion | `35.1200` |
+| J candidates | `17.7129` |
+| entities | `2,707` |
+| assertions | all empty |
+| candidate rows/values | `543 / 1,655` |
+
+Compared with the strict `23.9854` baseline, this artifact improves final by `3.3190`, WER by
+`4.9838`, J assertion by `5.4435`, and J candidates by `0.4772`. It shares only 821 exact
+entity identities with that baseline and therefore represents a materially different entity
+extractor, not a metadata-only change.
+
+The artifact itself is not promoted as the repository baseline:
+
+- its JSON files are at ZIP root rather than under canonical `output/`;
+- 138 candidate occurrences are absent from the pinned TT06/full RxNorm terminology;
+- its generator model, revision, prompt, and decoding configuration remain unavailable.
+
+It can still be consumed locally as a fingerprinted proposal source because the router discards
+source metadata and validates every raw span. The isolated single-source region probe produced:
+
+| Field | Value |
+| --- | --- |
+| probe | `E_QWEN_QA_ADD` |
+| added entities | `460` |
+| Q&A / educational additions | `386 / 74` |
+| output entities | `2,497` |
+| blocked overlap / insufficient evidence | `173 / 1,312` |
+| validation issues | `0` |
+| artifact | `outputs/phase1/round2/20260726T105716Z_round2-qwen-qa-add_4aa81dd108/variants/E_QWEN_QA_ADD/output.zip` |
+| ZIP SHA-256 | `daba39ba29f282b3dbb7838e4eb2e18e276ea6f5104a7a6be88a2595689233e8` |
+
+This entity probe must be submitted alone. Promotion requires WER to decrease by at least `2.0`
+and final score not to decrease. Only then may it be combined with the independently winning
+A_NEG_HIST policy.
+
+The source is passed explicitly:
 
 ```bash
 uv run medical-kg benchmark phase1 round2 probes \
   ... \
-  --source qwen=/secure/local/qwen-round2-output.zip
+  --source qwen=/Users/macbook/Downloads/output_new_27.zip
 ```
 
 The runner fingerprints the source and records its path and SHA-256 in the run manifest. Round 2
-text must not be sent to a hosted model.
+text must not be sent to a hosted model. Re-running the Qwen generator remains blocked until its
+complete provenance is recovered.
 
 A metadata-only diagnostic probe preserves every `(text, type, position)` tuple from the rejected
 artifact and clears only `assertions` and `candidates`:
