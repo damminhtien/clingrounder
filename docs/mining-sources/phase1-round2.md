@@ -330,6 +330,29 @@ A_NEG_HIST. Candidate filtering is a blocking safety correction, not a learned m
 only values absent from pinned TT06/full RxNorm are removed. A second clean rebuild produced the
 same two ZIP hashes.
 
+### Public Result: Qwen Full Known + A_NEG_HIST
+
+The public grader scored the exact combined ZIP on 2026-07-26. Submission file SHA-256
+`a3190e9911712b9fdeb2fac82f6747097bc28b9a59165ab73da2c94dddcee8b0` matches the local artifact:
+
+| Metric | Qwen source | Full known + A_NEG_HIST | Delta |
+| --- | ---: | ---: | ---: |
+| final | `27.3044` | `28.1970` | `+0.8926` |
+| WER | `67.7225` | `67.7225` | `0.0000` |
+| J assertion | `35.1200` | `36.8242` | `+1.7042` |
+| J candidates | `17.7129` | `18.6663` | `+0.9534` |
+| records scored | `100` | `100` | `0` |
+
+The unchanged WER proves that neither metadata operation changed entity text, type, or boundary.
+The assertion gain promotes `A_NEG_HIST` on the Qwen projection. The candidate gain promotes
+dictionary-membership filtering: removing 138 values absent from the pinned TT06/full RxNorm
+terminology improved candidate score rather than merely satisfying local validation.
+
+Against the previous strict `23.9854` baseline, the new artifact gains `+4.2116` final, reduces WER
+by `4.9838`, gains `+7.1477` J assertion, and gains `+1.4306` J candidates. It is now the frozen
+Round 2 public baseline. Future probes must preserve its entity projection unless the probe targets
+WER, and must preserve both entity and assertion projections when testing candidate policies.
+
 The source is passed explicitly:
 
 ```bash
