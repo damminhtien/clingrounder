@@ -430,9 +430,22 @@ outputs/phase1/round2/
   20260726T113807Z_round2-qwen-candidate-abstention_a74bb338fd/
 ```
 
-Submit these separately. Start with `C_RX_ONLY`; promote only if J candidates gains at least `0.5`
-and final does not decrease. `C_RX_UNIQUE_ONLY` tests the stronger hypothesis that multi-code drug
-lists are penalized, rather than assuming it from local precision.
+The public grader scored `C_RX_UNIQUE_ONLY` on 2026-07-26:
+
+| Metric | Frozen baseline | `C_RX_UNIQUE_ONLY` | Delta |
+| --- | ---: | ---: | ---: |
+| final | `28.1970` | `28.5772` | `+0.3802` |
+| WER | `67.7225` | `67.7225` | `0.0000` |
+| J assertion | `36.8242` | `36.8242` | `0.0000` |
+| J candidates | `18.6663` | `19.6167` | `+0.9504` |
+
+The submitted ZIP prefix `6fbd3cbb683f...` matches the complete local SHA-256. The invariant
+metrics prove candidate-only isolation, and the candidate gain exceeds the `+0.5` promotion gate.
+`C_RX_UNIQUE_ONLY` is therefore the current best Round 2 artifact.
+
+`C_RX_ONLY` remains the next controlled submission. Its score will separate the gain from removing
+all diagnosis candidates from the additional gain or loss caused by suppressing multi-code drug
+lists. Do not add new mappings until that comparison is observed.
 
 A metadata-only diagnostic probe preserves every `(text, type, position)` tuple from the rejected
 artifact and clears only `assertions` and `candidates`:
