@@ -165,6 +165,7 @@ medical-kg benchmark phase1 submission
 medical-kg benchmark phase1 round2 audit
 medical-kg benchmark phase1 round2 probes
 medical-kg benchmark phase1 model-data build
+medical-kg benchmark phase1 model-data augment-regions
 medical-kg benchmark phase1 model-data calibrate
 medical-kg data registry validate
 medical-kg data source sync

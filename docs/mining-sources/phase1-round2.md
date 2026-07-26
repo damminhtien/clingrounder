@@ -107,6 +107,50 @@ The span JSONL SHA-256 is
 The official 19-entity BTC medication-list example is an executable convention test only:
 `included_in_training: false` and `runtime_lookup_memory: false`.
 
+### Q&A/Educational Train View
+
+The reviewed first-round span dataset contains no native Q&A/educational regions. A deterministic
+child view therefore adapts discourse structure without inventing medical labels:
+
+```text
+reviewed train chunk
+→ add Q&A or educational framing
+→ shift copied spans into child coordinates
+→ validate every raw child slice
+```
+
+Development records are copied unchanged. The builder rejects source artifact IDs containing
+`round2`, `leak`, or `quarantine`, and the build contract records
+`label_generation: copy_reviewed_parent_spans_only`.
+
+```bash
+uv run medical-kg benchmark phase1 model-data augment-regions \
+  --source-dataset outputs/mining/model-datasets/phase1-manual-five-type-v1/spans.jsonl \
+  --source-manifest outputs/mining/model-datasets/phase1-manual-five-type-v1/manifest.json \
+  --source-build-manifest outputs/mining/model-datasets/phase1-manual-five-type-v1/build_manifest.json \
+  --output-dir outputs/mining/model-datasets/phase1-manual-five-type-qa-edu-v1 \
+  --max-synthetic-fraction 0.4 \
+  --seed phase1-qa-educational-v1
+```
+
+| Measure | Value |
+| --- | ---: |
+| source train/development chunks | `81 / 20` |
+| synthetic train chunks | `54` |
+| final train/development chunks | `135 / 20` |
+| synthetic train fraction | `0.4000` |
+| final entities | `3,198` |
+| development entities | `431` |
+| `spans.jsonl` SHA-256 | `093043d9294773d4faffc890c94f346d1c70c5d95181037b6ebf45c94de0d8f4` |
+| `manifest.json` SHA-256 | `c5d713aa73997b80c3fbf330ffc3e20e180eabf6da26ee78e223d310e1e598a4` |
+| run-spec SHA-256 | `08889ebb934b1feefa4e5885545ab0b81d634d859f41ec35d3752bd0cc02eeb1` |
+
+The pinned run spec is
+`configs/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml`; its model checkpoint and XLM-R
+revision are unchanged from the base experiment. This is an untrained input artifact, not evidence
+of improved NER yet. Local inspection reports `validated_not_executed`; promotion requires
+development comparison against the base model before local Round 2 inference.
+
 XLM-R cannot express 10 of 2,112 gold boundaries as complete subword boundaries. The checked-in
 run masks the crossing tokens from loss; it never widens or rewrites those raw annotations. The
 distribution is 8 train and 2 development spans, or `0.4735%` of all labels.
@@ -366,6 +410,30 @@ The runner fingerprints the source and records its path and SHA-256 in the run m
 text must not be sent to a hosted model. Re-running the Qwen generator remains blocked until its
 complete provenance is recovered.
 
+### Candidate Abstention Probes
+
+The Qwen baseline contains 1,517 candidate values: 1,252 values on diagnosis rows and 265 values
+on medication rows. Two candidate-only probes were built from the exact public baseline SHA
+`a3190e9911712b9fdeb2fac82f6747097bc28b9a59165ab73da2c94dddcee8b0`:
+
+| Probe | Candidate rows | Values kept/removed | Rows changed | ZIP SHA-256 |
+| --- | ---: | ---: | ---: | --- |
+| `C_RX_ONLY` | `165` | `265 / 1,252` | `345` | `bf62075cdcd60f13d1e03553b91dfaea5488e69e3ae4b24fc3331e8e388498d5` |
+| `C_RX_UNIQUE_ONLY` | `115` | `115 / 1,402` | `395` | `6fbd3cbb683f601fa1fcc3304ba52886bc9068f2ea4cde7f669f59e3ee3c0f0e` |
+
+Both ZIPs have zero strict validation and isolation issues. Their entity projection remains
+`62b16643f126c0fe2136941a5a93b4299d2583b803c251e21a2f6d62328754e3`, and every assertion is
+unchanged. The reproducible run is:
+
+```text
+outputs/phase1/round2/
+  20260726T113807Z_round2-qwen-candidate-abstention_a74bb338fd/
+```
+
+Submit these separately. Start with `C_RX_ONLY`; promote only if J candidates gains at least `0.5`
+and final does not decrease. `C_RX_UNIQUE_ONLY` tests the stronger hypothesis that multi-code drug
+lists are penalized, rather than assuming it from local precision.
+
 A metadata-only diagnostic probe preserves every `(text, type, position)` tuple from the rejected
 artifact and clears only `assertions` and `candidates`:
 
@@ -393,37 +461,37 @@ The repository tracks `uv.lock`; the run spec verifies lock SHA-256
 frameworks. Prepare one local transfer archive containing only the first-round model supervision:
 
 ```bash
-tar -czf outputs/models/phase1-five-type-xlmr-training-inputs.tar.gz \
-  -C outputs/mining/model-datasets/phase1-manual-five-type-v1 \
-  spans.jsonl manifest.json split_manifest.json
-shasum -a 256 outputs/models/phase1-five-type-xlmr-training-inputs.tar.gz
+tar -czf outputs/models/phase1-five-type-xlmr-qa-edu-training-inputs.tar.gz \
+  -C outputs/mining/model-datasets/phase1-manual-five-type-qa-edu-v1 \
+  spans.jsonl manifest.json build_manifest.json
+shasum -a 256 outputs/models/phase1-five-type-xlmr-qa-edu-training-inputs.tar.gz
 ```
 
-The current transfer archive SHA-256 is
-`087f88d4886fcf8213d9044eaba38a6a9fdce5378bc95ac0a4b087a5d44cf1a7`.
-Its container timestamp may differ when rebuilt; `manifest.json` remains the authoritative
-content check for `spans.jsonl`.
+Record the container hash at transfer time. Tar metadata may differ across rebuilds;
+`manifest.json` remains the authoritative content check for `spans.jsonl`, whose pinned SHA-256 is
+`093043d9294773d4faffc890c94f346d1c70c5d95181037b6ebf45c94de0d8f4`.
 
 On an authorized Colab/Kaggle/private Linux GPU checkout:
 
 ```bash
 git status --porcelain
-mkdir -p outputs/mining/model-datasets/phase1-manual-five-type-v1
-tar -xzf /secure/phase1-five-type-xlmr-training-inputs.tar.gz \
-  -C outputs/mining/model-datasets/phase1-manual-five-type-v1
+mkdir -p outputs/mining/model-datasets/phase1-manual-five-type-qa-edu-v1
+tar -xzf /secure/phase1-five-type-xlmr-qa-edu-training-inputs.tar.gz \
+  -C outputs/mining/model-datasets/phase1-manual-five-type-qa-edu-v1
 
 uv sync --frozen --extra ml
 uv run hf download FacebookAI/xlm-roberta-base \
   --revision e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
 uv run medical-kg model inspect-token-classifier-run \
-  --config configs/models/phase1-five-type-xlmr-base-2026-07-22.yaml
+  --config configs/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
 CUDA_VISIBLE_DEVICES=0 uv run medical-kg model train-token-classifier-run \
-  --config configs/models/phase1-five-type-xlmr-base-2026-07-22.yaml
+  --config configs/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
 ```
 
 The training command uses batch 4, gradient accumulation 4, three epochs, BF16, seed 42, and full
 determinism. It records dataset, checkpoint, dependency lock, run-spec, source-control, GPU, model
-fingerprint, and metrics in `outputs/models/phase1-five-type-xlmr-base-2026-07-22/run_manifest.json`.
+fingerprint, and metrics in
+`outputs/models/phase1-five-type-xlmr-qa-edu-2026-07-26/run_manifest.json`.
 
 After copying `final-model/` and `run_manifest.json` back to the same repository-relative output
 path on the Mac, rerun the inspect command. It verifies the returned model fingerprint, run-spec
@@ -435,8 +503,8 @@ Run verified development inference and per-type calibration as one bounded comma
 
 ```bash
 uv run medical-kg benchmark phase1 model-data calibrate \
-  --pipeline-config configs/pipeline/phase1-five-type-model-only.yaml \
-  --output-dir outputs/models/phase1-five-type-calibration
+  --pipeline-config configs/pipeline/phase1-five-type-qa-edu-model-only.yaml \
+  --output-dir outputs/models/phase1-five-type-qa-edu-calibration
 ```
 
 The pipeline profile points to the pinned run spec and returned `final-model/`. The command rejects

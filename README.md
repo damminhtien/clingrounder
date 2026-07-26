@@ -420,11 +420,21 @@ uv run medical-kg benchmark phase1 model-data build \
 
 The command excludes the 24-document holdout and all Round 2 text by contract.
 
+Build the bounded Q&A/educational training view from that reviewed dataset:
+
+```bash
+uv run medical-kg benchmark phase1 model-data augment-regions \
+  --output-dir outputs/mining/model-datasets/phase1-manual-five-type-qa-edu-v1
+```
+
+This adds discourse framing only to train records, caps synthetic records at 40%, leaves
+development unchanged, and rejects Round 2/leaked/quarantined sources.
+
 Inspect the pinned five-type XLM-R run before moving it to an authorized Linux/BF16 GPU:
 
 ```bash
 uv run medical-kg model inspect-token-classifier-run \
-  --config configs/models/phase1-five-type-xlmr-base-2026-07-22.yaml
+  --config configs/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
 ```
 
 After the verified `final-model/` and `run_manifest.json` return to this checkout, run development
@@ -438,6 +448,22 @@ uv run medical-kg benchmark phase1 model-data calibrate \
 The command rejects CPU-smoke/stale checkpoints, reads only the 16-document development split, and
 writes a hashed prediction, calibration, and calibrated-pipeline bundle. It never opens holdout or
 Round 2 labels.
+
+Build isolated RxNorm abstention probes on the frozen Round 2 Qwen baseline:
+
+```bash
+uv run medical-kg benchmark phase1 round2 probes \
+  --documents outputs/mining/phase1-round2-2026-07-22/documents.jsonl \
+  --source-archive-sha256 989d82404a9c1f3739e15d68a1e69d0f1f90d35c93c04ab0988e071fc1525545 \
+  --base outputs/phase1/round2/20260726T110342Z_round2-qwen-full-known_b6affead3c/variants/E_QWEN_FULL_KNOWN_A_NEG_HIST/output.zip \
+  --expected-base-sha256 a3190e9911712b9fdeb2fac82f6747097bc28b9a59165ab73da2c94dddcee8b0 \
+  --candidate-probe rx_only \
+  --candidate-probe rx_unique_only \
+  --run-label round2-qwen-candidate-abstention
+```
+
+These variants preserve every entity and assertion. `C_RX_ONLY` removes diagnosis codes while
+retaining existing RxNorm lists; `C_RX_UNIQUE_ONLY` additionally clears ambiguous drug lists.
 
 The complete source policy, artifact hashes, GPU handoff, and Round 2 privacy boundary are recorded
 in [docs/mining-sources/phase1-round2.md](docs/mining-sources/phase1-round2.md).
