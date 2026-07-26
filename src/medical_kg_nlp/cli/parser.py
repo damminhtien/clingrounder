@@ -423,6 +423,46 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         help="Drop chunks without an entity after deterministic chunking.",
     )
 
+    model_data_augment = model_data_operations.add_parser(
+        "augment-regions",
+        help="Add bounded train-only Q&A and educational discourse views.",
+    )
+    model_data_augment.set_defaults(
+        handler="benchmark_phase1_model_data_augment_regions"
+    )
+    model_data_augment.add_argument(
+        "--source-dataset",
+        default=(
+            "outputs/mining/model-datasets/"
+            "phase1-manual-five-type-v1/spans.jsonl"
+        ),
+    )
+    model_data_augment.add_argument(
+        "--source-manifest",
+        default=(
+            "outputs/mining/model-datasets/"
+            "phase1-manual-five-type-v1/manifest.json"
+        ),
+    )
+    model_data_augment.add_argument(
+        "--source-build-manifest",
+        default=(
+            "outputs/mining/model-datasets/"
+            "phase1-manual-five-type-v1/build_manifest.json"
+        ),
+    )
+    model_data_augment.add_argument("--output-dir", required=True)
+    model_data_augment.add_argument(
+        "--max-synthetic-fraction",
+        type=float,
+        default=0.4,
+        help="Maximum synthetic share after augmentation; hard-capped at 0.4.",
+    )
+    model_data_augment.add_argument(
+        "--seed",
+        default="phase1-qa-educational-v1",
+    )
+
     model_data_calibrate = model_data_operations.add_parser(
         "calibrate",
         help="Verify a full model and select per-type thresholds on development.",

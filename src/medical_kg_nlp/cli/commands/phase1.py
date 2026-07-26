@@ -14,6 +14,10 @@ from medical_kg_nlp.benchmarks.phase1.model_dataset import (
 from medical_kg_nlp.benchmarks.phase1.model_runtime import (
     run_phase1_model_calibration,
 )
+from medical_kg_nlp.benchmarks.phase1.model_region_augmentation import (
+    Phase1RegionAugmentationConfig,
+    build_phase1_region_augmented_dataset,
+)
 from medical_kg_nlp.benchmarks.phase1.model_selection import (
     Phase1ModelSelectionConfig,
     compare_phase1_ner_variants,
@@ -40,6 +44,7 @@ from medical_kg_nlp.utils.run_output import create_hashed_run_dir, path_in_run
 
 __all__ = [
     "audit_phase1_round2",
+    "augment_phase1_model_regions",
     "build_phase1_model_data",
     "calibrate_phase1_model_data",
     "compare_phase1_model_variants",
@@ -189,6 +194,23 @@ def build_phase1_model_data(args: argparse.Namespace) -> int:
             max_characters=args.max_characters,
             include_empty_chunks=not args.exclude_empty_chunks,
             empty_chunk_rate=args.empty_chunk_rate,
+        ),
+    )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def augment_phase1_model_regions(args: argparse.Namespace) -> int:
+    """Build train-only Q&A/educational views from reviewed span records."""
+
+    report = build_phase1_region_augmented_dataset(
+        Path(args.output_dir),
+        config=Phase1RegionAugmentationConfig(
+            source_dataset_path=Path(args.source_dataset),
+            source_manifest_path=Path(args.source_manifest),
+            source_build_manifest_path=Path(args.source_build_manifest),
+            max_synthetic_train_fraction=args.max_synthetic_fraction,
+            seed=args.seed,
         ),
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))

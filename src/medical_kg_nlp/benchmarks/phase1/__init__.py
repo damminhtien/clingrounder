@@ -31,6 +31,11 @@ from medical_kg_nlp.benchmarks.phase1.model_dataset import (
 from medical_kg_nlp.benchmarks.phase1.model_runtime import (
     run_phase1_model_calibration,
 )
+from medical_kg_nlp.benchmarks.phase1.model_region_augmentation import (
+    Phase1RegionAugmentationConfig,
+    RegionAugmentationKind,
+    build_phase1_region_augmented_dataset,
+)
 from medical_kg_nlp.benchmarks.phase1.model_selection import (
     PHASE1_NER_VARIANTS,
     Phase1HoldoutGate,
@@ -67,6 +72,7 @@ __all__ = [
     "CandidateProbePolicy",
     "Phase1EvaluationAdapter",
     "Phase1Record",
+    "Phase1RegionAugmentationConfig",
     "Phase1ManualGoldMiningCorpus",
     "Phase1ModelDatasetConfig",
     "Phase1HoldoutGate",
@@ -78,10 +84,12 @@ __all__ = [
     "PHASE1_FIVE_TYPE_LABELS",
     "PHASE1_NER_VARIANTS",
     "ROUND2_NOVELTY_SOURCE_IDS",
+    "RegionAugmentationKind",
     "build_phase1_round2_audit",
     "apply_round2_candidate_policy",
     "build_phase1_reviewed_recognition_policy",
     "build_phase1_report",
+    "build_phase1_region_augmented_dataset",
     "build_phase1_model_dataset",
     "build_phase1_model_splits",
     "calibrate_phase1_model_thresholds",

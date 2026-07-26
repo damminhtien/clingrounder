@@ -54,6 +54,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.phase1",
         "build_phase1_model_data",
     ),
+    "benchmark_phase1_model_data_augment_regions": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "augment_phase1_model_regions",
+    ),
     "benchmark_phase1_model_data_calibrate": (
         "medical_kg_nlp.cli.commands.phase1",
         "calibrate_phase1_model_data",
