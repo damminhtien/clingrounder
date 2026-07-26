@@ -189,6 +189,76 @@ deficiency concept while emitting repeated secondary diagnoses. This is concrete
 recognition/domain coverage failure in the mixed education, question-and-answer, and clinical
 distribution. It is not evidence that adding more candidates to the same spans will repair WER.
 
+## Current Frozen Baseline And Breakthrough Probe
+
+The best scored Round 2 artifact as of 2026-07-25 is now the immutable input to isolated probes:
+
+| Field | Value |
+| --- | --- |
+| public score | `23.9854` |
+| WER | `72.7063` |
+| J assertion | `29.6765` |
+| J candidates | `17.2357` |
+| entities | `2,037` |
+| non-empty candidate rows/values | `177 / 177` |
+| artifact | `outputs/phase1/round2/20260725T050933Z_round2-reviewed-recognition-rxnorm-only_ee4c7a81a0/output.zip` |
+| ZIP SHA-256 | `f0bad7ce6493fa83bf70ff7ac70446c66fb328bb50730b613a6ea38c59b6d99e` |
+
+The first probe applies only the previously calibrated selective negation and history policy:
+
+| Field | Value |
+| --- | --- |
+| probe | `A_NEG_HIST` |
+| artifact | `outputs/phase1/round2/20260726T105158Z_round2-a-neg-hist_e9df05165b/variants/A_NEG_HIST/output.zip` |
+| ZIP SHA-256 | `dd75e6acb56cd2968f6614789b2068f6cf0ccaf9d26721e716fd1b4b9781dc8f` |
+| entity additions/removals | `0 / 0` |
+| assertion rows changed | `279` |
+| selective history/negation emissions | `227 / 88` |
+| candidate rows/values before and after | `177 / 177` |
+| strict validation issues | `0` |
+
+The entity projection SHA-256 is
+`708953f79e1e74b6de1c2495624a955d56ffe0fd88c4270fe4a2895a7b96aea5` for both artifacts.
+The run manifest records commit `5ef6739f853f2a18a6274b29884bcc6a134d132f` with
+`git_dirty: false`. Promotion still requires a public J assertion gain of at least `1.0` and no
+final-score regression.
+
+The probe runner also implements the model-source routing contract:
+
+```text
+exact raw quote projection
+→ keep every raw occurrence
+→ region classification
+→ single-source Q&A/educational additions
+→ two-source exact agreement in clinical regions
+→ non-overlap resolution
+→ strict Phase 1 validation
+```
+
+New model entities always start with empty assertions and candidates. A proposal source never
+supplies trusted offsets: exact quoted text is projected back to the immutable local document, and
+every emitted span must satisfy `source_text[start:end] == text`.
+
+### Qwen Reproduction Status
+
+The legacy Round 1 Qwen-derived output was recovered and matches ZIP SHA-256
+`c4eddd1bd0162cc52c29132a9b6c51e844cada5c557d4d47b324efae317128e8`. The generator script,
+prompt, model identifier, model revision, and decoding parameters were not recovered from the
+repository, shell history, or adjacent artifact directories. It is therefore evidence of prior
+performance, not a reproducible proposal source. Round 2 Qwen probing remains blocked rather than
+substituting an uncalibrated model.
+
+When a complete local source is recovered, pass its Phase 1 directory or ZIP explicitly:
+
+```bash
+uv run medical-kg benchmark phase1 round2 probes \
+  ... \
+  --source qwen=/secure/local/qwen-round2-output.zip
+```
+
+The runner fingerprints the source and records its path and SHA-256 in the run manifest. Round 2
+text must not be sent to a hosted model.
+
 A metadata-only diagnostic probe preserves every `(text, type, position)` tuple from the rejected
 artifact and clears only `assertions` and `candidates`:
 

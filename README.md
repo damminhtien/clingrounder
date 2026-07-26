@@ -392,6 +392,23 @@ uv run medical-kg benchmark phase1 round2 audit \
   --output-dir outputs/mining/phase1-round2-2026-07-22/audit
 ```
 
+Build isolated probes around a frozen, already scored Round 2 artifact:
+
+```bash
+uv run medical-kg benchmark phase1 round2 probes \
+  --documents outputs/mining/phase1-round2-2026-07-22/documents.jsonl \
+  --source-archive-sha256 989d82404a9c1f3739e15d68a1e69d0f1f90d35c93c04ab0988e071fc1525545 \
+  --base outputs/phase1/round2/20260725T050933Z_round2-reviewed-recognition-rxnorm-only_ee4c7a81a0/output.zip \
+  --expected-base-sha256 f0bad7ce6493fa83bf70ff7ac70446c66fb328bb50730b613a6ea38c59b6d99e \
+  --run-label round2-a-neg-hist
+```
+
+The command always emits an `A_NEG_HIST` ZIP and proves that entity identity and candidates remain
+unchanged. Calibrated local model artifacts can be added with repeatable
+`--source qwen=...` or `--source xlmr=...` arguments. A single source may add only exact,
+non-overlapping proposals in question/answer or educational regions; clinical prose requires exact
+agreement from at least two independent sources.
+
 Build the five-type model dataset from only the frozen 76-document training split:
 
 ```bash
