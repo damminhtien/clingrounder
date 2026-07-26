@@ -407,7 +407,9 @@ The command always emits an `A_NEG_HIST` ZIP and proves that entity identity and
 unchanged. Calibrated local model artifacts can be added with repeatable
 `--source qwen=...` or `--source xlmr=...` arguments. A single source may add only exact,
 non-overlapping proposals in question/answer or educational regions; clinical prose requires exact
-agreement from at least two independent sources.
+agreement from at least two independent sources. For an already scored complete source projection,
+`--build-full-source qwen` additionally creates a canonical ZIP, removes codes absent from the
+pinned terminology, and emits its isolated A_NEG_HIST combination.
 
 Build the five-type model dataset from only the frozen 76-document training split:
 

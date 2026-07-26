@@ -304,12 +304,39 @@ This entity probe must be submitted alone. Promotion requires WER to decrease by
 and final score not to decrease. Only then may it be combined with the independently winning
 A_NEG_HIST policy.
 
+Because the full Qwen projection has already won publicly, the runner can also canonicalize that
+complete projection. This path preserves the exact entity multiset, including eight duplicate
+identity rows, while enforcing the repository's dictionary invariant:
+
+| Field | Full known source | Full known + A_NEG_HIST |
+| --- | ---: | ---: |
+| entities | `2,707` | `2,707` |
+| candidate rows | `510` | `510` |
+| candidate values retained/removed | `1,517 / 138` | `1,517 / 138` |
+| assertion rows | `0` | `253` |
+| history/negation emissions | `0 / 0` | `191 / 62` |
+| strict validation issues | `0` | `0` |
+| ZIP SHA-256 | `ca6794562c3653d63b955d2be963a2752d7534a6ef6daee66c2363f7deb08ab4` | `a3190e9911712b9fdeb2fac82f6747097bc28b9a59165ab73da2c94dddcee8b0` |
+
+The combined submission artifact is:
+
+```text
+outputs/phase1/round2/20260726T110342Z_round2-qwen-full-known_b6affead3c/
+  variants/E_QWEN_FULL_KNOWN_A_NEG_HIST/output.zip
+```
+
+It combines two independently public-winning changes: the full Qwen entity projection and
+A_NEG_HIST. Candidate filtering is a blocking safety correction, not a learned mapping change:
+only values absent from pinned TT06/full RxNorm are removed. A second clean rebuild produced the
+same two ZIP hashes.
+
 The source is passed explicitly:
 
 ```bash
 uv run medical-kg benchmark phase1 round2 probes \
   ... \
-  --source qwen=/Users/macbook/Downloads/output_new_27.zip
+  --source qwen=/Users/macbook/Downloads/output_new_27.zip \
+  --build-full-source qwen
 ```
 
 The runner fingerprints the source and records its path and SHA-256 in the run manifest. Round 2
