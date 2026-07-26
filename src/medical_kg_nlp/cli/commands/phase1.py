@@ -23,6 +23,10 @@ from medical_kg_nlp.benchmarks.phase1.round2 import (
     build_phase1_round2_audit,
     write_phase1_round2_audit,
 )
+from medical_kg_nlp.benchmarks.phase1.round2_probes import (
+    Phase1Round2ProbeConfig,
+    run_phase1_round2_probes,
+)
 from medical_kg_nlp.benchmarks.phase1.runner import (
     BenchmarkExportPolicy,
     Phase1BenchmarkConfig,
@@ -38,6 +42,7 @@ __all__ = [
     "build_phase1_model_data",
     "calibrate_phase1_model_data",
     "compare_phase1_model_variants",
+    "run_phase1_round2_probe_suite",
     "run_phase1_submission",
 ]
 
@@ -138,6 +143,31 @@ def audit_phase1_round2(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_phase1_round2_probe_suite(args: argparse.Namespace) -> int:
+    """Build strict probe variants around one frozen Round 2 artifact."""
+
+    report = run_phase1_round2_probes(
+        Phase1Round2ProbeConfig(
+            documents_path=Path(args.documents),
+            expected_source_archive_sha256=args.source_archive_sha256,
+            base=Path(args.base),
+            expected_base_sha256=args.expected_base_sha256,
+            dictionary_paths=(
+                Path(args.dictionary),
+                *(Path(path) for path in args.validation_dictionaries),
+            ),
+            proposal_sources=tuple(_named_paths(args.source)),
+            output_root=Path(args.output_root),
+            run_label=args.run_label,
+            expected_count=args.expected_count,
+            minimum_agreement_sources=args.minimum_agreement_sources,
+            expand_repeated_mentions=not args.no_expand_repeated_mentions,
+        )
+    )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
 def build_phase1_model_data(args: argparse.Namespace) -> int:
     """Build the five-type NER view from the frozen manual-gold train split."""
 
@@ -210,3 +240,13 @@ def _model_selection_config(args: argparse.Namespace) -> Phase1ModelSelectionCon
             sorted(set(float(value) for value in thresholds))
         )
     )
+
+
+def _named_paths(values: list[str]) -> list[tuple[str, Path]]:
+    paths: list[tuple[str, Path]] = []
+    for raw in values:
+        name, separator, value = str(raw).partition("=")
+        if not separator or not name or not value:
+            raise ValueError("--source must use NAME=DIR_OR_ZIP")
+        paths.append((name, Path(value)))
+    return paths

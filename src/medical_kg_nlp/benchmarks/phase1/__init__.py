@@ -49,6 +49,15 @@ from medical_kg_nlp.benchmarks.phase1.round2 import (
     load_phase1_round2_documents,
     write_phase1_round2_audit,
 )
+from medical_kg_nlp.benchmarks.phase1.round2_probes import (
+    Phase1Round2ProbeConfig,
+    Phase1TextRegion,
+    RegionProposalPolicy,
+    align_quoted_phase1_proposals,
+    merge_region_routed_proposals,
+    run_phase1_round2_probes,
+    segment_phase1_text_regions,
+)
 
 __all__ = [
     "Phase1SelectiveExportConfig",
@@ -59,6 +68,9 @@ __all__ = [
     "Phase1HoldoutGate",
     "Phase1ModelSelectionConfig",
     "Phase1RecognitionMiningConfig",
+    "Phase1Round2ProbeConfig",
+    "Phase1TextRegion",
+    "RegionProposalPolicy",
     "PHASE1_FIVE_TYPE_LABELS",
     "PHASE1_NER_VARIANTS",
     "ROUND2_NOVELTY_SOURCE_IDS",
@@ -72,6 +84,7 @@ __all__ = [
     "infer_phase1_development_predictions",
     "load_phase1_text_documents",
     "load_phase1_round2_documents",
+    "merge_region_routed_proposals",
     "prediction_to_phase1_entities",
     "score_phase1_documents",
     "validate_phase1_entities",
@@ -82,6 +95,9 @@ __all__ = [
     "zip_phase1_output_dir",
     "load_phase1_manual_gold_mining_corpus",
     "run_phase1_recognition_mining",
+    "run_phase1_round2_probes",
     "run_phase1_model_calibration",
+    "segment_phase1_text_regions",
+    "align_quoted_phase1_proposals",
     "write_phase1_round2_audit",
 ]

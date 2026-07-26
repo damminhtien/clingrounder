@@ -327,6 +327,45 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     )
     audit.add_argument("--output-dir", required=True)
 
+    probes = round2_operations.add_parser(
+        "probes",
+        help="Build isolated assertion and region-routed entity probe ZIPs.",
+    )
+    probes.set_defaults(handler="benchmark_phase1_round2_probes")
+    probes.add_argument("--documents", required=True)
+    probes.add_argument("--source-archive-sha256", required=True)
+    probes.add_argument("--base", required=True)
+    probes.add_argument("--expected-base-sha256", required=True)
+    probes.add_argument(
+        "--source",
+        action="append",
+        default=[],
+        help="Calibrated proposal artifact as NAME=DIR_OR_ZIP; repeat for Qwen/XLM-R.",
+    )
+    probes.add_argument(
+        "--dictionary",
+        default="data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+    )
+    probes.add_argument(
+        "--validation-dictionary",
+        dest="validation_dictionaries",
+        action="append",
+        default=[
+            "data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl",
+            "data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl",
+        ],
+        help="Canonical code source used by strict probe validation; repeat as needed.",
+    )
+    probes.add_argument("--output-root", default="outputs/phase1/round2")
+    probes.add_argument("--run-label", default="round2-breakthrough-probes")
+    probes.add_argument("--expected-count", type=int, default=100)
+    probes.add_argument("--minimum-agreement-sources", type=int, default=2)
+    probes.add_argument(
+        "--no-expand-repeated-mentions",
+        action="store_true",
+        help="Do not recover repeated exact mentions in proposal sources.",
+    )
+
     model_data = operations.add_parser(
         "model-data",
         help="Build leakage-safe Phase 1 model supervision.",
