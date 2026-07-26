@@ -73,6 +73,23 @@ resources:
       max_compression_ratio: "200"
     allowed_uses: [local_competition_inference, local_distribution_audit]
     notes: Raw Round 2 input is never a training, pseudo-label, or runtime-memory source.
+  - id: phase1_part2_leaked_bundle
+    name: Unverified Phase 1 part 2 annotation bundle
+    category: unauthorized_competition_annotation_bundle
+    version: sha256-46da2a7718078b95024e97feb66d49e44917d7b00b3981bad3eaaae13adc418e
+    version_policy: pinned
+    access_class: quarantine
+    license_id: organizer_authorization_unverified
+    license_url: local-source://phase1-part2-leaked-bundle/authorization
+    redistribution: unknown
+    hosted_processing_allowed: false
+    retention: local_only
+    connector: local_archive
+    parser: quarantine_audit_only
+    allowed_uses: [license_review, aggregate_quarantine_audit]
+    notes: >-
+      The caller described this bundle as leaked. Labels, spans, aliases, thresholds, and
+      document-specific output are prohibited until the organizer supplies explicit authorization.
   - id: pmc_oa
     name: PubMed Central Open Access Subset
     category: case_reports_and_literature

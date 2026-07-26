@@ -41,6 +41,15 @@ sources:
       - configs/mining/phase1-round2-2026-07-22.yaml
     artifact_roots:
       - outputs/mining/phase1-round2-2026-07-22
+  - source_id: phase1_part2_leaked_bundle
+    state: quarantined
+    promotion_boundary: none
+    dossier: docs/mining-sources/phase1-part2-quarantine.md
+    verified_on: 2026-07-26
+    summary: >-
+      The checksum-pinned local bundle was audited only at aggregate level. Its labels cannot enter
+      training, runtime recognition, linking, calibration, or competition output without explicit
+      organizer authorization.
   - source_id: pmc_oa
     state: proposed
     promotion_boundary: review_only

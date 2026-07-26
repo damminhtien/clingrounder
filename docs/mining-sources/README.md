@@ -15,6 +15,7 @@ knowledge may be promoted.
 | --- | --- | --- | --- |
 | VietBioNER | curated | training only | [VietBioNER](vietbioner.md) |
 | Phase 1 Round 2 input | acquired | local inference/audit only | [Phase 1 Round 2](phase1-round2.md) |
+| Phase 1 part 2 leaked bundle | quarantined | none | [Quarantine audit](phase1-part2-quarantine.md) |
 | CodiEsp | promoted | runtime opt-in | [CodiEsp](codiesp.md) |
 | DailyMed SPL | promoted | runtime opt-in | [DailyMed](dailymed.md) |
 | DailyMed-RxNorm | promoted | runtime opt-in | [DailyMed](dailymed.md) |

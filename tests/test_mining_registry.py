@@ -38,6 +38,11 @@ def test_checked_in_mining_registry_is_strict_and_unique() -> None:
         "local_competition_inference",
         "local_distribution_audit",
     )
+    leaked = registry.by_id("phase1_part2_leaked_bundle")
+    assert leaked.access_class is AccessClass.QUARANTINE
+    assert leaked.redistribution is RedistributionPolicy.UNKNOWN
+    assert leaked.hosted_processing_allowed is False
+    assert leaked.allowed_uses == ("license_review", "aggregate_quarantine_audit")
 
 
 def test_registry_rejects_hosted_processing_for_dua_source() -> None:
