@@ -36,6 +36,7 @@ from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.mining.io import load_documents, write_json, write_jsonl
 from medical_kg_nlp.ontology.phase1 import (
     PHASE1_ALLOWED_TYPES,
+    PHASE1_CODE_SYSTEM_BY_TYPE,
     PHASE1_TYPE_PRIORITY,
 )
 from medical_kg_nlp.schema.document import ClinicalDocument
@@ -47,6 +48,7 @@ __all__ = [
     "Phase1TextRegion",
     "RegionProposalPolicy",
     "align_quoted_phase1_proposals",
+    "canonicalize_full_phase1_source",
     "merge_region_routed_proposals",
     "run_phase1_round2_probes",
     "segment_phase1_text_regions",
@@ -129,6 +131,7 @@ class Phase1Round2ProbeConfig:
     expected_count: int = 100
     minimum_agreement_sources: int = 2
     expand_repeated_mentions: bool = True
+    full_source_names: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not re.fullmatch(r"[0-9a-f]{64}", self.expected_source_archive_sha256):
@@ -149,6 +152,14 @@ class Phase1Round2ProbeConfig:
         invalid_names = [name for name in names if _SOURCE_NAME_RE.fullmatch(name) is None]
         if invalid_names:
             raise ValueError(f"Invalid proposal source names: {invalid_names}")
+        if len(self.full_source_names) != len(set(self.full_source_names)):
+            raise ValueError("Full-source names must be unique")
+        unknown_full_sources = set(self.full_source_names) - set(names)
+        if unknown_full_sources:
+            raise ValueError(
+                "Full-source variants require matching --source inputs: "
+                f"{sorted(unknown_full_sources)}"
+            )
 
 
 def segment_phase1_text_regions(source_text: str) -> tuple[Phase1TextRegion, ...]:
@@ -369,6 +380,96 @@ def merge_region_routed_proposals(
     return output, decisions, dict(sorted(counters.items()))
 
 
+def canonicalize_full_phase1_source(
+    rows_by_doc: Mapping[str, list[dict[str, Any]]],
+    source_text_by_doc: Mapping[str, str],
+    dictionary: DictionaryStore,
+) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]], dict[str, int]]:
+    """Preserve a source entity projection while removing non-canonical candidates.
+
+    This adapter exists for externally produced, already scored artifacts. It does not infer new
+    codes or repair spans. Candidate values survive only when the pinned terminology contains the
+    expected Phase 1 code system for that entity type.
+    """
+
+    if set(rows_by_doc) != set(source_text_by_doc):
+        raise ValueError("Full proposal source must contain every Round 2 document exactly once")
+    output: dict[str, list[dict[str, Any]]] = {}
+    decisions: list[dict[str, Any]] = []
+    counters: Counter[str] = Counter()
+    known_codes = set(dictionary.by_code_system_code)
+    seen_identities: Counter[tuple[str, str, str, int, int]] = Counter()
+
+    for document_id in sorted(rows_by_doc, key=_document_sort_key):
+        source_text = source_text_by_doc[document_id]
+        canonical_rows: list[dict[str, Any]] = []
+        for row_index, row in enumerate(rows_by_doc[document_id]):
+            _validate_entity_identity(row, source_text, document_id=document_id)
+            entity_type = str(row["type"])
+            raw_assertions = row.get("assertions", [])
+            raw_candidates = row.get("candidates", [])
+            if not isinstance(raw_assertions, list) or not all(
+                isinstance(value, str) for value in raw_assertions
+            ):
+                raise ValueError(
+                    f"{document_id}:{row_index}: assertions must be a string list"
+                )
+            if not isinstance(raw_candidates, list) or not all(
+                isinstance(value, str) for value in raw_candidates
+            ):
+                raise ValueError(
+                    f"{document_id}:{row_index}: candidates must be a string list"
+                )
+
+            expected_system = PHASE1_CODE_SYSTEM_BY_TYPE.get(entity_type)
+            retained: list[str] = []
+            for candidate in raw_candidates:
+                if expected_system is not None and (
+                    expected_system,
+                    candidate,
+                ) in known_codes:
+                    retained.append(candidate)
+                    counters["candidate.retained"] += 1
+                    continue
+                decisions.append(
+                    {
+                        "document_id": document_id,
+                        "stage": "source_candidate_safety",
+                        "action": "remove",
+                        "reason": (
+                            "candidate_not_allowed_for_entity_type"
+                            if expected_system is None
+                            else "candidate_absent_from_pinned_terminology"
+                        ),
+                        "candidate": candidate,
+                        "entity": _identity_payload(row),
+                    }
+                )
+                counters["candidate.removed"] += 1
+
+            start, end = _position(row)
+            canonical = {
+                "text": str(row["text"]),
+                "type": entity_type,
+                "assertions": list(raw_assertions),
+                "candidates": retained,
+                "position": [start, end],
+            }
+            canonical_rows.append(canonical)
+            seen_identities[(document_id, *_identity_key(canonical))] += 1
+        output[document_id] = sorted(canonical_rows, key=_row_sort_key)
+
+    counters["duplicate_identity_rows"] = sum(
+        count - 1 for count in seen_identities.values() if count > 1
+    )
+    counters["decision_total"] = len(decisions)
+    counters["output_entity_total"] = sum(len(rows) for rows in output.values())
+    counters["output_candidate_rows"] = sum(
+        bool(row["candidates"]) for rows in output.values() for row in rows
+    )
+    return output, decisions, dict(sorted(counters.items()))
+
+
 def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
     """Build strict, hashed A_NEG_HIST and region-routed entity probe artifacts."""
 
@@ -396,11 +497,13 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
     )
 
     loaded_sources: dict[str, dict[str, list[dict[str, Any]]]] = {}
+    routed_sources: dict[str, dict[str, list[dict[str, Any]]]] = {}
     for name, path in config.proposal_sources:
         rows = load_phase1_output_source(path)
+        loaded_sources[name] = rows
         if config.expand_repeated_mentions:
             rows = expand_repeated_phase1_mentions(rows, source_text_by_doc)
-        loaded_sources[name] = rows
+        routed_sources[name] = rows
 
     run_output = create_hashed_run_dir(
         config.output_root,
@@ -418,6 +521,7 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
             "minimum_agreement_sources": config.minimum_agreement_sources,
             "expand_repeated_mentions": config.expand_repeated_mentions,
             "proposal_sources": [name for name, _ in config.proposal_sources],
+            "full_source_names": list(config.full_source_names),
         },
     )
 
@@ -442,7 +546,7 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
         )
     )
 
-    for name, rows_by_doc in loaded_sources.items():
+    for name, rows_by_doc in routed_sources.items():
         routed_rows, decisions, counters = merge_region_routed_proposals(
             base,
             {name: rows_by_doc},
@@ -464,11 +568,54 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
                 dictionary=dictionary,
             )
         )
+        if name in config.full_source_names:
+            canonical_rows, source_decisions, source_counters = (
+                canonicalize_full_phase1_source(
+                    loaded_sources[name],
+                    source_text_by_doc,
+                    dictionary,
+                )
+            )
+            source_variant_name = f"E_{name.upper()}_FULL_KNOWN"
+            variants.append(
+                _materialize_variant(
+                    source_variant_name,
+                    module="source",
+                    rows=canonical_rows,
+                    base=base,
+                    decisions=source_decisions,
+                    counters=source_counters,
+                    run_dir=run_output.run_dir,
+                    documents=documents,
+                    dictionary=dictionary,
+                )
+            )
+            combined_rows, combined_decisions, combined_counters = (
+                apply_selective_assertions(
+                    canonical_rows,
+                    source_text_by_doc,
+                    regimes=("negation", "history"),
+                    preserve_existing=False,
+                )
+            )
+            variants.append(
+                _materialize_variant(
+                    f"{source_variant_name}_A_NEG_HIST",
+                    module="assertion",
+                    rows=combined_rows,
+                    base=canonical_rows,
+                    decisions=combined_decisions,
+                    counters=combined_counters,
+                    run_dir=run_output.run_dir,
+                    documents=documents,
+                    dictionary=dictionary,
+                )
+            )
 
-    if len(loaded_sources) >= config.minimum_agreement_sources:
+    if len(routed_sources) >= config.minimum_agreement_sources:
         consensus_rows, decisions, counters = merge_region_routed_proposals(
             base,
-            loaded_sources,
+            routed_sources,
             source_text_by_doc,
             policy=RegionProposalPolicy(
                 minimum_agreement_sources=config.minimum_agreement_sources,
@@ -533,7 +680,7 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
 def _materialize_variant(
     name: str,
     *,
-    module: Literal["assertion", "entity"],
+    module: Literal["assertion", "entity", "source"],
     rows: Mapping[str, list[dict[str, Any]]],
     base: Mapping[str, list[dict[str, Any]]],
     decisions: list[dict[str, Any]],
@@ -558,7 +705,11 @@ def _materialize_variant(
         raise ValueError(
             f"{name} ZIP validation failed: {[issue.to_json() for issue in zip_issues[:5]]}"
         )
-    isolation_issues = validate_probe_isolation(base, rows, module=module)
+    isolation_issues = (
+        []
+        if module == "source"
+        else validate_probe_isolation(base, rows, module=module)
+    )
     if isolation_issues:
         raise ValueError(f"{name} isolation failed: {isolation_issues[:5]}")
     write_jsonl(variant_dir / "decisions.jsonl", decisions)

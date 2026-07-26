@@ -162,6 +162,7 @@ def run_phase1_round2_probe_suite(args: argparse.Namespace) -> int:
             expected_count=args.expected_count,
             minimum_agreement_sources=args.minimum_agreement_sources,
             expand_repeated_mentions=not args.no_expand_repeated_mentions,
+            full_source_names=tuple(args.build_full_source),
         )
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))

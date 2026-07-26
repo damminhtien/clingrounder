@@ -13,17 +13,21 @@ from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import (
 from medical_kg_nlp.benchmarks.phase1.round2_probes import (
     Phase1Round2ProbeConfig,
     align_quoted_phase1_proposals,
+    canonicalize_full_phase1_source,
     merge_region_routed_proposals,
     run_phase1_round2_probes,
     segment_phase1_text_regions,
 )
 from medical_kg_nlp.cli.parser import build_parser
+from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.mining.io import write_jsonl
 from medical_kg_nlp.mining.records import (
     AccessClass,
     MinedDocument,
     RedistributionPolicy,
 )
+from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.utils.hashing import sha256_file
 
 
@@ -120,6 +124,43 @@ def test_region_router_allows_qa_recall_but_requires_consensus_in_clinical_text(
     assert counters["proposal.blocked_overlap"] == 1
 
 
+def test_full_source_canonicalization_filters_candidates_by_type_and_dictionary() -> None:
+    text = "Tăng huyết áp và ho"
+    diagnosis = _row(text, "Tăng huyết áp", "CHẨN_ĐOÁN")
+    diagnosis["assertions"] = ["isHistorical"]
+    diagnosis["candidates"] = ["I10", "UNKNOWN"]
+    symptom = _row(text, "ho", "TRIỆU_CHỨNG")
+    symptom["candidates"] = ["I10"]
+    dictionary = DictionaryStore(
+        [
+            ConceptEntry(
+                concept_id="icd10:I10",
+                code="I10",
+                code_system=CodeSystem.ICD10,
+                canonical_name="Tăng huyết áp",
+                semantic_type=EntityType.DISEASE,
+            )
+        ]
+    )
+
+    output, decisions, counters = canonicalize_full_phase1_source(
+        {"1": [diagnosis, symptom]},
+        {"1": text},
+        dictionary,
+    )
+
+    assert output["1"][0]["assertions"] == ["isHistorical"]
+    assert output["1"][0]["candidates"] == ["I10"]
+    assert output["1"][1]["candidates"] == []
+    assert [decision["reason"] for decision in decisions] == [
+        "candidate_absent_from_pinned_terminology",
+        "candidate_not_allowed_for_entity_type",
+    ]
+    assert counters["candidate.retained"] == 1
+    assert counters["candidate.removed"] == 2
+    assert counters["output_entity_total"] == 2
+
+
 def test_round2_probe_runner_preserves_entities_and_candidates_for_assertions(
     tmp_path: Path,
 ) -> None:
@@ -196,11 +237,14 @@ def test_round2_probe_cli_parser_accepts_named_sources() -> None:
             "qwen=qwen.zip",
             "--source",
             "xlmr=xlmr.zip",
+            "--build-full-source",
+            "qwen",
         ]
     )
 
     assert args.handler == "benchmark_phase1_round2_probes"
     assert args.source == ["qwen=qwen.zip", "xlmr=xlmr.zip"]
+    assert args.build_full_source == ["qwen"]
 
 
 def _row(text: str, mention: str, entity_type: str) -> dict[str, object]:

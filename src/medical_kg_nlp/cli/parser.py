@@ -343,6 +343,15 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         help="Calibrated proposal artifact as NAME=DIR_OR_ZIP; repeat for Qwen/XLM-R.",
     )
     probes.add_argument(
+        "--build-full-source",
+        action="append",
+        default=[],
+        help=(
+            "Canonicalize the complete named --source projection and build its "
+            "A_NEG_HIST combination; repeat by source name."
+        ),
+    )
+    probes.add_argument(
         "--dictionary",
         default="data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
     )
