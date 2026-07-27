@@ -33,6 +33,8 @@ __all__ = [
     "Phase1QuotedProposal",
     "RawTextWindow",
     "apply_phase1_adjudication",
+    "build_phase1_qwen_adjudication_messages",
+    "build_phase1_qwen_extraction_messages",
     "phase1_qwen_prompt_hash",
     "project_phase1_quoted_proposals",
     "select_qwen_confirmed_proposals",
@@ -209,7 +211,7 @@ class Phase1QwenAdapter:
                 overlap_characters=self._window_overlap_characters,
             )
         ):
-            messages = _extraction_messages(
+            messages = build_phase1_qwen_extraction_messages(
                 window.text,
                 pass_id=pass_id,
                 target_types=normalized_types,
@@ -256,7 +258,7 @@ class Phase1QwenAdapter:
                 raise ValueError(
                     f"Adjudication candidate {candidate.proposal_id} violates raw offsets"
                 )
-        messages = _adjudication_messages(source_text, candidates)
+        messages = build_phase1_qwen_adjudication_messages(source_text, candidates)
         parsed, raw_response = self._generate_structured(messages, generation)
         decisions = _parse_adjudication_decisions(parsed)
         known_ids = {candidate.proposal_id for candidate in candidates}
@@ -542,7 +544,7 @@ def apply_phase1_adjudication(
     return _deduplicate_entity_proposals(output)
 
 
-def _extraction_messages(
+def build_phase1_qwen_extraction_messages(
     source_text: str,
     *,
     pass_id: str,
@@ -565,7 +567,7 @@ def _extraction_messages(
     )
 
 
-def _adjudication_messages(
+def build_phase1_qwen_adjudication_messages(
     source_text: str,
     candidates: Sequence[Phase1AdjudicationCandidate],
 ) -> tuple[ChatMessage, ...]:
