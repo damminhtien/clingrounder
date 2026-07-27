@@ -13,6 +13,7 @@ from medical_kg_nlp.ner.extractors import (
     DictionaryProposalExtractor,
     MedicationAttributeProposalExtractor,
     RegexLabProposalExtractor,
+    StructuredLabProposalExtractor,
 )
 from medical_kg_nlp.ner.lab_observation_extractor import LabObservationExtractor
 from medical_kg_nlp.ner.medication_attribute_extractor import MedicationAttributeExtractor
@@ -67,6 +68,7 @@ class RuleBasedNER:
                 MedicationAttributeProposalExtractor(MedicationAttributeExtractor()),
                 AnchoredLabProposalExtractor(LabObservationExtractor()),
                 RegexLabProposalExtractor(),
+                StructuredLabProposalExtractor(),
             ),
             span_resolver=EvidenceWeightedSpanResolver(),
             medication_mentions=MedicationMentionParser(),

@@ -11,6 +11,9 @@ from medical_kg_nlp.ner.extractors.laboratory import (
     RegexLabProposalExtractor,
 )
 from medical_kg_nlp.ner.extractors.medication import MedicationAttributeProposalExtractor
+from medical_kg_nlp.ner.extractors.structured_lab import (
+    StructuredLabProposalExtractor,
+)
 
 __all__ = [
     "AnchoredLabProposalExtractor",
@@ -18,4 +21,5 @@ __all__ = [
     "DictionaryProposalExtractor",
     "MedicationAttributeProposalExtractor",
     "RegexLabProposalExtractor",
+    "StructuredLabProposalExtractor",
 ]
