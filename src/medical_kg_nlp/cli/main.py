@@ -74,6 +74,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.phase1",
         "inspect_phase1_qwen_run",
     ),
+    "benchmark_phase1_qwen_propose": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "propose_phase1_qwen_entities",
+    ),
     "model_validate_token_dataset": (
         "medical_kg_nlp.cli.commands.model",
         "validate_token_dataset",

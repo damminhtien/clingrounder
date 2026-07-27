@@ -65,6 +65,23 @@ def test_qwen_cli_commands_are_discoverable() -> None:
     data_args = parser.parse_args(
         ["benchmark", "phase1", "model-data", "build-qwen"]
     )
+    propose_args = parser.parse_args(
+        [
+            "benchmark",
+            "phase1",
+            "qwen",
+            "propose",
+            "--config",
+            "qwen.yaml",
+            "--documents",
+            "documents.jsonl",
+            "--source-archive-sha256",
+            "a" * 64,
+            "--output-dir",
+            "output",
+        ]
+    )
 
     assert inspect_args.handler == "benchmark_phase1_qwen_inspect"
     assert data_args.handler == "benchmark_phase1_qwen_data_build"
+    assert propose_args.handler == "benchmark_phase1_qwen_propose"

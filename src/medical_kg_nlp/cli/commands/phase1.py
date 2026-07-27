@@ -39,6 +39,10 @@ from medical_kg_nlp.benchmarks.phase1.qwen_dataset import (
 from medical_kg_nlp.benchmarks.phase1.qwen_run_spec import (
     load_phase1_qwen_run_spec,
 )
+from medical_kg_nlp.benchmarks.phase1.qwen_runner import (
+    Phase1QwenProposalRunConfig,
+    run_phase1_qwen_proposals,
+)
 from medical_kg_nlp.benchmarks.phase1.runner import (
     BenchmarkExportPolicy,
     Phase1BenchmarkConfig,
@@ -57,6 +61,7 @@ __all__ = [
     "calibrate_phase1_model_data",
     "compare_phase1_model_variants",
     "inspect_phase1_qwen_run",
+    "propose_phase1_qwen_entities",
     "run_phase1_round2_probe_suite",
     "run_phase1_submission",
 ]
@@ -269,6 +274,24 @@ def inspect_phase1_qwen_run(args: argparse.Namespace) -> int:
         ],
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def propose_phase1_qwen_entities(args: argparse.Namespace) -> int:
+    """Run a pinned Qwen checkpoint over an authorized private document manifest."""
+
+    report = run_phase1_qwen_proposals(
+        load_phase1_qwen_run_spec(args.config),
+        Phase1QwenProposalRunConfig(
+            documents_path=Path(args.documents),
+            expected_source_archive_sha256=args.source_archive_sha256,
+            output_dir=Path(args.output_dir),
+            support_sources=tuple(_named_paths(args.support_source)),
+            expected_document_count=args.expected_count,
+            run_adjudication=not args.no_adjudication,
+        ),
+    )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 
 

@@ -113,6 +113,7 @@ class Phase1QwenPassResult:
     proposals: tuple[EntityProposal, ...]
     rejected: tuple[dict[str, Any], ...]
     response_sha256: tuple[str, ...]
+    raw_responses: tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -204,6 +205,7 @@ class Phase1QwenAdapter:
         proposals: list[EntityProposal] = []
         rejected: list[dict[str, Any]] = []
         response_hashes: list[str] = []
+        raw_responses: list[str] = []
         for window_index, window in enumerate(
             split_raw_text_windows(
                 source_text,
@@ -218,6 +220,7 @@ class Phase1QwenAdapter:
             )
             parsed, raw_response = self._generate_structured(messages, generation)
             response_hashes.append(_text_sha256(raw_response))
+            raw_responses.append(raw_response)
             quoted, parse_rejections = _parse_quoted_proposals(parsed)
             projected, projection_rejections = project_phase1_quoted_proposals(
                 window.text,
@@ -241,6 +244,7 @@ class Phase1QwenAdapter:
             proposals=_deduplicate_entity_proposals(proposals),
             rejected=tuple(rejected),
             response_sha256=tuple(response_hashes),
+            raw_responses=tuple(raw_responses),
         )
 
     def adjudicate(

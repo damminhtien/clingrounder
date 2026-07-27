@@ -544,6 +544,23 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     )
     qwen_inspect.set_defaults(handler="benchmark_phase1_qwen_inspect")
     qwen_inspect.add_argument("--config", required=True)
+    qwen_propose = qwen_operations.add_parser(
+        "propose",
+        help="Run recall, targeted, consensus, and adjudication on private documents.",
+    )
+    qwen_propose.set_defaults(handler="benchmark_phase1_qwen_propose")
+    qwen_propose.add_argument("--config", required=True)
+    qwen_propose.add_argument("--documents", required=True)
+    qwen_propose.add_argument("--source-archive-sha256", required=True)
+    qwen_propose.add_argument("--output-dir", required=True)
+    qwen_propose.add_argument(
+        "--support-source",
+        action="append",
+        default=[],
+        help="Optional NAME=DIR_OR_ZIP rule/XLM-R support; XLM-R alone is never emitted.",
+    )
+    qwen_propose.add_argument("--expected-count", type=int, default=100)
+    qwen_propose.add_argument("--no-adjudication", action="store_true")
 
 
 def _model_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
