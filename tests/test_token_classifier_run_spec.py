@@ -85,6 +85,16 @@ def test_phase1_qa_educational_recovery_run_increases_optimizer_updates() -> Non
     assert spec.training.full_determinism is True
 
 
+def test_phase1_qa_educational_lr_control_is_isolated() -> None:
+    spec = load_token_classifier_run_spec(
+        "configs/models/phase1-five-type-xlmr-qa-edu-e10-lr3e5-2026-07-27.yaml"
+    )
+
+    assert spec.training.epochs == 10.0
+    assert spec.training.learning_rate == pytest.approx(3e-5)
+    assert spec.training.output_dir.name.endswith("e10-lr3e5-2026-07-27")
+
+
 def test_phase1_qa_educational_pipeline_points_to_matching_run_spec() -> None:
     resolved = ResolvedPipelineConfig.load(
         "configs/pipeline/phase1-five-type-qa-edu-model-only.yaml"
