@@ -51,6 +51,7 @@ __all__ = [
     "apply_round2_candidate_policy",
     "align_quoted_phase1_proposals",
     "canonicalize_full_phase1_source",
+    "merge_consensus_boundary_replacements",
     "merge_region_routed_proposals",
     "run_phase1_round2_probes",
     "segment_phase1_text_regions",
@@ -412,6 +413,124 @@ def merge_region_routed_proposals(
     return output, decisions, dict(sorted(counters.items()))
 
 
+def merge_consensus_boundary_replacements(
+    baseline_by_doc: Mapping[str, list[dict[str, Any]]],
+    consensus_by_doc: Mapping[str, list[dict[str, Any]]],
+    source_text_by_doc: Mapping[str, str],
+) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]], dict[str, int]]:
+    """Add consensus proposals and replace only one contained same-type baseline span.
+
+    MODEL: this is deliberately a separate public probe from additive recall. Replacement is
+    allowed only when one source span contains the other, so crossing spans, type conflicts, and
+    one-to-many overlap ambiguity cannot silently rewrite the frozen baseline.
+    """
+
+    expected_ids = set(baseline_by_doc)
+    if set(consensus_by_doc) != expected_ids or set(source_text_by_doc) != expected_ids:
+        raise ValueError(
+            "Consensus, source text, and baseline document IDs must match exactly"
+        )
+
+    output: dict[str, list[dict[str, Any]]] = {}
+    decisions: list[dict[str, Any]] = []
+    counters: Counter[str] = Counter()
+    for document_id in sorted(expected_ids, key=_document_sort_key):
+        source_text = source_text_by_doc[document_id]
+        selected = [_copy_row(row) for row in baseline_by_doc[document_id]]
+        for row in (*selected, *consensus_by_doc[document_id]):
+            _validate_entity_identity(row, source_text, document_id=document_id)
+
+        for proposal in sorted(
+            consensus_by_doc[document_id],
+            key=lambda row: (
+                -PHASE1_TYPE_PRIORITY.get(str(row.get("type")), 0),
+                -(_position(row)[1] - _position(row)[0]),
+                *_row_sort_key(row),
+            ),
+        ):
+            if any(_identity_key(proposal) == _identity_key(row) for row in selected):
+                counters["proposal.already_in_baseline"] += 1
+                continue
+            overlap_indexes = [
+                index for index, row in enumerate(selected) if _rows_overlap(proposal, row)
+            ]
+            if not overlap_indexes:
+                start, end = _position(proposal)
+                added = _new_entity_row(
+                    str(proposal["text"]),
+                    str(proposal["type"]),
+                    start,
+                    end,
+                )
+                selected.append(added)
+                decisions.append(
+                    {
+                        "document_id": document_id,
+                        "stage": "entity_consensus_boundary",
+                        "action": "add",
+                        "reason": "internally_consensused_nonoverlap",
+                        "entity": _identity_payload(added),
+                    }
+                )
+                counters["proposal.added"] += 1
+                continue
+            if len(overlap_indexes) != 1:
+                counters["proposal.blocked_multiple_overlaps"] += 1
+                continue
+
+            overlap_index = overlap_indexes[0]
+            existing = selected[overlap_index]
+            if proposal.get("type") != existing.get("type"):
+                counters["proposal.blocked_type_conflict"] += 1
+                continue
+            proposal_start, proposal_end = _position(proposal)
+            existing_start, existing_end = _position(existing)
+            if not (
+                (proposal_start <= existing_start and existing_end <= proposal_end)
+                or (
+                    existing_start <= proposal_start
+                    and proposal_end <= existing_end
+                )
+            ):
+                counters["proposal.blocked_crossing_boundary"] += 1
+                continue
+
+            replacement = _copy_row(existing)
+            replacement["text"] = str(proposal["text"])
+            replacement["position"] = [proposal_start, proposal_end]
+            if any(
+                index != overlap_index and _rows_overlap(replacement, row)
+                for index, row in enumerate(selected)
+            ):
+                counters["proposal.blocked_replacement_overlap"] += 1
+                continue
+            selected[overlap_index] = replacement
+            decisions.append(
+                {
+                    "document_id": document_id,
+                    "stage": "entity_consensus_boundary",
+                    "action": "replace",
+                    "reason": "single_contained_same_type_overlap",
+                    "before": _identity_payload(existing),
+                    "after": _identity_payload(replacement),
+                }
+            )
+            counters["proposal.replaced"] += 1
+
+        output[document_id] = sorted(selected, key=_row_sort_key)
+
+    isolation_issues = validate_probe_isolation(
+        baseline_by_doc,
+        output,
+        module="entity",
+    )
+    if isolation_issues:
+        raise ValueError(f"Consensus boundary isolation failed: {isolation_issues[:5]}")
+    counters["decision_total"] = len(decisions)
+    counters["output_entity_total"] = sum(len(rows) for rows in output.values())
+    return output, decisions, dict(sorted(counters.items()))
+
+
 def canonicalize_full_phase1_source(
     rows_by_doc: Mapping[str, list[dict[str, Any]]],
     source_text_by_doc: Mapping[str, str],
@@ -730,6 +849,28 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
                     base=base,
                     decisions=consensus_decisions,
                     counters=consensus_counters,
+                    run_dir=run_output.run_dir,
+                    documents=documents,
+                    dictionary=dictionary,
+                )
+            )
+            (
+                replacement_rows,
+                replacement_decisions,
+                replacement_counters,
+            ) = merge_consensus_boundary_replacements(
+                base,
+                rows_by_doc,
+                source_text_by_doc,
+            )
+            variants.append(
+                _materialize_variant(
+                    f"E_{name.upper()}_CONSENSUS_REPLACE",
+                    module="entity",
+                    rows=replacement_rows,
+                    base=base,
+                    decisions=replacement_decisions,
+                    counters=replacement_counters,
                     run_dir=run_output.run_dir,
                     documents=documents,
                     dictionary=dictionary,

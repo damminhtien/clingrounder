@@ -16,6 +16,7 @@ from medical_kg_nlp.benchmarks.phase1.round2_probes import (
     apply_round2_candidate_policy,
     align_quoted_phase1_proposals,
     canonicalize_full_phase1_source,
+    merge_consensus_boundary_replacements,
     merge_region_routed_proposals,
     run_phase1_round2_probes,
     segment_phase1_text_regions,
@@ -153,6 +154,39 @@ def test_region_router_can_promote_an_internally_consensused_source() -> None:
     assert [row["text"] for row in merged["1"]] == ["Tăng huyết áp"]
     assert decisions[0]["reason"] == "single_source_region_route"
     assert counters["proposal.add.region.clinical"] == 1
+
+
+def test_consensus_boundary_replacement_is_contained_and_preserves_metadata() -> None:
+    text = "Bệnh nhân đau đầu kéo dài và ho."
+    pain = _row(text, "đau đầu", "TRIỆU_CHỨNG")
+    pain["assertions"] = ["isHistorical"]
+    baseline = {
+        "1": [
+            pain,
+            _row(text, "ho", "TRIỆU_CHỨNG"),
+        ]
+    }
+    consensus = {
+        "1": [
+            _row(text, "đau đầu kéo dài", "TRIỆU_CHỨNG"),
+            _row(text, "Bệnh nhân", "CHẨN_ĐOÁN"),
+        ]
+    }
+
+    merged, decisions, counters = merge_consensus_boundary_replacements(
+        baseline,
+        consensus,
+        {"1": text},
+    )
+
+    assert [(row["text"], row["assertions"]) for row in merged["1"]] == [
+        ("Bệnh nhân", []),
+        ("đau đầu kéo dài", ["isHistorical"]),
+        ("ho", []),
+    ]
+    assert {decision["action"] for decision in decisions} == {"add", "replace"}
+    assert counters["proposal.added"] == 1
+    assert counters["proposal.replaced"] == 1
 
 
 def test_full_source_canonicalization_filters_candidates_by_type_and_dictionary() -> None:
