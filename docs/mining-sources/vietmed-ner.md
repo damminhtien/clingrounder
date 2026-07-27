@@ -106,6 +106,46 @@ without Qwen. The combined Qwen3-8B and VietMed-NER budget is 8,468,216,869 para
 experiment config is `phase1-qwen3-8b-vietmed-verifier-2026-07-27.yaml`. The original Qwen config
 remains an unchanged control.
 
+## Round 2 Verifier Run
+
+The pinned published checkpoint was run over all 100 authorized Round 2 documents on 2026-07-27.
+The returned artifact is:
+
+```text
+outputs/models/phase1-vietmed-ner-round2-support/
+archive SHA-256: 85c1887242814f5b3d38466185df3107a83c589ac4b868a52633580e13fc4898
+trace SHA-256: 6edcfd25f5253dd065afc19dac03842546030b2ef3ef97bab88bc747cb27d5dc
+```
+
+Observed source predictions and compatibility rows:
+
+| Source label | Source entities | Phase 1 rows |
+| --- | ---: | ---: |
+| `DISEASESYMTOM` | 2,598 | 5,196 diagnosis/symptom alternatives |
+| `DRUGCHEMICAL` | 797 | 797 medication candidates |
+| `DIAGNOSTICS` | 445 | 445 lab-test candidates |
+| **Total** | **3,840** | **6,438** |
+
+The run used one RTX 4090 with the `vastai/pytorch:cuda-13.0.3-auto` template, Torch
+`2.12.0+cu130`, CUDA 13.0, and Transformers 5.13.0. Reusing the template environment reduced
+bootstrap from an aborted 1.8 GB isolated dependency download to about 23 MB of additional Python
+packages. The reproducible entry point is `scripts/vast/run_vietmed_support.sh`.
+
+The scored 31.2236 artifact is not ground truth, but comparison against its frozen 3,340-entity
+projection is useful for routing:
+
+```text
+exact span+type agreement: 910
+VietMed alternatives not exact in the frozen projection: 5528
+VietMed alternatives overlapping a frozen entity: 1191
+VietMed alternatives non-overlapping the frozen projection: 4337
+```
+
+This distribution rules out direct union. A later probe may retain a new entity only when Qwen
+produces the exact quote/type and VietMed supplies independent compatible evidence. Qwen-only and
+Qwen-plus-VietMed variants must remain separate so the public delta identifies whether verifier
+evidence helps.
+
 ## Promotion Boundary
 
 - Allowed: source-task training, exact-quote curriculum, model inference and verifier evidence.
