@@ -459,11 +459,13 @@ uv run medical-kg benchmark phase1 round2 probes \
   --expected-base-sha256 a3190e9911712b9fdeb2fac82f6747097bc28b9a59165ab73da2c94dddcee8b0 \
   --candidate-probe rx_only \
   --candidate-probe rx_unique_only \
+  --candidate-probe rx_unique_keep_icd \
   --run-label round2-qwen-candidate-abstention
 ```
 
 These variants preserve every entity and assertion. `C_RX_ONLY` removes diagnosis codes while
-retaining existing RxNorm lists; `C_RX_UNIQUE_ONLY` additionally clears ambiguous drug lists.
+retaining existing RxNorm lists; `C_RX_UNIQUE_ONLY` additionally clears ambiguous drug lists;
+`C_RX_UNIQUE_KEEP_ICD` clears only ambiguous drug lists and preserves diagnosis codes.
 
 The complete source policy, artifact hashes, GPU handoff, and Round 2 privacy boundary are recorded
 in [docs/mining-sources/phase1-round2.md](docs/mining-sources/phase1-round2.md).

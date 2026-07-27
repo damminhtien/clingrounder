@@ -413,7 +413,7 @@ complete provenance is recovered.
 ### Candidate Abstention Probes
 
 The Qwen baseline contains 1,517 candidate values: 1,252 values on diagnosis rows and 265 values
-on medication rows. Two candidate-only probes were built from the exact public baseline SHA
+on medication rows. The initial candidate-only probes were built from the exact public baseline SHA
 `a3190e9911712b9fdeb2fac82f6747097bc28b9a59165ab73da2c94dddcee8b0`:
 
 | Probe | Candidate rows | Values kept/removed | Rows changed | ZIP SHA-256 |
@@ -443,9 +443,32 @@ The submitted ZIP prefix `6fbd3cbb683f...` matches the complete local SHA-256. T
 metrics prove candidate-only isolation, and the candidate gain exceeds the `+0.5` promotion gate.
 `C_RX_UNIQUE_ONLY` is therefore the current best Round 2 artifact.
 
-`C_RX_ONLY` remains the next controlled submission. Its score will separate the gain from removing
-all diagnosis candidates from the additional gain or loss caused by suppressing multi-code drug
-lists. Do not add new mappings until that comparison is observed.
+The public grader then scored `C_RX_ONLY` on 2026-07-27:
+
+| Metric | Frozen baseline | `C_RX_ONLY` | Delta |
+| --- | ---: | ---: | ---: |
+| final | `28.1970` | `27.8650` | `-0.3320` |
+| WER | `67.7225` | `67.7225` | `0.0000` |
+| J assertion | `36.8242` | `36.8242` | `0.0000` |
+| J candidates | `18.6663` | `17.8363` | `-0.8300` |
+
+The submitted prefix `bf62075cdcd6...` matches the local artifact. Reject `C_RX_ONLY`: keeping 50
+multi-code medication rows while removing diagnosis candidates is worse than both the frozen
+baseline and `C_RX_UNIQUE_ONLY`. Relative to the promoted unique policy, it loses `0.7122` final
+and `1.7804` J candidates.
+
+This comparison does not isolate the value of ICD candidates because `C_RX_UNIQUE_ONLY` removes
+both ICD and ambiguous medication lists. The follow-up `C_RX_UNIQUE_KEEP_ICD` changes only those 50
+medication rows:
+
+| Probe | Candidate rows | Values kept/removed | Rows changed | ZIP SHA-256 |
+| --- | ---: | ---: | ---: | --- |
+| `C_RX_UNIQUE_KEEP_ICD` | `460` | `1,367 / 150` | `50` | `2f2fa1f569c2d595140ae2ff5c50f1315fe1065f8b54dbf7945aa025161f2203` |
+
+It retains all 1,252 diagnosis values and 115 unique medication values. Strict validation and
+candidate isolation report zero issues. Its reproducible run is
+`outputs/phase1/round2/20260727T041845Z_round2-qwen-rx-unique-keep-icd_c5c0b16cdf/`.
+Submit this artifact next; do not add new mappings before observing whether keeping ICD helps.
 
 A metadata-only diagnostic probe preserves every `(text, type, position)` tuple from the rejected
 artifact and clears only `assertions` and `candidates`:
