@@ -167,9 +167,15 @@ VietBioNER is pinned at Git commit `19ba70a5947d1be72906d407c860b1666b9337e9` un
 `configs/mining/vietbioner.yaml` acquires the checksum-pinned archive, preserves each annotator as a
 separate document, groups exact duplicate text into one split, and imports source labels as silver
 proposals through `medical_kg_nlp.mining.labelers.brat`. The broad internal label mapping is an
-import convention, not adjudicated clinical gold. VietMed-NER remains quarantined until an explicit
-dataset annotation license is available; do not copy model-card visibility into a redistribution
-assumption.
+import convention, not adjudicated clinical gold.
+
+VietMed-NER use for training and inference was confirmed by the data owner on 2026-07-27. The
+repository pins the dataset/model revisions and source checksums, projects only text/BIO columns,
+and preserves the official train/validation/test split. Redistribution remains prohibited because
+the public model card does not state a reusable SPDX license. Its 18-type spoken-medical taxonomy
+is retained as source evidence; broad labels such as `DISEASESYMTOM` are never silently narrowed
+into a competition label. See
+[`docs/mining-sources/vietmed-ner.md`](mining-sources/vietmed-ner.md).
 
 The current VietBioNER snapshot can be reproduced without an implicit download or parser choice:
 

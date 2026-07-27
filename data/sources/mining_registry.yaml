@@ -39,17 +39,27 @@ resources:
   - id: vietmed_ner
     name: VietMed-NER
     category: vietnamese_spoken_medical_ner
-    version: repository-snapshot
-    version_policy: manual_import
-    access_class: quarantine
-    license_id: verify_dataset_license
+    version: hf-e3d0393c733858402a7c04228f45d351d2ce6d8f
+    version_policy: pinned
+    access_class: open_with_terms
+    # LICENSE: training/inference permission was confirmed by the data owner on 2026-07-27.
+    # Keep redistribution prohibited because the public card does not declare an SPDX license.
+    license_id: research-use-confirmed-2026-07-27
     license_url: https://huggingface.co/leduckhai/VietMed-NER
-    redistribution: unknown
-    hosted_processing_allowed: false
-    retention: local_only
-    connector: local_archive
-    parser: vietmed_ner
-    allowed_uses: [license_review]
+    redistribution: prohibited
+    hosted_processing_allowed: true
+    retention: immutable
+    connector: static_http
+    parser: vietmed_ner_parquet
+    parser_options:
+      language: vi
+      note_type: spoken_medical_transcript
+    urls:
+      - https://huggingface.co/datasets/leduckhai/VietMed-NER
+    allowed_uses: [entity_training, external_benchmark, model_inference]
+    notes: >-
+      Dataset/model use was confirmed on 2026-07-27. Pin repository revisions and checksums;
+      do not redistribute source Parquet or audio.
   - id: phase1_round2_input
     name: Phase 1 Round 2 competition input
     category: local_competition_input

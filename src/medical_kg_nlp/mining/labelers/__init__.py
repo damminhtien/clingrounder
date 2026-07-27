@@ -25,6 +25,10 @@ from medical_kg_nlp.mining.labelers.pipeline import (
     LocalPipelineProposalLabeler,
     create_local_pipeline_labeler,
 )
+from medical_kg_nlp.mining.labelers.vietmed_ner import (
+    VietMedNerSourceLabelerAdapter,
+    create_vietmed_ner_source_labeler,
+)
 
 __all__ = [
     "BratArchiveLabelerAdapter",
@@ -41,5 +45,7 @@ __all__ = [
     "create_dailymed_structured_labeler",
     "create_dailymed_structured_relation_labeler",
     "LocalPipelineProposalLabeler",
+    "VietMedNerSourceLabelerAdapter",
     "create_local_pipeline_labeler",
+    "create_vietmed_ner_source_labeler",
 ]

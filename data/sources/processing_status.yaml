@@ -24,11 +24,21 @@ sources:
       - outputs/mining/model_datasets/vietbioner-19ba70a-reconciled-silver-v4
       - outputs/mining/knowledge/vietbioner-recognition-v4
   - source_id: vietmed_ner
-    state: quarantined
-    promotion_boundary: none
-    dossier: docs/mining-sources/backlog.md
-    verified_on: 2026-07-19
-    summary: Dataset annotation license is not explicit enough for acquisition or redistribution.
+    state: curated
+    promotion_boundary: training_only
+    dossier: docs/mining-sources/vietmed-ner.md
+    verified_on: 2026-07-27
+    summary: >-
+      Owner-confirmed use permits pinned training and model inference. Text/BIO columns from all
+      official splits are materialized with exact offsets; source bytes remain non-redistributable.
+      Broad source labels may train or verify proposals but cannot enter Phase 1 output directly.
+    run_configs:
+      - configs/mining/vietmed_ner.yaml
+      - configs/mining/labelers/vietmed_ner.yaml
+    artifact_roots:
+      - outputs/mining/vietmed-ner-e3d0393c
+      - outputs/mining/model-datasets/vietmed-ner-e3d0393c-18type
+      - outputs/mining/model-datasets/vietmed-ner-qwen-exact-quote-v1
   - source_id: phase1_round2_input
     state: acquired
     promotion_boundary: none

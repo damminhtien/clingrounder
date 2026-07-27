@@ -6,7 +6,6 @@ not be counted in corpus size, terminology coverage, or model-training claims.
 | Source ID | Current blocker | Next executable gate |
 | --- | --- | --- |
 | `vn_moh_guidelines` | no pinned document list or source fingerprint | select a bounded release, verify reuse terms, parse sections |
-| `vietmed_ner` | annotation-data license is not explicit | obtain license evidence; keep quarantined until then |
 | `loinc_2_82` | account/license acceptance and archive absent | import locally, validate release hash, build lab terminology only |
 | `biored` | dataset license review incomplete | verify redistribution and annotation use before local import |
 | `synthea` | generator commit and scenario config absent | pin commit, seed, FHIR export and deterministic patient groups |

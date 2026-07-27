@@ -1,0 +1,33 @@
+schema_version: medical-mining-plan.v1
+registry: ../../data/sources/mining_registry.yaml
+work_dir: ../../outputs/mining/vietmed-ner-e3d0393c
+artifact_store:
+  # SCALING: override with MEDICAL_KG_ARTIFACT_STORE to keep the 0.9 GB Parquet source external.
+  uri: ../../outputs/mining/artifact-store
+  storage_options: {}
+  encrypted_at_rest: false
+sources:
+  - source_id: vietmed_ner
+    source_version: hf-e3d0393c733858402a7c04228f45d351d2ce6d8f
+    enabled: true
+    parse_documents: true
+    parameters:
+      artifacts:
+        - uri: https://huggingface.co/datasets/leduckhai/VietMed-NER/resolve/e3d0393c733858402a7c04228f45d351d2ce6d8f/data/train-00000-of-00001.parquet
+          media_type: application/vnd.apache.parquet
+          sha256: 5d04692de75257c5392ad7a1b4cc4fbdd078f4b454719dbae46b89d284452a3c
+          metadata:
+            split: train
+            repository_revision: e3d0393c733858402a7c04228f45d351d2ce6d8f
+        - uri: https://huggingface.co/datasets/leduckhai/VietMed-NER/resolve/e3d0393c733858402a7c04228f45d351d2ce6d8f/data/validation-00000-of-00001.parquet
+          media_type: application/vnd.apache.parquet
+          sha256: bf1caebca2d49d6f2fb91bfb7297d32b083be87a31fb64cadf05b6eadcbd80ed
+          metadata:
+            split: validation
+            repository_revision: e3d0393c733858402a7c04228f45d351d2ce6d8f
+        - uri: https://huggingface.co/datasets/leduckhai/VietMed-NER/resolve/e3d0393c733858402a7c04228f45d351d2ce6d8f/data/test-00000-of-00001.parquet
+          media_type: application/vnd.apache.parquet
+          sha256: fd9c5e5778ded8d01512e1acf19c4e75a788c861d43299683e16d13a2b05228a
+          metadata:
+            split: test
+            repository_revision: e3d0393c733858402a7c04228f45d351d2ce6d8f

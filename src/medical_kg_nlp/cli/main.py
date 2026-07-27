@@ -130,6 +130,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.data",
         "build_exact_quote_curriculum_dataset",
     ),
+    "data_dataset_freeze_source_splits": (
+        "medical_kg_nlp.cli.commands.data",
+        "freeze_dataset_source_splits",
+    ),
     "data_lexicon_build": ("medical_kg_nlp.cli.commands.data", "build_lexicon"),
     "data_lexicon_crosswalk": (
         "medical_kg_nlp.cli.commands.data",

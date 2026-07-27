@@ -832,6 +832,20 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     dataset_exact_quote.add_argument("--spans-manifest", required=True)
     dataset_exact_quote.add_argument("--label", action="append", required=True)
     dataset_exact_quote.add_argument("--output-dir", required=True)
+    dataset_source_splits = dataset_operations.add_parser(
+        "freeze-source-splits",
+        help="Freeze source-declared train/validation/test assignments.",
+    )
+    dataset_source_splits.set_defaults(handler="data_dataset_freeze_source_splits")
+    dataset_source_splits.add_argument("--documents", required=True)
+    dataset_source_splits.add_argument("--metadata-key", default="source_split")
+    dataset_source_splits.add_argument(
+        "--map",
+        action="append",
+        required=True,
+        help="Source and target split as SOURCE=TARGET.",
+    )
+    dataset_source_splits.add_argument("--output", required=True)
 
     lexicon = operations.add_parser(
         "lexicon", help="Build mined mention inventories for terminology review."

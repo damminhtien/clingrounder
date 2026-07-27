@@ -14,6 +14,7 @@ knowledge may be promoted.
 | Source | State | Strongest allowed use | Dossier |
 | --- | --- | --- | --- |
 | VietBioNER | curated | training only | [VietBioNER](vietbioner.md) |
+| VietMed-NER | curated | training and verifier inference | [VietMed-NER](vietmed-ner.md) |
 | Phase 1 Round 2 input | acquired | local inference/audit only | [Phase 1 Round 2](phase1-round2.md) |
 | Phase 1 part 2 leaked bundle | quarantined | none | [Quarantine audit](phase1-part2-quarantine.md) |
 | CodiEsp | promoted | runtime opt-in | [CodiEsp](codiesp.md) |

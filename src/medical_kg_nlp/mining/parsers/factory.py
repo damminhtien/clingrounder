@@ -16,6 +16,7 @@ from medical_kg_nlp.mining.parsers.json_formats import (
     FhirBundleParser,
 )
 from medical_kg_nlp.mining.parsers.pmc import PmcOaParser
+from medical_kg_nlp.mining.parsers.vietmed_ner import VietMedNerParquetParser
 from medical_kg_nlp.mining.parsers.xml import JatsXmlParser, SplXmlParser
 from medical_kg_nlp.mining.ports import DocumentParserPort
 from medical_kg_nlp.mining.registry import SourceDefinition
@@ -34,6 +35,7 @@ def parser_from_definition(source: SourceDefinition) -> DocumentParserPort:
         "fhir_bundle": FhirBundleParser,
         "bioc": BiocJsonParser,
         "codiesp": CodiEspArchiveParser,
+        "vietmed_ner_parquet": VietMedNerParquetParser,
     }
     parser_factory = parser_factories.get(source.parser)
     if parser_factory is not None:

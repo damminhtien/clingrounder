@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import importlib
 import json
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any, cast
@@ -135,6 +135,7 @@ from medical_kg_nlp.mining.section_evidence import (
     load_block_evidence_policy,
 )
 from medical_kg_nlp.mining.snapshot import SnapshotBuilder, SnapshotSplitConfig
+from medical_kg_nlp.mining.source_splits import freeze_source_splits
 from medical_kg_nlp.mining.splits import (
     load_split_document_ids,
     select_mined_records,
@@ -166,6 +167,7 @@ __all__ = [
     "export_review",
     "export_span_training_dataset",
     "freeze_snapshot",
+    "freeze_dataset_source_splits",
     "fuse_datasets",
     "harmonize_dataset",
     "import_review",
@@ -551,6 +553,20 @@ def build_exact_quote_curriculum_dataset(args: argparse.Namespace) -> int:
             output_dir=Path(args.output_dir),
             allowed_labels=tuple(sorted(set(args.label))),
         )
+    )
+    _print_json(report)
+    return 0
+
+
+def freeze_dataset_source_splits(args: argparse.Namespace) -> int:
+    """Freeze source-provided split assignments without random reassignment."""
+
+    report = freeze_source_splits(
+        load_documents(args.documents),
+        metadata_key=args.metadata_key,
+        split_map=_named_values(args.map),
+        documents_path=args.documents,
+        output_path=args.output,
     )
     _print_json(report)
     return 0
@@ -1524,6 +1540,22 @@ def _load_jsonl_mappings(path: str | Path) -> Iterator[dict[str, Any]]:
             if not isinstance(raw, Mapping):
                 raise ValueError(f"{source}:{line_number}: expected JSON object")
             yield {str(key): value for key, value in raw.items()}
+
+
+def _named_values(values: Sequence[str]) -> dict[str, str]:
+    """Parse repeatable ``NAME=VALUE`` CLI options without silently overwriting keys."""
+
+    output: dict[str, str] = {}
+    for raw in values:
+        name, separator, value = str(raw).partition("=")
+        name = name.strip()
+        value = value.strip()
+        if not separator or not name or not value:
+            raise ValueError(f"Expected NAME=VALUE, got {raw!r}")
+        if name in output:
+            raise ValueError(f"Duplicate named value {name!r}")
+        output[name] = value
+    return output
 
 
 def _print_json(payload: Mapping[str, Any]) -> None:

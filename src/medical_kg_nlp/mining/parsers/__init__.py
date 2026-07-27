@@ -13,6 +13,7 @@ from medical_kg_nlp.mining.parsers.json_formats import (
     FhirBundleParser,
 )
 from medical_kg_nlp.mining.parsers.pmc import PmcOaParser
+from medical_kg_nlp.mining.parsers.vietmed_ner import VietMedNerParquetParser
 from medical_kg_nlp.mining.parsers.xml import JatsXmlParser, SplXmlParser
 
 __all__ = [
@@ -26,5 +27,6 @@ __all__ = [
     "PlainTextParser",
     "PmcOaParser",
     "SplXmlParser",
+    "VietMedNerParquetParser",
     "parser_from_definition",
 ]
