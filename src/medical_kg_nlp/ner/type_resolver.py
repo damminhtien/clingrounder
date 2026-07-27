@@ -39,6 +39,31 @@ _LAB_RIGHT_EVIDENCE_RE = re.compile(
     r"tăng|giảm|cao|thấp|[<>]?\s*\d)",
     flags=re.IGNORECASE | re.UNICODE,
 )
+_SECTION_HEADER_RE = re.compile(
+    r"^[ \t]*(?:[-*•]+[ \t]*)?(?:"
+    r"(?P<symptom>"
+    r"(?:các[ \t]+)?triệu[ \t]+chứng[ \t]+(?:hiện[ \t]+tại|khi[ \t]+nhập[ \t]+viện)|"
+    r"đặc[ \t]+điểm[ \t]+triệu[ \t]+chứng|"
+    r"(?:các[ \t]+)?triệu[ \t]+chứng[ \t]+(?:kèm[ \t]+theo|liên[ \t]+quan)"
+    r")|"
+    r"(?P<disease>"
+    r"chẩn[ \t]+đoán|"
+    r"(?:các[ \t]+)?bệnh[ \t]+lý[ \t]+(?:nội[ \t]+khoa[ \t]+)?m(?:ạ|ã)n[ \t]+tính|"
+    r"tiền[ \t]+sử[ \t]+bệnh[ \t]+nội[ \t]+khoa"
+    r")|"
+    r"(?P<neutral>"
+    r"tiền[ \t]+sử[ \t]+bệnh[ \t]+hiện[ \t]+tại|"
+    r"lý[ \t]+do[ \t]+(?:nhập|vào)[ \t]+viện|"
+    r"diễn[ \t]+biến[ \t]+bệnh|"
+    r"kết[ \t]+quả[ \t]+(?:xét[ \t]*nghiệm|chẩn[ \t]+đoán[ \t]+hình[ \t]+ảnh)|"
+    r"cận[ \t]+lâm[ \t]+sàng|"
+    r"đánh[ \t]+giá[ \t]+tại[ \t]+bệnh[ \t]+viện|"
+    r"(?:các[ \t]+)?thủ[ \t]+thuật|"
+    r"điều[ \t]+trị|thuốc|kế[ \t]+hoạch"
+    r")"
+    r")(?=[ \t]*:|[ \t]*$)",
+    flags=re.IGNORECASE | re.MULTILINE | re.UNICODE,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,10 +80,13 @@ class ContextualEntityTypeResolver:
 
     disease_symptom_fallback: Literal["disease", "abstain"] = "disease"
     context_radius: int = 64
+    section_radius: int = 800
 
     def __post_init__(self) -> None:
         if self.context_radius < 16:
             raise ValueError("context_radius must be at least 16 characters")
+        if self.section_radius < self.context_radius:
+            raise ValueError("section_radius must be at least context_radius")
 
     def resolve(
         self,
@@ -70,19 +98,39 @@ class ContextualEntityTypeResolver:
     ) -> TypeResolution:
         """Resolve one exact span while preserving ambiguous evidence when cues are absent."""
 
-        if len(candidate_types) == 1:
-            return TypeResolution(candidate_types[0], "unique_dictionary_type")
-
         left = source_text[max(0, span[0] - self.context_radius) : span[0]]
         right = source_text[span[1] : min(len(source_text), span[1] + self.context_radius)]
         candidate_set = set(candidate_types)
+        in_medication_indication = any(
+            indication_start <= span[0] and span[1] <= indication_end
+            for indication_start, indication_end in medication_indication_spans
+        )
+        section_type = _nearest_section_type(
+            source_text,
+            span[0],
+            radius=self.section_radius,
+        )
+
+        if len(candidate_types) == 1:
+            entity_type = candidate_types[0]
+            if entity_type is EntityType.DISEASE and (
+                in_medication_indication or section_type is EntityType.SYMPTOM
+            ):
+                reason = (
+                    "medication_indication_retype"
+                    if in_medication_indication
+                    else "explicit_symptom_section_retype"
+                )
+                return TypeResolution(EntityType.SYMPTOM, reason)
+            return TypeResolution(entity_type, "unique_dictionary_type")
 
         if candidate_set == {EntityType.DISEASE, EntityType.SYMPTOM}:
-            if any(
-                indication_start <= span[0] and span[1] <= indication_end
-                for indication_start, indication_end in medication_indication_spans
-            ):
+            if in_medication_indication:
                 return TypeResolution(EntityType.SYMPTOM, "medication_indication")
+            if section_type is EntityType.SYMPTOM:
+                return TypeResolution(EntityType.SYMPTOM, "explicit_symptom_section")
+            if section_type is EntityType.DISEASE:
+                return TypeResolution(EntityType.DISEASE, "explicit_diagnosis_section")
             symptom_distance = _last_cue_distance(left, _SYMPTOM_LEFT_CUE_RE)
             disease_distance = _last_cue_distance(left, _DISEASE_LEFT_CUE_RE)
             if symptom_distance is not None and (
@@ -109,3 +157,23 @@ def _last_cue_distance(left_context: str, pattern: re.Pattern[str]) -> int | Non
     if match is None:
         return None
     return len(left_context) - match.end()
+
+
+def _nearest_section_type(
+    source_text: str,
+    boundary: int,
+    *,
+    radius: int,
+) -> EntityType | None:
+    """Return the nearest explicit section type, with neutral headings terminating scope."""
+
+    window_start = max(0, boundary - radius)
+    matches = list(_SECTION_HEADER_RE.finditer(source_text, window_start, boundary))
+    if not matches:
+        return None
+    nearest = matches[-1]
+    if nearest.lastgroup == "symptom":
+        return EntityType.SYMPTOM
+    if nearest.lastgroup == "disease":
+        return EntityType.DISEASE
+    return None

@@ -53,6 +53,38 @@ def test_contextual_type_resolver_uses_explicit_symptom_and_diagnosis_cues() -> 
     assert unresolved[0].feature("type_resolution") == "disease_symptom_context_missing"
 
 
+def test_contextual_type_resolver_can_retype_unique_disease_in_symptom_section() -> None:
+    store = DictionaryStore(
+        [
+            ConceptEntry(
+                concept_id="D:1",
+                code="K59.0",
+                code_system=CodeSystem.ICD10,
+                canonical_name="táo bón",
+                semantic_type=EntityType.DISEASE,
+            )
+        ]
+    )
+    ner = RuleBasedNER(store)
+    text = (
+        "Bệnh lý mãn tính\n- táo bón\n"
+        "Triệu chứng hiện tại\n- táo bón\n"
+        "Kết quả xét nghiệm\n- táo bón"
+    )
+
+    result = ner.extract_with_trace(text)
+
+    assert [(entity.text, entity.type) for entity in result.entities] == [
+        ("táo bón", EntityType.DISEASE),
+        ("táo bón", EntityType.SYMPTOM),
+        ("táo bón", EntityType.DISEASE),
+    ]
+    assert any(
+        proposal.feature("type_resolution") == "explicit_symptom_section_retype"
+        for proposal in result.trace.proposals
+    )
+
+
 def test_rule_ner_keeps_medication_and_lab_sources_independent_until_resolution() -> None:
     text = "Dùng metoprolol 25mg. Creatinine 1.4 mg/dL."
     ner = RuleBasedNER(
