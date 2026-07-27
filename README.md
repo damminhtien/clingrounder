@@ -44,6 +44,8 @@ Supported Python versions: **3.11–3.14**.
 Vietnamese documentation: [`README_VI.md`](README_VI.md).
 Package ownership and extension points: [`docs/code-map.md`](docs/code-map.md).
 Breaking 0.2 migration notes: [`docs/migration-v0.2.md`](docs/migration-v0.2.md).
+Rule NER architecture and measured stages: [`docs/rule-ner-v2.md`](docs/rule-ner-v2.md).
+Linux/Vast.ai model handoff: [`docs/vast-ai-model-runbook.md`](docs/vast-ai-model-runbook.md).
 
 ---
 
@@ -152,19 +154,17 @@ flowchart TB
 ## 3. Entity extraction
 
 ```text
-Dictionary aliases
+Dictionary, medication, lab, and boundary sources
     ↓
-Aho-Corasick scans the document
+Independent raw-offset EntityProposal records
     ↓
-Word-boundary validation
+Contextual type resolution from observed evidence
     ↓
-Offset mapping back to the source text
+One global weighted overlap resolver
     ↓
-Duplicate and overlap resolution
+Medication SIG decoration and offset validation
     ↓
-Additional drug, strength, and lab extraction rules
-    ↓
-EntityAnnotation
+EntityAnnotation + RuleNerTrace
 ```
 
 Core implementation:
@@ -172,6 +172,8 @@ Core implementation:
 ```text
 src/medical_kg_nlp/ner/dictionary_matcher.py
 src/medical_kg_nlp/ner/rule_ner.py
+src/medical_kg_nlp/ner/rule_engine.py
+src/medical_kg_nlp/ner/span_resolver.py
 src/medical_kg_nlp/ner/medication_attribute_extractor.py
 src/medical_kg_nlp/ner/lab_observation_extractor.py
 ```

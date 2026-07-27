@@ -49,6 +49,20 @@ composition root that turns config into a runnable component graph.
 | `mining/` | Licensed acquisition, immutable artifacts, parsers, curation, terminology evidence, review, model datasets, and snapshots | Competition schemas or hosted services |
 | `cli/` | `argparse` command routing and thin IO handlers | Metrics or pipeline algorithms |
 
+## Rule NER
+
+`RuleBasedNER` is a facade over a proposal-first engine. Independent dictionary, medication, lab,
+and boundary extractors emit immutable evidence before one global resolver chooses a non-overlapping
+set. Context may select only among proposed types, and every final span remains in raw coordinates.
+
+Start with [`rule-ner-v2.md`](rule-ner-v2.md). Useful searches:
+
+```bash
+rg "class .*ProposalExtractor|EntityProposal" src/medical_kg_nlp/ner tests
+rg "type_resolution|boundary_rules|rule_id" src/medical_kg_nlp/ner tests
+rg "medication_mention|structured_lab" src/medical_kg_nlp/ner tests
+```
+
 ## Public Ports
 
 The replaceable contracts live in [`pipeline/ports.py`](../src/medical_kg_nlp/pipeline/ports.py):
