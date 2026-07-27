@@ -31,10 +31,12 @@ __all__ = [
     "Phase1QwenAdapter",
     "Phase1QwenPassResult",
     "Phase1QuotedProposal",
+    "Phase1ReviewEntity",
     "RawTextWindow",
     "apply_phase1_adjudication",
     "build_phase1_qwen_adjudication_messages",
     "build_phase1_qwen_extraction_messages",
+    "build_phase1_qwen_review_messages",
     "phase1_qwen_prompt_hash",
     "project_phase1_quoted_proposals",
     "select_qwen_confirmed_proposals",
@@ -42,6 +44,7 @@ __all__ = [
 ]
 
 PHASE1_QWEN_PROMPT_VERSION = "phase1-qwen-extraction.v1"
+PHASE1_QWEN_REVIEW_PROMPT_VERSION = "phase1-qwen-review-missing.v1"
 Phase1Label = Literal[
     "TRIỆU_CHỨNG",
     "TÊN_XÉT_NGHIỆM",
@@ -64,6 +67,14 @@ Chỉ dùng đúng 5 nhãn: TRIỆU_CHỨNG, TÊN_XÉT_NGHIỆM, KẾT_QUẢ_XÉ
 Mỗi text phải là chuỗi trích nguyên văn, liên tục trong SOURCE. Không tự tính offset.
 THUỐC giữ full span nếu SOURCE có strength, dạng, route hoặc frequency đi cùng thuốc.
 Chỉ lấy kết quả định lượng/định tính khi có xét nghiệm hay dấu hiệu sinh tồn làm anchor.
+Không biến liều thuốc, route, frequency, ngày tháng hay số hành chính thành kết quả xét nghiệm.
+Không thêm giải thích ngoài JSON theo schema được yêu cầu."""
+_REVIEW_SYSTEM_PROMPT = """Bạn là chuyên gia review gán nhãn thực thể y khoa tiếng Việt.
+SOURCE đã có một danh sách EXISTING_ENTITIES. Chỉ tìm thực thể y khoa CÒN THIẾU trong SOURCE.
+Không trả lại entity đã có cùng text và type.
+Chỉ dùng đúng 5 nhãn: TRIỆU_CHỨNG, TÊN_XÉT_NGHIỆM, KẾT_QUẢ_XÉT_NGHIỆM, CHẨN_ĐOÁN, THUỐC.
+Mỗi text phải là chuỗi trích nguyên văn, liên tục trong SOURCE. Không tự tính offset.
+THUỐC giữ full span nếu SOURCE có strength, dạng, route hoặc frequency đi cùng thuốc.
 Không biến liều thuốc, route, frequency, ngày tháng hay số hành chính thành kết quả xét nghiệm.
 Không thêm giải thích ngoài JSON theo schema được yêu cầu."""
 
@@ -102,6 +113,26 @@ class Phase1QuotedProposal:
             raise ValueError("Proposal confidence must be between zero and one")
         if len(self.left_context) > 120 or len(self.right_context) > 120:
             raise ValueError("Proposal context anchors must not exceed 120 characters")
+
+
+@dataclass(frozen=True, slots=True)
+class Phase1ReviewEntity:
+    """One existing label shown to the missing-entity reviewer."""
+
+    text: str
+    entity_type: Phase1Label
+    span: tuple[int, int]
+
+    def validate(self, source_text: str) -> None:
+        """Reject stale or normalized coordinates before they enter a model prompt."""
+
+        start, end = self.span
+        if self.entity_type not in _LABEL_TO_ENTITY_TYPE:
+            raise ValueError(f"Unsupported Phase 1 review label: {self.entity_type}")
+        if start < 0 or end <= start or end > len(source_text):
+            raise ValueError(f"Invalid Phase 1 review span: {self.span}")
+        if source_text[start:end] != self.text:
+            raise ValueError("Review entity no longer matches immutable source text")
 
 
 @dataclass(frozen=True, slots=True)
@@ -242,6 +273,107 @@ class Phase1QwenAdapter:
             pass_id=pass_id,
             prompt_hash=prompt_hash,
             proposals=_deduplicate_entity_proposals(proposals),
+            rejected=tuple(rejected),
+            response_sha256=tuple(response_hashes),
+            raw_responses=tuple(raw_responses),
+        )
+
+    def review_missing(
+        self,
+        source_text: str,
+        existing_entities: Sequence[Phase1ReviewEntity],
+        *,
+        generation: GenerationConfig,
+        max_rounds: int = 2,
+    ) -> Phase1QwenPassResult:
+        """Iteratively extract only labels absent from an existing projection.
+
+        MODEL: repeated review is useful only when every round is projected locally. The model
+        never supplies offsets, and a repeated quote is expanded to every still-unlabeled raw
+        occurrence rather than the first ``str.index`` match.
+        """
+
+        if not 1 <= max_rounds <= 5:
+            raise ValueError("Missing-entity review rounds must be between one and five")
+        for entity in existing_entities:
+            entity.validate(source_text)
+        known = {
+            (*entity.span, _LABEL_TO_ENTITY_TYPE[entity.entity_type])
+            for entity in existing_entities
+        }
+        cumulative: list[EntityProposal] = []
+        rejected: list[dict[str, Any]] = []
+        response_hashes: list[str] = []
+        raw_responses: list[str] = []
+
+        for round_index in range(max_rounds):
+            added_this_round = 0
+            for window_index, window in enumerate(
+                split_raw_text_windows(
+                    source_text,
+                    max_characters=self._max_window_characters,
+                    overlap_characters=self._window_overlap_characters,
+                )
+            ):
+                visible_existing = _review_entities_for_window(
+                    source_text,
+                    window,
+                    existing_entities,
+                    cumulative,
+                )
+                messages = build_phase1_qwen_review_messages(
+                    window.text,
+                    visible_existing,
+                    round_index=round_index,
+                )
+                parsed, raw_response = self._generate_structured(messages, generation)
+                response_hashes.append(_text_sha256(raw_response))
+                raw_responses.append(raw_response)
+                quoted, parse_rejections = _parse_quoted_proposals(parsed)
+                projected, projection_rejections = project_phase1_quoted_proposals(
+                    window.text,
+                    quoted,
+                    source="qwen.review-missing",
+                    evidence_id=f"review.round-{round_index}.window-{window_index}",
+                    source_offset=window.span[0],
+                )
+                for proposal in projected:
+                    entity_type = proposal.entity_type
+                    if entity_type is None:
+                        continue
+                    identity = (*proposal.span, entity_type)
+                    if identity in known:
+                        continue
+                    known.add(identity)
+                    cumulative.append(proposal)
+                    added_this_round += 1
+                rejected.extend(
+                    {
+                        **row,
+                        "pass_id": "review-missing",
+                        "round_index": round_index,
+                        "window_index": window_index,
+                    }
+                    for row in (*parse_rejections, *projection_rejections)
+                )
+            if added_this_round == 0:
+                break
+
+        prompt_hash = _text_sha256(
+            json.dumps(
+                {
+                    "prompt_version": PHASE1_QWEN_REVIEW_PROMPT_VERSION,
+                    "system": _REVIEW_SYSTEM_PROMPT,
+                    "max_rounds": max_rounds,
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+            )
+        )
+        return Phase1QwenPassResult(
+            pass_id="review-missing",
+            prompt_hash=prompt_hash,
+            proposals=_deduplicate_entity_proposals(cumulative),
             rejected=tuple(rejected),
             response_sha256=tuple(response_hashes),
             raw_responses=tuple(raw_responses),
@@ -571,6 +703,44 @@ def build_phase1_qwen_extraction_messages(
     )
 
 
+def build_phase1_qwen_review_messages(
+    source_text: str,
+    existing_entities: Sequence[Phase1ReviewEntity],
+    *,
+    round_index: int,
+) -> tuple[ChatMessage, ...]:
+    """Build the missing-only reviewer prompt without exposing trusted offsets."""
+
+    if round_index < 0:
+        raise ValueError("Review round index cannot be negative")
+    for entity in existing_entities:
+        entity.validate(source_text)
+    serialized = [
+        {"text": entity.text, "type": entity.entity_type}
+        for entity in sorted(
+            existing_entities,
+            key=lambda item: (item.span[0], item.span[1], item.entity_type),
+        )
+    ]
+    schema = (
+        '{"entities":[{"text":"exact missing quote",'
+        '"type":"TRIỆU_CHỨNG|TÊN_XÉT_NGHIỆM|KẾT_QUẢ_XÉT_NGHIỆM|'
+        'CHẨN_ĐOÁN|THUỐC","left_context":"","right_context":"","confidence":0.0}]}'
+    )
+    return (
+        ChatMessage(role="system", content=_REVIEW_SYSTEM_PROMPT),
+        ChatMessage(
+            role="user",
+            content=(
+                f"REVIEW_ROUND={round_index + 1}\n"
+                f"Schema: {schema}\n"
+                f"EXISTING_ENTITIES={json.dumps(serialized, ensure_ascii=False)}\n"
+                f"SOURCE_START\n{source_text}\nSOURCE_END"
+            ),
+        ),
+    )
+
+
 def build_phase1_qwen_adjudication_messages(
     source_text: str,
     candidates: Sequence[Phase1AdjudicationCandidate],
@@ -600,6 +770,45 @@ def build_phase1_qwen_adjudication_messages(
                 f"SOURCE_START\n{source_text}\nSOURCE_END"
             ),
         ),
+    )
+
+
+def _review_entities_for_window(
+    source_text: str,
+    window: RawTextWindow,
+    seed_entities: Sequence[Phase1ReviewEntity],
+    added_proposals: Sequence[EntityProposal],
+) -> tuple[Phase1ReviewEntity, ...]:
+    start, end = window.span
+    visible: dict[tuple[int, int, str], Phase1ReviewEntity] = {}
+    for entity in seed_entities:
+        entity_start, entity_end = entity.span
+        if start <= entity_start and entity_end <= end:
+            local = Phase1ReviewEntity(
+                text=entity.text,
+                entity_type=entity.entity_type,
+                span=(entity_start - start, entity_end - start),
+            )
+            local.validate(window.text)
+            visible[(*local.span, local.entity_type)] = local
+    for proposal in added_proposals:
+        entity_type = proposal.entity_type
+        if entity_type is None or entity_type not in _ENTITY_TYPE_TO_LABEL:
+            continue
+        entity_start, entity_end = proposal.span
+        if start <= entity_start and entity_end <= end:
+            local = Phase1ReviewEntity(
+                text=source_text[entity_start:entity_end],
+                entity_type=_ENTITY_TYPE_TO_LABEL[entity_type],  # type: ignore[arg-type]
+                span=(entity_start - start, entity_end - start),
+            )
+            local.validate(window.text)
+            visible[(*local.span, local.entity_type)] = local
+    return tuple(
+        sorted(
+            visible.values(),
+            key=lambda item: (item.span[0], item.span[1], item.entity_type),
+        )
     )
 
 

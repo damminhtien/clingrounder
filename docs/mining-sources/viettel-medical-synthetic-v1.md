@@ -80,6 +80,41 @@ records: 155
 entities: 3215
 ```
 
+## Qwen Missing-Entity Curriculum
+
+The public 31.2236 artifact showed that iterative, missing-only review has materially higher recall
+than a single extraction pass. The training view therefore derives deterministic reviewer
+examples from train records: a stable mask exposes part of the trusted entity set as
+`EXISTING_ENTITIES`, while the assistant target contains only the held-out entities.
+
+Development records are never converted into reviewer training examples. The reviewer prompt does
+not expose trusted offsets; at runtime, quoted text is projected back to every still-unlabeled
+occurrence in the immutable source. This avoids the first-occurrence error caused by
+`str.index()`-style projection.
+
+```bash
+uv run medical-kg benchmark phase1 model-data build-qwen \
+  --source-dataset \
+    outputs/mining/model-datasets/phase1-manual-user-synthetic-v1/spans.jsonl \
+  --source-manifest \
+    outputs/mining/model-datasets/phase1-manual-user-synthetic-v1/manifest.json \
+  --output-dir \
+    outputs/mining/model-datasets/phase1-qwen-user-synthetic-review-v1 \
+  --review-masks-per-train-record 2 \
+  --review-keep-fraction 0.5 \
+  --review-seed phase1-qwen-review-missing-v1
+```
+
+Expected identity:
+
+```text
+build_fingerprint: 46d451f7df5af38521460f1130fea653cf26ef95d247058d844dffbe896be6e9
+extraction.jsonl: ade75d4b7168a0c4595cb34af52af57e1db7d1dfc99017754b1ad7a38fb6f4b0
+review_missing.jsonl: 1da0405325e3bce29799575aa218a03872929fd5441959535a8c2717daa1e467
+extraction records: 155
+review records: 270
+```
+
 ## Limitations
 
 - Synthetic `dev` and `test` are never calibration or challenge data.

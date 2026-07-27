@@ -13,8 +13,10 @@ from typing import Any
 from medical_kg_nlp.benchmarks.phase1.qwen_proposals import (
     Phase1AdjudicationCandidate,
     Phase1AdjudicationDecision,
+    Phase1ReviewEntity,
     build_phase1_qwen_adjudication_messages,
     build_phase1_qwen_extraction_messages,
+    build_phase1_qwen_review_messages,
 )
 from medical_kg_nlp.mining.io import write_json, write_jsonl
 from medical_kg_nlp.utils.hashing import sha256_file
@@ -44,13 +46,16 @@ _LABEL_MAP = {
 
 @dataclass(frozen=True, slots=True)
 class Phase1QwenDatasetConfig:
-    """Immutable inputs for extraction SFT and optional XLM-R hard negatives."""
+    """Immutable inputs for extraction, review, and optional adjudication curricula."""
 
     spans_path: Path
     spans_manifest_path: Path
     output_dir: Path
     hard_negative_predictions_path: Path | None = None
     include_development: bool = True
+    review_masks_per_train_record: int = 0
+    review_keep_fraction: float = 0.5
+    review_seed: str = "phase1-qwen-review-missing-v1"
 
     def __post_init__(self) -> None:
         if not self.spans_path.is_file() or not self.spans_manifest_path.is_file():
@@ -60,12 +65,18 @@ class Phase1QwenDatasetConfig:
             and not self.hard_negative_predictions_path.is_file()
         ):
             raise ValueError("Hard-negative prediction file does not exist")
+        if not 0 <= self.review_masks_per_train_record <= 4:
+            raise ValueError("Review masks per train record must be between zero and four")
+        if not 0.0 <= self.review_keep_fraction < 1.0:
+            raise ValueError("Review keep fraction must be in [0, 1)")
+        if not self.review_seed.strip():
+            raise ValueError("Review seed must be non-empty")
 
 
 def build_phase1_qwen_instruction_dataset(
     config: Phase1QwenDatasetConfig,
 ) -> dict[str, Any]:
-    """Build deterministic extraction records and train-only adjudication negatives."""
+    """Build deterministic extraction, missing-review, and adjudication records."""
 
     source_manifest = _load_and_validate_source_manifest(
         config.spans_manifest_path,
@@ -85,13 +96,16 @@ def build_phase1_qwen_instruction_dataset(
             source_rows,
             read_jsonl(config.hard_negative_predictions_path),
         )
+    review_rows = _build_review_records(source_rows, config=config)
 
     target = config.output_dir
     target.mkdir(parents=True, exist_ok=True)
     extraction_path = target / "extraction.jsonl"
     hard_negative_path = target / "hard_negatives.jsonl"
+    review_path = target / "review_missing.jsonl"
     extraction_sha256 = write_jsonl(extraction_path, extraction_rows)
     hard_negative_sha256 = write_jsonl(hard_negative_path, hard_negative_rows)
+    review_sha256 = write_jsonl(review_path, review_rows)
     split_counts = Counter(str(row["split"]) for row in extraction_rows)
     manifest = {
         "schema_version": _SCHEMA_VERSION,
@@ -130,6 +144,15 @@ def build_phase1_qwen_instruction_dataset(
                 "sha256": hard_negative_sha256,
                 "record_count": len(hard_negative_rows),
             },
+            "review_missing": {
+                "path": review_path.name,
+                "sha256": review_sha256,
+                "record_count": len(review_rows),
+                "train_only": True,
+                "masks_per_train_record": config.review_masks_per_train_record,
+                "keep_fraction": config.review_keep_fraction,
+                "seed": config.review_seed,
+            },
         },
     }
     manifest["build_fingerprint"] = _mapping_sha256(
@@ -162,6 +185,11 @@ def _load_and_validate_source_manifest(
         raise ValueError("Round 2 data cannot enter Qwen training or calibration")
     if bool(augmentation.get("quarantined_data_included")):
         raise ValueError("Quarantined data cannot enter Qwen training or calibration")
+    synthetic_fraction = float(augmentation.get("synthetic_train_fraction", 0.0))
+    if synthetic_fraction > 0.4:
+        raise ValueError("Qwen synthetic training fraction cannot exceed 0.4")
+    if int(augmentation.get("synthetic_development_record_count", 0)) != 0:
+        raise ValueError("Synthetic records cannot enter Qwen development")
     return raw
 
 
@@ -244,6 +272,165 @@ def _extraction_record(row: Mapping[str, Any]) -> dict[str, Any]:
         "text_sha256": row["text_sha256"],
         "entity_count": len(unique_targets),
     }
+
+
+def _build_review_records(
+    source_rows: Sequence[Mapping[str, Any]],
+    *,
+    config: Phase1QwenDatasetConfig,
+) -> list[dict[str, Any]]:
+    """Create deterministic missing-only masks from train records.
+
+    MODEL: the reviewer learns to complement an existing extractor, matching the iterative
+    inference protocol. Development rows are never masked into extra training examples.
+    """
+
+    output: list[dict[str, Any]] = []
+    if config.review_masks_per_train_record == 0:
+        return output
+    for row in source_rows:
+        if row["split"] != "train":
+            continue
+        unique = _unique_review_entities(row)
+        if not unique:
+            continue
+        for mask_index in range(config.review_masks_per_train_record):
+            kept, missing = _partition_review_entities(
+                unique,
+                record_id=str(row["record_id"]),
+                mask_index=mask_index,
+                keep_fraction=config.review_keep_fraction,
+                seed=config.review_seed,
+            )
+            messages = build_phase1_qwen_review_messages(
+                str(row["text"]),
+                tuple(
+                    Phase1ReviewEntity(
+                        text=str(entity["text"]),
+                        entity_type=str(entity["type"]),  # type: ignore[arg-type]
+                        span=(int(entity["start"]), int(entity["end"])),
+                    )
+                    for entity in kept
+                ),
+                round_index=mask_index,
+            )
+            assistant = json.dumps(
+                {
+                    "entities": [
+                        {
+                            "text": str(entity["text"]),
+                            "type": str(entity["type"]),
+                            "left_context": "",
+                            "right_context": "",
+                            "confidence": 1.0,
+                        }
+                        for entity in missing
+                    ]
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            output.append(
+                {
+                    "record_id": (
+                        f"qwen-review:{row['record_id']}:mask-{mask_index:02d}"
+                    ),
+                    "source_record_id": row["record_id"],
+                    "source_artifact_id": row["source_artifact_id"],
+                    "document_id": row["document_id"],
+                    "split": "train",
+                    "task": "phase1_missing_entity_review",
+                    "messages": [
+                        {"role": message.role, "content": message.content}
+                        for message in messages
+                    ]
+                    + [{"role": "assistant", "content": assistant}],
+                    "text_sha256": row["text_sha256"],
+                    "existing_entity_count": len(kept),
+                    "missing_entity_count": len(missing),
+                    "mask_index": mask_index,
+                }
+            )
+    return output
+
+
+def _unique_review_entities(
+    row: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    text = str(row["text"])
+    unique: dict[tuple[str, str], dict[str, Any]] = {}
+    for entity in row["entities"]:
+        source_label = str(entity["label"])
+        phase1_label = _LABEL_MAP[source_label]
+        start = int(entity["start"])
+        end = int(entity["end"])
+        quote = text[start:end]
+        key = (quote, phase1_label)
+        current = unique.get(key)
+        candidate = {
+            "text": quote,
+            "type": phase1_label,
+            "start": start,
+            "end": end,
+        }
+        if current is None or (start, end) < (
+            int(current["start"]),
+            int(current["end"]),
+        ):
+            unique[key] = candidate
+    return sorted(
+        unique.values(),
+        key=lambda entity: (
+            int(entity["start"]),
+            int(entity["end"]),
+            str(entity["type"]),
+        ),
+    )
+
+
+def _partition_review_entities(
+    entities: Sequence[dict[str, Any]],
+    *,
+    record_id: str,
+    mask_index: int,
+    keep_fraction: float,
+    seed: str,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    kept: list[dict[str, Any]] = []
+    missing: list[dict[str, Any]] = []
+    ranked = sorted(
+        entities,
+        key=lambda entity: hashlib.sha256(
+            (
+                f"{seed}\0{record_id}\0{mask_index}\0"
+                f"{entity['text']}\0{entity['type']}"
+            ).encode("utf-8")
+        ).hexdigest(),
+    )
+    threshold = int(keep_fraction * (1 << 64))
+    for entity in ranked:
+        digest = hashlib.sha256(
+            (
+                f"{seed}\0keep\0{record_id}\0{mask_index}\0"
+                f"{entity['text']}\0{entity['type']}"
+            ).encode("utf-8")
+        ).hexdigest()
+        destination = kept if int(digest[:16], 16) < threshold else missing
+        destination.append(entity)
+    if not missing:
+        missing.append(kept.pop())
+    if len(entities) > 1 and keep_fraction > 0.0 and not kept:
+        kept.append(missing.pop(0))
+
+    def entity_key(entity: Mapping[str, Any]) -> tuple[int, int, str]:
+        return (
+            int(entity["start"]),
+            int(entity["end"]),
+            str(entity["type"]),
+        )
+
+    return sorted(kept, key=entity_key), sorted(missing, key=entity_key)
 
 
 def _build_hard_negative_records(

@@ -57,6 +57,52 @@ def test_qwen_dataset_builds_train_and_development_without_offsets_in_target(
     assert "position" not in assistant["entities"][0]
 
 
+def test_qwen_dataset_builds_train_only_missing_reviewer_masks(
+    tmp_path: Path,
+) -> None:
+    spans = tmp_path / "spans.jsonl"
+    train = _span_row("1", "train", "Bệnh nhân ho", 10, 12, "SYMPTOM")
+    train["entities"].append(
+        {
+            "start": 0,
+            "end": 4,
+            "text": "Bệnh",
+            "label": "DISEASE",
+        }
+    )
+    rows = [
+        train,
+        _span_row("2", "development", "Có tăng huyết áp", 3, 16, "DISEASE"),
+    ]
+    spans_sha256 = write_jsonl(spans, rows)
+    manifest = tmp_path / "source-manifest.json"
+    _write_source_manifest(manifest, spans_sha256)
+
+    report = build_phase1_qwen_instruction_dataset(
+        Phase1QwenDatasetConfig(
+            spans_path=spans,
+            spans_manifest_path=manifest,
+            output_dir=tmp_path / "output",
+            review_masks_per_train_record=1,
+            review_keep_fraction=0.5,
+        )
+    )
+
+    assert report["outputs"]["review_missing"]["record_count"] == 1
+    review = json.loads(
+        (tmp_path / "output/review_missing.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()[0]
+    )
+    assert review["split"] == "train"
+    assert review["existing_entity_count"] == 1
+    assert review["missing_entity_count"] == 1
+    assert "EXISTING_ENTITIES=" in review["messages"][1]["content"]
+    assistant = json.loads(review["messages"][-1]["content"])
+    assert len(assistant["entities"]) == 1
+    assert "position" not in assistant["entities"][0]
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [

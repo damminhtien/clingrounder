@@ -260,7 +260,7 @@ def augment_phase1_model_user_synthetic(args: argparse.Namespace) -> int:
 
 
 def build_phase1_qwen_data(args: argparse.Namespace) -> int:
-    """Build extraction SFT and train-only XLM-R hard-negative records."""
+    """Build extraction, missing-review, and optional hard-negative records."""
 
     report = build_phase1_qwen_instruction_dataset(
         Phase1QwenDatasetConfig(
@@ -273,6 +273,9 @@ def build_phase1_qwen_data(args: argparse.Namespace) -> int:
                 else Path(args.hard_negative_predictions)
             ),
             include_development=not args.exclude_development,
+            review_masks_per_train_record=args.review_masks_per_train_record,
+            review_keep_fraction=args.review_keep_fraction,
+            review_seed=args.review_seed,
         )
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))

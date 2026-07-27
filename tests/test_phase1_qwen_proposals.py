@@ -11,6 +11,7 @@ from medical_kg_nlp.benchmarks.phase1.qwen_proposals import (
     Phase1AdjudicationDecision,
     Phase1QwenAdapter,
     Phase1QuotedProposal,
+    Phase1ReviewEntity,
     apply_phase1_adjudication,
     project_phase1_quoted_proposals,
     select_qwen_confirmed_proposals,
@@ -88,6 +89,52 @@ def test_qwen_structured_retry_does_not_accept_free_text() -> None:
 
     assert len(runtime.calls) == 2
     assert result.proposals[0].span == (10, 12)
+
+
+def test_missing_reviewer_projects_only_unlabeled_occurrences() -> None:
+    text = "ho và sốt; ho lại"
+    runtime = _FakeRuntime(
+        (
+            json.dumps(
+                {
+                    "entities": [
+                        {
+                            "text": "ho",
+                            "type": "TRIỆU_CHỨNG",
+                            "confidence": 0.9,
+                        },
+                        {
+                            "text": "sốt",
+                            "type": "TRIỆU_CHỨNG",
+                            "confidence": 0.9,
+                        },
+                    ]
+                },
+                ensure_ascii=False,
+            ),
+            '{"entities":[]}',
+        )
+    )
+
+    result = Phase1QwenAdapter(runtime).review_missing(
+        text,
+        (
+            Phase1ReviewEntity(
+                text="ho",
+                entity_type="TRIỆU_CHỨNG",
+                span=(0, 2),
+            ),
+        ),
+        generation=GenerationConfig(),
+        max_rounds=2,
+    )
+
+    assert [(row.span, row.entity_type) for row in result.proposals] == [
+        ((6, 9), EntityType.SYMPTOM),
+        ((11, 13), EntityType.SYMPTOM),
+    ]
+    assert "EXISTING_ENTITIES" in runtime.calls[0][1].content
+    assert '"position"' not in runtime.calls[0][1].content
 
 
 def test_consensus_requires_qwen_and_blocks_xlmr_only() -> None:

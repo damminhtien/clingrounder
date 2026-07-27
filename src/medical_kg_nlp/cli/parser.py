@@ -533,6 +533,22 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         action="store_true",
         help="Write train records only; development remains excluded rather than merged.",
     )
+    qwen_data_build.add_argument(
+        "--review-masks-per-train-record",
+        type=int,
+        default=0,
+        help="Create zero to four deterministic missing-only reviewer masks per train record.",
+    )
+    qwen_data_build.add_argument(
+        "--review-keep-fraction",
+        type=float,
+        default=0.5,
+        help="Expected share of unique entities shown as already extracted.",
+    )
+    qwen_data_build.add_argument(
+        "--review-seed",
+        default="phase1-qwen-review-missing-v1",
+    )
 
     model_data_calibrate = model_data_operations.add_parser(
         "calibrate",
