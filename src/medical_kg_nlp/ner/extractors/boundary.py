@@ -75,6 +75,8 @@ class ClinicalBoundaryProposalExtractor:
                 source_text,
                 foundation.span,
                 entity_type,
+                context,
+                foundation,
             )
             if expanded_span == foundation.span:
                 continue
@@ -116,6 +118,8 @@ class ClinicalBoundaryProposalExtractor:
         source_text: str,
         span: tuple[int, int],
         entity_type: EntityType,
+        context: RuleNerContext,
+        foundation: EntityProposal,
     ) -> tuple[tuple[int, int], tuple[str, ...]]:
         start, end = span
         rule_ids: list[str] = []
@@ -151,6 +155,15 @@ class ClinicalBoundaryProposalExtractor:
                     break
                 end = new_end
                 rule_ids.append("symptom_suffix")
+
+            structured_span = _structured_symptom_span(
+                source_text,
+                foundation,
+                context,
+            )
+            if structured_span is not None:
+                start, end = structured_span
+                rule_ids.append("symptom_structured_region")
 
         if entity_type == EntityType.DISEASE:
             for _ in range(self.max_suffixes):
@@ -200,6 +213,61 @@ def _consume_suffix(
     if match is None:
         return boundary, False
     return boundary + match.end("expand"), True
+
+
+def _structured_symptom_span(
+    source_text: str,
+    foundation: EntityProposal,
+    context: RuleNerContext,
+) -> tuple[int, int] | None:
+    """Complete a reviewed short alias inside an already parsed structural region.
+
+    A generic dictionary mention must never absorb its full line. Only contextual aliases carry
+    evidence that the short surface is unsafe without structure. The enclosing list item or
+    medication indication supplies a bounded phrase whose raw coordinates are already known.
+    """
+
+    if foundation.source != "contextual_alias":
+        return None
+    start, end = foundation.span
+    for item in context.medication_items:
+        indication = item.indication_span
+        if indication is None or not (
+            indication[0] <= start and end <= indication[1]
+        ):
+            continue
+        return _trim_structured_span(source_text, indication)
+
+    structure = context.structure
+    if structure is None or not structure.starts_list_item(start):
+        return None
+    line = structure.line_at(start)
+    if line is None:
+        return None
+    return _trim_structured_span(source_text, (start, line.span[1]))
+
+
+def _trim_structured_span(
+    source_text: str,
+    span: tuple[int, int],
+) -> tuple[int, int] | None:
+    """Trim layout punctuation and reject regions too broad for one clinical mention."""
+
+    start, end = span
+    while end > start and source_text[end - 1].isspace():
+        end -= 1
+    while end > start and source_text[end - 1] in ".:;":
+        end -= 1
+    while end > start and source_text[end - 1].isspace():
+        end -= 1
+    if end <= start:
+        return None
+    phrase = source_text[start:end]
+    # SCALING: a hard local bound prevents malformed OCR/list lines from creating document-sized
+    # proposals and keeps global interval resolution predictable.
+    if len(phrase) > 96 or len(phrase.split()) > 18:
+        return None
+    return start, end
 
 
 def _proposal_order(proposal: EntityProposal) -> tuple[int, int, str]:

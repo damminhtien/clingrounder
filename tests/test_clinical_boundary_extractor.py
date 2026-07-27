@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from medical_kg_nlp.ner.contracts import RuleNerContext
+from medical_kg_nlp.ner.document_structure import DocumentStructureAnalyzer
 from medical_kg_nlp.ner.extractors.boundary import ClinicalBoundaryProposalExtractor
+from medical_kg_nlp.ner.medication_list_parser import MedicationListParser
 from medical_kg_nlp.ner.proposal import EntityProposal
 from medical_kg_nlp.schema.types import EntityType
 
@@ -68,16 +70,83 @@ def test_boundary_extractor_expands_compound_from_xiu_fragment() -> None:
     ]
 
 
+def test_boundary_extractor_completes_contextual_alias_list_item() -> None:
+    text = "Triệu chứng hiện tại\n- đau hạ sườn phải tái phát."
+    start = text.index("đau")
+    foundation = _proposal(
+        text,
+        "đau",
+        EntityType.SYMPTOM,
+        start,
+        source="contextual_alias",
+    )
+
+    proposals = ClinicalBoundaryProposalExtractor().propose(
+        text,
+        RuleNerContext(
+            foundation_proposals=(foundation,),
+            structure=DocumentStructureAnalyzer().analyze(text),
+        ),
+    )
+
+    assert _mentions(text, proposals) == [
+        ("đau hạ sườn phải tái phát", EntityType.SYMPTOM)
+    ]
+    assert dict(proposals[0].features)["boundary_rules"] == (
+        "symptom_structured_region"
+    )
+
+
+def test_boundary_extractor_completes_contextual_medication_indication() -> None:
+    text = "1. acetaminophen 325 mg po q6h:prn điều trị đau nhức"
+    start = text.index("đau")
+    foundation = _proposal(
+        text,
+        "đau",
+        EntityType.SYMPTOM,
+        start,
+        source="contextual_alias",
+    )
+
+    proposals = ClinicalBoundaryProposalExtractor().propose(
+        text,
+        RuleNerContext(
+            foundation_proposals=(foundation,),
+            medication_items=MedicationListParser().items(text),
+            structure=DocumentStructureAnalyzer().analyze(text),
+        ),
+    )
+
+    assert _mentions(text, proposals) == [("đau nhức", EntityType.SYMPTOM)]
+
+
+def test_boundary_extractor_does_not_complete_dictionary_list_item() -> None:
+    text = "- đau hạ sườn phải tái phát."
+    foundation = _proposal(text, "đau", EntityType.SYMPTOM, text.index("đau"))
+
+    proposals = ClinicalBoundaryProposalExtractor().propose(
+        text,
+        RuleNerContext(
+            foundation_proposals=(foundation,),
+            structure=DocumentStructureAnalyzer().analyze(text),
+        ),
+    )
+
+    assert proposals == ()
+
+
 def _proposal(
     source_text: str,
     mention: str,
     entity_type: EntityType,
     start: int,
+    *,
+    source: str = "dictionary_exact",
 ) -> EntityProposal:
     proposal = EntityProposal(
         span=(start, start + len(mention)),
         candidate_types=(entity_type,),
-        source="dictionary_exact",
+        source=source,
         score=0.78,
         evidence_ids=("exact:C1",),
         concept_ids=("C1",),
