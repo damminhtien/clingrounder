@@ -257,11 +257,25 @@ class Phase1QwenAdapter:
                 pass_id=pass_id,
                 target_types=normalized_types,
             )
-            (quoted, parse_rejections), raw_response = self._generate_structured(
-                messages,
-                generation,
-                parser=_parse_quoted_proposals,
-            )
+            try:
+                (quoted, parse_rejections), raw_response = self._generate_structured(
+                    messages,
+                    generation,
+                    parser=_parse_quoted_proposals,
+                )
+            except StructuredResponseError as error:
+                # SCALING: one malformed model response must not discard every completed
+                # document in a multi-hour batch. The strict parser remains authoritative; this
+                # window contributes no proposal and the failure stays visible in the trace.
+                rejected.append(
+                    {
+                        "reason": "structured_response_exhausted",
+                        "pass_id": pass_id,
+                        "window_index": window_index,
+                        "error": str(error),
+                    }
+                )
+                continue
             response_hashes.append(_text_sha256(raw_response))
             raw_responses.append(raw_response)
             projected, projection_rejections = project_phase1_quoted_proposals(
@@ -337,11 +351,25 @@ class Phase1QwenAdapter:
                     visible_existing,
                     round_index=round_index,
                 )
-                (quoted, parse_rejections), raw_response = self._generate_structured(
-                    messages,
-                    generation,
-                    parser=_parse_quoted_proposals,
-                )
+                try:
+                    (quoted, parse_rejections), raw_response = (
+                        self._generate_structured(
+                            messages,
+                            generation,
+                            parser=_parse_quoted_proposals,
+                        )
+                    )
+                except StructuredResponseError as error:
+                    rejected.append(
+                        {
+                            "reason": "structured_response_exhausted",
+                            "pass_id": "review-missing",
+                            "round_index": round_index,
+                            "window_index": window_index,
+                            "error": str(error),
+                        }
+                    )
+                    continue
                 response_hashes.append(_text_sha256(raw_response))
                 raw_responses.append(raw_response)
                 projected, projection_rejections = project_phase1_quoted_proposals(

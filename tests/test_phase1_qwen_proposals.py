@@ -91,6 +91,32 @@ def test_qwen_structured_retry_does_not_accept_free_text() -> None:
     assert result.proposals[0].span == (10, 12)
 
 
+def test_qwen_exhausted_structured_response_isolated_to_one_window() -> None:
+    runtime = _FakeRuntime(('{"unexpected":[]}', '{"also_unexpected":[]}'))
+
+    result = Phase1QwenAdapter(runtime, structured_retries=1).extract(
+        "Bệnh nhân ho.",
+        pass_id="recall",
+        target_types=("TRIỆU_CHỨNG",),
+        generation=GenerationConfig(),
+    )
+
+    assert not result.proposals
+    assert result.response_sha256 == ()
+    assert result.raw_responses == ()
+    assert result.rejected == (
+        {
+            "reason": "structured_response_exhausted",
+            "pass_id": "recall",
+            "window_index": 0,
+            "error": (
+                "Structured generation failed after retries: "
+                "Extraction response requires exactly one recognized entity array"
+            ),
+        },
+    )
+
+
 def test_qwen_projection_uses_evidence_score_and_recovers_bad_context() -> None:
     runtime = _FakeRuntime(
         (
