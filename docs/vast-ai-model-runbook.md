@@ -47,11 +47,22 @@ legacy `vastai show instances --raw` returns HTTP 410 instead of an empty list.
 
 ### A. Five-Type XLM-R Training
 
-Use the pinned run:
+The original pinned run is:
 
 ```text
 configs/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
 ```
+
+That three-epoch schedule collapsed to the `O` class in the first executed GPU experiment. The
+selected recovery schedule is:
+
+```text
+configs/models/phase1-five-type-xlmr-qa-edu-e12-lr5e5-2026-07-27.yaml
+```
+
+See [`experiments/vast-xlmr-2026-07-27.md`](experiments/vast-xlmr-2026-07-27.md) for the executed
+template, runtime caveat, ablation metrics, returned fingerprint, calibration thresholds, and
+observed cost.
 
 Recommended rental:
 
@@ -285,6 +296,23 @@ uv run medical-kg benchmark phase1 model-data calibrate \
 
 Calibration may read only the 16-document development split. It must not open the frozen holdout or
 Round 2 labels.
+
+For the selected recovery run, use:
+
+```bash
+uv run medical-kg model inspect-token-classifier-run \
+  --config configs/models/phase1-five-type-xlmr-qa-edu-e12-lr5e5-2026-07-27.yaml
+
+uv run medical-kg benchmark phase1 model-data calibrate \
+  --pipeline-config configs/pipeline/phase1-five-type-qa-edu-e12-lr5e5-model-only.yaml \
+  --output-dir outputs/models/calibration-e12-lr5e5-2026-07-27
+```
+
+Expected final-model fingerprint:
+
+```text
+169a02de77d1198e062789271aac563c8000e8aa0ef7e4c95a1ed06ea07d771a
+```
 
 ## Promotion Gates
 
