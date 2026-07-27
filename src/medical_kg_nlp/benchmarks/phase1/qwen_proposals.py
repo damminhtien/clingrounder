@@ -43,8 +43,8 @@ __all__ = [
     "split_raw_text_windows",
 ]
 
-PHASE1_QWEN_PROMPT_VERSION = "phase1-qwen-extraction.v1"
-PHASE1_QWEN_REVIEW_PROMPT_VERSION = "phase1-qwen-review-missing.v1"
+PHASE1_QWEN_PROMPT_VERSION = "phase1-qwen-extraction.v2"
+PHASE1_QWEN_REVIEW_PROMPT_VERSION = "phase1-qwen-review-missing.v2"
 Phase1Label = Literal[
     "TRIỆU_CHỨNG",
     "TÊN_XÉT_NGHIỆM",
@@ -63,9 +63,12 @@ _LABEL_TO_ENTITY_TYPE: dict[str, EntityType] = {
     "THUỐC": EntityType.DRUG,
 }
 _ENTITY_TYPE_TO_LABEL = {value: key for key, value in _LABEL_TO_ENTITY_TYPE.items()}
+_MODEL_PROPOSAL_CONFIDENCE = 0.90
+_MAX_CONTEXT_CHARACTERS = 120
 _SYSTEM_PROMPT = """Bạn là bộ gán nhãn thực thể y khoa tiếng Việt.
 Chỉ dùng đúng 5 nhãn: TRIỆU_CHỨNG, TÊN_XÉT_NGHIỆM, KẾT_QUẢ_XÉT_NGHIỆM, CHẨN_ĐOÁN, THUỐC.
 Mỗi text phải là chuỗi trích nguyên văn, liên tục trong SOURCE. Không tự tính offset.
+Không tự chấm confidence; pipeline sẽ hiệu chỉnh theo agreement giữa các pass.
 THUỐC giữ full span nếu SOURCE có strength, dạng, route hoặc frequency đi cùng thuốc.
 Chỉ lấy kết quả định lượng/định tính khi có xét nghiệm hay dấu hiệu sinh tồn làm anchor.
 Không biến liều thuốc, route, frequency, ngày tháng hay số hành chính thành kết quả xét nghiệm.
@@ -75,6 +78,7 @@ SOURCE đã có một danh sách EXISTING_ENTITIES. Chỉ tìm thực thể y kh
 Không trả lại entity đã có cùng text và type.
 Chỉ dùng đúng 5 nhãn: TRIỆU_CHỨNG, TÊN_XÉT_NGHIỆM, KẾT_QUẢ_XÉT_NGHIỆM, CHẨN_ĐOÁN, THUỐC.
 Mỗi text phải là chuỗi trích nguyên văn, liên tục trong SOURCE. Không tự tính offset.
+Không tự chấm confidence; pipeline sẽ hiệu chỉnh theo agreement giữa các pass.
 THUỐC giữ full span nếu SOURCE có strength, dạng, route hoặc frequency đi cùng thuốc.
 Không biến liều thuốc, route, frequency, ngày tháng hay số hành chính thành kết quả xét nghiệm.
 Không thêm giải thích ngoài JSON theo schema được yêu cầu."""
@@ -112,7 +116,10 @@ class Phase1QuotedProposal:
             raise ValueError(f"Unsupported Phase 1 label: {self.entity_type}")
         if not 0.0 <= self.confidence <= 1.0:
             raise ValueError("Proposal confidence must be between zero and one")
-        if len(self.left_context) > 120 or len(self.right_context) > 120:
+        if (
+            len(self.left_context) > _MAX_CONTEXT_CHARACTERS
+            or len(self.right_context) > _MAX_CONTEXT_CHARACTERS
+        ):
             raise ValueError("Proposal context anchors must not exceed 120 characters")
 
 
@@ -514,7 +521,8 @@ def project_phase1_quoted_proposals(
     projected: list[EntityProposal] = []
     rejected: list[dict[str, Any]] = []
     for index, proposal in enumerate(proposals):
-        occurrences = _exact_occurrences(source_text, proposal.text)
+        exact_occurrences = _exact_occurrences(source_text, proposal.text)
+        occurrences = exact_occurrences
         if proposal.left_context:
             occurrences = [
                 start
@@ -529,6 +537,14 @@ def project_phase1_quoted_proposals(
                 for start in occurrences
                 if source_text[start + len(proposal.text) :].startswith(proposal.right_context)
             ]
+        context_projection = "matched"
+        if not occurrences and exact_occurrences:
+            # MODEL: exact quotation is the offset authority. Context anchors are only optional
+            # disambiguation hints, and local chat checkpoints sometimes copy a whole clause or
+            # invent spacing around an otherwise exact mention. Agreement gates still prevent a
+            # single recovered quote from entering final output.
+            occurrences = exact_occurrences
+            context_projection = "fallback_to_all_exact_occurrences"
         if not occurrences:
             rejected.append(
                 {
@@ -555,6 +571,7 @@ def project_phase1_quoted_proposals(
                             ("left_context", proposal.left_context),
                             ("quoted_text", proposal.text),
                             ("right_context", proposal.right_context),
+                            ("context_projection", context_projection),
                         )
                     )
                 ),
@@ -704,7 +721,7 @@ def build_phase1_qwen_extraction_messages(
     schema = (
         '{"entities":[{"text":"exact quote","type":"'
         + '|'.join(target_types)
-        + '","left_context":"","right_context":"","confidence":0.0}]}'
+        + '","left_context":"","right_context":""}]}'
     )
     return (
         ChatMessage(role="system", content=_SYSTEM_PROMPT),
@@ -740,7 +757,7 @@ def build_phase1_qwen_review_messages(
     schema = (
         '{"entities":[{"text":"exact missing quote",'
         '"type":"TRIỆU_CHỨNG|TÊN_XÉT_NGHIỆM|KẾT_QUẢ_XÉT_NGHIỆM|'
-        'CHẨN_ĐOÁN|THUỐC","left_context":"","right_context":"","confidence":0.0}]}'
+        'CHẨN_ĐOÁN|THUỐC","left_context":"","right_context":""}]}'
     )
     return (
         ChatMessage(role="system", content=_REVIEW_SYSTEM_PROMPT),
@@ -867,9 +884,18 @@ def _parse_quoted_proposals(
                 Phase1QuotedProposal(
                     text=str(row.get("text", "")),
                     entity_type=entity_type,  # type: ignore[arg-type]
-                    confidence=float(row.get("confidence", 0.0)),
-                    left_context=str(row.get("left_context", "")),
-                    right_context=str(row.get("right_context", "")),
+                    # MODEL: self-reported confidence copied the schema placeholder in Qwen3.
+                    # Exact quote projection receives a fixed source score; independent pass or
+                    # support agreement remains the actual promotion signal.
+                    confidence=_MODEL_PROPOSAL_CONFIDENCE,
+                    left_context=_bounded_context(
+                        row.get("left_context", ""),
+                        side="left",
+                    ),
+                    right_context=_bounded_context(
+                        row.get("right_context", ""),
+                        side="right",
+                    ),
                 )
             )
         except (TypeError, ValueError) as error:
@@ -880,6 +906,17 @@ def _parse_quoted_proposals(
                 }
             )
     return output, rejected
+
+
+def _bounded_context(value: Any, *, side: Literal["left", "right"]) -> str:
+    """Retain only the context nearest the quote without trusting model offsets."""
+
+    text = str(value)
+    if len(text) <= _MAX_CONTEXT_CHARACTERS:
+        return text
+    if side == "left":
+        return text[-_MAX_CONTEXT_CHARACTERS:]
+    return text[:_MAX_CONTEXT_CHARACTERS]
 
 
 def _parse_adjudication_decisions(

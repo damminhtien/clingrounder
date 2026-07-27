@@ -91,6 +91,41 @@ def test_qwen_structured_retry_does_not_accept_free_text() -> None:
     assert result.proposals[0].span == (10, 12)
 
 
+def test_qwen_projection_uses_evidence_score_and_recovers_bad_context() -> None:
+    runtime = _FakeRuntime(
+        (
+            json.dumps(
+                {
+                    "entities": [
+                        {
+                            "text": "ho",
+                            "type": "TRIỆU_CHỨNG",
+                            "left_context": "x" * 200,
+                            "right_context": "y" * 200,
+                            "confidence": 0.0,
+                        }
+                    ]
+                },
+                ensure_ascii=False,
+            ),
+        )
+    )
+    adapter = Phase1QwenAdapter(runtime)
+
+    result = adapter.extract(
+        "ho rồi ho",
+        pass_id="recall",
+        target_types=("TRIỆU_CHỨNG",),
+        generation=GenerationConfig(),
+    )
+
+    assert [proposal.span for proposal in result.proposals] == [(0, 2), (7, 9)]
+    assert {proposal.score for proposal in result.proposals} == {0.90}
+    assert not result.rejected
+    prompt = runtime.calls[0][1].content
+    assert '"confidence"' not in prompt
+
+
 def test_missing_reviewer_retries_json_with_wrong_root_schema() -> None:
     runtime = _FakeRuntime(('{"unexpected":[]}', '{"entities":[]}'))
 
