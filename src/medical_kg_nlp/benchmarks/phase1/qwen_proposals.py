@@ -10,9 +10,9 @@ from __future__ import annotations
 import hashlib
 import json
 from collections import defaultdict
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, TypeVar
 
 from medical_kg_nlp.adapters.generative import (
     ChatMessage,
@@ -53,6 +53,7 @@ Phase1Label = Literal[
     "THUỐC",
 ]
 AdjudicationAction = Literal["KEEP", "DROP", "REPLACE"]
+_StructuredT = TypeVar("_StructuredT")
 
 _LABEL_TO_ENTITY_TYPE: dict[str, EntityType] = {
     "TRIỆU_CHỨNG": EntityType.SYMPTOM,
@@ -249,10 +250,13 @@ class Phase1QwenAdapter:
                 pass_id=pass_id,
                 target_types=normalized_types,
             )
-            parsed, raw_response = self._generate_structured(messages, generation)
+            (quoted, parse_rejections), raw_response = self._generate_structured(
+                messages,
+                generation,
+                parser=_parse_quoted_proposals,
+            )
             response_hashes.append(_text_sha256(raw_response))
             raw_responses.append(raw_response)
-            quoted, parse_rejections = _parse_quoted_proposals(parsed)
             projected, projection_rejections = project_phase1_quoted_proposals(
                 window.text,
                 quoted,
@@ -326,10 +330,13 @@ class Phase1QwenAdapter:
                     visible_existing,
                     round_index=round_index,
                 )
-                parsed, raw_response = self._generate_structured(messages, generation)
+                (quoted, parse_rejections), raw_response = self._generate_structured(
+                    messages,
+                    generation,
+                    parser=_parse_quoted_proposals,
+                )
                 response_hashes.append(_text_sha256(raw_response))
                 raw_responses.append(raw_response)
-                quoted, parse_rejections = _parse_quoted_proposals(parsed)
                 projected, projection_rejections = project_phase1_quoted_proposals(
                     window.text,
                     quoted,
@@ -395,8 +402,11 @@ class Phase1QwenAdapter:
                     f"Adjudication candidate {candidate.proposal_id} violates raw offsets"
                 )
         messages = build_phase1_qwen_adjudication_messages(source_text, candidates)
-        parsed, raw_response = self._generate_structured(messages, generation)
-        decisions = _parse_adjudication_decisions(parsed)
+        decisions, raw_response = self._generate_structured(
+            messages,
+            generation,
+            parser=_parse_adjudication_decisions,
+        )
         known_ids = {candidate.proposal_id for candidate in candidates}
         if any(decision.proposal_id not in known_ids for decision in decisions):
             raise ValueError("Adjudication response references an unknown proposal_id")
@@ -406,14 +416,19 @@ class Phase1QwenAdapter:
         self,
         messages: Sequence[ChatMessage],
         generation: GenerationConfig,
-    ) -> tuple[Any, str]:
+        *,
+        parser: Callable[[Any], _StructuredT],
+    ) -> tuple[_StructuredT, str]:
+        """Generate and validate one task schema inside the bounded retry loop."""
+
         active_messages = list(messages)
-        last_error: StructuredResponseError | None = None
+        last_error: Exception | None = None
         for attempt in range(self._structured_retries + 1):
             raw_response = self._runtime.generate(active_messages, generation)
             try:
-                return parse_structured_response(raw_response), raw_response
-            except StructuredResponseError as error:
+                parsed = parse_structured_response(raw_response)
+                return parser(parsed), raw_response
+            except (StructuredResponseError, TypeError, ValueError) as error:
                 last_error = error
                 if attempt >= self._structured_retries:
                     break
@@ -423,8 +438,8 @@ class Phase1QwenAdapter:
                         ChatMessage(
                             role="user",
                             content=(
-                                "Output trước không đúng JSON schema. Hãy trả lại duy nhất JSON "
-                                "hợp lệ, không giải thích."
+                                "Output trước không đúng JSON schema. Lỗi validator: "
+                                f"{error}. Hãy trả lại duy nhất JSON đúng schema, không giải thích."
                             ),
                         ),
                     )

@@ -91,6 +91,21 @@ def test_qwen_structured_retry_does_not_accept_free_text() -> None:
     assert result.proposals[0].span == (10, 12)
 
 
+def test_missing_reviewer_retries_json_with_wrong_root_schema() -> None:
+    runtime = _FakeRuntime(('{"missing":[]}', '{"entities":[]}'))
+
+    result = Phase1QwenAdapter(runtime).review_missing(
+        "Bệnh nhân ho.",
+        (),
+        generation=GenerationConfig(),
+        max_rounds=1,
+    )
+
+    assert len(runtime.calls) == 2
+    assert not result.proposals
+    assert 'requires an entities array' in runtime.calls[1][-1].content
+
+
 def test_missing_reviewer_projects_only_unlabeled_occurrences() -> None:
     text = "ho và sốt; ho lại"
     runtime = _FakeRuntime(
