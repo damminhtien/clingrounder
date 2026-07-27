@@ -29,7 +29,11 @@ _QUALITATIVE_RESULT_RE = re.compile(
     flags=re.IGNORECASE | re.UNICODE,
 )
 _LEFT_QUALITATIVE_RESULT_RE = re.compile(
-    r"(?<!\w)(?P<value>tăng\s+cao|tăng|giảm|cao|thấp)\s*$",
+    r"(?<!\w)(?P<value>"
+    r"dương\s+tính|âm\s+tính|bình\s+thường|bất\s+thường|"
+    r"đang\s+chờ(?:\s+kết\s+quả)?|"
+    r"tăng\s+cao|tăng|giảm|cao|thấp"
+    r")\s*$",
     flags=re.IGNORECASE | re.UNICODE,
 )
 
