@@ -56,9 +56,20 @@ def test_vast_template_helper_preserves_template_dependencies(tmp_path: Path) ->
 
 def test_vast_runners_source_shared_template_helper() -> None:
     for path in (
+        Path("scripts/vast/run_qwen_phase1_proposals.sh"),
         Path("scripts/vast/run_qwen_phase1_review.sh"),
         Path("scripts/vast/run_vietmed_support.sh"),
     ):
         source = path.read_text(encoding="utf-8")
         assert 'source "${SCRIPT_DIR}/template_runtime.sh"' in source
         assert "uv sync" not in source
+
+
+def test_qwen_proposal_runner_defaults_to_bounded_consensus_inference() -> None:
+    source = Path("scripts/vast/run_qwen_phase1_proposals.sh").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'MAX_RUNTIME_SECONDS="${MAX_RUNTIME_SECONDS:-21600}"' in source
+    assert '--support-source "${SUPPORT_SOURCE}"' in source
+    assert "command+=(--no-adjudication)" in source
