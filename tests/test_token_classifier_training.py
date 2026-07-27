@@ -14,6 +14,7 @@ from medical_kg_nlp.cli.parser import build_parser
 from medical_kg_nlp.training import (
     SpanTrainingEntity,
     SpanTrainingRecord,
+    TokenClassifierTrainingConfig,
     TokenBoundaryAlignmentError,
     build_bio_label_vocabulary,
     compute_bio_span_metrics,
@@ -257,6 +258,28 @@ def test_training_import_does_not_import_model_frameworks() -> None:
     )
 
     assert process.returncode == 0, process.stderr
+
+
+def test_transformers_five_training_arguments_exclude_removed_overwrite_flag(
+    tmp_path: Path,
+) -> None:
+    config = TokenClassifierTrainingConfig(
+        dataset_path=tmp_path / "spans.jsonl",
+        dataset_manifest_path=tmp_path / "manifest.json",
+        output_dir=tmp_path / "model",
+        model_id="local/model",
+        revision="deadbeef",
+        overwrite_output=True,
+    )
+
+    arguments = training_runtime._training_argument_kwargs(  # noqa: SLF001
+        config,
+        has_evaluation=True,
+    )
+
+    assert "overwrite_output_dir" not in arguments
+    assert arguments["eval_strategy"] == "epoch"
+    assert arguments["load_best_model_at_end"] is True
 
 
 def _raw_record(record_id: str, split: str, text: str, label: str) -> dict[str, Any]:

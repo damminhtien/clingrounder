@@ -207,30 +207,7 @@ def train_huggingface_token_classifier(
 
     has_evaluation = evaluation_dataset is not None
     training_arguments = transformers.TrainingArguments(
-        output_dir=str(config.output_dir),
-        overwrite_output_dir=config.overwrite_output,
-        num_train_epochs=config.epochs,
-        per_device_train_batch_size=config.train_batch_size,
-        per_device_eval_batch_size=config.evaluation_batch_size,
-        gradient_accumulation_steps=config.gradient_accumulation_steps,
-        learning_rate=config.learning_rate,
-        weight_decay=config.weight_decay,
-        warmup_ratio=config.warmup_ratio,
-        eval_strategy="epoch" if has_evaluation else "no",
-        save_strategy="epoch",
-        save_total_limit=2,
-        load_best_model_at_end=has_evaluation,
-        metric_for_best_model="span_f1" if has_evaluation else None,
-        greater_is_better=True if has_evaluation else None,
-        logging_strategy="steps",
-        logging_steps=10,
-        report_to=[],
-        seed=config.seed,
-        data_seed=config.seed,
-        fp16=config.fp16,
-        bf16=config.bf16,
-        use_cpu=config.use_cpu,
-        full_determinism=config.full_determinism,
+        **_training_argument_kwargs(config, has_evaluation=has_evaluation)
     )
     trainer = transformers.Trainer(
         model=model,
@@ -292,6 +269,43 @@ def train_huggingface_token_classifier(
     }
     write_json(config.output_dir / "run_manifest.json", manifest)
     return manifest
+
+
+def _training_argument_kwargs(
+    config: TokenClassifierTrainingConfig,
+    *,
+    has_evaluation: bool,
+) -> dict[str, Any]:
+    """Build the pinned Transformers 5 training contract without framework imports."""
+
+    # MODEL: output overwrite/resume semantics are enforced by _validate_output_directory.
+    # Transformers 5 removed TrainingArguments.overwrite_output_dir, so passing the legacy
+    # parameter would fail before the first forward/backward step.
+    return {
+        "output_dir": str(config.output_dir),
+        "num_train_epochs": config.epochs,
+        "per_device_train_batch_size": config.train_batch_size,
+        "per_device_eval_batch_size": config.evaluation_batch_size,
+        "gradient_accumulation_steps": config.gradient_accumulation_steps,
+        "learning_rate": config.learning_rate,
+        "weight_decay": config.weight_decay,
+        "warmup_ratio": config.warmup_ratio,
+        "eval_strategy": "epoch" if has_evaluation else "no",
+        "save_strategy": "epoch",
+        "save_total_limit": 2,
+        "load_best_model_at_end": has_evaluation,
+        "metric_for_best_model": "span_f1" if has_evaluation else None,
+        "greater_is_better": True if has_evaluation else None,
+        "logging_strategy": "steps",
+        "logging_steps": 10,
+        "report_to": [],
+        "seed": config.seed,
+        "data_seed": config.seed,
+        "fp16": config.fp16,
+        "bf16": config.bf16,
+        "use_cpu": config.use_cpu,
+        "full_determinism": config.full_determinism,
+    }
 
 
 def verify_saved_token_classifier(
