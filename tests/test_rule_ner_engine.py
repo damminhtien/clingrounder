@@ -53,7 +53,30 @@ def test_contextual_type_resolver_uses_explicit_symptom_and_diagnosis_cues() -> 
     assert unresolved[0].feature("type_resolution") == "disease_symptom_context_missing"
 
 
-def test_contextual_type_resolver_can_retype_unique_disease_in_symptom_section() -> None:
+def test_contextual_type_resolver_uses_sections_for_ambiguous_type_evidence() -> None:
+    ner = RuleBasedNER(_dual_type_store("táo bón"))
+    text = (
+        "Bệnh lý mãn tính\n- táo bón\n"
+        "Triệu chứng hiện tại\n- táo bón\n"
+        "Các sự kiện trước khi nhập viện\n- táo bón\n"
+        "Kết quả xét nghiệm\n- táo bón"
+    )
+
+    result = ner.extract_with_trace(text)
+
+    assert [(entity.text, entity.type) for entity in result.entities] == [
+        ("táo bón", EntityType.DISEASE),
+        ("táo bón", EntityType.SYMPTOM),
+        ("táo bón", EntityType.DISEASE),
+        ("táo bón", EntityType.DISEASE),
+    ]
+    assert any(
+        proposal.feature("type_resolution") == "explicit_symptom_section"
+        for proposal in result.trace.proposals
+    )
+
+
+def test_contextual_type_resolver_does_not_invent_unproposed_type() -> None:
     store = DictionaryStore(
         [
             ConceptEntry(
@@ -69,6 +92,7 @@ def test_contextual_type_resolver_can_retype_unique_disease_in_symptom_section()
     text = (
         "Bệnh lý mãn tính\n- táo bón\n"
         "Triệu chứng hiện tại\n- táo bón\n"
+        "Các sự kiện trước khi nhập viện\n- táo bón\n"
         "Kết quả xét nghiệm\n- táo bón"
     )
 
@@ -76,12 +100,14 @@ def test_contextual_type_resolver_can_retype_unique_disease_in_symptom_section()
 
     assert [(entity.text, entity.type) for entity in result.entities] == [
         ("táo bón", EntityType.DISEASE),
-        ("táo bón", EntityType.SYMPTOM),
+        ("táo bón", EntityType.DISEASE),
+        ("táo bón", EntityType.DISEASE),
         ("táo bón", EntityType.DISEASE),
     ]
-    assert any(
-        proposal.feature("type_resolution") == "explicit_symptom_section_retype"
+    assert all(
+        proposal.feature("type_resolution") == "unique_dictionary_type"
         for proposal in result.trace.proposals
+        if proposal.source == "dictionary_exact"
     )
 
 

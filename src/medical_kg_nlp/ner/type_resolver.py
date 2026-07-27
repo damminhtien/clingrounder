@@ -55,6 +55,8 @@ _SECTION_HEADER_RE = re.compile(
     r"tiền[ \t]+sử[ \t]+bệnh[ \t]+hiện[ \t]+tại|"
     r"lý[ \t]+do[ \t]+(?:nhập|vào)[ \t]+viện|"
     r"diễn[ \t]+biến[ \t]+bệnh|"
+    r"(?:các[ \t]+)?sự[ \t]+kiện[ \t]+trước[ \t]+khi[ \t]+nhập[ \t]+viện|"
+    r"tình[ \t]+trạng[ \t]+ngay[ \t]+trước[ \t]+khi[ \t]+nhập[ \t]+viện|"
     r"kết[ \t]+quả[ \t]+(?:xét[ \t]*nghiệm|chẩn[ \t]+đoán[ \t]+hình[ \t]+ảnh)|"
     r"cận[ \t]+lâm[ \t]+sàng|"
     r"đánh[ \t]+giá[ \t]+tại[ \t]+bệnh[ \t]+viện|"
@@ -112,17 +114,10 @@ class ContextualEntityTypeResolver:
         )
 
         if len(candidate_types) == 1:
-            entity_type = candidate_types[0]
-            if entity_type is EntityType.DISEASE and (
-                in_medication_indication or section_type is EntityType.SYMPTOM
-            ):
-                reason = (
-                    "medication_indication_retype"
-                    if in_medication_indication
-                    else "explicit_symptom_section_retype"
-                )
-                return TypeResolution(EntityType.SYMPTOM, reason)
-            return TypeResolution(entity_type, "unique_dictionary_type")
+            # INVARIANT: context selects among observed type evidence; it never invents a
+            # type that no extractor proposed. Reviewed code-free aliases can supply the
+            # alternate evidence without weakening code-bearing terminology.
+            return TypeResolution(candidate_types[0], "unique_dictionary_type")
 
         if candidate_set == {EntityType.DISEASE, EntityType.SYMPTOM}:
             if in_medication_indication:
