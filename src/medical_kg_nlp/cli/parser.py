@@ -352,6 +352,15 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         ),
     )
     probes.add_argument(
+        "--build-consensus-source",
+        action="append",
+        default=[],
+        help=(
+            "Build an all-region additive variant for a named --source whose producer "
+            "already enforced independent evidence agreement; repeat by source name."
+        ),
+    )
+    probes.add_argument(
         "--dictionary",
         default="data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
     )

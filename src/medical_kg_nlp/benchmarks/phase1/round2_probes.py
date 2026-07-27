@@ -89,6 +89,9 @@ _EDUCATIONAL_RE = re.compile(
     r"^\s*phòng ngừa\b)"
 )
 _SOURCE_NAME_RE = re.compile(r"[A-Za-z0-9_.-]+")
+_ALL_ROUND2_REGIONS: frozenset[Round2RegionKind] = frozenset(
+    {"medication_list", "clinical", "question_answer", "educational", "other"}
+)
 
 
 @dataclass(frozen=True)
@@ -139,6 +142,7 @@ class Phase1Round2ProbeConfig:
     minimum_agreement_sources: int = 2
     expand_repeated_mentions: bool = True
     full_source_names: tuple[str, ...] = ()
+    consensus_source_names: tuple[str, ...] = ()
     candidate_probe_policies: tuple[CandidateProbePolicy, ...] = ()
 
     def __post_init__(self) -> None:
@@ -167,6 +171,14 @@ class Phase1Round2ProbeConfig:
             raise ValueError(
                 "Full-source variants require matching --source inputs: "
                 f"{sorted(unknown_full_sources)}"
+            )
+        if len(self.consensus_source_names) != len(set(self.consensus_source_names)):
+            raise ValueError("Consensus-source names must be unique")
+        unknown_consensus_sources = set(self.consensus_source_names) - set(names)
+        if unknown_consensus_sources:
+            raise ValueError(
+                "Consensus-source variants require matching --source inputs: "
+                f"{sorted(unknown_consensus_sources)}"
             )
         if len(self.candidate_probe_policies) != len(set(self.candidate_probe_policies)):
             raise ValueError("Candidate probe policies must be unique")
@@ -629,6 +641,7 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
             "expand_repeated_mentions": config.expand_repeated_mentions,
             "proposal_sources": [name for name, _ in config.proposal_sources],
             "full_source_names": list(config.full_source_names),
+            "consensus_source_names": list(config.consensus_source_names),
             "candidate_probe_policies": list(config.candidate_probe_policies),
         },
     )
@@ -694,6 +707,34 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
                 dictionary=dictionary,
             )
         )
+        if name in config.consensus_source_names:
+            consensus_rows, consensus_decisions, consensus_counters = (
+                merge_region_routed_proposals(
+                    base,
+                    {name: rows_by_doc},
+                    source_text_by_doc,
+                    policy=RegionProposalPolicy(
+                        minimum_agreement_sources=config.minimum_agreement_sources,
+                        # MODEL: this source has already passed independent evidence agreement
+                        # inside its producer. The separate variant measures whether extending
+                        # that evidence beyond Q&A regions improves the public entity metric.
+                        allowed_single_source_regions=_ALL_ROUND2_REGIONS,
+                    ),
+                )
+            )
+            variants.append(
+                _materialize_variant(
+                    f"E_{name.upper()}_CONSENSUS_ADD",
+                    module="entity",
+                    rows=consensus_rows,
+                    base=base,
+                    decisions=consensus_decisions,
+                    counters=consensus_counters,
+                    run_dir=run_output.run_dir,
+                    documents=documents,
+                    dictionary=dictionary,
+                )
+            )
         if name in config.full_source_names:
             canonical_rows, source_decisions, source_counters = (
                 canonicalize_full_phase1_source(
@@ -773,6 +814,7 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
         },
         "proposal_source_status": {
             "count": len(loaded_sources),
+            "internally_consensused": list(config.consensus_source_names),
             "sources": {
                 name: {
                     "path": str(path),

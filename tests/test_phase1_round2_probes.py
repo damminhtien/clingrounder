@@ -12,6 +12,7 @@ from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import (
 )
 from medical_kg_nlp.benchmarks.phase1.round2_probes import (
     Phase1Round2ProbeConfig,
+    RegionProposalPolicy,
     apply_round2_candidate_policy,
     align_quoted_phase1_proposals,
     canonicalize_full_phase1_source,
@@ -123,6 +124,35 @@ def test_region_router_allows_qa_recall_but_requires_consensus_in_clinical_text(
         "exact_source_consensus",
     }
     assert counters["proposal.blocked_overlap"] == 1
+
+
+def test_region_router_can_promote_an_internally_consensused_source() -> None:
+    text = "Tiền sử bệnh:\nTăng huyết áp."
+    baseline = {"1": []}
+    qwen_consensus = {
+        "1": [_row(text, "Tăng huyết áp", "CHẨN_ĐOÁN")],
+    }
+
+    merged, decisions, counters = merge_region_routed_proposals(
+        baseline,
+        {"qwen_consensus": qwen_consensus},
+        {"1": text},
+        policy=RegionProposalPolicy(
+            allowed_single_source_regions=frozenset(
+                {
+                    "medication_list",
+                    "clinical",
+                    "question_answer",
+                    "educational",
+                    "other",
+                }
+            )
+        ),
+    )
+
+    assert [row["text"] for row in merged["1"]] == ["Tăng huyết áp"]
+    assert decisions[0]["reason"] == "single_source_region_route"
+    assert counters["proposal.add.region.clinical"] == 1
 
 
 def test_full_source_canonicalization_filters_candidates_by_type_and_dictionary() -> None:
@@ -304,6 +334,8 @@ def test_round2_probe_cli_parser_accepts_named_sources() -> None:
             "xlmr=xlmr.zip",
             "--build-full-source",
             "qwen",
+            "--build-consensus-source",
+            "qwen",
             "--candidate-probe",
             "rx_only",
             "--candidate-probe",
@@ -316,6 +348,7 @@ def test_round2_probe_cli_parser_accepts_named_sources() -> None:
     assert args.handler == "benchmark_phase1_round2_probes"
     assert args.source == ["qwen=qwen.zip", "xlmr=xlmr.zip"]
     assert args.build_full_source == ["qwen"]
+    assert args.build_consensus_source == ["qwen"]
     assert args.candidate_probe == [
         "rx_only",
         "rx_unique_only",
