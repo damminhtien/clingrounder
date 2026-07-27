@@ -114,6 +114,22 @@ def test_phase1_qa_educational_pipeline_points_to_matching_run_spec() -> None:
     assert resolved.factory_config.options.enable_linking is False
 
 
+def test_phase1_qa_educational_recovery_pipeline_points_to_selected_model() -> None:
+    resolved = ResolvedPipelineConfig.load(
+        "configs/pipeline/phase1-five-type-qa-edu-e12-lr5e5-model-only.yaml"
+    )
+    extractor = resolved.factory_config.models.entity_extractor
+
+    assert extractor is not None
+    assert Path(
+        resolved.payload["models"]["entity_extractor"]["run_spec"]
+    ).name.endswith("e12-lr5e5-2026-07-27.yaml")
+    assert extractor.model_id.endswith("e12-lr5e5-2026-07-27/final-model")
+    assert extractor.device == "cuda"
+    assert resolved.factory_config.options.enable_context is False
+    assert resolved.factory_config.options.enable_linking is False
+
+
 def test_run_spec_paths_are_stable_from_another_working_directory(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

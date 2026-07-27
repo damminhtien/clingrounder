@@ -1,0 +1,33 @@
+# Development calibration profile for the selected high-recall XLM-R checkpoint.
+terminology:
+  # PipelineFactory requires a recognition repository, but model-only extraction never queries it.
+  recognition_path: ../../data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
+  abbreviation_path: ../../data/dictionaries/abbreviations.jsonl
+  alias_overlay_path: null
+  reviewed_mention_path: null
+
+pipeline:
+  version: "0.2.0-phase1-five-type-qa-edu-e12-lr5e5-model-only"
+  # INVARIANT: calibration measures raw NER output without context, linking, relation, or KG edits.
+  enable_context: false
+  enable_linking: false
+  enable_candidate_reranking: false
+  enable_graph_evidence_reranking: false
+  enable_entity_kg_validation: false
+  enable_relations: false
+  enable_relation_kg_validation: false
+  candidate_sources: [exact]
+
+models:
+  entity_extractor:
+    # MODEL: the run spec pins dataset, checkpoint revision, environment, and GPU requirements.
+    run_spec: ../models/phase1-five-type-xlmr-qa-edu-e12-lr5e5-2026-07-27.yaml
+    model_id: ../../outputs/models/phase1-five-type-xlmr-qa-edu-e12-lr5e5-2026-07-27/final-model
+    revision: e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
+    device: cuda
+    batch_size: 8
+    max_length: 512
+    stride: 64
+    default_confidence_threshold: 0.0
+    confidence_thresholds: {}
+    combine_with_dictionary: false
