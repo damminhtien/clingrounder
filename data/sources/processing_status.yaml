@@ -41,8 +41,10 @@ sources:
       pseudo-labeling, and hosted artifact retention remain prohibited.
     run_configs:
       - configs/mining/phase1-round2-2026-07-22.yaml
+      - configs/mining/phase1-round2-hosted-2026-07-27.yaml
     artifact_roots:
       - outputs/mining/phase1-round2-2026-07-22
+      - outputs/mining/phase1-round2-hosted-2026-07-27
   - source_id: phase1_part2_leaked_bundle
     state: quarantined
     promotion_boundary: none

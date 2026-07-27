@@ -130,6 +130,30 @@ def test_phase1_qa_educational_recovery_pipeline_points_to_selected_model() -> N
     assert resolved.factory_config.options.enable_linking is False
 
 
+def test_round2_calibrated_pipeline_freezes_selected_thresholds() -> None:
+    resolved = ResolvedPipelineConfig.load(
+        "configs/pipeline/phase1-round2-xlmr-model-only-calibrated-cuda.yaml"
+    )
+    models = resolved.factory_config.models
+
+    assert models.entity_extractor is not None
+    assert models.entity_extractor.device == "cuda"
+    assert models.entity_default_confidence_threshold == 0.0
+    assert {
+        entity_type.value: threshold
+        for entity_type, threshold in models.entity_confidence_thresholds
+    } == {
+        "DISEASE": 0.8,
+        "DRUG": 0.8,
+        "LAB_RESULT": 0.5,
+        "LAB_TEST": 0.8,
+        "SYMPTOM": 0.8,
+    }
+    assert models.entity_combine_with_dictionary is False
+    assert resolved.factory_config.options.enable_context is False
+    assert resolved.factory_config.options.enable_linking is False
+
+
 def test_run_spec_paths_are_stable_from_another_working_directory(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
