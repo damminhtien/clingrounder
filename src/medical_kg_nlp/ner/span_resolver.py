@@ -182,19 +182,29 @@ class EvidenceWeightedSpanResolver:
         self,
         candidates: tuple[_Candidate, ...],
     ) -> tuple[_Candidate, ...]:
-        """Keep exact parent entities from being replaced by their internal attributes.
+        """Keep structural parent entities from being replaced by their children.
 
         A lab value such as ``65%`` may occur inside one diagnosis span, and strength/route
-        components occur inside a full medication span. These components remain proposals for
-        traceability, but their combined utility cannot replace an exact parent entity.
+        components occur inside a full medication span. A grammar-confirmed atomic phrase such as
+        ``ngất xỉu`` may also contain independently recognized fragments. These components remain
+        proposals for traceability, but their combined utility cannot replace the parent entity.
         """
 
         adjusted: list[_Candidate] = []
         for outer in candidates:
             proposal = outer.representative
             entity_type = _resolved_type(proposal)
-            protected_types = _protected_internal_types(entity_type)
-            if proposal.source != "dictionary_exact" or not protected_types:
+            atomic_phrase = proposal.feature("atomic_clinical_phrase") == "true"
+            protected_types = (
+                frozenset({entity_type})
+                if atomic_phrase
+                else _protected_internal_types(entity_type)
+            )
+            if (
+                not atomic_phrase
+                and proposal.source != "dictionary_exact"
+                or not protected_types
+            ):
                 adjusted.append(outer)
                 continue
             contained = tuple(
@@ -221,7 +231,12 @@ class EvidenceWeightedSpanResolver:
                     sorted(
                         {
                             *proposal.features,
-                            ("resolver_constraint", "exact_parent_over_attributes"),
+                            (
+                                "resolver_constraint",
+                                "atomic_phrase_over_fragments"
+                                if atomic_phrase
+                                else "exact_parent_over_attributes",
+                            ),
                         }
                     )
                 ),
@@ -282,7 +297,11 @@ class EvidenceWeightedSpanResolver:
                 )
             )
             reason = (
-                "selected_exact_container"
+                "selected_atomic_phrase"
+                if accepted
+                and candidate.representative.feature("resolver_constraint")
+                == "atomic_phrase_over_fragments"
+                else "selected_exact_container"
                 if accepted
                 and candidate.representative.feature("resolver_constraint")
                 == "exact_parent_over_attributes"

@@ -9,6 +9,7 @@ from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatcher
 from medical_kg_nlp.ner.extractors import (
     AnchoredLabProposalExtractor,
+    ClinicalBoundaryProposalExtractor,
     ConcatenatedDrugProposalExtractor,
     DictionaryProposalExtractor,
     MedicationAttributeProposalExtractor,
@@ -65,6 +66,7 @@ class RuleBasedNER:
                 ),
             ),
             dependent_extractors=(
+                ClinicalBoundaryProposalExtractor(),
                 MedicationAttributeProposalExtractor(MedicationAttributeExtractor()),
                 AnchoredLabProposalExtractor(LabObservationExtractor()),
                 RegexLabProposalExtractor(),

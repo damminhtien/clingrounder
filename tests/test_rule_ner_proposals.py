@@ -110,6 +110,27 @@ def test_exact_drug_container_beats_internal_sig_components() -> None:
     }
 
 
+def test_atomic_clinical_phrase_beats_same_type_fragments() -> None:
+    proposals = (
+        EntityProposal(
+            span=(0, 8),
+            candidate_types=(EntityType.SYMPTOM,),
+            source="clinical_boundary",
+            score=0.82,
+            features=(("atomic_clinical_phrase", "true"),),
+        ),
+        _proposal((0, 4), EntityType.SYMPTOM, "dictionary_exact", 0.78),
+        _proposal((5, 8), EntityType.SYMPTOM, "dictionary_exact", 0.78),
+    )
+
+    result = EvidenceWeightedSpanResolver().resolve(proposals)
+
+    assert [item.span for item in result.selected] == [(0, 8)]
+    assert {item.reason for item in result.decisions if item.accepted} == {
+        "selected_atomic_phrase"
+    }
+
+
 def _proposal(
     span: tuple[int, int],
     entity_type: EntityType,
