@@ -92,7 +92,7 @@ def test_qwen_structured_retry_does_not_accept_free_text() -> None:
 
 
 def test_missing_reviewer_retries_json_with_wrong_root_schema() -> None:
-    runtime = _FakeRuntime(('{"missing":[]}', '{"entities":[]}'))
+    runtime = _FakeRuntime(('{"unexpected":[]}', '{"entities":[]}'))
 
     result = Phase1QwenAdapter(runtime).review_missing(
         "Bệnh nhân ho.",
@@ -103,7 +103,32 @@ def test_missing_reviewer_retries_json_with_wrong_root_schema() -> None:
 
     assert len(runtime.calls) == 2
     assert not result.proposals
-    assert 'requires an entities array' in runtime.calls[1][-1].content
+    assert 'requires exactly one recognized entity array' in runtime.calls[1][-1].content
+
+
+def test_qwen_parser_accepts_bare_array_and_allowlisted_wrapper() -> None:
+    responses = (
+        '[{"text":"ho","type":"TRIỆU_CHỨNG","confidence":0.9}]',
+        '{"missing_entities":[]}',
+    )
+    runtime = _FakeRuntime(responses)
+    adapter = Phase1QwenAdapter(runtime)
+
+    first = adapter.review_missing(
+        "Bệnh nhân ho.",
+        (),
+        generation=GenerationConfig(),
+        max_rounds=1,
+    )
+    second = adapter.review_missing(
+        "Bệnh nhân ho.",
+        (),
+        generation=GenerationConfig(),
+        max_rounds=1,
+    )
+
+    assert [proposal.span for proposal in first.proposals] == [(10, 12)]
+    assert not second.proposals
 
 
 def test_missing_reviewer_projects_only_unlabeled_occurrences() -> None:

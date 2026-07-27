@@ -830,11 +830,32 @@ def _review_entities_for_window(
 def _parse_quoted_proposals(
     value: Any,
 ) -> tuple[list[Phase1QuotedProposal], list[dict[str, Any]]]:
-    if not isinstance(value, Mapping) or not isinstance(value.get("entities"), list):
-        raise StructuredResponseError("Extraction response requires an entities array")
+    rows: Any
+    if isinstance(value, list):
+        # MODEL: some local chat checkpoints omit the requested top-level wrapper but still emit
+        # the exact entity row schema. Row validation below remains authoritative.
+        rows = value
+    elif isinstance(value, Mapping):
+        container_keys = (
+            "entities",
+            "missing_entities",
+            "new_entities",
+            "results",
+            "items",
+        )
+        selected = [key for key in container_keys if isinstance(value.get(key), list)]
+        if len(selected) != 1:
+            raise StructuredResponseError(
+                "Extraction response requires exactly one recognized entity array"
+            )
+        rows = value[selected[0]]
+    else:
+        raise StructuredResponseError(
+            "Extraction response must be an entity array or an object containing one"
+        )
     output: list[Phase1QuotedProposal] = []
     rejected: list[dict[str, Any]] = []
-    for index, row in enumerate(value["entities"]):
+    for index, row in enumerate(rows):
         if not isinstance(row, Mapping):
             rejected.append({"proposal_index": index, "reason": "not_an_object"})
             continue
