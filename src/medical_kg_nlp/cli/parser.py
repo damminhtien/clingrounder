@@ -463,6 +463,41 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         default="phase1-qa-educational-v1",
     )
 
+    model_data_synthetic = model_data_operations.add_parser(
+        "augment-user-synthetic",
+        help="Validate and add a bounded train-only user synthetic archive.",
+    )
+    model_data_synthetic.set_defaults(
+        handler="benchmark_phase1_model_data_augment_user_synthetic"
+    )
+    model_data_synthetic.add_argument("--archive", required=True)
+    model_data_synthetic.add_argument("--archive-sha256", required=True)
+    model_data_synthetic.add_argument(
+        "--source-dataset",
+        default=(
+            "outputs/mining/model-datasets/"
+            "phase1-manual-five-type-v1/spans.jsonl"
+        ),
+    )
+    model_data_synthetic.add_argument(
+        "--source-manifest",
+        default=(
+            "outputs/mining/model-datasets/"
+            "phase1-manual-five-type-v1/manifest.json"
+        ),
+    )
+    model_data_synthetic.add_argument("--output-dir", required=True)
+    model_data_synthetic.add_argument(
+        "--max-synthetic-fraction",
+        type=float,
+        default=0.4,
+        help="Maximum synthetic share of train records; hard-capped at 0.4.",
+    )
+    model_data_synthetic.add_argument(
+        "--seed",
+        default="phase1-user-synthetic-balanced-v1",
+    )
+
     qwen_data_build = model_data_operations.add_parser(
         "build-qwen",
         help="Build leakage-safe Qwen extraction and adjudication instructions.",

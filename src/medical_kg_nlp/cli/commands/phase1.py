@@ -32,6 +32,10 @@ from medical_kg_nlp.benchmarks.phase1.round2_probes import (
     Phase1Round2ProbeConfig,
     run_phase1_round2_probes,
 )
+from medical_kg_nlp.benchmarks.phase1.synthetic_training import (
+    Phase1SyntheticTrainingConfig,
+    build_phase1_synthetic_training_dataset,
+)
 from medical_kg_nlp.benchmarks.phase1.qwen_dataset import (
     Phase1QwenDatasetConfig,
     build_phase1_qwen_instruction_dataset,
@@ -60,6 +64,7 @@ from medical_kg_nlp.utils.run_output import create_hashed_run_dir, path_in_run
 __all__ = [
     "audit_phase1_round2",
     "augment_phase1_model_regions",
+    "augment_phase1_model_user_synthetic",
     "build_phase1_model_data",
     "build_phase1_qwen_data",
     "calibrate_phase1_model_data",
@@ -231,6 +236,24 @@ def augment_phase1_model_regions(args: argparse.Namespace) -> int:
             max_synthetic_train_fraction=args.max_synthetic_fraction,
             seed=args.seed,
         ),
+    )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def augment_phase1_model_user_synthetic(args: argparse.Namespace) -> int:
+    """Build a human-development, bounded-synthetic-train span dataset."""
+
+    report = build_phase1_synthetic_training_dataset(
+        Phase1SyntheticTrainingConfig(
+            archive_path=Path(args.archive),
+            expected_archive_sha256=args.archive_sha256,
+            human_spans_path=Path(args.source_dataset),
+            human_manifest_path=Path(args.source_manifest),
+            output_dir=Path(args.output_dir),
+            max_synthetic_train_fraction=args.max_synthetic_fraction,
+            selection_seed=args.seed,
+        )
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
