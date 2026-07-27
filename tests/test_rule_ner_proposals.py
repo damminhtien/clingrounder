@@ -77,6 +77,39 @@ def test_span_resolver_retains_ambiguous_proposal_as_rejected_evidence() -> None
     assert result.decisions[0].reason == "unresolved_type"
 
 
+def test_exact_disease_container_beats_internal_lab_result() -> None:
+    proposals = (
+        _proposal((0, 32), EntityType.DISEASE, "dictionary_exact", 0.78),
+        _proposal((12, 15), EntityType.LAB_RESULT, "regex_lab_result", 0.82),
+    )
+
+    result = EvidenceWeightedSpanResolver().resolve(proposals)
+
+    assert [(item.span, item.entity_type) for item in result.selected] == [
+        ((0, 32), EntityType.DISEASE)
+    ]
+    assert {item.reason for item in result.decisions if item.accepted} == {
+        "selected_exact_container"
+    }
+
+
+def test_exact_drug_container_beats_internal_sig_components() -> None:
+    proposals = (
+        _proposal((0, 14), EntityType.DRUG, "dictionary_exact", 0.78),
+        _proposal((0, 5), EntityType.STRENGTH, "medication_attribute", 0.9),
+        _proposal((6, 8), EntityType.ROUTE, "medication_attribute", 0.9),
+    )
+
+    result = EvidenceWeightedSpanResolver().resolve(proposals)
+
+    assert [(item.span, item.entity_type) for item in result.selected] == [
+        ((0, 14), EntityType.DRUG)
+    ]
+    assert {item.reason for item in result.decisions if item.accepted} == {
+        "selected_exact_container"
+    }
+
+
 def _proposal(
     span: tuple[int, int],
     entity_type: EntityType,

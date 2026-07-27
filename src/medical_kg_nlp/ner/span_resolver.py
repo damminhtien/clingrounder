@@ -30,6 +30,7 @@ class _DefaultProposalScoring:
 
     agreement_bonus: float = 0.25
     atomic_product_bonus: float = 1.5
+    atomic_lexical_term_bonus: float = 2.5
 
     def score(self, proposal: EntityProposal, *, source_count: int) -> float:
         probability = min(1.0 - 1e-6, max(1e-6, proposal.score))
@@ -37,6 +38,9 @@ class _DefaultProposalScoring:
         utility += max(0, source_count - 1) * self.agreement_bonus
         if proposal.feature("atomic_product") == "true":
             utility += self.atomic_product_bonus
+        nested_count = proposal.feature("atomic_lexical_term_count")
+        if nested_count is not None:
+            utility += int(nested_count) * self.atomic_lexical_term_bonus
         return utility
 
 
@@ -88,7 +92,7 @@ class EvidenceWeightedSpanResolver:
     def resolve(self, proposals: tuple[EntityProposal, ...]) -> SpanResolutionResult:
         ambiguous = tuple(proposal for proposal in proposals if proposal.entity_type is None)
         typed = tuple(proposal for proposal in proposals if proposal.entity_type is not None)
-        candidates = self._merge_exact(typed)
+        candidates = self._apply_exact_container_constraints(self._merge_exact(typed))
         selected_candidates = self._maximum_utility_set(candidates)
         selected_keys: set[tuple[tuple[int, int], EntityType]] = {
             (
@@ -174,6 +178,63 @@ class EvidenceWeightedSpanResolver:
             )
         return tuple(sorted(candidates, key=_candidate_end_order))
 
+    def _apply_exact_container_constraints(
+        self,
+        candidates: tuple[_Candidate, ...],
+    ) -> tuple[_Candidate, ...]:
+        """Keep exact parent entities from being replaced by their internal attributes.
+
+        A lab value such as ``65%`` may occur inside one diagnosis span, and strength/route
+        components occur inside a full medication span. These components remain proposals for
+        traceability, but their combined utility cannot replace an exact parent entity.
+        """
+
+        adjusted: list[_Candidate] = []
+        for outer in candidates:
+            proposal = outer.representative
+            entity_type = _resolved_type(proposal)
+            protected_types = _protected_internal_types(entity_type)
+            if proposal.source != "dictionary_exact" or not protected_types:
+                adjusted.append(outer)
+                continue
+            contained = tuple(
+                candidate
+                for candidate in candidates
+                if candidate is not outer
+                and _contains(proposal.span, candidate.representative.span)
+                and _resolved_type(candidate.representative) in protected_types
+            )
+            if not contained:
+                adjusted.append(outer)
+                continue
+            contained_selection = self._maximum_utility_set(
+                tuple(sorted(contained, key=_candidate_end_order))
+            )
+            contained_utility = sum(candidate.utility for candidate in contained_selection)
+            protected_utility = contained_utility + 1e-6
+            if outer.utility >= protected_utility:
+                adjusted.append(outer)
+                continue
+            constrained_proposal = replace(
+                proposal,
+                features=tuple(
+                    sorted(
+                        {
+                            *proposal.features,
+                            ("resolver_constraint", "exact_parent_over_attributes"),
+                        }
+                    )
+                ),
+            )
+            adjusted.append(
+                replace(
+                    outer,
+                    representative=constrained_proposal,
+                    utility=protected_utility,
+                )
+            )
+        return tuple(sorted(adjusted, key=_candidate_end_order))
+
     @staticmethod
     def _maximum_utility_set(candidates: tuple[_Candidate, ...]) -> tuple[_Candidate, ...]:
         ends = [candidate.representative.span[1] for candidate in candidates]
@@ -221,7 +282,11 @@ class EvidenceWeightedSpanResolver:
                 )
             )
             reason = (
-                "selected_exact_consensus"
+                "selected_exact_container"
+                if accepted
+                and candidate.representative.feature("resolver_constraint")
+                == "exact_parent_over_attributes"
+                else "selected_exact_consensus"
                 if accepted and len(candidate.source_proposals) > 1
                 else "selected_global_utility"
                 if accepted
@@ -297,6 +362,38 @@ def _decision_order(decision: ProposalDecision) -> tuple[int, int, str, str]:
 
 def _overlaps(left: tuple[int, int], right: tuple[int, int]) -> bool:
     return left[0] < right[1] and right[0] < left[1]
+
+
+def _contains(container: tuple[int, int], inner: tuple[int, int]) -> bool:
+    return (
+        container != inner
+        and container[0] <= inner[0]
+        and inner[1] <= container[1]
+    )
+
+
+def _protected_internal_types(entity_type: EntityType) -> frozenset[EntityType]:
+    """Return structural child types that must not split an exact parent mention.
+
+    Semantic alternatives such as a symptom overlapping a disease are intentionally absent:
+    those conflicts still compete through the global evidence score.
+    """
+
+    if entity_type is EntityType.DISEASE:
+        return frozenset({EntityType.LAB_RESULT})
+    if entity_type is EntityType.DRUG:
+        return frozenset(
+            {
+                EntityType.DRUG,
+                EntityType.DOSAGE,
+                EntityType.STRENGTH,
+                EntityType.FREQUENCY,
+                EntityType.ROUTE,
+                EntityType.DURATION,
+                EntityType.DOSAGE_FORM,
+            }
+        )
+    return frozenset()
 
 
 def _resolved_type(proposal: EntityProposal) -> EntityType:

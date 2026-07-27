@@ -65,10 +65,11 @@ class MedicationAttributeExtractor:
         text: str,
         entities: Iterable[EntityAnnotation],
         *,
-        occupied: list[tuple[int, int]],
+        occupied: Iterable[tuple[int, int]] = (),
     ) -> list[EntityAnnotation]:
         attributes: list[EntityAnnotation] = []
         seen: set[tuple[int, int, EntityType]] = set()
+        occupied_spans = list(occupied)
         drugs = [entity for entity in entities if entity.type == EntityType.DRUG]
         for drug in drugs:
             window_start, window_end = _attribute_window(text, drug.span)
@@ -77,10 +78,10 @@ class MedicationAttributeExtractor:
                 for match in pattern.finditer(window):
                     span = window_start + match.start(), window_start + match.end()
                     key = (*span, entity_type)
-                    if key in seen or _overlaps(span, occupied):
+                    if key in seen or _overlaps(span, occupied_spans):
                         continue
                     seen.add(key)
-                    occupied.append(span)
+                    occupied_spans.append(span)
                     mention = text[span[0] : span[1]]
                     attributes.append(
                         EntityAnnotation(
@@ -111,5 +112,5 @@ def _attribute_window(text: str, drug_span: tuple[int, int]) -> tuple[int, int]:
     return left, right
 
 
-def _overlaps(span: tuple[int, int], occupied: list[tuple[int, int]]) -> bool:
+def _overlaps(span: tuple[int, int], occupied: Iterable[tuple[int, int]]) -> bool:
     return any(span[0] < old_end and old_start < span[1] for old_start, old_end in occupied)

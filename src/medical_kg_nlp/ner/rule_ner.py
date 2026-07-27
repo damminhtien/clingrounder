@@ -1,16 +1,28 @@
+"""Public composition wrapper for proposal-first deterministic NER."""
+
 from __future__ import annotations
-import re
+
 from pathlib import Path
+from typing import Literal
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatch, DictionaryMatcher
+from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatcher
+from medical_kg_nlp.ner.extractors import (
+    AnchoredLabProposalExtractor,
+    ConcatenatedDrugProposalExtractor,
+    DictionaryProposalExtractor,
+    MedicationAttributeProposalExtractor,
+    RegexLabProposalExtractor,
+)
 from medical_kg_nlp.ner.lab_observation_extractor import LabObservationExtractor
 from medical_kg_nlp.ner.medication_attribute_extractor import MedicationAttributeExtractor
-from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
 from medical_kg_nlp.ner.medication_list_parser import MedicationListParser
+from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
+from medical_kg_nlp.ner.rule_engine import RuleNerEngine, RuleNerEngineResult
+from medical_kg_nlp.ner.span_resolver import EvidenceWeightedSpanResolver
+from medical_kg_nlp.ner.type_resolver import ContextualEntityTypeResolver
 from medical_kg_nlp.ontology.false_positive import (
     DEFAULT_FALSE_POSITIVE_PATH,
-    FalsePositiveRule,
     load_false_positive_rules,
 )
 from medical_kg_nlp.schema.annotation import (
@@ -18,288 +30,81 @@ from medical_kg_nlp.schema.annotation import (
     EntityAnnotation,
     EntityExtractionResult,
 )
-from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
 from medical_kg_nlp.utils.text import normalize_for_match
 
-
-_LAB_VALUE_RE = re.compile(
-    r"(?<!\w)\d+(?:[\.,]\d+)?\s?(?:mmol/L|mg/dL|g/dL|ng/mL|mEq/L|IU/L|U/L|%)(?!\w)",
-    flags=re.IGNORECASE,
-)
-_BP_RE = re.compile(r"(?<!\w)BP\s*(?P<value>\d{2,3}/\d{2,3})(?!\w)", flags=re.IGNORECASE)
-_VITAL_VALUE_RE = re.compile(
-    r"(?<!\w)"
-    r"(?:"
-    r"huyết\s+áp(?:\s+tâm\s+(?:thu|trương))?|"
-    r"nhịp\s+thở|"
-    r"nhịp\s+tim|"
-    r"nhiệt\s+độ|"
-    r"thân\s+nhiệt|"
-    r"spo2|"
-    r"độ\s+bão\s+h[oò]a\s+oxy|"
-    r"bão\s+h[oò]a\s+oxy"
-    r")"
-    r"(?:\s+là)?\s*"
-    r"(?P<value>\d{2,5}(?:/\d{2,3})?(?:[\.,]\d+)?(?:-\d{2,3})?(?:\s*%|\s*mmhg|\s*°?\s*c)?)"
-    r"(?!\w)",
-    flags=re.IGNORECASE | re.UNICODE,
-)
-_HBA1C_RE = re.compile(r"(?<!\w)HbA1c\s*\d+(?:\.\d+)?%(?!\w)", flags=re.IGNORECASE)
-_CONCATENATED_DRUG_LEFT_PREFIXES = ("dùng", "uống", "tiêm", "truyền")
-_CONCATENATED_DRUG_RIGHT_SUFFIXES = ("đã", "và", "trong", "kéo", "iv", "oral", "and")
+__all__ = ["RuleBasedNER"]
 
 
 class RuleBasedNER:
+    """Deterministic NER facade backed by independent proposal extractors."""
+
     def __init__(
         self,
         store: DictionaryStore,
         *,
         false_positive_path: str | Path | None = DEFAULT_FALSE_POSITIVE_PATH,
+        disease_symptom_fallback: Literal["disease", "abstain"] = "disease",
     ) -> None:
-        self.aliases = store.aliases_for_ner()
-        self.matcher = DictionaryMatcher(self.aliases)
-        self.lab_observations = LabObservationExtractor()
-        self.medication_attributes = MedicationAttributeExtractor()
-        self.medication_mentions = MedicationMentionParser()
-        self.medication_lists = MedicationListParser()
-        self._drug_alias_lowers = tuple(
-            alias.lower()
-            for alias, entry in self.aliases
-            if entry.semantic_type == EntityType.DRUG and len(alias.strip()) >= 4
+        matcher = DictionaryMatcher(store.aliases_for_ner())
+        false_positive_rules = load_false_positive_rules(false_positive_path)
+        type_resolver = ContextualEntityTypeResolver(
+            disease_symptom_fallback=disease_symptom_fallback,
         )
-        self.false_positive_rules: tuple[FalsePositiveRule, ...] = load_false_positive_rules(
-            false_positive_path
+        medication_lists = MedicationListParser()
+        self.engine = RuleNerEngine(
+            foundation_extractors=(
+                DictionaryProposalExtractor(
+                    matcher=matcher,
+                    type_resolver=type_resolver,
+                    false_positive_rules=false_positive_rules,
+                ),
+                ConcatenatedDrugProposalExtractor(
+                    matcher=matcher,
+                    false_positive_rules=false_positive_rules,
+                ),
+            ),
+            dependent_extractors=(
+                MedicationAttributeProposalExtractor(MedicationAttributeExtractor()),
+                AnchoredLabProposalExtractor(LabObservationExtractor()),
+                RegexLabProposalExtractor(),
+            ),
+            span_resolver=EvidenceWeightedSpanResolver(),
+            medication_mentions=MedicationMentionParser(),
+            medication_lists=medication_lists,
         )
 
     def extract(self, text: str) -> list[EntityAnnotation]:
-        """Return only resolved entities for the standard extraction contract."""
+        """Return resolved entities through the standard pipeline contract."""
 
-        return list(self.extract_with_proposals(text).entities)
+        return list(self.engine.extract(text).entities)
+
+    def extract_with_trace(self, text: str) -> RuleNerEngineResult:
+        """Return resolved entities plus proposal and arbitration lineage."""
+
+        return self.engine.extract(text)
 
     def extract_with_proposals(self, text: str) -> EntityExtractionResult:
-        """Extract entities while retaining aliases whose semantic type is unresolved."""
+        """Retain unresolved dictionary type evidence for hybrid arbitration."""
 
-        spans: list[EntityAnnotation] = []
-        ambiguous_proposals: list[AmbiguousEntityProposal] = []
-        occupied: list[tuple[int, int]] = []
-        medication_list_items = self.medication_lists.items(text)
-        indication_spans = tuple(
-            item.indication_span
-            for item in medication_list_items
-            if item.indication_span is not None
+        result = self.engine.extract(text)
+        ambiguous = tuple(
+            AmbiguousEntityProposal(
+                span=proposal.span,
+                text=text[proposal.span[0] : proposal.span[1]],
+                normalized_text=_normalized_text(text, proposal.span),
+                candidate_types=proposal.candidate_types,
+                concept_ids=proposal.concept_ids,
+                confidence=proposal.score,
+                source=proposal.source,
+            )
+            for proposal in result.unresolved_proposals
+            if proposal.concept_ids
         )
-        raw_dictionary_matches = [
-            match
-            for match in self.matcher.find_candidates(
-                text, require_boundaries=True, min_alias_chars=2
-            )
-            if not self._blocked_contextual_alias(match.alias, text, match.span)
-        ]
-        semantic_types_by_span: dict[tuple[int, int], set[EntityType]] = {}
-        for match in raw_dictionary_matches:
-            semantic_types_by_span.setdefault(match.span, set()).add(match.entry.semantic_type)
-        selected_type_by_span = {
-            span: self._disambiguated_semantic_type(
-                text,
-                span,
-                entity_types,
-                medication_indication_spans=indication_spans,
-            )
-            for span, entity_types in semantic_types_by_span.items()
-        }
-        for span, selected_type in selected_type_by_span.items():
-            if selected_type is not None:
-                continue
-            matches = [match for match in raw_dictionary_matches if match.span == span]
-            ambiguous_proposals.append(
-                AmbiguousEntityProposal(
-                    span=span,
-                    text=text[span[0] : span[1]],
-                    normalized_text=normalize_for_match(text[span[0] : span[1]]),
-                    candidate_types=tuple(
-                        sorted(semantic_types_by_span[span], key=lambda item: item.value)
-                    ),
-                    concept_ids=tuple(
-                        sorted({match.entry.concept_id for match in matches})
-                    ),
-                    confidence=max(
-                        0.78 if match.match_kind == "exact" else 0.76
-                        for match in matches
-                    ),
-                )
-            )
-        dictionary_matches = self.matcher.resolve_longest(
-            match
-            for match in raw_dictionary_matches
-            if match.entry.semantic_type == selected_type_by_span[match.span]
-        )
-        for match in dictionary_matches:
-            occupied.append(match.span)
-            spans.append(self._entity_from_dictionary_match(match))
-        self._extract_concatenated_drugs(text, occupied, spans)
-        spans.extend(self.medication_attributes.extract(text, spans, occupied=occupied))
-        for entity in spans:
-            if entity.type == EntityType.DRUG:
-                entity.medication_mention = self.medication_mentions.parse(text, entity.span)
-        spans = self.medication_lists.adjudicate(text, spans)
-        for entity in self.lab_observations.extract(text, spans, occupied=occupied):
-            occupied.append(entity.span)
-            spans.append(entity)
-        for regex in (_HBA1C_RE, _BP_RE, _VITAL_VALUE_RE, _LAB_VALUE_RE):
-            for regex_match in regex.finditer(text):
-                span = _lab_result_span(regex_match)
-                if self._overlaps(span, occupied):
-                    continue
-                occupied.append(span)
-                spans.append(
-                    EntityAnnotation(
-                        id="",
-                        span=span,
-                        text=text[span[0] : span[1]],
-                        normalized_text=normalize_for_match(text[span[0] : span[1]]),
-                        type=EntityType.LAB_RESULT,
-                        assertion=AssertionStatus.PRESENT,
-                        code_system=CodeSystem.NONE,
-                        confidence=0.8,
-                    )
-                )
-        spans.sort(key=lambda entity: (entity.span[0], entity.span[1]))
-        for index, entity in enumerate(spans, start=1):
-            entity.id = f"E{index}"
         return EntityExtractionResult(
-            entities=tuple(spans),
-            ambiguous_proposals=tuple(
-                sorted(
-                    ambiguous_proposals,
-                    key=lambda item: (
-                        item.span[0],
-                        item.span[1],
-                        tuple(value.value for value in item.candidate_types),
-                    ),
-                )
-            ),
-        )
-
-    @staticmethod
-    def _overlaps(span: tuple[int, int], occupied: list[tuple[int, int]]) -> bool:
-        return any(span[0] < old_end and old_start < span[1] for old_start, old_end in occupied)
-
-    def _blocked_contextual_alias(self, alias: str, text: str, span: tuple[int, int]) -> bool:
-        return any(rule.blocks(alias, text, span) for rule in self.false_positive_rules)
-
-    def _disambiguated_semantic_type(
-        self,
-        text: str,
-        span: tuple[int, int],
-        entity_types: set[EntityType],
-        *,
-        medication_indication_spans: tuple[tuple[int, int], ...] = (),
-    ) -> EntityType | None:
-        if len(entity_types) == 1:
-            return next(iter(entity_types))
-        if entity_types == {EntityType.DISEASE, EntityType.SYMPTOM}:
-            # Dual-typed concepts used as medication indications follow the BTC symptom policy.
-            # Diagnosis-only entries remain diseases, so unseen indications do not need a phrase
-            # whitelist and retain their dictionary semantics.
-            if any(
-                indication_start <= span[0] and span[1] <= indication_end
-                for indication_start, indication_end in medication_indication_spans
-            ):
-                return EntityType.SYMPTOM
-            return EntityType.DISEASE
-        left = text[max(0, span[0] - 32) : span[0]]
-        right = text[span[1] : min(len(text), span[1] + 48)]
-        if EntityType.DRUG in entity_types and re.search(
-            r"(?<!\w)(?:dùng|uống|tiêm|truyền|thuốc|điều\s+trị\s+bằng)\s*$",
-            left,
-            flags=re.IGNORECASE | re.UNICODE,
-        ):
-            return EntityType.DRUG
-        if EntityType.LAB_TEST in entity_types and (
-            re.search(
-                r"(?:là|:|=)?\s*(?:âm\s+tính|dương\s+tính|bình\s+thường|bất\s+thường|"
-                r"tăng|giảm|cao|thấp|\d)",
-                right,
-                flags=re.IGNORECASE | re.UNICODE,
-            )
-            or re.search(
-                r"(?<!\w)(?:xét\s+nghiệm|định\s+lượng)\s*$",
-                left,
-                flags=re.IGNORECASE | re.UNICODE,
-            )
-        ):
-            return EntityType.LAB_TEST
-        return None
-
-    def _extract_concatenated_drugs(
-        self,
-        text: str,
-        occupied: list[tuple[int, int]],
-        spans: list[EntityAnnotation],
-    ) -> None:
-        lowered = text.lower()
-        candidates: list[DictionaryMatch] = []
-        for match in self.matcher.find_candidates(
-            text,
-            require_boundaries=False,
-            entity_types={EntityType.DRUG},
-            min_alias_chars=4,
-        ):
-            span = match.span
-            if self._overlaps(span, occupied):
-                continue
-            left_concat = self._has_concatenated_drug_left_boundary(lowered, span[0])
-            right_concat = self._has_concatenated_drug_right_boundary(lowered, span[1])
-            left_boundary = span[0] == 0 or not text[span[0] - 1].isalnum() or left_concat
-            right_boundary = span[1] == len(text) or not text[span[1]].isalnum() or right_concat
-            if not (left_boundary and right_boundary and (left_concat or right_concat)):
-                continue
-            if self._blocked_contextual_alias(match.alias, text, span):
-                continue
-            candidates.append(match)
-        for match in self.matcher.resolve_longest(candidates):
-            if self._overlaps(match.span, occupied):
-                continue
-            occupied.append(match.span)
-            spans.append(self._entity_from_dictionary_match(match, confidence=0.74))
-
-    def _entity_from_dictionary_match(
-        self,
-        match: DictionaryMatch,
-        *,
-        confidence: float | None = None,
-    ) -> EntityAnnotation:
-        # INVARIANT: recognition establishes only raw span and semantic type. Code assignment
-        # belongs to the linker, where candidates are type-filtered, qualified, and auditable.
-        return EntityAnnotation(
-            id="",
-            span=match.span,
-            text=match.text,
-            normalized_text=match.normalized_text,
-            type=match.entry.semantic_type,
-            assertion=AssertionStatus.UNKNOWN,
-            code_system=CodeSystem.NONE,
-            code=None,
-            confidence=(0.78 if match.match_kind == "exact" else 0.76)
-            if confidence is None
-            else confidence,
-            candidates=[],
-        )
-
-    def _has_concatenated_drug_left_boundary(self, lowered: str, start: int) -> bool:
-        left = lowered[max(0, start - 32) : start]
-        return left.endswith(self._drug_alias_lowers) or left.endswith(
-            _CONCATENATED_DRUG_LEFT_PREFIXES
-        )
-
-    def _has_concatenated_drug_right_boundary(self, lowered: str, end: int) -> bool:
-        right = lowered[end : end + 32]
-        return right.startswith(self._drug_alias_lowers) or right.startswith(
-            _CONCATENATED_DRUG_RIGHT_SUFFIXES
+            entities=result.entities,
+            ambiguous_proposals=ambiguous,
         )
 
 
-def _lab_result_span(match: re.Match[str]) -> tuple[int, int]:
-    if "value" in match.re.groupindex:
-        return match.span("value")
-    return match.span()
+def _normalized_text(text: str, span: tuple[int, int]) -> str:
+    return normalize_for_match(text[span[0] : span[1]])
