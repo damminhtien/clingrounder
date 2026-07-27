@@ -74,6 +74,17 @@ def test_phase1_qa_educational_run_spec_uses_isolated_augmented_dataset() -> Non
     assert spec.training.unaligned_span_policy == "mask"
 
 
+def test_phase1_qa_educational_recovery_run_increases_optimizer_updates() -> None:
+    spec = load_token_classifier_run_spec(
+        "configs/models/phase1-five-type-xlmr-qa-edu-e12-lr5e5-2026-07-27.yaml"
+    )
+
+    assert spec.training.epochs == 12.0
+    assert spec.training.learning_rate == pytest.approx(5e-5)
+    assert spec.training.gradient_accumulation_steps == 2
+    assert spec.training.full_determinism is True
+
+
 def test_phase1_qa_educational_pipeline_points_to_matching_run_spec() -> None:
     resolved = ResolvedPipelineConfig.load(
         "configs/pipeline/phase1-five-type-qa-edu-model-only.yaml"
