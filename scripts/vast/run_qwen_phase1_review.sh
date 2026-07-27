@@ -3,6 +3,10 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=template_runtime.sh
+source "${SCRIPT_DIR}/template_runtime.sh"
+
 REPO_ROOT="${REPO_ROOT:-/workspace/medical-kg}"
 TEMPLATE_PYTHON="${TEMPLATE_PYTHON:-/venv/main/bin/python}"
 TEMPLATE_BIN="$(dirname "${TEMPLATE_PYTHON}")"
@@ -18,40 +22,19 @@ MODEL_REVISION="${MODEL_REVISION:-b968826d9c46dd6066d109eabc6255188de91218}"
 REVIEW_MAX_ROUNDS="${REVIEW_MAX_ROUNDS:-2}"
 MAX_RUNTIME_SECONDS="${MAX_RUNTIME_SECONDS:-28800}"
 
-if [[ ! -x "${TEMPLATE_PYTHON}" ]]; then
-  printf 'Vast template Python is unavailable: %s\n' "${TEMPLATE_PYTHON}" >&2
-  exit 2
-fi
-
 cd "${REPO_ROOT}"
 export HF_HOME PIP_CACHE_DIR
 
-# SCALING: keep the template Torch/CUDA bytes and install only the model runtime dependencies.
-"${TEMPLATE_PYTHON}" - <<'PY'
-import torch
-
-if not torch.cuda.is_available():
-    raise SystemExit("The Vast PyTorch template cannot access CUDA")
-print(
-    {
-        "torch": torch.__version__,
-        "cuda": torch.version.cuda,
-        "gpu": torch.cuda.get_device_name(0),
-    }
-)
-PY
-
-"${TEMPLATE_PYTHON}" -m pip install \
-  --cache-dir "${PIP_CACHE_DIR}" \
+medical_kg_vast_verify_pytorch_template "${TEMPLATE_PYTHON}"
+medical_kg_vast_install_project_runtime \
+  "${TEMPLATE_PYTHON}" \
+  "${REPO_ROOT}" \
+  "${PIP_CACHE_DIR}" \
   "accelerate==1.14.0" \
   "pydantic==2.13.4" \
   "PyYAML==6.0.3" \
   "tokenizers==0.22.2" \
   "transformers==5.13.0"
-"${TEMPLATE_PYTHON}" -m pip install \
-  --cache-dir "${PIP_CACHE_DIR}" \
-  --no-deps \
-  --editable "${REPO_ROOT}"
 
 "${TEMPLATE_BIN}/hf" download \
   "${MODEL_ID}" \
