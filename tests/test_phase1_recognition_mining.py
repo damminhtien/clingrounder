@@ -66,7 +66,11 @@ def test_recognition_mining_writes_holdout_gate_and_is_idempotent(tmp_path: Path
     assert first == second
     assert first["promotion_gate"]["passed"] is True
     assert first["compilation"]["recognition_concept_count"] == 1
+    assert first["contextual_aliases"]["runtime_rule_count"] == 0
     assert (run_dir / "holdout_benchmark.json").exists()
+    assert (run_dir / "contextual_alias_rules.yaml").exists()
+    assert (run_dir / "contextual_alias_decisions.jsonl").exists()
+    assert (run_dir / "contextual_alias_report.json").exists()
     concepts = [
         json.loads(line)
         for line in (run_dir / "recognition_concepts.jsonl").read_text(encoding="utf-8").splitlines()

@@ -10,6 +10,9 @@ from typing import Any
 
 import yaml
 
+from medical_kg_nlp.benchmarks.phase1.contextual_alias_mining import (
+    compile_phase1_contextual_alias_rules,
+)
 from medical_kg_nlp.benchmarks.phase1.manual_gold_mining import (
     build_phase1_reviewed_recognition_policy,
     load_phase1_manual_gold_mining_corpus,
@@ -94,6 +97,11 @@ def run_phase1_recognition_mining(
         inventory_sha256=inventory_sha256,
         baseline_entries=baseline_entries,
     )
+    contextual_aliases = compile_phase1_contextual_alias_rules(
+        annotation_policy,
+        inventory.entries,
+        inventory_sha256=inventory_sha256,
+    )
 
     input_fingerprint = _input_fingerprint(
         config,
@@ -124,6 +132,7 @@ def run_phase1_recognition_mining(
         inventory=inventory,
         policy_data=recognition_policy_to_data(policy),
         compilation=compilation,
+        contextual_aliases=contextual_aliases,
     )
     if outputs["inventory_sha256"] != inventory_sha256:
         raise ValueError("Written inventory fingerprint changed during serialization")
@@ -144,16 +153,19 @@ def run_phase1_recognition_mining(
     write_json(run_dir / "holdout_benchmark.json", benchmark)
     write_json(run_dir / "promotion_gate.json", gate)
     if gate["passed"]:
+        terminology_fragment: dict[str, Any] = {
+            "additional_recognition_paths": [
+                str(run_dir / "recognition_concepts.jsonl")
+            ]
+        }
+        if contextual_aliases.artifact["rules"]:
+            terminology_fragment["contextual_alias_path"] = str(
+                run_dir / "contextual_alias_rules.yaml"
+            )
         write_text(
             run_dir / "pipeline_profile_fragment.yaml",
             yaml.safe_dump(
-                {
-                    "terminology": {
-                        "additional_recognition_paths": [
-                            str(run_dir / "recognition_concepts.jsonl")
-                        ]
-                    }
-                },
+                {"terminology": terminology_fragment},
                 allow_unicode=True,
                 sort_keys=False,
             ),
@@ -174,6 +186,7 @@ def run_phase1_recognition_mining(
         },
         "inventory": inventory.report,
         "compilation": compilation.report,
+        "contextual_aliases": contextual_aliases.report,
         "benchmark": benchmark,
         "promotion_gate": gate,
         "outputs": outputs,
@@ -193,6 +206,7 @@ def _write_corpus_and_knowledge(
     inventory: Any,
     policy_data: dict[str, Any],
     compilation: Any,
+    contextual_aliases: Any,
 ) -> dict[str, str]:
     """Write immutable inputs and compiler outputs using atomic mining IO."""
 
@@ -232,6 +246,22 @@ def _write_corpus_and_knowledge(
         ),
         "compilation_report_sha256": write_json(
             run_dir / "compilation_report.json", compilation.report
+        ),
+        "contextual_alias_rules_sha256": write_text(
+            run_dir / "contextual_alias_rules.yaml",
+            yaml.safe_dump(
+                contextual_aliases.artifact,
+                allow_unicode=True,
+                sort_keys=False,
+            ),
+        ),
+        "contextual_alias_decisions_sha256": write_jsonl(
+            run_dir / "contextual_alias_decisions.jsonl",
+            contextual_aliases.decisions,
+        ),
+        "contextual_alias_report_sha256": write_json(
+            run_dir / "contextual_alias_report.json",
+            contextual_aliases.report,
         ),
     }
     return outputs
@@ -301,6 +331,9 @@ def _input_fingerprint(
             ),
             "recognition_benchmark.py": sha256_file(
                 package_root / "mining" / "recognition_benchmark.py"
+            ),
+            "contextual_alias_mining.py": sha256_file(
+                Path(__file__).with_name("contextual_alias_mining.py")
             ),
         },
         "gates": {
