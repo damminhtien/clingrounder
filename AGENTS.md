@@ -154,3 +154,22 @@ directly and save verbose output to a file when needed.
 A task is done only when implementation is typed, tests pass or failures are reported, offset
 regression is checked when spans are touched, JSON schema validation still works, and known
 limitations are documented.
+
+## Vast GPU Operating Rules
+
+- Never rent a new GPU, open a public inference port, stop an instance, or destroy an instance
+  without explicit user approval.
+- Never delete a Vast volume or checkpoint without explicit user approval.
+- Never print credentials, access tokens, private keys, or private dataset contents.
+- Use SSH keys only; do not enable password authentication.
+- Verify the Git commit, lockfile, dataset fingerprint, GPU, CUDA, PyTorch, config, and seed before
+  training.
+- Run unit tests and a one-batch forward/backward smoke test before full training.
+- Start long-running jobs in `tmux` and write logs plus resumable checkpoints outside temporary
+  cache directories.
+- Record optimizer, scheduler, gradient scaler, RNG, epoch/global step, config, and Git commit in
+  resumable checkpoints.
+- Copy final checkpoints, manifests, metrics, and logs off-host before requesting instance
+  destruction.
+- Keep inference private through an SSH tunnel unless the user explicitly approves a secured
+  public endpoint.

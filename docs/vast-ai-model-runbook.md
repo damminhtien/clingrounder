@@ -5,6 +5,44 @@ current deterministic checkpoint and measurements are documented in
 [`rule-ner-v2.md`](rule-ner-v2.md); finish reproducing that artifact before renting a GPU. This
 runbook does not authorize uploading competition or private clinical text to a third party.
 
+## Local Control Plane
+
+The tested local control plane uses:
+
+```text
+vastai 1.0.9 in an isolated uv tool environment on Python 3.11
+credential file: ~/.config/vastai/vast_api_key (mode 0600)
+SSH private key: ~/.ssh/vast_ed25519 (mode 0600)
+Codex skill: ~/.agents/skills/vastai
+```
+
+Load the scoped key for automation without copying its literal value into shell configuration:
+
+```bash
+export VAST_API_KEY="$(< "$HOME/.config/vastai/vast_api_key")"
+vastai show user --raw >/dev/null
+```
+
+Register the public key contents, not its path:
+
+```bash
+vastai create ssh-key "$(cat "$HOME/.ssh/vast_ed25519.pub")" -y --raw
+```
+
+`vastai 1.0.9` was observed to store the path string itself when called as
+`vastai create ssh-key ~/.ssh/vast_ed25519.pub`, despite its CLI help describing path input.
+Always compare the first two OpenSSH fields returned by `vastai show ssh-keys --raw` with the local
+public key before renting a machine.
+
+The installed Codex CLI `0.118.0` does not expose a `codex plugin` subcommand. The official
+`vast-ai/vast-cli` `vastai` skill is therefore the active integration. It is high-risk by design
+because the CLI can create billable resources and destroy instances, volumes, keys, and endpoints.
+Repository-level approval rules in `AGENTS.md` remain authoritative. Restart Codex before expecting
+the newly installed skill to appear in a new session.
+
+For account inventory, use `vastai show instances-v1 --all --raw`. On the tested CLI/API pair,
+legacy `vastai show instances --raw` returns HTTP 410 instead of an empty list.
+
 ## Workloads
 
 ### A. Five-Type XLM-R Training
@@ -45,6 +83,21 @@ CUDA capability: 8.0 or newer
 network: public SSH and stable outbound HTTPS
 availability: on-demand, not interruptible
 ```
+
+Read-only offer search:
+
+```bash
+vastai search offers \
+  'gpu_name=RTX_4090 num_gpus=1 verified=true reliability>=0.98 direct_port_count>=1 rentable=true gpu_ram>=24 cpu_ram>=32' \
+  --type on-demand \
+  --storage 150 \
+  --limit 10 \
+  -o 'dlperf_usd-' \
+  --raw
+```
+
+Offer IDs and prices are volatile. Search again immediately before approval; never encode an offer
+ID in a script or config.
 
 Prefer a verified host with a strong reliability history and local NVMe storage. Do not pay for
 multiple GPUs: the current run has only 135 training chunks and does not implement distributed
