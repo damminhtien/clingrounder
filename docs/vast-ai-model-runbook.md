@@ -229,7 +229,31 @@ shell history.
 
 ## Bootstrap And Train
 
-On the instance:
+First inspect the template environment:
+
+```bash
+/venv/main/bin/python - <<'PY'
+import torch
+
+print(torch.__version__, torch.version.cuda, torch.cuda.is_available())
+PY
+```
+
+For pinned VietMed support inference on `vastai/pytorch`, reuse the template's CUDA-enabled Torch:
+
+```bash
+REPO_ROOT=/workspace/medical-kg \
+  scripts/vast/run_vietmed_support.sh \
+  2>&1 | tee /workspace/run_vietmed_template.log
+```
+
+Do not run `uv sync --extra ml` inside a separate venv for this inference job. That downloads
+Torch and all CUDA wheels again even though the template already contains a working CUDA runtime.
+The script pins the lightweight Python dependencies, installs the repository editable with
+`--no-deps`, and fails early when the template cannot access CUDA.
+
+For a full training run that requires the exact lockfile environment rather than the template
+Torch, use the isolated lane below and account for its bootstrap time explicitly:
 
 ```bash
 cd /workspace/ontological-reasoning-in-medical-knowledge-retrieval
