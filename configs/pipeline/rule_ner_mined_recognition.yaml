@@ -1,9 +1,11 @@
 terminology:
   # Recognition stays in memory because the matcher scans every note. The additional source is
-  # code-free, train-mined knowledge that passed the frozen holdout gate in run 115886bf9d22.
+  # code-free, train-mined knowledge that passed the frozen holdout gate in run 577236248a8e.
+  # Reviewed alternate types remain ambiguous until the contextual type resolver sees a
+  # section or medication-indication cue.
   recognition_path: ../../data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
   additional_recognition_paths:
-    - ../../outputs/mining/knowledge/phase1-recognition-115886bf9d22/recognition_concepts.jsonl
+    - ../../outputs/mining/knowledge/phase1-recognition-577236248a8e/recognition_concepts.jsonl
   abbreviation_path: ../../data/dictionaries/abbreviations.jsonl
   alias_overlay_path: ../../data/dictionaries/vietnamese_medical_alias.jsonl
 

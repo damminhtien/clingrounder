@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import yaml
+
 from medical_kg_nlp.benchmarks.phase1.manual_gold import (
     build_manual_gold_split_manifest,
     write_manual_gold_split_manifest,
@@ -70,6 +72,11 @@ def test_recognition_mining_writes_holdout_gate_and_is_idempotent(tmp_path: Path
         for line in (run_dir / "recognition_concepts.jsonl").read_text(encoding="utf-8").splitlines()
     ]
     assert all("document_id" not in concept and "position" not in concept for concept in concepts)
+    compiled_policy = yaml.safe_load(
+        (run_dir / "recognition_policy.yaml").read_text(encoding="utf-8")
+    )
+    assert compiled_policy["policy_id"] == "phase1-manual-gold-train-recognition-v2"
+    assert compiled_policy["allow_reviewed_baseline_type_conflicts"] is True
     assert load_documents(run_dir / "train" / "documents.jsonl")[0].access_class.value == (
         "local_private"
     )

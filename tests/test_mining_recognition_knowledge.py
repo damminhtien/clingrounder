@@ -121,6 +121,39 @@ def test_compiler_rejects_mapped_and_baseline_type_conflicts() -> None:
     assert baseline_result.report["reason_counts"] == {"baseline_type_conflict": 1}
 
 
+def test_compiler_can_add_reviewed_code_free_type_evidence_for_baseline_alias() -> None:
+    baseline = ConceptEntry(
+        concept_id="ICD:K59.0",
+        code="K59.0",
+        code_system=CodeSystem.ICD10,
+        canonical_name="táo bón",
+        semantic_type=EntityType.DISEASE,
+    )
+    policy = replace(
+        _policy(),
+        allow_reviewed_baseline_type_conflicts=True,
+        accepted_source_mentions=frozenset(
+            {("Symptom_and_Disease", "táo bón")}
+        ),
+    )
+
+    result = compile_recognition_knowledge(
+        (_entry("term:symptom", "Táo bón"),),
+        policy,
+        inventory_sha256=_INVENTORY_SHA256,
+        baseline_entries=(baseline,),
+    )
+
+    assert len(result.concepts) == 1
+    concept = result.concepts[0]
+    assert concept["semantic_type"] == "FINDING"
+    assert concept["code_system"] == "NONE"
+    assert concept["code"] is None
+    assert result.report["reason_counts"] == {
+        "reviewed_baseline_type_evidence": 1
+    }
+
+
 def test_compiler_fail_closes_on_source_aware_reviewed_mentions() -> None:
     base_policy = _policy()
     policy = RecognitionKnowledgePolicy(

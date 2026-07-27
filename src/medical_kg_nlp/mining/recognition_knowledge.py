@@ -49,6 +49,7 @@ class RecognitionKnowledgePolicy:
     max_alias_tokens: int = 20
     max_surface_variants: int = 12
     allow_numeric_only: bool = False
+    allow_reviewed_baseline_type_conflicts: bool = False
     accepted_source_mentions: frozenset[tuple[str, str]] = frozenset()
     blocked_normalized_mentions: tuple[str, ...] = ()
 
@@ -144,6 +145,9 @@ def load_recognition_knowledge_policy(path: str | Path) -> RecognitionKnowledgeP
         max_alias_tokens=int(raw.get("max_alias_tokens", 20)),
         max_surface_variants=int(raw.get("max_surface_variants", 12)),
         allow_numeric_only=bool(raw.get("allow_numeric_only", False)),
+        allow_reviewed_baseline_type_conflicts=bool(
+            raw.get("allow_reviewed_baseline_type_conflicts", False)
+        ),
         accepted_source_mentions=_source_mention_allowlist(raw),
         blocked_normalized_mentions=_string_tuple(
             raw,
@@ -200,7 +204,18 @@ def compile_recognition_knowledge(
                     _decision(mention.entry, "skipped", "already_present_same_type")
                 )
             continue
-        if baseline_types:
+        reviewed_type_conflict = (
+            policy.allow_reviewed_baseline_type_conflicts
+            and all(
+                (
+                    mention.entry.source_label,
+                    normalized_mention,
+                )
+                in policy.accepted_source_mentions
+                for mention in mentions
+            )
+        )
+        if baseline_types and not reviewed_type_conflict:
             for mention in mentions:
                 decisions.append(
                     _decision(
@@ -225,9 +240,14 @@ def compile_recognition_knowledge(
                 _decision(
                     mention.entry,
                     "promoted",
-                    "supported_unique_recognition_term",
+                    (
+                        "reviewed_baseline_type_evidence"
+                        if baseline_types
+                        else "supported_unique_recognition_term"
+                    ),
                     concept_id=concept["concept_id"],
                     mapped_type=entity_type.value,
+                    baseline_types=sorted(value.value for value in baseline_types),
                 )
             )
 

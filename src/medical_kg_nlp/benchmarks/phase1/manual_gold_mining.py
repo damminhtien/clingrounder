@@ -161,7 +161,7 @@ def build_phase1_reviewed_recognition_policy(
         raise ValueError("Phase 1 strict-alias allowlist is empty")
 
     return RecognitionKnowledgePolicy(
-        policy_id="phase1-manual-gold-train-recognition-v1",
+        policy_id="phase1-manual-gold-train-recognition-v2",
         accepted_inventory_sha256=(inventory_sha256,),
         source_label_types=tuple(
             sorted(
@@ -185,6 +185,10 @@ def build_phase1_reviewed_recognition_policy(
         max_alias_characters=240,
         max_alias_tokens=40,
         max_surface_variants=20,
+        # INVARIANT: a reviewed alias may add code-free type evidence beside the
+        # terminology type. Contextual NER resolves the ambiguity; linking still uses
+        # the original code-bearing concept and remains type constrained.
+        allow_reviewed_baseline_type_conflicts=True,
         accepted_source_mentions=frozenset(reviewed),
     )
 
@@ -213,6 +217,9 @@ def recognition_policy_to_data(policy: RecognitionKnowledgePolicy) -> dict[str, 
         "max_alias_tokens": policy.max_alias_tokens,
         "max_surface_variants": policy.max_surface_variants,
         "allow_numeric_only": policy.allow_numeric_only,
+        "allow_reviewed_baseline_type_conflicts": (
+            policy.allow_reviewed_baseline_type_conflicts
+        ),
         "accepted_source_mentions": reviewed,
         "blocked_normalized_mentions": list(policy.blocked_normalized_mentions),
     }
