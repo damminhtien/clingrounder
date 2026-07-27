@@ -23,6 +23,9 @@ def _load_runtime(
     require_fast_tokenizer: bool = False,
 ) -> tuple[Any, Any, Any]:
     torch, transformers = _import_model_dependencies()
+    source_options = (
+        {} if config.subfolder is None else {"subfolder": config.subfolder}
+    )
     # MODEL: local_files_only prevents a configured pipeline from becoming a hosted dependency.
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         config.model_id,
@@ -30,6 +33,7 @@ def _load_runtime(
         use_fast=True,
         local_files_only=True,
         trust_remote_code=False,
+        **source_options,
     )
     if require_fast_tokenizer and not bool(getattr(tokenizer, "is_fast", False)):
         raise ValueError("Token-classification NER requires a fast tokenizer offset mapping")
@@ -39,6 +43,7 @@ def _load_runtime(
         revision=config.revision,
         local_files_only=True,
         trust_remote_code=False,
+        **source_options,
     )
     model.to(config.device)
     model.eval()

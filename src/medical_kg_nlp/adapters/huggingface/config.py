@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from pathlib import PurePosixPath
 
 __all__ = ["HuggingFaceModelConfig"]
 
@@ -17,6 +18,7 @@ class HuggingFaceModelConfig:
     device: str = "cpu"
     batch_size: int = 16
     max_length: int = 512
+    subfolder: str | None = None
 
     def __post_init__(self) -> None:
         if not self.model_id.strip():
@@ -29,6 +31,14 @@ class HuggingFaceModelConfig:
             raise ValueError("batch_size must be at least 1")
         if self.max_length < 8:
             raise ValueError("max_length must be at least 8")
+        if self.subfolder is not None:
+            subfolder = PurePosixPath(self.subfolder)
+            if (
+                not self.subfolder.strip()
+                or subfolder.is_absolute()
+                or ".." in subfolder.parts
+            ):
+                raise ValueError("subfolder must be a non-empty relative model path")
 
     @classmethod
     def from_mapping(
@@ -51,13 +61,15 @@ class HuggingFaceModelConfig:
             device=_optional_string(payload, "device", "cpu", name),
             batch_size=_optional_int(payload, "batch_size", 16, name),
             max_length=_optional_int(payload, "max_length", 512, name),
+            subfolder=_optional_nullable_string(payload, "subfolder", name),
         )
 
     @property
     def provenance(self) -> str:
         """Return a stable identity suitable for traces and experiment manifests."""
 
-        return f"{self.model_id}@{self.revision}"
+        suffix = "" if self.subfolder is None else f"#{self.subfolder}"
+        return f"{self.model_id}@{self.revision}{suffix}"
 
 
 def _optional_string(
@@ -81,4 +93,17 @@ def _optional_int(
     value = payload.get(key, default)
     if isinstance(value, bool) or not isinstance(value, int):
         raise ValueError(f"models.{name}.{key} must be an integer")
+    return value
+
+
+def _optional_nullable_string(
+    payload: Mapping[str, object],
+    key: str,
+    name: str,
+) -> str | None:
+    value = payload.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"models.{name}.{key} must be a non-empty string")
     return value

@@ -43,6 +43,10 @@ from medical_kg_nlp.benchmarks.phase1.qwen_runner import (
     Phase1QwenProposalRunConfig,
     run_phase1_qwen_proposals,
 )
+from medical_kg_nlp.benchmarks.phase1.vietnamese_support import (
+    build_phase1_vietnamese_model_support,
+    load_phase1_vietnamese_support_spec,
+)
 from medical_kg_nlp.benchmarks.phase1.runner import (
     BenchmarkExportPolicy,
     Phase1BenchmarkConfig,
@@ -62,6 +66,7 @@ __all__ = [
     "compare_phase1_model_variants",
     "inspect_phase1_qwen_run",
     "propose_phase1_qwen_entities",
+    "propose_phase1_vietnamese_support",
     "run_phase1_round2_probe_suite",
     "run_phase1_submission",
 ]
@@ -290,6 +295,20 @@ def propose_phase1_qwen_entities(args: argparse.Namespace) -> int:
             expected_document_count=args.expected_count,
             run_adjudication=not args.no_adjudication,
         ),
+    )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def propose_phase1_vietnamese_support(args: argparse.Namespace) -> int:
+    """Run a pinned Vietnamese source-task model as Qwen-only support evidence."""
+
+    report = build_phase1_vietnamese_model_support(
+        load_phase1_vietnamese_support_spec(args.config),
+        documents_path=args.documents,
+        expected_source_archive_sha256=args.source_archive_sha256,
+        output_dir=args.output_dir,
+        expected_document_count=args.expected_count,
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0

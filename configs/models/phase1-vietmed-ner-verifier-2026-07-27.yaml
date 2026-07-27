@@ -1,0 +1,33 @@
+# MODEL: source-task Vietnamese verifier; it cannot emit Phase 1 entities directly.
+schema_version: phase1-vietnamese-support.v1
+run_id: phase1-vietmed-ner-verifier-2026-07-27
+run_root: ../..
+
+model:
+  artifact_id: vietmed-ner-xlmr-base
+  model_id: leduckhai/VietMed-NER
+  revision: cccffb7de14423114f7d4bafc9f736b9d866e446
+  subfolder: xlm-roberta-base-VietMed-NER
+  parameter_count: 277481509
+  kind: base
+  roles: [hard_negative, verifier]
+  source_url: https://huggingface.co/leduckhai/VietMed-NER
+  permission: research-use-confirmed-2026-07-27
+
+runtime:
+  device: cuda
+  batch_size: 16
+  max_length: 512
+  stride: 64
+
+# MODEL: initial source-task thresholds. Calibrate only on source development or Phase 1 train.
+confidence_thresholds:
+  DIAGNOSTICS: 0.80
+  DISEASESYMTOM: 0.75
+  DRUGCHEMICAL: 0.80
+
+# MODEL: DISEASESYMTOM remains ambiguous until Qwen confirms one target type.
+compatibility_map:
+  DIAGNOSTICS: [TÊN_XÉT_NGHIỆM]
+  DISEASESYMTOM: [CHẨN_ĐOÁN, TRIỆU_CHỨNG]
+  DRUGCHEMICAL: [THUỐC]

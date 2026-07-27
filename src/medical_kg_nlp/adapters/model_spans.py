@@ -7,7 +7,13 @@ from dataclasses import dataclass
 
 from medical_kg_nlp.schema.types import EntityType
 
-__all__ = ["ProjectedEntity", "TokenPrediction", "project_bio_predictions"]
+__all__ = [
+    "ProjectedEntity",
+    "ProjectedSourceEntity",
+    "TokenPrediction",
+    "project_bio_predictions",
+    "project_source_bio_predictions",
+]
 
 _BEGIN = frozenset({"B"})
 _INSIDE = frozenset({"I"})
@@ -32,6 +38,15 @@ class ProjectedEntity:
 
     span: tuple[int, int]
     entity_type: EntityType
+    confidence: float
+
+
+@dataclass(frozen=True)
+class ProjectedSourceEntity:
+    """A raw model-taxonomy span retained before any task-specific crosswalk."""
+
+    span: tuple[int, int]
+    source_label: str
     confidence: float
 
 
@@ -131,6 +146,98 @@ def project_bio_predictions(
     return _resolve_entity_overlaps(accepted)
 
 
+def project_source_bio_predictions(
+    source_text: str,
+    predictions: Sequence[TokenPrediction],
+    *,
+    confidence_thresholds: Mapping[str, float] | None = None,
+    default_confidence_threshold: float = 0.0,
+) -> list[ProjectedSourceEntity]:
+    """Decode BIO/BIOES labels while preserving a model's source taxonomy.
+
+    This projection is intentionally task-neutral. A downstream benchmark adapter may
+    map one source label to multiple compatible target types, but the model prediction
+    itself remains auditable and cannot silently become target-task gold.
+    """
+
+    if not 0.0 <= default_confidence_threshold <= 1.0:
+        raise ValueError("default confidence threshold must be between 0 and 1")
+    thresholds = dict(confidence_thresholds or {})
+    if any(
+        not label.strip() or not 0.0 <= threshold <= 1.0
+        for label, threshold in thresholds.items()
+    ):
+        raise ValueError("source-label confidence thresholds are invalid")
+
+    best_by_span: dict[tuple[int, int], TokenPrediction] = {}
+    for prediction in predictions:
+        if not 0 <= prediction.start < prediction.end <= len(source_text):
+            continue
+        current = best_by_span.get((prediction.start, prediction.end))
+        if current is None or _prediction_order(prediction) > _prediction_order(current):
+            best_by_span[(prediction.start, prediction.end)] = prediction
+
+    decoded: list[ProjectedSourceEntity] = []
+    active: list[TokenPrediction] = []
+    active_label: str | None = None
+
+    def flush() -> None:
+        nonlocal active, active_label
+        if active and active_label is not None:
+            start = active[0].start
+            end = active[-1].end
+            confidence = sum(item.score for item in active) / len(active)
+            if (
+                source_text[start:end]
+                and confidence
+                >= thresholds.get(active_label, default_confidence_threshold)
+            ):
+                decoded.append(
+                    ProjectedSourceEntity(
+                        span=(start, end),
+                        source_label=active_label,
+                        confidence=confidence,
+                    )
+                )
+        active = []
+        active_label = None
+
+    for prediction in sorted(
+        best_by_span.values(),
+        key=lambda item: (item.start, item.end, -item.score, item.label),
+    ):
+        prefix, source_label = _decode_unmapped_label(prediction.label)
+        if source_label is None or prefix in _OUTSIDE:
+            flush()
+            continue
+        if prefix in _SINGLE:
+            flush()
+            active = [prediction]
+            active_label = source_label
+            flush()
+            continue
+        if prefix in _BEGIN:
+            flush()
+            active = [prediction]
+            active_label = source_label
+            continue
+        continues_active = (
+            active
+            and active_label == source_label
+            and prediction.start >= active[-1].end
+        )
+        if not continues_active:
+            flush()
+            active = [prediction]
+            active_label = source_label
+        else:
+            active.append(prediction)
+        if prefix in _END:
+            flush()
+    flush()
+    return _resolve_source_entity_overlaps(decoded)
+
+
 def _decode_label(
     raw_label: str,
     label_map: Mapping[str, EntityType],
@@ -157,6 +264,23 @@ def _decode_label(
         return prefix, None
 
 
+def _decode_unmapped_label(raw_label: str) -> tuple[str, str | None]:
+    label = raw_label.strip()
+    if not label or label.upper() in _OUTSIDE:
+        return label.upper() or "O", None
+    prefix = "S"
+    source_label = label
+    for separator in ("-", "_"):
+        head, found, tail = label.partition(separator)
+        if found and head.upper() in _BEGIN | _INSIDE | _END | _SINGLE:
+            prefix = head.upper()
+            source_label = tail
+            break
+    if not source_label:
+        raise ValueError(f"Source BIO label has no entity type: {raw_label!r}")
+    return prefix, source_label
+
+
 def _prediction_order(prediction: TokenPrediction) -> tuple[float, str]:
     return prediction.score, prediction.label
 
@@ -181,3 +305,30 @@ def _resolve_entity_overlaps(entities: list[ProjectedEntity]) -> list[ProjectedE
             continue
         selected.append(candidate)
     return sorted(selected, key=lambda item: (item.span[0], item.span[1], item.entity_type.value))
+
+
+def _resolve_source_entity_overlaps(
+    entities: list[ProjectedSourceEntity],
+) -> list[ProjectedSourceEntity]:
+    ranked = sorted(
+        entities,
+        key=lambda item: (
+            -item.confidence,
+            -(item.span[1] - item.span[0]),
+            item.span[0],
+            item.source_label,
+        ),
+    )
+    selected: list[ProjectedSourceEntity] = []
+    for candidate in ranked:
+        if any(
+            candidate.span[0] < existing.span[1]
+            and existing.span[0] < candidate.span[1]
+            for existing in selected
+        ):
+            continue
+        selected.append(candidate)
+    return sorted(
+        selected,
+        key=lambda item: (item.span[0], item.span[1], item.source_label),
+    )

@@ -46,6 +46,36 @@ class HuggingFaceTokenClassifierAdapter:
 
         if not source_text:
             return []
+        predictions = self.predict_token_labels(source_text)
+        projected = project_bio_predictions(
+            source_text,
+            predictions,
+            label_map=self.label_map,
+            confidence_thresholds=self.confidence_thresholds,
+            default_confidence_threshold=self.default_confidence_threshold,
+        )
+        entities: list[EntityAnnotation] = []
+        for index, item in enumerate(projected, start=1):
+            start, end = item.span
+            text = source_text[start:end]
+            entity = EntityAnnotation(
+                id=f"M{index:04d}",
+                span=item.span,
+                text=text,
+                normalized_text=normalize_for_match(text),
+                type=item.entity_type,
+                confidence=_probability(item.confidence),
+            )
+            # MODEL: fast-tokenizer offsets are accepted only after raw-slice validation.
+            entity.validate_offsets(source_text)
+            entities.append(entity)
+        return entities
+
+    def predict_token_labels(self, source_text: str) -> list[TokenPrediction]:
+        """Return raw model labels for source-taxonomy verifier adapters."""
+
+        if not source_text:
+            return []
         torch, tokenizer, model = self._runtime()
         encoded = tokenizer(
             source_text,
@@ -99,30 +129,7 @@ class HuggingFaceTokenClassifierAdapter:
                             score=float(raw_score),
                         )
                     )
-
-        projected = project_bio_predictions(
-            source_text,
-            predictions,
-            label_map=self.label_map,
-            confidence_thresholds=self.confidence_thresholds,
-            default_confidence_threshold=self.default_confidence_threshold,
-        )
-        entities: list[EntityAnnotation] = []
-        for index, item in enumerate(projected, start=1):
-            start, end = item.span
-            text = source_text[start:end]
-            entity = EntityAnnotation(
-                id=f"M{index:04d}",
-                span=item.span,
-                text=text,
-                normalized_text=normalize_for_match(text),
-                type=item.entity_type,
-                confidence=_probability(item.confidence),
-            )
-            # MODEL: fast-tokenizer offsets are accepted only after raw-slice validation.
-            entity.validate_offsets(source_text)
-            entities.append(entity)
-        return entities
+        return predictions
 
     def _runtime(self) -> tuple[Any, Any, Any]:
         if self._loaded is None:

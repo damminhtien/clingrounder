@@ -5,6 +5,9 @@ from medical_kg_nlp.adapters.huggingface.cross_encoder import (
     HuggingFaceCrossEncoderAdapter,
 )
 from medical_kg_nlp.adapters.huggingface.runtime import OptionalModelDependencyError
+from medical_kg_nlp.adapters.huggingface.source_token_classifier import (
+    HuggingFaceSourceTokenClassifierAdapter,
+)
 from medical_kg_nlp.adapters.huggingface.text_encoder import HuggingFaceTextEncoderAdapter
 from medical_kg_nlp.adapters.huggingface.token_classifier import (
     HuggingFaceTokenClassifierAdapter,
@@ -13,6 +16,7 @@ from medical_kg_nlp.adapters.huggingface.token_classifier import (
 __all__ = [
     "HuggingFaceCrossEncoderAdapter",
     "HuggingFaceModelConfig",
+    "HuggingFaceSourceTokenClassifierAdapter",
     "HuggingFaceTextEncoderAdapter",
     "HuggingFaceTokenClassifierAdapter",
     "OptionalModelDependencyError",

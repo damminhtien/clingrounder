@@ -78,6 +78,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.phase1",
         "propose_phase1_qwen_entities",
     ),
+    "benchmark_phase1_qwen_vietnamese_support": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "propose_phase1_vietnamese_support",
+    ),
     "model_validate_token_dataset": (
         "medical_kg_nlp.cli.commands.model",
         "validate_token_dataset",

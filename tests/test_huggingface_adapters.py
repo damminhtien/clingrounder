@@ -14,6 +14,7 @@ import pytest
 from medical_kg_nlp.adapters import (
     HuggingFaceCrossEncoderAdapter,
     HuggingFaceModelConfig,
+    HuggingFaceSourceTokenClassifierAdapter,
     HuggingFaceTextEncoderAdapter,
     HuggingFaceTokenClassifierAdapter,
     HybridEntityExtractorAdapter,
@@ -21,7 +22,11 @@ from medical_kg_nlp.adapters import (
     OptionalModelDependencyError,
 )
 from medical_kg_nlp.adapters.huggingface import runtime as huggingface_runtime
-from medical_kg_nlp.adapters.model_spans import TokenPrediction, project_bio_predictions
+from medical_kg_nlp.adapters.model_spans import (
+    TokenPrediction,
+    project_bio_predictions,
+    project_source_bio_predictions,
+)
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.linking.candidate import Candidate
@@ -71,6 +76,29 @@ def test_model_config_requires_pinned_identity() -> None:
                     "confidence_thresholds": {"NOT_A_TYPE": 0.5},
                 }
             }
+        )
+
+
+def test_model_config_pins_safe_repository_subfolder() -> None:
+    config = HuggingFaceModelConfig.from_mapping(
+        {
+            "model_id": "owner/repository",
+            "revision": "abc123",
+            "subfolder": "xlm-roberta-base-VietMed-NER",
+        },
+        name="entity_extractor",
+    )
+
+    assert config.subfolder == "xlm-roberta-base-VietMed-NER"
+    assert (
+        config.provenance
+        == "owner/repository@abc123#xlm-roberta-base-VietMed-NER"
+    )
+    with pytest.raises(ValueError, match="relative model path"):
+        HuggingFaceModelConfig(
+            model_id="owner/repository",
+            revision="abc123",
+            subfolder="../untrusted",
         )
 
 
@@ -129,6 +157,45 @@ def test_bio_projection_deduplicates_windows_and_preserves_raw_slice() -> None:
         ("đau ngực", EntityType.SYMPTOM),
         ("sốt", EntityType.SYMPTOM),
     ]
+
+
+def test_source_bio_projection_retains_vietmed_taxonomy() -> None:
+    text = "đau đầu dùng aspirin"
+    entities = project_source_bio_predictions(
+        text,
+        (
+            TokenPrediction(0, 3, "B-DISEASESYMTOM", 0.91),
+            TokenPrediction(4, 7, "I-DISEASESYMTOM", 0.93),
+            TokenPrediction(13, 20, "B-DRUGCHEMICAL", 0.88),
+        ),
+    )
+
+    assert [
+        (text[start:end], item.source_label)
+        for item in entities
+        for start, end in [item.span]
+    ] == [
+        ("đau đầu", "DISEASESYMTOM"),
+        ("aspirin", "DRUGCHEMICAL"),
+    ]
+
+
+def test_source_token_classifier_exposes_support_labels_without_type_crosswalk(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    adapter = HuggingFaceSourceTokenClassifierAdapter(_model_config(), stride=8)
+    monkeypatch.setattr(
+        adapter._token_classifier,
+        "predict_token_labels",
+        lambda text: [
+            TokenPrediction(0, len(text), "B-DISEASESYMTOM", 0.92),
+        ],
+    )
+
+    entities = adapter.extract("đau đầu")
+
+    assert entities[0].source_label == "DISEASESYMTOM"
+    assert entities[0].span == (0, 7)
 
 
 def test_token_classifier_projects_fast_tokenizer_offsets(

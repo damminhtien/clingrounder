@@ -561,6 +561,16 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     )
     qwen_propose.add_argument("--expected-count", type=int, default=100)
     qwen_propose.add_argument("--no-adjudication", action="store_true")
+    qwen_support = qwen_operations.add_parser(
+        "build-vietnamese-support",
+        help="Run a pinned Vietnamese NER model as support that Qwen must confirm.",
+    )
+    qwen_support.set_defaults(handler="benchmark_phase1_qwen_vietnamese_support")
+    qwen_support.add_argument("--config", required=True)
+    qwen_support.add_argument("--documents", required=True)
+    qwen_support.add_argument("--source-archive-sha256", required=True)
+    qwen_support.add_argument("--output-dir", required=True)
+    qwen_support.add_argument("--expected-count", type=int, default=100)
 
 
 def _model_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:

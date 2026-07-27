@@ -86,6 +86,26 @@ Its JSONL SHA-256 is
 No development/test record, target-task crosswalk or offset appears in the assistant target. It is
 intended as a Vietnamese medical quote-extraction curriculum before Phase 1 specialization.
 
+## Published Model As Verifier
+
+The published `xlm-roberta-base-VietMed-NER` checkpoint has 277,481,509 parameters. Its repository
+revision, subfolder and count are locked in
+`configs/models/phase1-vietmed-ner-verifier-2026-07-27.yaml`.
+`HuggingFaceSourceTokenClassifierAdapter` preserves the source taxonomy and projects fast-tokenizer
+offsets back to raw text. The Phase 1 compatibility layer exposes only:
+
+```text
+DISEASESYMTOM -> {CHẨN_ĐOÁN, TRIỆU_CHỨNG}
+DRUGCHEMICAL  -> {THUỐC}
+DIAGNOSTICS   -> {TÊN_XÉT_NGHIỆM}
+```
+
+These are candidates for Qwen adjudication, not final predictions. The Qwen consensus function
+requires at least one `qwen.*` source, so VietMed-NER plus a rule source still cannot emit an entity
+without Qwen. The combined Qwen3-8B and VietMed-NER budget is 8,468,216,869 parameters; its separate
+experiment config is `phase1-qwen3-8b-vietmed-verifier-2026-07-27.yaml`. The original Qwen config
+remains an unchanged control.
+
 ## Promotion Boundary
 
 - Allowed: source-task training, exact-quote curriculum, model inference and verifier evidence.
@@ -134,3 +154,28 @@ uv run medical-kg data dataset export-spans \
 Build the train-only Qwen curriculum by passing all 18 source labels to
 `build-exact-quote-curriculum`. The expected build fingerprint is
 `a1099af3ea44afee7fc32e74bbc60e982a1041afbcdac25baaa16665c63ba551`.
+
+On a machine with the `ml` extra and a local pinned checkpoint, build support evidence:
+
+```bash
+hf download leduckhai/VietMed-NER \
+  --revision cccffb7de14423114f7d4bafc9f736b9d866e446 \
+  --include 'xlm-roberta-base-VietMed-NER/*'
+
+uv run medical-kg benchmark phase1 qwen build-vietnamese-support \
+  --config configs/models/phase1-vietmed-ner-verifier-2026-07-27.yaml \
+  --documents outputs/mining/phase1-round2-hosted-2026-07-27/documents.jsonl \
+  --source-archive-sha256 989d82404a9c1f3739e15d68a1e69d0f1f90d35c93c04ab0988e071fc1525545 \
+  --output-dir outputs/models/phase1-vietmed-ner-round2-support
+```
+
+Then pass the generated `support/` directory to Qwen:
+
+```bash
+uv run medical-kg benchmark phase1 qwen propose \
+  --config configs/models/phase1-qwen3-8b-vietmed-verifier-2026-07-27.yaml \
+  --documents outputs/mining/phase1-round2-hosted-2026-07-27/documents.jsonl \
+  --source-archive-sha256 989d82404a9c1f3739e15d68a1e69d0f1f90d35c93c04ab0988e071fc1525545 \
+  --support-source vietmed.ner=outputs/models/phase1-vietmed-ner-round2-support/support \
+  --output-dir outputs/models/phase1-qwen3-vietmed-round2
+```
