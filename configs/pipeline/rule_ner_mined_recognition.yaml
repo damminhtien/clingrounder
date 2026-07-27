@@ -1,0 +1,17 @@
+terminology:
+  # Recognition stays in memory because the matcher scans every note. The additional source is
+  # code-free, train-mined knowledge that passed the frozen holdout gate in run 115886bf9d22.
+  recognition_path: ../../data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
+  additional_recognition_paths:
+    - ../../outputs/mining/knowledge/phase1-recognition-115886bf9d22/recognition_concepts.jsonl
+  abbreviation_path: ../../data/dictionaries/abbreviations.jsonl
+  alias_overlay_path: ../../data/dictionaries/vietnamese_medical_alias.jsonl
+
+pipeline:
+  version: "0.2.0-rule-ner-mined-recognition"
+  enable_context: false
+  enable_linking: false
+  enable_candidate_reranking: false
+  enable_entity_kg_validation: false
+  enable_relations: false
+  enable_relation_kg_validation: false

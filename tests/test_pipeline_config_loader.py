@@ -224,6 +224,22 @@ def test_round2_full_profile_adds_reviewed_recognition_sources() -> None:
     assert factory.options.link_max_qualified_candidates == 1
 
 
+def test_rule_ner_mined_recognition_profile_does_not_compose_linking() -> None:
+    resolved = ResolvedPipelineConfig.load(
+        "configs/pipeline/rule_ner_mined_recognition.yaml"
+    )
+    factory = resolved.factory_config
+
+    assert [Path(path).name for path in factory.additional_recognition_dictionary_paths] == [
+        "recognition_concepts.jsonl"
+    ]
+    assert factory.normalization_dictionary_paths == ()
+    assert factory.reviewed_mention_path is None
+    assert factory.options.enable_context is False
+    assert factory.options.enable_linking is False
+    assert factory.options.enable_relations is False
+
+
 def _concept_rows() -> str:
     rows = (
         {
