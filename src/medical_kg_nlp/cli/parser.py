@@ -463,6 +463,42 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         default="phase1-qa-educational-v1",
     )
 
+    qwen_data_build = model_data_operations.add_parser(
+        "build-qwen",
+        help="Build leakage-safe Qwen extraction and adjudication instructions.",
+    )
+    qwen_data_build.set_defaults(handler="benchmark_phase1_qwen_data_build")
+    qwen_data_build.add_argument(
+        "--source-dataset",
+        default=(
+            "outputs/mining/model-datasets/"
+            "phase1-manual-five-type-qa-edu-v1/spans.jsonl"
+        ),
+    )
+    qwen_data_build.add_argument(
+        "--source-manifest",
+        default=(
+            "outputs/mining/model-datasets/"
+            "phase1-manual-five-type-qa-edu-v1/manifest.json"
+        ),
+    )
+    qwen_data_build.add_argument(
+        "--hard-negative-predictions",
+        help="Optional XLM-R predictions over train documents only.",
+    )
+    qwen_data_build.add_argument(
+        "--output-dir",
+        default=(
+            "outputs/mining/model-datasets/"
+            "phase1-qwen-instructions-v1"
+        ),
+    )
+    qwen_data_build.add_argument(
+        "--exclude-development",
+        action="store_true",
+        help="Write train records only; development remains excluded rather than merged.",
+    )
+
     model_data_calibrate = model_data_operations.add_parser(
         "calibrate",
         help="Verify a full model and select per-type thresholds on development.",
@@ -493,6 +529,21 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         action="store_true",
         help="Explicitly score the final frozen holdout after development selection.",
     )
+
+    qwen = operations.add_parser(
+        "qwen",
+        help="Inspect or execute pinned Qwen proposal runs.",
+    )
+    qwen_operations = qwen.add_subparsers(
+        dest="phase1_qwen_command",
+        required=True,
+    )
+    qwen_inspect = qwen_operations.add_parser(
+        "inspect",
+        help="Validate model identity, parameter budget, cost cap, and data paths.",
+    )
+    qwen_inspect.set_defaults(handler="benchmark_phase1_qwen_inspect")
+    qwen_inspect.add_argument("--config", required=True)
 
 
 def _model_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:

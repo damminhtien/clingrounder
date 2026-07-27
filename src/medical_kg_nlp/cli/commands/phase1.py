@@ -32,6 +32,13 @@ from medical_kg_nlp.benchmarks.phase1.round2_probes import (
     Phase1Round2ProbeConfig,
     run_phase1_round2_probes,
 )
+from medical_kg_nlp.benchmarks.phase1.qwen_dataset import (
+    Phase1QwenDatasetConfig,
+    build_phase1_qwen_instruction_dataset,
+)
+from medical_kg_nlp.benchmarks.phase1.qwen_run_spec import (
+    load_phase1_qwen_run_spec,
+)
 from medical_kg_nlp.benchmarks.phase1.runner import (
     BenchmarkExportPolicy,
     Phase1BenchmarkConfig,
@@ -46,8 +53,10 @@ __all__ = [
     "audit_phase1_round2",
     "augment_phase1_model_regions",
     "build_phase1_model_data",
+    "build_phase1_qwen_data",
     "calibrate_phase1_model_data",
     "compare_phase1_model_variants",
+    "inspect_phase1_qwen_run",
     "run_phase1_round2_probe_suite",
     "run_phase1_submission",
 ]
@@ -214,6 +223,52 @@ def augment_phase1_model_regions(args: argparse.Namespace) -> int:
         ),
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def build_phase1_qwen_data(args: argparse.Namespace) -> int:
+    """Build extraction SFT and train-only XLM-R hard-negative records."""
+
+    report = build_phase1_qwen_instruction_dataset(
+        Phase1QwenDatasetConfig(
+            spans_path=Path(args.source_dataset),
+            spans_manifest_path=Path(args.source_manifest),
+            output_dir=Path(args.output_dir),
+            hard_negative_predictions_path=(
+                None
+                if args.hard_negative_predictions is None
+                else Path(args.hard_negative_predictions)
+            ),
+            include_development=not args.exclude_development,
+        )
+    )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def inspect_phase1_qwen_run(args: argparse.Namespace) -> int:
+    """Validate a Qwen run without importing Torch or loading the checkpoint."""
+
+    spec = load_phase1_qwen_run_spec(args.config)
+    payload = spec.to_dict()
+    payload["config"] = {
+        "path": spec.relative_path(spec.config_path),
+        "sha256": sha256_file(spec.config_path),
+    }
+    payload["dataset"]["present"] = (
+        spec.dataset_path.is_file() and spec.dataset_manifest_path.is_file()
+    )
+    payload["commands"] = {
+        "prefetch": list(spec.prefetch_command),
+        "build_dataset": [
+            "medical-kg",
+            "benchmark",
+            "phase1",
+            "model-data",
+            "build-qwen",
+        ],
+    }
+    print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 
 

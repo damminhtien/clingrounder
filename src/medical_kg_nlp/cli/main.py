@@ -66,6 +66,14 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.phase1",
         "compare_phase1_model_variants",
     ),
+    "benchmark_phase1_qwen_data_build": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "build_phase1_qwen_data",
+    ),
+    "benchmark_phase1_qwen_inspect": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "inspect_phase1_qwen_run",
+    ),
     "model_validate_token_dataset": (
         "medical_kg_nlp.cli.commands.model",
         "validate_token_dataset",
