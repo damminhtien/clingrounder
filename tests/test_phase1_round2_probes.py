@@ -182,6 +182,12 @@ def test_candidate_policies_abstain_without_changing_entities_or_assertions() ->
         baseline,
         policy="rx_unique_only",
     )
+    unique_keep_icd, keep_icd_decisions, keep_icd_counters = (
+        apply_round2_candidate_policy(
+            baseline,
+            policy="rx_unique_keep_icd",
+        )
+    )
 
     assert [row["candidates"] for row in rx_only["1"]] == [
         [],
@@ -189,6 +195,11 @@ def test_candidate_policies_abstain_without_changing_entities_or_assertions() ->
         ["11289", "855332"],
     ]
     assert [row["candidates"] for row in unique["1"]] == [[], ["1191"], []]
+    assert [row["candidates"] for row in unique_keep_icd["1"]] == [
+        ["I10", "I11"],
+        ["1191"],
+        [],
+    ]
     assert [row["assertions"] for row in unique["1"]] == [
         ["isHistorical"],
         ["isHistorical"],
@@ -204,10 +215,15 @@ def test_candidate_policies_abstain_without_changing_entities_or_assertions() ->
         "non_medication_candidate_abstention",
         "ambiguous_medication_candidate_abstention",
     ]
+    assert [decision["reason"] for decision in keep_icd_decisions] == [
+        "ambiguous_medication_candidate_abstention"
+    ]
     assert rx_counters["candidate.retained"] == 3
     assert rx_counters["candidate.removed"] == 2
     assert unique_counters["candidate.retained"] == 1
     assert unique_counters["candidate.removed"] == 4
+    assert keep_icd_counters["candidate.retained"] == 3
+    assert keep_icd_counters["candidate.removed"] == 2
 
 
 def test_round2_probe_runner_preserves_entities_and_candidates_for_assertions(
@@ -292,13 +308,19 @@ def test_round2_probe_cli_parser_accepts_named_sources() -> None:
             "rx_only",
             "--candidate-probe",
             "rx_unique_only",
+            "--candidate-probe",
+            "rx_unique_keep_icd",
         ]
     )
 
     assert args.handler == "benchmark_phase1_round2_probes"
     assert args.source == ["qwen=qwen.zip", "xlmr=xlmr.zip"]
     assert args.build_full_source == ["qwen"]
-    assert args.candidate_probe == ["rx_only", "rx_unique_only"]
+    assert args.candidate_probe == [
+        "rx_only",
+        "rx_unique_only",
+        "rx_unique_keep_icd",
+    ]
 
 
 def _row(text: str, mention: str, entity_type: str) -> dict[str, object]:

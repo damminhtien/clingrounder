@@ -63,7 +63,11 @@ Round2RegionKind = Literal[
     "educational",
     "other",
 ]
-CandidateProbePolicy = Literal["rx_only", "rx_unique_only"]
+CandidateProbePolicy = Literal[
+    "rx_only",
+    "rx_unique_only",
+    "rx_unique_keep_icd",
+]
 
 _MEDICATION_HEADING_RE = re.compile(
     r"(?i)^\s*(?:danh sách\s+)?thuốc\s+(?:đang dùng\s+)?trước "
@@ -169,6 +173,7 @@ class Phase1Round2ProbeConfig:
         unsupported_candidate_policies = set(self.candidate_probe_policies) - {
             "rx_only",
             "rx_unique_only",
+            "rx_unique_keep_icd",
         }
         if unsupported_candidate_policies:
             raise ValueError(
@@ -494,11 +499,11 @@ def apply_round2_candidate_policy(
 
     `rx_only` retains every existing RxNorm list on medication entities and clears all other
     candidate lists. `rx_unique_only` additionally requires the medication row to contain exactly
-    one candidate, avoiding an arbitrary top-one choice when source ordering has no calibrated
-    ranking contract.
+    one candidate. `rx_unique_keep_icd` applies that medication uniqueness gate while preserving
+    diagnosis candidates, isolating the effect of ambiguous drug lists from ICD abstention.
     """
 
-    if policy not in {"rx_only", "rx_unique_only"}:
+    if policy not in {"rx_only", "rx_unique_only", "rx_unique_keep_icd"}:
         raise ValueError(f"Unsupported Round 2 candidate policy {policy!r}")
     output: dict[str, list[dict[str, Any]]] = {}
     decisions: list[dict[str, Any]] = []
@@ -516,20 +521,25 @@ def apply_round2_candidate_policy(
             entity_type = str(copied.get("type", ""))
             retained = list(raw_candidates)
             reason: str | None = None
-            if entity_type != "THUỐC":
+            if entity_type != "THUỐC" and policy != "rx_unique_keep_icd":
                 retained = []
                 if raw_candidates:
                     reason = "non_medication_candidate_abstention"
                     counters["row.cleared_non_medication"] += 1
-            elif policy == "rx_unique_only" and len(raw_candidates) != 1:
+            elif entity_type == "THUỐC" and policy in {
+                "rx_unique_only",
+                "rx_unique_keep_icd",
+            } and len(raw_candidates) != 1:
                 retained = []
                 if raw_candidates:
                     reason = "ambiguous_medication_candidate_abstention"
                     counters["row.cleared_ambiguous_medication"] += 1
                 else:
                     counters["row.empty_medication"] += 1
-            elif raw_candidates:
+            elif entity_type == "THUỐC" and raw_candidates:
                 counters["row.retained_medication"] += 1
+            elif raw_candidates:
+                counters["row.retained_non_medication"] += 1
 
             copied["candidates"] = retained
             transformed.append(copied)

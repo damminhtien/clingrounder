@@ -377,11 +377,11 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     probes.add_argument(
         "--candidate-probe",
         action="append",
-        choices=("rx_only", "rx_unique_only"),
+        choices=("rx_only", "rx_unique_only", "rx_unique_keep_icd"),
         default=[],
         help=(
             "Build a candidate-only abstention probe on the frozen baseline; repeat for "
-            "rx_only and rx_unique_only."
+            "rx_only, rx_unique_only, and rx_unique_keep_icd."
         ),
     )
 
