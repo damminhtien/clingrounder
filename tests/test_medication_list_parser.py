@@ -51,6 +51,16 @@ def test_medication_list_does_not_materialize_hidden_indication_vocabulary() -> 
     assert entities == [drug]
 
 
+def test_medication_list_does_not_absorb_unstructured_narrative_bullet() -> None:
+    text = "- doxycycline (do bác sĩ chăm sóc chính kê đơn)"
+    drug = _entity(text, "doxycycline", EntityType.DRUG)
+
+    MedicationListParser().adjudicate(text, [drug])
+
+    assert drug.medication_mention is not None
+    assert drug.medication_mention.full_span == drug.span
+
+
 def _entity(text: str, mention: str, entity_type: EntityType) -> EntityAnnotation:
     start = text.index(mention)
     return EntityAnnotation(

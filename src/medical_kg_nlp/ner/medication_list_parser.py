@@ -77,8 +77,9 @@ class MedicationListParser:
         if not items:
             return entities
 
-        # List parsing owns medication boundaries. Indication recognition belongs to the configured
-        # entity extractor so a benchmark fixture cannot become hidden global runtime vocabulary.
+        # List parsing supplies a hard item boundary and indication scope. The structured
+        # mention parser still owns the medication boundary: treating every clinical bullet
+        # as a complete medication span absorbs narrative such as prescribing rationale.
         for entity in entities:
             if entity.type != EntityType.DRUG:
                 continue
@@ -89,13 +90,14 @@ class MedicationListParser:
             if item is None:
                 continue
             parsed = self.mention_parser.parse(source_text, entity.span)
+            full_end = min(parsed.full_span[1], item.medication_span[1])
             entity.medication_mention = MedicationMention(
                 drug_span=entity.span,
-                full_span=(entity.span[0], item.medication_span[1]),
+                full_span=(entity.span[0], full_end),
                 components=tuple(
                     component
                     for component in parsed.components
-                    if component.span[1] <= item.medication_span[1]
+                    if component.span[1] <= full_end
                 ),
             )
         return entities
