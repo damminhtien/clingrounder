@@ -468,7 +468,29 @@ medication rows:
 It retains all 1,252 diagnosis values and 115 unique medication values. Strict validation and
 candidate isolation report zero issues. Its reproducible run is
 `outputs/phase1/round2/20260727T041845Z_round2-qwen-rx-unique-keep-icd_c5c0b16cdf/`.
-Submit this artifact next; do not add new mappings before observing whether keeping ICD helps.
+
+The public grader scored `C_RX_UNIQUE_KEEP_ICD` on 2026-07-27:
+
+| Metric | Frozen baseline | `C_RX_UNIQUE_KEEP_ICD` | Delta |
+| --- | ---: | ---: | ---: |
+| final | `28.1970` | `28.9092` | `+0.7122` |
+| WER | `67.7225` | `67.7225` | `0.0000` |
+| J assertion | `36.8242` | `36.8242` | `0.0000` |
+| J candidates | `18.6663` | `20.4468` | `+1.7805` |
+
+The submitted prefix `2f2fa1f569c2...` matches the complete local SHA-256. Relative to the
+previously promoted `C_RX_UNIQUE_ONLY`, restoring the 1,252 diagnosis candidate values gains
+`+0.3320` final and `+0.8301` J candidates while leaving WER and assertions unchanged. Therefore,
+`C_RX_UNIQUE_KEEP_ICD` is the current best Round 2 artifact and replaces `C_RX_UNIQUE_ONLY` as the
+frozen baseline.
+
+The controlled experiments establish the current candidate convention: preserve existing ICD
+candidates, preserve medication rows with exactly one RxNorm candidate, and clear medication rows
+with multiple candidates. Do not recover those ambiguous rows by selecting the first candidate.
+Any follow-up must use structured strength, form, route, release, or exact brand/ingredient
+evidence and must be isolated from entity changes. Since WER remains `67.7225`, the primary
+optimization branch now returns to NER recall and boundaries in question-answer and educational
+text.
 
 A metadata-only diagnostic probe preserves every `(text, type, position)` tuple from the rejected
 artifact and clears only `assertions` and `candidates`:
