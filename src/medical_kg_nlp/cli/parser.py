@@ -816,6 +816,22 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     dataset_export_spans.add_argument("--max-characters", type=int, default=1600)
     dataset_export_spans.add_argument("--empty-chunk-rate", type=float, default=1.0)
     dataset_export_spans.add_argument("--drop-empty-chunks", action="store_true")
+    dataset_exact_quote = dataset_operations.add_parser(
+        "build-exact-quote-curriculum",
+        help="Compile licensed train spans into source-label-preserving instructions.",
+    )
+    dataset_exact_quote.set_defaults(
+        handler="data_dataset_build_exact_quote_curriculum"
+    )
+    dataset_exact_quote.add_argument(
+        "--registry",
+        default="data/sources/mining_registry.yaml",
+    )
+    dataset_exact_quote.add_argument("--source-id", required=True)
+    dataset_exact_quote.add_argument("--spans", required=True)
+    dataset_exact_quote.add_argument("--spans-manifest", required=True)
+    dataset_exact_quote.add_argument("--label", action="append", required=True)
+    dataset_exact_quote.add_argument("--output-dir", required=True)
 
     lexicon = operations.add_parser(
         "lexicon", help="Build mined mention inventories for terminology review."

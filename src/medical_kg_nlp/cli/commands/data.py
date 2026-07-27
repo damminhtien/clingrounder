@@ -34,6 +34,10 @@ from medical_kg_nlp.mining.crosswalk_links import (
     materialize_exact_crosswalk_links,
 )
 from medical_kg_nlp.mining.dedup import StableTextDeduplicator
+from medical_kg_nlp.mining.exact_quote_curriculum import (
+    ExactQuoteCurriculumConfig,
+    build_exact_quote_curriculum,
+)
 from medical_kg_nlp.mining.dailymed_product_aliases import (
     build_dailymed_product_alias_proposals,
 )
@@ -144,6 +148,7 @@ from medical_kg_nlp.utils.hashing import sha256_file
 
 __all__ = [
     "build_dataset",
+    "build_exact_quote_curriculum_dataset",
     "attach_dataset_block_evidence",
     "build_lexicon",
     "benchmark_recognition_knowledge",
@@ -531,6 +536,23 @@ def export_span_training_dataset(args: argparse.Namespace) -> int:
         split_manifest_path=args.split_manifest,
     )
     _print_json(manifest)
+    return 0
+
+
+def build_exact_quote_curriculum_dataset(args: argparse.Namespace) -> int:
+    """Compile licensed source spans into a train-only exact-quote curriculum."""
+
+    report = build_exact_quote_curriculum(
+        ExactQuoteCurriculumConfig(
+            source_id=args.source_id,
+            source_registry_path=Path(args.registry),
+            spans_path=Path(args.spans),
+            spans_manifest_path=Path(args.spans_manifest),
+            output_dir=Path(args.output_dir),
+            allowed_labels=tuple(sorted(set(args.label))),
+        )
+    )
+    _print_json(report)
     return 0
 
 

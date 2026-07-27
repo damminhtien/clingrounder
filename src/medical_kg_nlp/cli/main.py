@@ -126,6 +126,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.data",
         "export_span_training_dataset",
     ),
+    "data_dataset_build_exact_quote_curriculum": (
+        "medical_kg_nlp.cli.commands.data",
+        "build_exact_quote_curriculum_dataset",
+    ),
     "data_lexicon_build": ("medical_kg_nlp.cli.commands.data", "build_lexicon"),
     "data_lexicon_crosswalk": (
         "medical_kg_nlp.cli.commands.data",
