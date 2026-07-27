@@ -145,7 +145,10 @@ immutable raw document.
 ## Data Boundary
 
 - Remote XLM-R training receives only the reviewed Round 1 train/development model dataset.
-- Never upload Round 2, DUA, private, or quarantined text unless its source policy explicitly allows
+- Round 2 may be uploaded only for temporary competition inference because its registry entry now
+  uses `authorized_private`; it remains excluded from training, calibration, pseudo-labeling,
+  aliases, and runtime memory.
+- Never upload DUA, other private, or quarantined text unless its source policy explicitly allows
   processing on Vast.ai.
 - If hosted processing is not allowed, train remotely and copy the checkpoint back; run inference
   on an authorized local/private GPU.
