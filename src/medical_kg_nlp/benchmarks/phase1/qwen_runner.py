@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
@@ -16,6 +17,7 @@ from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import (
 from medical_kg_nlp.benchmarks.phase1.qwen_proposals import (
     Phase1AdjudicationCandidate,
     Phase1QwenAdapter,
+    Phase1ReviewEntity,
     apply_phase1_adjudication,
     select_qwen_confirmed_proposals,
 )
@@ -58,6 +60,9 @@ class Phase1QwenProposalRunConfig:
     expected_source_archive_sha256: str
     output_dir: Path
     support_sources: tuple[tuple[str, Path], ...] = ()
+    review_source: tuple[str, Path] | None = None
+    review_max_rounds: int = 2
+    review_only: bool = False
     expected_document_count: int = 100
     run_adjudication: bool = True
 
@@ -69,6 +74,22 @@ class Phase1QwenProposalRunConfig:
             raise ValueError("Qwen support source names must be non-empty and unique")
         if any(name.startswith("qwen.") for name in names):
             raise ValueError("External support source names cannot use the qwen.* namespace")
+        if self.review_source is not None:
+            review_name, review_path = self.review_source
+            if not review_name.strip() or review_name.startswith("qwen."):
+                raise ValueError(
+                    "Qwen review source name must be non-empty and outside qwen.*"
+                )
+            if review_name in names:
+                raise ValueError("Qwen review source must differ from support sources")
+            if not review_path.exists():
+                raise ValueError("Qwen review source does not exist")
+        if not 1 <= self.review_max_rounds <= 5:
+            raise ValueError("Qwen review rounds must be between one and five")
+        if self.review_only and self.review_source is None:
+            raise ValueError("Qwen review-only mode requires a review source")
+        if self.review_only and self.support_sources:
+            raise ValueError("Qwen review-only mode does not consume support sources")
 
 
 def run_phase1_qwen_proposals(
@@ -87,10 +108,17 @@ def run_phase1_qwen_proposals(
         name: load_phase1_output_source(path)
         for name, path in config.support_sources
     }
+    review_by_doc = (
+        None
+        if config.review_source is None
+        else load_phase1_output_source(config.review_source[1])
+    )
     expected_ids = {document.document_id for document in documents}
     for name, rows_by_doc in support_by_name.items():
         if set(rows_by_doc) != expected_ids:
             raise ValueError(f"Support source {name!r} does not cover the private corpus")
+    if review_by_doc is not None and set(review_by_doc) != expected_ids:
+        raise ValueError("Review source does not cover the private corpus")
 
     runtime = TransformersCausalLMRuntime(
         model_id=run_spec.model.model_id,
@@ -106,69 +134,130 @@ def run_phase1_qwen_proposals(
         structured_retries=run_spec.structured_retries,
     )
     output = config.output_dir
-    consensus_dir = output / "consensus"
-    adjudicated_dir = output / "adjudicated"
-    consensus_dir.mkdir(parents=True, exist_ok=True)
-    if config.run_adjudication:
+    run_extraction = not config.review_only
+    consensus_dir = output / "consensus" if run_extraction else None
+    adjudicated_dir = (
+        output / "adjudicated"
+        if run_extraction and config.run_adjudication
+        else None
+    )
+    review_additions_dir = (
+        output / "review_additions" if review_by_doc is not None else None
+    )
+    reviewed_dir = output / "reviewed" if review_by_doc is not None else None
+    if consensus_dir is not None:
+        consensus_dir.mkdir(parents=True, exist_ok=True)
+    if adjudicated_dir is not None:
         adjudicated_dir.mkdir(parents=True, exist_ok=True)
+    if review_additions_dir is not None and reviewed_dir is not None:
+        review_additions_dir.mkdir(parents=True, exist_ok=True)
+        reviewed_dir.mkdir(parents=True, exist_ok=True)
 
     trace_rows: list[dict[str, Any]] = []
     raw_rows: list[dict[str, Any]] = []
     counters: Counter[str] = Counter()
     for document in documents:
-        proposal_sources, pass_trace, pass_raw = _run_document_passes(
-            adapter,
-            run_spec,
-            document,
-        )
-        for name, rows_by_doc in support_by_name.items():
-            proposal_sources[name] = _rows_to_proposals(
-                rows_by_doc[document.document_id],
-                document.text,
-                source=name,
-            )
-        thresholds = {
-            _PHASE1_LABEL_TO_TYPE[label]: threshold
-            for label, threshold in run_spec.thresholds.items()
-        }
-        confirmed = select_qwen_confirmed_proposals(
-            proposal_sources,
-            thresholds=thresholds,
-        )
-        resolved = EvidenceWeightedSpanResolver().resolve(confirmed)
-        consensus_rows = _proposals_to_rows(resolved.selected, document.text)
-        _write_document_rows(
-            consensus_dir / f"{document.document_id}.json",
-            consensus_rows,
-        )
-        counters["consensus.entities"] += len(consensus_rows)
-        counters["consensus.overlap_rejected"] += len(confirmed) - len(resolved.selected)
-
+        proposal_sources: dict[str, tuple[EntityProposal, ...]] = {}
+        pass_trace: list[dict[str, Any]] = []
+        pass_raw: list[dict[str, Any]] = []
+        consensus_rows: list[dict[str, Any]] = []
         adjudicated_rows: list[dict[str, Any]] = []
         adjudication_hash: str | None = None
-        if config.run_adjudication:
-            candidates = _adjudication_candidates(proposal_sources, document.text)
-            decisions, adjudication_hash = adapter.adjudicate(
-                document.text,
-                candidates,
-                generation=run_spec.adjudication_generation,
+        if run_extraction:
+            proposal_sources, pass_trace, pass_raw = _run_document_passes(
+                adapter,
+                run_spec,
+                document,
             )
-            adjudicated = apply_phase1_adjudication(
-                document.text,
-                candidates,
-                decisions,
-                minimum_confidence=min(run_spec.thresholds.values()),
+            for name, rows_by_doc in support_by_name.items():
+                proposal_sources[name] = _rows_to_proposals(
+                    rows_by_doc[document.document_id],
+                    document.text,
+                    source=name,
+                )
+            thresholds = _entity_type_thresholds(run_spec)
+            confirmed = select_qwen_confirmed_proposals(
+                proposal_sources,
+                thresholds=thresholds,
             )
-            adjudicated_resolved = EvidenceWeightedSpanResolver().resolve(adjudicated)
-            adjudicated_rows = _proposals_to_rows(
-                adjudicated_resolved.selected,
-                document.text,
+            resolved = EvidenceWeightedSpanResolver().resolve(confirmed)
+            consensus_rows = _proposals_to_rows(resolved.selected, document.text)
+            if consensus_dir is None:
+                raise AssertionError("Extraction output directory was not initialized")
+            _write_document_rows(
+                consensus_dir / f"{document.document_id}.json",
+                consensus_rows,
+            )
+            counters["consensus.entities"] += len(consensus_rows)
+            counters["consensus.overlap_rejected"] += (
+                len(confirmed) - len(resolved.selected)
+            )
+
+            if config.run_adjudication:
+                candidates = _adjudication_candidates(
+                    proposal_sources,
+                    document.text,
+                )
+                decisions, adjudication_hash = adapter.adjudicate(
+                    document.text,
+                    candidates,
+                    generation=run_spec.adjudication_generation,
+                )
+                adjudicated = apply_phase1_adjudication(
+                    document.text,
+                    candidates,
+                    decisions,
+                    minimum_confidence=min(run_spec.thresholds.values()),
+                )
+                adjudicated_resolved = EvidenceWeightedSpanResolver().resolve(
+                    adjudicated
+                )
+                adjudicated_rows = _proposals_to_rows(
+                    adjudicated_resolved.selected,
+                    document.text,
+                )
+                if adjudicated_dir is None:
+                    raise AssertionError(
+                        "Adjudication output directory was not initialized"
+                    )
+                _write_document_rows(
+                    adjudicated_dir / f"{document.document_id}.json",
+                    adjudicated_rows,
+                )
+                counters["adjudicated.entities"] += len(adjudicated_rows)
+
+        review_trace: dict[str, Any] | None = None
+        review_raw: list[dict[str, Any]] = []
+        if (
+            review_by_doc is not None
+            and review_additions_dir is not None
+            and reviewed_dir is not None
+        ):
+            (
+                additions,
+                reviewed,
+                review_trace,
+                review_raw,
+            ) = _run_document_review(
+                adapter,
+                run_spec,
+                document,
+                review_by_doc[document.document_id],
+                max_rounds=config.review_max_rounds,
             )
             _write_document_rows(
-                adjudicated_dir / f"{document.document_id}.json",
-                adjudicated_rows,
+                review_additions_dir / f"{document.document_id}.json",
+                additions,
             )
-            counters["adjudicated.entities"] += len(adjudicated_rows)
+            _write_document_rows(
+                reviewed_dir / f"{document.document_id}.json",
+                reviewed,
+            )
+            counters["review.additions"] += len(additions)
+            counters["review.entities"] += len(reviewed)
+            counters["review.overlap_rejected"] += int(
+                review_trace["overlap_rejected_count"]
+            )
         trace_rows.append(
             {
                 "document_id": document.document_id,
@@ -181,10 +270,12 @@ def run_phase1_qwen_proposals(
                 "consensus_entity_count": len(consensus_rows),
                 "adjudicated_entity_count": len(adjudicated_rows),
                 "adjudication_response_sha256": adjudication_hash,
+                "review": review_trace,
             }
         )
         raw_rows.extend(
-            {"document_id": document.document_id, **row} for row in pass_raw
+            {"document_id": document.document_id, **row}
+            for row in (*pass_raw, *review_raw)
         )
 
     trace_sha256 = write_jsonl(output / "trace.jsonl", trace_rows)
@@ -199,16 +290,26 @@ def run_phase1_qwen_proposals(
                 "source_archive_sha256": config.expected_source_archive_sha256,
             },
             "support_sources": [
-                {"name": name, "path": str(path), "sha256": sha256_file(path)}
+                _phase1_source_descriptor(name, path)
                 for name, path in config.support_sources
-                if path.is_file()
             ],
+            "review_source": (
+                None
+                if config.review_source is None
+                else _phase1_source_descriptor(*config.review_source)
+            ),
         },
         "outputs": {
-            "consensus_dir": str(consensus_dir),
+            "consensus_dir": None if consensus_dir is None else str(consensus_dir),
             "adjudicated_dir": (
-                str(adjudicated_dir) if config.run_adjudication else None
+                None if adjudicated_dir is None else str(adjudicated_dir)
             ),
+            "review_additions_dir": (
+                None
+                if review_additions_dir is None
+                else str(review_additions_dir)
+            ),
+            "reviewed_dir": None if reviewed_dir is None else str(reviewed_dir),
             "trace_sha256": trace_sha256,
             "raw_responses_sha256": raw_sha256,
         },
@@ -218,10 +319,160 @@ def run_phase1_qwen_proposals(
             "qwen_confirmation_required": True,
             "new_entity_assertions": [],
             "new_entity_candidates": [],
+            "review_only": config.review_only,
+            "review_max_rounds": (
+                config.review_max_rounds
+                if config.review_source is not None
+                else None
+            ),
+            "review_merge": "baseline_preferred_nonoverlap",
         },
     }
     write_json(output / "manifest.json", manifest)
     return manifest
+
+
+def _run_document_review(
+    adapter: Phase1QwenAdapter,
+    run_spec: Phase1QwenRunSpec,
+    document: ClinicalDocument,
+    baseline_rows: Sequence[Mapping[str, Any]],
+    *,
+    max_rounds: int,
+) -> tuple[
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+    dict[str, Any],
+    list[dict[str, Any]],
+]:
+    """Review one frozen entity projection without changing its trusted metadata."""
+
+    existing = _rows_to_review_entities(
+        baseline_rows,
+        document.text,
+        source="review.baseline",
+    )
+    result = adapter.review_missing(
+        document.text,
+        existing,
+        generation=run_spec.targeted_generation,
+        max_rounds=max_rounds,
+    )
+    thresholds = _entity_type_thresholds(run_spec)
+    thresholded = tuple(
+        proposal
+        for proposal in result.proposals
+        if proposal.entity_type is not None
+        and proposal.score >= thresholds[proposal.entity_type]
+    )
+    resolved = EvidenceWeightedSpanResolver().resolve(thresholded)
+    addition_rows = _proposals_to_rows(resolved.selected, document.text)
+    reviewed_rows, overlap_rejected = _merge_review_rows(
+        baseline_rows,
+        addition_rows,
+    )
+    baseline_keys = {_row_identity(seed) for seed in baseline_rows}
+    accepted_keys = {
+        _row_identity(row)
+        for row in reviewed_rows
+        if _row_identity(row) not in baseline_keys
+    }
+    accepted_additions = [
+        row for row in addition_rows if _row_identity(row) in accepted_keys
+    ]
+    trace = {
+        "pass_id": result.pass_id,
+        "prompt_hash": result.prompt_hash,
+        "proposed_count": len(result.proposals),
+        "below_threshold_count": len(result.proposals) - len(thresholded),
+        "resolver_rejected_count": len(thresholded) - len(resolved.selected),
+        "accepted_addition_count": len(accepted_additions),
+        "overlap_rejected_count": overlap_rejected,
+        "reviewed_entity_count": len(reviewed_rows),
+        "rejected": list(result.rejected),
+        "response_sha256": list(result.response_sha256),
+    }
+    raw = [
+        {
+            "pass_id": result.pass_id,
+            "window_index": index,
+            "response_sha256": result.response_sha256[index],
+            "response": response,
+        }
+        for index, response in enumerate(result.raw_responses)
+    ]
+    return accepted_additions, reviewed_rows, trace, raw
+
+
+def _rows_to_review_entities(
+    rows: Sequence[Mapping[str, Any]],
+    source_text: str,
+    *,
+    source: str,
+) -> tuple[Phase1ReviewEntity, ...]:
+    """Convert one validated Phase 1 projection into reviewer prompt records."""
+
+    proposals = _rows_to_proposals(rows, source_text, source=source)
+    unique: dict[tuple[int, int, EntityType], Phase1ReviewEntity] = {}
+    for proposal in proposals:
+        entity_type = proposal.entity_type
+        if entity_type is None:
+            continue
+        start, end = proposal.span
+        review_entity = Phase1ReviewEntity(
+            text=source_text[start:end],
+            entity_type=_ENTITY_TYPE_TO_PHASE1_LABEL[entity_type],  # type: ignore[arg-type]
+            span=(start, end),
+        )
+        review_entity.validate(source_text)
+        unique[(start, end, entity_type)] = review_entity
+    return tuple(
+        sorted(
+            unique.values(),
+            key=lambda row: (row.span[0], row.span[1], row.entity_type),
+        )
+    )
+
+
+def _merge_review_rows(
+    baseline_rows: Sequence[Mapping[str, Any]],
+    addition_rows: Sequence[Mapping[str, Any]],
+) -> tuple[list[dict[str, Any]], int]:
+    """Add only non-overlapping review proposals while preserving baseline metadata.
+
+    INVARIANT: reviewer-only experiments isolate entity recall. Existing assertion and candidate
+    lists are copied byte-for-byte at the row level; new entities start empty.
+    """
+
+    selected: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, int, int]] = set()
+    for row in baseline_rows:
+        identity = _row_identity(row)
+        if identity in seen:
+            continue
+        seen.add(identity)
+        selected.append(dict(row))
+
+    overlap_rejected = 0
+    for row in sorted(addition_rows, key=_row_sort_key):
+        identity = _row_identity(row)
+        if identity in seen:
+            continue
+        if any(_row_spans_overlap(row, existing) for existing in selected):
+            overlap_rejected += 1
+            continue
+        selected.append(dict(row))
+        seen.add(identity)
+    return sorted(selected, key=_row_sort_key), overlap_rejected
+
+
+def _entity_type_thresholds(
+    run_spec: Phase1QwenRunSpec,
+) -> dict[EntityType, float]:
+    return {
+        _PHASE1_LABEL_TO_TYPE[label]: threshold
+        for label, threshold in run_spec.thresholds.items()
+    }
 
 
 def _run_document_passes(
@@ -381,7 +632,63 @@ def _write_document_rows(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
     )
 
 
-def _text_sha256(value: str) -> str:
-    import hashlib
+def _phase1_source_descriptor(name: str, path: Path) -> dict[str, Any]:
+    """Describe a ZIP or directory with a deterministic content fingerprint."""
 
+    return {
+        "name": name,
+        "path": str(path),
+        "kind": "file" if path.is_file() else "directory",
+        "sha256": _phase1_source_fingerprint(path),
+    }
+
+
+def _phase1_source_fingerprint(path: Path) -> str:
+    if path.is_file():
+        return sha256_file(path)
+    if not path.is_dir():
+        raise ValueError(f"Phase 1 source does not exist: {path}")
+    json_files = sorted(
+        value
+        for value in path.rglob("*.json")
+        if value.stem.isdigit() and value.is_file()
+    )
+    if not json_files:
+        raise ValueError(f"Phase 1 source directory has no document JSON: {path}")
+    digest = hashlib.sha256()
+    for value in json_files:
+        digest.update(value.relative_to(path).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(sha256_file(value).encode("ascii"))
+        digest.update(b"\n")
+    return digest.hexdigest()
+
+
+def _row_identity(row: Mapping[str, Any]) -> tuple[str, str, int, int]:
+    position = row.get("position")
+    if not isinstance(position, list) or len(position) != 2:
+        raise ValueError(f"Invalid Phase 1 row position: {row}")
+    return (
+        str(row.get("type", "")),
+        str(row.get("text", "")),
+        int(position[0]),
+        int(position[1]),
+    )
+
+
+def _row_sort_key(row: Mapping[str, Any]) -> tuple[int, int, str, str]:
+    entity_type, text, start, end = _row_identity(row)
+    return (start, end, entity_type, text)
+
+
+def _row_spans_overlap(
+    left: Mapping[str, Any],
+    right: Mapping[str, Any],
+) -> bool:
+    _, _, left_start, left_end = _row_identity(left)
+    _, _, right_start, right_end = _row_identity(right)
+    return left_start < right_end and right_start < left_end
+
+
+def _text_sha256(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()

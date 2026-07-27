@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from medical_kg_nlp.benchmarks.phase1.qwen_runner import (
+    Phase1QwenProposalRunConfig,
     _adjudication_candidates,
+    _merge_review_rows,
     _proposals_to_rows,
+    _rows_to_review_entities,
     _rows_to_proposals,
 )
 
@@ -71,3 +76,72 @@ def test_adjudication_candidates_merge_exact_source_evidence() -> None:
     )
 
     assert candidates[0].sources == ("qwen.recall", "rule")
+
+
+def test_review_rows_preserve_baseline_metadata_and_reject_overlap() -> None:
+    baseline = [
+        {
+            "text": "aspirin 81 mg",
+            "type": "THUỐC",
+            "position": [0, 13],
+            "assertions": ["isHistorical"],
+            "candidates": ["243670"],
+        }
+    ]
+    additions = [
+        {
+            "text": "aspirin",
+            "type": "THUỐC",
+            "position": [0, 7],
+            "assertions": [],
+            "candidates": [],
+        },
+        {
+            "text": "ho",
+            "type": "TRIỆU_CHỨNG",
+            "position": [18, 20],
+            "assertions": [],
+            "candidates": [],
+        },
+    ]
+
+    reviewed, rejected = _merge_review_rows(baseline, additions)
+
+    assert rejected == 1
+    assert reviewed == [
+        baseline[0],
+        {
+            "text": "ho",
+            "type": "TRIỆU_CHỨNG",
+            "position": [18, 20],
+            "assertions": [],
+            "candidates": [],
+        },
+    ]
+
+
+def test_review_entities_keep_every_raw_occurrence() -> None:
+    text = "ho rồi ho"
+    entities = _rows_to_review_entities(
+        (
+            {"text": "ho", "type": "TRIỆU_CHỨNG", "position": [0, 2]},
+            {"text": "ho", "type": "TRIỆU_CHỨNG", "position": [7, 9]},
+        ),
+        text,
+        source="baseline",
+    )
+
+    assert [entity.span for entity in entities] == [(0, 2), (7, 9)]
+
+
+def test_review_only_config_requires_a_complete_source(tmp_path: Path) -> None:
+    documents = tmp_path / "documents.jsonl"
+    documents.write_text("{}\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="requires a review source"):
+        Phase1QwenProposalRunConfig(
+            documents_path=documents,
+            expected_source_archive_sha256="a" * 64,
+            output_dir=tmp_path / "output",
+            review_only=True,
+        )

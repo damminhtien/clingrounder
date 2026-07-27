@@ -318,6 +318,13 @@ def propose_phase1_qwen_entities(args: argparse.Namespace) -> int:
             expected_source_archive_sha256=args.source_archive_sha256,
             output_dir=Path(args.output_dir),
             support_sources=tuple(_named_paths(args.support_source)),
+            review_source=(
+                None
+                if args.review_source is None
+                else _named_paths([args.review_source])[0]
+            ),
+            review_max_rounds=args.review_max_rounds,
+            review_only=args.review_only,
             expected_document_count=args.expected_count,
             run_adjudication=not args.no_adjudication,
         ),

@@ -597,7 +597,7 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     qwen_inspect.add_argument("--config", required=True)
     qwen_propose = qwen_operations.add_parser(
         "propose",
-        help="Run recall, targeted, consensus, and adjudication on private documents.",
+        help="Run extraction/adjudication or missing-only review on private documents.",
     )
     qwen_propose.set_defaults(handler="benchmark_phase1_qwen_propose")
     qwen_propose.add_argument("--config", required=True)
@@ -609,6 +609,23 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         action="append",
         default=[],
         help="Optional NAME=DIR_OR_ZIP rule/XLM-R support; XLM-R alone is never emitted.",
+    )
+    qwen_propose.add_argument(
+        "--review-source",
+        help=(
+            "Optional NAME=DIR_OR_ZIP frozen projection shown to the missing-only reviewer."
+        ),
+    )
+    qwen_propose.add_argument(
+        "--review-max-rounds",
+        type=int,
+        default=2,
+        help="Stop after this many missing-only review rounds, or earlier when no entity is added.",
+    )
+    qwen_propose.add_argument(
+        "--review-only",
+        action="store_true",
+        help="Skip recall, targeted, and adjudication passes to review one frozen source cheaply.",
     )
     qwen_propose.add_argument("--expected-count", type=int, default=100)
     qwen_propose.add_argument("--no-adjudication", action="store_true")
