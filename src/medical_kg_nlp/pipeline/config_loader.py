@@ -23,6 +23,7 @@ _TERMINOLOGY_SINGLE_PATHS = (
     "additional_recognition_path",
     "abbreviation_path",
     "alias_overlay_path",
+    "contextual_alias_path",
 )
 _TERMINOLOGY_PATH_LISTS = (
     "normalization_paths",
@@ -104,6 +105,7 @@ def _materialize_terminology_paths(
             ),
             "abbreviation_path": config.abbreviation_path,
             "alias_overlay_path": config.alias_overlay_path,
+            "contextual_alias_path": config.contextual_alias_path,
         }
     )
     output["terminology"] = terminology

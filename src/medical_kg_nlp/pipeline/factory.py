@@ -27,6 +27,9 @@ from medical_kg_nlp.linking.graph_evidence import GraphEvidenceReranker
 from medical_kg_nlp.linking.graph_second_pass import GraphEvidenceSecondPass
 from medical_kg_nlp.linking.linker import EntityLinker
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
+from medical_kg_nlp.ner.extractors.contextual_alias import (
+    load_contextual_alias_rules,
+)
 from medical_kg_nlp.pipeline.components import PipelineComponents
 from medical_kg_nlp.pipeline.model_config import PipelineModelConfig
 from medical_kg_nlp.pipeline.options import PipelineOptions
@@ -69,6 +72,7 @@ class PipelineFactoryConfig:
     additional_recognition_dictionary_paths: tuple[str, ...] = ()
     abbreviation_path: str = "data/dictionaries/abbreviations.jsonl"
     alias_overlay_path: str | None = "data/dictionaries/vietnamese_medical_alias.jsonl"
+    contextual_alias_path: str | None = None
     pipeline_version: str = "0.2.0"
     options: PipelineOptions = field(default_factory=PipelineOptions)
     models: PipelineModelConfig = field(default_factory=PipelineModelConfig)
@@ -131,6 +135,9 @@ class PipelineFactoryConfig:
             alias_overlay_path=_optional_string(
                 terminology.get("alias_overlay_path", cls.alias_overlay_path)
             ),
+            contextual_alias_path=_optional_string(
+                terminology.get("contextual_alias_path")
+            ),
             pipeline_version=_string(pipeline, "version", cls.pipeline_version),
             options=PipelineOptions.from_mapping(pipeline),
             models=PipelineModelConfig.from_mapping(models),
@@ -162,6 +169,11 @@ class PipelineFactory:
         recognition_store = DictionaryStore(merge_concept_entries(recognition_entries))
 
         recognition_repository = InMemoryTerminologyRepository(recognition_store)
+        contextual_alias_rules = (
+            load_contextual_alias_rules(resolved.contextual_alias_path)
+            if resolved.contextual_alias_path is not None
+            else ()
+        )
         terminology_repository: TerminologyRepository = recognition_repository
         uses_sqlite_normalization = bool(resolved.normalization_dictionary_paths)
         if resolved.normalization_dictionary_paths:
@@ -226,14 +238,20 @@ class PipelineFactory:
                 entity_extractor = HybridEntityExtractorAdapter(
                     model=model_entity_extractor,
                     dictionary=RuleEntityExtractorAdapter(
-                        RuleBasedNER(recognition_store)
+                        RuleBasedNER(
+                            recognition_store,
+                            contextual_alias_rules=contextual_alias_rules,
+                        )
                     ),
                 )
             else:
                 entity_extractor = model_entity_extractor
         else:
             entity_extractor = RuleEntityExtractorAdapter(
-                RuleBasedNER(recognition_store)
+                RuleBasedNER(
+                    recognition_store,
+                    contextual_alias_rules=contextual_alias_rules,
+                )
             )
         assertion_classifier = (
             RuleAssertionClassifierAdapter(AssertionClassifier())

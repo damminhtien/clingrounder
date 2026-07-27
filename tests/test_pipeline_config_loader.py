@@ -42,6 +42,7 @@ terminology:
     - ../../data/mined.jsonl
   abbreviation_path: ../../data/abbreviations.jsonl
   alias_overlay_path: ../../data/vietnamese_aliases.jsonl
+  contextual_alias_path: ../../data/contextual_aliases.yaml
 pipeline:
   enable_relations: false
   enable_relation_kg_validation: false
@@ -77,6 +78,9 @@ models:
     assert (
         resolved.factory_config.models.candidate_reranker.model_id
         == "medical-org/reranker"
+    )
+    assert resolved.factory_config.contextual_alias_path == str(
+        tmp_path / "project" / "data" / "contextual_aliases.yaml"
     )
 
 

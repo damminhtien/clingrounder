@@ -7,15 +7,18 @@ from typing import Literal
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatcher
+from medical_kg_nlp.ner.document_structure import DocumentStructureAnalyzer
 from medical_kg_nlp.ner.extractors import (
     AnchoredLabProposalExtractor,
     ClinicalBoundaryProposalExtractor,
     ConcatenatedDrugProposalExtractor,
+    ContextualAliasProposalExtractor,
     DictionaryProposalExtractor,
     MedicationAttributeProposalExtractor,
     RegexLabProposalExtractor,
     StructuredLabProposalExtractor,
 )
+from medical_kg_nlp.ner.extractors.contextual_alias import ContextualAliasRule
 from medical_kg_nlp.ner.lab_observation_extractor import LabObservationExtractor
 from medical_kg_nlp.ner.medication_attribute_extractor import MedicationAttributeExtractor
 from medical_kg_nlp.ner.medication_list_parser import MedicationListParser
@@ -46,6 +49,7 @@ class RuleBasedNER:
         *,
         false_positive_path: str | Path | None = DEFAULT_FALSE_POSITIVE_PATH,
         disease_symptom_fallback: Literal["disease", "abstain"] = "disease",
+        contextual_alias_rules: tuple[ContextualAliasRule, ...] = (),
     ) -> None:
         matcher = DictionaryMatcher(store.aliases_for_ner())
         false_positive_rules = load_false_positive_rules(false_positive_path)
@@ -53,6 +57,11 @@ class RuleBasedNER:
             disease_symptom_fallback=disease_symptom_fallback,
         )
         medication_lists = MedicationListParser()
+        contextual_aliases = (
+            (ContextualAliasProposalExtractor(contextual_alias_rules),)
+            if contextual_alias_rules
+            else ()
+        )
         self.engine = RuleNerEngine(
             foundation_extractors=(
                 DictionaryProposalExtractor(
@@ -64,6 +73,7 @@ class RuleBasedNER:
                     matcher=matcher,
                     false_positive_rules=false_positive_rules,
                 ),
+                *contextual_aliases,
             ),
             dependent_extractors=(
                 ClinicalBoundaryProposalExtractor(),
@@ -75,6 +85,7 @@ class RuleBasedNER:
             span_resolver=EvidenceWeightedSpanResolver(),
             medication_mentions=MedicationMentionParser(),
             medication_lists=medication_lists,
+            document_structure=DocumentStructureAnalyzer(),
         )
 
     def extract(self, text: str) -> list[EntityAnnotation]:

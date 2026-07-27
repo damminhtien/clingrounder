@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from medical_kg_nlp.ner.contracts import ProposalExtractorPort, RuleNerContext
+from medical_kg_nlp.ner.document_structure import DocumentStructureAnalyzer
 from medical_kg_nlp.ner.medication_list_parser import MedicationListParser
 from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
 from medical_kg_nlp.ner.proposal import EntityProposal, RuleNerTrace
@@ -37,10 +38,15 @@ class RuleNerEngine:
     span_resolver: EvidenceWeightedSpanResolver
     medication_mentions: MedicationMentionParser
     medication_lists: MedicationListParser
+    document_structure: DocumentStructureAnalyzer
 
     def extract(self, source_text: str) -> RuleNerEngineResult:
+        structure = self.document_structure.analyze(source_text)
         medication_items = self.medication_lists.items(source_text)
-        initial_context = RuleNerContext(medication_items=medication_items)
+        initial_context = RuleNerContext(
+            medication_items=medication_items,
+            structure=structure,
+        )
         foundation = tuple(
             proposal
             for extractor in self.foundation_extractors
@@ -49,6 +55,7 @@ class RuleNerEngine:
         dependent_context = RuleNerContext(
             medication_items=medication_items,
             foundation_proposals=foundation,
+            structure=structure,
         )
         dependent = tuple(
             proposal

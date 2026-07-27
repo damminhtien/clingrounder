@@ -3,6 +3,10 @@ from __future__ import annotations
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
+from medical_kg_nlp.ner.extractors.contextual_alias import (
+    ContextGate,
+    ContextualAliasRule,
+)
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 
 
@@ -131,6 +135,40 @@ def test_rule_ner_keeps_medication_and_lab_sources_independent_until_resolution(
     assert all(
         text[entity.span[0] : entity.span[1]] == entity.text
         for entity in result.entities
+    )
+
+
+def test_rule_ner_composes_contextual_alias_before_boundary_resolution() -> None:
+    text = "Triệu chứng hiện tại:\n- dau dữ dội\nĐịnh nghĩa dau trong từ điển."
+    ner = RuleBasedNER(
+        DictionaryStore([]),
+        contextual_alias_rules=(
+            ContextualAliasRule(
+                rule_id="symptom.pain",
+                alias="đau",
+                entity_type=EntityType.SYMPTOM,
+                required_any=(ContextGate.SYMPTOM_SECTION,),
+                match_modes=("exact", "toneless"),
+                score=0.72,
+                provenance="reviewed_train",
+            ),
+        ),
+    )
+
+    result = ner.extract_with_trace(text)
+
+    assert [(entity.text, entity.type) for entity in result.entities] == [
+        ("dau dữ dội", EntityType.SYMPTOM)
+    ]
+    assert any(
+        proposal.source == "contextual_alias"
+        and text[slice(*proposal.span)] == "dau"
+        for proposal in result.trace.proposals
+    )
+    assert any(
+        proposal.source == "clinical_boundary"
+        and text[slice(*proposal.span)] == "dau dữ dội"
+        for proposal in result.trace.proposals
     )
 
 
