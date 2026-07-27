@@ -252,6 +252,20 @@ Torch and all CUDA wheels again even though the template already contains a work
 The script pins the lightweight Python dependencies, installs the repository editable with
 `--no-deps`, and fails early when the template cannot access CUDA.
 
+The same rule applies to Qwen review. Transfer the frozen review ZIP and pinned instruction
+manifest, then run:
+
+```bash
+REVIEW_SOURCE=friend31=outputs/inputs/friend31-strict-known.zip \
+MAX_RUNTIME_SECONDS=28800 \
+  scripts/vast/run_qwen_phase1_review.sh \
+  2>&1 | tee /workspace/run_qwen_review.log
+```
+
+This mode skips recall, five targeted passes, and adjudication. It performs at most two
+missing-only rounds, keeps the frozen source on every overlap, and has an eight-hour process
+timeout as a cost guard.
+
 For a full training run that requires the exact lockfile environment rather than the template
 Torch, use the isolated lane below and account for its bootstrap time explicitly:
 
