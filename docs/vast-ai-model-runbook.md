@@ -1,7 +1,9 @@
 # Vast.ai Model Runbook
 
-This runbook is a handoff plan for model experiments after the Rule NER baseline is frozen. It does
-not authorize uploading competition or private clinical text to a third party.
+This runbook is a handoff plan for model experiments after the Rule NER baseline is frozen. The
+current deterministic checkpoint and measurements are documented in
+[`rule-ner-v2.md`](rule-ner-v2.md); finish reproducing that artifact before renting a GPU. This
+runbook does not authorize uploading competition or private clinical text to a third party.
 
 ## Workloads
 
