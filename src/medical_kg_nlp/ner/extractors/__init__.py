@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from medical_kg_nlp.ner.extractors.boundary import ClinicalBoundaryProposalExtractor
+from medical_kg_nlp.ner.extractors.contextual_alias import (
+    ContextualAliasProposalExtractor,
+)
 from medical_kg_nlp.ner.extractors.dictionary import (
     ConcatenatedDrugProposalExtractor,
     DictionaryProposalExtractor,
@@ -20,6 +23,7 @@ __all__ = [
     "AnchoredLabProposalExtractor",
     "ClinicalBoundaryProposalExtractor",
     "ConcatenatedDrugProposalExtractor",
+    "ContextualAliasProposalExtractor",
     "DictionaryProposalExtractor",
     "MedicationAttributeProposalExtractor",
     "RegexLabProposalExtractor",

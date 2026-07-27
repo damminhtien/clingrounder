@@ -98,7 +98,15 @@ class _AhoCorasick:
 
 
 class DictionaryMatcher:
-    def __init__(self, aliases: Iterable[tuple[str, ConceptEntry]]) -> None:
+    def __init__(
+        self,
+        aliases: Iterable[tuple[str, ConceptEntry]],
+        *,
+        min_toneless_alias_chars: int = _MIN_TONELESS_ALIAS_CHARS,
+        allow_compact_toneless_aliases: bool = False,
+    ) -> None:
+        if min_toneless_alias_chars < 2:
+            raise ValueError("min_toneless_alias_chars must be at least 2")
         exact_payloads: list[_AliasPayload] = []
         toneless_payloads: list[_AliasPayload] = []
         seen: set[tuple[str, str, str]] = set()
@@ -124,8 +132,11 @@ class DictionaryMatcher:
             if (
                 toneless_key
                 and toneless_key != exact_key
-                and len(toneless_key) >= _MIN_TONELESS_ALIAS_CHARS
-                and not _compact_alias_is_upper(cleaned)
+                and len(toneless_key) >= min_toneless_alias_chars
+                and (
+                    allow_compact_toneless_aliases
+                    or not _compact_alias_is_upper(cleaned)
+                )
             ):
                 key = ("toneless", toneless_key, entry.concept_id)
                 if key not in seen:

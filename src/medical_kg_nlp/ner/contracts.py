@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from medical_kg_nlp.ner.medication_list_parser import MedicationListItem
+from medical_kg_nlp.ner.document_structure import DocumentStructure
 from medical_kg_nlp.ner.proposal import EntityProposal
 
 __all__ = [
@@ -20,6 +21,7 @@ class RuleNerContext:
 
     medication_items: tuple[MedicationListItem, ...] = ()
     foundation_proposals: tuple[EntityProposal, ...] = ()
+    structure: DocumentStructure | None = None
 
 
 class ProposalExtractorPort(Protocol):
