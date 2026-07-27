@@ -33,6 +33,9 @@ class AccessClass(str, Enum):
 
     OPEN = "open"
     OPEN_WITH_TERMS = "open_with_terms"
+    # PRIVACY: the data owner explicitly permits temporary hosted compute, while canonical raw
+    # artifacts remain local and redistribution stays prohibited.
+    AUTHORIZED_PRIVATE = "authorized_private"
     CREDENTIALLED = "credentialled"
     DUA = "dua"
     LOCAL_PRIVATE = "local_private"

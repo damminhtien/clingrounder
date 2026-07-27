@@ -26,9 +26,9 @@ def _document(source_id: str, text: str) -> MinedDocument:
         language="vi",
         note_type="mixed_medical_text",
         source_artifact_id="round2:archive",
-        access_class=AccessClass.LOCAL_PRIVATE,
+        access_class=AccessClass.AUTHORIZED_PRIVATE,
         redistribution=RedistributionPolicy.PROHIBITED,
-        hosted_processing_allowed=False,
+        hosted_processing_allowed=True,
         metadata={
             "archive_member": f"input/{source_id}.txt",
             "source_document_id": source_id,
@@ -40,7 +40,7 @@ def _document(source_id: str, text: str) -> MinedDocument:
     )
 
 
-def test_round2_manifest_loader_preserves_private_raw_text_contract() -> None:
+def test_round2_manifest_loader_preserves_authorized_raw_text_contract() -> None:
     mined = tuple(_document(str(index), f"Dòng {index}\r\nDòng hai") for index in range(1, 101))
 
     documents = load_phase1_round2_documents(
@@ -53,7 +53,7 @@ def test_round2_manifest_loader_preserves_private_raw_text_contract() -> None:
     ]
     assert documents[0].text == "Dòng 1\r\nDòng hai"
     assert documents[0].metadata["archive_member"] == "input/1.txt"
-    assert documents[0].metadata["access_class"] == "local_private"
+    assert documents[0].metadata["access_class"] == "authorized_private"
 
 
 def test_round2_audit_emits_no_runtime_annotation_memory(tmp_path: Path) -> None:

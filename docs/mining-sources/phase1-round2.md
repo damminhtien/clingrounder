@@ -10,10 +10,12 @@ SHA-256 is:
 989d82404a9c1f3739e15d68a1e69d0f1f90d35c93c04ab0988e071fc1525545
 ```
 
-The registry permits only local competition inference and local distribution audit. Redistribution,
-hosted processing, pseudo-label training, annotation transfer, and runtime lookup memory are
-prohibited. The raw archive and all parsed text remain outside Git in an encrypted local artifact
-store.
+The registry permits local inference, local distribution audit, and temporary competition
+inference on owner-authorized Vast.ai compute. This hosted permission was explicitly granted by the
+data owner on 2026-07-27. Redistribution, pseudo-label training, annotation transfer, runtime lookup
+memory, and hosted artifact retention remain prohibited. The canonical raw archive and parsed text
+remain outside Git in an encrypted local artifact store; the temporary inference copy must be
+removed when the instance is destroyed.
 
 ## Import And Offset Contract
 
@@ -178,6 +180,17 @@ lock SHA, pipeline config, canonical validation dictionaries, and final ZIP SHA.
 structural baseline only: it proves deterministic export and validation, but it is not a viable
 submission candidate. Model-only and hybrid artifacts do not exist yet and must not be described as
 evaluated.
+
+### Hosted Inference Authorization
+
+The access class is `authorized_private`, which means:
+
+- canonical source bytes use `local_only` retention;
+- redistribution remains `prohibited`;
+- a temporary copy may be transferred to Vast.ai for competition inference;
+- Round 2 remains excluded from training, threshold calibration, pseudo-labeling, aliases, and
+  runtime memory;
+- returned predictions and model logs must be copied home before the remote instance is destroyed.
 
 ## Public Rule-Baseline Result
 

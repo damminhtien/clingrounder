@@ -31,11 +31,12 @@ def test_checked_in_mining_registry_is_strict_and_unique() -> None:
     assert registry.by_id("mimic_iv_note").hosted_processing_allowed is False
     assert registry.by_id("pmc_oa").license_mode.value == "per_artifact"
     round2 = registry.by_id("phase1_round2_input")
-    assert round2.access_class is AccessClass.LOCAL_PRIVATE
+    assert round2.access_class is AccessClass.AUTHORIZED_PRIVATE
     assert round2.redistribution is RedistributionPolicy.PROHIBITED
-    assert round2.hosted_processing_allowed is False
+    assert round2.hosted_processing_allowed is True
     assert round2.allowed_uses == (
         "local_competition_inference",
+        "hosted_competition_inference",
         "local_distribution_audit",
     )
     leaked = registry.by_id("phase1_part2_leaked_bundle")

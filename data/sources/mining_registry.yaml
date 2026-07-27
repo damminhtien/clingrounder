@@ -55,11 +55,12 @@ resources:
     category: local_competition_input
     version: round2-phase1-2026-07-22
     version_policy: pinned
-    access_class: local_private
+    # The data owner explicitly authorized temporary inference on Vast.ai on 2026-07-27.
+    access_class: authorized_private
     license_id: competition_input_restricted
     license_url: local-source://phase1-round2-input/terms
     redistribution: prohibited
-    hosted_processing_allowed: false
+    hosted_processing_allowed: true
     retention: local_only
     connector: local_archive
     parser: plain_text_archive
@@ -71,8 +72,11 @@ resources:
       max_member_bytes: "8388608"
       max_total_uncompressed_bytes: "67108864"
       max_compression_ratio: "200"
-    allowed_uses: [local_competition_inference, local_distribution_audit]
-    notes: Raw Round 2 input is never a training, pseudo-label, or runtime-memory source.
+    allowed_uses:
+      [local_competition_inference, hosted_competition_inference, local_distribution_audit]
+    notes: >-
+      Raw Round 2 input may be transferred temporarily to owner-authorized Vast.ai compute for
+      inference. It is never a training, pseudo-label, redistribution, or runtime-memory source.
   - id: phase1_part2_leaked_bundle
     name: Unverified Phase 1 part 2 annotation bundle
     category: unauthorized_competition_annotation_bundle

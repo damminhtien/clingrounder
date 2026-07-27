@@ -93,12 +93,14 @@ def load_phase1_round2_documents(
     output: list[ClinicalDocument] = []
     for source_id in sorted(by_source_id, key=int):
         document = by_source_id[source_id]
-        if document.access_class is not AccessClass.LOCAL_PRIVATE:
-            raise ValueError(f"Round 2 document {source_id} is not local_private")
+        if document.access_class is not AccessClass.AUTHORIZED_PRIVATE:
+            raise ValueError(f"Round 2 document {source_id} is not authorized_private")
         if document.redistribution is not RedistributionPolicy.PROHIBITED:
             raise ValueError(f"Round 2 document {source_id} permits redistribution")
-        if document.hosted_processing_allowed:
-            raise ValueError(f"Round 2 document {source_id} permits hosted processing")
+        if not document.hosted_processing_allowed:
+            raise ValueError(
+                f"Round 2 document {source_id} does not permit hosted processing"
+            )
         raw_bytes_sha256 = document.metadata.get("raw_bytes_sha256")
         # INVARIANT: re-encoding must recover the exact imported UTF-8 bytes. This also proves
         # no newline normalization occurred between archive parsing and model inference.

@@ -7,7 +7,8 @@ schema_version: medical-mining-plan.v1
 registry: ../../data/sources/mining_registry.yaml
 work_dir: ../../outputs/mining/phase1-round2-2026-07-22
 artifact_store:
-  # PRIVACY: the caller is responsible for pointing this at an encrypted local volume.
+  # PRIVACY: canonical raw objects stay in this encrypted local store. The source policy permits
+  # a temporary inference copy on owner-authorized Vast.ai compute, not remote artifact retention.
   uri: ${MEDICAL_KG_ARTIFACT_STORE}
   storage_options: {}
   encrypted_at_rest: true

@@ -341,9 +341,9 @@ def _document(source_id: str, text: str, archive_sha256: str) -> MinedDocument:
         language="vi",
         note_type="mixed_medical_text",
         source_artifact_id="round2:archive",
-        access_class=AccessClass.LOCAL_PRIVATE,
+        access_class=AccessClass.AUTHORIZED_PRIVATE,
         redistribution=RedistributionPolicy.PROHIBITED,
-        hosted_processing_allowed=False,
+        hosted_processing_allowed=True,
         metadata={
             "archive_member": f"input/{source_id}.txt",
             "source_document_id": source_id,

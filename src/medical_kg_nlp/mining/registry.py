@@ -80,11 +80,23 @@ class SourceDefinition(BaseModel):
         }
         if self.access_class in restricted and self.hosted_processing_allowed:
             raise ValueError("restricted sources cannot allow hosted processing")
-        if self.access_class in {AccessClass.DUA, AccessClass.LOCAL_PRIVATE}:
+        private_access = {
+            AccessClass.AUTHORIZED_PRIVATE,
+            AccessClass.DUA,
+            AccessClass.LOCAL_PRIVATE,
+        }
+        if self.access_class in private_access:
             if self.retention is not RetentionPolicy.LOCAL_ONLY:
-                raise ValueError("DUA and local-private sources require local_only retention")
+                raise ValueError("private sources require local_only canonical retention")
             if self.redistribution is not RedistributionPolicy.PROHIBITED:
-                raise ValueError("DUA and local-private sources must prohibit redistribution")
+                raise ValueError("private sources must prohibit redistribution")
+        if (
+            self.access_class is AccessClass.AUTHORIZED_PRIVATE
+            and not self.hosted_processing_allowed
+        ):
+            raise ValueError(
+                "authorized-private sources must explicitly allow hosted processing"
+            )
         if self.access_class is AccessClass.QUARANTINE:
             if self.redistribution is not RedistributionPolicy.UNKNOWN:
                 raise ValueError("quarantine sources must keep redistribution unknown")

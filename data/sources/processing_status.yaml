@@ -37,6 +37,8 @@ sources:
     summary: >-
       The private 100-document archive is checksum-pinned and byte-preserving; derived profile,
       duplicate, and novelty reports are audit-only and cannot supply labels or runtime memory.
+      The owner authorized temporary Vast.ai inference on 2026-07-27; redistribution, training,
+      pseudo-labeling, and hosted artifact retention remain prohibited.
     run_configs:
       - configs/mining/phase1-round2-2026-07-22.yaml
     artifact_roots:
