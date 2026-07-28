@@ -418,6 +418,35 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         help="Minimum reviewed document support for an exact RxNorm mapping.",
     )
 
+    proposal_calibrate = operations.add_parser(
+        "proposal-calibrate",
+        help="Train a leakage-safe calibrated verifier over aligned entity proposals.",
+    )
+    proposal_calibrate.set_defaults(
+        handler="benchmark_phase1_proposal_calibrate"
+    )
+    proposal_calibrate.add_argument("--matrix", required=True)
+    proposal_calibrate.add_argument("--input-dir", default="data/raw/input")
+    proposal_calibrate.add_argument("--gold-dir", default="data/manual_gold")
+    proposal_calibrate.add_argument(
+        "--model-split-manifest",
+        default=(
+            "outputs/mining/model-datasets/"
+            "phase1-manual-five-type-v1/split_manifest.json"
+        ),
+    )
+    proposal_calibrate.add_argument(
+        "--frozen-split-manifest",
+        default="data/manual_gold/holdout_manifest.json",
+    )
+    proposal_calibrate.add_argument(
+        "--source-role",
+        action="append",
+        required=True,
+        help="Proposal source and portable role as NAME=rule|llm|token_model|ensemble|verifier.",
+    )
+    proposal_calibrate.add_argument("--output-dir", required=True)
+
     golden = round2_operations.add_parser(
         "golden",
         help="Build inferred strict/review labels from independent proposal sources.",

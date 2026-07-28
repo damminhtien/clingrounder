@@ -177,6 +177,8 @@ def build_phase1_proposal_dataset(
     examples.sort(key=_example_sort_key)
     manifest = _build_manifest(
         examples,
+        gold_by_document,
+        split_by_document,
         matrix_file,
         model_manifest_file,
         holdout_manifest_file,
@@ -297,6 +299,8 @@ def _proposal_label(
 
 def _build_manifest(
     examples: Sequence[Phase1ProposalExample],
+    gold_by_document: Mapping[str, Sequence[Mapping[str, Any]]],
+    split_by_document: Mapping[str, str],
     matrix_path: Path,
     model_manifest_path: Path,
     holdout_manifest_path: Path,
@@ -309,12 +313,17 @@ def _build_manifest(
     type_counts: Counter[str] = Counter()
     status_counts: Counter[str] = Counter()
     error_counts: Counter[str] = Counter()
+    gold_counts: Counter[str] = Counter()
     for example in examples:
         split_counts[example.split] += 1
         label_counts[f"{example.split}:{example.label}"] += 1
         type_counts[f"{example.split}:{example.entity_type}:{example.label}"] += 1
         status_counts[f"{example.split}:{example.status}:{example.label}"] += 1
         error_counts[f"{example.split}:{example.error_kind}"] += 1
+    for document_id, gold_rows in gold_by_document.items():
+        split = split_by_document[document_id]
+        for row in gold_rows:
+            gold_counts[f"{split}:{row.get('type', '')}"] += 1
     frozen_corpus = holdout_manifest.get("corpus")
     assert isinstance(frozen_corpus, Mapping)
     return {
@@ -326,6 +335,7 @@ def _build_manifest(
         "type_label_counts": dict(sorted(type_counts.items())),
         "status_label_counts": dict(sorted(status_counts.items())),
         "error_counts": dict(sorted(error_counts.items())),
+        "gold_entity_counts": dict(sorted(gold_counts.items())),
         "source_roles": {
             source: ProposalSourceRole(role).value
             for source, role in sorted(source_roles.items())

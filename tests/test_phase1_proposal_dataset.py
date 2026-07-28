@@ -85,6 +85,11 @@ def test_proposal_dataset_labels_errors_without_reading_holdout(tmp_path: Path) 
         "train:0": 4,
         "train:1": 1,
     }
+    assert dataset.manifest["gold_entity_counts"] == {
+        "development:TRIỆU_CHỨNG": 1,
+        "train:KẾT_QUẢ_XÉT_NGHIỆM": 1,
+        "train:TRIỆU_CHỨNG": 2,
+    }
 
     output = tmp_path / "output"
     write_phase1_proposal_dataset(dataset, output)

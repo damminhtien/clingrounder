@@ -23,6 +23,15 @@ from medical_kg_nlp.benchmarks.phase1.model_selection import (
     compare_phase1_ner_variants,
     write_phase1_model_selection_report,
 )
+from medical_kg_nlp.benchmarks.phase1.proposal_calibration import (
+    fit_phase1_proposal_verifier,
+    write_phase1_proposal_verifier,
+)
+from medical_kg_nlp.benchmarks.phase1.proposal_dataset import (
+    build_phase1_proposal_dataset,
+    write_phase1_proposal_dataset,
+)
+from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRole
 from medical_kg_nlp.benchmarks.phase1.round2 import (
     build_phase1_round2_audit,
     load_phase1_round2_documents,
@@ -79,6 +88,7 @@ __all__ = [
     "build_phase1_qwen_data",
     "build_phase1_round2_golden_command",
     "calibrate_phase1_model_data",
+    "calibrate_phase1_proposals",
     "compare_phase1_model_variants",
     "inspect_phase1_qwen_run",
     "propose_phase1_qwen_entities",
@@ -156,6 +166,38 @@ def run_phase1_submission(args: argparse.Namespace) -> int:
         report["run_dir"] = str(run_output.run_dir)
         report["run_manifest"] = str(run_output.manifest_path)
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def calibrate_phase1_proposals(args: argparse.Namespace) -> int:
+    """Build frozen proposal labels and fit the portable verifier."""
+
+    source_roles: dict[str, ProposalSourceRole] = {}
+    for raw in args.source_role:
+        name, separator, value = str(raw).partition("=")
+        if not separator or not name or not value:
+            raise ValueError("--source-role must use NAME=ROLE")
+        if name in source_roles:
+            raise ValueError(f"Duplicate proposal source role {name!r}")
+        source_roles[name] = ProposalSourceRole(value)
+    output = Path(args.output_dir)
+    dataset = build_phase1_proposal_dataset(
+        args.matrix,
+        args.input_dir,
+        args.gold_dir,
+        args.model_split_manifest,
+        args.frozen_split_manifest,
+        source_roles=source_roles,
+    )
+    write_phase1_proposal_dataset(dataset, output / "dataset")
+    verifier, report = fit_phase1_proposal_verifier(dataset)
+    write_phase1_proposal_verifier(verifier, report, output)
+    summary = {
+        "output_dir": str(output),
+        "dataset": dataset.manifest,
+        "calibration": report,
+    }
+    print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 
 
