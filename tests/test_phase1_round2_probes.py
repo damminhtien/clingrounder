@@ -252,6 +252,12 @@ def test_candidate_policies_abstain_without_changing_entities_or_assertions() ->
             policy="rx_unique_keep_icd",
         )
     )
+    icd_top1, icd_top1_decisions, icd_top1_counters = (
+        apply_round2_candidate_policy(
+            baseline,
+            policy="icd_top1_keep_rx",
+        )
+    )
 
     assert [row["candidates"] for row in rx_only["1"]] == [
         [],
@@ -263,6 +269,11 @@ def test_candidate_policies_abstain_without_changing_entities_or_assertions() ->
         ["I10", "I11"],
         ["1191"],
         [],
+    ]
+    assert [row["candidates"] for row in icd_top1["1"]] == [
+        ["I10"],
+        ["1191"],
+        ["11289", "855332"],
     ]
     assert [row["assertions"] for row in unique["1"]] == [
         ["isHistorical"],
@@ -282,12 +293,20 @@ def test_candidate_policies_abstain_without_changing_entities_or_assertions() ->
     assert [decision["reason"] for decision in keep_icd_decisions] == [
         "ambiguous_medication_candidate_abstention"
     ]
+    assert [decision["reason"] for decision in icd_top1_decisions] == [
+        "diagnosis_candidate_top1_truncation"
+    ]
+    assert icd_top1_decisions[0]["action"] == "truncate"
+    assert icd_top1_decisions[0]["candidate_count_after"] == 1
     assert rx_counters["candidate.retained"] == 3
     assert rx_counters["candidate.removed"] == 2
     assert unique_counters["candidate.retained"] == 1
     assert unique_counters["candidate.removed"] == 4
     assert keep_icd_counters["candidate.retained"] == 3
     assert keep_icd_counters["candidate.removed"] == 2
+    assert icd_top1_counters["candidate.retained"] == 4
+    assert icd_top1_counters["candidate.removed"] == 1
+    assert icd_top1_counters["row.truncated_diagnosis"] == 1
 
 
 def test_round2_probe_runner_preserves_entities_and_candidates_for_assertions(
@@ -376,6 +395,8 @@ def test_round2_probe_cli_parser_accepts_named_sources() -> None:
             "rx_unique_only",
             "--candidate-probe",
             "rx_unique_keep_icd",
+            "--candidate-probe",
+            "icd_top1_keep_rx",
         ]
     )
 
@@ -387,6 +408,7 @@ def test_round2_probe_cli_parser_accepts_named_sources() -> None:
         "rx_only",
         "rx_unique_only",
         "rx_unique_keep_icd",
+        "icd_top1_keep_rx",
     ]
 
 

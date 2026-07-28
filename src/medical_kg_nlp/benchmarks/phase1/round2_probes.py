@@ -65,6 +65,7 @@ Round2RegionKind = Literal[
     "other",
 ]
 CandidateProbePolicy = Literal[
+    "icd_top1_keep_rx",
     "rx_only",
     "rx_unique_only",
     "rx_unique_keep_icd",
@@ -184,6 +185,7 @@ class Phase1Round2ProbeConfig:
         if len(self.candidate_probe_policies) != len(set(self.candidate_probe_policies)):
             raise ValueError("Candidate probe policies must be unique")
         unsupported_candidate_policies = set(self.candidate_probe_policies) - {
+            "icd_top1_keep_rx",
             "rx_only",
             "rx_unique_only",
             "rx_unique_keep_icd",
@@ -632,9 +634,16 @@ def apply_round2_candidate_policy(
     candidate lists. `rx_unique_only` additionally requires the medication row to contain exactly
     one candidate. `rx_unique_keep_icd` applies that medication uniqueness gate while preserving
     diagnosis candidates, isolating the effect of ambiguous drug lists from ICD abstention.
+    `icd_top1_keep_rx` preserves every non-diagnosis list and truncates ranked diagnosis lists to
+    their first code, isolating the effect of broad ICD retrieval lists.
     """
 
-    if policy not in {"rx_only", "rx_unique_only", "rx_unique_keep_icd"}:
+    if policy not in {
+        "icd_top1_keep_rx",
+        "rx_only",
+        "rx_unique_only",
+        "rx_unique_keep_icd",
+    }:
         raise ValueError(f"Unsupported Round 2 candidate policy {policy!r}")
     output: dict[str, list[dict[str, Any]]] = {}
     decisions: list[dict[str, Any]] = []
@@ -652,7 +661,21 @@ def apply_round2_candidate_policy(
             entity_type = str(copied.get("type", ""))
             retained = list(raw_candidates)
             reason: str | None = None
-            if entity_type != "THUỐC" and policy != "rx_unique_keep_icd":
+            if (
+                policy == "icd_top1_keep_rx"
+                and entity_type == "CHẨN_ĐOÁN"
+                and len(raw_candidates) > 1
+            ):
+                # INVARIANT: candidate order is the retriever's frozen rank order. This probe
+                # changes only list depth and never re-scores or invents a terminology code.
+                retained = raw_candidates[:1]
+                reason = "diagnosis_candidate_top1_truncation"
+                counters["row.truncated_diagnosis"] += 1
+            elif (
+                policy != "icd_top1_keep_rx"
+                and entity_type != "THUỐC"
+                and policy != "rx_unique_keep_icd"
+            ):
                 retained = []
                 if raw_candidates:
                     reason = "non_medication_candidate_abstention"
@@ -678,14 +701,19 @@ def apply_round2_candidate_policy(
             counters["candidate.retained"] += len(retained)
             counters["candidate.removed"] += len(raw_candidates) - len(retained)
             if reason is not None:
+                action = (
+                    "truncate"
+                    if reason == "diagnosis_candidate_top1_truncation"
+                    else "clear"
+                )
                 decisions.append(
                     {
                         "document_id": document_id,
                         "stage": "candidate_abstention",
-                        "action": "clear",
+                        "action": action,
                         "reason": reason,
                         "candidate_count_before": len(raw_candidates),
-                        "candidate_count_after": 0,
+                        "candidate_count_after": len(retained),
                         "entity": _identity_payload(row),
                     }
                 )
