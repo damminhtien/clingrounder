@@ -15,6 +15,7 @@ __all__ = [
     "LineRegion",
     "SectionKind",
     "SectionRegion",
+    "classify_section_heading_label",
 ]
 
 
@@ -99,8 +100,8 @@ class DocumentStructure:
 
 
 _LIST_PREFIX_RE = re.compile(
-    r"^[ \t]*(?:(?:[-*+•]+)[ \t]+|\d{1,3}[.)][ \t]+)",
-    flags=re.UNICODE,
+    r"^[ \t]*(?:(?:[-*+•]+)[ \t]+|(?:\d{1,3}|[ivxlcdm]{1,8})[.)][ \t]+)",
+    flags=re.IGNORECASE | re.UNICODE,
 )
 _QUESTION_ANSWER_RE = re.compile(
     r"^[ \t]*(?:câu[ \t]+hỏi|hỏi|đáp[ \t]+án|trả[ \t]+lời|question|answer)"
@@ -124,8 +125,11 @@ _SECTION_PATTERNS: tuple[tuple[SectionKind, re.Pattern[str]], ...] = (
     (
         SectionKind.LABORATORY,
         re.compile(
-            r"^(?:kết[ \t]+quả[ \t]+)?(?:xét[ \t]*nghiệm|phòng[ \t]+thí[ \t]+nghiệm)"
-            r"\b|^cận[ \t]+lâm[ \t]+sàng\b|^laboratory\b|^labs?\b"
+            r"^(?:(?:kết[ \t]+quả[ \t]+)?"
+            r"(?:(?:xét[ \t]*nghiệm|phòng[ \t]+thí[ \t]+nghiệm)"
+            r"(?:[ \t]+(?:(?:&|và)[ \t]+)?cận[ \t]+lâm[ \t]+sàng)?|"
+            r"cận[ \t]+lâm[ \t]+sàng)"
+            r"(?:[ \t]+đã[ \t]+có)?|laboratory|labs?)\b"
         ),
     ),
     (
@@ -248,8 +252,19 @@ def _heading_for_line(
     raw = source_text[start:end].strip()
     if not raw:
         return None
-    normalized = normalize_for_match(raw)
-    normalized = re.sub(r"^(?:[-*+•]+|\d{1,3}[.)])\s*", "", normalized)
+    kind = classify_section_heading_label(raw)
+    return (line.span, kind) if kind is not None else None
+
+
+def classify_section_heading_label(label: str) -> SectionKind | None:
+    """Classify a complete structural label without changing source offsets."""
+
+    normalized = normalize_for_match(label.strip())
+    normalized = re.sub(
+        r"^(?:[-*+•]+|(?:\d{1,3}|[ivxlcdm]{1,8})[.)])\s*",
+        "",
+        normalized,
+    )
     for kind, pattern in _SECTION_PATTERNS:
         match = pattern.match(normalized)
         if match is None:
@@ -259,7 +274,7 @@ def _heading_for_line(
         remainder = normalized[match.end() :]
         if remainder and not remainder.lstrip().startswith(":"):
             continue
-        return line.span, kind
+        return kind
     return None
 
 

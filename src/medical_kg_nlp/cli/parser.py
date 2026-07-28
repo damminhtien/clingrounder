@@ -418,6 +418,38 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         help="Minimum reviewed document support for an exact RxNorm mapping.",
     )
 
+    proposal_verify = round2_operations.add_parser(
+        "proposal-verifier",
+        help="Apply a frozen calibrated verifier as an additive-only entity probe.",
+    )
+    proposal_verify.set_defaults(
+        handler="benchmark_phase1_round2_proposal_verifier"
+    )
+    proposal_verify.add_argument("--documents", required=True)
+    proposal_verify.add_argument("--source-archive-sha256", required=True)
+    proposal_verify.add_argument("--base", required=True)
+    proposal_verify.add_argument("--expected-base-sha256", required=True)
+    proposal_verify.add_argument("--proposal-source", required=True)
+    proposal_verify.add_argument("--expected-proposal-source-sha256", required=True)
+    proposal_verify.add_argument("--verifier", required=True)
+    proposal_verify.add_argument("--expected-verifier-sha256", required=True)
+    proposal_verify.add_argument(
+        "--dictionary",
+        default="data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+    )
+    proposal_verify.add_argument(
+        "--validation-dictionary",
+        dest="validation_dictionaries",
+        action="append",
+        default=[
+            "data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl",
+            "data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl",
+        ],
+    )
+    proposal_verify.add_argument("--output-root", default="outputs/phase1/round2")
+    proposal_verify.add_argument("--run-label", default="round2-proposal-verifier")
+    proposal_verify.add_argument("--expected-count", type=int, default=100)
+
     proposal_calibrate = operations.add_parser(
         "proposal-calibrate",
         help="Train a leakage-safe calibrated verifier over aligned entity proposals.",
@@ -444,6 +476,14 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         action="append",
         required=True,
         help="Proposal source and portable role as NAME=rule|llm|token_model|ensemble|verifier.",
+    )
+    proposal_calibrate.add_argument(
+        "--minimum-development-precision",
+        type=float,
+        help=(
+            "Select the highest-recall per-type threshold meeting this precision; "
+            "omit to maximize development F1."
+        ),
     )
     proposal_calibrate.add_argument("--output-dir", required=True)
 

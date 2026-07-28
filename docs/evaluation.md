@@ -125,6 +125,45 @@ The profiler output is intended to be a cacheable experiment artifact. Use it to
 entity distributions, span lengths, context cue frequency, dictionary coverage, and unseen-code
 risks before adding larger models.
 
+### Proposal calibration
+
+Phase 1 proposal fusion uses a portable sparse logistic verifier rather than treating source
+agreement as an emission rule. The dataset builder reads only frozen model train/development
+documents, rejects Round 2 input, and verifies that the 24-document holdout is excluded. Its
+manifest fingerprints both the source matrix and the exact serialized feature rows.
+
+```bash
+uv run medical-kg benchmark phase1 proposal-calibrate \
+  --matrix outputs/phase1/<run>/proposals/proposal_matrix.jsonl \
+  --source-role pipeline=rule \
+  --source-role qwen=llm \
+  --minimum-development-precision 0.90 \
+  --output-dir outputs/phase1/proposal_calibration/<name>
+```
+
+`--minimum-development-precision` selects the highest-recall threshold meeting that precision
+separately for each entity type. Omitting it selects by development F1 and is suitable for source
+replacement experiments, not conservative additions to a strong baseline. The verifier records
+its feature contract, feature-row SHA-256, thresholds, and calibration objective.
+
+Apply a frozen verifier to an unlabeled Round 2 proposal source with:
+
+```bash
+uv run medical-kg benchmark phase1 round2 proposal-verifier \
+  --documents outputs/mining/phase1-round2-<run>/documents.jsonl \
+  --source-archive-sha256 <source-sha256> \
+  --base outputs/phase1/round2/<baseline>/output.zip \
+  --expected-base-sha256 <baseline-sha256> \
+  --proposal-source outputs/models/<proposal-source> \
+  --expected-proposal-source-sha256 <proposal-source-sha256> \
+  --verifier outputs/phase1/proposal_calibration/<name>/verifier.json \
+  --expected-verifier-sha256 <verifier-sha256>
+```
+
+The Round 2 command is additive-only: baseline rows remain unchanged by value, new rows emit empty
+assertions/candidates, overlaps are blocked, structural section labels are rejected, and the
+directory plus deterministic ZIP pass strict validation before the artifact is reported.
+
 Phase 1 model promotion never reads baseline numbers from Python defaults. The holdout gate loads
 `data/manual_gold/model_holdout_baseline.json` and verifies its frozen-split SHA, model-split SHA,
 corpus fingerprint, and holdout ID fingerprint before comparison. A corpus or split change therefore

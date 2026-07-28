@@ -151,4 +151,46 @@ validation issues: 0
 public score: pending
 ```
 
+## Calibrated Additive Probe
+
+The next gate was trained on the frozen Round 1 pipeline/Qwen proposal matrix,
+using only 60 train and 16 development documents. The 24-document holdout
+remained unopened. A `0.90` minimum development precision operating point
+produced:
+
+```text
+development precision: 0.924138
+development recall:    0.310905
+development F1:        0.465278
+feature rows SHA-256:
+  ed4b2914b4abed87ef40d4021d513b6a3c71f6e34ce4dbf1441e55a64a06f63e
+training dataset SHA-256:
+  1265fffb2243bca3ff7328095fedc7d141ed614fc93a4a6bbabc0bccd2a3f258
+verifier SHA-256:
+  e4d688bc3ac0b76cd502f7db8249296833c55b6f0e9e0d8adf76ae61546bc67b
+```
+
+Applied additively to the frozen public-score reference, the verifier rejected
+197 below-threshold proposals, three baseline overlaps, and three structural
+labels. These include both `Cận lâm sàng` occurrences that escaped the broad
+probe. It retained one non-overlapping symptom occurrence,
+`tiêu chảy`, with no assertion or candidate change:
+
+```text
+run:
+  outputs/phase1/round2/
+  20260728T111226Z_round2-qlora-calibrated-precision90-source-parit_725cbb879c/
+variant:
+  E_CALIBRATED_PROPOSAL_ADD
+entities: 3385 -> 3386
+validation issues: 0
+ZIP SHA-256:
+  b26cc76f39c6e48ff44c81c3689fe68635782537dcb7b09fd9b30c6bf5ca7ca5
+public score: pending
+```
+
+This is a controlled one-row probe, not a promoted baseline. Its likely public
+delta is small; submit it only when an entity-probe slot is available. The
+broad 39-row QLoRA union remains rejected.
+
 No model artifact is promoted from training loss or local agreement alone.

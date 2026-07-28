@@ -4,6 +4,7 @@ from medical_kg_nlp.ner.document_structure import (
     DocumentGenre,
     DocumentStructureAnalyzer,
     SectionKind,
+    classify_section_heading_label,
 )
 
 
@@ -65,3 +66,24 @@ def test_document_structure_requires_heading_termination() -> None:
 
     assert structure.genre is DocumentGenre.EDUCATIONAL
     assert structure.sections == ()
+
+
+def test_document_structure_detects_roman_numbered_lab_headings() -> None:
+    text = (
+        "I. Kết quả xét nghiệm & Cận lâm sàng đã có\n"
+        "Xét nghiệm có kết quả:\n"
+        "Kết quả Cận lâm sàng\n"
+        ". Xét nghiệm Máu"
+    )
+
+    structure = DocumentStructureAnalyzer().analyze(text)
+
+    first = text.index("Cận lâm sàng")
+    second = text.index("Cận lâm sàng", first + 1)
+    assert structure.section_at(first).kind is SectionKind.LABORATORY
+    assert structure.section_at(second).kind is SectionKind.LABORATORY
+    assert structure.line_at(first).content_start == text.index("Kết quả xét nghiệm")
+    assert (
+        classify_section_heading_label("Cận lâm sàng")
+        is SectionKind.LABORATORY
+    )

@@ -17,6 +17,7 @@ from typing import Any
 from medical_kg_nlp.ner.document_structure import (
     DocumentStructure,
     DocumentStructureAnalyzer,
+    classify_section_heading_label,
 )
 from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
 from medical_kg_nlp.utils.text import normalize_for_match
@@ -25,9 +26,10 @@ __all__ = [
     "PHASE1_PROPOSAL_FEATURE_CONTRACT",
     "ProposalSourceRole",
     "extract_phase1_proposal_features",
+    "is_phase1_heading_only_proposal",
 ]
 
-PHASE1_PROPOSAL_FEATURE_CONTRACT = "phase1-proposal-features.v1"
+PHASE1_PROPOSAL_FEATURE_CONTRACT = "phase1-proposal-features.v2"
 
 _UNIT_RE = re.compile(
     r"(?<!\w)(?:mg|mcg|µg|g|kg|ml|l|mmol|mol|meq|iu|u|"
@@ -109,10 +111,47 @@ def extract_phase1_proposal_features(
         features["flag:inside_heading"] = float(
             start < heading_end and end > heading_start
         )
+    features["flag:heading_only"] = float(
+        is_phase1_heading_only_proposal(
+            row,
+            source_text,
+            structure=active_structure,
+        )
+    )
 
     _add_surface_features(features, mention, normalized, words)
     _add_hashed_lexical_features(features, normalized, source_text, start, end)
     return dict(sorted(features.items()))
+
+
+def is_phase1_heading_only_proposal(
+    row: Mapping[str, Any],
+    source_text: str,
+    *,
+    structure: DocumentStructure | None = None,
+) -> bool:
+    """Return whether the proposal is a structural label rather than a medical entity."""
+
+    start, end, _, mention = _validated_proposal(row, source_text)
+    # Malformed source exports sometimes concatenate a numbered heading to the previous sentence.
+    # Classifying the complete proposal surface catches that case without document-specific rules.
+    if classify_section_heading_label(mention) is not None:
+        return True
+    active_structure = structure or DocumentStructureAnalyzer().analyze(source_text)
+    line = active_structure.line_at(start)
+    if line is None:
+        return False
+    owns_heading = any(
+        section.heading_span[0] <= start
+        and end <= section.heading_span[1]
+        for section in active_structure.sections
+    )
+    if not owns_heading:
+        return False
+    delimiter = source_text.find(":", line.span[0], line.span[1])
+    # INVARIANT: a section parser owns the whole physical heading line. Only the label before the
+    # first delimiter is structural; a valid entity may still occur in inline content after it.
+    return delimiter < 0 or end <= delimiter
 
 
 def _validated_proposal(

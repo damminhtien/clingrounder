@@ -46,6 +46,10 @@ from medical_kg_nlp.benchmarks.phase1.round2_probes import (
     Phase1Round2ProbeConfig,
     run_phase1_round2_probes,
 )
+from medical_kg_nlp.benchmarks.phase1.round2_proposal_verifier import (
+    Phase1Round2ProposalVerifierConfig,
+    run_phase1_round2_proposal_verifier,
+)
 from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import (
     load_phase1_output_source,
 )
@@ -94,6 +98,7 @@ __all__ = [
     "propose_phase1_qwen_entities",
     "propose_phase1_vietnamese_support",
     "run_phase1_round2_probe_suite",
+    "run_phase1_round2_proposal_verifier_command",
     "run_phase1_submission",
 ]
 
@@ -190,7 +195,10 @@ def calibrate_phase1_proposals(args: argparse.Namespace) -> int:
         source_roles=source_roles,
     )
     write_phase1_proposal_dataset(dataset, output / "dataset")
-    verifier, report = fit_phase1_proposal_verifier(dataset)
+    verifier, report = fit_phase1_proposal_verifier(
+        dataset,
+        minimum_development_precision=args.minimum_development_precision,
+    )
     write_phase1_proposal_verifier(verifier, report, output)
     summary = {
         "output_dir": str(output),
@@ -261,6 +269,32 @@ def run_phase1_round2_probe_suite(args: argparse.Namespace) -> int:
             reviewed_rxnorm_min_document_support=(
                 args.reviewed_rxnorm_min_document_support
             ),
+        )
+    )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def run_phase1_round2_proposal_verifier_command(args: argparse.Namespace) -> int:
+    """Build one isolated additive entity probe through the calibrated verifier."""
+
+    report = run_phase1_round2_proposal_verifier(
+        Phase1Round2ProposalVerifierConfig(
+            documents_path=Path(args.documents),
+            expected_source_archive_sha256=args.source_archive_sha256,
+            base=Path(args.base),
+            expected_base_sha256=args.expected_base_sha256,
+            proposal_source=Path(args.proposal_source),
+            expected_proposal_source_sha256=args.expected_proposal_source_sha256,
+            verifier_path=Path(args.verifier),
+            expected_verifier_sha256=args.expected_verifier_sha256,
+            dictionary_paths=(
+                Path(args.dictionary),
+                *(Path(path) for path in args.validation_dictionaries),
+            ),
+            output_root=Path(args.output_root),
+            run_label=args.run_label,
+            expected_count=args.expected_count,
         )
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))

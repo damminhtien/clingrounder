@@ -52,6 +52,48 @@ def test_runtime_scoring_resolves_overlap_by_probability() -> None:
     assert all(0.0 <= item.probability <= 1.0 for item in scored)
 
 
+def test_runtime_scoring_blocks_structural_labels_before_overlap() -> None:
+    verifier, _ = fit_phase1_proposal_verifier(_dataset())
+    text = "Cận lâm sàng:\n"
+    rows = [
+        _row(
+            "Cận lâm sàng",
+            "TÊN_XÉT_NGHIỆM",
+            0,
+            "qwen",
+            "heading",
+        )
+    ]
+
+    scored = score_phase1_proposal_rows(
+        rows,
+        {"1": text},
+        verifier,
+        source_roles={
+            "pipeline": ProposalSourceRole.RULE,
+            "qwen": ProposalSourceRole.LLM,
+        },
+    )
+
+    assert scored[0].selected_before_overlap is False
+    assert scored[0].selected is False
+    assert scored[0].rejection_reason == "structural_heading"
+
+
+def test_precision_operating_point_is_persisted() -> None:
+    verifier, report = fit_phase1_proposal_verifier(
+        _dataset(),
+        minimum_development_precision=0.9,
+    )
+    restored = Phase1ProposalVerifier.from_dict(verifier.to_dict())
+
+    assert restored.minimum_development_precision == 0.9
+    assert report["operating_point"] == {
+        "objective": "maximum_recall_at_minimum_precision",
+        "minimum_development_precision": 0.9,
+    }
+
+
 def _dataset() -> Phase1ProposalDataset:
     examples = (
         _example("1", "train", "train-positive-a", 1, {"agreement": 1.0}, 0, 8),
@@ -76,7 +118,7 @@ def _dataset() -> Phase1ProposalDataset:
     return Phase1ProposalDataset(
         examples=examples,
         manifest={
-            "feature_contract": "phase1-proposal-features.v1",
+            "feature_contract": "phase1-proposal-features.v2",
             "gold_entity_counts": gold_counts,
             "source_roles": {
                 "pipeline": "rule",

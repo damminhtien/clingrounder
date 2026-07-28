@@ -15,6 +15,7 @@ from medical_kg_nlp.benchmarks.phase1.proposal_dataset import (
 from medical_kg_nlp.benchmarks.phase1.proposal_features import (
     ProposalSourceRole,
     extract_phase1_proposal_features,
+    is_phase1_heading_only_proposal,
 )
 
 
@@ -47,6 +48,48 @@ def test_proposal_features_use_roles_structure_and_bounded_hashes() -> None:
     assert features["flag:contains_unit"] == 1.0
     assert any(name.startswith("hash:mention_char_3:") for name in features)
     assert not any("document_id" in name or "absolute" in name for name in features)
+
+
+def test_heading_only_feature_does_not_block_content_after_colon() -> None:
+    text = "Cận lâm sàng:\n- CRP: tăng"
+    heading = _proposal(
+        "Cận lâm sàng",
+        "TÊN_XÉT_NGHIỆM",
+        0,
+        sources=["qwen"],
+        status="source_only",
+    )
+    result_start = text.index("tăng")
+    result = _proposal(
+        "tăng",
+        "KẾT_QUẢ_XÉT_NGHIỆM",
+        result_start,
+        sources=["qwen"],
+        status="source_only",
+    )
+
+    assert is_phase1_heading_only_proposal(heading, text) is True
+    assert is_phase1_heading_only_proposal(result, text) is False
+
+
+def test_heading_only_feature_blocks_labels_inside_heading_line() -> None:
+    text = (
+        "Điện tâm đồ: ghi tại giường.II. Kết quả xét nghiệm & "
+        "Cận lâm sàng đã có\n"
+        "Kết quả Cận lâm sàng\n"
+    )
+    first_start = text.index("Cận lâm sàng")
+    second_start = text.index("Cận lâm sàng", first_start + 1)
+
+    for start in (first_start, second_start):
+        row = _proposal(
+            "Cận lâm sàng",
+            "TÊN_XÉT_NGHIỆM",
+            start,
+            sources=["qwen"],
+            status="source_only",
+        )
+        assert is_phase1_heading_only_proposal(row, text) is True
 
 
 def test_proposal_dataset_labels_errors_without_reading_holdout(tmp_path: Path) -> None:
@@ -94,6 +137,7 @@ def test_proposal_dataset_labels_errors_without_reading_holdout(tmp_path: Path) 
     output = tmp_path / "output"
     write_phase1_proposal_dataset(dataset, output)
     first = (output / "examples.jsonl").read_bytes()
+    assert hashlib.sha256(first).hexdigest() == dataset.manifest["examples_sha256"]
     write_phase1_proposal_dataset(dataset, output)
     assert (output / "examples.jsonl").read_bytes() == first
 

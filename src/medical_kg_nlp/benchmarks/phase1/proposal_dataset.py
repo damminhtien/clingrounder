@@ -202,10 +202,7 @@ def write_phase1_proposal_dataset(
         encoding="utf-8",
     )
     (output / "examples.jsonl").write_text(
-        "".join(
-            json.dumps(example.to_dict(), ensure_ascii=False, sort_keys=True) + "\n"
-            for example in dataset.examples
-        ),
+        _serialized_examples(dataset.examples),
         encoding="utf-8",
     )
 
@@ -330,6 +327,9 @@ def _build_manifest(
         "schema_version": _DATASET_SCHEMA,
         "feature_contract": PHASE1_PROPOSAL_FEATURE_CONTRACT,
         "example_count": len(examples),
+        "examples_sha256": hashlib.sha256(
+            _serialized_examples(examples).encode("utf-8")
+        ).hexdigest(),
         "split_counts": dict(sorted(split_counts.items())),
         "label_counts": dict(sorted(label_counts.items())),
         "type_label_counts": dict(sorted(type_counts.items())),
@@ -354,6 +354,15 @@ def _build_manifest(
             ]["document_ids_sha256"],
         },
     }
+
+
+def _serialized_examples(examples: Sequence[Phase1ProposalExample]) -> str:
+    """Serialize feature rows exactly once for both hashing and persisted output."""
+
+    return "".join(
+        json.dumps(example.to_dict(), ensure_ascii=False, sort_keys=True) + "\n"
+        for example in examples
+    )
 
 
 def _assignment_by_document(

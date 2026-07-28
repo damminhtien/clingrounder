@@ -18,6 +18,7 @@ from medical_kg_nlp.benchmarks.phase1.proposal_features import (
     PHASE1_PROPOSAL_FEATURE_CONTRACT,
     ProposalSourceRole,
     extract_phase1_proposal_features,
+    is_phase1_heading_only_proposal,
 )
 from medical_kg_nlp.evaluation.sparse_logistic import (
     SparseBinaryExample,
@@ -69,6 +70,7 @@ class Phase1ProposalVerifier:
     model: SparseLogisticModel
     thresholds: tuple[tuple[str, float], ...]
     training_dataset_sha256: str
+    minimum_development_precision: float | None = None
 
     def __post_init__(self) -> None:
         threshold_types = {entity_type for entity_type, _ in self.thresholds}
@@ -80,6 +82,10 @@ class Phase1ProposalVerifier:
             raise ValueError("Proposal verifier thresholds must be within [0, 1]")
         if len(self.training_dataset_sha256) != 64:
             raise ValueError("Proposal verifier requires a dataset SHA-256")
+        if self.minimum_development_precision is not None and not (
+            0.0 < self.minimum_development_precision <= 1.0
+        ):
+            raise ValueError("Minimum development precision must be within (0, 1]")
 
     @property
     def threshold_by_type(self) -> dict[str, float]:
@@ -94,6 +100,7 @@ class Phase1ProposalVerifier:
             "feature_contract": PHASE1_PROPOSAL_FEATURE_CONTRACT,
             "training_dataset_sha256": self.training_dataset_sha256,
             "thresholds": dict(self.thresholds),
+            "minimum_development_precision": self.minimum_development_precision,
             "model": self.model.to_dict(),
         }
 
@@ -120,6 +127,12 @@ class Phase1ProposalVerifier:
             model=SparseLogisticModel.from_dict(raw_model),
             thresholds=tuple(sorted(thresholds)),
             training_dataset_sha256=str(payload.get("training_dataset_sha256", "")),
+            minimum_development_precision=(
+                float(payload["minimum_development_precision"])
+                if isinstance(payload.get("minimum_development_precision"), int | float)
+                and not isinstance(payload.get("minimum_development_precision"), bool)
+                else None
+            ),
         )
 
 
@@ -127,11 +140,16 @@ def fit_phase1_proposal_verifier(
     dataset: Phase1ProposalDataset,
     *,
     training_config: SparseLogisticTrainingConfig | None = None,
+    minimum_development_precision: float | None = None,
 ) -> tuple[Phase1ProposalVerifier, dict[str, Any]]:
     """Fit on train, calibrate per-type thresholds on development, and report baselines."""
 
     if dataset.manifest.get("feature_contract") != PHASE1_PROPOSAL_FEATURE_CONTRACT:
         raise ValueError("Proposal dataset feature contract is incompatible")
+    if minimum_development_precision is not None and not (
+        0.0 < minimum_development_precision <= 1.0
+    ):
+        raise ValueError("Minimum development precision must be within (0, 1]")
     train = tuple(example for example in dataset.examples if example.split == "train")
     development = tuple(
         example for example in dataset.examples if example.split == "development"
@@ -161,12 +179,14 @@ def fit_phase1_proposal_verifier(
         development,
         development_probabilities,
         gold_counts,
+        minimum_precision=minimum_development_precision,
     )
     dataset_sha256 = _mapping_sha256(dataset.manifest)
     verifier = Phase1ProposalVerifier(
         model=model,
         thresholds=tuple(sorted(thresholds.items())),
         training_dataset_sha256=dataset_sha256,
+        minimum_development_precision=minimum_development_precision,
     )
     learned_selected = _select_examples(
         development,
@@ -179,6 +199,14 @@ def fit_phase1_proposal_verifier(
         "feature_contract": PHASE1_PROPOSAL_FEATURE_CONTRACT,
         "training_dataset_sha256": dataset_sha256,
         "holdout_opened": False,
+        "operating_point": {
+            "objective": (
+                "maximum_recall_at_minimum_precision"
+                if minimum_development_precision is not None
+                else "maximum_f1"
+            ),
+            "minimum_development_precision": minimum_development_precision,
+        },
         "training": training_report,
         "probability_metrics": {
             "train": binary_probability_metrics(
@@ -240,18 +268,30 @@ def score_phase1_proposal_rows(
         )
         probability = verifier.predict_probability(features)
         threshold = thresholds[entity_type]
-        if probability >= threshold:
+        structural_heading = is_phase1_heading_only_proposal(
+            row,
+            source_text_by_document[document_id],
+            structure=structures[document_id],
+        )
+        selected_before_overlap = probability >= threshold and not structural_heading
+        if selected_before_overlap:
             preselected.append((row, probability, threshold))
         scored.append(
             ScoredPhase1Proposal(
                 row=row,
                 probability=probability,
                 threshold=threshold,
-                selected_before_overlap=probability >= threshold,
+                selected_before_overlap=selected_before_overlap,
                 selected=False,
-                rejection_reason="below_threshold"
-                if probability < threshold
-                else "overlap_pending",
+                rejection_reason=(
+                    "structural_heading"
+                    if structural_heading
+                    else (
+                        "below_threshold"
+                        if probability < threshold
+                        else "overlap_pending"
+                    )
+                ),
             )
         )
 
@@ -302,6 +342,8 @@ def _calibrate_thresholds(
     examples: Sequence[Phase1ProposalExample],
     probabilities: Sequence[float],
     gold_counts: Mapping[tuple[str, str], int],
+    *,
+    minimum_precision: float | None,
 ) -> tuple[dict[str, float], dict[str, Any]]:
     thresholds: dict[str, float] = {}
     report: dict[str, Any] = {}
@@ -328,15 +370,37 @@ def _calibrate_thresholds(
                 split="development",
                 entity_type=entity_type,
             )
-            # Precision and a higher threshold break equal-F1 ties conservatively.
-            rank = (
-                float(metrics["f1"]),
-                float(metrics["precision"]),
-                float(metrics["recall"]),
-                threshold,
-            )
+            if minimum_precision is None:
+                # Precision and a higher threshold break equal-F1 ties conservatively.
+                rank = (
+                    float(metrics["f1"]),
+                    float(metrics["precision"]),
+                    float(metrics["recall"]),
+                    threshold,
+                )
+            else:
+                if (
+                    int(metrics["true_positive"]) == 0
+                    or float(metrics["precision"]) < minimum_precision
+                ):
+                    continue
+                rank = (
+                    float(metrics["recall"]),
+                    float(metrics["f1"]),
+                    float(metrics["precision"]),
+                    threshold,
+                )
             trials.append((rank, threshold, metrics))
-        _, best_threshold, best_metrics = max(trials, key=lambda item: item[0])
+        if trials:
+            _, best_threshold, best_metrics = max(trials, key=lambda item: item[0])
+        else:
+            best_threshold = 1.0
+            best_metrics = _selection_metrics(
+                (),
+                gold_counts,
+                split="development",
+                entity_type=entity_type,
+            )
         thresholds[entity_type] = best_threshold
         report[entity_type] = {
             "proposal_support": len(type_examples),
@@ -345,6 +409,7 @@ def _calibrate_thresholds(
             ),
             "gold_support": gold_counts.get(("development", entity_type), 0),
             "candidate_threshold_count": len(candidates),
+            "minimum_precision": minimum_precision,
             "threshold": best_threshold,
             "metrics": best_metrics,
         }
