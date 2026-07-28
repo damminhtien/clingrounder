@@ -157,6 +157,7 @@ limitations are documented.
 
 ## Vast GPU Operating Rules
 
+- Prefer the machine's existing environment or a prebuilt Vast template, installing only missing pinned packages before creating a new environment because host downloads may be slow.
 - Never rent a new GPU, open a public inference port, stop an instance, or destroy an instance
   without explicit user approval.
 - Never delete a Vast volume or checkpoint without explicit user approval.
