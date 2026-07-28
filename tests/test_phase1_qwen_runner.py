@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
+from medical_kg_nlp.adapters.generative import GenerationConfig
+from medical_kg_nlp.benchmarks.phase1.qwen_proposals import Phase1QwenPassResult
 from medical_kg_nlp.benchmarks.phase1.qwen_runner import (
     Phase1QwenProposalRunConfig,
     _adjudication_candidates,
@@ -15,6 +18,7 @@ from medical_kg_nlp.benchmarks.phase1.qwen_runner import (
     _proposals_to_rows,
     _rows_to_review_entities,
     _rows_to_proposals,
+    _run_document_passes,
     _write_document_rows,
 )
 from medical_kg_nlp.schema.document import ClinicalDocument
@@ -231,3 +235,57 @@ def test_resume_state_blocks_mixed_run_fingerprints(tmp_path: Path) -> None:
             run_fingerprint="b" * 64,
             resume=True,
         )
+
+
+class _RecordingAdapter:
+    def __init__(self) -> None:
+        self.pass_ids: list[str] = []
+
+    def extract(self, source_text: str, *, pass_id: str, target_types, generation):
+        del source_text, target_types, generation
+        self.pass_ids.append(pass_id)
+        return Phase1QwenPassResult(
+            pass_id=pass_id,
+            prompt_hash="a" * 64,
+            proposals=(),
+            rejected=(),
+            response_sha256=(),
+            raw_responses=(),
+        )
+
+
+@pytest.mark.parametrize(
+    ("mode", "expected_passes"),
+    [
+        ("recall_only", ["recall"]),
+        (
+            "recall_and_targeted",
+            [
+                "recall",
+                "targeted.TRIỆU_CHỨNG",
+                "targeted.TÊN_XÉT_NGHIỆM",
+                "targeted.KẾT_QUẢ_XÉT_NGHIỆM",
+                "targeted.CHẨN_ĐOÁN",
+                "targeted.THUỐC",
+            ],
+        ),
+    ],
+)
+def test_document_passes_respect_bounded_extraction_mode(
+    mode: str,
+    expected_passes: list[str],
+) -> None:
+    adapter = _RecordingAdapter()
+    run_spec = SimpleNamespace(
+        recall_generation=GenerationConfig(),
+        targeted_generation=GenerationConfig(),
+    )
+
+    _run_document_passes(
+        adapter,  # type: ignore[arg-type]
+        run_spec,  # type: ignore[arg-type]
+        ClinicalDocument(document_id="1", text="Bệnh nhân ho"),
+        extraction_mode=mode,  # type: ignore[arg-type]
+    )
+
+    assert adapter.pass_ids == expected_passes

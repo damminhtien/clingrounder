@@ -20,6 +20,7 @@ MODEL_ID="${MODEL_ID:-Qwen/Qwen3-8B}"
 MODEL_REVISION="${MODEL_REVISION:-b968826d9c46dd6066d109eabc6255188de91218}"
 SUPPORT_SOURCE="${SUPPORT_SOURCE:-vietmed=outputs/models/phase1-vietmed-ner-round2-support/support}"
 RUN_ADJUDICATION="${RUN_ADJUDICATION:-0}"
+EXTRACTION_MODE="${EXTRACTION_MODE:-recall_and_targeted}"
 RESUME="${RESUME:-0}"
 MAX_RUNTIME_SECONDS="${MAX_RUNTIME_SECONDS:-21600}"
 
@@ -48,6 +49,7 @@ command=(
   --documents "${DOCUMENTS}"
   --source-archive-sha256 "${SOURCE_ARCHIVE_SHA256}"
   --support-source "${SUPPORT_SOURCE}"
+  --extraction-mode "${EXTRACTION_MODE}"
   --output-dir "${OUTPUT_DIR}"
 )
 if [[ "${RUN_ADJUDICATION}" != "1" ]]; then

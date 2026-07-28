@@ -72,5 +72,6 @@ def test_qwen_proposal_runner_defaults_to_bounded_consensus_inference() -> None:
 
     assert 'MAX_RUNTIME_SECONDS="${MAX_RUNTIME_SECONDS:-21600}"' in source
     assert '--support-source "${SUPPORT_SOURCE}"' in source
+    assert '--extraction-mode "${EXTRACTION_MODE}"' in source
     assert "command+=(--no-adjudication)" in source
     assert "command+=(--resume)" in source

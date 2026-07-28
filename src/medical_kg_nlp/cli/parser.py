@@ -684,6 +684,15 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     qwen_propose.add_argument("--expected-count", type=int, default=100)
     qwen_propose.add_argument("--no-adjudication", action="store_true")
     qwen_propose.add_argument(
+        "--extraction-mode",
+        choices=("recall_only", "recall_and_targeted"),
+        default="recall_and_targeted",
+        help=(
+            "Run one all-type recall pass, or recall plus five type-targeted passes. "
+            "The selected mode is part of the resume fingerprint."
+        ),
+    )
+    qwen_propose.add_argument(
         "--resume",
         action="store_true",
         help=(

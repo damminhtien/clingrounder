@@ -8,7 +8,7 @@ from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from medical_kg_nlp.adapters.generative import (
     LocalPeftAdapterConfig,
@@ -40,6 +40,8 @@ from medical_kg_nlp.schema.types import EntityType
 from medical_kg_nlp.utils.hashing import sha256_file
 
 __all__ = ["Phase1QwenProposalRunConfig", "run_phase1_qwen_proposals"]
+
+QwenExtractionMode = Literal["recall_only", "recall_and_targeted"]
 
 _PHASE1_LABEL_TO_TYPE = {
     "TRIỆU_CHỨNG": EntityType.SYMPTOM,
@@ -73,6 +75,7 @@ class Phase1QwenProposalRunConfig:
     review_only: bool = False
     expected_document_count: int = 100
     run_adjudication: bool = True
+    extraction_mode: QwenExtractionMode = "recall_and_targeted"
     resume: bool = False
 
     def __post_init__(self) -> None:
@@ -99,6 +102,8 @@ class Phase1QwenProposalRunConfig:
             raise ValueError("Qwen review-only mode requires a review source")
         if self.review_only and self.support_sources:
             raise ValueError("Qwen review-only mode does not consume support sources")
+        if self.extraction_mode not in {"recall_only", "recall_and_targeted"}:
+            raise ValueError(f"Unsupported Qwen extraction mode: {self.extraction_mode}")
 
 
 def run_phase1_qwen_proposals(
@@ -197,6 +202,7 @@ def run_phase1_qwen_proposals(
                 adapter,
                 run_spec,
                 document,
+                extraction_mode=config.extraction_mode,
             )
             for name, rows_by_doc in support_by_name.items():
                 proposal_sources[name] = _rows_to_proposals(
@@ -342,6 +348,7 @@ def run_phase1_qwen_proposals(
                 else None
             ),
             "review_merge": "baseline_preferred_nonoverlap",
+            "extraction_mode": config.extraction_mode,
             "resume": config.resume,
             "resume_fingerprint": resume_state["run_fingerprint"],
         },
@@ -400,6 +407,7 @@ def _run_input_descriptors(
             "review_max_rounds": config.review_max_rounds,
             "review_only": config.review_only,
             "run_adjudication": config.run_adjudication,
+            "extraction_mode": config.extraction_mode,
             "run_spec_sha256": _json_sha256(run_spec.to_dict()),
         },
     }
@@ -439,6 +447,7 @@ def _run_fingerprint(
         "review_max_rounds": config.review_max_rounds,
         "review_only": config.review_only,
         "run_adjudication": config.run_adjudication,
+        "extraction_mode": config.extraction_mode,
     }
     return _json_sha256(payload)
 
@@ -716,6 +725,8 @@ def _run_document_passes(
     adapter: Phase1QwenAdapter,
     run_spec: Phase1QwenRunSpec,
     document: ClinicalDocument,
+    *,
+    extraction_mode: QwenExtractionMode = "recall_and_targeted",
 ) -> tuple[
     dict[str, tuple[EntityProposal, ...]],
     list[dict[str, Any]],
@@ -734,16 +745,19 @@ def _run_document_passes(
     }
     for proposal in recall.proposals:
         proposal_sources[proposal.source].append(proposal)
-    for label in _TARGETED_PASSES:
-        result = adapter.extract(
-            document.text,
-            pass_id=f"targeted.{label}",
-            target_types=(label,),  # type: ignore[arg-type]
-            generation=run_spec.targeted_generation,
-        )
-        results.append(result)
-        for proposal in result.proposals:
-            proposal_sources.setdefault(proposal.source, []).append(proposal)
+    if extraction_mode == "recall_and_targeted":
+        for label in _TARGETED_PASSES:
+            result = adapter.extract(
+                document.text,
+                pass_id=f"targeted.{label}",
+                target_types=(label,),  # type: ignore[arg-type]
+                generation=run_spec.targeted_generation,
+            )
+            results.append(result)
+            for proposal in result.proposals:
+                proposal_sources.setdefault(proposal.source, []).append(proposal)
+    elif extraction_mode != "recall_only":
+        raise ValueError(f"Unsupported Qwen extraction mode: {extraction_mode}")
     trace = [
         {
             "pass_id": result.pass_id,

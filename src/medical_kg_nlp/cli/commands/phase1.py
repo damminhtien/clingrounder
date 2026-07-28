@@ -438,6 +438,7 @@ def propose_phase1_qwen_entities(args: argparse.Namespace) -> int:
             review_only=args.review_only,
             expected_document_count=args.expected_count,
             run_adjudication=not args.no_adjudication,
+            extraction_mode=args.extraction_mode,
             resume=args.resume,
         ),
     )
