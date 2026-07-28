@@ -883,6 +883,29 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
                 )
             )
             (
+                consensus_assertion_rows,
+                consensus_assertion_decisions,
+                consensus_assertion_counters,
+            ) = apply_selective_assertions(
+                consensus_rows,
+                source_text_by_doc,
+                regimes=("negation", "history"),
+                preserve_existing=True,
+            )
+            variants.append(
+                _materialize_variant(
+                    f"E_{name.upper()}_CONSENSUS_ADD_A_NEG_HIST",
+                    module="assertion",
+                    rows=consensus_assertion_rows,
+                    base=consensus_rows,
+                    decisions=consensus_assertion_decisions,
+                    counters=consensus_assertion_counters,
+                    run_dir=run_output.run_dir,
+                    documents=documents,
+                    dictionary=dictionary,
+                )
+            )
+            (
                 replacement_rows,
                 replacement_decisions,
                 replacement_counters,

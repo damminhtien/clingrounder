@@ -366,6 +366,66 @@ def test_round2_probe_runner_preserves_entities_and_candidates_for_assertions(
     )
 
 
+def test_consensus_addition_can_fill_assertions_without_replacing_baseline(
+    tmp_path: Path,
+) -> None:
+    archive_sha256 = "a" * 64
+    text = (
+        "Tiền sử bệnh:\n"
+        "Tăng huyết áp\n"
+        "Triệu chứng hiện tại:\n"
+        "ho"
+    )
+    source_document = _document("1", text, archive_sha256)
+    documents_path = tmp_path / "documents.jsonl"
+    write_jsonl(documents_path, (source_document.to_dict(),))
+
+    base_dir = tmp_path / "base"
+    source_dir = tmp_path / "source"
+    base_dir.mkdir()
+    source_dir.mkdir()
+    baseline_row = _row(text, "ho", "TRIỆU_CHỨNG")
+    baseline_row["assertions"] = ["isNegated"]
+    (base_dir / "1.json").write_text(_json([baseline_row]), encoding="utf-8")
+    (source_dir / "1.json").write_text(
+        _json([_row(text, "Tăng huyết áp", "CHẨN_ĐOÁN")]),
+        encoding="utf-8",
+    )
+    base_zip = tmp_path / "base.zip"
+    zip_phase1_output_dir(base_dir, base_zip)
+    dictionary_path = tmp_path / "dictionary.jsonl"
+    dictionary_path.write_text("", encoding="utf-8")
+
+    report = run_phase1_round2_probes(
+        Phase1Round2ProbeConfig(
+            documents_path=documents_path,
+            expected_source_archive_sha256=archive_sha256,
+            base=base_zip,
+            expected_base_sha256=sha256_file(base_zip),
+            dictionary_paths=(dictionary_path,),
+            proposal_sources=(("qwen", source_dir),),
+            consensus_source_names=("qwen",),
+            output_root=tmp_path / "runs",
+            expected_count=1,
+        )
+    )
+
+    variants = {variant["name"]: variant for variant in report["variants"]}
+    combined = load_phase1_output_source(
+        variants["E_QWEN_CONSENSUS_ADD_A_NEG_HIST"]["zip"]
+    )
+    assert [(row["text"], row["assertions"]) for row in combined["1"]] == [
+        ("Tăng huyết áp", ["isHistorical"]),
+        ("ho", ["isNegated"]),
+    ]
+    assert (
+        variants["E_QWEN_CONSENSUS_ADD"]["entity_projection_sha256"]
+        == variants["E_QWEN_CONSENSUS_ADD_A_NEG_HIST"][
+            "entity_projection_sha256"
+        ]
+    )
+
+
 def test_round2_probe_cli_parser_accepts_named_sources() -> None:
     args = build_parser().parse_args(
         [
