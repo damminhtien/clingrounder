@@ -13,11 +13,13 @@ from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.linking.structured_rxnorm import (
     MedicationStructure,
     parse_medication_structure,
+    parse_rxnorm_entry_structure,
 )
 from medical_kg_nlp.retrieval.bm25_retriever import BM25Retriever
 from medical_kg_nlp.retrieval.constraints import allowed_code_systems
 from medical_kg_nlp.retrieval.fuzzy_matcher import FuzzyMatcher
 from medical_kg_nlp.retrieval.ngram_retriever import CharNgramRetriever
+from medical_kg_nlp.retrieval.query_expansion import build_retrieval_query_variants
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.terminology.ports import TerminologyRepository
 from medical_kg_nlp.utils.io import read_jsonl
@@ -316,7 +318,7 @@ class BM25RetrieverAdapter:
 
 @dataclass(frozen=True)
 class FTSRetrieverAdapter:
-    """Use SQLite FTS5 for lexical retrieval over full terminology sources."""
+    """Use SQLite FTS5 plus bounded query variants over full terminology sources."""
 
     repository: TerminologyRepository
     source: str = "bm25"
@@ -331,21 +333,65 @@ class FTSRetrieverAdapter:
         limit: int,
     ) -> list[Candidate]:
         del context_window
-        hits = self.repository.search_scored(
-            mention,
-            entity_type=entity_type,
-            code_systems=allowed_code_systems(entity_type),
-            limit=limit,
+        queries = (
+            (mention, 1.0, "original"),
+            *(
+                (variant.text, variant.score_multiplier, variant.kind)
+                for variant in build_retrieval_query_variants(mention, entity_type)
+            ),
         )
-        return [
-            _candidate(
-                hit.entry,
-                hit.score,
-                self.source,
-                hit.matched_alias,
+        mention_structure = (
+            parse_medication_structure(mention)
+            if entity_type == EntityType.DRUG
+            else None
+        )
+        by_concept: dict[str, tuple[Candidate, int, int]] = {}
+        for query_order, (query, multiplier, query_kind) in enumerate(queries):
+            hits = self.repository.search_scored(
+                query,
+                entity_type=entity_type,
+                code_systems=allowed_code_systems(entity_type),
+                limit=limit,
             )
-            for hit in hits
-        ]
+            for rank, hit in enumerate(hits, start=1):
+                score = hit.score * multiplier
+                if query_kind == "medication_typography" and mention_structure is not None:
+                    candidate_structure = parse_rxnorm_entry_structure(hit.entry)
+                    if (
+                        mention_structure.strengths
+                        & candidate_structure.product_strengths
+                    ):
+                        # A matching normalized strength is structured retrieval evidence,
+                        # not a final product assignment. It only keeps the product in top-k.
+                        score = max(score, 0.96)
+                candidate = _candidate(
+                    hit.entry,
+                    score,
+                    self.source,
+                    hit.matched_alias,
+                )
+                current = by_concept.get(candidate.concept_id)
+                ordering = (-candidate.score, query_order, rank)
+                if current is None or ordering < (
+                    -current[0].score,
+                    current[1],
+                    current[2],
+                ):
+                    by_concept[candidate.concept_id] = (candidate, query_order, rank)
+
+        # SCALING: each query is independently capped, then the bounded union is
+        # deduplicated before it reaches multi-source retrieval fusion.
+        ordered = sorted(
+            by_concept.values(),
+            key=lambda item: (
+                -item[0].score,
+                item[1],
+                item[2],
+                item[0].code or "",
+                item[0].concept_id,
+            ),
+        )
+        return [candidate for candidate, _, _ in ordered[:limit]]
 
 
 @dataclass(frozen=True)
