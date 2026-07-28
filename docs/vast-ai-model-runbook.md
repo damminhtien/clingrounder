@@ -153,6 +153,42 @@ The runner fingerprints the model run spec, document manifest, support sources, 
 before reusing output. Every reused document JSON is reparsed and checked against the immutable raw
 offsets. A changed fingerprint fails closed and requires a new output directory.
 
+#### Evaluate an unmerged QLoRA adapter
+
+The Phase 1 Qwen run spec accepts one optional local PEFT adapter. The adapter is loaded with
+`PeftModel.from_pretrained(..., is_trainable=False)` over the pinned base model; inference never
+calls `merge_and_unload()`. This keeps base and adapter identities independently auditable.
+
+Add this block to a copy of the pinned Qwen inference YAML:
+
+```yaml
+adapter:
+  artifact_id: qwen3-phase1-qlora-specialize
+  model_id: local/qwen3-phase1-qlora-specialize
+  revision: "<40-character training Git commit>"
+  parameter_count: <exact adapter state-dict parameter count>
+  kind: adapter
+  roles: [adjudication, recall, targeted]
+  path: outputs/models/<training-run>/final-adapter
+  fingerprint: "<SHA-256 of relative paths and file contents>"
+  provenance:
+    manifest: outputs/models/<training-run>/run_manifest.json
+    manifest_sha256: "<SHA-256 of the training manifest>"
+```
+
+The base model plus adapter and any auxiliary model must remain at or below nine billion
+parameters. Quantization does not reduce this count. Before loading Torch, execution verifies:
+
+- the adapter directory fingerprint;
+- `adapter_config.json` and its base-model identity;
+- the immutable QLoRA training-manifest hash;
+- the training manifest's base model, revision, parameter count, and Git commit.
+
+After PEFT loading, the runtime sums the adapter state-dict tensor sizes and rejects a mismatch
+with `parameter_count`. `medical-kg benchmark phase1 qwen inspect --config ...` performs the
+artifact/provenance checks without loading model weights. Exact quotes are still projected by the
+existing raw-text projector; PEFT output is never trusted to provide offsets.
+
 ## Data Boundary
 
 - Remote XLM-R training receives only the reviewed Round 1 train/development model dataset.

@@ -396,6 +396,15 @@ def inspect_phase1_qwen_run(args: argparse.Namespace) -> int:
     payload["dataset"]["present"] = (
         spec.dataset_path.is_file() and spec.dataset_manifest_path.is_file()
     )
+    if spec.adapter is not None:
+        adapter_present = (
+            spec.adapter.path.is_dir()
+            and spec.adapter.provenance_manifest_path.is_file()
+        )
+        payload["adapter"]["present"] = adapter_present
+        payload["adapter"]["verification"] = (
+            spec.verify_adapter_inputs() if adapter_present else None
+        )
     payload["commands"] = {
         "prefetch": list(spec.prefetch_command),
         "build_dataset": [

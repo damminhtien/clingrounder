@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,11 +13,120 @@ from medical_kg_nlp.adapters.generative import (
     InferenceBudgetManifest,
     ModelBudgetEntry,
 )
+from medical_kg_nlp.utils.hashing import sha256_directory, sha256_file
 from medical_kg_nlp.utils.io import read_yaml
 
-__all__ = ["Phase1QwenRunSpec", "load_phase1_qwen_run_spec"]
+__all__ = [
+    "Phase1PeftAdapterSpec",
+    "Phase1QwenRunSpec",
+    "load_phase1_qwen_run_spec",
+]
 
 _COMMIT_SHA = re.compile(r"[0-9a-f]{40}")
+_SHA256 = re.compile(r"[0-9a-f]{64}")
+
+
+@dataclass(frozen=True, slots=True)
+class Phase1PeftAdapterSpec:
+    """Pinned local PEFT adapter and the training evidence that produced it."""
+
+    model: ModelBudgetEntry
+    path: Path
+    fingerprint: str
+    provenance_manifest_path: Path
+    provenance_manifest_sha256: str
+
+    def __post_init__(self) -> None:
+        if self.model.kind != "adapter":
+            raise ValueError("Qwen PEFT budget entry must use kind=adapter")
+        if _SHA256.fullmatch(self.fingerprint) is None:
+            raise ValueError("Qwen PEFT fingerprint must be a lowercase SHA-256")
+        if _SHA256.fullmatch(self.provenance_manifest_sha256) is None:
+            raise ValueError(
+                "Qwen PEFT provenance manifest hash must be a lowercase SHA-256"
+            )
+
+    def to_dict(self, run_spec: Phase1QwenRunSpec) -> dict[str, Any]:
+        """Serialize paths relative to the portable Qwen run root."""
+
+        return {
+            **self.model.to_dict(),
+            "path": run_spec.relative_path(self.path),
+            "fingerprint": self.fingerprint,
+            "provenance": {
+                "manifest": run_spec.relative_path(self.provenance_manifest_path),
+                "manifest_sha256": self.provenance_manifest_sha256,
+            },
+        }
+
+    def verify(self, base_model: ModelBudgetEntry) -> dict[str, Any]:
+        """Verify adapter bytes, base compatibility, and training provenance."""
+
+        if not self.path.is_dir():
+            raise ValueError(f"Qwen PEFT adapter directory is absent: {self.path}")
+        adapter_config_path = self.path / "adapter_config.json"
+        if not adapter_config_path.is_file():
+            raise ValueError("Qwen PEFT adapter_config.json is absent")
+        actual_fingerprint = sha256_directory(self.path)
+        if actual_fingerprint != self.fingerprint:
+            raise ValueError(
+                "Qwen PEFT adapter fingerprint mismatch: "
+                f"expected {self.fingerprint}, got {actual_fingerprint}"
+            )
+        if not self.provenance_manifest_path.is_file():
+            raise ValueError("Qwen PEFT provenance manifest is absent")
+        actual_manifest_sha256 = sha256_file(self.provenance_manifest_path)
+        if actual_manifest_sha256 != self.provenance_manifest_sha256:
+            raise ValueError(
+                "Qwen PEFT provenance manifest SHA-256 mismatch: "
+                f"expected {self.provenance_manifest_sha256}, "
+                f"got {actual_manifest_sha256}"
+            )
+
+        adapter_config = _json_mapping(adapter_config_path, "PEFT adapter config")
+        configured_base = adapter_config.get("base_model_name_or_path")
+        if configured_base != base_model.model_id:
+            raise ValueError(
+                "Qwen PEFT adapter base model mismatch: "
+                f"expected {base_model.model_id!r}, got {configured_base!r}"
+            )
+        provenance = _json_mapping(
+            self.provenance_manifest_path,
+            "PEFT provenance manifest",
+        )
+        if provenance.get("schema_version") != "causal-qlora-artifact.v1":
+            raise ValueError("Unsupported Qwen PEFT provenance schema")
+        trained_model = _as_mapping(provenance.get("model"), "trained model")
+        trained_parameter_count = trained_model.get("parameter_count")
+        if (
+            trained_model.get("model_id") != base_model.model_id
+            or trained_model.get("revision") != base_model.revision
+            or not isinstance(trained_parameter_count, int)
+            or trained_parameter_count != base_model.parameter_count
+        ):
+            raise ValueError(
+                "Qwen PEFT provenance does not match the pinned base checkpoint"
+            )
+        source_control = _as_mapping(
+            provenance.get("source_control"),
+            "adapter source control",
+        )
+        if source_control.get("git_commit") != self.model.revision:
+            raise ValueError(
+                "Qwen PEFT budget revision does not match the training commit"
+            )
+        artifacts = _as_mapping(provenance.get("artifacts"), "adapter artifacts")
+        expected_config_sha256 = artifacts.get("adapter_config_sha256")
+        if expected_config_sha256 != sha256_file(adapter_config_path):
+            raise ValueError(
+                "Qwen PEFT adapter config does not match training provenance"
+            )
+        return {
+            "status": "verified",
+            "fingerprint": actual_fingerprint,
+            "manifest_sha256": actual_manifest_sha256,
+            "adapter_config_sha256": expected_config_sha256,
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,6 +140,7 @@ class Phase1QwenRunSpec:
     model: ModelBudgetEntry
     model_source_url: str
     model_license: str
+    adapter: Phase1PeftAdapterSpec | None
     budget: InferenceBudgetManifest
     dataset_path: Path
     dataset_manifest_path: Path
@@ -52,10 +163,19 @@ class Phase1QwenRunSpec:
             raise ValueError("Qwen run_id must be non-empty")
         if self.model not in self.budget.entries:
             raise ValueError("Primary Qwen model must be included in the inference budget")
+        if self.adapter is not None and self.adapter.model not in self.budget.entries:
+            raise ValueError("Qwen PEFT adapter must be included in the inference budget")
+        if self.adapter is not None and not set(self.adapter.model.roles).issubset(
+            self.model.roles
+        ):
+            raise ValueError("Qwen PEFT roles must be a subset of base-model roles")
         # INVARIANT: specs may be inspected before derived data is built, but paths cannot escape
         # the portable run root. Execution calls ``verify_dataset_inputs`` explicitly.
         self.relative_path(self.dataset_path)
         self.relative_path(self.dataset_manifest_path)
+        if self.adapter is not None:
+            self.relative_path(self.adapter.path)
+            self.relative_path(self.adapter.provenance_manifest_path)
         if self.device not in {"cuda", "cpu", "mps"}:
             raise ValueError("Qwen device must be cuda, cpu, or mps")
         if self.dtype not in {"auto", "bf16", "fp16", "fp32"}:
@@ -94,6 +214,13 @@ class Phase1QwenRunSpec:
                 "Qwen instruction dataset is absent; run the qwen-data builder first"
             )
 
+    def verify_adapter_inputs(self) -> dict[str, Any] | None:
+        """Verify an optional local adapter before model initialization."""
+
+        if self.adapter is None:
+            return None
+        return self.adapter.verify(self.model)
+
     def relative_path(self, path: Path) -> str:
         """Project one resolved path into the portable run-root namespace."""
 
@@ -105,7 +232,7 @@ class Phase1QwenRunSpec:
     def to_dict(self) -> dict[str, Any]:
         """Serialize every behavior-bearing run parameter."""
 
-        return {
+        payload = {
             "schema_version": self.schema_version,
             "run_id": self.run_id,
             "model": self.model.to_dict(),
@@ -132,6 +259,10 @@ class Phase1QwenRunSpec:
             "thresholds": dict(sorted(self.thresholds.items())),
             "remote": {"maximum_vast_cost_usd": self.maximum_vast_cost_usd},
         }
+        # MODEL: omitting the optional key preserves the identity of pre-PEFT base-only specs.
+        if self.adapter is not None:
+            payload["adapter"] = self.adapter.to_dict(self)
+        return payload
 
 
 def load_phase1_qwen_run_spec(path: str | Path) -> Phase1QwenRunSpec:
@@ -149,12 +280,17 @@ def load_phase1_qwen_run_spec(path: str | Path) -> Phase1QwenRunSpec:
     model_raw = _mapping(raw, "model")
     budget_raw = _mapping(raw, "budget")
     model = _model_entry(model_raw)
+    adapter = _adapter_spec(raw.get("adapter"), run_root)
     auxiliary_raw = budget_raw.get("auxiliary", [])
     if not isinstance(auxiliary_raw, list):
         raise ValueError("budget.auxiliary must be a list")
     auxiliary = tuple(_model_entry(_as_mapping(value, "auxiliary model")) for value in auxiliary_raw)
     budget = InferenceBudgetManifest(
-        entries=(model, *auxiliary),
+        entries=(
+            model,
+            *((adapter.model,) if adapter is not None else ()),
+            *auxiliary,
+        ),
         maximum_parameters=int(budget_raw.get("maximum_parameters", 9_000_000_000)),
     )
     dataset = _mapping(raw, "dataset")
@@ -170,6 +306,7 @@ def load_phase1_qwen_run_spec(path: str | Path) -> Phase1QwenRunSpec:
         model=model,
         model_source_url=_required_string(model_raw, "source_url"),
         model_license=_required_string(model_raw, "license"),
+        adapter=adapter,
         budget=budget,
         dataset_path=_resolve(run_root, _required_string(dataset, "path")),
         dataset_manifest_path=_resolve(run_root, _required_string(dataset, "manifest")),
@@ -201,6 +338,29 @@ def _model_entry(raw: dict[str, Any]) -> ModelBudgetEntry:
         parameter_count=int(raw["parameter_count"]),
         kind=str(raw.get("kind", "base")),  # type: ignore[arg-type]
         roles=tuple(sorted(str(value) for value in roles_raw)),
+    )
+
+
+def _adapter_spec(
+    value: object,
+    run_root: Path,
+) -> Phase1PeftAdapterSpec | None:
+    if value is None:
+        return None
+    raw = _as_mapping(value, "adapter")
+    provenance = _mapping(raw, "provenance")
+    return Phase1PeftAdapterSpec(
+        model=_model_entry(raw),
+        path=_resolve(run_root, _required_string(raw, "path")),
+        fingerprint=_required_string(raw, "fingerprint"),
+        provenance_manifest_path=_resolve(
+            run_root,
+            _required_string(provenance, "manifest"),
+        ),
+        provenance_manifest_sha256=_required_string(
+            provenance,
+            "manifest_sha256",
+        ),
     )
 
 
@@ -244,6 +404,14 @@ def _required_string(raw: MappingLike, field: str) -> str:
 def _resolve(root: Path, value: str) -> Path:
     path = Path(value)
     return path.resolve() if path.is_absolute() else (root / path).resolve()
+
+
+def _json_mapping(path: Path, field: str) -> dict[str, Any]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError(f"{field} is not valid JSON: {path}") from error
+    return _as_mapping(value, field)
 
 
 MappingLike = dict[str, Any]

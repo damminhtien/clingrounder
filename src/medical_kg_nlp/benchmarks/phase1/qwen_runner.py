@@ -10,7 +10,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from medical_kg_nlp.adapters.generative import TransformersCausalLMRuntime
+from medical_kg_nlp.adapters.generative import (
+    LocalPeftAdapterConfig,
+    TransformersCausalLMRuntime,
+)
 from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import (
     load_phase1_output_source,
 )
@@ -105,6 +108,7 @@ def run_phase1_qwen_proposals(
     """Run recall, type-targeted, consensus, and optional adjudication passes."""
 
     run_spec.verify_dataset_inputs()
+    adapter_verification = run_spec.verify_adapter_inputs()
     documents = load_phase1_round2_documents(
         load_documents(config.documents_path),
         expected_archive_sha256=config.expected_source_archive_sha256,
@@ -173,13 +177,7 @@ def run_phase1_qwen_proposals(
                 continue
         if adapter is None:
             # SCALING: defer the 8B checkpoint load until at least one document needs work.
-            runtime = TransformersCausalLMRuntime(
-                model_id=run_spec.model.model_id,
-                revision=run_spec.model.revision,
-                device=run_spec.device,
-                dtype=run_spec.dtype,  # type: ignore[arg-type]
-                local_files_only=run_spec.local_files_only,
-            )
+            runtime = _build_qwen_runtime(run_spec)
             adapter = Phase1QwenAdapter(
                 runtime,
                 max_window_characters=run_spec.max_window_characters,
@@ -315,6 +313,7 @@ def run_phase1_qwen_proposals(
     manifest = {
         "schema_version": "phase1-qwen-proposal-run.v1",
         "run_spec": run_spec.to_dict(),
+        "adapter_verification": adapter_verification,
         "inputs": input_descriptors,
         "outputs": {
             "consensus_dir": None if consensus_dir is None else str(consensus_dir),
@@ -349,6 +348,30 @@ def run_phase1_qwen_proposals(
     }
     write_json(output / "manifest.json", manifest)
     return manifest
+
+
+def _build_qwen_runtime(
+    run_spec: Phase1QwenRunSpec,
+) -> TransformersCausalLMRuntime:
+    """Compose the base checkpoint with an optional unmerged local PEFT adapter."""
+
+    adapter = run_spec.adapter
+    return TransformersCausalLMRuntime(
+        model_id=run_spec.model.model_id,
+        revision=run_spec.model.revision,
+        device=run_spec.device,
+        dtype=run_spec.dtype,  # type: ignore[arg-type]
+        local_files_only=run_spec.local_files_only,
+        adapter=(
+            None
+            if adapter is None
+            else LocalPeftAdapterConfig(
+                path=adapter.path,
+                fingerprint=adapter.fingerprint,
+                parameter_count=adapter.model.parameter_count,
+            )
+        ),
+    )
 
 
 def _run_input_descriptors(

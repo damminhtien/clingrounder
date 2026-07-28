@@ -8,6 +8,7 @@ from medical_kg_nlp.adapters.generative.runtime import (
     ChatMessage,
     GenerationConfig,
     GenerativeModelPort,
+    LocalPeftAdapterConfig,
     TransformersCausalLMRuntime,
 )
 from medical_kg_nlp.adapters.generative.structured import (
@@ -20,6 +21,7 @@ __all__ = [
     "GenerationConfig",
     "GenerativeModelPort",
     "InferenceBudgetManifest",
+    "LocalPeftAdapterConfig",
     "ModelBudgetEntry",
     "StructuredResponseError",
     "TransformersCausalLMRuntime",
