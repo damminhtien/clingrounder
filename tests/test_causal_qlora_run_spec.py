@@ -32,9 +32,19 @@ def test_checked_in_qwen_stages_pin_model_data_and_adapter_handoff() -> None:
     )
     assert specialize.training.max_length == 4096
     assert specialize.training.evaluation_sources[0].split == "development"
+    assert len(curriculum.training.train_sources) == 2
+    assert curriculum.training.train_sources[0].maximum_records == 800
+    assert curriculum.training.train_sources[0].sha256 == (
+        "cfe2274d07621d63698c9d667c15ad6a509f202a6c988c92cbed011159dfa09f"
+    )
 
-    report = inspect_causal_qlora_inputs(curriculum.training)
-    assert report["train_record_count"] == 980
+
+def test_inspect_reports_portable_fixture_counts(tmp_path: Path) -> None:
+    run_spec = load_causal_qlora_run_spec(_write_run_spec(tmp_path))
+
+    report = inspect_causal_qlora_inputs(run_spec.training)
+
+    assert report["train_record_count"] == 1
     assert report["evaluation_record_count"] == 0
 
 
