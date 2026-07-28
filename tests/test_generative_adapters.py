@@ -247,7 +247,14 @@ def test_complete_json_stopping_criteria_waits_for_valid_json() -> None:
     )
 
     assert not criterion([[1, 2, *map(ord, '{"entities":[')]], None)
-    assert criterion([[1, 2, *map(ord, '{"entities":[]}')]], None)
+    assert not criterion(
+        [[1, 2, *map(ord, '{"entities":[{"text":"ho"}')]],
+        None,
+    )
+    assert criterion(
+        [[1, 2, *map(ord, '{"entities":[{"text":"ho"}]}')]],
+        None,
+    )
 
 
 def test_generation_config_does_not_enable_json_stop_by_default() -> None:

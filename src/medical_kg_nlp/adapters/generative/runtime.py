@@ -3,15 +3,12 @@
 from __future__ import annotations
 
 import importlib
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, Protocol, Sequence
 
 from medical_kg_nlp.adapters.huggingface.runtime import OptionalModelDependencyError
-from medical_kg_nlp.adapters.generative.structured import (
-    StructuredResponseError,
-    parse_structured_response,
-)
 from medical_kg_nlp.utils.hashing import sha256_directory
 
 __all__ = [
@@ -275,11 +272,29 @@ class _CompleteJsonStoppingCriteria:
         raw_response = str(
             self._tokenizer.decode(generated, skip_special_tokens=True)
         )
-        try:
-            parse_structured_response(raw_response)
-        except StructuredResponseError:
-            return False
-        return True
+        return _has_complete_outer_json(raw_response)
+
+
+def _has_complete_outer_json(raw_response: str) -> bool:
+    """Return true only when the first outer JSON start has completed.
+
+    The general response parser may recover a nested object while its containing array is still
+    incomplete. Generation must not stop on that nested value.
+    """
+
+    starts = [
+        index
+        for character in ("{", "[")
+        if (index := raw_response.find(character)) >= 0
+    ]
+    if not starts:
+        return False
+    candidate = raw_response[min(starts) :]
+    try:
+        value, _ = json.JSONDecoder().raw_decode(candidate)
+    except json.JSONDecodeError:
+        return False
+    return isinstance(value, (dict, list))
 
 
 def _import_generative_dependencies() -> tuple[Any, Any]:
