@@ -262,6 +262,7 @@ class Phase1QwenAdapter:
                     messages,
                     generation,
                     parser=_parse_quoted_proposals,
+                    partial_parser=_parse_partial_quoted_proposals,
                 )
             except StructuredResponseError as error:
                 # SCALING: one malformed model response must not discard every completed
@@ -357,6 +358,7 @@ class Phase1QwenAdapter:
                             messages,
                             generation,
                             parser=_parse_quoted_proposals,
+                            partial_parser=_parse_partial_quoted_proposals,
                         )
                     )
                 except StructuredResponseError as error:
@@ -453,6 +455,7 @@ class Phase1QwenAdapter:
         generation: GenerationConfig,
         *,
         parser: Callable[[Any], _StructuredT],
+        partial_parser: Callable[[str], _StructuredT] | None = None,
     ) -> tuple[_StructuredT, str]:
         """Generate and validate one task schema inside the bounded retry loop."""
 
@@ -465,6 +468,15 @@ class Phase1QwenAdapter:
                 return parser(parsed), raw_response
             except (StructuredResponseError, TypeError, ValueError) as error:
                 last_error = error
+                if partial_parser is not None:
+                    try:
+                        # MODEL: long recall responses can hit the generation cap after dozens
+                        # of complete entity rows. Extraction rows are independent and still go
+                        # through schema and raw-offset validation, so preserving that prefix is
+                        # safer and substantially cheaper than generating the whole note again.
+                        return partial_parser(raw_response), raw_response
+                    except (StructuredResponseError, TypeError, ValueError):
+                        pass
                 if attempt >= self._structured_retries:
                     break
                 active_messages.extend(
@@ -934,6 +946,94 @@ def _parse_quoted_proposals(
                 }
             )
     return output, rejected
+
+
+def _parse_partial_quoted_proposals(
+    raw_response: str,
+) -> tuple[list[Phase1QuotedProposal], list[dict[str, Any]]]:
+    """Recover complete extraction rows from an otherwise incomplete entity array.
+
+    This recovery is deliberately narrower than generic JSON repair: the response must contain
+    one allowlisted entity-array key, decoding stops at the first incomplete value, and every
+    recovered object is passed through the normal proposal validator.
+    """
+
+    rows = _recover_complete_entity_rows(raw_response)
+    if not rows:
+        raise StructuredResponseError(
+            "Incomplete extraction response contains no complete entity rows"
+        )
+    proposals, rejected = _parse_quoted_proposals({"entities": rows})
+    if not proposals:
+        raise StructuredResponseError(
+            "Incomplete extraction response contains no valid entity rows"
+        )
+    rejected.append(
+        {
+            "reason": "partial_entity_array_recovered",
+            "recovered_count": len(rows),
+        }
+    )
+    return proposals, rejected
+
+
+def _recover_complete_entity_rows(raw_response: str) -> list[dict[str, Any]]:
+    """Decode only the complete object prefix of an allowlisted entity array."""
+
+    array_start = _find_entity_array_start(raw_response)
+    decoder = json.JSONDecoder()
+    cursor = array_start + 1
+    rows: list[dict[str, Any]] = []
+    while cursor < len(raw_response):
+        while (
+            cursor < len(raw_response)
+            and raw_response[cursor] in " \t\r\n,"
+        ):
+            cursor += 1
+        if cursor >= len(raw_response) or raw_response[cursor] == "]":
+            break
+        try:
+            value, end = decoder.raw_decode(raw_response, cursor)
+        except json.JSONDecodeError:
+            break
+        if not isinstance(value, dict):
+            raise StructuredResponseError(
+                "Incomplete extraction array contains a non-object row"
+            )
+        rows.append(value)
+        cursor = end
+    return rows
+
+
+def _find_entity_array_start(raw_response: str) -> int:
+    """Locate the first allowlisted extraction container followed by an array."""
+
+    starts: list[int] = []
+    for key in (
+        "entities",
+        "missing_entities",
+        "new_entities",
+        "results",
+        "items",
+    ):
+        marker = f'"{key}"'
+        search_from = 0
+        while (index := raw_response.find(marker, search_from)) >= 0:
+            colon = raw_response.find(":", index + len(marker))
+            if colon < 0:
+                break
+            cursor = colon + 1
+            while cursor < len(raw_response) and raw_response[cursor].isspace():
+                cursor += 1
+            if cursor < len(raw_response) and raw_response[cursor] == "[":
+                starts.append(cursor)
+                break
+            search_from = index + len(marker)
+    if not starts:
+        raise StructuredResponseError(
+            "Incomplete extraction response has no recognized entity array"
+        )
+    return min(starts)
 
 
 def _bounded_context(value: Any, *, side: Literal["left", "right"]) -> str:

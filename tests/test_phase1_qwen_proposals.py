@@ -91,6 +91,60 @@ def test_qwen_structured_retry_does_not_accept_free_text() -> None:
     assert result.proposals[0].span == (10, 12)
 
 
+def test_qwen_recovers_complete_rows_from_truncated_entity_array() -> None:
+    runtime = _FakeRuntime(
+        (
+            (
+                '{"entities":['
+                '{"text":"ho","type":"TRIỆU_CHỨNG","confidence":0.8},'
+                '{"text":"sốt","type":"TRIỆU_CHỨNG","confidence":0.8},'
+                '{"text":"incomplete"'
+            ),
+        )
+    )
+
+    result = Phase1QwenAdapter(runtime).extract(
+        "Bệnh nhân ho và sốt.",
+        pass_id="recall",
+        target_types=("TRIỆU_CHỨNG",),
+        generation=GenerationConfig(),
+    )
+
+    assert len(runtime.calls) == 1
+    assert [(row.span, row.entity_type) for row in result.proposals] == [
+        ((10, 12), EntityType.SYMPTOM),
+        ((16, 19), EntityType.SYMPTOM),
+    ]
+    assert result.rejected == (
+        {
+            "reason": "partial_entity_array_recovered",
+            "recovered_count": 2,
+            "pass_id": "recall",
+            "window_index": 0,
+        },
+    )
+
+
+def test_qwen_does_not_recover_truncated_array_without_valid_rows() -> None:
+    runtime = _FakeRuntime(
+        (
+            '{"entities":[{"text":"unfinished"',
+            '{"entities":[]}',
+        )
+    )
+
+    result = Phase1QwenAdapter(runtime).extract(
+        "Bệnh nhân ho.",
+        pass_id="recall",
+        target_types=("TRIỆU_CHỨNG",),
+        generation=GenerationConfig(),
+    )
+
+    assert len(runtime.calls) == 2
+    assert not result.proposals
+    assert not result.rejected
+
+
 def test_qwen_exhausted_structured_response_isolated_to_one_window() -> None:
     runtime = _FakeRuntime(('{"unexpected":[]}', '{"also_unexpected":[]}'))
 
