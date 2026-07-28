@@ -6,6 +6,8 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
+
 from medical_kg_nlp.benchmarks.phase1.phase1 import zip_phase1_output_dir
 from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import (
     load_phase1_output_source,
@@ -13,6 +15,7 @@ from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import (
 from medical_kg_nlp.benchmarks.phase1.round2_probes import (
     Phase1Round2ProbeConfig,
     RegionProposalPolicy,
+    apply_reviewed_rxnorm_fill_empty,
     apply_round2_candidate_policy,
     align_quoted_phase1_proposals,
     canonicalize_full_phase1_source,
@@ -309,6 +312,114 @@ def test_candidate_policies_abstain_without_changing_entities_or_assertions() ->
     assert icd_top1_counters["row.truncated_diagnosis"] == 1
 
 
+def test_reviewed_rxnorm_fill_empty_is_exact_and_preserves_existing_candidates(
+    tmp_path: Path,
+) -> None:
+    text = "Gleevec; Gleevec 400 mg; aspirin; Gleevec"
+    exact = _row(text, "Gleevec", "THUỐC")
+    extended = _row(text, "Gleevec 400 mg", "THUỐC")
+    aspirin = _row(text, "aspirin", "THUỐC")
+    aspirin["candidates"] = ["1191"]
+    diagnosis = _row(text, "Gleevec", "CHẨN_ĐOÁN")
+    baseline = {"1": [exact, extended, aspirin, diagnosis]}
+    reviewed_map = tmp_path / "reviewed.jsonl"
+    write_jsonl(
+        reviewed_map,
+        (
+            {
+                "normalized_mention": "gleevec",
+                "entity_type": "THUỐC",
+                "candidate": "282388",
+                "code_system": "RxNorm",
+                "candidate_stage": "candidate_rxnorm_ingredient",
+                "occurrence_support": 7,
+                "document_support": 2,
+                "provenance": "manual_gold_train",
+                "rule_id": "reviewed.rxnorm.gleevec",
+                "review_status": "reviewed",
+            },
+        ),
+    )
+    dictionary = DictionaryStore(
+        [
+            ConceptEntry(
+                concept_id="rxnorm:282388",
+                code="282388",
+                code_system=CodeSystem.RXNORM,
+                canonical_name="imatinib",
+                semantic_type=EntityType.DRUG,
+                aliases=("Gleevec",),
+            )
+        ]
+    )
+
+    output, decisions, counters = apply_reviewed_rxnorm_fill_empty(
+        baseline,
+        reviewed_map_path=reviewed_map,
+        dictionary=dictionary,
+    )
+
+    assert [row["candidates"] for row in output["1"]] == [
+        ["282388"],
+        [],
+        ["1191"],
+        [],
+    ]
+    assert [row["assertions"] for row in output["1"]] == [[], [], [], []]
+    assert decisions == [
+        {
+            "document_id": "1",
+            "stage": "candidate_rxnorm_ingredient",
+            "rule_id": "reviewed.rxnorm.gleevec",
+            "source": "manual_gold_train",
+            "action": "fill_empty",
+            "reason": "reviewed_exact_rxnorm_mapping",
+            "candidate": "282388",
+            "occurrence_support": 7,
+            "document_support": 2,
+            "entity": {
+                "text": "Gleevec",
+                "type": "THUỐC",
+                "position": exact["position"],
+            },
+        }
+    ]
+    assert counters["row.filled"] == 1
+    assert counters["row.preserved_nonempty"] == 1
+    assert counters["row.no_reviewed_exact_mapping"] == 1
+    assert counters["row.skipped_non_medication"] == 1
+
+
+def test_reviewed_rxnorm_fill_empty_rejects_unknown_pinned_code(
+    tmp_path: Path,
+) -> None:
+    reviewed_map = tmp_path / "reviewed.jsonl"
+    write_jsonl(
+        reviewed_map,
+        (
+            {
+                "normalized_mention": "gleevec",
+                "entity_type": "THUỐC",
+                "candidate": "missing",
+                "code_system": "RxNorm",
+                "candidate_stage": "candidate_rxnorm_ingredient",
+                "occurrence_support": 2,
+                "document_support": 1,
+                "provenance": "manual_gold_train",
+                "rule_id": "reviewed.rxnorm.gleevec",
+                "review_status": "reviewed",
+            },
+        ),
+    )
+
+    with pytest.raises(ValueError, match="absent from the pinned terminology"):
+        apply_reviewed_rxnorm_fill_empty(
+            {"1": []},
+            reviewed_map_path=reviewed_map,
+            dictionary=DictionaryStore([]),
+        )
+
+
 def test_round2_probe_runner_preserves_entities_and_candidates_for_assertions(
     tmp_path: Path,
 ) -> None:
@@ -364,6 +475,86 @@ def test_round2_probe_runner_preserves_entities_and_candidates_for_assertions(
         variant["entity_projection_sha256"]
         == manifest["probe_suite"]["baseline"]["entity_projection_sha256"]
     )
+
+
+def test_round2_probe_runner_builds_reviewed_rxnorm_fill_variant(
+    tmp_path: Path,
+) -> None:
+    archive_sha256 = "a" * 64
+    source_document = _document(
+        "1",
+        "Danh sách thuốc trước nhập viện:\nGleevec",
+        archive_sha256,
+    )
+    documents_path = tmp_path / "documents.jsonl"
+    write_jsonl(documents_path, (source_document.to_dict(),))
+    base_dir = tmp_path / "base"
+    base_dir.mkdir()
+    (base_dir / "1.json").write_text(
+        _json([_row(source_document.text, "Gleevec", "THUỐC")]),
+        encoding="utf-8",
+    )
+    base_zip = tmp_path / "base.zip"
+    zip_phase1_output_dir(base_dir, base_zip)
+    dictionary_path = tmp_path / "dictionary.jsonl"
+    write_jsonl(
+        dictionary_path,
+        (
+            {
+                "concept_id": "rxnorm:282388",
+                "code": "282388",
+                "code_system": "RxNorm",
+                "canonical_name": "imatinib",
+                "semantic_type": "DRUG",
+                "aliases": ["Gleevec"],
+            },
+        ),
+    )
+    reviewed_map = tmp_path / "reviewed.jsonl"
+    write_jsonl(
+        reviewed_map,
+        (
+            {
+                "normalized_mention": "gleevec",
+                "entity_type": "THUỐC",
+                "candidate": "282388",
+                "code_system": "RxNorm",
+                "candidate_stage": "candidate_rxnorm_ingredient",
+                "occurrence_support": 7,
+                "document_support": 2,
+                "provenance": "manual_gold_train",
+                "rule_id": "reviewed.rxnorm.gleevec",
+                "review_status": "reviewed",
+            },
+        ),
+    )
+
+    report = run_phase1_round2_probes(
+        Phase1Round2ProbeConfig(
+            documents_path=documents_path,
+            expected_source_archive_sha256=archive_sha256,
+            base=base_zip,
+            expected_base_sha256=sha256_file(base_zip),
+            dictionary_paths=(dictionary_path,),
+            reviewed_rxnorm_map_path=reviewed_map,
+            reviewed_rxnorm_min_document_support=2,
+            output_root=tmp_path / "runs",
+            expected_count=1,
+        )
+    )
+
+    variants = {variant["name"]: variant for variant in report["variants"]}
+    candidate_variant = variants["C_RX_REVIEWED_FILL_EMPTY"]
+    output = load_phase1_output_source(candidate_variant["zip"])
+    assert output["1"][0]["candidates"] == ["282388"]
+    assert candidate_variant["changed"] == {
+        "candidate_changed": 1,
+        "changed_row_count": 1,
+        "entity_added": 0,
+        "entity_removed": 0,
+    }
+    assert candidate_variant["validation_issue_count"] == 0
+    assert candidate_variant["isolation_issues"] == []
 
 
 def test_consensus_addition_can_fill_assertions_without_replacing_baseline(
@@ -457,6 +648,12 @@ def test_round2_probe_cli_parser_accepts_named_sources() -> None:
             "rx_unique_keep_icd",
             "--candidate-probe",
             "icd_top1_keep_rx",
+            "--reviewed-rxnorm-map",
+            "reviewed.jsonl",
+            "--reviewed-rxnorm-min-occurrence-support",
+            "3",
+            "--reviewed-rxnorm-min-document-support",
+            "2",
         ]
     )
 
@@ -470,6 +667,9 @@ def test_round2_probe_cli_parser_accepts_named_sources() -> None:
         "rx_unique_keep_icd",
         "icd_top1_keep_rx",
     ]
+    assert args.reviewed_rxnorm_map == "reviewed.jsonl"
+    assert args.reviewed_rxnorm_min_occurrence_support == 3
+    assert args.reviewed_rxnorm_min_document_support == 2
 
 
 def _row(text: str, mention: str, entity_type: str) -> dict[str, object]:

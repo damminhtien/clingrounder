@@ -40,14 +40,17 @@ from medical_kg_nlp.ontology.phase1 import (
     PHASE1_TYPE_PRIORITY,
 )
 from medical_kg_nlp.schema.document import ClinicalDocument
+from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.utils.hashing import sha256_file
 from medical_kg_nlp.utils.run_output import create_hashed_run_dir
+from medical_kg_nlp.utils.text import normalize_for_match
 
 __all__ = [
     "CandidateProbePolicy",
     "Phase1Round2ProbeConfig",
     "Phase1TextRegion",
     "RegionProposalPolicy",
+    "apply_reviewed_rxnorm_fill_empty",
     "apply_round2_candidate_policy",
     "align_quoted_phase1_proposals",
     "canonicalize_full_phase1_source",
@@ -146,6 +149,9 @@ class Phase1Round2ProbeConfig:
     full_source_names: tuple[str, ...] = ()
     consensus_source_names: tuple[str, ...] = ()
     candidate_probe_policies: tuple[CandidateProbePolicy, ...] = ()
+    reviewed_rxnorm_map_path: Path | None = None
+    reviewed_rxnorm_min_occurrence_support: int = 2
+    reviewed_rxnorm_min_document_support: int = 1
 
     def __post_init__(self) -> None:
         if not re.fullmatch(r"[0-9a-f]{64}", self.expected_source_archive_sha256):
@@ -195,6 +201,23 @@ class Phase1Round2ProbeConfig:
                 "Unsupported candidate probe policies: "
                 f"{sorted(unsupported_candidate_policies)}"
             )
+        if self.reviewed_rxnorm_min_occurrence_support < 1:
+            raise ValueError("Reviewed RxNorm occurrence support must be positive")
+        if self.reviewed_rxnorm_min_document_support < 1:
+            raise ValueError("Reviewed RxNorm document support must be positive")
+
+
+@dataclass(frozen=True)
+class _ReviewedRxNormRule:
+    """One exact medication mapping admitted from the reviewed candidate registry."""
+
+    normalized_mention: str
+    candidate: str
+    candidate_stage: str
+    rule_id: str
+    provenance: str
+    occurrence_support: int
+    document_support: int
 
 
 def segment_phase1_text_regions(source_text: str) -> tuple[Phase1TextRegion, ...]:
@@ -736,6 +759,206 @@ def apply_round2_candidate_policy(
     return output, decisions, dict(sorted(counters.items()))
 
 
+def apply_reviewed_rxnorm_fill_empty(
+    rows_by_doc: Mapping[str, list[dict[str, Any]]],
+    *,
+    reviewed_map_path: Path,
+    dictionary: DictionaryStore,
+    minimum_occurrence_support: int = 2,
+    minimum_document_support: int = 1,
+) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]], dict[str, int]]:
+    """Fill empty medication candidates from exact, reviewed, pinned RxNorm mappings.
+
+    This deliberately does not perform terminology retrieval. It promotes only mappings already
+    reviewed against Phase 1 conventions, and it never replaces a candidate emitted by the frozen
+    baseline. Support thresholds make the public probe independent from one-off annotation rows.
+    """
+
+    rules, registry_counters = _load_reviewed_rxnorm_rules(
+        reviewed_map_path,
+        dictionary,
+        minimum_occurrence_support=minimum_occurrence_support,
+        minimum_document_support=minimum_document_support,
+    )
+    output: dict[str, list[dict[str, Any]]] = {}
+    decisions: list[dict[str, Any]] = []
+    counters: Counter[str] = Counter(registry_counters)
+    for document_id in sorted(rows_by_doc, key=_document_sort_key):
+        transformed: list[dict[str, Any]] = []
+        for row in rows_by_doc[document_id]:
+            copied = _copy_row(row)
+            raw_candidates = copied.get("candidates", [])
+            if not isinstance(raw_candidates, list) or not all(
+                isinstance(value, str) for value in raw_candidates
+            ):
+                raise ValueError(f"{document_id}: candidates must be a string list")
+            counters["candidate.input"] += len(raw_candidates)
+            if raw_candidates:
+                # INVARIANT: this probe cannot overwrite or reorder an existing candidate list.
+                counters["row.preserved_nonempty"] += 1
+                counters["candidate.retained"] += len(raw_candidates)
+                transformed.append(copied)
+                continue
+            if str(copied.get("type", "")) != "THUỐC":
+                counters["row.skipped_non_medication"] += 1
+                transformed.append(copied)
+                continue
+
+            normalized_mention = normalize_for_match(str(copied.get("text", "")))
+            rule = rules.get(normalized_mention)
+            if rule is None:
+                counters["row.no_reviewed_exact_mapping"] += 1
+                transformed.append(copied)
+                continue
+
+            copied["candidates"] = [rule.candidate]
+            transformed.append(copied)
+            counters["candidate.added"] += 1
+            counters["candidate.retained"] += 1
+            counters["row.filled"] += 1
+            decisions.append(
+                {
+                    "document_id": document_id,
+                    "stage": rule.candidate_stage,
+                    "rule_id": rule.rule_id,
+                    "source": rule.provenance,
+                    "action": "fill_empty",
+                    "reason": "reviewed_exact_rxnorm_mapping",
+                    "candidate": rule.candidate,
+                    "occurrence_support": rule.occurrence_support,
+                    "document_support": rule.document_support,
+                    "entity": _identity_payload(row),
+                }
+            )
+        output[document_id] = transformed
+
+    # INVARIANT: candidate enrichment must preserve every entity and assertion byte-for-byte after
+    # JSON decoding. The release validator separately enforces code-system and dictionary safety.
+    isolation_issues = validate_probe_isolation(
+        rows_by_doc,
+        output,
+        module="candidate",
+    )
+    if isolation_issues:
+        raise ValueError(f"Reviewed RxNorm probe isolation failed: {isolation_issues[:5]}")
+    counters["decision_total"] = len(decisions)
+    counters["output_entity_total"] = sum(len(rows) for rows in output.values())
+    counters["output_candidate_rows"] = sum(
+        bool(row.get("candidates")) for rows in output.values() for row in rows
+    )
+    return output, decisions, dict(sorted(counters.items()))
+
+
+def _load_reviewed_rxnorm_rules(
+    path: Path,
+    dictionary: DictionaryStore,
+    *,
+    minimum_occurrence_support: int,
+    minimum_document_support: int,
+) -> tuple[dict[str, _ReviewedRxNormRule], dict[str, int]]:
+    """Load the reviewed map while rejecting provenance and terminology drift."""
+
+    if minimum_occurrence_support < 1 or minimum_document_support < 1:
+        raise ValueError("Reviewed RxNorm support thresholds must be positive")
+    rules: dict[str, _ReviewedRxNormRule] = {}
+    counters: Counter[str] = Counter()
+    with path.open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            if not line.strip():
+                continue
+            counters["registry.row_input"] += 1
+            row = json.loads(line)
+            if not isinstance(row, dict):
+                raise ValueError(f"{path}:{line_number}: reviewed mapping must be an object")
+            if (
+                row.get("review_status") != "reviewed"
+                or row.get("entity_type") != "THUỐC"
+                or row.get("code_system") != "RxNorm"
+                or row.get("candidate_stage")
+                not in {
+                    "candidate_rxnorm_ingredient",
+                    "candidate_rxnorm_clinical_drug",
+                }
+            ):
+                counters["registry.row_skipped_non_rxnorm_reviewed"] += 1
+                continue
+
+            normalized_mention = normalize_for_match(
+                str(row.get("normalized_mention", ""))
+            )
+            candidate = str(row.get("candidate", "")).strip()
+            rule_id = str(row.get("rule_id", "")).strip()
+            if not normalized_mention or not candidate or not rule_id:
+                raise ValueError(
+                    f"{path}:{line_number}: reviewed RxNorm mapping is incomplete"
+                )
+            occurrence_support = _support_value(
+                row.get("occurrence_support"),
+                path=path,
+                line_number=line_number,
+                field="occurrence_support",
+            )
+            document_support = _support_value(
+                row.get("document_support"),
+                path=path,
+                line_number=line_number,
+                field="document_support",
+            )
+            if (
+                occurrence_support < minimum_occurrence_support
+                or document_support < minimum_document_support
+            ):
+                counters["registry.row_skipped_low_support"] += 1
+                continue
+
+            entry = dictionary.by_code_system_code.get(
+                (CodeSystem.RXNORM, candidate)
+            )
+            if entry is None:
+                raise ValueError(
+                    f"{path}:{line_number}: RxNorm candidate {candidate!r} is absent "
+                    "from the pinned terminology"
+                )
+            if entry.semantic_type is not EntityType.DRUG:
+                raise ValueError(
+                    f"{path}:{line_number}: RxNorm candidate {candidate!r} is not a drug"
+                )
+
+            rule = _ReviewedRxNormRule(
+                normalized_mention=normalized_mention,
+                candidate=candidate,
+                candidate_stage=str(row["candidate_stage"]),
+                rule_id=rule_id,
+                provenance=str(row.get("provenance", "reviewed_candidate_map")),
+                occurrence_support=occurrence_support,
+                document_support=document_support,
+            )
+            existing = rules.get(normalized_mention)
+            if existing is not None and existing.candidate != candidate:
+                raise ValueError(
+                    f"{path}:{line_number}: conflicting reviewed RxNorm candidates for "
+                    f"{normalized_mention!r}: {existing.candidate!r} and {candidate!r}"
+                )
+            if existing is not None:
+                counters["registry.row_duplicate"] += 1
+                continue
+            rules[normalized_mention] = rule
+            counters["registry.row_eligible"] += 1
+    return rules, dict(sorted(counters.items()))
+
+
+def _support_value(
+    value: object,
+    *,
+    path: Path,
+    line_number: int,
+    field: str,
+) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError(f"{path}:{line_number}: {field} must be a non-negative integer")
+    return value
+
+
 def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
     """Build strict, hashed assertion, candidate, and region-routed entity probes."""
 
@@ -778,6 +1001,11 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
             config.documents_path,
             config.base,
             *config.dictionary_paths,
+            *(
+                (config.reviewed_rxnorm_map_path,)
+                if config.reviewed_rxnorm_map_path is not None
+                else ()
+            ),
             *(path for _, path in config.proposal_sources),
         ),
         resolved_config={
@@ -790,6 +1018,17 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
             "full_source_names": list(config.full_source_names),
             "consensus_source_names": list(config.consensus_source_names),
             "candidate_probe_policies": list(config.candidate_probe_policies),
+            "reviewed_rxnorm_map_path": (
+                str(config.reviewed_rxnorm_map_path)
+                if config.reviewed_rxnorm_map_path is not None
+                else None
+            ),
+            "reviewed_rxnorm_min_occurrence_support": (
+                config.reviewed_rxnorm_min_occurrence_support
+            ),
+            "reviewed_rxnorm_min_document_support": (
+                config.reviewed_rxnorm_min_document_support
+            ),
         },
     )
 
@@ -826,6 +1065,32 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
                 base=base,
                 decisions=candidate_decisions,
                 counters=candidate_counters,
+                run_dir=run_output.run_dir,
+                documents=documents,
+                dictionary=dictionary,
+            )
+        )
+
+    if config.reviewed_rxnorm_map_path is not None:
+        reviewed_rows, reviewed_decisions, reviewed_counters = (
+            apply_reviewed_rxnorm_fill_empty(
+                base,
+                reviewed_map_path=config.reviewed_rxnorm_map_path,
+                dictionary=dictionary,
+                minimum_occurrence_support=(
+                    config.reviewed_rxnorm_min_occurrence_support
+                ),
+                minimum_document_support=config.reviewed_rxnorm_min_document_support,
+            )
+        )
+        variants.append(
+            _materialize_variant(
+                "C_RX_REVIEWED_FILL_EMPTY",
+                module="candidate",
+                rows=reviewed_rows,
+                base=base,
+                decisions=reviewed_decisions,
+                counters=reviewed_counters,
                 run_dir=run_output.run_dir,
                 documents=documents,
                 dictionary=dictionary,
@@ -1015,6 +1280,20 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
                 for name, path in config.proposal_sources
             },
         },
+        "reviewed_rxnorm_source": (
+            {
+                "path": str(config.reviewed_rxnorm_map_path),
+                "sha256": _path_sha256(config.reviewed_rxnorm_map_path),
+                "minimum_occurrence_support": (
+                    config.reviewed_rxnorm_min_occurrence_support
+                ),
+                "minimum_document_support": (
+                    config.reviewed_rxnorm_min_document_support
+                ),
+            }
+            if config.reviewed_rxnorm_map_path is not None
+            else None
+        ),
         "variants": variants,
         "public_promotion_gates": {
             "entity": {"minimum_wer_reduction": 2.0, "final_must_not_decrease": True},

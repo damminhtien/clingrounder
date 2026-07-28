@@ -398,6 +398,25 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
             "icd_top1_keep_rx, rx_only, rx_unique_only, and rx_unique_keep_icd."
         ),
     )
+    probes.add_argument(
+        "--reviewed-rxnorm-map",
+        help=(
+            "Reviewed candidate JSONL used to fill empty medication candidates by "
+            "exact normalized mention."
+        ),
+    )
+    probes.add_argument(
+        "--reviewed-rxnorm-min-occurrence-support",
+        type=int,
+        default=2,
+        help="Minimum reviewed occurrence support for an exact RxNorm mapping.",
+    )
+    probes.add_argument(
+        "--reviewed-rxnorm-min-document-support",
+        type=int,
+        default=1,
+        help="Minimum reviewed document support for an exact RxNorm mapping.",
+    )
 
     golden = round2_operations.add_parser(
         "golden",

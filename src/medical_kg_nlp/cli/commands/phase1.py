@@ -208,6 +208,17 @@ def run_phase1_round2_probe_suite(args: argparse.Namespace) -> int:
             candidate_probe_policies=tuple(
                 cast(CandidateProbePolicy, policy) for policy in args.candidate_probe
             ),
+            reviewed_rxnorm_map_path=(
+                Path(args.reviewed_rxnorm_map)
+                if args.reviewed_rxnorm_map is not None
+                else None
+            ),
+            reviewed_rxnorm_min_occurrence_support=(
+                args.reviewed_rxnorm_min_occurrence_support
+            ),
+            reviewed_rxnorm_min_document_support=(
+                args.reviewed_rxnorm_min_document_support
+            ),
         )
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
