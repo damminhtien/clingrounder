@@ -13,6 +13,7 @@ from medical_kg_nlp.benchmarks.phase1.qwen_proposals import (
     Phase1QuotedProposal,
     Phase1ReviewEntity,
     apply_phase1_adjudication,
+    parse_phase1_quoted_response,
     project_phase1_quoted_proposals,
     select_qwen_confirmed_proposals,
     split_raw_text_windows,
@@ -125,6 +126,20 @@ def test_qwen_recovers_complete_rows_from_truncated_entity_array() -> None:
     )
 
 
+def test_stored_qwen_response_uses_the_same_partial_recovery_policy() -> None:
+    proposals, rejected = parse_phase1_quoted_response(
+        ('{"entities":[{"text":"ho","type":"TRIỆU_CHỨNG"},{"text":"unfinished"')
+    )
+
+    assert [(row.text, row.entity_type) for row in proposals] == [("ho", "TRIỆU_CHỨNG")]
+    assert rejected == [
+        {
+            "reason": "partial_entity_array_recovered",
+            "recovered_count": 1,
+        }
+    ]
+
+
 def test_qwen_does_not_recover_truncated_array_without_valid_rows() -> None:
     runtime = _FakeRuntime(
         (
@@ -218,7 +233,7 @@ def test_missing_reviewer_retries_json_with_wrong_root_schema() -> None:
 
     assert len(runtime.calls) == 2
     assert not result.proposals
-    assert 'requires exactly one recognized entity array' in runtime.calls[1][-1].content
+    assert "requires exactly one recognized entity array" in runtime.calls[1][-1].content
 
 
 def test_qwen_parser_accepts_bare_array_and_allowlisted_wrapper() -> None:
@@ -314,9 +329,7 @@ def test_consensus_requires_qwen_and_blocks_xlmr_only() -> None:
 def test_two_qwen_passes_can_confirm_without_xlmr() -> None:
     selected = select_qwen_confirmed_proposals(
         {
-            "qwen.recall": (
-                _proposal("qwen.recall", (4, 12), EntityType.DISEASE, 0.88),
-            ),
+            "qwen.recall": (_proposal("qwen.recall", (4, 12), EntityType.DISEASE, 0.88),),
             "qwen.targeted.disease": (
                 _proposal("qwen.targeted.disease", (4, 12), EntityType.DISEASE, 0.84),
             ),

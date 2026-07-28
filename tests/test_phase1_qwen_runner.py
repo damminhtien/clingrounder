@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -20,6 +22,7 @@ from medical_kg_nlp.benchmarks.phase1.qwen_runner import (
     _rows_to_proposals,
     _run_document_passes,
     _write_document_rows,
+    materialize_phase1_qwen_pass_source,
 )
 from medical_kg_nlp.schema.document import ClinicalDocument
 
@@ -48,6 +51,39 @@ def test_runner_round_trips_support_rows_without_assertion_or_candidates() -> No
 
     assert [row["text"] for row in output] == ["ho", "tăng huyết áp"]
     assert all(row["assertions"] == [] and row["candidates"] == [] for row in output)
+
+
+def test_materialize_stored_qwen_pass_projects_offsets_and_verifies_hash(
+    tmp_path: Path,
+) -> None:
+    document = ClinicalDocument(document_id="1", text="Bệnh nhân ho và sốt.")
+    response = (
+        '{"entities":[{"text":"ho","type":"TRIỆU_CHỨNG"},{"text":"sốt","type":"TRIỆU_CHỨNG"}]}'
+    )
+    manifest = materialize_phase1_qwen_pass_source(
+        (document,),
+        (
+            {
+                "document_id": "1",
+                "pass_id": "recall",
+                "window_index": 0,
+                "response": response,
+                "response_sha256": hashlib.sha256(response.encode()).hexdigest(),
+            },
+        ),
+        tmp_path / "source",
+        pass_id="recall",
+        max_window_characters=12_000,
+        window_overlap_characters=800,
+    )
+
+    rows = json.loads((tmp_path / "source" / "1.json").read_text())
+    assert [(row["text"], row["position"]) for row in rows] == [
+        ("ho", [10, 12]),
+        ("sốt", [16, 19]),
+    ]
+    assert manifest["counters"]["entity.total"] == 2
+    assert manifest["counters"]["response.complete"] == 1
 
 
 def test_runner_rejects_support_offset_mismatch() -> None:

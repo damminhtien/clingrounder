@@ -38,6 +38,7 @@ __all__ = [
     "build_phase1_qwen_extraction_messages",
     "build_phase1_qwen_review_messages",
     "phase1_qwen_prompt_hash",
+    "parse_phase1_quoted_response",
     "project_phase1_quoted_proposals",
     "select_qwen_confirmed_proposals",
     "split_raw_text_windows",
@@ -235,7 +236,9 @@ class Phase1QwenAdapter:
         if not pass_id.strip():
             raise ValueError("pass_id must be non-empty")
         normalized_types = tuple(sorted(set(target_types)))
-        if not normalized_types or any(item not in _LABEL_TO_ENTITY_TYPE for item in normalized_types):
+        if not normalized_types or any(
+            item not in _LABEL_TO_ENTITY_TYPE for item in normalized_types
+        ):
             raise ValueError("target_types must contain supported Phase 1 labels")
         prompt_hash = phase1_qwen_prompt_hash(
             pass_id=pass_id,
@@ -353,13 +356,11 @@ class Phase1QwenAdapter:
                     round_index=round_index,
                 )
                 try:
-                    (quoted, parse_rejections), raw_response = (
-                        self._generate_structured(
-                            messages,
-                            generation,
-                            parser=_parse_quoted_proposals,
-                            partial_parser=_parse_partial_quoted_proposals,
-                        )
+                    (quoted, parse_rejections), raw_response = self._generate_structured(
+                        messages,
+                        generation,
+                        parser=_parse_quoted_proposals,
+                        partial_parser=_parse_partial_quoted_proposals,
                     )
                 except StructuredResponseError as error:
                     rejected.append(
@@ -491,9 +492,7 @@ class Phase1QwenAdapter:
                         ),
                     )
                 )
-        raise StructuredResponseError(
-            f"Structured generation failed after retries: {last_error}"
-        )
+        raise StructuredResponseError(f"Structured generation failed after retries: {last_error}")
 
 
 def phase1_qwen_prompt_hash(
@@ -510,6 +509,17 @@ def phase1_qwen_prompt_hash(
         "target_types": sorted(set(target_types)),
     }
     return _text_sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+
+
+def parse_phase1_quoted_response(
+    raw_response: str,
+) -> tuple[list[Phase1QuotedProposal], list[dict[str, Any]]]:
+    """Parse a stored extraction response with the inference recovery policy."""
+
+    try:
+        return _parse_quoted_proposals(parse_structured_response(raw_response))
+    except (StructuredResponseError, TypeError, ValueError):
+        return _parse_partial_quoted_proposals(raw_response)
 
 
 def split_raw_text_windows(
@@ -618,9 +628,7 @@ def project_phase1_quoted_proposals(
             )
             # INVARIANT: offsets are calculated only from an exact source quote.
             item.validate_offsets(
-                (" " * source_offset) + source_text
-                if source_offset
-                else source_text
+                (" " * source_offset) + source_text if source_offset else source_text
             )
             projected.append(item)
     return projected, rejected
@@ -653,21 +661,11 @@ def select_qwen_confirmed_proposals(
         qwen_sources = {source for source in sources if source.startswith("qwen.")}
         if not qwen_sources or len(sources) < minimum_sources:
             continue
-        qwen_score = max(
-            proposal.score
-            for proposal in evidence
-            if proposal.source in qwen_sources
-        )
+        qwen_score = max(proposal.score for proposal in evidence if proposal.source in qwen_sources)
         if qwen_score < active_thresholds[entity_type]:
             continue
         evidence_ids = tuple(
-            sorted(
-                {
-                    evidence_id
-                    for proposal in evidence
-                    for evidence_id in proposal.evidence_ids
-                }
-            )
+            sorted({evidence_id for proposal in evidence for evidence_id in proposal.evidence_ids})
         )
         selected.append(
             EntityProposal(
@@ -760,7 +758,7 @@ def build_phase1_qwen_extraction_messages(
 ) -> tuple[ChatMessage, ...]:
     schema = (
         '{"entities":[{"text":"exact quote","type":"'
-        + '|'.join(target_types)
+        + "|".join(target_types)
         + '","left_context":"","right_context":""}]}'
     )
     return (
@@ -985,10 +983,7 @@ def _recover_complete_entity_rows(raw_response: str) -> list[dict[str, Any]]:
     cursor = array_start + 1
     rows: list[dict[str, Any]] = []
     while cursor < len(raw_response):
-        while (
-            cursor < len(raw_response)
-            and raw_response[cursor] in " \t\r\n,"
-        ):
+        while cursor < len(raw_response) and raw_response[cursor] in " \t\r\n,":
             cursor += 1
         if cursor >= len(raw_response) or raw_response[cursor] == "]":
             break
@@ -997,9 +992,7 @@ def _recover_complete_entity_rows(raw_response: str) -> list[dict[str, Any]]:
         except json.JSONDecodeError:
             break
         if not isinstance(value, dict):
-            raise StructuredResponseError(
-                "Incomplete extraction array contains a non-object row"
-            )
+            raise StructuredResponseError("Incomplete extraction array contains a non-object row")
         rows.append(value)
         cursor = end
     return rows
@@ -1069,9 +1062,7 @@ def _parse_adjudication_decisions(
                 confidence=float(row.get("confidence", 0.0)),
                 evidence_quote=str(row.get("evidence_quote", "")),
                 replacement_text=(
-                    None
-                    if row.get("replacement_text") is None
-                    else str(row["replacement_text"])
+                    None if row.get("replacement_text") is None else str(row["replacement_text"])
                 ),
                 replacement_type=replacement_type,
             )
@@ -1119,9 +1110,7 @@ def _overlapping_quote_span(
 ) -> tuple[int, int] | None:
     spans = [(start, start + len(quote)) for start in _exact_occurrences(source_text, quote)]
     overlapping = [
-        span
-        for span in spans
-        if span[0] < original_span[1] and original_span[0] < span[1]
+        span for span in spans if span[0] < original_span[1] and original_span[0] < span[1]
     ]
     if len(overlapping) != 1:
         return None
