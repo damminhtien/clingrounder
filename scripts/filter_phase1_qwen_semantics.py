@@ -18,6 +18,12 @@ def main() -> int:
     parser.add_argument("--source", required=True)
     parser.add_argument("--documents", required=True)
     parser.add_argument("--output-dir", required=True)
+    parser.add_argument(
+        "--profile",
+        choices=("reviewed", "strict"),
+        default="reviewed",
+        help="Use strict to exclude short mentions that require boundary verification.",
+    )
     args = parser.parse_args()
     source_text_by_doc = {
         str(document.metadata["source_document_id"]): document.text
@@ -27,6 +33,7 @@ def main() -> int:
         args.source,
         source_text_by_doc,
         args.output_dir,
+        profile=args.profile,
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0

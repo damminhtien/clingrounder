@@ -12,14 +12,16 @@ import re
 from collections import Counter
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from medical_kg_nlp.mining.io import write_json, write_text
 from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
 from medical_kg_nlp.utils.hashing import sha256_file
 from medical_kg_nlp.utils.text import normalize_for_match
 
-__all__ = ["filter_high_precision_qwen_proposals"]
+__all__ = ["QwenSemanticGateProfile", "filter_high_precision_qwen_proposals"]
+
+QwenSemanticGateProfile = Literal["reviewed", "strict"]
 
 _BLOCKED_MENTIONS = frozenset({"g6pd", "thuốc", "****"})
 _REVIEWED_TYPES = {
@@ -51,6 +53,19 @@ _REVIEWED_TYPES = {
 _REVIEWED_PREFIX_TYPES = {
     "st chênh xuống": "KẾT_QUẢ_XÉT_NGHIỆM",
 }
+_STRICT_REVIEWED_TYPES = {
+    mention: entity_type
+    for mention, entity_type in _REVIEWED_TYPES.items()
+    if mention
+    not in {
+        # MODEL: short surface forms are useful recall proposals, but their
+        # exact BTC boundary is unstable without a separate span verifier.
+        "da dầu",
+        "mụn",
+        "sốt",
+        "trứng cá",
+    }
+}
 _BLOOD_PRESSURE_LEFT = re.compile(r"(?i)\bđo\s*$")
 _BLOOD_PRESSURE_RIGHT = re.compile(
     r"(?i)^\s*(?:(?::|=)\s*)?\d{2,3}/\d{2,3}\b"
@@ -61,6 +76,8 @@ def filter_high_precision_qwen_proposals(
     source_dir: str | Path,
     source_text_by_doc: Mapping[str, str],
     output_dir: str | Path,
+    *,
+    profile: QwenSemanticGateProfile = "reviewed",
 ) -> dict[str, Any]:
     """Keep only reviewed semantic families and preserve exact raw spans.
 
@@ -69,6 +86,11 @@ def filter_high_precision_qwen_proposals(
     this is an entity-only WER probe.
     """
 
+    if profile not in {"reviewed", "strict"}:
+        raise ValueError(f"Unsupported Qwen semantic gate profile: {profile}")
+    reviewed_types = (
+        _STRICT_REVIEWED_TYPES if profile == "strict" else _REVIEWED_TYPES
+    )
     source_root = Path(source_dir)
     destination = Path(output_dir)
     destination.mkdir(parents=True, exist_ok=True)
@@ -92,6 +114,7 @@ def filter_high_precision_qwen_proposals(
                 source_text,
                 document_id=document_id,
                 row_index=row_index,
+                reviewed_types=reviewed_types,
             )
             if accepted is None:
                 counters["blocked"] += 1
@@ -124,8 +147,9 @@ def filter_high_precision_qwen_proposals(
         "source_sha256": _directory_fingerprint(source_root),
         "document_count": document_count,
         "policy": {
+            "profile": profile,
             "blocked_mentions": sorted(_BLOCKED_MENTIONS),
-            "reviewed_exact_mentions": dict(sorted(_REVIEWED_TYPES.items())),
+            "reviewed_exact_mentions": dict(sorted(reviewed_types.items())),
             "reviewed_prefix_mentions": dict(
                 sorted(_REVIEWED_PREFIX_TYPES.items())
             ),
@@ -144,6 +168,7 @@ def _review_row(
     *,
     document_id: str,
     row_index: int,
+    reviewed_types: Mapping[str, str],
 ) -> dict[str, Any] | None:
     if not isinstance(raw, dict):
         raise ValueError(f"{document_id}:{row_index}: proposal must be a mapping")
@@ -161,7 +186,7 @@ def _review_row(
     normalized = normalize_for_match(text)
     if normalized in _BLOCKED_MENTIONS or set(normalized) <= {"*"}:
         return None
-    entity_type = _REVIEWED_TYPES.get(normalized)
+    entity_type = reviewed_types.get(normalized)
     if entity_type is None:
         entity_type = next(
             (

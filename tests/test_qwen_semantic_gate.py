@@ -69,6 +69,48 @@ def test_gate_rejects_offset_drift(tmp_path: Path) -> None:
         )
 
 
+def test_strict_gate_blocks_short_boundary_sensitive_mentions(
+    tmp_path: Path,
+) -> None:
+    text = "mụn; béo phì; Đau bụng; đo HA: 130/76"
+    source = tmp_path / "source"
+    source.mkdir()
+    rows = [
+        _row(text, "mụn", "TRIỆU_CHỨNG"),
+        _row(text, "béo phì", "TRIỆU_CHỨNG"),
+        _row(text, "Đau bụng", "CHẨN_ĐOÁN"),
+        _row(text, "HA", "CHẨN_ĐOÁN"),
+    ]
+    (source / "1.json").write_text(json.dumps(rows), encoding="utf-8")
+    output = tmp_path / "strict" / "proposals"
+
+    report = filter_high_precision_qwen_proposals(
+        source,
+        {"1": text},
+        output,
+        profile="strict",
+    )
+    accepted = json.loads((output / "1.json").read_text(encoding="utf-8"))
+
+    assert [(row["text"], row["type"]) for row in accepted] == [
+        ("béo phì", "CHẨN_ĐOÁN"),
+        ("Đau bụng", "TRIỆU_CHỨNG"),
+        ("HA", "TÊN_XÉT_NGHIỆM"),
+    ]
+    assert report["policy"]["profile"] == "strict"
+    assert "mụn" not in report["policy"]["reviewed_exact_mentions"]
+
+
+def test_gate_rejects_unknown_profile(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="Unsupported Qwen semantic gate profile"):
+        filter_high_precision_qwen_proposals(
+            tmp_path,
+            {},
+            tmp_path / "output",
+            profile="unknown",  # type: ignore[arg-type]
+        )
+
+
 def _row(
     text: str,
     mention: str,
