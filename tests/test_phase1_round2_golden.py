@@ -63,6 +63,7 @@ def test_round2_golden_separates_consensus_from_review_and_expands_medication(
         ("aspirin", "superseded_by_btc_medication_full_span"),
         ("ho", "source_only"),
     }
+    assert report["summary"]["review_group_count"] == 2
 
     documents = [ClinicalDocument(document_id="1", text=text)]
     manifest = write_phase1_round2_golden(
@@ -77,6 +78,7 @@ def test_round2_golden_separates_consensus_from_review_and_expands_medication(
     assert manifest["validation"]["strict_issue_count"] == 0
     assert (tmp_path / "golden" / "gold_strict.zip").exists()
     assert (tmp_path / "golden" / "review_queue.jsonl").exists()
+    assert (tmp_path / "golden" / "review_groups.jsonl").exists()
     written = json.loads(
         (tmp_path / "golden" / "gold_strict" / "1.json").read_text(encoding="utf-8")
     )

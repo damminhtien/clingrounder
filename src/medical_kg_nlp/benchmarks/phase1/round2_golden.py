@@ -252,7 +252,9 @@ def build_phase1_round2_golden(
                     "source_count": group.support,
                     "sources": list(group.sources),
                     "text": group.text,
-                    "normalized_mention": normalize_for_match(group.text),
+                    "normalized_mention": (
+                        normalize_for_match(group.text) or group.text.casefold()
+                    ),
                     "type": group.entity_type,
                     "position": list(group.span),
                     "context": _context_window(source_text, group.span),
@@ -283,6 +285,7 @@ def build_phase1_round2_golden(
     decisions.extend(strict_assertion_decisions)
     counters.update(strict_assertion_counters)
     _attach_review_metadata(review_queue, review_by_doc)
+    review_groups = _group_review_queue(review_queue)
 
     strict_type_counts = Counter(
         str(row["type"]) for rows in strict_by_doc.values() for row in rows
@@ -298,6 +301,7 @@ def build_phase1_round2_golden(
         "strict_entity_count": sum(len(rows) for rows in strict_by_doc.values()),
         "review_entity_count": sum(len(rows) for rows in review_by_doc.values()),
         "review_queue_count": len(review_queue),
+        "review_group_count": len(review_groups),
         "invalid_proposal_count": len(invalid_proposals),
         "rejected_candidate_count": sum(
             len(row["rejected_candidates"]) for row in candidate_rejections
@@ -333,6 +337,7 @@ def build_phase1_round2_golden(
         "gold_review": review_by_doc,
         "decisions": decisions,
         "review_queue": sorted(review_queue, key=_review_sort_key),
+        "review_groups": review_groups,
         "invalid_proposals": invalid_proposals,
         "candidate_rejections": candidate_rejections,
     }
@@ -378,6 +383,7 @@ def write_phase1_round2_golden(
     _write_json(output / "summary.json", report["summary"])
     _write_jsonl(output / "decisions.jsonl", report.get("decisions", []))
     _write_jsonl(output / "review_queue.jsonl", report.get("review_queue", []))
+    _write_jsonl(output / "review_groups.jsonl", report.get("review_groups", []))
     _write_jsonl(output / "invalid_proposals.jsonl", report.get("invalid_proposals", []))
     _write_jsonl(
         output / "candidate_rejections.jsonl",
@@ -404,6 +410,7 @@ def write_phase1_round2_golden(
             "gold_review_zip": str(review_zip),
             "gold_review_zip_sha256": sha256_file(review_zip),
             "review_queue": str(output / "review_queue.jsonl"),
+            "review_groups": str(output / "review_groups.jsonl"),
             "decisions": str(output / "decisions.jsonl"),
         },
         "validation": {
@@ -661,6 +668,81 @@ def _attach_review_metadata(
             item["candidate_suggestions"] = suggestion["candidates"]
 
 
+def _group_review_queue(queue: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    groups: dict[tuple[str, str, str, tuple[str, ...]], dict[str, Any]] = {}
+    for row in queue:
+        sources = tuple(str(value) for value in row["sources"])
+        key = (
+            str(row["normalized_mention"]),
+            str(row["type"]),
+            str(row["reason"]),
+            sources,
+        )
+        group = groups.setdefault(
+            key,
+            {
+                "normalized_mention": key[0],
+                "type": key[1],
+                "reason": key[2],
+                "sources": list(sources),
+                "occurrence_count": 0,
+                "document_ids": set(),
+                "candidate_suggestions": set(),
+                "assertion_suggestions": set(),
+                "examples": [],
+                "review_decision": "",
+                "review_notes": "",
+            },
+        )
+        group["occurrence_count"] += 1
+        group["document_ids"].add(str(row["document_id"]))
+        group["candidate_suggestions"].update(row["candidate_suggestions"])
+        group["assertion_suggestions"].update(row["assertion_suggestions"])
+        if len(group["examples"]) < 5:
+            group["examples"].append(
+                {
+                    "document_id": row["document_id"],
+                    "text": row["text"],
+                    "position": list(row["position"]),
+                    "context": row["context"],
+                }
+            )
+
+    output: list[dict[str, Any]] = []
+    for group in groups.values():
+        output.append(
+            {
+                **{
+                    key: value
+                    for key, value in group.items()
+                    if key
+                    not in {
+                        "document_ids",
+                        "candidate_suggestions",
+                        "assertion_suggestions",
+                    }
+                },
+                "document_count": len(group["document_ids"]),
+                "document_ids": sorted(
+                    group["document_ids"],
+                    key=_document_sort_key,
+                ),
+                "candidate_suggestions": sorted(group["candidate_suggestions"]),
+                "assertion_suggestions": sorted(group["assertion_suggestions"]),
+            }
+        )
+    return sorted(
+        output,
+        key=lambda row: (
+            -int(row["document_count"]),
+            -int(row["occurrence_count"]),
+            str(row["reason"]),
+            str(row["type"]),
+            str(row["normalized_mention"]),
+        ),
+    )
+
+
 def _apply_btc_external_contract(
     rows_by_doc: Mapping[str, list[dict[str, Any]]],
 ) -> dict[str, list[dict[str, Any]]]:
@@ -792,6 +874,7 @@ def _write_summary_markdown(path: Path, summary: Mapping[str, Any]) -> None:
                 f"- Strict entities: {summary['strict_entity_count']}",
                 f"- Review-union entities: {summary['review_entity_count']}",
                 f"- Pending review rows: {summary['review_queue_count']}",
+                f"- Grouped review decisions: {summary['review_group_count']}",
                 f"- Strict candidates: {summary['strict_candidate_count']}",
                 f"- Strict assertions: {summary['strict_assertion_count']}",
                 "",

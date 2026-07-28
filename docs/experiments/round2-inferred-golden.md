@@ -74,6 +74,7 @@ gold_review/
 gold_strict.zip
 gold_review.zip
 review_queue.jsonl
+review_groups.jsonl
 decisions.jsonl
 invalid_proposals.jsonl
 candidate_rejections.jsonl
