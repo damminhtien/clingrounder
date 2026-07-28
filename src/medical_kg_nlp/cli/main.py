@@ -110,6 +110,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.model",
         "inspect_causal_qlora_run",
     ),
+    "model_finalize_causal_qlora_run": (
+        "medical_kg_nlp.cli.commands.model",
+        "finalize_causal_qlora_run",
+    ),
     "model_train_causal_qlora_run": (
         "medical_kg_nlp.cli.commands.model",
         "train_causal_qlora_run",

@@ -775,6 +775,13 @@ def _model_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser])
     inspect_qlora.set_defaults(handler="model_inspect_causal_qlora_run")
     inspect_qlora.add_argument("--config", required=True)
 
+    finalize_qlora = operations.add_parser(
+        "finalize-causal-qlora-run",
+        help="Verify and finalize a completed QLoRA artifact from a source bundle.",
+    )
+    finalize_qlora.set_defaults(handler="model_finalize_causal_qlora_run")
+    finalize_qlora.add_argument("--config", required=True)
+
     train_qlora = operations.add_parser(
         "train-causal-qlora-run",
         help="Validate Linux/CUDA and execute one pinned QLoRA stage.",

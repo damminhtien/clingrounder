@@ -1,5 +1,6 @@
 """Framework-neutral training contracts and optional local model runtimes."""
 
+from medical_kg_nlp.training.causal_artifact import finalize_causal_qlora_artifact
 from medical_kg_nlp.training.causal_instruction import (
     CausalInstructionRecord,
     CausalInstructionSource,
@@ -74,6 +75,7 @@ __all__ = [
     "assert_local_gpu_runtime",
     "compute_bio_span_metrics",
     "decode_bio_spans",
+    "finalize_causal_qlora_artifact",
     "fingerprint_model_directory",
     "find_unaligned_annotations",
     "inspect_token_classifier_training_inputs",

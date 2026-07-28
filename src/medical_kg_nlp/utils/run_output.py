@@ -30,13 +30,32 @@ class HashedRunOutput:
 
 
 def collect_git_metadata() -> dict[str, str | bool | None]:
-    """Return source-control identity without failing outside a Git checkout."""
+    """Return source identity from Git or a verified source-bundle marker.
+
+    Vast templates commonly receive a source archive without ``.git``. The
+    upload workflow writes ``.source-commit`` so model manifests can still pin
+    the commit that produced the bundle. A malformed marker fails closed.
+    """
 
     commit, dirty, working_tree_hash = _git_metadata()
+    mode = "git"
+    marker_sha256: str | None = None
+    if commit is None:
+        marker = _find_source_commit_marker()
+        if marker is not None:
+            commit = marker.read_text(encoding="ascii").strip()
+            if re.fullmatch(r"[0-9a-f]{40}", commit) is None:
+                raise ValueError(f"Invalid source commit marker: {marker}")
+            mode = "source_commit_marker"
+            marker_sha256 = _file_sha256(marker)
+        else:
+            mode = "unavailable"
     return {
         "git_commit": commit,
         "git_dirty": dirty,
         "working_tree_hash": working_tree_hash,
+        "source_control_mode": mode,
+        "source_commit_marker_sha256": marker_sha256,
     }
 
 
@@ -224,3 +243,14 @@ def _git_metadata() -> tuple[str | None, bool | None, str | None]:
     except (OSError, subprocess.CalledProcessError):
         return None, None, None
     return commit or None, dirty, working_tree_hash
+
+
+def _find_source_commit_marker() -> Path | None:
+    """Find the nearest portable source marker without crossing filesystem root."""
+
+    current = Path.cwd().resolve()
+    for root in (current, *current.parents):
+        marker = root / ".source-commit"
+        if marker.is_file():
+            return marker
+    return None

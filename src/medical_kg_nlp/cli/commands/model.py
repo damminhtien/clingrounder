@@ -12,6 +12,7 @@ from medical_kg_nlp.training import (
     TokenClassifierRunSpec,
     TokenClassifierTrainingConfig,
     assert_local_gpu_runtime,
+    finalize_causal_qlora_artifact,
     inspect_causal_qlora_inputs,
     inspect_local_runtime,
     inspect_token_classifier_training_inputs,
@@ -27,6 +28,7 @@ from medical_kg_nlp.utils.hashing import sha256_file
 from medical_kg_nlp.utils.run_output import collect_git_metadata
 
 __all__ = [
+    "finalize_causal_qlora_run",
     "inspect_causal_qlora_run",
     "inspect_token_classifier_run",
     "train_causal_qlora_run",
@@ -34,6 +36,24 @@ __all__ = [
     "train_token_classifier_run",
     "validate_token_dataset",
 ]
+
+
+def finalize_causal_qlora_run(args: argparse.Namespace) -> int:
+    """Finalize a completed adapter created from a source archive."""
+
+    spec = load_causal_qlora_run_spec(args.config)
+    report = finalize_causal_qlora_artifact(
+        spec.training.output_dir,
+        model_id=spec.training.model_id,
+        model_revision=spec.training.revision,
+        parameter_count=spec.training.parameter_count,
+        run_spec_path=spec.config_path,
+        run_spec_sha256=sha256_file(spec.config_path),
+        environment_lock_path=spec.environment_lock_path,
+        environment_lock_sha256=spec.environment_lock_sha256,
+    )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
 
 
 def inspect_causal_qlora_run(args: argparse.Namespace) -> int:

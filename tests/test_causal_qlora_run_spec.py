@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from medical_kg_nlp.cli.parser import build_parser
+from medical_kg_nlp.training.causal_artifact import finalize_causal_qlora_artifact
 from medical_kg_nlp.training.causal_qlora import inspect_causal_qlora_inputs
 from medical_kg_nlp.training.causal_run_spec import load_causal_qlora_run_spec
 from medical_kg_nlp.utils.hashing import sha256_file
@@ -81,6 +82,14 @@ def test_qlora_cli_commands_are_discoverable() -> None:
             "run.yaml",
         ]
     )
+    finalize_args = parser.parse_args(
+        [
+            "model",
+            "finalize-causal-qlora-run",
+            "--config",
+            "run.yaml",
+        ]
+    )
     train_args = parser.parse_args(
         [
             "model",
@@ -95,8 +104,76 @@ def test_qlora_cli_commands_are_discoverable() -> None:
     )
 
     assert inspect_args.handler == "model_inspect_causal_qlora_run"
+    assert finalize_args.handler == "model_finalize_causal_qlora_run"
     assert train_args.handler == "model_train_causal_qlora_run"
     assert train_args.max_steps == 1
+
+
+def test_finalize_qlora_artifact_uses_portable_source_marker(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config_path = _write_run_spec(tmp_path)
+    spec = load_causal_qlora_run_spec(config_path)
+    output_dir = spec.training.output_dir
+    adapter_dir = output_dir / "final-adapter"
+    adapter_dir.mkdir(parents=True)
+    adapter_config = adapter_dir / "adapter_config.json"
+    adapter_config.write_text(
+        '{"base_model_name_or_path":"Qwen/Qwen3-8B"}\n',
+        encoding="utf-8",
+    )
+    manifest = {
+        "schema_version": "causal-qlora-artifact.v1",
+        "model": {
+            "model_id": spec.training.model_id,
+            "revision": spec.training.revision,
+            "parameter_count": spec.training.parameter_count,
+        },
+        "run_spec": {"sha256": sha256_file(config_path)},
+        "environment": {
+            "lock_sha256": spec.environment_lock_sha256,
+        },
+        "artifacts": {
+            "adapter_config_sha256": sha256_file(adapter_config),
+        },
+        "source_control": {
+            "git_commit": None,
+            "git_dirty": None,
+            "working_tree_hash": None,
+        },
+    }
+    (output_dir / "run_manifest.json").write_text(
+        json.dumps(manifest),
+        encoding="utf-8",
+    )
+    source_commit = "b" * 40
+    (tmp_path / ".source-commit").write_text(
+        source_commit + "\n",
+        encoding="ascii",
+    )
+    monkeypatch.chdir(tmp_path)
+
+    report = finalize_causal_qlora_artifact(
+        output_dir,
+        model_id=spec.training.model_id,
+        model_revision=spec.training.revision,
+        parameter_count=spec.training.parameter_count,
+        run_spec_path=config_path,
+        run_spec_sha256=sha256_file(config_path),
+        environment_lock_path=spec.environment_lock_path,
+        environment_lock_sha256=spec.environment_lock_sha256,
+    )
+
+    finalized = json.loads(
+        (output_dir / "run_manifest.json").read_text(encoding="utf-8")
+    )
+    assert report["status"] == "finalized"
+    assert finalized["source_control"]["git_commit"] == source_commit
+    assert (
+        finalized["source_control"]["source_control_mode"]
+        == "source_commit_marker"
+    )
 
 
 def _write_run_spec(root: Path) -> Path:
