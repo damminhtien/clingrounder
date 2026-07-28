@@ -1,0 +1,60 @@
+schema_version: causal-qlora-run.v1
+run_id: phase1-qwen3-8b-qlora-curriculum-2026-07-28
+run_root: ../..
+
+model:
+  model_id: Qwen/Qwen3-8B
+  revision: b968826d9c46dd6066d109eabc6255188de91218
+  parameter_count: 8190735360
+  source_url: https://huggingface.co/Qwen/Qwen3-8B
+  license: Apache-2.0
+
+datasets:
+  sample_seed: phase1-qwen3-curriculum-v1
+  train:
+    - path: outputs/mining/model-datasets/vietmed-ner-qwen-exact-quote-v1/curriculum.jsonl
+      sha256: cfe2274d07621d63698c9d667c15ad6a509f202a6c988c92cbed011159dfa09f
+      split: train
+      maximum_records: 800
+    - path: outputs/mining/model-datasets/vietbioner-qwen-exact-quote-v1/curriculum.jsonl
+      sha256: 613e47865d39bc19392b0bc02c5d9da75afecc07855fbb9b1f0a5eb671a7af0b
+      split: train
+  evaluation: []
+
+training:
+  output_dir: outputs/models/phase1-qwen3-8b-qlora-curriculum-2026-07-28
+  max_length: 2048
+  train_batch_size: 1
+  evaluation_batch_size: 1
+  gradient_accumulation_steps: 8
+  epochs: 1.0
+  max_steps: -1
+  learning_rate: 0.0001
+  weight_decay: 0.0
+  warmup_ratio: 0.05
+  max_grad_norm: 1.0
+  logging_steps: 2
+  evaluation_steps: 20
+  save_steps: 25
+  save_total_limit: 2
+  seed: 42
+  lora_rank: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  gradient_checkpointing: true
+
+runtime:
+  operating_system: linux
+  accelerator: cuda
+  minimum_devices: 1
+  minimum_vram_gib: 20
+  minimum_compute_capability: [8, 0]
+  precision: bf16
+  local_files_only: true
+
+environment:
+  lock_path: uv.lock
+  lock_sha256: f1affea66092c72ef7d0c3968cfa5ac9d2e7e603fd05ceb0d5e1f991fd1448ab
+
+remote:
+  maximum_vast_cost_usd: 6.0

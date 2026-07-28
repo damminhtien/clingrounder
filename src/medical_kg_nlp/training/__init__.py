@@ -1,5 +1,22 @@
 """Framework-neutral training contracts and optional local model runtimes."""
 
+from medical_kg_nlp.training.causal_instruction import (
+    CausalInstructionRecord,
+    CausalInstructionSource,
+    InstructionDatasetReport,
+    InstructionTooLongError,
+    load_causal_instruction_records,
+    tokenize_causal_instruction,
+)
+from medical_kg_nlp.training.causal_qlora import (
+    inspect_causal_qlora_inputs,
+    train_causal_qlora,
+)
+from medical_kg_nlp.training.causal_run_spec import (
+    CausalQLoRAConfig,
+    CausalQLoRARunSpec,
+    load_causal_qlora_run_spec,
+)
 from medical_kg_nlp.training.config import TokenClassifierTrainingConfig
 from medical_kg_nlp.training.huggingface_token_classifier import (
     fingerprint_model_directory,
@@ -37,8 +54,14 @@ from medical_kg_nlp.training.token_labels import (
 )
 
 __all__ = [
+    "CausalInstructionRecord",
+    "CausalInstructionSource",
+    "CausalQLoRAConfig",
+    "CausalQLoRARunSpec",
     "FastTokenizerPort",
     "GPURequirements",
+    "InstructionDatasetReport",
+    "InstructionTooLongError",
     "SpanDatasetSummary",
     "SpanTrainingEntity",
     "SpanTrainingRecord",
@@ -55,11 +78,16 @@ __all__ = [
     "find_unaligned_annotations",
     "inspect_token_classifier_training_inputs",
     "inspect_local_runtime",
+    "inspect_causal_qlora_inputs",
     "iter_span_training_records",
+    "load_causal_instruction_records",
+    "load_causal_qlora_run_spec",
     "project_record_to_token_windows",
     "load_token_classifier_run_spec",
     "scan_span_dataset",
     "train_huggingface_token_classifier",
+    "tokenize_causal_instruction",
+    "train_causal_qlora",
     "validate_span_dataset_manifest",
     "verify_token_classifier_artifact",
     "verify_token_classifier_run_artifact",

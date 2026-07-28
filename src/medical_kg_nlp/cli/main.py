@@ -106,6 +106,14 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.model",
         "train_token_classifier_run",
     ),
+    "model_inspect_causal_qlora_run": (
+        "medical_kg_nlp.cli.commands.model",
+        "inspect_causal_qlora_run",
+    ),
+    "model_train_causal_qlora_run": (
+        "medical_kg_nlp.cli.commands.model",
+        "train_causal_qlora_run",
+    ),
     "data_registry_validate": ("medical_kg_nlp.cli.commands.data", "validate_registry"),
     "data_artifact_materialize": (
         "medical_kg_nlp.cli.commands.data",

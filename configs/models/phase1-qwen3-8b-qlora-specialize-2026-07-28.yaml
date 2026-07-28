@@ -1,0 +1,65 @@
+schema_version: causal-qlora-run.v1
+run_id: phase1-qwen3-8b-qlora-specialize-2026-07-28
+run_root: ../..
+
+model:
+  model_id: Qwen/Qwen3-8B
+  revision: b968826d9c46dd6066d109eabc6255188de91218
+  parameter_count: 8190735360
+  source_url: https://huggingface.co/Qwen/Qwen3-8B
+  license: Apache-2.0
+
+datasets:
+  sample_seed: phase1-qwen3-specialize-v1
+  train:
+    - path: outputs/mining/model-datasets/phase1-qwen-instructions-v1/extraction.jsonl
+      sha256: 9091a7c7252a3185b0ecb626f6c9f27f0a1d75d3335ff4424ed5995cf1011146
+      split: train
+      repeat: 2
+    - path: outputs/mining/model-datasets/phase1-qwen-user-synthetic-review-v1/extraction.jsonl
+      sha256: ade75d4b7168a0c4595cb34af52af57e1db7d1dfc99017754b1ad7a38fb6f4b0
+      split: train
+      document_id_prefix: "phase1-user-synthetic:"
+  evaluation:
+    - path: outputs/mining/model-datasets/phase1-qwen-instructions-v1/extraction.jsonl
+      sha256: 9091a7c7252a3185b0ecb626f6c9f27f0a1d75d3335ff4424ed5995cf1011146
+      split: development
+
+training:
+  output_dir: outputs/models/phase1-qwen3-8b-qlora-specialize-2026-07-28
+  initial_adapter_path: outputs/models/phase1-qwen3-8b-qlora-curriculum-2026-07-28/final-adapter
+  max_length: 4096
+  train_batch_size: 1
+  evaluation_batch_size: 1
+  gradient_accumulation_steps: 8
+  epochs: 3.0
+  max_steps: -1
+  learning_rate: 0.00005
+  weight_decay: 0.0
+  warmup_ratio: 0.05
+  max_grad_norm: 1.0
+  logging_steps: 2
+  evaluation_steps: 20
+  save_steps: 20
+  save_total_limit: 2
+  seed: 42
+  lora_rank: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  gradient_checkpointing: true
+
+runtime:
+  operating_system: linux
+  accelerator: cuda
+  minimum_devices: 1
+  minimum_vram_gib: 20
+  minimum_compute_capability: [8, 0]
+  precision: bf16
+  local_files_only: true
+
+environment:
+  lock_path: uv.lock
+  lock_sha256: f1affea66092c72ef7d0c3968cfa5ac9d2e7e603fd05ceb0d5e1f991fd1448ab
+
+remote:
+  maximum_vast_cost_usd: 6.0

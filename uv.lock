@@ -297,6 +297,21 @@ wheels = [
 ]
 
 [[package]]
+name = "bitsandbytes"
+version = "0.50.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "packaging" },
+    { name = "torch" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d2/3a/fe0f0c7186436038319f15156386e844abc2ae1e54b8cda3f53b81a96cb9/bitsandbytes-0.50.0-py3-none-manylinux_2_24_aarch64.whl", hash = "sha256:824d931d8e77d7db09bb26d940268d36920e0757e2a2f49cce8766e309e13048", size = 23776757, upload-time = "2026-07-25T01:34:17.305Z" },
+    { url = "https://files.pythonhosted.org/packages/22/08/9501f4fc830448a6862bd5313df94a7dd1ae678f4f81087b96569d4a6f8b/bitsandbytes-0.50.0-py3-none-manylinux_2_24_x86_64.whl", hash = "sha256:173d137610468bec9cddbaa2e049254e97792657ab984e3e737bec1772c1668c", size = 40860117, upload-time = "2026-07-25T01:34:21.049Z" },
+]
+
+[[package]]
 name = "blinker"
 version = "1.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2029,7 +2044,9 @@ graph = [
 ]
 ml = [
     { name = "accelerate", marker = "platform_machine != 'x86_64' or sys_platform != 'darwin'" },
+    { name = "bitsandbytes", marker = "sys_platform == 'linux'" },
     { name = "datasets" },
+    { name = "peft" },
     { name = "scikit-learn" },
     { name = "tokenizers" },
     { name = "torch", marker = "platform_machine != 'x86_64' or sys_platform != 'darwin'" },
@@ -2050,6 +2067,7 @@ wandb = [
 [package.metadata]
 requires-dist = [
     { name = "accelerate", marker = "(platform_machine != 'x86_64' and extra == 'ml') or (sys_platform != 'darwin' and extra == 'ml')", specifier = ">=1.14.0" },
+    { name = "bitsandbytes", marker = "sys_platform == 'linux' and extra == 'ml'", specifier = ">=0.49.1" },
     { name = "bm25s", marker = "extra == 'retrieval'", specifier = ">=0.3.9" },
     { name = "datasets", marker = "extra == 'ml'", specifier = ">=5.0.0" },
     { name = "duckdb", marker = "extra == 'data'", specifier = ">=1.5.4" },
@@ -2063,6 +2081,7 @@ requires-dist = [
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=2.1.0" },
     { name = "networkx", marker = "extra == 'graph'", specifier = ">=3.6.1" },
     { name = "omegaconf", marker = "extra == 'experiment'", specifier = ">=2.3.1" },
+    { name = "peft", marker = "extra == 'ml'", specifier = ">=0.18.1" },
     { name = "polars", marker = "extra == 'data'", specifier = ">=1.42.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.6.0" },
     { name = "pyarrow", marker = "extra == 'data'", specifier = ">=24.0.0" },
@@ -2827,6 +2846,28 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/5a/82/42f767fc1c1143d6fd36efb827202a2d997a375e160a71eb2888a925aac1/pathspec-1.1.1.tar.gz", hash = "sha256:17db5ecd524104a120e173814c90367a96a98d07c45b2e10c2f3919fff91bf5a", size = 135180, upload-time = "2026-04-27T01:46:08.907Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f1/d9/7fb5aa316bc299258e68c73ba3bddbc499654a07f151cba08f6153988714/pathspec-1.1.1-py3-none-any.whl", hash = "sha256:a00ce642f577bf7f473932318056212bc4f8bfdf53128c78bbd5af0b9b20b189", size = 57328, upload-time = "2026-04-27T01:46:07.06Z" },
+]
+
+[[package]]
+name = "peft"
+version = "0.19.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "accelerate" },
+    { name = "huggingface-hub" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "packaging" },
+    { name = "psutil" },
+    { name = "pyyaml" },
+    { name = "safetensors" },
+    { name = "torch" },
+    { name = "tqdm" },
+    { name = "transformers" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/86/cf/037f1e3d5186496c05513a6754639e2dab3038a05f384284d49a9bd06a2d/peft-0.19.1.tar.gz", hash = "sha256:0d97542fe96dcdaa20d3b81c06f26f988618f416a73544ab23c3618ccb674a40", size = 763738, upload-time = "2026-04-16T15:46:45.105Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/b6/f54d676ed93cc2dd2234c3b172ea9c8c3d7d29361e66b1b23dec57a67465/peft-0.19.1-py3-none-any.whl", hash = "sha256:2113f72a81621b5913ef28f9022204c742df111890c5f49d812716a4a301e356", size = 680692, upload-time = "2026-04-16T15:46:42.886Z" },
 ]
 
 [[package]]

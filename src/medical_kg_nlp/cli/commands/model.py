@@ -8,12 +8,16 @@ from pathlib import Path
 from typing import Literal, cast
 
 from medical_kg_nlp.training import (
+    CausalQLoRARunSpec,
     TokenClassifierRunSpec,
     TokenClassifierTrainingConfig,
     assert_local_gpu_runtime,
+    inspect_causal_qlora_inputs,
     inspect_local_runtime,
     inspect_token_classifier_training_inputs,
+    load_causal_qlora_run_spec,
     load_token_classifier_run_spec,
+    train_causal_qlora,
     train_huggingface_token_classifier,
     verify_token_classifier_run_artifact,
     verify_saved_token_classifier,
@@ -23,11 +27,136 @@ from medical_kg_nlp.utils.hashing import sha256_file
 from medical_kg_nlp.utils.run_output import collect_git_metadata
 
 __all__ = [
+    "inspect_causal_qlora_run",
     "inspect_token_classifier_run",
+    "train_causal_qlora_run",
     "train_token_classifier",
     "train_token_classifier_run",
     "validate_token_dataset",
 ]
+
+
+def inspect_causal_qlora_run(args: argparse.Namespace) -> int:
+    """Validate a pinned QLoRA stage without importing model frameworks."""
+
+    spec = load_causal_qlora_run_spec(args.config)
+    print(
+        json.dumps(
+            {
+                "status": "validated_not_executed",
+                "run_id": spec.run_id,
+                "run_spec": {
+                    "path": spec.config_relative_path,
+                    "path_base": "run_root",
+                    "sha256": sha256_file(spec.config_path),
+                },
+                "environment": {
+                    "lock_path": spec.relative_path(spec.environment_lock_path),
+                    "lock_sha256": spec.environment_lock_sha256,
+                    "install_command": [
+                        "uv",
+                        "sync",
+                        "--frozen",
+                        "--extra",
+                        "ml",
+                    ],
+                },
+                "datasets": inspect_causal_qlora_inputs(spec.training),
+                "model": {
+                    "model_id": spec.training.model_id,
+                    "revision": spec.training.revision,
+                    "parameter_count": spec.training.parameter_count,
+                    "source_url": spec.model_source_url,
+                    "license": spec.model_license,
+                },
+                "runtime_requirements": spec.runtime.to_dict(),
+                "local_runtime": inspect_local_runtime(spec.runtime),
+                "trained_artifact": _inspect_causal_qlora_artifact(spec),
+                "commands": {
+                    "working_directory": "run_root",
+                    "prefetch": list(spec.prefetch_command),
+                    "train": [
+                        "medical-kg",
+                        "model",
+                        "train-causal-qlora-run",
+                        "--config",
+                        spec.config_relative_path,
+                    ],
+                },
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    return 0
+
+
+def train_causal_qlora_run(args: argparse.Namespace) -> int:
+    """Execute one QLoRA stage after dataset, lockfile, and GPU validation."""
+
+    spec = load_causal_qlora_run_spec(args.config)
+    gpu_runtime = assert_local_gpu_runtime(spec.runtime)
+    output_override = _run_root_path(spec, getattr(args, "output_dir", None))
+    resume_checkpoint = _run_root_path(
+        spec,
+        getattr(args, "resume_from_checkpoint", None),
+    )
+    max_steps = getattr(args, "max_steps", None)
+    manifest = dict(
+        train_causal_qlora(
+            spec.training,
+            resume_from_checkpoint=resume_checkpoint,
+            max_steps_override=max_steps,
+            output_dir_override=output_override,
+        )
+    )
+    output_dir = (
+        spec.training.output_dir if output_override is None else output_override
+    )
+    manifest["run_spec"] = {
+        "path": spec.config_relative_path,
+        "path_base": "run_root",
+        "sha256": sha256_file(spec.config_path),
+        "run_id": spec.run_id,
+    }
+    manifest["environment"] = {
+        "lock_path": spec.relative_path(spec.environment_lock_path),
+        "lock_sha256": spec.environment_lock_sha256,
+        "install_command": ["uv", "sync", "--frozen", "--extra", "ml"],
+    }
+    manifest["gpu_runtime"] = gpu_runtime
+    manifest["purpose"] = "smoke" if max_steps is not None else "training"
+    manifest["submission_eligible"] = max_steps is None
+    write_json(output_dir / "run_manifest.json", manifest)
+    print(
+        json.dumps(
+            {
+                "status": "trained",
+                "run_id": spec.run_id,
+                "manifest": spec.relative_path(output_dir / "run_manifest.json"),
+                "metrics": manifest["metrics"],
+                "gpu_runtime": gpu_runtime,
+                "submission_eligible": manifest["submission_eligible"],
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    return 0
+
+
+def _run_root_path(
+    spec: CausalQLoRARunSpec,
+    value: str | None,
+) -> Path | None:
+    if value is None:
+        return None
+    path = Path(value)
+    resolved = path.resolve() if path.is_absolute() else (spec.run_root / path).resolve()
+    spec.relative_path(resolved)
+    return resolved
 
 
 def inspect_token_classifier_run(args: argparse.Namespace) -> int:
@@ -134,6 +263,26 @@ def _inspect_trained_artifact(spec: TokenClassifierRunSpec) -> dict[str, object]
             "manifest": spec.relative_path(manifest_path),
         }
     return dict(verify_token_classifier_run_artifact(spec))
+
+
+def _inspect_causal_qlora_artifact(
+    spec: CausalQLoRARunSpec,
+) -> dict[str, object]:
+    """Report an adapter without importing PEFT or trusting an incomplete run."""
+
+    manifest_path = spec.training.output_dir / "run_manifest.json"
+    adapter_config = spec.training.output_dir / "final-adapter" / "adapter_config.json"
+    if not manifest_path.is_file() or not adapter_config.is_file():
+        return {
+            "status": "absent",
+            "manifest": spec.relative_path(manifest_path),
+        }
+    return {
+        "status": "present",
+        "manifest": spec.relative_path(manifest_path),
+        "manifest_sha256": sha256_file(manifest_path),
+        "adapter_config_sha256": sha256_file(adapter_config),
+    }
 
 
 def validate_token_dataset(args: argparse.Namespace) -> int:

@@ -763,6 +763,30 @@ def _model_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser])
     train_run.set_defaults(handler="model_train_token_classifier_run")
     train_run.add_argument("--config", required=True)
 
+    inspect_qlora = operations.add_parser(
+        "inspect-causal-qlora-run",
+        help="Validate a pinned QLoRA run spec without ML imports.",
+    )
+    inspect_qlora.set_defaults(handler="model_inspect_causal_qlora_run")
+    inspect_qlora.add_argument("--config", required=True)
+
+    train_qlora = operations.add_parser(
+        "train-causal-qlora-run",
+        help="Validate Linux/CUDA and execute one pinned QLoRA stage.",
+    )
+    train_qlora.set_defaults(handler="model_train_causal_qlora_run")
+    train_qlora.add_argument("--config", required=True)
+    train_qlora.add_argument("--resume-from-checkpoint")
+    train_qlora.add_argument(
+        "--max-steps",
+        type=int,
+        help="Smoke-only optimizer step override; output is marked non-submittable.",
+    )
+    train_qlora.add_argument(
+        "--output-dir",
+        help="Run-root-relative smoke output; the checked-in training path is unchanged.",
+    )
+
 
 def _phase1_model_selection_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--input-dir", default="data/raw/input")
