@@ -9,15 +9,27 @@ from medical_kg_nlp.evaluation.records import (
     EvaluationEntity,
     EvaluationRelation,
 )
+from medical_kg_nlp.evaluation.sparse_logistic import (
+    SparseBinaryExample,
+    SparseLogisticModel,
+    SparseLogisticTrainingConfig,
+    binary_probability_metrics,
+    fit_sparse_logistic,
+)
 
 __all__ = [
     "EvaluationAdapter",
     "EvaluationDocument",
     "EvaluationEntity",
     "EvaluationRelation",
+    "SparseBinaryExample",
+    "SparseLogisticModel",
+    "SparseLogisticTrainingConfig",
     "adapt_evaluation_records",
+    "binary_probability_metrics",
     "build_pipeline_report",
     "evaluate_predictions",
+    "fit_sparse_logistic",
     "profile_dataset",
     "profile_paths",
     "render_markdown",
