@@ -371,6 +371,7 @@ def _generation_config(raw: dict[str, Any]) -> GenerationConfig:
         top_p=float(raw.get("top_p", 1.0)),
         seed=int(raw.get("seed", 42)),
         enable_thinking=bool(raw.get("enable_thinking", False)),
+        stop_on_complete_json=bool(raw.get("stop_on_complete_json", False)),
     )
 
 
@@ -381,6 +382,7 @@ def _generation_dict(config: GenerationConfig) -> dict[str, Any]:
         "top_p": config.top_p,
         "seed": config.seed,
         "enable_thinking": config.enable_thinking,
+        "stop_on_complete_json": config.stop_on_complete_json,
     }
 
 

@@ -51,6 +51,10 @@ def test_checked_in_qlora_inference_run_pins_adapter_provenance() -> None:
     )
     assert spec.budget.total_parameters == 8_234_382_336
     assert spec.budget.maximum_parameters == 9_000_000_000
+    assert spec.recall_generation.max_new_tokens == 2048
+    assert spec.recall_generation.stop_on_complete_json is True
+    assert spec.targeted_generation.stop_on_complete_json is True
+    assert spec.adjudication_generation.stop_on_complete_json is False
 
 
 def test_qwen_run_spec_rejects_cost_above_user_limit(tmp_path: Path) -> None:

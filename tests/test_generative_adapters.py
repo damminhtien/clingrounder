@@ -235,3 +235,22 @@ def test_structured_response_recovers_json_after_thinking_and_fence() -> None:
 def test_structured_response_rejects_non_json_text() -> None:
     with pytest.raises(StructuredResponseError, match="Could not parse"):
         parse_structured_response("Không tìm thấy thực thể.")
+
+
+def test_complete_json_stopping_criteria_waits_for_valid_json() -> None:
+    tokenizer = SimpleNamespace(
+        decode=lambda token_ids, **kwargs: "".join(chr(value) for value in token_ids)
+    )
+    criterion = generative_runtime._CompleteJsonStoppingCriteria(
+        tokenizer,
+        prompt_length=2,
+    )
+
+    assert not criterion([[1, 2, *map(ord, '{"entities":[')]], None)
+    assert criterion([[1, 2, *map(ord, '{"entities":[]}')]], None)
+
+
+def test_generation_config_does_not_enable_json_stop_by_default() -> None:
+    config = generative_runtime.GenerationConfig()
+
+    assert config.stop_on_complete_json is False

@@ -8,6 +8,10 @@ from pathlib import Path
 from typing import Any, Literal, Protocol, Sequence
 
 from medical_kg_nlp.adapters.huggingface.runtime import OptionalModelDependencyError
+from medical_kg_nlp.adapters.generative.structured import (
+    StructuredResponseError,
+    parse_structured_response,
+)
 from medical_kg_nlp.utils.hashing import sha256_directory
 
 __all__ = [
@@ -40,6 +44,7 @@ class GenerationConfig:
     top_p: float = 1.0
     seed: int = 42
     enable_thinking: bool = False
+    stop_on_complete_json: bool = False
 
     def __post_init__(self) -> None:
         if self.max_new_tokens < 1:
@@ -153,12 +158,20 @@ class TransformersCausalLMRuntime:
             for key, value in encoded.items()
             if hasattr(value, "to")
         }
+        prompt_length = int(model_inputs["input_ids"].shape[-1])
         torch.manual_seed(config.seed)
         generation_kwargs: dict[str, Any] = {
             "max_new_tokens": config.max_new_tokens,
             "do_sample": config.temperature > 0,
             "pad_token_id": tokenizer.eos_token_id,
         }
+        if config.stop_on_complete_json:
+            # MODEL: extraction prompts require one JSON value. Qwen adapters can otherwise
+            # continue generating until max_new_tokens even after that value is complete.
+            transformers = importlib.import_module("transformers")
+            generation_kwargs["stopping_criteria"] = transformers.StoppingCriteriaList(
+                [_CompleteJsonStoppingCriteria(tokenizer, prompt_length)]
+            )
         if config.temperature > 0:
             generation_kwargs.update(
                 temperature=config.temperature,
@@ -166,7 +179,6 @@ class TransformersCausalLMRuntime:
             )
         with torch.inference_mode():
             generated = model.generate(**model_inputs, **generation_kwargs)
-        prompt_length = int(model_inputs["input_ids"].shape[-1])
         return str(tokenizer.decode(generated[0][prompt_length:], skip_special_tokens=True))
 
     def _load(self) -> tuple[Any, Any, Any]:
@@ -229,6 +241,45 @@ class TransformersCausalLMRuntime:
         self._tokenizer = tokenizer
         self._model = model
         return torch, tokenizer, model
+
+
+class _CompleteJsonStoppingCriteria:
+    """Stop batch-size-one decoding after the first complete JSON object or array."""
+
+    def __init__(self, tokenizer: Any, prompt_length: int) -> None:
+        self._tokenizer = tokenizer
+        self._prompt_length = prompt_length
+        self._last_checked_length = 0
+
+    def __call__(
+        self,
+        input_ids: Any,
+        scores: Any,
+        **kwargs: Any,
+    ) -> bool:
+        del scores, kwargs
+        if len(input_ids) != 1:
+            # SCALING: the current runtime intentionally generates one request at a time. Failing
+            # open here avoids stopping only part of a future batch.
+            return False
+        generated = input_ids[0][self._prompt_length :]
+        generated_length = len(generated)
+        if generated_length <= self._last_checked_length:
+            return False
+        self._last_checked_length = generated_length
+        tail = str(
+            self._tokenizer.decode(generated[-2:], skip_special_tokens=True)
+        )
+        if "}" not in tail and "]" not in tail:
+            return False
+        raw_response = str(
+            self._tokenizer.decode(generated, skip_special_tokens=True)
+        )
+        try:
+            parse_structured_response(raw_response)
+        except StructuredResponseError:
+            return False
+        return True
 
 
 def _import_generative_dependencies() -> tuple[Any, Any]:

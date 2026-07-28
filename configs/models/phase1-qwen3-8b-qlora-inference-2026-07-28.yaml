@@ -44,17 +44,19 @@ runtime:
 
 generation:
   recall:
-    max_new_tokens: 3072
+    max_new_tokens: 2048
     temperature: 0.0
     top_p: 1.0
     seed: 42
     enable_thinking: false
+    stop_on_complete_json: true
   targeted:
     max_new_tokens: 2048
     temperature: 0.0
     top_p: 1.0
     seed: 43
     enable_thinking: false
+    stop_on_complete_json: true
   adjudication:
     max_new_tokens: 3072
     temperature: 0.0
