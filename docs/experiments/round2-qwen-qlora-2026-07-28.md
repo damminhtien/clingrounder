@@ -57,6 +57,11 @@ outputs/models/vast-backups/
   phase1-qwen3-8b-qlora-specialize-2026-07-28/
 ```
 
+The final adapter and resumable `checkpoint-123` are also stored in the
+private Hugging Face repository
+`damminhtien/medical-kg-qwen3-8b-phase1-qlora-20260728`. Upload completed
+without exposing the access token to the repository or command logs.
+
 Curriculum:
 
 ```text
@@ -74,15 +79,76 @@ The pinned run spec is:
 configs/models/phase1-qwen3-8b-qlora-inference-2026-07-28.yaml
 ```
 
-The run consumes the authorized raw Round 2 document manifest and performs recall, five
-type-targeted passes, exact-quote projection, pass consensus, and thinking adjudication. Every
-output span must satisfy `source[start:end] == text`. New entities initially carry empty assertion
-and candidate lists.
+The production run used `recall_only`; the five targeted passes and thinking
+adjudication remained disabled. This kept the completed run inside the GPU
+budget and prevented an uncalibrated multi-pass union from entering the
+submission.
 
-Inference status and promotion decisions will be appended after the complete 100-document run,
-strict validation, and comparison against both:
+```text
+documents: 100/100
+raw responses: 100
+complete JSON responses: 39
+prefix-recovered responses: 61
+raw exact-quote entities: 2,267
+support-confirmed consensus entities: 766
+overlap rejections: 12
+strict offset/schema issues: 0
+```
 
-- the reproducible rule baseline `f0bad7ce6493...`;
-- the external-teacher public-score reference `1b375c092bb5...`.
+Only complete entity objects are recovered from a truncated JSON prefix.
+Every recovered quote is projected locally, and every emitted span satisfies
+`source[start:end] == text`.
 
-No model artifact is promoted from training loss alone.
+Immutable local inference artifact:
+
+```text
+outputs/models/vast-backups/
+  phase1-qwen3-8b-qlora-recall1024-round2-2026-07-28/
+
+raw_responses.jsonl:
+  4cc16e8200bfdf48d05af1db476b81487e58aa6e9bc38008be878c45186ebed7
+trace.jsonl:
+  4ef79004d8dc7ebcc0cba29a8500b2d37f9e355d135fca976007bfe9199771e6
+portable run archive:
+  9b4a0c3a616cd33dc800d62db54834b295c39a10a67a9beedfe3d9ae5975596d
+```
+
+## Public Probe
+
+The first probe added 39 QLoRA consensus entities to the frozen `33.0750`
+public-score reference and applied selective assertion evidence to eight new
+rows:
+
+```text
+ZIP SHA-256:
+  21ab21f209e46fc8d8c9a912bbcfa083c7587c3a6e22cfacfd1219b9704b7e4b
+score: 32.9663
+WER: 63.5430
+J_assertion: 41.5326
+J_candidates: 23.9235
+```
+
+Relative to the reference, final score fell `0.1087`, WER worsened `0.1296`,
+J_assertion fell `0.2136`, and J_candidates fell `0.0144`. Reject this
+variant. Source/support agreement alone did not remove headings such as
+`Cận lâm sàng`, modifiers such as `mãn tính`, or underspecified spans such as
+`viêm`.
+
+The follow-up `strict` semantic profile excludes short boundary-sensitive
+families and keeps only reviewed canonical or context-anchored mentions. Its
+entity-only probe adds seven rows and changes no existing assertion or
+candidate:
+
+```text
+run:
+  outputs/phase1/round2/
+  20260728T100931Z_round2-qlora-strict-semantics-on-public-best_042b8d96e0/
+variant:
+  E_QLORA_STRICT_CONSENSUS_ADD
+ZIP SHA-256:
+  62be7247d56e831a811a323d06a3b564910139fa652fc23cb026ca870c74e691
+validation issues: 0
+public score: pending
+```
+
+No model artifact is promoted from training loss or local agreement alone.
