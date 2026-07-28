@@ -95,3 +95,22 @@ Git state, environment lock, source archive hash, and output ZIP hashes.
 - Do not use either layer as a blind challenge/evaluation set.
 - Do not train from `gold_review` until its queue is resolved.
 - Keep the Round 2 raw text and derived labels in authorized-private storage.
+
+## Public Probe
+
+The Min-2 `gold_strict.zip` was submitted once to measure how far consensus
+weak supervision is from the hidden organizer labels:
+
+```text
+submitted: 2026-07-28 11:34
+ZIP SHA-256: f2e01df4271d8fc1c0df9bb6b55f6c2e3861d6112ae89c39db9afa95e5276f90
+final: 26.0282
+WER: 70.9973
+J_assertion: 32.5410
+J_candidates: 18.9127
+records: 100
+```
+
+Decision: reject as a submission artifact. Min-2 agreement is too sparse and
+has substantially lower entity recall than the scored Friend-31 projection.
+Keep it only for weak supervision and disagreement analysis.
