@@ -43,15 +43,17 @@ runtime:
   structured_retries: 1
 
 generation:
+  # MODEL: bounded prefix recovery retained the complete retry projection at 512 tokens on the
+  # representative diagnostic note. Production keeps a 2x margin for denser notes.
   recall:
-    max_new_tokens: 2048
+    max_new_tokens: 1024
     temperature: 0.0
     top_p: 1.0
     seed: 42
     enable_thinking: false
     stop_on_complete_json: true
   targeted:
-    max_new_tokens: 2048
+    max_new_tokens: 1024
     temperature: 0.0
     top_p: 1.0
     seed: 43
