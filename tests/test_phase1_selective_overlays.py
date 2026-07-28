@@ -115,6 +115,28 @@ def test_history_policy_abstains_on_symptoms_even_inside_history_section() -> No
     assert [row["assertions"] for row in output["1"]] == [[], ["isHistorical"]]
 
 
+def test_history_policy_accepts_btc_pre_admission_medication_heading() -> None:
+    text = "Danh sách thuốc trước nhập viện chính xác và đầy đủ.\namlodipine 10 mg po daily"
+    rows = {
+        "1": [
+            _row(
+                "amlodipine 10 mg po daily",
+                "THUỐC",
+                text.index("amlodipine"),
+            )
+        ]
+    }
+
+    output, decisions, _ = apply_selective_assertions(
+        rows,
+        {"1": text},
+        regimes=("history",),
+    )
+
+    assert output["1"][0]["assertions"] == ["isHistorical"]
+    assert decisions[0]["rule_id"] == "builtin.assertion.history_section"
+
+
 def test_assertion_extension_preserves_winning_baseline_labels() -> None:
     text = "Tiền sử gia đình:\nMẹ có đái tháo đường\nTriệu chứng hiện tại:\nKhông có sốt"
     rows = {

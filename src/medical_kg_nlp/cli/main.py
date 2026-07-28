@@ -50,6 +50,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.phase1",
         "run_phase1_round2_probe_suite",
     ),
+    "benchmark_phase1_round2_golden": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "build_phase1_round2_golden_command",
+    ),
     "benchmark_phase1_model_data_build": (
         "medical_kg_nlp.cli.commands.phase1",
         "build_phase1_model_data",

@@ -394,6 +394,46 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         ),
     )
 
+    golden = round2_operations.add_parser(
+        "golden",
+        help="Build inferred strict/review labels from independent proposal sources.",
+    )
+    golden.set_defaults(handler="benchmark_phase1_round2_golden")
+    golden.add_argument("--documents", required=True)
+    golden.add_argument("--source-archive-sha256", required=True)
+    golden.add_argument(
+        "--source",
+        action="append",
+        required=True,
+        help="Independent proposal artifact as NAME=DIR_OR_ZIP; repeat at least twice.",
+    )
+    golden.add_argument(
+        "--dictionary",
+        default="data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+    )
+    golden.add_argument(
+        "--validation-dictionary",
+        dest="validation_dictionaries",
+        action="append",
+        default=[
+            "data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl",
+            "data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl",
+        ],
+        help="Pinned terminology source for candidate filtering; repeat as needed.",
+    )
+    golden.add_argument("--output-root", default="outputs/phase1/round2_golden")
+    golden.add_argument("--run-label", default="round2-golden-local")
+    golden.add_argument("--expected-count", type=int, default=100)
+    golden.add_argument("--minimum-sources", type=int, default=2)
+    golden.add_argument(
+        "--btc-example-input",
+        default="tests/fixtures/phase1/btc_medication_list_crlf.txt",
+    )
+    golden.add_argument(
+        "--btc-example-output",
+        default="tests/fixtures/phase1/btc_medication_list_expected.json",
+    )
+
     model_data = operations.add_parser(
         "model-data",
         help="Build leakage-safe Phase 1 model supervision.",

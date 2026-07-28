@@ -25,13 +25,22 @@ from medical_kg_nlp.benchmarks.phase1.model_selection import (
 )
 from medical_kg_nlp.benchmarks.phase1.round2 import (
     build_phase1_round2_audit,
+    load_phase1_round2_documents,
     write_phase1_round2_audit,
+)
+from medical_kg_nlp.benchmarks.phase1.round2_golden import (
+    build_phase1_round2_golden,
+    write_phase1_round2_golden,
 )
 from medical_kg_nlp.benchmarks.phase1.round2_probes import (
     CandidateProbePolicy,
     Phase1Round2ProbeConfig,
     run_phase1_round2_probes,
 )
+from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import (
+    load_phase1_output_source,
+)
+from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.benchmarks.phase1.synthetic_training import (
     Phase1SyntheticTrainingConfig,
     build_phase1_synthetic_training_dataset,
@@ -58,6 +67,7 @@ from medical_kg_nlp.benchmarks.phase1.runner import (
 )
 from medical_kg_nlp.mining.io import load_documents, write_json
 from medical_kg_nlp.pipeline.parallel_batch import ParallelBackend
+from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.utils.hashing import sha256_file
 from medical_kg_nlp.utils.run_output import create_hashed_run_dir, path_in_run
 
@@ -67,6 +77,7 @@ __all__ = [
     "augment_phase1_model_user_synthetic",
     "build_phase1_model_data",
     "build_phase1_qwen_data",
+    "build_phase1_round2_golden_command",
     "calibrate_phase1_model_data",
     "compare_phase1_model_variants",
     "inspect_phase1_qwen_run",
@@ -200,6 +211,96 @@ def run_phase1_round2_probe_suite(args: argparse.Namespace) -> int:
         )
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def build_phase1_round2_golden_command(args: argparse.Namespace) -> int:
+    """Build non-official strict and review labels from independent Round 2 sources."""
+
+    named_sources = _named_paths(args.source)
+    source_names = [name for name, _ in named_sources]
+    if len(named_sources) < 2 or len(source_names) != len(set(source_names)):
+        raise ValueError("--source requires at least two uniquely named proposal artifacts")
+    dictionary_paths = (
+        Path(args.dictionary),
+        *(Path(path) for path in args.validation_dictionaries),
+    )
+    dictionary_entries = [
+        entry
+        for path in dictionary_paths
+        for entry in DictionaryStore.load_entries_jsonl(path)
+    ]
+    dictionary = DictionaryStore(dictionary_entries)
+    mined_documents = load_phase1_round2_documents(
+        load_documents(args.documents),
+        expected_archive_sha256=args.source_archive_sha256,
+        expected_count=args.expected_count,
+    )
+    documents = [
+        ClinicalDocument(document_id=document.document_id, text=document.text)
+        for document in mined_documents
+    ]
+    source_text_by_doc = {document.document_id: document.text for document in documents}
+    proposal_sources = {
+        name: load_phase1_output_source(path) for name, path in named_sources
+    }
+    btc_example_input = Path(args.btc_example_input)
+    btc_example_output = Path(args.btc_example_output)
+    run_output = create_hashed_run_dir(
+        args.output_root,
+        label=args.run_label,
+        inputs=(
+            args.documents,
+            *(path for _, path in named_sources),
+            *dictionary_paths,
+            btc_example_input,
+            btc_example_output,
+        ),
+        resolved_config={
+            "source_archive_sha256": args.source_archive_sha256,
+            "expected_count": args.expected_count,
+            "minimum_sources": args.minimum_sources,
+            "source_names": source_names,
+            "official_gold": False,
+        },
+    )
+    report = build_phase1_round2_golden(
+        source_text_by_doc,
+        proposal_sources,
+        dictionary,
+        minimum_sources=args.minimum_sources,
+    )
+    run_manifest = json.loads(run_output.manifest_path.read_text(encoding="utf-8"))
+    manifest = write_phase1_round2_golden(
+        report,
+        run_output.run_dir,
+        documents=documents,
+        dictionary=dictionary,
+        provenance={
+            "source_archive_sha256": args.source_archive_sha256,
+            "proposal_sources": {
+                name: str(path) for name, path in named_sources
+            },
+            "input_artifacts": run_manifest["input_artifacts"],
+            "btc_example": {
+                "input": str(btc_example_input),
+                "input_sha256": sha256_file(btc_example_input),
+                "output": str(btc_example_output),
+                "output_sha256": sha256_file(btc_example_output),
+            },
+        },
+    )
+    run_manifest["inferred_gold"] = manifest
+    write_json(run_output.manifest_path, run_manifest)
+    result = {
+        "run_id": run_output.run_id,
+        "run_dir": str(run_output.run_dir),
+        "manifest": str(run_output.run_dir / "manifest.json"),
+        "official_gold": False,
+        "summary": report["summary"],
+        "artifacts": manifest["artifacts"],
+    }
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 
 

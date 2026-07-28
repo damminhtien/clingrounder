@@ -54,6 +54,11 @@ from medical_kg_nlp.benchmarks.phase1.round2 import (
     load_phase1_round2_documents,
     write_phase1_round2_audit,
 )
+from medical_kg_nlp.benchmarks.phase1.round2_golden import (
+    BTC_PHASE1_INFERRED_GOLD_POLICY,
+    build_phase1_round2_golden,
+    write_phase1_round2_golden,
+)
 from medical_kg_nlp.benchmarks.phase1.round2_probes import (
     CandidateProbePolicy,
     Phase1Round2ProbeConfig,
@@ -70,6 +75,7 @@ from medical_kg_nlp.benchmarks.phase1.round2_probes import (
 __all__ = [
     "Phase1SelectiveExportConfig",
     "CandidateProbePolicy",
+    "BTC_PHASE1_INFERRED_GOLD_POLICY",
     "Phase1EvaluationAdapter",
     "Phase1Record",
     "Phase1RegionAugmentationConfig",
@@ -86,6 +92,7 @@ __all__ = [
     "ROUND2_NOVELTY_SOURCE_IDS",
     "RegionAugmentationKind",
     "build_phase1_round2_audit",
+    "build_phase1_round2_golden",
     "apply_round2_candidate_policy",
     "build_phase1_reviewed_recognition_policy",
     "build_phase1_report",
@@ -114,4 +121,5 @@ __all__ = [
     "segment_phase1_text_regions",
     "align_quoted_phase1_proposals",
     "write_phase1_round2_audit",
+    "write_phase1_round2_golden",
 ]

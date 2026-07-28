@@ -38,7 +38,7 @@ _ASSERTION_VALUE = {
 }
 _HISTORY_SECTION_RE = re.compile(
     r"(?i)\b(?:tiền sử(?: bệnh| nội khoa| phẫu thuật)?|bệnh lý mạn tính|"
-    r"thuốc trước khi nhập viện|các sự kiện trước khi nhập viện)\b"
+    r"(?:danh sách )?thuốc trước(?: khi)? nhập viện|các sự kiện trước khi nhập viện)\b"
 )
 _FAMILY_SECTION_RE = re.compile(r"(?i)\b(?:tiền sử gia đình|bệnh sử gia đình)\b")
 _GENERIC_SECTION_RE = re.compile(
