@@ -328,6 +328,7 @@ def propose_phase1_qwen_entities(args: argparse.Namespace) -> int:
             review_only=args.review_only,
             expected_document_count=args.expected_count,
             run_adjudication=not args.no_adjudication,
+            resume=args.resume,
         ),
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))

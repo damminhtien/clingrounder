@@ -638,6 +638,14 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     )
     qwen_propose.add_argument("--expected-count", type=int, default=100)
     qwen_propose.add_argument("--no-adjudication", action="store_true")
+    qwen_propose.add_argument(
+        "--resume",
+        action="store_true",
+        help=(
+            "Reuse complete per-document outputs only when the run fingerprint and "
+            "raw offsets still match."
+        ),
+    )
     qwen_support = qwen_operations.add_parser(
         "build-vietnamese-support",
         help="Run a pinned Vietnamese NER model as support that Qwen must confirm.",

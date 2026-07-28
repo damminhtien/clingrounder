@@ -20,6 +20,7 @@ MODEL_ID="${MODEL_ID:-Qwen/Qwen3-8B}"
 MODEL_REVISION="${MODEL_REVISION:-b968826d9c46dd6066d109eabc6255188de91218}"
 SUPPORT_SOURCE="${SUPPORT_SOURCE:-vietmed=outputs/models/phase1-vietmed-ner-round2-support/support}"
 RUN_ADJUDICATION="${RUN_ADJUDICATION:-0}"
+RESUME="${RESUME:-0}"
 MAX_RUNTIME_SECONDS="${MAX_RUNTIME_SECONDS:-21600}"
 
 cd "${REPO_ROOT}"
@@ -52,9 +53,12 @@ command=(
 if [[ "${RUN_ADJUDICATION}" != "1" ]]; then
   command+=(--no-adjudication)
 fi
+if [[ "${RESUME}" == "1" ]]; then
+  command+=(--resume)
+fi
 
-# MODEL: six extraction passes are intentionally bounded by wall time. Per-document JSON files
-# remain available if the host is interrupted, while the final manifest marks only a complete run.
+# MODEL: six extraction passes are intentionally bounded by wall time. Atomic per-document JSON
+# files can be resumed after their run fingerprint and raw offsets are revalidated.
 timeout --signal=TERM "${MAX_RUNTIME_SECONDS}" "${command[@]}"
 
 test -f "${OUTPUT_DIR}/manifest.json"

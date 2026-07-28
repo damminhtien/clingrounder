@@ -9,11 +9,15 @@ import pytest
 from medical_kg_nlp.benchmarks.phase1.qwen_runner import (
     Phase1QwenProposalRunConfig,
     _adjudication_candidates,
+    _load_completed_document,
     _merge_review_rows,
+    _prepare_resume_state,
     _proposals_to_rows,
     _rows_to_review_entities,
     _rows_to_proposals,
+    _write_document_rows,
 )
+from medical_kg_nlp.schema.document import ClinicalDocument
 
 
 def test_runner_round_trips_support_rows_without_assertion_or_candidates() -> None:
@@ -144,4 +148,86 @@ def test_review_only_config_requires_a_complete_source(tmp_path: Path) -> None:
             expected_source_archive_sha256="a" * 64,
             output_dir=tmp_path / "output",
             review_only=True,
+        )
+
+
+def test_resume_reuses_only_complete_offset_validated_document(
+    tmp_path: Path,
+) -> None:
+    document = ClinicalDocument(document_id="1", text="Bệnh nhân ho")
+    consensus = tmp_path / "consensus"
+    consensus.mkdir()
+    _write_document_rows(
+        consensus / "1.json",
+        (
+            {
+                "text": "ho",
+                "type": "TRIỆU_CHỨNG",
+                "assertions": [],
+                "candidates": [],
+                "position": [10, 12],
+            },
+        ),
+    )
+
+    resumed = _load_completed_document(
+        document,
+        consensus_dir=consensus,
+        adjudicated_dir=None,
+        review_additions_dir=None,
+        reviewed_dir=None,
+        support_source_names=("vietmed",),
+    )
+
+    assert resumed is not None
+    assert resumed["counters"]["resume.documents"] == 1
+    assert resumed["counters"]["consensus.entities"] == 1
+    assert resumed["trace"]["resume"]["source"] == "validated_document_outputs"
+
+
+def test_resume_rejects_existing_offset_mismatch(tmp_path: Path) -> None:
+    document = ClinicalDocument(document_id="1", text="Bệnh nhân ho")
+    consensus = tmp_path / "consensus"
+    consensus.mkdir()
+    _write_document_rows(
+        consensus / "1.json",
+        (
+            {
+                "text": "ho",
+                "type": "TRIỆU_CHỨNG",
+                "assertions": [],
+                "candidates": [],
+                "position": [0, 2],
+            },
+        ),
+    )
+
+    with pytest.raises(ValueError, match="violates raw offsets"):
+        _load_completed_document(
+            document,
+            consensus_dir=consensus,
+            adjudicated_dir=None,
+            review_additions_dir=None,
+            reviewed_dir=None,
+            support_source_names=(),
+        )
+
+
+def test_resume_state_blocks_mixed_run_fingerprints(tmp_path: Path) -> None:
+    output = tmp_path / "output"
+    (output / "consensus").mkdir(parents=True)
+    (output / "consensus" / "1.json").write_text("[]\n", encoding="utf-8")
+
+    adopted = _prepare_resume_state(
+        output,
+        run_fingerprint="a" * 64,
+        resume=True,
+    )
+
+    assert adopted["adopted_existing_outputs"] is True
+    with pytest.raises(ValueError, match="fingerprint differs"):
+        _prepare_resume_state(
+            output,
+            run_fingerprint="b" * 64,
+            resume=True,
         )

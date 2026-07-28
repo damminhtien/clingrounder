@@ -23,7 +23,12 @@ from medical_kg_nlp.benchmarks.phase1.qwen_proposals import (
 )
 from medical_kg_nlp.benchmarks.phase1.qwen_run_spec import Phase1QwenRunSpec
 from medical_kg_nlp.benchmarks.phase1.round2 import load_phase1_round2_documents
-from medical_kg_nlp.mining.io import load_documents, write_json, write_jsonl
+from medical_kg_nlp.mining.io import (
+    load_documents,
+    write_json,
+    write_jsonl,
+    write_text,
+)
 from medical_kg_nlp.ner.proposal import EntityProposal
 from medical_kg_nlp.ner.span_resolver import EvidenceWeightedSpanResolver
 from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
@@ -65,6 +70,7 @@ class Phase1QwenProposalRunConfig:
     review_only: bool = False
     expected_document_count: int = 100
     run_adjudication: bool = True
+    resume: bool = False
 
     def __post_init__(self) -> None:
         if not self.documents_path.is_file():
@@ -120,20 +126,8 @@ def run_phase1_qwen_proposals(
     if review_by_doc is not None and set(review_by_doc) != expected_ids:
         raise ValueError("Review source does not cover the private corpus")
 
-    runtime = TransformersCausalLMRuntime(
-        model_id=run_spec.model.model_id,
-        revision=run_spec.model.revision,
-        device=run_spec.device,
-        dtype=run_spec.dtype,  # type: ignore[arg-type]
-        local_files_only=run_spec.local_files_only,
-    )
-    adapter = Phase1QwenAdapter(
-        runtime,
-        max_window_characters=run_spec.max_window_characters,
-        window_overlap_characters=run_spec.window_overlap_characters,
-        structured_retries=run_spec.structured_retries,
-    )
     output = config.output_dir
+    output.mkdir(parents=True, exist_ok=True)
     run_extraction = not config.review_only
     consensus_dir = output / "consensus" if run_extraction else None
     adjudicated_dir = (
@@ -153,10 +147,47 @@ def run_phase1_qwen_proposals(
         review_additions_dir.mkdir(parents=True, exist_ok=True)
         reviewed_dir.mkdir(parents=True, exist_ok=True)
 
+    input_descriptors = _run_input_descriptors(run_spec, config)
+    resume_state = _prepare_resume_state(
+        output,
+        run_fingerprint=_run_fingerprint(run_spec, config, input_descriptors),
+        resume=config.resume,
+    )
+    adapter: Phase1QwenAdapter | None = None
     trace_rows: list[dict[str, Any]] = []
     raw_rows: list[dict[str, Any]] = []
     counters: Counter[str] = Counter()
     for document in documents:
+        if config.resume:
+            resumed = _load_completed_document(
+                document,
+                consensus_dir=consensus_dir,
+                adjudicated_dir=adjudicated_dir,
+                review_additions_dir=review_additions_dir,
+                reviewed_dir=reviewed_dir,
+                support_source_names=tuple(sorted(support_by_name)),
+            )
+            if resumed is not None:
+                trace_rows.append(resumed["trace"])
+                counters.update(resumed["counters"])
+                continue
+        if adapter is None:
+            # SCALING: defer the 8B checkpoint load until at least one document needs work.
+            runtime = TransformersCausalLMRuntime(
+                model_id=run_spec.model.model_id,
+                revision=run_spec.model.revision,
+                device=run_spec.device,
+                dtype=run_spec.dtype,  # type: ignore[arg-type]
+                local_files_only=run_spec.local_files_only,
+            )
+            adapter = Phase1QwenAdapter(
+                runtime,
+                max_window_characters=run_spec.max_window_characters,
+                window_overlap_characters=run_spec.window_overlap_characters,
+                structured_retries=run_spec.structured_retries,
+            )
+        if adapter is None:
+            raise AssertionError("Qwen adapter was not initialized")
         proposal_sources: dict[str, tuple[EntityProposal, ...]] = {}
         pass_trace: list[dict[str, Any]] = []
         pass_raw: list[dict[str, Any]] = []
@@ -271,6 +302,7 @@ def run_phase1_qwen_proposals(
                 "adjudicated_entity_count": len(adjudicated_rows),
                 "adjudication_response_sha256": adjudication_hash,
                 "review": review_trace,
+                "resume": None,
             }
         )
         raw_rows.extend(
@@ -283,22 +315,7 @@ def run_phase1_qwen_proposals(
     manifest = {
         "schema_version": "phase1-qwen-proposal-run.v1",
         "run_spec": run_spec.to_dict(),
-        "inputs": {
-            "documents": {
-                "path": str(config.documents_path),
-                "sha256": sha256_file(config.documents_path),
-                "source_archive_sha256": config.expected_source_archive_sha256,
-            },
-            "support_sources": [
-                _phase1_source_descriptor(name, path)
-                for name, path in config.support_sources
-            ],
-            "review_source": (
-                None
-                if config.review_source is None
-                else _phase1_source_descriptor(*config.review_source)
-            ),
-        },
+        "inputs": input_descriptors,
         "outputs": {
             "consensus_dir": None if consensus_dir is None else str(consensus_dir),
             "adjudicated_dir": (
@@ -326,10 +343,207 @@ def run_phase1_qwen_proposals(
                 else None
             ),
             "review_merge": "baseline_preferred_nonoverlap",
+            "resume": config.resume,
+            "resume_fingerprint": resume_state["run_fingerprint"],
         },
     }
     write_json(output / "manifest.json", manifest)
     return manifest
+
+
+def _run_input_descriptors(
+    run_spec: Phase1QwenRunSpec,
+    config: Phase1QwenProposalRunConfig,
+) -> dict[str, Any]:
+    """Fingerprint behavior-bearing inputs before loading the model."""
+
+    return {
+        "documents": {
+            "path": str(config.documents_path),
+            "sha256": sha256_file(config.documents_path),
+            "source_archive_sha256": config.expected_source_archive_sha256,
+        },
+        "support_sources": [
+            _phase1_source_descriptor(name, path)
+            for name, path in config.support_sources
+        ],
+        "review_source": (
+            None
+            if config.review_source is None
+            else _phase1_source_descriptor(*config.review_source)
+        ),
+        "config": {
+            "expected_document_count": config.expected_document_count,
+            "review_max_rounds": config.review_max_rounds,
+            "review_only": config.review_only,
+            "run_adjudication": config.run_adjudication,
+            "run_spec_sha256": _json_sha256(run_spec.to_dict()),
+        },
+    }
+
+
+def _run_fingerprint(
+    run_spec: Phase1QwenRunSpec,
+    config: Phase1QwenProposalRunConfig,
+    input_descriptors: Mapping[str, Any],
+) -> str:
+    """Build a path-independent identity for safe document-level resume."""
+
+    support = [
+        {
+            "name": value["name"],
+            "kind": value["kind"],
+            "sha256": value["sha256"],
+        }
+        for value in input_descriptors["support_sources"]
+    ]
+    review = input_descriptors["review_source"]
+    payload = {
+        "run_spec": run_spec.to_dict(),
+        "documents_sha256": input_descriptors["documents"]["sha256"],
+        "source_archive_sha256": config.expected_source_archive_sha256,
+        "support_sources": support,
+        "review_source": (
+            None
+            if review is None
+            else {
+                "name": review["name"],
+                "kind": review["kind"],
+                "sha256": review["sha256"],
+            }
+        ),
+        "expected_document_count": config.expected_document_count,
+        "review_max_rounds": config.review_max_rounds,
+        "review_only": config.review_only,
+        "run_adjudication": config.run_adjudication,
+    }
+    return _json_sha256(payload)
+
+
+def _prepare_resume_state(
+    output_dir: Path,
+    *,
+    run_fingerprint: str,
+    resume: bool,
+) -> dict[str, Any]:
+    """Create or verify the run identity before reusing document files."""
+
+    state_path = output_dir / "resume_state.json"
+    has_outputs = _has_document_outputs(output_dir)
+    if state_path.is_file():
+        raw = json.loads(state_path.read_text(encoding="utf-8"))
+        if not isinstance(raw, dict) or raw.get("run_fingerprint") != run_fingerprint:
+            raise ValueError(
+                "Qwen resume fingerprint differs; use a new output directory"
+            )
+        if has_outputs and not resume:
+            raise ValueError(
+                "Qwen output already contains document results; pass --resume or "
+                "use a new output directory"
+            )
+        return raw
+    if has_outputs and not resume:
+        raise ValueError(
+            "Qwen output already contains untracked document results; pass --resume "
+            "to validate and adopt them"
+        )
+    state = {
+        "schema_version": "phase1-qwen-resume.v1",
+        "run_fingerprint": run_fingerprint,
+        # INVARIANT: adoption does not trust rows blindly; each file is revalidated
+        # against the immutable source text before its document is skipped.
+        "adopted_existing_outputs": has_outputs,
+    }
+    write_json(state_path, state)
+    return state
+
+
+def _load_completed_document(
+    document: ClinicalDocument,
+    *,
+    consensus_dir: Path | None,
+    adjudicated_dir: Path | None,
+    review_additions_dir: Path | None,
+    reviewed_dir: Path | None,
+    support_source_names: tuple[str, ...],
+) -> dict[str, Any] | None:
+    """Return validated counters and a trace stub when all requested outputs exist."""
+
+    required = {
+        "consensus": consensus_dir,
+        "adjudicated": adjudicated_dir,
+        "review_additions": review_additions_dir,
+        "reviewed": reviewed_dir,
+    }
+    paths = {
+        name: directory / f"{document.document_id}.json"
+        for name, directory in required.items()
+        if directory is not None
+    }
+    if not paths or not all(path.is_file() for path in paths.values()):
+        return None
+
+    rows_by_kind = {
+        name: _load_document_rows(path, document)
+        for name, path in paths.items()
+    }
+    counts = Counter({"resume.documents": 1})
+    counts["consensus.entities"] = len(rows_by_kind.get("consensus", ()))
+    counts["adjudicated.entities"] = len(rows_by_kind.get("adjudicated", ()))
+    counts["review.additions"] = len(rows_by_kind.get("review_additions", ()))
+    counts["review.entities"] = len(rows_by_kind.get("reviewed", ()))
+    return {
+        "counters": counts,
+        "trace": {
+            "document_id": document.document_id,
+            "text_sha256": _text_sha256(document.text),
+            "passes": [],
+            "support_sources": list(support_source_names),
+            "proposal_source_counts": {},
+            "consensus_entity_count": counts["consensus.entities"],
+            "adjudicated_entity_count": counts["adjudicated.entities"],
+            "adjudication_response_sha256": None,
+            "review": None,
+            "resume": {
+                "source": "validated_document_outputs",
+                "raw_response_available": False,
+            },
+        },
+    }
+
+
+def _load_document_rows(
+    path: Path,
+    document: ClinicalDocument,
+) -> list[dict[str, Any]]:
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(raw, list) or any(not isinstance(row, dict) for row in raw):
+        raise ValueError(f"Qwen document output must be a JSON list: {path}")
+    rows = [dict(row) for row in raw]
+    invalid_types = {str(row.get("type")) for row in rows} - PHASE1_ALLOWED_TYPES
+    if invalid_types:
+        raise ValueError(f"Qwen output contains invalid Phase 1 types: {invalid_types}")
+    _rows_to_proposals(rows, document.text, source=f"resume:{path.name}")
+    return rows
+
+
+def _has_document_outputs(output_dir: Path) -> bool:
+    return any(
+        path.parent.name
+        in {"consensus", "adjudicated", "review_additions", "reviewed"}
+        and path.stem.isdigit()
+        for path in output_dir.rglob("*.json")
+    )
+
+
+def _json_sha256(payload: Mapping[str, Any]) -> str:
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _run_document_review(
@@ -626,9 +840,10 @@ def _write_document_rows(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
     invalid_types = {str(row["type"]) for row in rows} - PHASE1_ALLOWED_TYPES
     if invalid_types:
         raise ValueError(f"Qwen output contains invalid Phase 1 types: {invalid_types}")
-    path.write_text(
+    # INVARIANT: one document becomes resumable only after an atomic JSON replace.
+    write_text(
+        path,
         json.dumps(list(rows), ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
     )
 
 

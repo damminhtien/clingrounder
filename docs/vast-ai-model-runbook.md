@@ -142,6 +142,17 @@ Qwen must return exact source quotes, type, confidence, and optional local conte
 return trusted offsets. Offset projection and repeated-occurrence recovery run locally against the
 immutable raw document.
 
+Interrupted proposal runs can be continued with the same output directory:
+
+```bash
+RESUME=1 OUTPUT_DIR=outputs/models/<existing-run> \
+  bash scripts/vast/run_qwen_phase1_proposals.sh
+```
+
+The runner fingerprints the model run spec, document manifest, support sources, and behavior flags
+before reusing output. Every reused document JSON is reparsed and checked against the immutable raw
+offsets. A changed fingerprint fails closed and requires a new output directory.
+
 ## Data Boundary
 
 - Remote XLM-R training receives only the reviewed Round 1 train/development model dataset.
