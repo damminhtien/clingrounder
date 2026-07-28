@@ -48,6 +48,9 @@ from medical_kg_nlp.benchmarks.phase1.recognition_mining import (
     Phase1RecognitionMiningConfig,
     run_phase1_recognition_mining,
 )
+from medical_kg_nlp.benchmarks.phase1.qwen_semantic_gate import (
+    filter_high_precision_qwen_proposals,
+)
 from medical_kg_nlp.benchmarks.phase1.round2 import (
     ROUND2_NOVELTY_SOURCE_IDS,
     build_phase1_round2_audit,
@@ -102,6 +105,7 @@ __all__ = [
     "calibrate_phase1_model_thresholds",
     "canonicalize_full_phase1_source",
     "compare_phase1_ner_variants",
+    "filter_high_precision_qwen_proposals",
     "infer_phase1_development_predictions",
     "load_phase1_text_documents",
     "load_phase1_round2_documents",
