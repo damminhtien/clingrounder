@@ -39,6 +39,20 @@ def test_checked_in_qwen_run_specs_are_pinned(
     assert "adapter" not in spec.to_dict()
 
 
+def test_checked_in_qlora_inference_run_pins_adapter_provenance() -> None:
+    spec = load_phase1_qwen_run_spec(
+        "configs/models/phase1-qwen3-8b-qlora-inference-2026-07-28.yaml"
+    )
+
+    assert spec.adapter is not None
+    assert spec.adapter.model.parameter_count == 43_646_976
+    assert spec.adapter.model.revision == (
+        "2b3a98d4fa312ced50331f971fa6ec43a927e590"
+    )
+    assert spec.budget.total_parameters == 8_234_382_336
+    assert spec.budget.maximum_parameters == 9_000_000_000
+
+
 def test_qwen_run_spec_rejects_cost_above_user_limit(tmp_path: Path) -> None:
     source = Path("configs/models/phase1-qwen3-8b-2026-07-27.yaml").read_text(
         encoding="utf-8"
