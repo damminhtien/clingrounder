@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Literal, cast
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.linking.expected_jaccard import expected_jaccard_prefix
 from medical_kg_nlp.ontology.phase1_assertions import (
     Phase1AssertionOverlay,
     load_phase1_assertion_overlays,
@@ -991,59 +992,13 @@ def _selective_candidates(
     empty_probability = config.candidate_empty_probabilities.get(expected_system)
     if empty_probability is None or not calibrated_codes:
         return []
-    selected = _expected_jaccard_prefix_size(
+    decision = expected_jaccard_prefix(
         probabilities,
         empty_probability=empty_probability,
         max_candidates=min(max_candidates, config.candidate_max_candidates),
         minimum_gain=config.candidate_min_expected_jaccard_gain,
     )
-    return calibrated_codes[:selected]
-
-
-def _expected_jaccard_prefix_size(
-    probabilities: list[float],
-    *,
-    empty_probability: float,
-    max_candidates: int,
-    minimum_gain: float,
-) -> int:
-    """Choose a ranked prefix using expected set Jaccard under calibrated marginals.
-
-    Candidate inclusion events are treated as independent for this decision model. The explicit
-    empty probability is calibrated separately because hidden-gold null prevalence is not implied
-    reliably by alternative candidate marginals.
-    """
-    if max_candidates < 1:
-        return 0
-    best_size = 0
-    best_score = empty_probability
-    for size in range(1, min(max_candidates, len(probabilities)) + 1):
-        selected_distribution = _bernoulli_count_distribution(probabilities[:size])
-        omitted_distribution = _bernoulli_count_distribution(probabilities[size:])
-        expected = 0.0
-        for true_positive, true_positive_probability in enumerate(selected_distribution):
-            for false_negative, false_negative_probability in enumerate(omitted_distribution):
-                expected += (
-                    true_positive_probability
-                    * false_negative_probability
-                    * true_positive
-                    / (size + false_negative)
-                )
-        if expected > best_score:
-            best_size = size
-            best_score = expected
-    return best_size if best_score >= empty_probability + minimum_gain else 0
-
-
-def _bernoulli_count_distribution(probabilities: list[float]) -> list[float]:
-    distribution = [1.0]
-    for probability in probabilities:
-        updated = [0.0] * (len(distribution) + 1)
-        for count, mass in enumerate(distribution):
-            updated[count] += mass * (1.0 - probability)
-            updated[count + 1] += mass * probability
-        distribution = updated
-    return distribution
+    return calibrated_codes[: decision.selected_size]
 
 
 def _has_structured_medication_mention(entity: EntityAnnotation) -> bool:

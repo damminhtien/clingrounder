@@ -4,6 +4,7 @@ from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.linking.linker import EntityLinker
 from medical_kg_nlp.linking.structured_rxnorm import (
     parse_medication_structure,
+    rxnorm_compatibility,
     rxnorm_structure_conflict,
 )
 from medical_kg_nlp.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
@@ -133,14 +134,56 @@ def test_explicit_dose_form_separates_product_strength_from_administered_range()
     assert not range_dose.product_strengths
 
 
-def _entry() -> ConceptEntry:
+def test_rxnorm_compatibility_hard_rejects_explicit_ingredient_mismatch() -> None:
+    verdict = rxnorm_compatibility(
+        "clonazepam 0.5 mg oral tablet",
+        _entry(),
+        ingredients=("clonazepam",),
+    )
+
+    assert verdict.hard_conflict == "rxnorm_ingredient_mismatch"
+
+
+def test_rxnorm_compatibility_rejects_combination_cardinality_mismatch() -> None:
+    verdict = rxnorm_compatibility(
+        "amoxicillin clavulanate tablet",
+        _entry(ingredient="amoxicillin / clavulanate"),
+        ingredients=("amoxicillin",),
+    )
+
+    assert verdict.hard_conflict == "rxnorm_ingredient_count_mismatch"
+
+
+def test_rxnorm_compatibility_keeps_brand_conflict_as_ranking_penalty() -> None:
+    verdict = rxnorm_compatibility(
+        "Lopressor 25 mg oral tablet",
+        _entry(brand_name="Toprol XL"),
+        ingredients=("metoprolol",),
+        brands=("Lopressor",),
+    )
+
+    assert verdict.hard_conflict is None
+    assert verdict.bonuses == (
+        "dose_form_exact",
+        "ingredient_exact",
+        "product_strength_exact",
+    )
+    assert verdict.penalties == ("brand_mismatch",)
+
+
+def _entry(
+    *,
+    ingredient: str = "metoprolol",
+    brand_name: str | None = None,
+) -> ConceptEntry:
     return ConceptEntry(
         concept_id="RXNORM:123",
         code="123",
         code_system=CodeSystem.RXNORM,
         canonical_name="metoprolol 25 MG Extended Release Oral Tablet",
         semantic_type=EntityType.DRUG,
-        ingredient="metoprolol",
+        ingredient=ingredient,
+        brand_name=brand_name,
         dose_form="Oral Tablet",
         rxnorm_tty="SCD",
         strength="25 MG",
