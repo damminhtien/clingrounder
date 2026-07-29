@@ -45,6 +45,9 @@ legacy `vastai show instances --raw` returns HTTP 410 instead of an empty list.
 
 ## Workloads
 
+The joint Vietnamese XLM-R masked-language plus synonym-contrastive run has a
+separate reproducibility guide: [`xlmr-dapt.md`](xlmr-dapt.md).
+
 ### A. Five-Type XLM-R Training
 
 The original pinned run is:

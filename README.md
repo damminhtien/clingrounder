@@ -46,6 +46,7 @@ Package ownership and extension points: [`docs/code-map.md`](docs/code-map.md).
 Breaking 0.2 migration notes: [`docs/migration-v0.2.md`](docs/migration-v0.2.md).
 Rule NER architecture and measured stages: [`docs/rule-ner-v2.md`](docs/rule-ner-v2.md).
 Linux/Vast.ai model handoff: [`docs/vast-ai-model-runbook.md`](docs/vast-ai-model-runbook.md).
+Joint Vietnamese XLM-R DAPT: [`docs/xlmr-dapt.md`](docs/xlmr-dapt.md).
 
 ---
 
