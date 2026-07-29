@@ -985,6 +985,13 @@ def _model_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser])
     model = commands.add_parser("model", help="Validate datasets and train local models.")
     operations = model.add_subparsers(dest="model_command", required=True)
 
+    build_dapt = operations.add_parser(
+        "build-dapt-corpus",
+        help="Build source-pinned MLM lanes, including an isolated Round 2 lane.",
+    )
+    build_dapt.set_defaults(handler="model_build_dapt_corpus")
+    build_dapt.add_argument("--config", required=True)
+
     validate = operations.add_parser(
         "validate-token-dataset",
         help="Validate mined spans and train/evaluation label compatibility.",

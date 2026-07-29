@@ -12,11 +12,13 @@ from medical_kg_nlp.training import (
     TokenClassifierRunSpec,
     TokenClassifierTrainingConfig,
     assert_local_gpu_runtime,
+    build_dapt_corpus,
     finalize_causal_qlora_artifact,
     inspect_causal_qlora_inputs,
     inspect_local_runtime,
     inspect_token_classifier_training_inputs,
     load_causal_qlora_run_spec,
+    load_dapt_corpus_build_spec,
     load_token_classifier_run_spec,
     train_causal_qlora,
     train_huggingface_token_classifier,
@@ -28,6 +30,7 @@ from medical_kg_nlp.utils.hashing import sha256_file
 from medical_kg_nlp.utils.run_output import collect_git_metadata
 
 __all__ = [
+    "build_dapt_corpus_run",
     "finalize_causal_qlora_run",
     "inspect_causal_qlora_run",
     "inspect_token_classifier_run",
@@ -36,6 +39,14 @@ __all__ = [
     "train_token_classifier_run",
     "validate_token_dataset",
 ]
+
+
+def build_dapt_corpus_run(args: argparse.Namespace) -> int:
+    """Build physically separated, source-pinned DAPT corpus lanes."""
+
+    manifest = build_dapt_corpus(load_dapt_corpus_build_spec(args.config))
+    print(json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
 
 
 def finalize_causal_qlora_run(args: argparse.Namespace) -> int:

@@ -1,0 +1,32 @@
+# MODEL: source text only; annotations and pseudo-labels never enter this corpus.
+schema_version: xlmr-dapt-corpus-build.v1
+build_id: xlmr-vietnamese-medical-dapt-2026-07-29
+run_root: ../..
+output_dir: outputs/mining/model-datasets/xlmr-vietnamese-medical-dapt-2026-07-29
+
+lanes:
+  - lane_id: vietmed-ner-unlabeled
+    kind: open_unlabeled
+    documents: outputs/mining/vietmed-ner-e3d0393c/documents.jsonl
+    source_manifest: outputs/mining/vietmed-ner-e3d0393c/run_result.json
+    languages: [vi]
+    sampling_weight: 1.0
+    minimum_characters: 20
+
+  - lane_id: vietbioner-unlabeled
+    kind: open_unlabeled
+    documents: outputs/mining/vietbioner-19ba70a/documents.jsonl
+    source_manifest: outputs/mining/vietbioner-19ba70a/run_result.json
+    languages: [vi]
+    sampling_weight: 0.5
+    minimum_characters: 20
+
+  # PRIVACY: Round 2 is an authorized, non-redistributable MLM-only lane.
+  # It remains physically separate and cannot supply NER labels or synonym pairs.
+  - lane_id: phase1-round2-unlabeled
+    kind: round2_unlabeled
+    documents: outputs/mining/phase1-round2-hosted-2026-07-27/documents.jsonl
+    source_manifest: outputs/mining/phase1-round2-hosted-2026-07-27/run_result.json
+    languages: [vi]
+    sampling_weight: 0.25
+    minimum_characters: 20

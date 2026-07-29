@@ -19,6 +19,13 @@ from medical_kg_nlp.training.causal_run_spec import (
     load_causal_qlora_run_spec,
 )
 from medical_kg_nlp.training.config import TokenClassifierTrainingConfig
+from medical_kg_nlp.training.dapt_corpus import (
+    DaptCorpusBuildSpec,
+    DaptCorpusLaneKind,
+    DaptCorpusLaneSpec,
+    build_dapt_corpus,
+    load_dapt_corpus_build_spec,
+)
 from medical_kg_nlp.training.huggingface_token_classifier import (
     fingerprint_model_directory,
     inspect_token_classifier_training_inputs,
@@ -74,6 +81,9 @@ __all__ = [
     "CausalInstructionSource",
     "CausalQLoRAConfig",
     "CausalQLoRARunSpec",
+    "DaptCorpusBuildSpec",
+    "DaptCorpusLaneKind",
+    "DaptCorpusLaneSpec",
     "FastTokenizerPort",
     "GPURequirements",
     "InstructionDatasetReport",
@@ -92,6 +102,7 @@ __all__ = [
     "TokenClassifierRunSpec",
     "TokenizedTrainingWindow",
     "build_bio_label_vocabulary",
+    "build_dapt_corpus",
     "build_listwise_linking_record",
     "build_terminology_synonym_pairs",
     "assert_local_gpu_runtime",
@@ -107,6 +118,7 @@ __all__ = [
     "iter_span_training_records",
     "load_causal_instruction_records",
     "load_causal_qlora_run_spec",
+    "load_dapt_corpus_build_spec",
     "project_record_to_token_windows",
     "render_listwise_input",
     "load_token_classifier_run_spec",

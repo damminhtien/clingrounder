@@ -126,6 +126,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.model",
         "validate_token_dataset",
     ),
+    "model_build_dapt_corpus": (
+        "medical_kg_nlp.cli.commands.model",
+        "build_dapt_corpus_run",
+    ),
     "model_train_token_classifier": (
         "medical_kg_nlp.cli.commands.model",
         "train_token_classifier",
