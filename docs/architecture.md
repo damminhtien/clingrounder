@@ -77,6 +77,12 @@ preprocessing input to later stages. Downstream NER, context, linking, and relat
 original source text. Normalized text should become a span-producing input only after every output
 is mapped back to source offsets with end-to-end regression tests.
 
+Section detection is configuration-driven. `SectionRuleRegistry` owns heading aliases, semantic
+categories, optional parent constraints, and scope limits; `RuleBasedSectionDetector` returns
+source-coordinate section and heading spans. Downstream policy should depend on the semantic
+category rather than one literal Vietnamese heading. Third-party sentence or word tokenization
+cannot own exported offsets.
+
 ## Retrieval
 
 Candidate generation must avoid brute-force mention-to-dictionary comparison. The intended order is:
@@ -143,6 +149,19 @@ Within a direction, executable cue matches are ordered by descending rule `prior
 distance, longer cue, and stable `rule_id`. A match beyond that rule's `max_distance` is discarded.
 This ordering is independent of JSONL row order; evidence records point to the exact rule selected
 by execution rather than performing a second metadata lookup after matching.
+
+Batch assertion classification also emits a modifier-target `ContextGraph`. Cue occurrences are
+raw-coordinate modifier nodes, entities are target nodes, and edges retain assertion type, scope,
+distance, and stable rule provenance. Section priors are explicit spanless modifier nodes. The
+graph supports model features and error analysis without changing deterministic assertion policy.
+`AssertionModelFeatureExtractor` converts this evidence into bounded sparse features while keeping
+negation, history, family, uncertainty, conditional, planned, and resolved status independent.
+
+Dependency paths may later add evidence to this graph, but cannot replace linear evidence until a
+Vietnamese parser passes target-anchored assertion and raw-offset benchmarks. Likewise,
+word-segmented Vietnamese encoders may supply representations but cannot own final NER boundaries
+until segmentation is reversibly projected to source text. The detailed source audit and adoption
+map are documented in `docs/reference-implementations.md`.
 
 ## Data Storage
 
