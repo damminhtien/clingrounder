@@ -112,6 +112,39 @@ def test_max_score_pipeline_requires_budget_roles() -> None:
         raise AssertionError("An incomplete inference budget must fail closed")
 
 
+def test_max_score_pipeline_blocks_vietmed_only_source_task_proposal() -> None:
+    text = "Bệnh nhân đau ngực."
+    start = text.index("đau ngực")
+    documents = [ClinicalDocument(document_id="1", text=text)]
+    pipeline = Phase1MaxScorePipeline(
+        verifier=_accept_all_verifier(),
+        source_roles={
+            "rule": ProposalSourceRole.RULE,
+            "vietmed": ProposalSourceRole.VERIFIER,
+        },
+        budget_manifest=_budget_manifest(),
+        dictionary=_dictionary(),
+        candidate_source_priority=("rule", "vietmed"),
+    )
+
+    result = pipeline.run(
+        documents,
+        {
+            "rule": {"1": []},
+            "vietmed": {
+                "1": [_row("đau ngực", "TRIỆU_CHỨNG", start)],
+            },
+        },
+    )
+
+    assert result.rows_by_document["1"] == ()
+    assert result.counters["entity.verifier_only_blocked"] == 1
+    assert any(
+        decision.get("reason") == "verifier_only_proposal"
+        for decision in result.source_decisions
+    )
+
+
 def _row(
     text: str,
     entity_type: str,

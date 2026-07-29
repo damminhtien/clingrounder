@@ -142,8 +142,34 @@ class Phase1MaxScorePipeline:
                 for source, role in sorted(self.source_roles.items())
             },
         )
+        eligible_proposals: list[Mapping[str, Any]] = []
+        for row in matrix["matrix"]:
+            sources = row.get("sources", [])
+            if not isinstance(sources, list):
+                raise ValueError("Proposal matrix sources must be a list")
+            if sources and all(
+                self.source_roles[str(source)] is ProposalSourceRole.VERIFIER
+                for source in sources
+            ):
+                # MODEL: VietMed is source-task evidence. It may strengthen an exact proposal
+                # from a target-task source but cannot own a Phase 1 entity by itself.
+                source_decisions.append(
+                    {
+                        "document_id": row.get("document_id"),
+                        "proposal_id": row.get("proposal_id"),
+                        "stage": "proposal_source_eligibility",
+                        "action": "block",
+                        "reason": "verifier_only_proposal",
+                        "entity": _identity_payload(row),
+                    }
+                )
+                counters["entity.verifier_only_blocked"] = (
+                    counters.get("entity.verifier_only_blocked", 0) + 1
+                )
+                continue
+            eligible_proposals.append(row)
         resolved, proposal_scores = resolve_phase1_proposal_rows(
-            matrix["matrix"],
+            eligible_proposals,
             source_text_by_document,
             self.verifier,
             source_roles=self.source_roles,

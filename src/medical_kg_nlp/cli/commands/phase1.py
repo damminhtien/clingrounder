@@ -24,6 +24,10 @@ from medical_kg_nlp.benchmarks.phase1.model_dataset import (
 from medical_kg_nlp.benchmarks.phase1.model_runtime import (
     run_phase1_model_calibration,
 )
+from medical_kg_nlp.benchmarks.phase1.max_score_run import (
+    load_phase1_max_score_run_spec,
+    run_phase1_max_score,
+)
 from medical_kg_nlp.benchmarks.phase1.model_region_augmentation import (
     Phase1RegionAugmentationConfig,
     build_phase1_region_augmented_dataset,
@@ -141,6 +145,7 @@ __all__ = [
     "propose_phase1_vietnamese_support",
     "run_phase1_round2_probe_suite",
     "run_phase1_round2_proposal_verifier_command",
+    "run_phase1_round2_max_score",
     "run_phase1_submission",
     "resolve_phase1_proposals",
     "resolve_phase1_boundaries",
@@ -617,6 +622,16 @@ def run_phase1_round2_proposal_verifier_command(args: argparse.Namespace) -> int
             run_label=args.run_label,
             expected_count=args.expected_count,
         )
+    )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def run_phase1_round2_max_score(args: argparse.Namespace) -> int:
+    """Compose pinned model-source artifacts into one strict max-score ZIP."""
+
+    report = run_phase1_max_score(
+        load_phase1_max_score_run_spec(args.config),
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0

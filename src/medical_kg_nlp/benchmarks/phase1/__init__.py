@@ -93,6 +93,12 @@ from medical_kg_nlp.benchmarks.phase1.max_score_pipeline import (
     Phase1MaxScorePipeline,
     Phase1MaxScoreResult,
 )
+from medical_kg_nlp.benchmarks.phase1.max_score_run import (
+    Phase1MaxScoreRunSpec,
+    PinnedPhase1Artifact,
+    load_phase1_max_score_run_spec,
+    run_phase1_max_score,
+)
 from medical_kg_nlp.benchmarks.phase1.model_dataset import (
     PHASE1_FIVE_TYPE_LABELS,
     Phase1ModelDatasetConfig,
@@ -169,6 +175,7 @@ __all__ = [
     "Phase1ManualGoldMiningCorpus",
     "Phase1MaxScorePipeline",
     "Phase1MaxScoreResult",
+    "Phase1MaxScoreRunSpec",
     "Phase1ModelDatasetConfig",
     "Phase1HoldoutGate",
     "Phase1ModelSelectionConfig",
@@ -194,6 +201,7 @@ __all__ = [
     "DiseaseSymptomLabel",
     "DiseaseSymptomVerifier",
     "ProposalSourceRole",
+    "PinnedPhase1Artifact",
     "Phase1SourceSemantics",
     "ROUND2_NOVELTY_SOURCE_IDS",
     "RegionAugmentationKind",
@@ -252,10 +260,12 @@ __all__ = [
     "write_disease_symptom_verifier",
     "zip_phase1_output_dir",
     "load_phase1_manual_gold_mining_corpus",
+    "load_phase1_max_score_run_spec",
     "run_phase1_recognition_mining",
     "run_phase1_round2_probes",
     "run_phase1_round2_proposal_verifier",
     "run_phase1_model_calibration",
+    "run_phase1_max_score",
     "segment_phase1_text_regions",
     "align_quoted_phase1_proposals",
     "write_phase1_round2_audit",

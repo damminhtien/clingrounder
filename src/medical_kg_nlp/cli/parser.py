@@ -450,6 +450,17 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     proposal_verify.add_argument("--run-label", default="round2-proposal-verifier")
     proposal_verify.add_argument("--expected-count", type=int, default=100)
 
+    max_score = round2_operations.add_parser(
+        "max-score",
+        help="Compose pinned Rule/XLM-R/Qwen/VietMed artifacts under a verified model budget.",
+    )
+    max_score.set_defaults(handler="benchmark_phase1_round2_max_score")
+    max_score.add_argument(
+        "--config",
+        required=True,
+        help="Pinned Phase 1 max-score run specification.",
+    )
+
     proposal_matrix = operations.add_parser(
         "proposal-matrix",
         help="Align rule/model/LLM/support proposals and retain source confidence evidence.",
