@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
+from medical_kg_nlp.context.modifier_graph import AssertionDecision, ContextGraph
 from medical_kg_nlp.kg.validator import ValidationIssue
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.schema.annotation import (
@@ -18,6 +19,7 @@ from medical_kg_nlp.terminology.ports import TerminologyRepository
 
 __all__ = [
     "AssertionClassifierPort",
+    "BatchAssertionClassifierPort",
     "CandidateAssignerPort",
     "CandidateRerankerPort",
     "DocumentCandidateRerankerPort",
@@ -51,6 +53,17 @@ class AssertionClassifierPort(Protocol):
         entity: EntityAnnotation,
         sentence: Sentence | None = None,
     ) -> tuple[AssertionFeatures, tuple[AssertionEvidence, ...]]: ...
+
+
+@runtime_checkable
+class BatchAssertionClassifierPort(Protocol):
+    """Classify sentence targets together and expose modifier-target evidence."""
+
+    def classify_batch_with_graph(
+        self,
+        entities: list[EntityAnnotation],
+        sentence: Sentence,
+    ) -> tuple[dict[str, AssertionDecision], ContextGraph]: ...
 
 
 class CandidateRetrieverPort(Protocol):

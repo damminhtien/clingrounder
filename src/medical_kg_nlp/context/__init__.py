@@ -3,5 +3,19 @@
 from __future__ import annotations
 
 from medical_kg_nlp.context.assertion import AssertionClassifier
+from medical_kg_nlp.context.modifier_graph import (
+    AssertionDecision,
+    ContextEdge,
+    ContextGraph,
+    ContextModifierNode,
+    ContextTargetNode,
+)
 
-__all__ = ["AssertionClassifier"]
+__all__ = [
+    "AssertionClassifier",
+    "AssertionDecision",
+    "ContextEdge",
+    "ContextGraph",
+    "ContextModifierNode",
+    "ContextTargetNode",
+]

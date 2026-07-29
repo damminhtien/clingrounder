@@ -3,6 +3,11 @@ import re
 from collections.abc import Callable
 
 from medical_kg_nlp.context.cue_loader import AssertionCue, AssertionRuleRegistry
+from medical_kg_nlp.context.modifier_graph import (
+    AssertionDecision,
+    ContextGraph,
+    build_context_graph,
+)
 from medical_kg_nlp.context.rules import ASSERTION_RULE_REGISTRY
 from medical_kg_nlp.schema.annotation import (
     AssertionEvidence,
@@ -177,6 +182,24 @@ class AssertionClassifier:
         )
         unique_evidence = {item.rule_id: item for item in evidence}
         return AssertionFeatures.from_statuses(statuses), tuple(unique_evidence.values())
+
+    def classify_batch_with_graph(
+        self,
+        entities: list[EntityAnnotation],
+        sentence: Sentence,
+    ) -> tuple[dict[str, AssertionDecision], ContextGraph]:
+        """Classify one sentence and retain explicit modifier-target evidence.
+
+        SCALING: callers can process one sentence as a unit and reuse the graph
+        for feature extraction or review instead of reconstructing provenance
+        from entity-level flags.
+        """
+
+        decisions = {
+            entity.id: self.classify_features_with_evidence(entity, sentence)
+            for entity in entities
+        }
+        return decisions, build_context_graph(sentence, entities, decisions)
 
     def _add_directional_evidence(
         self,
