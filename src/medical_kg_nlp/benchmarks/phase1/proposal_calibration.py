@@ -23,6 +23,12 @@ from medical_kg_nlp.benchmarks.phase1.proposal_features import (
     is_phase1_heading_only_proposal,
     phase1_genre_bucket,
 )
+from medical_kg_nlp.benchmarks.phase1.proposal_conflict_graph import (
+    Phase1ConflictGraph,
+    Phase1ConflictNode,
+    build_phase1_conflict_graph,
+    select_maximum_utility_nodes,
+)
 from medical_kg_nlp.evaluation.sparse_logistic import (
     SparseBinaryExample,
     SparseLogisticModel,
@@ -132,6 +138,8 @@ class ScoredPhase1Proposal:
     selected: bool
     rejection_reason: str | None
     genre: str = "unknown"
+    conflict_component_id: str | None = None
+    conflict_kinds: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -142,6 +150,8 @@ class ScoredPhase1Proposal:
             "selected_before_overlap": self.selected_before_overlap,
             "selected": self.selected,
             "rejection_reason": self.rejection_reason,
+            "conflict_component_id": self.conflict_component_id,
+            "conflict_kinds": list(self.conflict_kinds),
         }
 
 
@@ -616,10 +626,7 @@ def score_phase1_proposal_rows(
             )
         )
 
-    accepted_ids = {
-        id(row)
-        for row, _, _ in _resolve_runtime_overlaps(preselected)
-    }
+    accepted_ids, conflict_trace = _resolve_runtime_overlaps(preselected)
     return tuple(
         ScoredPhase1Proposal(
             row=item.row,
@@ -635,6 +642,8 @@ def score_phase1_proposal_rows(
                 if item.selected_before_overlap
                 else item.rejection_reason
             ),
+            conflict_component_id=conflict_trace.get(id(item.row), (None, ()))[0],
+            conflict_kinds=conflict_trace.get(id(item.row), (None, ()))[1],
         )
         for item in scored
     )
@@ -1239,20 +1248,55 @@ def _select_examples(
 
 def _resolve_runtime_overlaps(
     rows: Sequence[tuple[Mapping[str, Any], float, float]],
-) -> tuple[tuple[Mapping[str, Any], float, float], ...]:
-    accepted: list[tuple[Mapping[str, Any], float, float]] = []
-    for item in sorted(rows, key=_runtime_score_sort_key):
-        row = item[0]
-        document_id = str(row.get("document_id", ""))
-        position = _row_position(row)
-        if any(
-            document_id == str(other[0].get("document_id", ""))
-            and _overlap(position, _row_position(other[0]))
-            for other in accepted
-        ):
-            continue
-        accepted.append(item)
-    return tuple(accepted)
+) -> tuple[set[int], dict[int, tuple[str | None, tuple[str, ...]]]]:
+    nodes: list[Phase1ConflictNode] = []
+    row_id_by_node_id: dict[str, int] = {}
+    for index, (row, probability, _) in enumerate(rows):
+        raw_sources = row.get("sources")
+        source_count = (
+            len(raw_sources)
+            if isinstance(raw_sources, list) and raw_sources
+            else int(row.get("source_count", 1))
+        )
+        node_id = f"runtime:{index:08d}"
+        row_id_by_node_id[node_id] = id(row)
+        nodes.append(
+            Phase1ConflictNode(
+                node_id=node_id,
+                document_id=str(row.get("document_id", "")),
+                span=_row_position(row),
+                entity_type=str(row.get("type", "")),
+                probability=probability,
+                source_count=source_count,
+            )
+        )
+    graph = build_phase1_conflict_graph(tuple(nodes))
+    accepted_ids = {
+        row_id_by_node_id[node.node_id]
+        for node in select_maximum_utility_nodes(graph)
+    }
+    return accepted_ids, _runtime_conflict_trace(graph, row_id_by_node_id)
+
+
+def _runtime_conflict_trace(
+    graph: Phase1ConflictGraph,
+    row_id_by_node_id: Mapping[str, int],
+) -> dict[int, tuple[str | None, tuple[str, ...]]]:
+    trace: dict[int, tuple[str | None, tuple[str, ...]]] = {}
+    for component in graph.components:
+        kinds_by_node: dict[str, set[str]] = {
+            node_id: set() for node_id in component.node_ids
+        }
+        for edge in component.edges:
+            kinds_by_node[edge.left_id].add(edge.kind.value)
+            kinds_by_node[edge.right_id].add(edge.kind.value)
+        component_id = component.component_id if component.edges else None
+        for node_id, kinds in kinds_by_node.items():
+            trace[row_id_by_node_id[node_id]] = (
+                component_id,
+                tuple(sorted(kinds)),
+            )
+    return trace
 
 
 def _selection_metrics(

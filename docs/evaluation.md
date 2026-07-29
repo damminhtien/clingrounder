@@ -224,6 +224,12 @@ When a frozen proposal verifier supplies the base entity set, the persisted boun
 inside one unambiguous family. It cannot add or delete entities. Without a proposal verifier, the
 artifact is explicitly marked `open_ranker` and should be treated as a broader experimental probe.
 
+Calibrated runtime proposals are represented as an explicit conflict graph. Edges distinguish
+same-span type conflicts, boundary overlap, containment, exact duplicates, and drug-versus-lab
+number ambiguity. Connected components are suitable for bounded model adjudication. Final
+non-overlap selection uses calibrated log-odds with weighted interval scheduling; it does not use
+greedy highest-probability suppression or treat rule/model confidence scores as probabilities.
+
 Candidate generation and cross-encoder rows can be much larger than the fitted sparse model.
 Interrupted training can resume from the fingerprinted materialized dataset without regenerating
 trie, grammar, medication, token-window, and coordination alternatives:
