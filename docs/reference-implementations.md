@@ -18,7 +18,7 @@ files inspected, patterns adopted, and patterns explicitly rejected. Checkouts l
 | --- | --- | --- |
 | medspaCy | Typed context rules, termination, modifier evidence | `context/` rule contracts |
 | NegBio | Optional dependency evidence anchored to a target | future context adapter; linear rules remain fallback |
-| cTAKES | Independent assertion attributes and per-attribute metrics | `AssertionFeatures`, generic evaluation |
+| cTAKES | Independent assertion attributes and per-attribute metrics | `AssertionFeatures`, `evaluation/context_metrics.py` |
 | SapBERT | Same-concept synonym curriculum | `training/terminology_pairs.py` |
 | biomedical-entity-linking | Shared candidate benchmark and abbreviation-first retrieval | terminology evaluation and query expansion |
 | Prompt-BioEL | Cross-candidate/listwise reranking records | `training/listwise_linking.py` |
