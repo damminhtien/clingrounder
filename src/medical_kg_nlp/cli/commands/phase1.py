@@ -7,6 +7,16 @@ import json
 from pathlib import Path
 from typing import Any, cast
 
+from medical_kg_nlp.benchmarks.phase1.boundary_verifier import (
+    Phase1BoundaryVerifier,
+    build_phase1_boundary_dataset,
+    fit_phase1_boundary_verifier,
+    load_phase1_boundary_dataset,
+    resolve_phase1_boundary_rows,
+    write_phase1_boundary_dataset,
+    write_phase1_boundary_resolution,
+    write_phase1_boundary_verifier,
+)
 from medical_kg_nlp.benchmarks.phase1.model_dataset import (
     Phase1ModelDatasetConfig,
     build_phase1_model_dataset,
@@ -82,6 +92,7 @@ from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import (
     load_phase1_output_source,
 )
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatcher
 from medical_kg_nlp.benchmarks.phase1.synthetic_training import (
     Phase1SyntheticTrainingConfig,
     build_phase1_synthetic_training_dataset,
@@ -118,6 +129,7 @@ __all__ = [
     "augment_phase1_model_regions",
     "augment_phase1_model_user_synthetic",
     "build_phase1_model_data",
+    "calibrate_phase1_boundaries",
     "build_phase1_proposal_matrix_command",
     "build_phase1_qwen_data",
     "build_phase1_round2_golden_command",
@@ -131,6 +143,7 @@ __all__ = [
     "run_phase1_round2_proposal_verifier_command",
     "run_phase1_submission",
     "resolve_phase1_proposals",
+    "resolve_phase1_boundaries",
     "score_phase1_proposal_sources",
     "train_phase1_type_verifier",
 ]
@@ -263,6 +276,93 @@ def resolve_phase1_proposals(args: argparse.Namespace) -> int:
         matrix_path=args.matrix,
         verifier_path=args.verifier,
         source_roles=source_roles,
+    )
+    print(json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def calibrate_phase1_boundaries(args: argparse.Namespace) -> int:
+    """Build raw boundary alternatives and fit a genre-aware family ranker."""
+
+    output = Path(args.output_dir)
+    if args.dataset_dir:
+        dataset = load_phase1_boundary_dataset(args.dataset_dir)
+    else:
+        if not args.source_role:
+            raise ValueError(
+                "--source-role is required when generating a boundary dataset"
+            )
+        source_roles = _source_roles(args.source_role)
+        contract = load_phase1_split_contract(
+            args.model_split_manifest,
+            args.frozen_split_manifest,
+        )
+        corpus = load_phase1_reviewed_corpus(
+            contract,
+            input_dir=args.input_dir,
+            gold_dir=args.gold_dir,
+            frozen_manifest_path=args.frozen_split_manifest,
+        )
+        proposal_verifier = _load_proposal_verifier(args.proposal_verifier)
+        dictionary_matcher = _load_dictionary_matcher(args.dictionary)
+        dataset = build_phase1_boundary_dataset(
+            args.matrix,
+            corpus,
+            source_roles=source_roles,
+            proposal_verifier=proposal_verifier,
+            proposal_verifier_path=args.proposal_verifier,
+            dictionary_matcher=dictionary_matcher,
+            corpus_fingerprint_sha256=contract.corpus_fingerprint_sha256,
+        )
+        write_phase1_boundary_dataset(dataset, output / "dataset")
+    verifier, report = fit_phase1_boundary_verifier(dataset)
+    write_phase1_boundary_verifier(verifier, report, output)
+    print(
+        json.dumps(
+            {
+                "output_dir": str(output),
+                "dataset": dataset.manifest,
+                "development": report["development_selection"],
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    return 0
+
+
+def resolve_phase1_boundaries(args: argparse.Namespace) -> int:
+    """Apply a frozen boundary ranker to all proposal documents."""
+
+    source_roles = _source_roles(args.source_role)
+    source_texts = {
+        path.stem: read_source_text(path)
+        for path in sorted(Path(args.input_dir).glob("*.txt"))
+    }
+    if not source_texts:
+        raise ValueError(f"No .txt documents found under {args.input_dir}")
+    payload = json.loads(Path(args.boundary_verifier).read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("Boundary verifier must be a JSON object")
+    verifier = Phase1BoundaryVerifier.from_dict(payload)
+    proposal_verifier = _load_proposal_verifier(args.proposal_verifier)
+    resolved, scored = resolve_phase1_boundary_rows(
+        read_jsonl(args.matrix),
+        source_texts,
+        verifier,
+        source_roles=source_roles,
+        proposal_verifier=proposal_verifier,
+        dictionary_matcher=_load_dictionary_matcher(args.dictionary),
+    )
+    manifest = write_phase1_boundary_resolution(
+        resolved,
+        scored,
+        args.output_dir,
+        matrix_path=args.matrix,
+        verifier_path=args.boundary_verifier,
+        proposal_verifier_path=args.proposal_verifier,
+        dictionary_paths=args.dictionary,
     )
     print(json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
@@ -840,3 +940,25 @@ def _source_roles(values: list[str]) -> dict[str, ProposalSourceRole]:
             raise ValueError(f"Duplicate proposal source role {name!r}")
         roles[name] = ProposalSourceRole(value)
     return roles
+
+
+def _load_proposal_verifier(
+    path: str | None,
+) -> Phase1ProposalVerifier | None:
+    if path is None:
+        return None
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("Proposal verifier must be a JSON object")
+    return Phase1ProposalVerifier.from_dict(payload)
+
+
+def _load_dictionary_matcher(paths: list[str]) -> DictionaryMatcher | None:
+    if not paths:
+        return None
+    entries = [
+        entry
+        for path in paths
+        for entry in DictionaryStore.load_entries_jsonl(path)
+    ]
+    return DictionaryMatcher(DictionaryStore(entries).aliases_for_ner())

@@ -70,6 +70,14 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.phase1",
         "resolve_phase1_proposals",
     ),
+    "benchmark_phase1_boundary_calibrate": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "calibrate_phase1_boundaries",
+    ),
+    "benchmark_phase1_boundary_resolve": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "resolve_phase1_boundaries",
+    ),
     "benchmark_phase1_proposal_score": (
         "medical_kg_nlp.cli.commands.phase1",
         "score_phase1_proposal_sources",

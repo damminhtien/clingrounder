@@ -177,6 +177,63 @@ records `fallback_reason` and uses the global calibration. The current frozen Ph
 split contains only clinical notes, so Q&A and educational overrides must be learned from a future
 labeled corpus rather than copied from hand-written thresholds.
 
+### Boundary verifier
+
+Boundary verification is a separate ranking stage. It retains every original token-model and LLM
+quote, then adds overlapping alternatives from the recognition trie, clinical boundary grammar,
+structured medication parser, coordination splitting/merging, and bounded token windows. It never
+edits normalized text back into raw offsets. Each candidate is labeled `CORRECT`, `TOO_SHORT`,
+`TOO_LONG`, or `WRONG_ENTITY`; the binary rank target is exact span plus exact type.
+
+```bash
+uv run medical-kg benchmark phase1 boundary-calibrate \
+  --matrix outputs/phase1/proposal-fusion/matrix/proposal_matrix.jsonl \
+  --proposal-verifier outputs/phase1/proposal-fusion/calibrated/verifier.json \
+  --dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl \
+  --source-role rule=rule \
+  --source-role xlmr=token_model \
+  --source-role qwen=ensemble \
+  --source-role vietmed=verifier \
+  --output-dir outputs/phase1/proposal-fusion/boundary
+
+uv run medical-kg benchmark phase1 boundary-resolve \
+  --matrix outputs/phase1/proposal-fusion/matrix/proposal_matrix.jsonl \
+  --proposal-verifier outputs/phase1/proposal-fusion/calibrated/verifier.json \
+  --boundary-verifier outputs/phase1/proposal-fusion/boundary/verifier.json \
+  --dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl \
+  --source-role rule=rule \
+  --source-role xlmr=token_model \
+  --source-role qwen=ensemble \
+  --source-role vietmed=verifier \
+  --output-dir outputs/phase1/proposal-fusion/boundary-resolved
+```
+
+The persisted dataset includes a stable cross-encoder representation:
+`[GENRE]`, `[SECTION]`, `[QA_ROLE]`, `[TYPE]`, `[LEFT]`, `[ENTITY]`, and `[RIGHT]`.
+The default verifier is a fast sparse joint ranker; a pinned Hugging Face sequence classifier can
+consume the same rows later without changing candidate generation or evaluation. Thresholds are
+selected per type and per genre only with sufficient labeled development support.
+
+Manual-gold scores in `training_report.json` are diagnostic only. They may expose offset bugs,
+candidate-family collapse, or relative boundary errors, but they do not authorize promotion to a
+Round 2 submission. The report always sets `auto_promote: false`; a frozen public probe is required
+because the reviewed corpus has not reproduced the strongest public distribution.
+
+When a frozen proposal verifier supplies the base entity set, the persisted boundary verifier uses
+`conservative_replacement`: it preserves every selected entity slot and may only replace its span
+inside one unambiguous family. It cannot add or delete entities. Without a proposal verifier, the
+artifact is explicitly marked `open_ranker` and should be treated as a broader experimental probe.
+
+Candidate generation and cross-encoder rows can be much larger than the fitted sparse model.
+Interrupted training can resume from the fingerprinted materialized dataset without regenerating
+trie, grammar, medication, token-window, and coordination alternatives:
+
+```bash
+uv run medical-kg benchmark phase1 boundary-calibrate \
+  --dataset-dir outputs/phase1/proposal-fusion/boundary/dataset \
+  --output-dir outputs/phase1/proposal-fusion/boundary-resumed
+```
+
 Probability calibration is leakage-safe:
 
 - the base classifier is cross-fitted by document on the 60-document train split;

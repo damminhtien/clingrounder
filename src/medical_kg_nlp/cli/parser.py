@@ -529,6 +529,79 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     proposal_resolve.add_argument("--input-dir", default="data/raw/input")
     proposal_resolve.add_argument("--output-dir", required=True)
 
+    boundary_calibrate = operations.add_parser(
+        "boundary-calibrate",
+        help="Train a proposal-conditioned ranker over raw boundary alternatives.",
+    )
+    boundary_calibrate.set_defaults(
+        handler="benchmark_phase1_boundary_calibrate"
+    )
+    boundary_input = boundary_calibrate.add_mutually_exclusive_group(required=True)
+    boundary_input.add_argument(
+        "--matrix",
+        help="Proposal matrix from which boundary candidates will be generated.",
+    )
+    boundary_input.add_argument(
+        "--dataset-dir",
+        help="Previously materialized boundary dataset to train without regeneration.",
+    )
+    boundary_calibrate.add_argument(
+        "--proposal-verifier",
+        help="Optional frozen proposal verifier used as one boundary feature.",
+    )
+    boundary_calibrate.add_argument(
+        "--dictionary",
+        action="append",
+        default=[],
+        help="Recognition JSONL used to generate trie boundary alternatives; repeatable.",
+    )
+    boundary_calibrate.add_argument("--input-dir", default="data/raw/input")
+    boundary_calibrate.add_argument("--gold-dir", default="data/manual_gold")
+    boundary_calibrate.add_argument(
+        "--model-split-manifest",
+        default=(
+            "outputs/mining/model-datasets/"
+            "phase1-manual-five-type-v1/split_manifest.json"
+        ),
+    )
+    boundary_calibrate.add_argument(
+        "--frozen-split-manifest",
+        default="data/manual_gold/holdout_manifest.json",
+    )
+    boundary_calibrate.add_argument(
+        "--source-role",
+        action="append",
+        default=[],
+        help="Proposal source and portable role as NAME=ROLE.",
+    )
+    boundary_calibrate.add_argument("--output-dir", required=True)
+
+    boundary_resolve = operations.add_parser(
+        "boundary-resolve",
+        help="Rank generated boundary families and write raw-offset Phase 1 rows.",
+    )
+    boundary_resolve.set_defaults(handler="benchmark_phase1_boundary_resolve")
+    boundary_resolve.add_argument("--matrix", required=True)
+    boundary_resolve.add_argument("--boundary-verifier", required=True)
+    boundary_resolve.add_argument(
+        "--proposal-verifier",
+        help="Required when the boundary verifier was trained with base probabilities.",
+    )
+    boundary_resolve.add_argument(
+        "--dictionary",
+        action="append",
+        default=[],
+        help="Same recognition JSONL set used during boundary training; repeatable.",
+    )
+    boundary_resolve.add_argument(
+        "--source-role",
+        action="append",
+        required=True,
+        help="Proposal source and portable role as NAME=ROLE.",
+    )
+    boundary_resolve.add_argument("--input-dir", default="data/raw/input")
+    boundary_resolve.add_argument("--output-dir", required=True)
+
     proposal_score = operations.add_parser(
         "proposal-score",
         help="Score frozen rule/model/LLM/support proposal sources on train and development.",
