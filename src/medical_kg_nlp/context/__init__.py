@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from medical_kg_nlp.context.assertion import AssertionClassifier
+from medical_kg_nlp.context.features import AssertionModelFeatureExtractor
 from medical_kg_nlp.context.modifier_graph import (
     AssertionDecision,
     ContextEdge,
@@ -14,6 +15,7 @@ from medical_kg_nlp.context.modifier_graph import (
 __all__ = [
     "AssertionClassifier",
     "AssertionDecision",
+    "AssertionModelFeatureExtractor",
     "ContextEdge",
     "ContextGraph",
     "ContextModifierNode",
