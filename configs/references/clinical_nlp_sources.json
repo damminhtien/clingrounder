@@ -107,7 +107,7 @@
       "repository_url": "https://github.com/HITsz-TMG/Prompt-BioEL.git",
       "revision": "482290ad7c8a957bb18385cf85c0090e9bd22d01",
       "checkout": "prompt-bioel",
-      "license_status": "unverified",
+      "license_status": "user_authorized",
       "license_spdx": null,
       "license_evidence": [],
       "inspected_paths": ["data_disambiguation.py", "loss.py", "disambiguation.py"],
@@ -166,13 +166,17 @@
     },
     {
       "source_id": "vihealthbert",
-      "repository_url": "https://huggingface.co/demdecuong/vihealthbert-base-word",
-      "revision": "f89e80b461e86f9cfc1c84019bd819830c24b6c5",
-      "checkout": "vihealthbert-base-word",
-      "license_status": "unverified",
-      "license_spdx": null,
-      "license_evidence": [],
-      "inspected_paths": ["README.md", "config.json"],
+      "repository_url": "https://github.com/demdecuong/vihealthbert.git",
+      "revision": "faeb90e6938714e7ded4af20a60b631302203dfd",
+      "checkout": "vihealthbert",
+      "license_status": "user_authorized",
+      "license_spdx": "MIT",
+      "license_evidence": ["LICENSE"],
+      "inspected_paths": [
+        "README.md",
+        "code/finetune/ner/src/preprocess.py",
+        "code/finetune/ner/src/model/vihnbert.py"
+      ],
       "adopt": [
         "Vietnamese healthcare representation benchmark",
         "encoder-only verifier initialization",

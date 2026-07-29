@@ -29,7 +29,8 @@ files inspected, patterns adopted, and patterns explicitly rejected. Checkouts l
 ## Integration Rules
 
 - English rules and resource inventories are not copied into Vietnamese runtime resources.
-- A source with incomplete or absent machine-readable license is architecture-only.
+- The user has confirmed authorization to study and use every source in this registry. License
+  metadata remains recorded for provenance, but it is not an integration blocker for this project.
 - Third-party token or word offsets are never exported. Model spans are projected to raw text by
   local offset-safe adapters.
 - UMLS, RxNorm, and other terminology data retain their own access and redistribution terms.
@@ -58,3 +59,14 @@ MedXN validates the current medication architecture: preserve the drug span, ext
 SIG components separately, then compare structured mention evidence with RxNorm ingredient,
 strength, release type, and dose form. The local implementation additionally keeps every component
 at raw offsets and treats route/frequency as administration evidence rather than product form.
+
+## Deliberate Deferrals
+
+- NegBio dependency parsing is deferred until a Vietnamese dependency parser beats the linear
+  scope baseline on target-anchored assertion metrics. Parse evidence must remain optional and fail
+  open when parsing fails.
+- ViHealthBERT boundary ownership is deferred until reversible Vietnamese word segmentation passes
+  raw-offset round-trip and boundary benchmarks. It can supply representation features now.
+- Prompt-BioEL and ViHealthBERT are architecture references in the core implementation. Their
+  model code is not copied; local adapters keep model revision, candidate constraints, and raw
+  projection under this repository's contracts.
