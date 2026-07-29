@@ -52,6 +52,7 @@ runtime:
   operating_system: linux
   accelerator: cuda
   minimum_devices: 1
-  minimum_vram_gib: 24
+  # MODEL: 24 GB-class RTX 4090 devices report about 23.5 GiB through CUDA.
+  minimum_vram_gib: 23
   minimum_compute_capability: [8, 0]
   precision: bf16
