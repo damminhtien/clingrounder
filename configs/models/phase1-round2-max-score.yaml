@@ -1,4 +1,7 @@
-# Final CPU-only composition of independently generated, checksum-pinned model artifacts.
+# PUBLIC REJECTED: 25.2683 on 2026-07-29. This config is retained only for reproducibility.
+# It must not replace the frozen 33.0750 Round 2 public reference.
+# The density-derived thresholds changed 3,218 entity identities and the candidate policy reduced
+# 1,844 public-reference code values to 413, causing regressions in every official metric.
 schema_version: phase1-max-score-run-spec.v1
 run_root: ../..
 
