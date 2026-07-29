@@ -164,6 +164,47 @@ The Round 2 command is additive-only: baseline rows remain unchanged by value, n
 assertions/candidates, overlaps are blocked, structural section labels are rejected, and the
 directory plus deterministic ZIP pass strict validation before the artifact is reported.
 
+### Proposal-source and disease/symptom evaluation
+
+Score rule, token-model, LLM, and source-task support proposals on the same frozen 60/16 split:
+
+```bash
+uv run medical-kg benchmark phase1 proposal-score \
+  --target-source rule=outputs/phase1/<rule>/output.zip \
+  --internal-source xlmr=outputs/models/<run>/development_predictions.jsonl \
+  --target-source qwen=outputs/phase1/<qwen>/output.zip \
+  --compatible-source vietmed=outputs/models/<vietmed>/support \
+  --output-dir outputs/evaluation/phase1-proposal-sources
+```
+
+The scorer never opens the 24-document holdout. A source must cover a complete split or none of it;
+partial coverage fails. Ordinary target sources receive exact span+type and relaxed same-type
+overlap metrics. Compatible source-task labels are scored separately:
+
+- duplicate compatibility rows are grouped into one raw span;
+- `DISEASESYMTOM -> {CHẨN_ĐOÁN, TRIỆU_CHỨNG}` measures compatible-span support;
+- compatible support is not reported as target-label precision and cannot enter output directly.
+
+Train the dedicated target-task type verifier with:
+
+```bash
+uv run medical-kg benchmark phase1 type-verifier \
+  --matrix outputs/phase1/<run>/proposals/proposal_matrix.jsonl \
+  --representation-source outputs/models/<vietmed>/support \
+  --output-dir outputs/models/phase1-disease-symptom-verifier
+```
+
+Its contract is:
+
+```text
+mention + local context + section + question/answer role + optional model evidence
+→ DISEASE | SYMPTOM | NONE
+```
+
+`NONE` is the default. There is no disease fallback. VietMed `DISEASESYMTOM` is an optional
+representation feature only; labels are always derived from reviewed Phase 1 train data. The
+dataset includes other entity types, spurious proposals, and boundary conflicts as hard negatives.
+
 Phase 1 model promotion never reads baseline numbers from Python defaults. The holdout gate loads
 `data/manual_gold/model_holdout_baseline.json` and verifies its frozen-split SHA, model-split SHA,
 corpus fingerprint, and holdout ID fingerprint before comparison. A corpus or split change therefore

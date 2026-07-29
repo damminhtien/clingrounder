@@ -487,6 +487,72 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     )
     proposal_calibrate.add_argument("--output-dir", required=True)
 
+    proposal_score = operations.add_parser(
+        "proposal-score",
+        help="Score frozen rule/model/LLM/support proposal sources on train and development.",
+    )
+    proposal_score.set_defaults(handler="benchmark_phase1_proposal_score")
+    proposal_score.add_argument(
+        "--target-source",
+        action="append",
+        default=[],
+        help="Flat Phase 1 target source as NAME=DIR_OR_ZIP; repeat as needed.",
+    )
+    proposal_score.add_argument(
+        "--internal-source",
+        action="append",
+        default=[],
+        help="Internal prediction JSONL as NAME=PATH; repeat as needed.",
+    )
+    proposal_score.add_argument(
+        "--compatible-source",
+        action="append",
+        default=[],
+        help="Support-only compatible source as NAME=DIR_OR_ZIP_OR_JSONL.",
+    )
+    proposal_score.add_argument("--input-dir", default="data/raw/input")
+    proposal_score.add_argument("--gold-dir", default="data/manual_gold")
+    proposal_score.add_argument(
+        "--model-split-manifest",
+        default=(
+            "outputs/mining/model-datasets/"
+            "phase1-manual-five-type-v1/split_manifest.json"
+        ),
+    )
+    proposal_score.add_argument(
+        "--frozen-split-manifest",
+        default="data/manual_gold/holdout_manifest.json",
+    )
+    proposal_score.add_argument("--output-dir", required=True)
+
+    type_verifier = operations.add_parser(
+        "type-verifier",
+        help="Train the abstaining DISEASE/SYMPTOM/NONE verifier.",
+    )
+    type_verifier.set_defaults(handler="benchmark_phase1_type_verifier")
+    type_verifier.add_argument("--matrix", required=True)
+    type_verifier.add_argument(
+        "--representation-source",
+        help=(
+            "Optional support-only directory/ZIP whose source labels become representation "
+            "features, never target labels."
+        ),
+    )
+    type_verifier.add_argument("--input-dir", default="data/raw/input")
+    type_verifier.add_argument("--gold-dir", default="data/manual_gold")
+    type_verifier.add_argument(
+        "--model-split-manifest",
+        default=(
+            "outputs/mining/model-datasets/"
+            "phase1-manual-five-type-v1/split_manifest.json"
+        ),
+    )
+    type_verifier.add_argument(
+        "--frozen-split-manifest",
+        default="data/manual_gold/holdout_manifest.json",
+    )
+    type_verifier.add_argument("--output-dir", required=True)
+
     golden = round2_operations.add_parser(
         "golden",
         help="Build inferred strict/review labels from independent proposal sources.",

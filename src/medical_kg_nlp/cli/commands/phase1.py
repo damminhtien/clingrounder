@@ -32,6 +32,27 @@ from medical_kg_nlp.benchmarks.phase1.proposal_dataset import (
     write_phase1_proposal_dataset,
 )
 from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRole
+from medical_kg_nlp.benchmarks.phase1.proposal_source_report import (
+    Phase1ProposalSource,
+    Phase1SourceSemantics,
+    build_phase1_proposal_source_report,
+    load_compatible_phase1_source,
+    load_internal_phase1_source,
+    load_target_phase1_source,
+    source_path_fingerprint,
+    write_phase1_proposal_source_report,
+)
+from medical_kg_nlp.benchmarks.phase1.disease_symptom_verifier import (
+    build_disease_symptom_verifier_dataset,
+    fit_disease_symptom_verifier,
+    write_disease_symptom_verifier,
+)
+from medical_kg_nlp.benchmarks.phase1.reviewed_corpus import (
+    load_phase1_reviewed_corpus,
+)
+from medical_kg_nlp.benchmarks.phase1.split_contract import (
+    load_phase1_split_contract,
+)
 from medical_kg_nlp.benchmarks.phase1.round2 import (
     build_phase1_round2_audit,
     load_phase1_round2_documents,
@@ -100,6 +121,8 @@ __all__ = [
     "run_phase1_round2_probe_suite",
     "run_phase1_round2_proposal_verifier_command",
     "run_phase1_submission",
+    "score_phase1_proposal_sources",
+    "train_phase1_type_verifier",
 ]
 
 
@@ -206,6 +229,111 @@ def calibrate_phase1_proposals(args: argparse.Namespace) -> int:
         "calibration": report,
     }
     print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def score_phase1_proposal_sources(args: argparse.Namespace) -> int:
+    """Score heterogeneous proposal sources without opening frozen holdout labels."""
+
+    contract = load_phase1_split_contract(
+        args.model_split_manifest,
+        args.frozen_split_manifest,
+    )
+    corpus = load_phase1_reviewed_corpus(
+        contract,
+        input_dir=args.input_dir,
+        gold_dir=args.gold_dir,
+        frozen_manifest_path=args.frozen_split_manifest,
+    )
+    sources: list[Phase1ProposalSource] = []
+    configured_names: set[str] = set()
+    for semantics, source_format, values in (
+        (Phase1SourceSemantics.TARGET, "phase1", args.target_source),
+        (Phase1SourceSemantics.TARGET, "internal", args.internal_source),
+        (
+            Phase1SourceSemantics.COMPATIBLE,
+            "compatible",
+            args.compatible_source,
+        ),
+    ):
+        for name, path in _named_paths(values):
+            if name in configured_names:
+                raise ValueError(f"Duplicate proposal source name {name!r}")
+            configured_names.add(name)
+            if source_format == "phase1":
+                rows = load_target_phase1_source(path)
+            elif source_format == "internal":
+                rows = load_internal_phase1_source(path, corpus.source_texts)
+            else:
+                rows = load_compatible_phase1_source(path)
+            sources.append(
+                Phase1ProposalSource(
+                    name=name,
+                    rows_by_document=rows,
+                    semantics=semantics,
+                    provenance={
+                        "format": source_format,
+                        "path": str(path),
+                        "sha256": source_path_fingerprint(path),
+                    },
+                )
+            )
+    report = build_phase1_proposal_source_report(
+        sources,
+        corpus,
+        corpus_fingerprint_sha256=contract.corpus_fingerprint_sha256,
+    )
+    write_phase1_proposal_source_report(report, args.output_dir)
+    summary = dict(report)
+    summary.pop("errors", None)
+    print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def train_phase1_type_verifier(args: argparse.Namespace) -> int:
+    """Train the target-task disease/symptom verifier with explicit abstention."""
+
+    contract = load_phase1_split_contract(
+        args.model_split_manifest,
+        args.frozen_split_manifest,
+    )
+    corpus = load_phase1_reviewed_corpus(
+        contract,
+        input_dir=args.input_dir,
+        gold_dir=args.gold_dir,
+        frozen_manifest_path=args.frozen_split_manifest,
+    )
+    representation = (
+        load_compatible_phase1_source(args.representation_source)
+        if args.representation_source
+        else None
+    )
+    dataset = build_disease_symptom_verifier_dataset(
+        corpus,
+        proposal_matrix_path=args.matrix,
+        corpus_fingerprint_sha256=contract.corpus_fingerprint_sha256,
+        representation_rows_by_document=representation,
+    )
+    verifier, report = fit_disease_symptom_verifier(dataset)
+    write_disease_symptom_verifier(
+        dataset,
+        verifier,
+        report,
+        args.output_dir,
+    )
+    print(
+        json.dumps(
+            {
+                "output_dir": str(args.output_dir),
+                "dataset": dataset.manifest,
+                "development": report["metrics"]["development"],
+                "operating_point": verifier.to_dict()["operating_point"],
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
     return 0
 
 
