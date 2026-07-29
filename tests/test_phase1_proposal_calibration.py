@@ -5,13 +5,17 @@ from __future__ import annotations
 from medical_kg_nlp.benchmarks.phase1.proposal_calibration import (
     Phase1ProposalVerifier,
     fit_phase1_proposal_verifier,
+    resolve_phase1_proposal_rows,
     score_phase1_proposal_rows,
 )
 from medical_kg_nlp.benchmarks.phase1.proposal_dataset import (
     Phase1ProposalDataset,
     Phase1ProposalExample,
 )
-from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRole
+from medical_kg_nlp.benchmarks.phase1.proposal_features import (
+    PHASE1_PROPOSAL_FEATURE_CONTRACT,
+    ProposalSourceRole,
+)
 from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
 
 
@@ -26,6 +30,11 @@ def test_proposal_verifier_learns_calibrates_and_round_trips() -> None:
     assert report["development_selection"]["learned"]["f1"] == 1.0
     assert report["development_selection"]["learned"]["false_positive"] == 0
     assert report["coverage_ceiling"]["development"]["recall"] == 1.0
+    assert report["probability_calibration"]["selected_method"] in {
+        "identity_logistic",
+        "platt_document_grouped_oof",
+    }
+    assert restored.probability_calibrator.fold_count >= 2
 
 
 def test_runtime_scoring_resolves_overlap_by_probability() -> None:
@@ -50,6 +59,32 @@ def test_runtime_scoring_resolves_overlap_by_probability() -> None:
     assert len(selected) <= 1
     assert all(item.row["proposal_id"] in {"full", "nested"} for item in selected)
     assert all(0.0 <= item.probability <= 1.0 for item in scored)
+
+
+def test_probability_resolver_emits_only_selected_raw_spans() -> None:
+    verifier, _ = fit_phase1_proposal_verifier(_dataset())
+    text = "đau ngực"
+    rows = [
+        _row("đau ngực", "TRIỆU_CHỨNG", 0, "qwen", "full"),
+        _row("ngực", "TRIỆU_CHỨNG", 4, "pipeline", "nested"),
+    ]
+
+    resolved, scored = resolve_phase1_proposal_rows(
+        rows,
+        {"1": text},
+        verifier,
+        source_roles={
+            "pipeline": ProposalSourceRole.RULE,
+            "qwen": ProposalSourceRole.LLM,
+        },
+    )
+
+    assert len(resolved["1"]) == sum(item.selected for item in scored)
+    assert len(resolved["1"]) <= 1
+    for row in resolved["1"]:
+        start, end = row["position"]
+        assert text[start:end] == row["text"]
+        assert row["assertions"] == []
 
 
 def test_runtime_scoring_blocks_structural_labels_before_overlap() -> None:
@@ -118,8 +153,20 @@ def _dataset() -> Phase1ProposalDataset:
     return Phase1ProposalDataset(
         examples=examples,
         manifest={
-            "feature_contract": "phase1-proposal-features.v2",
+            "feature_contract": PHASE1_PROPOSAL_FEATURE_CONTRACT,
             "gold_entity_counts": gold_counts,
+            "gold_entity_genre_counts": {
+                "train:unknown:CHẨN_ĐOÁN": 0,
+                "train:unknown:KẾT_QUẢ_XÉT_NGHIỆM": 0,
+                "train:unknown:THUỐC": 0,
+                "train:unknown:TRIỆU_CHỨNG": 2,
+                "train:unknown:TÊN_XÉT_NGHIỆM": 0,
+                "development:unknown:CHẨN_ĐOÁN": 0,
+                "development:unknown:KẾT_QUẢ_XÉT_NGHIỆM": 0,
+                "development:unknown:THUỐC": 0,
+                "development:unknown:TRIỆU_CHỨNG": 1,
+                "development:unknown:TÊN_XÉT_NGHIỆM": 0,
+            },
             "source_roles": {
                 "pipeline": "rule",
                 "qwen": "llm",

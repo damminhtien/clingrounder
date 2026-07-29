@@ -46,8 +46,40 @@ def test_proposal_matrix_classifies_exact_overlap_type_conflict_and_source_only(
     assert nested["status"] == "overlap_agreement"
     assert source_only["status"] == "source_only"
     assert proposal_consensus_keys(report) == {("1", 0, 8, "TRIỆU_CHỨNG")}
-    assert report["schema_version"] == "phase1-proposal-matrix.v2"
+    assert report["schema_version"] == "phase1-proposal-matrix.v3"
     assert report["source_metadata"]["codex"]["prompt_sha256"] == "abc"
+
+
+def test_proposal_matrix_retains_strongest_source_confidence_and_labels() -> None:
+    text = "khó thở"
+    first = _row("khó thở", "TRIỆU_CHỨNG", 0)
+    first.update(
+        confidence=0.71,
+        source_label="DISEASESYMTOM",
+        support_only=True,
+    )
+    stronger = dict(first)
+    stronger["confidence"] = 0.93
+    sources = {
+        "rule": {"1": [_row("khó thở", "TRIỆU_CHỨNG", 0)]},
+        "vietmed": {"1": [first, stronger]},
+    }
+
+    report = build_phase1_proposal_matrix(sources, {"1": text})
+
+    row = report["matrix"][0]
+    assert row["source_evidence"] == {
+        "rule": {
+            "confidence": None,
+            "source_labels": [],
+            "support_only": False,
+        },
+        "vietmed": {
+            "confidence": 0.93,
+            "source_labels": ["DISEASESYMTOM"],
+            "support_only": True,
+        },
+    }
 
 
 def test_proposal_matrix_excludes_invalid_offsets_and_writes_artifacts(tmp_path: Path) -> None:

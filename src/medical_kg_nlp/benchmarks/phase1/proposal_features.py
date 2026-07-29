@@ -11,10 +11,12 @@ import math
 import re
 import unicodedata
 from collections.abc import Mapping
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any
 
 from medical_kg_nlp.ner.document_structure import (
+    DocumentGenre,
     DocumentStructure,
     DocumentStructureAnalyzer,
     classify_section_heading_label,
@@ -24,12 +26,16 @@ from medical_kg_nlp.utils.text import normalize_for_match
 
 __all__ = [
     "PHASE1_PROPOSAL_FEATURE_CONTRACT",
+    "Phase1GenreBucket",
+    "Phase1ProposalContext",
     "ProposalSourceRole",
+    "extract_phase1_proposal_context",
     "extract_phase1_proposal_features",
     "is_phase1_heading_only_proposal",
+    "phase1_genre_bucket",
 ]
 
-PHASE1_PROPOSAL_FEATURE_CONTRACT = "phase1-proposal-features.v2"
+PHASE1_PROPOSAL_FEATURE_CONTRACT = "phase1-proposal-features.v4"
 
 _UNIT_RE = re.compile(
     r"(?<!\w)(?:mg|mcg|µg|g|kg|ml|l|mmol|mol|meq|iu|u|"
@@ -42,6 +48,15 @@ _QUALITATIVE_RESULT_RE = re.compile(
     flags=re.IGNORECASE | re.UNICODE,
 )
 _HASH_BUCKETS = 256
+_CONTEXT_WINDOW = 96
+_QUESTION_RE = re.compile(
+    r"^[ \t]*(?:câu[ \t]+hỏi|hỏi|question)[ \t]*(?::|-)",
+    flags=re.IGNORECASE | re.UNICODE,
+)
+_ANSWER_RE = re.compile(
+    r"^[ \t]*(?:đáp[ \t]+án|trả[ \t]+lời|answer)[ \t]*(?::|-)",
+    flags=re.IGNORECASE | re.UNICODE,
+)
 
 
 class ProposalSourceRole(StrEnum):
@@ -52,6 +67,63 @@ class ProposalSourceRole(StrEnum):
     RULE = "rule"
     TOKEN_MODEL = "token_model"
     VERIFIER = "verifier"
+
+
+class Phase1GenreBucket(StrEnum):
+    """Calibration buckets that share one encoder but may use separate operating points."""
+
+    CLINICAL = "clinical"
+    EDUCATIONAL = "educational"
+    QUESTION_ANSWER = "qa"
+    UNKNOWN = "unknown"
+
+
+@dataclass(frozen=True, slots=True)
+class Phase1ProposalContext:
+    """Inspectable structural context stored alongside hashed model features."""
+
+    left_context: str
+    right_context: str
+    section: str
+    genre: str
+    question_answer_role: str
+
+
+def phase1_genre_bucket(genre: DocumentGenre | str) -> Phase1GenreBucket:
+    """Collapse structural genres into the three task regimes plus a safe fallback."""
+
+    normalized = DocumentGenre(genre)
+    if normalized in {
+        DocumentGenre.CLINICAL_NOTE,
+        DocumentGenre.LAB_TABLE,
+        DocumentGenre.MEDICATION_LIST,
+    }:
+        return Phase1GenreBucket.CLINICAL
+    if normalized is DocumentGenre.QUESTION_ANSWER:
+        return Phase1GenreBucket.QUESTION_ANSWER
+    if normalized is DocumentGenre.EDUCATIONAL:
+        return Phase1GenreBucket.EDUCATIONAL
+    return Phase1GenreBucket.UNKNOWN
+
+
+def extract_phase1_proposal_context(
+    row: Mapping[str, Any],
+    source_text: str,
+    *,
+    structure: DocumentStructure | None = None,
+) -> Phase1ProposalContext:
+    """Return bounded raw context without changing the proposal's source offsets."""
+
+    start, end, _, _ = _validated_proposal(row, source_text)
+    active_structure = structure or DocumentStructureAnalyzer().analyze(source_text)
+    section = active_structure.section_at(start)
+    return Phase1ProposalContext(
+        left_context=source_text[max(0, start - _CONTEXT_WINDOW) : start],
+        right_context=source_text[end : min(len(source_text), end + _CONTEXT_WINDOW)],
+        section=section.kind.value if section is not None else "none",
+        genre=active_structure.genre.value,
+        question_answer_role=_question_answer_role(source_text, start),
+    )
 
 
 def extract_phase1_proposal_features(
@@ -69,19 +141,27 @@ def extract_phase1_proposal_features(
 
     start, end, entity_type, mention = _validated_proposal(row, source_text)
     active_structure = structure or DocumentStructureAnalyzer().analyze(source_text)
-    roles = _proposal_roles(row, source_roles)
+    sources = _proposal_sources(row, source_roles)
+    roles = tuple(sorted({role for _, role in sources}, key=lambda role: role.value))
+    genre = phase1_genre_bucket(active_structure.genre)
     status = str(row.get("status", "unknown"))
     normalized = normalize_for_match(mention)
     words = _WORD_RE.findall(normalized)
     features: dict[str, float] = {}
+    context = extract_phase1_proposal_context(
+        row,
+        source_text,
+        structure=active_structure,
+    )
 
-    features["numeric:source_count"] = float(len(roles))
-    features["numeric:source_fraction"] = len(roles) / max(1, len(source_roles))
+    features["numeric:source_count"] = float(len(sources))
+    features["numeric:source_fraction"] = len(sources) / max(1, len(source_roles))
+    features["numeric:source_role_count"] = float(len(roles))
     features["numeric:span_log_length"] = math.log1p(end - start)
     features["numeric:token_log_count"] = math.log1p(len(words))
     features[f"type:{entity_type}"] = 1.0
     features[f"status:{status}"] = 1.0
-    features[f"genre:{active_structure.genre.value}"] = 1.0
+    features[f"genre:{genre.value}"] = 1.0
     features["flag:all_source_agreement"] = float(
         bool(row.get("all_source_agreement", False))
     )
@@ -89,9 +169,14 @@ def extract_phase1_proposal_features(
     for role in roles:
         features[f"role:{role.value}"] = 1.0
         features[f"interaction:role_type:{role.value}:{entity_type}"] = 1.0
+        features[f"interaction:genre_role:{genre.value}:{role.value}"] = 1.0
+        features[
+            f"interaction:genre_role_type:{genre.value}:{role.value}:{entity_type}"
+        ] = 1.0
+    _add_source_evidence_features(features, row, sources)
     features[f"interaction:status_type:{status}:{entity_type}"] = 1.0
     features[
-        f"interaction:genre_type:{active_structure.genre.value}:{entity_type}"
+        f"interaction:genre_type:{genre.value}:{entity_type}"
     ] = 1.0
 
     line = active_structure.line_at(start)
@@ -103,9 +188,13 @@ def extract_phase1_proposal_features(
         )
         features["numeric:line_relative_start"] = (start - line.span[0]) / line_length
     section = active_structure.section_at(start)
-    section_name = section.kind.value if section is not None else "none"
+    section_name = context.section
     features[f"section:{section_name}"] = 1.0
     features[f"interaction:section_type:{section_name}:{entity_type}"] = 1.0
+    features[f"qa_role:{context.question_answer_role}"] = 1.0
+    features[
+        f"interaction:qa_role_type:{context.question_answer_role}:{entity_type}"
+    ] = 1.0
     if section is not None:
         heading_start, heading_end = section.heading_span
         features["flag:inside_heading"] = float(
@@ -178,22 +267,64 @@ def _validated_proposal(
     return start, end, str(entity_type), mention
 
 
-def _proposal_roles(
+def _proposal_sources(
     row: Mapping[str, Any],
     source_roles: Mapping[str, ProposalSourceRole | str],
-) -> tuple[ProposalSourceRole, ...]:
+) -> tuple[tuple[str, ProposalSourceRole], ...]:
     raw_sources = row.get("sources")
     if not isinstance(raw_sources, list) or not raw_sources:
         raise ValueError("Proposal must identify at least one source")
-    roles: set[ProposalSourceRole] = set()
+    sources: list[tuple[str, ProposalSourceRole]] = []
     for source in raw_sources:
         if not isinstance(source, str) or source not in source_roles:
             raise ValueError(f"Proposal source {source!r} has no configured role")
         try:
-            roles.add(ProposalSourceRole(source_roles[source]))
+            sources.append((source, ProposalSourceRole(source_roles[source])))
         except ValueError as exc:
             raise ValueError(f"Unsupported proposal source role for {source!r}") from exc
-    return tuple(sorted(roles, key=lambda role: role.value))
+    if len(sources) != len({source for source, _ in sources}):
+        raise ValueError("Proposal sources must be unique")
+    return tuple(sorted(sources))
+
+
+def _add_source_evidence_features(
+    features: dict[str, float],
+    row: Mapping[str, Any],
+    sources: tuple[tuple[str, ProposalSourceRole], ...],
+) -> None:
+    raw_evidence = row.get("source_evidence", {})
+    if not isinstance(raw_evidence, Mapping):
+        raise ValueError("Proposal source_evidence must be an object")
+    scores_by_role: dict[ProposalSourceRole, list[float]] = {}
+    for source, role in sources:
+        evidence = raw_evidence.get(source, {})
+        if not isinstance(evidence, Mapping):
+            raise ValueError(f"Proposal evidence for {source!r} must be an object")
+        confidence = evidence.get("confidence")
+        if confidence is not None:
+            if (
+                not isinstance(confidence, int | float)
+                or isinstance(confidence, bool)
+                or not math.isfinite(float(confidence))
+                or not 0.0 <= float(confidence) <= 1.0
+            ):
+                raise ValueError(f"Proposal evidence confidence for {source!r} is invalid")
+            scores_by_role.setdefault(role, []).append(float(confidence))
+        if bool(evidence.get("support_only", False)):
+            features[f"flag:role_support_only:{role.value}"] = 1.0
+        labels = evidence.get("source_labels", [])
+        if not isinstance(labels, list) or not all(
+            isinstance(label, str) and label for label in labels
+        ):
+            raise ValueError(f"Proposal source labels for {source!r} are invalid")
+        for label in labels:
+            _add_hash(features, f"source_label:{role.value}", label)
+    for role, scores in scores_by_role.items():
+        # MODEL: confidence scales differ across model families. The role-specific maximum keeps
+        # their evidence separate and lets logistic calibration learn the useful scale.
+        features[f"flag:role_confidence_present:{role.value}"] = 1.0
+        features[f"numeric:role_confidence_max:{role.value}"] = max(scores)
+        features[f"numeric:role_confidence_min:{role.value}"] = min(scores)
 
 
 def _add_surface_features(
@@ -258,3 +389,16 @@ def _add_hash(features: dict[str, float], namespace: str, value: str) -> None:
     digest = hashlib.sha256(f"{namespace}\0{value}".encode("utf-8")).digest()
     bucket = int.from_bytes(digest[:4], "big") % _HASH_BUCKETS
     features[f"hash:{namespace}:{bucket:03d}"] = 1.0
+
+
+def _question_answer_role(source_text: str, start: int) -> str:
+    line_start = source_text.rfind("\n", 0, start) + 1
+    line_end = source_text.find("\n", start)
+    if line_end < 0:
+        line_end = len(source_text)
+    line = source_text[line_start:line_end]
+    if _QUESTION_RE.match(line):
+        return "question"
+    if _ANSWER_RE.match(line):
+        return "answer"
+    return "none"

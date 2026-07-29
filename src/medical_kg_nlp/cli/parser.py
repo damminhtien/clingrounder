@@ -450,6 +450,32 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     proposal_verify.add_argument("--run-label", default="round2-proposal-verifier")
     proposal_verify.add_argument("--expected-count", type=int, default=100)
 
+    proposal_matrix = operations.add_parser(
+        "proposal-matrix",
+        help="Align rule/model/LLM/support proposals and retain source confidence evidence.",
+    )
+    proposal_matrix.set_defaults(handler="benchmark_phase1_proposal_matrix")
+    proposal_matrix.add_argument(
+        "--target-source",
+        action="append",
+        default=[],
+        help="Flat Phase 1 target source as NAME=DIR_OR_ZIP; repeat as needed.",
+    )
+    proposal_matrix.add_argument(
+        "--internal-source",
+        action="append",
+        default=[],
+        help="Internal prediction JSONL as NAME=PATH; repeat as needed.",
+    )
+    proposal_matrix.add_argument(
+        "--compatible-source",
+        action="append",
+        default=[],
+        help="Support-only compatible source as NAME=DIR_OR_ZIP_OR_JSONL.",
+    )
+    proposal_matrix.add_argument("--input-dir", default="data/raw/input")
+    proposal_matrix.add_argument("--output-dir", required=True)
+
     proposal_calibrate = operations.add_parser(
         "proposal-calibrate",
         help="Train a leakage-safe calibrated verifier over aligned entity proposals.",
@@ -486,6 +512,22 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         ),
     )
     proposal_calibrate.add_argument("--output-dir", required=True)
+
+    proposal_resolve = operations.add_parser(
+        "proposal-resolve",
+        help="Replace proposal union with calibrated probability and overlap resolution.",
+    )
+    proposal_resolve.set_defaults(handler="benchmark_phase1_proposal_resolve")
+    proposal_resolve.add_argument("--matrix", required=True)
+    proposal_resolve.add_argument("--verifier", required=True)
+    proposal_resolve.add_argument(
+        "--source-role",
+        action="append",
+        required=True,
+        help="Proposal source and portable role as NAME=rule|llm|token_model|ensemble|verifier.",
+    )
+    proposal_resolve.add_argument("--input-dir", default="data/raw/input")
+    proposal_resolve.add_argument("--output-dir", required=True)
 
     proposal_score = operations.add_parser(
         "proposal-score",

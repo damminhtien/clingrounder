@@ -14,6 +14,7 @@ from medical_kg_nlp.benchmarks.phase1.proposal_dataset import (
 )
 from medical_kg_nlp.benchmarks.phase1.proposal_features import (
     ProposalSourceRole,
+    extract_phase1_proposal_context,
     extract_phase1_proposal_features,
     is_phase1_heading_only_proposal,
 )
@@ -29,6 +30,18 @@ def test_proposal_features_use_roles_structure_and_bounded_hashes() -> None:
         sources=["pipeline", "qwen"],
         status="exact_agreement",
     )
+    row["source_evidence"] = {
+        "pipeline": {
+            "confidence": 0.82,
+            "source_labels": [],
+            "support_only": False,
+        },
+        "qwen": {
+            "confidence": 0.91,
+            "source_labels": ["SYMPTOM"],
+            "support_only": False,
+        },
+    }
 
     features = extract_phase1_proposal_features(
         row,
@@ -41,13 +54,19 @@ def test_proposal_features_use_roles_structure_and_bounded_hashes() -> None:
 
     assert features["role:rule"] == 1.0
     assert features["role:llm"] == 1.0
+    assert features["numeric:role_confidence_max:rule"] == 0.82
+    assert features["numeric:role_confidence_max:llm"] == 0.91
     assert features["section:medication"] == 1.0
     assert features["flag:list_item"] == 1.0
     assert features["flag:starts_list_item"] == 1.0
     assert features["flag:contains_digit"] == 1.0
     assert features["flag:contains_unit"] == 1.0
     assert any(name.startswith("hash:mention_char_3:") for name in features)
+    assert any(name.startswith("hash:source_label:llm:") for name in features)
     assert not any("document_id" in name or "absolute" in name for name in features)
+    context = extract_phase1_proposal_context(row, text)
+    assert context.section == "medication"
+    assert context.genre == "unknown"
 
 
 def test_heading_only_feature_does_not_block_content_after_colon() -> None:

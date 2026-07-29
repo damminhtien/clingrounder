@@ -17,7 +17,9 @@ from typing import Any
 from medical_kg_nlp.benchmarks.phase1.proposal_features import (
     PHASE1_PROPOSAL_FEATURE_CONTRACT,
     ProposalSourceRole,
+    extract_phase1_proposal_context,
     extract_phase1_proposal_features,
+    phase1_genre_bucket,
 )
 from medical_kg_nlp.ner.document_structure import DocumentStructureAnalyzer
 from medical_kg_nlp.utils.hashing import sha256_file
@@ -29,7 +31,7 @@ __all__ = [
     "write_phase1_proposal_dataset",
 ]
 
-_DATASET_SCHEMA = "phase1-proposal-calibration-dataset.v1"
+_DATASET_SCHEMA = "phase1-proposal-calibration-dataset.v3"
 _ERROR_KINDS = frozenset(
     {"exact", "boundary", "type_confusion", "boundary_type_confusion", "spurious"}
 )
@@ -50,6 +52,15 @@ class Phase1ProposalExample:
     label: int
     error_kind: str
     features: tuple[tuple[str, float], ...]
+    left_context: str = ""
+    right_context: str = ""
+    section: str = "none"
+    genre: str = "unknown"
+    question_answer_role: str = "none"
+    source_evidence: tuple[
+        tuple[str, float | None, tuple[str, ...], bool],
+        ...,
+    ] = ()
 
     def __post_init__(self) -> None:
         if self.split not in {"train", "development"}:
@@ -73,6 +84,20 @@ class Phase1ProposalExample:
             "status": self.status,
             "label": self.label,
             "error_kind": self.error_kind,
+            "left_context": self.left_context,
+            "right_context": self.right_context,
+            "section": self.section,
+            "genre": self.genre,
+            "question_answer_role": self.question_answer_role,
+            "source_evidence": {
+                source: {
+                    "present": True,
+                    "confidence": confidence,
+                    "source_labels": list(source_labels),
+                    "support_only": support_only,
+                }
+                for source, confidence, source_labels, support_only in self.source_evidence
+            },
             "features": dict(self.features),
         }
 
@@ -157,8 +182,14 @@ def build_phase1_proposal_dataset(
             source_roles,
             structure=structures[document_id],
         )
+        context = extract_phase1_proposal_context(
+            row,
+            source_text,
+            structure=structures[document_id],
+        )
         raw_sources = row.get("sources")
         assert isinstance(raw_sources, list)
+        sources = tuple(sorted(str(source) for source in raw_sources))
         examples.append(
             Phase1ProposalExample(
                 document_id=document_id,
@@ -167,11 +198,17 @@ def build_phase1_proposal_dataset(
                 text=text,
                 entity_type=entity_type,
                 position=position,
-                sources=tuple(sorted(str(source) for source in raw_sources)),
+                sources=sources,
                 status=str(row.get("status", "unknown")),
                 label=label,
                 error_kind=error_kind,
                 features=tuple(sorted(features.items())),
+                left_context=context.left_context,
+                right_context=context.right_context,
+                section=context.section,
+                genre=context.genre,
+                question_answer_role=context.question_answer_role,
+                source_evidence=_source_evidence(row, sources),
             )
         )
     examples.sort(key=_example_sort_key)
@@ -185,6 +222,10 @@ def build_phase1_proposal_dataset(
         model_manifest,
         holdout_manifest,
         source_roles,
+        {
+            document_id: phase1_genre_bucket(structure.genre).value
+            for document_id, structure in structures.items()
+        },
     )
     return Phase1ProposalDataset(examples=tuple(examples), manifest=manifest)
 
@@ -304,6 +345,7 @@ def _build_manifest(
     model_manifest: Mapping[str, Any],
     holdout_manifest: Mapping[str, Any],
     source_roles: Mapping[str, ProposalSourceRole | str],
+    genre_by_document: Mapping[str, str],
 ) -> dict[str, Any]:
     split_counts: Counter[str] = Counter()
     label_counts: Counter[str] = Counter()
@@ -311,6 +353,7 @@ def _build_manifest(
     status_counts: Counter[str] = Counter()
     error_counts: Counter[str] = Counter()
     gold_counts: Counter[str] = Counter()
+    gold_genre_counts: Counter[str] = Counter()
     for example in examples:
         split_counts[example.split] += 1
         label_counts[f"{example.split}:{example.label}"] += 1
@@ -319,8 +362,11 @@ def _build_manifest(
         error_counts[f"{example.split}:{example.error_kind}"] += 1
     for document_id, gold_rows in gold_by_document.items():
         split = split_by_document[document_id]
+        genre = genre_by_document.get(document_id, "unknown")
         for row in gold_rows:
-            gold_counts[f"{split}:{row.get('type', '')}"] += 1
+            entity_type = str(row.get("type", ""))
+            gold_counts[f"{split}:{entity_type}"] += 1
+            gold_genre_counts[f"{split}:{genre}:{entity_type}"] += 1
     frozen_corpus = holdout_manifest.get("corpus")
     assert isinstance(frozen_corpus, Mapping)
     return {
@@ -336,6 +382,10 @@ def _build_manifest(
         "status_label_counts": dict(sorted(status_counts.items())),
         "error_counts": dict(sorted(error_counts.items())),
         "gold_entity_counts": dict(sorted(gold_counts.items())),
+        "gold_entity_genre_counts": dict(sorted(gold_genre_counts.items())),
+        "document_genres": dict(
+            sorted(genre_by_document.items(), key=lambda item: _document_sort_key(item[0]))
+        ),
         "source_roles": {
             source: ProposalSourceRole(role).value
             for source, role in sorted(source_roles.items())
@@ -353,7 +403,49 @@ def _build_manifest(
                 "excluded_holdout"
             ]["document_ids_sha256"],
         },
+        "label_policy": {
+            "positive": "exact_raw_span_and_exact_phase1_type",
+            "negative": [
+                "boundary",
+                "type_confusion",
+                "boundary_type_confusion",
+                "spurious",
+            ],
+        },
     }
+
+
+def _source_evidence(
+    row: Mapping[str, Any],
+    sources: tuple[str, ...],
+) -> tuple[tuple[str, float | None, tuple[str, ...], bool], ...]:
+    raw = row.get("source_evidence", {})
+    if not isinstance(raw, Mapping):
+        raise ValueError("Proposal source_evidence must be an object")
+    values: list[tuple[str, float | None, tuple[str, ...], bool]] = []
+    for source in sources:
+        evidence = raw.get(source, {})
+        if not isinstance(evidence, Mapping):
+            raise ValueError(f"Proposal evidence for {source!r} must be an object")
+        confidence = evidence.get("confidence")
+        if confidence is not None and (
+            not isinstance(confidence, int | float) or isinstance(confidence, bool)
+        ):
+            raise ValueError(f"Proposal confidence for {source!r} must be numeric")
+        labels = evidence.get("source_labels", [])
+        if not isinstance(labels, list) or not all(
+            isinstance(label, str) and label for label in labels
+        ):
+            raise ValueError(f"Proposal labels for {source!r} must be strings")
+        values.append(
+            (
+                source,
+                float(confidence) if confidence is not None else None,
+                tuple(sorted(set(labels))),
+                bool(evidence.get("support_only", False)),
+            )
+        )
+    return tuple(values)
 
 
 def _serialized_examples(examples: Sequence[Phase1ProposalExample]) -> str:

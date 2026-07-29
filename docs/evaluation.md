@@ -130,21 +130,64 @@ risks before adding larger models.
 Phase 1 proposal fusion uses a portable sparse logistic verifier rather than treating source
 agreement as an emission rule. The dataset builder reads only frozen model train/development
 documents, rejects Round 2 input, and verifies that the 24-document holdout is excluded. Its
-manifest fingerprints both the source matrix and the exact serialized feature rows.
+manifest fingerprints both the source matrix and the exact serialized feature rows. A positive
+label means exact raw span and exact Phase 1 type; boundary, type, boundary+type, and spurious
+proposals are explicit negatives.
 
 ```bash
+uv run medical-kg benchmark phase1 proposal-matrix \
+  --target-source rule=outputs/phase1/<rule>/output.zip \
+  --internal-source xlmr=outputs/models/<xlmr>/predictions.jsonl \
+  --target-source qwen=outputs/phase1/<qwen>/output.zip \
+  --compatible-source vietmed=outputs/models/<vietmed>/support \
+  --output-dir outputs/phase1/proposal-fusion/matrix
+
 uv run medical-kg benchmark phase1 proposal-calibrate \
-  --matrix outputs/phase1/<run>/proposals/proposal_matrix.jsonl \
-  --source-role pipeline=rule \
+  --matrix outputs/phase1/proposal-fusion/matrix/proposal_matrix.jsonl \
+  --source-role rule=rule \
+  --source-role xlmr=token_model \
   --source-role qwen=llm \
+  --source-role vietmed=verifier \
   --minimum-development-precision 0.90 \
-  --output-dir outputs/phase1/proposal_calibration/<name>
+  --output-dir outputs/phase1/proposal-fusion/calibrated
+
+uv run medical-kg benchmark phase1 proposal-resolve \
+  --matrix outputs/phase1/proposal-fusion/matrix/proposal_matrix.jsonl \
+  --verifier outputs/phase1/proposal-fusion/calibrated/verifier.json \
+  --source-role rule=rule \
+  --source-role xlmr=token_model \
+  --source-role qwen=llm \
+  --source-role vietmed=verifier \
+  --output-dir outputs/phase1/proposal-fusion/resolved
 ```
 
 `--minimum-development-precision` selects the highest-recall threshold meeting that precision
 separately for each entity type. Omitting it selects by development F1 and is suitable for source
 replacement experiments, not conservative additions to a strong baseline. The verifier records
 its feature contract, feature-row SHA-256, thresholds, and calibration objective.
+
+The matrix retains per-source presence, confidence, source-task labels, and support-only status.
+The model also uses bounded mention/context hashes, section, genre, question/answer role, span
+length, and type. Source names are mapped to portable roles before becoming features.
+
+Genre is calibrated as `clinical`, `qa`, or `educational` while one sparse verifier is shared.
+The artifact may store a probability calibrator and per-type operating point for each genre, but
+only when train/development support contains enough positive and negative proposals. Otherwise it
+records `fallback_reason` and uses the global calibration. The current frozen Phase 1 development
+split contains only clinical notes, so Q&A and educational overrides must be learned from a future
+labeled corpus rather than copied from hand-written thresholds.
+
+Probability calibration is leakage-safe:
+
+- the base classifier is cross-fitted by document on the 60-document train split;
+- a Platt candidate is fitted only on those out-of-fold logits;
+- raw logistic and Platt probabilities are compared by Brier score, log loss, then ECE on the
+  16-document development split;
+- the better mapping is frozen before per-type threshold selection;
+- the 24-document holdout is never opened.
+
+The overlap resolver sorts accepted proposals by calibrated probability. Source count and model
+confidence are inputs to the learned probability, not hard-coded tie bonuses.
 
 Apply a frozen verifier to an unlabeled Round 2 proposal source with:
 

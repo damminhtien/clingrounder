@@ -1,13 +1,27 @@
+"""Align independent Phase 1 entity proposals without deciding which one wins.
+
+The matrix is the audit boundary between proposal generation and learned fusion. It preserves
+source confidence and source-task labels so the downstream verifier can estimate proposal
+correctness instead of relying on source-count bonuses.
+"""
+
 from __future__ import annotations
 
 import csv
 import hashlib
 import json
+import math
 from collections import Counter
 from pathlib import Path
 from typing import Any, Mapping
 
 from medical_kg_nlp.utils.text import normalize_for_match
+
+__all__ = [
+    "build_phase1_proposal_matrix",
+    "proposal_consensus_keys",
+    "write_phase1_proposal_matrix",
+]
 
 
 def build_phase1_proposal_matrix(
@@ -53,6 +67,11 @@ def build_phase1_proposal_matrix(
                 start, end, entity_type, text = parsed
                 key = (start, end, entity_type)
                 if key in seen_in_source:
+                    _merge_source_evidence(
+                        exact_groups[key]["source_evidence"],
+                        source_name,
+                        row,
+                    )
                     continue
                 seen_in_source.add(key)
                 source_counts[source_name] += 1
@@ -65,9 +84,15 @@ def build_phase1_proposal_matrix(
                         "normalized_mention": normalize_for_match(text),
                         "type": entity_type,
                         "sources": [],
+                        "source_evidence": {},
                     },
                 )
                 group["sources"].append(source_name)
+                _merge_source_evidence(
+                    group["source_evidence"],
+                    source_name,
+                    row,
+                )
 
         groups = list(exact_groups.values())
         for group in groups:
@@ -108,6 +133,10 @@ def build_phase1_proposal_matrix(
             else:
                 status = "source_only"
             group["sources"] = sorted(group_sources)
+            group["source_evidence"] = {
+                source: group["source_evidence"][source]
+                for source in sorted(group["source_evidence"])
+            }
             group["source_count"] = len(group_sources)
             group["all_source_agreement"] = len(group_sources) == len(source_names)
             group["status"] = status
@@ -125,7 +154,7 @@ def build_phase1_proposal_matrix(
     status_counts = Counter(str(row["status"]) for row in matrix_rows)
     exact_consensus = sum(1 for row in matrix_rows if int(row["source_count"]) >= 2)
     return {
-        "schema_version": "phase1-proposal-matrix.v2",
+        "schema_version": "phase1-proposal-matrix.v3",
         "source_names": list(source_names),
         "source_metadata": metadata,
         "summary": {
@@ -273,6 +302,51 @@ def _parse_proposal(
     if start < 0 or end > len(source_text) or source_text[start:end] != text:
         return None
     return start, end, entity_type, text
+
+
+def _merge_source_evidence(
+    evidence_by_source: dict[str, dict[str, Any]],
+    source_name: str,
+    row: Mapping[str, Any],
+) -> None:
+    """Merge duplicate exact proposals while retaining the strongest source evidence."""
+
+    confidence = _optional_confidence(row)
+    source_label = row.get("source_label")
+    if source_label is not None and (
+        not isinstance(source_label, str) or not source_label.strip()
+    ):
+        raise ValueError("Proposal source_label must be a non-empty string")
+    current = evidence_by_source.setdefault(
+        source_name,
+        {
+            "confidence": None,
+            "source_labels": [],
+            "support_only": False,
+        },
+    )
+    previous = current["confidence"]
+    if confidence is not None and (previous is None or confidence > previous):
+        current["confidence"] = confidence
+    if isinstance(source_label, str):
+        current["source_labels"] = sorted(
+            {*current["source_labels"], source_label}
+        )
+    current["support_only"] = bool(current["support_only"]) or bool(
+        row.get("support_only", False)
+    )
+
+
+def _optional_confidence(row: Mapping[str, Any]) -> float | None:
+    raw = row.get("confidence", row.get("score"))
+    if raw is None:
+        return None
+    if not isinstance(raw, int | float) or isinstance(raw, bool):
+        raise ValueError("Proposal confidence must be numeric")
+    confidence = float(raw)
+    if not math.isfinite(confidence) or not 0.0 <= confidence <= 1.0:
+        raise ValueError("Proposal confidence must be finite and within [0, 1]")
+    return confidence
 
 
 def _context_pattern(source_text: str, start: int, end: int) -> str:

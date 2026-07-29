@@ -26,7 +26,10 @@ from medical_kg_nlp.benchmarks.phase1.reviewed_corpus import (
 from medical_kg_nlp.benchmarks.phase1.split_contract import (
     phase1_document_sort_key,
 )
-from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
+from medical_kg_nlp.ontology.phase1 import (
+    PHASE1_ALLOWED_TYPES,
+    PHASE1_TYPE_BY_ENTITY_TYPE,
+)
 from medical_kg_nlp.utils.hashing import sha256_file
 
 __all__ = [
@@ -109,12 +112,25 @@ def load_internal_phase1_source(
         prediction = predictions.get(document_id)
         if prediction is None:
             continue
-        rows[document_id] = prediction_to_phase1_entities(
+        projected = prediction_to_phase1_entities(
             prediction,
             source_text=source_text,
             assertion_policy="empty",
             candidate_policy="empty",
         )
+        eligible_entities = [
+            entity
+            for entity in prediction.entities
+            if entity.type in PHASE1_TYPE_BY_ENTITY_TYPE
+        ]
+        if len(projected) != len(eligible_entities):
+            raise ValueError(
+                f"Internal projection count mismatch for document {document_id}"
+            )
+        for row, entity in zip(projected, eligible_entities, strict=True):
+            # MODEL: confidence is proposal evidence, not an exported Phase 1 field.
+            row["confidence"] = entity.confidence
+        rows[document_id] = projected
     return rows
 
 

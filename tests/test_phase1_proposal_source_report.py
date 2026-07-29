@@ -1,12 +1,17 @@
+import json
 from pathlib import Path
 
 from medical_kg_nlp.benchmarks.phase1.proposal_source_report import (
     Phase1ProposalSource,
     Phase1SourceSemantics,
     build_phase1_proposal_source_report,
+    load_internal_phase1_source,
     write_phase1_proposal_source_report,
 )
 from medical_kg_nlp.benchmarks.phase1.reviewed_corpus import Phase1ReviewedCorpus
+from medical_kg_nlp.schema.annotation import EntityAnnotation
+from medical_kg_nlp.schema.output import ClinicalPrediction
+from medical_kg_nlp.schema.types import EntityType
 
 
 def _row(text: str, entity_type: str, start: int, end: int, **extra: object) -> dict:
@@ -106,3 +111,32 @@ def test_source_report_rejects_partial_split_coverage() -> None:
         assert "partially covers development" in str(error)
     else:
         raise AssertionError("Expected partial split coverage to fail")
+
+
+def test_internal_source_loader_retains_model_confidence(tmp_path: Path) -> None:
+    text = "khó thở"
+    prediction = ClinicalPrediction.from_text(
+        "1",
+        text,
+        [
+            EntityAnnotation(
+                id="M1",
+                span=(0, 7),
+                text=text,
+                normalized_text=text,
+                type=EntityType.SYMPTOM,
+                confidence=0.91,
+            )
+        ],
+        [],
+        "test",
+    )
+    path = tmp_path / "predictions.jsonl"
+    path.write_text(
+        json.dumps(prediction.to_json(), ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+    rows = load_internal_phase1_source(path, {"1": text})
+
+    assert rows["1"][0]["confidence"] == 0.91

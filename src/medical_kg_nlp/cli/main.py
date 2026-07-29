@@ -62,6 +62,14 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.phase1",
         "calibrate_phase1_proposals",
     ),
+    "benchmark_phase1_proposal_matrix": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "build_phase1_proposal_matrix_command",
+    ),
+    "benchmark_phase1_proposal_resolve": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "resolve_phase1_proposals",
+    ),
     "benchmark_phase1_proposal_score": (
         "medical_kg_nlp.cli.commands.phase1",
         "score_phase1_proposal_sources",

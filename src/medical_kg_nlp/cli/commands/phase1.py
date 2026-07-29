@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 from medical_kg_nlp.benchmarks.phase1.model_dataset import (
     Phase1ModelDatasetConfig,
@@ -24,8 +24,15 @@ from medical_kg_nlp.benchmarks.phase1.model_selection import (
     write_phase1_model_selection_report,
 )
 from medical_kg_nlp.benchmarks.phase1.proposal_calibration import (
+    Phase1ProposalVerifier,
     fit_phase1_proposal_verifier,
+    resolve_phase1_proposal_rows,
+    write_phase1_proposal_resolution,
     write_phase1_proposal_verifier,
+)
+from medical_kg_nlp.benchmarks.phase1.phase1_proposals import (
+    build_phase1_proposal_matrix,
+    write_phase1_proposal_matrix,
 )
 from medical_kg_nlp.benchmarks.phase1.proposal_dataset import (
     build_phase1_proposal_dataset,
@@ -103,6 +110,7 @@ from medical_kg_nlp.mining.io import load_documents, write_json
 from medical_kg_nlp.pipeline.parallel_batch import ParallelBackend
 from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.utils.hashing import sha256_file
+from medical_kg_nlp.utils.io import read_jsonl, read_source_text
 from medical_kg_nlp.utils.run_output import create_hashed_run_dir, path_in_run
 
 __all__ = [
@@ -110,6 +118,7 @@ __all__ = [
     "augment_phase1_model_regions",
     "augment_phase1_model_user_synthetic",
     "build_phase1_model_data",
+    "build_phase1_proposal_matrix_command",
     "build_phase1_qwen_data",
     "build_phase1_round2_golden_command",
     "calibrate_phase1_model_data",
@@ -121,6 +130,7 @@ __all__ = [
     "run_phase1_round2_probe_suite",
     "run_phase1_round2_proposal_verifier_command",
     "run_phase1_submission",
+    "resolve_phase1_proposals",
     "score_phase1_proposal_sources",
     "train_phase1_type_verifier",
 ]
@@ -200,14 +210,7 @@ def run_phase1_submission(args: argparse.Namespace) -> int:
 def calibrate_phase1_proposals(args: argparse.Namespace) -> int:
     """Build frozen proposal labels and fit the portable verifier."""
 
-    source_roles: dict[str, ProposalSourceRole] = {}
-    for raw in args.source_role:
-        name, separator, value = str(raw).partition("=")
-        if not separator or not name or not value:
-            raise ValueError("--source-role must use NAME=ROLE")
-        if name in source_roles:
-            raise ValueError(f"Duplicate proposal source role {name!r}")
-        source_roles[name] = ProposalSourceRole(value)
+    source_roles = _source_roles(args.source_role)
     output = Path(args.output_dir)
     dataset = build_phase1_proposal_dataset(
         args.matrix,
@@ -229,6 +232,96 @@ def calibrate_phase1_proposals(args: argparse.Namespace) -> int:
         "calibration": report,
     }
     print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def resolve_phase1_proposals(args: argparse.Namespace) -> int:
+    """Apply a frozen probability verifier to a heterogeneous proposal matrix."""
+
+    source_roles = _source_roles(args.source_role)
+    source_texts = {
+        path.stem: read_source_text(path)
+        for path in sorted(Path(args.input_dir).glob("*.txt"))
+    }
+    if not source_texts:
+        raise ValueError(f"No .txt documents found under {args.input_dir}")
+    rows = read_jsonl(args.matrix)
+    verifier_payload = json.loads(Path(args.verifier).read_text(encoding="utf-8"))
+    if not isinstance(verifier_payload, dict):
+        raise ValueError("Proposal verifier must be a JSON object")
+    verifier = Phase1ProposalVerifier.from_dict(verifier_payload)
+    resolved, scored = resolve_phase1_proposal_rows(
+        rows,
+        source_texts,
+        verifier,
+        source_roles=source_roles,
+    )
+    manifest = write_phase1_proposal_resolution(
+        resolved,
+        scored,
+        args.output_dir,
+        matrix_path=args.matrix,
+        verifier_path=args.verifier,
+        source_roles=source_roles,
+    )
+    print(json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def build_phase1_proposal_matrix_command(args: argparse.Namespace) -> int:
+    """Align heterogeneous proposal sources while retaining confidence evidence."""
+
+    input_root = Path(args.input_dir)
+    source_texts = {
+        path.stem: read_source_text(path)
+        for path in sorted(input_root.glob("*.txt"))
+    }
+    if not source_texts:
+        raise ValueError(f"No .txt documents found under {input_root}")
+    sources: dict[str, dict[str, list[dict[str, Any]]]] = {}
+    metadata: dict[str, dict[str, object]] = {}
+    for semantics, source_format, values in (
+        (Phase1SourceSemantics.TARGET, "phase1", args.target_source),
+        (Phase1SourceSemantics.TARGET, "internal", args.internal_source),
+        (
+            Phase1SourceSemantics.COMPATIBLE,
+            "compatible",
+            args.compatible_source,
+        ),
+    ):
+        for name, path in _named_paths(values):
+            if name in sources:
+                raise ValueError(f"Duplicate proposal source name {name!r}")
+            if source_format == "phase1":
+                rows = load_target_phase1_source(path)
+            elif source_format == "internal":
+                rows = load_internal_phase1_source(path, source_texts)
+            else:
+                rows = load_compatible_phase1_source(path)
+            sources[name] = rows
+            metadata[name] = {
+                "format": source_format,
+                "semantics": semantics.value,
+                "path": str(path),
+                "sha256": source_path_fingerprint(path),
+            }
+    report = build_phase1_proposal_matrix(
+        sources,
+        source_texts,
+        source_metadata=metadata,
+    )
+    write_phase1_proposal_matrix(report, args.output_dir)
+    print(
+        json.dumps(
+            {
+                "output_dir": str(args.output_dir),
+                **report["summary"],
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
     return 0
 
 
@@ -735,3 +828,15 @@ def _named_paths(values: list[str]) -> list[tuple[str, Path]]:
             raise ValueError("--source must use NAME=DIR_OR_ZIP")
         paths.append((name, Path(value)))
     return paths
+
+
+def _source_roles(values: list[str]) -> dict[str, ProposalSourceRole]:
+    roles: dict[str, ProposalSourceRole] = {}
+    for raw in values:
+        name, separator, value = str(raw).partition("=")
+        if not separator or not name or not value:
+            raise ValueError("--source-role must use NAME=ROLE")
+        if name in roles:
+            raise ValueError(f"Duplicate proposal source role {name!r}")
+        roles[name] = ProposalSourceRole(value)
+    return roles
