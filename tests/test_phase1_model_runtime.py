@@ -162,6 +162,7 @@ runtime:
             "fingerprint": fingerprint_model_directory(model_dir),
             "model_id": "local/model",
             "revision": _REVISION,
+            "initialization": {"kind": "huggingface_cache"},
         },
         "run_spec": {
             "sha256": sha256_file(run_spec_path),
