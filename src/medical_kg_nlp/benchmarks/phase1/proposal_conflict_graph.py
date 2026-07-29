@@ -42,6 +42,7 @@ class Phase1ConflictNode:
     entity_type: str
     probability: float
     source_count: int
+    decision_threshold: float = 0.5
 
     def __post_init__(self) -> None:
         start, end = self.span
@@ -56,15 +57,22 @@ class Phase1ConflictNode:
             or not 0.0 <= self.probability <= 1.0
         ):
             raise ValueError("Conflict node probability must be within [0, 1]")
+        if (
+            not math.isfinite(self.decision_threshold)
+            or not 0.0 <= self.decision_threshold <= 1.0
+        ):
+            raise ValueError("Conflict node decision threshold must be within [0, 1]")
         if self.source_count <= 0:
             raise ValueError("Conflict node source_count must be positive")
 
     @property
     def utility(self) -> float:
-        """Return calibrated log-odds used by weighted interval scheduling."""
+        """Return calibrated log-odds margin used by weighted interval scheduling."""
 
-        probability = min(1.0 - 1e-9, max(1e-9, self.probability))
-        return math.log(probability / (1.0 - probability))
+        # MODEL: the operating point may be below 0.5 for a recall-oriented entity type.
+        # Subtracting its logit prevents the conflict resolver from silently reintroducing
+        # a fixed 0.5 threshold after the calibrated gate has accepted a proposal.
+        return _logit(self.probability) - _logit(self.decision_threshold)
 
 
 @dataclass(frozen=True, slots=True)
@@ -306,6 +314,11 @@ def _contains(container: tuple[int, int], inner: tuple[int, int]) -> bool:
         and container[0] <= inner[0]
         and inner[1] <= container[1]
     )
+
+
+def _logit(value: float) -> float:
+    bounded = min(1.0 - 1e-9, max(1e-9, value))
+    return math.log(bounded / (1.0 - bounded))
 
 
 def _document_sort_key(document_id: str) -> tuple[int, int | str]:

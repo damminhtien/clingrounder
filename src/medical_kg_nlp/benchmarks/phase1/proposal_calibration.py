@@ -1251,7 +1251,7 @@ def _resolve_runtime_overlaps(
 ) -> tuple[set[int], dict[int, tuple[str | None, tuple[str, ...]]]]:
     nodes: list[Phase1ConflictNode] = []
     row_id_by_node_id: dict[str, int] = {}
-    for index, (row, probability, _) in enumerate(rows):
+    for index, (row, probability, threshold) in enumerate(rows):
         raw_sources = row.get("sources")
         source_count = (
             len(raw_sources)
@@ -1268,6 +1268,7 @@ def _resolve_runtime_overlaps(
                 entity_type=str(row.get("type", "")),
                 probability=probability,
                 source_count=source_count,
+                decision_threshold=threshold,
             )
         )
     graph = build_phase1_conflict_graph(tuple(nodes))

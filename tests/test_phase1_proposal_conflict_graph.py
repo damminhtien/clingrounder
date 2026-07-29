@@ -68,12 +68,31 @@ def test_weighted_scheduler_is_deterministic_on_equal_utility() -> None:
     assert len(first) == 1
 
 
+def test_weighted_scheduler_respects_calibrated_threshold_below_half() -> None:
+    graph = build_phase1_conflict_graph(
+        (
+            _node(
+                "recall-oriented",
+                (0, 8),
+                "TRIỆU_CHỨNG",
+                probability=0.4,
+                decision_threshold=0.3,
+            ),
+        )
+    )
+
+    selected = select_maximum_utility_nodes(graph)
+
+    assert [node.node_id for node in selected] == ["recall-oriented"]
+
+
 def _node(
     node_id: str,
     span: tuple[int, int],
     entity_type: str,
     *,
     probability: float = 0.8,
+    decision_threshold: float = 0.5,
 ) -> Phase1ConflictNode:
     return Phase1ConflictNode(
         node_id=node_id,
@@ -82,4 +101,5 @@ def _node(
         entity_type=entity_type,
         probability=probability,
         source_count=1,
+        decision_threshold=decision_threshold,
     )
