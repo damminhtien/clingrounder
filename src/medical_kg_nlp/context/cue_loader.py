@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from medical_kg_nlp.schema.annotation import AssertionEvidence
-from medical_kg_nlp.schema.types import AssertionStatus
+from medical_kg_nlp.schema.types import AssertionStatus, EntityType
 
 
 DEFAULT_ASSERTION_CUE_PATH = (
@@ -19,6 +19,14 @@ VALID_SCOPES = {"left", "right", "bidirectional", "section_prior"}
 
 @dataclass(frozen=True)
 class AssertionCue:
+    """One context modifier rule loaded from a versioned resource.
+
+    ``allowed_entity_types`` and ``excluded_entity_types`` are mutually exclusive.
+    ``termination_cues`` stop this specific modifier without changing global clause
+    segmentation. These fields mirror useful ConText semantics while keeping raw
+    offsets and Vietnamese resources under local control.
+    """
+
     rule_id: str
     cue: str
     assertion: AssertionStatus
@@ -28,6 +36,16 @@ class AssertionCue:
     notes: str = ""
     priority: int = 100
     max_distance: int = 120
+    allowed_entity_types: tuple[EntityType, ...] = ()
+    excluded_entity_types: tuple[EntityType, ...] = ()
+    termination_cues: tuple[str, ...] = ()
+
+    def applies_to(self, entity_type: EntityType) -> bool:
+        """Return whether this modifier may attach to the target type."""
+
+        if self.allowed_entity_types:
+            return entity_type in self.allowed_entity_types
+        return entity_type not in self.excluded_entity_types
 
 
 class AssertionRuleRegistry:
@@ -177,6 +195,23 @@ def _cue_from_row(row: dict[str, Any], path: Path, line_number: int) -> Assertio
         "max_distance",
         minimum=0,
     )
+    allowed_entity_types = _entity_types(
+        row.get("allowed_entity_types"),
+        path,
+        line_number,
+        "allowed_entity_types",
+    )
+    excluded_entity_types = _entity_types(
+        row.get("excluded_entity_types"),
+        path,
+        line_number,
+        "excluded_entity_types",
+    )
+    if allowed_entity_types and excluded_entity_types:
+        raise ValueError(
+            f"{path}:{line_number}: allowed_entity_types and "
+            "excluded_entity_types are mutually exclusive."
+        )
     return AssertionCue(
         rule_id=str(row.get("rule_id") or _derived_rule_id(assertion, scope, cue)),
         cue=cue,
@@ -187,6 +222,14 @@ def _cue_from_row(row: dict[str, Any], path: Path, line_number: int) -> Assertio
         notes=str(row.get("notes", "")),
         priority=priority,
         max_distance=max_distance,
+        allowed_entity_types=allowed_entity_types,
+        excluded_entity_types=excluded_entity_types,
+        termination_cues=_text_tuple(
+            row.get("termination_cues"),
+            path,
+            line_number,
+            "termination_cues",
+        ),
     )
 
 
@@ -196,6 +239,34 @@ def _source_ids(value: Any) -> tuple[str, ...]:
     if not isinstance(value, list | tuple):
         return ()
     return tuple(str(item) for item in value if str(item).strip())
+
+
+def _entity_types(
+    value: Any,
+    path: Path,
+    line_number: int,
+    field: str,
+) -> tuple[EntityType, ...]:
+    return tuple(
+        EntityType(item)
+        for item in _text_tuple(value, path, line_number, field)
+    )
+
+
+def _text_tuple(
+    value: Any,
+    path: Path,
+    line_number: int,
+    field: str,
+) -> tuple[str, ...]:
+    if value is None:
+        return ()
+    if not isinstance(value, list | tuple):
+        raise ValueError(f"{path}:{line_number}: {field} must be a string array.")
+    result = tuple(str(item).strip() for item in value)
+    if any(not item for item in result):
+        raise ValueError(f"{path}:{line_number}: {field} contains an empty value.")
+    return result
 
 
 def _derived_rule_id(assertion: AssertionStatus, scope: str, cue: str) -> str:

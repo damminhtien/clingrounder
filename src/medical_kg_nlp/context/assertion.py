@@ -11,6 +11,7 @@ from medical_kg_nlp.schema.annotation import (
 )
 from medical_kg_nlp.schema.document import Sentence
 from medical_kg_nlp.schema.types import AssertionStatus
+from medical_kg_nlp.schema.types import EntityType
 from medical_kg_nlp.ontology.phase1 import PHASE1_TYPE_BY_ENTITY_TYPE, section_rule_for_heading
 
 
@@ -115,28 +116,54 @@ class AssertionClassifier:
                 self.registry.evidence_for_rule(rule, scope=scope)
             )
 
-        add(self._matching_family(left_context, right_context), "left")
-        add(self._matching_cue(right_context, AssertionStatus.FAMILY, "right"), "right")
-        add(self._matching_negation(left_context), "left")
-        add(self._matching_cue(right_context, AssertionStatus.NEGATED, "right"), "right")
-        add(self._matching_coordinated_negation(sentence_text, max(entity_start, 0)), "left")
+        add(self._matching_family(left_context, right_context, entity.type), "left")
+        add(
+            self._matching_cue(
+                right_context,
+                AssertionStatus.FAMILY,
+                "right",
+                entity.type,
+            ),
+            "right",
+        )
+        add(self._matching_negation(left_context, entity.type), "left")
+        add(
+            self._matching_cue(
+                right_context,
+                AssertionStatus.NEGATED,
+                "right",
+                entity.type,
+            ),
+            "right",
+        )
+        add(
+            self._matching_coordinated_negation(
+                sentence_text,
+                max(entity_start, 0),
+                entity.type,
+            ),
+            "left",
+        )
         self._add_directional_evidence(
             add,
             AssertionStatus.HISTORICAL,
             left_context,
             right_context,
+            entity.type,
         )
         self._add_directional_evidence(
             add,
             AssertionStatus.PLANNED,
             left_context,
             right_context,
+            entity.type,
         )
         self._add_directional_evidence(
             add,
             AssertionStatus.RESOLVED,
             left_context,
             right_context,
+            entity.type,
         )
         if section_prior is not None:
             statuses.add(section_prior.assertion)
@@ -146,6 +173,7 @@ class AssertionClassifier:
             AssertionStatus.POSSIBLE,
             left_context,
             right_context,
+            entity.type,
         )
         unique_evidence = {item.rule_id: item for item in evidence}
         return AssertionFeatures.from_statuses(statuses), tuple(unique_evidence.values())
@@ -156,9 +184,16 @@ class AssertionClassifier:
         assertion: AssertionStatus,
         left_context: str,
         right_context: str,
+        entity_type: EntityType,
     ) -> None:
-        add(self._matching_cue(left_context, assertion, "left"), "left")
-        add(self._matching_cue(right_context, assertion, "right"), "right")
+        add(
+            self._matching_cue(left_context, assertion, "left", entity_type),
+            "left",
+        )
+        add(
+            self._matching_cue(right_context, assertion, "right", entity_type),
+            "right",
+        )
 
     def _section_prior(
         self, entity: EntityAnnotation, sentence: Sentence | None
@@ -197,22 +232,36 @@ class AssertionClassifier:
         text: str,
         assertion: AssertionStatus,
         scope: str,
+        entity_type: EntityType,
     ) -> AssertionCue | None:
-        matches = self._rule_matches(text, assertion, scope=scope)
+        matches = self._rule_matches(
+            text,
+            assertion,
+            scope=scope,
+            entity_type=entity_type,
+        )
         return matches[0][1] if matches else None
 
-    def _matching_negation(self, left_context: str) -> AssertionCue | None:
+    def _matching_negation(
+        self,
+        left_context: str,
+        entity_type: EntityType,
+    ) -> AssertionCue | None:
         blocked_spans = self._pattern_spans(left_context, _NEGATION_FALSE_POSITIVE_PATTERNS)
         matches = self._rule_matches(
             left_context,
             AssertionStatus.NEGATED,
             scope="left",
+            entity_type=entity_type,
             blocked_spans=blocked_spans,
         )
         return matches[0][1] if matches else None
 
     def _matching_coordinated_negation(
-        self, sentence_text: str, entity_start: int
+        self,
+        sentence_text: str,
+        entity_start: int,
+        entity_type: EntityType,
     ) -> AssertionCue | None:
         segment_start = 0
         for match in _NEGATION_COORDINATION_BOUNDARY_RE.finditer(sentence_text[:entity_start]):
@@ -223,6 +272,7 @@ class AssertionClassifier:
             segment,
             AssertionStatus.NEGATED,
             scope="left",
+            entity_type=entity_type,
             blocked_spans=blocked_spans,
         ):
             if _NEGATION_COORDINATION_BREAK_RE.search(segment[match.end() :]) is None:
@@ -230,13 +280,17 @@ class AssertionClassifier:
         return None
 
     def _matching_family(
-        self, left_context: str, right_context: str
+        self,
+        left_context: str,
+        right_context: str,
+        entity_type: EntityType,
     ) -> AssertionCue | None:
         blocked_spans = self._pattern_spans(left_context, _FAMILY_FALSE_POSITIVE_PATTERNS)
         for _, rule, match in self._rule_matches(
             left_context,
             AssertionStatus.FAMILY,
             scope="left",
+            entity_type=entity_type,
             blocked_spans=blocked_spans,
         ):
             if rule.cue.casefold() not in _FAMILY_MEMBER_CUES:
@@ -252,6 +306,7 @@ class AssertionClassifier:
         assertion: AssertionStatus,
         *,
         scope: str,
+        entity_type: EntityType,
         blocked_spans: list[tuple[int, int]] | None = None,
     ) -> list[tuple[tuple[int, int, int, str], AssertionCue, re.Match[str]]]:
         matches: list[
@@ -259,9 +314,13 @@ class AssertionClassifier:
         ] = []
         blocked_spans = blocked_spans or []
         for rule in self.registry.rules(assertion, scope=scope):
+            if not rule.applies_to(entity_type):
+                continue
             pattern = rf"(?<!\w){re.escape(rule.cue.strip())}(?!\w)"
             for match in re.finditer(pattern, text, flags=re.IGNORECASE | re.UNICODE):
                 if self._is_inside_spans(match.span(), blocked_spans):
+                    continue
+                if self._terminated(rule, text, match, scope):
                     continue
                 distance = len(text) - match.end() if scope == "left" else match.start()
                 if distance > rule.max_distance:
@@ -271,6 +330,26 @@ class AssertionClassifier:
                 key = (-rule.priority, distance, -len(rule.cue), rule.rule_id)
                 matches.append((key, rule, match))
         return sorted(matches, key=lambda item: item[0])
+
+    @staticmethod
+    def _terminated(
+        rule: AssertionCue,
+        text: str,
+        match: re.Match[str],
+        scope: str,
+    ) -> bool:
+        if not rule.termination_cues:
+            return False
+        between = text[match.end() :] if scope == "left" else text[: match.start()]
+        return any(
+            re.search(
+                rf"(?<!\w){re.escape(cue)}(?!\w)",
+                between,
+                flags=re.IGNORECASE | re.UNICODE,
+            )
+            is not None
+            for cue in rule.termination_cues
+        )
 
     @staticmethod
     def _pattern_spans(text: str, patterns: tuple[re.Pattern[str], ...]) -> list[tuple[int, int]]:

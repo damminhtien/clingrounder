@@ -1,5 +1,12 @@
+import json
+from pathlib import Path
+
 from medical_kg_nlp.context.assertion import AssertionClassifier
-from medical_kg_nlp.context.cue_loader import AssertionCue, AssertionRuleRegistry
+from medical_kg_nlp.context.cue_loader import (
+    AssertionCue,
+    AssertionRuleRegistry,
+    load_assertion_cues,
+)
 from medical_kg_nlp.context.rules import PLANNED_LEFT_CUES, POSSIBLE_LEFT_CUES, POSSIBLE_RIGHT_CUES
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.document import Sentence
@@ -81,6 +88,89 @@ def test_assertion_rule_max_distance_limits_scope() -> None:
     entity, sentence = _entity("không có bằng chứng viêm phổi", "viêm phổi")
 
     assert AssertionClassifier(registry).classify(entity, sentence) == AssertionStatus.PRESENT
+
+
+def test_assertion_rule_can_target_specific_entity_types() -> None:
+    registry = AssertionRuleRegistry(
+        [
+            AssertionCue(
+                rule_id="NEG_DISEASE_ONLY",
+                cue="không",
+                assertion=AssertionStatus.NEGATED,
+                language="test",
+                scope="left",
+                source_ids=("test",),
+                allowed_entity_types=(EntityType.DISEASE,),
+            )
+        ]
+    )
+    disease, sentence = _typed_entity(
+        "không viêm phổi",
+        "viêm phổi",
+        EntityType.DISEASE,
+    )
+    symptom, _ = _typed_entity(
+        "không viêm phổi",
+        "viêm phổi",
+        EntityType.SYMPTOM,
+    )
+    classifier = AssertionClassifier(registry)
+
+    assert classifier.classify(disease, sentence) == AssertionStatus.NEGATED
+    assert classifier.classify(symptom, sentence) == AssertionStatus.PRESENT
+
+
+def test_assertion_rule_specific_terminator_stops_scope() -> None:
+    registry = AssertionRuleRegistry(
+        [
+            AssertionCue(
+                rule_id="NEG_WITH_TERMINATOR",
+                cue="không",
+                assertion=AssertionStatus.NEGATED,
+                language="test",
+                scope="left",
+                source_ids=("test",),
+                termination_cues=("nhưng",),
+            )
+        ]
+    )
+    text = "không viêm phổi nhưng đau ngực"
+    sentence = Sentence(span=(0, len(text)), text=text)
+    classifier = AssertionClassifier(registry)
+
+    pneumonia = _entity_in_sentence(text, "viêm phổi")
+    pain = _entity_in_sentence(text, "đau ngực")
+    pain.type = EntityType.SYMPTOM
+
+    assert classifier.classify(pneumonia, sentence) == AssertionStatus.NEGATED
+    assert classifier.classify(pain, sentence) == AssertionStatus.PRESENT
+
+
+def test_assertion_rule_loader_reads_target_and_termination_metadata(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "cues.jsonl"
+    path.write_text(
+        json.dumps(
+            {
+                "rule_id": "NEG_TYPED",
+                "cue": "không",
+                "assertion": "NEGATED",
+                "language": "vi",
+                "scope": "left",
+                "source_ids": ["test"],
+                "allowed_entity_types": ["DISEASE", "SYMPTOM"],
+                "termination_cues": ["nhưng"],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    cue = load_assertion_cues(path)[0]
+
+    assert cue.allowed_entity_types == (EntityType.DISEASE, EntityType.SYMPTOM)
+    assert cue.termination_cues == ("nhưng",)
 
 
 def test_possible_rule_overrides_negation_phrase() -> None:
