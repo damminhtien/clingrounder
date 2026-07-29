@@ -53,6 +53,13 @@ from medical_kg_nlp.training.token_labels import (
     find_unaligned_annotations,
     project_record_to_token_windows,
 )
+from medical_kg_nlp.training.terminology_pairs import (
+    SynonymPairMode,
+    TerminologyPairConfig,
+    TerminologySynonymPair,
+    build_terminology_synonym_pairs,
+    write_terminology_pair_dataset,
+)
 
 __all__ = [
     "CausalInstructionRecord",
@@ -66,12 +73,16 @@ __all__ = [
     "SpanDatasetSummary",
     "SpanTrainingEntity",
     "SpanTrainingRecord",
+    "SynonymPairMode",
+    "TerminologyPairConfig",
+    "TerminologySynonymPair",
     "TokenAlignmentPolicy",
     "TokenBoundaryAlignmentError",
     "TokenClassifierTrainingConfig",
     "TokenClassifierRunSpec",
     "TokenizedTrainingWindow",
     "build_bio_label_vocabulary",
+    "build_terminology_synonym_pairs",
     "assert_local_gpu_runtime",
     "compute_bio_span_metrics",
     "decode_bio_spans",
@@ -94,4 +105,5 @@ __all__ = [
     "verify_token_classifier_artifact",
     "verify_token_classifier_run_artifact",
     "verify_saved_token_classifier",
+    "write_terminology_pair_dataset",
 ]
