@@ -169,6 +169,7 @@ def materialize_phase1_qwen_pass_source(
                 source=f"qwen.{pass_id}.stored",
                 evidence_id=f"{pass_id}.window-{window_index}",
                 source_offset=window.span[0],
+                full_source_text=document.text,
             )
             proposals.extend(projected)
             response_hashes.append(observed_sha256)
@@ -299,7 +300,8 @@ def run_phase1_qwen_proposals(
         pass_raw: list[dict[str, Any]] = []
         consensus_rows: list[dict[str, Any]] = []
         adjudicated_rows: list[dict[str, Any]] = []
-        adjudication_hash: str | None = None
+        adjudication_trace: dict[str, Any] | None = None
+        adjudication_raw: dict[str, Any] | None = None
         if run_extraction:
             proposal_sources, pass_trace, pass_raw = _run_document_passes(
                 adapter,
@@ -334,16 +336,36 @@ def run_phase1_qwen_proposals(
                     proposal_sources,
                     document.text,
                 )
-                decisions, adjudication_hash = adapter.adjudicate(
-                    document.text,
-                    candidates,
-                    generation=run_spec.adjudication_generation,
-                )
-                adjudicated = apply_phase1_adjudication(
-                    document.text,
-                    candidates,
-                    decisions,
-                )
+                if candidates:
+                    result = adapter.adjudicate(
+                        document.text,
+                        candidates,
+                        generation=run_spec.adjudication_generation,
+                    )
+                    adjudicated = apply_phase1_adjudication(
+                        document.text,
+                        candidates,
+                        result.decisions,
+                    )
+                    adjudication_trace = {
+                        "prompt_hash": result.prompt_hash,
+                        "response_sha256": result.response_sha256,
+                        "candidate_count": len(candidates),
+                        "decision_count": len(result.decisions),
+                    }
+                    adjudication_raw = {
+                        "pass_id": "adjudication",
+                        "response_sha256": result.response_sha256,
+                        "response": result.raw_response,
+                    }
+                else:
+                    adjudicated = ()
+                    adjudication_trace = {
+                        "prompt_hash": None,
+                        "response_sha256": None,
+                        "candidate_count": 0,
+                        "decision_count": 0,
+                    }
                 adjudicated_resolved = EvidenceWeightedSpanResolver().resolve(adjudicated)
                 adjudicated_rows = _proposals_to_rows(
                     adjudicated_resolved.selected,
@@ -398,13 +420,18 @@ def run_phase1_qwen_proposals(
                 },
                 "consensus_entity_count": len(consensus_rows),
                 "adjudicated_entity_count": len(adjudicated_rows),
-                "adjudication_response_sha256": adjudication_hash,
+                "adjudication": adjudication_trace,
                 "review": review_trace,
                 "resume": None,
             }
         )
         raw_rows.extend(
-            {"document_id": document.document_id, **row} for row in (*pass_raw, *review_raw)
+            {"document_id": document.document_id, **row}
+            for row in (
+                *pass_raw,
+                *((adjudication_raw,) if adjudication_raw is not None else ()),
+                *review_raw,
+            )
         )
 
     trace_sha256 = write_jsonl(output / "trace.jsonl", trace_rows)
@@ -615,7 +642,7 @@ def _load_completed_document(
             "proposal_source_counts": {},
             "consensus_entity_count": counts["consensus.entities"],
             "adjudicated_entity_count": counts["adjudicated.entities"],
-            "adjudication_response_sha256": None,
+            "adjudication": None,
             "review": None,
             "resume": {
                 "source": "validated_document_outputs",

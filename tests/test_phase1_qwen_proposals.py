@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from collections.abc import Sequence
 
+import pytest
+
 from medical_kg_nlp.adapters.generative import ChatMessage, GenerationConfig
 from medical_kg_nlp.benchmarks.phase1.qwen_proposals import (
     Phase1AdjudicationCandidate,
@@ -408,15 +410,20 @@ def test_qwen_verifier_returns_only_four_way_structured_actions() -> None:
         confidence=0.7,
     )
 
-    decisions, response_sha256 = adapter.adjudicate(
+    result = adapter.adjudicate(
         "thiếu máu",
         (candidate,),
         generation=GenerationConfig(),
     )
-    projected = apply_phase1_adjudication("thiếu máu", (candidate,), decisions)
+    projected = apply_phase1_adjudication(
+        "thiếu máu",
+        (candidate,),
+        result.decisions,
+    )
 
-    assert response_sha256
-    assert decisions == (
+    assert result.prompt_hash
+    assert result.response_sha256
+    assert result.decisions == (
         Phase1AdjudicationDecision(
             proposal_id="p1",
             action="REPLACE_TYPE",
@@ -429,6 +436,70 @@ def test_qwen_verifier_returns_only_four_way_structured_actions() -> None:
     assert "KEEP|DROP|REPLACE_BOUNDARY|REPLACE_TYPE" in prompt
     assert '"confidence"' not in prompt
     assert '"evidence_quote"' not in prompt
+    system_prompt = runtime.calls[0][0].content
+    assert "đúng một action" in system_prompt
+    assert "Mỗi entity chỉ có hai field" not in system_prompt
+
+
+def test_qwen_verifier_retries_until_every_candidate_has_one_decision() -> None:
+    runtime = _FakeRuntime(
+        (
+            '{"decisions":[{"proposal_id":"p1","action":"KEEP"}]}',
+            (
+                '{"decisions":['
+                '{"proposal_id":"p1","action":"KEEP"},'
+                '{"proposal_id":"p2","action":"DROP"}]}'
+            ),
+        )
+    )
+    candidates = (
+        Phase1AdjudicationCandidate(
+            proposal_id="p1",
+            text="ho",
+            entity_type="TRIỆU_CHỨNG",
+            span=(0, 2),
+            sources=("qwen.recall",),
+            confidence=0.9,
+        ),
+        Phase1AdjudicationCandidate(
+            proposal_id="p2",
+            text="sốt",
+            entity_type="TRIỆU_CHỨNG",
+            span=(6, 9),
+            sources=("qwen.recall",),
+            confidence=0.9,
+        ),
+    )
+
+    result = Phase1QwenAdapter(runtime).adjudicate(
+        "ho và sốt",
+        candidates,
+        generation=GenerationConfig(),
+    )
+
+    assert len(runtime.calls) == 2
+    assert [decision.action for decision in result.decisions] == ["KEEP", "DROP"]
+    assert "coverage differs" in runtime.calls[1][-1].content
+
+
+def test_local_adjudication_rejects_missing_or_unknown_verdicts() -> None:
+    candidate = Phase1AdjudicationCandidate(
+        proposal_id="p1",
+        text="ho",
+        entity_type="TRIỆU_CHỨNG",
+        span=(0, 2),
+        sources=("qwen.recall",),
+        confidence=0.9,
+    )
+
+    with pytest.raises(ValueError, match="cover candidates exactly"):
+        apply_phase1_adjudication("ho", (candidate,), ())
+    with pytest.raises(ValueError, match="cover candidates exactly"):
+        apply_phase1_adjudication(
+            "ho",
+            (candidate,),
+            (Phase1AdjudicationDecision(proposal_id="unknown", action="DROP"),),
+        )
 
 
 def test_quote_projection_keeps_all_repeated_raw_occurrences() -> None:
@@ -447,6 +518,45 @@ def test_quote_projection_keeps_all_repeated_raw_occurrences() -> None:
 
     assert [row.span for row in rows] == [(0, 2), (15, 17)]
     assert rejected == []
+
+
+def test_quote_projection_rejects_ellipsis_even_when_literal_text_exists() -> None:
+    rows, rejected = project_phase1_quoted_proposals(
+        "đau ... ngực",
+        (
+            Phase1QuotedProposal(
+                text="đau ... ngực",
+                entity_type="TRIỆU_CHỨNG",
+            ),
+        ),
+        source="qwen.recall",
+        evidence_id="recall.window-0",
+    )
+
+    assert rows == []
+    assert rejected[0]["reason"] == "ellipsis_not_allowed"
+
+
+def test_window_projection_requires_and_validates_full_source() -> None:
+    proposal = Phase1QuotedProposal(text="ho", entity_type="TRIỆU_CHỨNG")
+
+    with pytest.raises(ValueError, match="requires full_source_text"):
+        project_phase1_quoted_proposals(
+            "ho",
+            (proposal,),
+            source="qwen.recall",
+            evidence_id="recall.window-1",
+            source_offset=4,
+        )
+    with pytest.raises(ValueError, match="does not match"):
+        project_phase1_quoted_proposals(
+            "ho",
+            (proposal,),
+            source="qwen.recall",
+            evidence_id="recall.window-1",
+            source_offset=4,
+            full_source_text="ho ở đây",
+        )
 
 
 def _proposal(

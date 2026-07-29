@@ -26,8 +26,10 @@ from medical_kg_nlp.schema.types import EntityType
 
 __all__ = [
     "PHASE1_QWEN_PROMPT_VERSION",
+    "PHASE1_QWEN_ADJUDICATION_PROMPT_VERSION",
     "Phase1AdjudicationCandidate",
     "Phase1AdjudicationDecision",
+    "Phase1QwenAdjudicationResult",
     "Phase1QwenAdapter",
     "Phase1QwenPassResult",
     "Phase1QuotedProposal",
@@ -37,6 +39,7 @@ __all__ = [
     "build_phase1_qwen_adjudication_messages",
     "build_phase1_qwen_extraction_messages",
     "build_phase1_qwen_review_messages",
+    "phase1_qwen_adjudication_prompt_hash",
     "phase1_qwen_prompt_hash",
     "parse_phase1_quoted_response",
     "project_phase1_quoted_proposals",
@@ -44,8 +47,9 @@ __all__ = [
     "split_raw_text_windows",
 ]
 
-PHASE1_QWEN_PROMPT_VERSION = "phase1-qwen-extraction.v3"
+PHASE1_QWEN_PROMPT_VERSION = "phase1-qwen-extraction.v4"
 PHASE1_QWEN_REVIEW_PROMPT_VERSION = "phase1-qwen-review-missing.v3"
+PHASE1_QWEN_ADJUDICATION_PROMPT_VERSION = "phase1-qwen-adjudication.v1"
 Phase1Label = Literal[
     "TRIỆU_CHỨNG",
     "TÊN_XÉT_NGHIỆM",
@@ -87,6 +91,12 @@ Mỗi entity chỉ có hai field text và type. Không trả confidence, context
 THUỐC giữ full span nếu SOURCE có strength, dạng, route hoặc frequency đi cùng thuốc.
 Không biến liều thuốc, route, frequency, ngày tháng hay số hành chính thành kết quả xét nghiệm.
 Không thêm giải thích ngoài JSON theo schema được yêu cầu."""
+_ADJUDICATION_SYSTEM_PROMPT = """Bạn là verifier thực thể y khoa tiếng Việt.
+Bạn chỉ phân xử các proposal đã được local tools cung cấp; không tự tìm entity mới và không tạo offset.
+Với mỗi proposal_id, trả đúng một action trong KEEP, DROP, REPLACE_BOUNDARY, REPLACE_TYPE.
+REPLACE_BOUNDARY chỉ trả replacement_text là một exact quote liên tục trong SOURCE.
+REPLACE_TYPE chỉ trả replacement_type thuộc đúng 5 nhãn được cho phép.
+Không trả confidence, evidence, offset, candidate code, assertion hoặc giải thích ngoài JSON."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -202,6 +212,16 @@ class Phase1AdjudicationDecision:
             raise ValueError("KEEP and DROP must not include replacement fields")
 
 
+@dataclass(frozen=True, slots=True)
+class Phase1QwenAdjudicationResult:
+    """Auditable verifier response before local action projection."""
+
+    prompt_hash: str
+    decisions: tuple[Phase1AdjudicationDecision, ...]
+    response_sha256: str
+    raw_response: str
+
+
 class Phase1QwenAdapter:
     """Run reusable Qwen passes while keeping Phase 1 projection deterministic."""
 
@@ -285,6 +305,7 @@ class Phase1QwenAdapter:
                 source=f"qwen.{pass_id}",
                 evidence_id=f"{pass_id}.window-{window_index}",
                 source_offset=window.span[0],
+                full_source_text=source_text,
             )
             proposals.extend(projected)
             rejected.extend(
@@ -378,6 +399,7 @@ class Phase1QwenAdapter:
                     source="qwen.review-missing",
                     evidence_id=f"review.round-{round_index}.window-{window_index}",
                     source_offset=window.span[0],
+                    full_source_text=source_text,
                 )
                 for proposal in projected:
                     entity_type = proposal.entity_type
@@ -427,8 +449,8 @@ class Phase1QwenAdapter:
         candidates: Sequence[Phase1AdjudicationCandidate],
         *,
         generation: GenerationConfig,
-    ) -> tuple[tuple[Phase1AdjudicationDecision, ...], str]:
-        """Ask Qwen to keep, drop, or replace already projected candidates."""
+    ) -> Phase1QwenAdjudicationResult:
+        """Ask Qwen for exactly one four-way verdict per projected candidate."""
 
         for candidate in candidates:
             start, end = candidate.span
@@ -437,15 +459,26 @@ class Phase1QwenAdapter:
                     f"Adjudication candidate {candidate.proposal_id} violates raw offsets"
                 )
         messages = build_phase1_qwen_adjudication_messages(source_text, candidates)
+        expected_ids = tuple(candidate.proposal_id for candidate in candidates)
+
+        def parse_complete_verdicts(
+            value: Any,
+        ) -> tuple[Phase1AdjudicationDecision, ...]:
+            decisions = _parse_adjudication_decisions(value)
+            _validate_adjudication_coverage(decisions, expected_ids)
+            return decisions
+
         decisions, raw_response = self._generate_structured(
             messages,
             generation,
-            parser=_parse_adjudication_decisions,
+            parser=parse_complete_verdicts,
         )
-        known_ids = {candidate.proposal_id for candidate in candidates}
-        if any(decision.proposal_id not in known_ids for decision in decisions):
-            raise ValueError("Adjudication response references an unknown proposal_id")
-        return decisions, _text_sha256(raw_response)
+        return Phase1QwenAdjudicationResult(
+            prompt_hash=phase1_qwen_adjudication_prompt_hash(),
+            decisions=decisions,
+            response_sha256=_text_sha256(raw_response),
+            raw_response=raw_response,
+        )
 
     def _generate_structured(
         self,
@@ -508,6 +541,23 @@ def phase1_qwen_prompt_hash(
     return _text_sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True))
 
 
+def phase1_qwen_adjudication_prompt_hash() -> str:
+    """Hash verifier behavior without including private source text or proposals."""
+
+    payload = {
+        "version": PHASE1_QWEN_ADJUDICATION_PROMPT_VERSION,
+        "system": _ADJUDICATION_SYSTEM_PROMPT,
+        "actions": [
+            "KEEP",
+            "DROP",
+            "REPLACE_BOUNDARY",
+            "REPLACE_TYPE",
+        ],
+        "coverage": "exactly_one_decision_per_proposal",
+    }
+    return _text_sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+
+
 def parse_phase1_quoted_response(
     raw_response: str,
 ) -> tuple[list[Phase1QuotedProposal], list[dict[str, Any]]]:
@@ -562,6 +612,7 @@ def project_phase1_quoted_proposals(
     source: str,
     evidence_id: str,
     source_offset: int = 0,
+    full_source_text: str | None = None,
 ) -> tuple[list[EntityProposal], list[dict[str, Any]]]:
     """Project each quote to every exact raw-text occurrence.
 
@@ -569,9 +620,28 @@ def project_phase1_quoted_proposals(
     mentions remain separate local proposals for later verification.
     """
 
+    if source_offset < 0:
+        raise ValueError("source_offset cannot be negative")
+    if source_offset and full_source_text is None:
+        raise ValueError("Window projection requires full_source_text")
+    projection_source = source_text if full_source_text is None else full_source_text
+    if projection_source[source_offset : source_offset + len(source_text)] != source_text:
+        raise ValueError("Projection window does not match full_source_text")
+
     projected: list[EntityProposal] = []
     rejected: list[dict[str, Any]] = []
     for index, proposal in enumerate(proposals):
+        rejection_reason = _quote_rejection_reason(proposal.text)
+        if rejection_reason is not None:
+            rejected.append(
+                {
+                    "proposal_index": index,
+                    "reason": rejection_reason,
+                    "text": proposal.text,
+                    "type": proposal.entity_type,
+                }
+            )
+            continue
         occurrences = _exact_occurrences(source_text, proposal.text)
         if not occurrences:
             rejected.append(
@@ -600,9 +670,7 @@ def project_phase1_quoted_proposals(
                 ),
             )
             # INVARIANT: offsets are calculated only from an exact source quote.
-            item.validate_offsets(
-                (" " * source_offset) + source_text if source_offset else source_text
-            )
+            item.validate_offsets(projection_source)
             projected.append(item)
     return projected, rejected
 
@@ -678,10 +746,16 @@ def apply_phase1_adjudication(
     decision_by_id = {decision.proposal_id: decision for decision in decisions}
     if len(decision_by_id) != len(decisions):
         raise ValueError("Adjudication may decide each proposal at most once")
+    if set(decision_by_id) != set(by_id):
+        missing = sorted(set(by_id) - set(decision_by_id))
+        extra = sorted(set(decision_by_id) - set(by_id))
+        raise ValueError(
+            f"Adjudication decisions must cover candidates exactly: missing={missing}, extra={extra}"
+        )
     output: list[EntityProposal] = []
     for proposal_id, candidate in by_id.items():
-        decision = decision_by_id.get(proposal_id)
-        if decision is None or decision.action == "DROP":
+        decision = decision_by_id[proposal_id]
+        if decision.action == "DROP":
             continue
         if decision.action == "KEEP":
             output.append(
@@ -804,7 +878,7 @@ def build_phase1_qwen_adjudication_messages(
         for item in candidates
     ]
     return (
-        ChatMessage(role="system", content=_SYSTEM_PROMPT),
+        ChatMessage(role="system", content=_ADJUDICATION_SYSTEM_PROMPT),
         ChatMessage(
             role="user",
             content=(
@@ -1045,6 +1119,24 @@ def _parse_adjudication_decisions(
     return tuple(decisions)
 
 
+def _validate_adjudication_coverage(
+    decisions: Sequence[Phase1AdjudicationDecision],
+    expected_ids: Sequence[str],
+) -> None:
+    expected = tuple(expected_ids)
+    if len(expected) != len(set(expected)):
+        raise ValueError("Adjudication candidates require unique proposal_id values")
+    actual = tuple(decision.proposal_id for decision in decisions)
+    if len(actual) != len(set(actual)):
+        raise StructuredResponseError("Adjudication response repeats proposal_id")
+    if set(actual) != set(expected):
+        missing = sorted(set(expected) - set(actual))
+        extra = sorted(set(actual) - set(expected))
+        raise StructuredResponseError(
+            f"Adjudication response coverage differs: missing={missing}, extra={extra}"
+        )
+
+
 def _deduplicate_entity_proposals(
     proposals: Sequence[EntityProposal],
 ) -> tuple[EntityProposal, ...]:
@@ -1078,11 +1170,23 @@ def _exact_occurrences(source_text: str, quote: str) -> list[int]:
         cursor = start + 1
 
 
+def _quote_rejection_reason(quote: str) -> str | None:
+    """Reject model shorthand that cannot represent one literal entity span."""
+
+    if not quote.strip():
+        return "empty_exact_quote"
+    if "..." in quote or "…" in quote:
+        return "ellipsis_not_allowed"
+    return None
+
+
 def _overlapping_quote_span(
     source_text: str,
     quote: str,
     original_span: tuple[int, int],
 ) -> tuple[int, int] | None:
+    if _quote_rejection_reason(quote) is not None:
+        return None
     spans = [(start, start + len(quote)) for start in _exact_occurrences(source_text, quote)]
     overlapping = [
         span for span in spans if span[0] < original_span[1] and original_span[0] < span[1]
