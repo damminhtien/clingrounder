@@ -307,6 +307,7 @@ def _training_argument_kwargs(
         "eval_strategy": "epoch" if has_evaluation else "no",
         "save_strategy": "epoch",
         "save_total_limit": 2,
+        "save_only_model": config.save_only_model,
         "load_best_model_at_end": has_evaluation,
         "metric_for_best_model": "span_f1" if has_evaluation else None,
         "greater_is_better": True if has_evaluation else None,

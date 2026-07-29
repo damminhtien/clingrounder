@@ -40,6 +40,8 @@ training:
   full_determinism: true
   unaligned_span_policy: mask
   overwrite_output: false
+  # SCALING: preserve the two best model checkpoints without duplicating 2.2 GB optimizer states.
+  save_only_model: true
 
 runtime:
   operating_system: linux

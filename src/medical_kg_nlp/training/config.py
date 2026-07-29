@@ -40,6 +40,7 @@ class TokenClassifierTrainingConfig:
     full_determinism: bool = False
     resume_from_checkpoint: Path | None = None
     overwrite_output: bool = False
+    save_only_model: bool = False
     cache_dir: Path | None = None
     unaligned_span_policy: Literal["error", "mask"] = "error"
 
@@ -150,6 +151,7 @@ class TokenClassifierTrainingConfig:
                 else _manifest_path(self.resume_from_checkpoint, root=path_root)
             ),
             "overwrite_output": self.overwrite_output,
+            "save_only_model": self.save_only_model,
             "cache_dir": (
                 None if self.cache_dir is None else _manifest_path(self.cache_dir, root=path_root)
             ),

@@ -222,6 +222,7 @@ def load_token_classifier_run_spec(path: str | Path) -> TokenClassifierRunSpec:
         use_cpu=False,
         full_determinism=_boolean(training, "full_determinism", default=False),
         overwrite_output=_boolean(training, "overwrite_output", default=False),
+        save_only_model=_boolean(training, "save_only_model", default=False),
         cache_dir=(
             None
             if training.get("cache_dir") is None

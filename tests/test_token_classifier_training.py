@@ -280,6 +280,7 @@ def test_transformers_five_training_arguments_exclude_removed_overwrite_flag(
     assert "overwrite_output_dir" not in arguments
     assert arguments["eval_strategy"] == "epoch"
     assert arguments["load_best_model_at_end"] is True
+    assert arguments["save_only_model"] is False
 
 
 def test_local_initialization_model_is_content_verified(tmp_path: Path) -> None:

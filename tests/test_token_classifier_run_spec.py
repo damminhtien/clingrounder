@@ -95,11 +95,13 @@ def test_phase1_dapt_run_uses_verified_local_initializer_without_prefetch() -> N
     assert spec.training.initialization_model_fingerprint == (
         "e70b2dc1b57a4f52fed53ef260a069847b2e90e4fe0cc22aeb61949b4d486549"
     )
+    assert spec.training.save_only_model is True
     assert spec.prefetch_command == ()
     serialized = spec.training.to_dict(path_root=spec.run_root)
     assert serialized["initialization_model_path"] == (
         "outputs/models/xlmr-joint-dapt-2026-07-29/final-model"
     )
+    assert serialized["save_only_model"] is True
     assert str(spec.run_root) not in str(serialized)
 
 
