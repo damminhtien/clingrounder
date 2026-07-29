@@ -88,6 +88,11 @@ from medical_kg_nlp.benchmarks.phase1.manual_gold_mining import (
     build_phase1_reviewed_recognition_policy,
     load_phase1_manual_gold_mining_corpus,
 )
+from medical_kg_nlp.benchmarks.phase1.max_score_pipeline import (
+    CandidateMetadataPolicy,
+    Phase1MaxScorePipeline,
+    Phase1MaxScoreResult,
+)
 from medical_kg_nlp.benchmarks.phase1.model_dataset import (
     PHASE1_FIVE_TYPE_LABELS,
     Phase1ModelDatasetConfig,
@@ -152,6 +157,7 @@ __all__ = [
     "BoundaryErrorLabel",
     "BoundaryGenerator",
     "CandidateProbePolicy",
+    "CandidateMetadataPolicy",
     "BTC_PHASE1_INFERRED_GOLD_POLICY",
     "Phase1EvaluationAdapter",
     "Phase1BoundaryDataset",
@@ -161,6 +167,8 @@ __all__ = [
     "Phase1Record",
     "Phase1RegionAugmentationConfig",
     "Phase1ManualGoldMiningCorpus",
+    "Phase1MaxScorePipeline",
+    "Phase1MaxScoreResult",
     "Phase1ModelDatasetConfig",
     "Phase1HoldoutGate",
     "Phase1ModelSelectionConfig",
