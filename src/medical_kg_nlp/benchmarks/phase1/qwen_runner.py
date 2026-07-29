@@ -343,7 +343,6 @@ def run_phase1_qwen_proposals(
                     document.text,
                     candidates,
                     decisions,
-                    minimum_confidence=min(run_spec.thresholds.values()),
                 )
                 adjudicated_resolved = EvidenceWeightedSpanResolver().resolve(adjudicated)
                 adjudicated_rows = _proposals_to_rows(

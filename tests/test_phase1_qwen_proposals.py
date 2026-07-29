@@ -45,9 +45,6 @@ def test_qwen_pass_projects_repeated_quotes_and_deduplicates_chunk_overlap() -> 
                 {
                     "text": "ho",
                     "type": "TRIỆU_CHỨNG",
-                    "left_context": "",
-                    "right_context": "",
-                    "confidence": 0.91,
                 }
             ]
         },
@@ -77,7 +74,7 @@ def test_qwen_structured_retry_does_not_accept_free_text() -> None:
     runtime = _FakeRuntime(
         (
             "Tôi tìm thấy ho.",
-            '{"entities":[{"text":"ho","type":"TRIỆU_CHỨNG","confidence":0.8}]}',
+            '{"entities":[{"text":"ho","type":"TRIỆU_CHỨNG"}]}',
         )
     )
 
@@ -97,8 +94,8 @@ def test_qwen_recovers_complete_rows_from_truncated_entity_array() -> None:
         (
             (
                 '{"entities":['
-                '{"text":"ho","type":"TRIỆU_CHỨNG","confidence":0.8},'
-                '{"text":"sốt","type":"TRIỆU_CHỨNG","confidence":0.8},'
+                '{"text":"ho","type":"TRIỆU_CHỨNG"},'
+                '{"text":"sốt","type":"TRIỆU_CHỨNG"},'
                 '{"text":"incomplete"'
             ),
         )
@@ -186,7 +183,7 @@ def test_qwen_exhausted_structured_response_isolated_to_one_window() -> None:
     )
 
 
-def test_qwen_projection_uses_evidence_score_and_recovers_bad_context() -> None:
+def test_qwen_recall_rejects_fields_beyond_exact_quote_and_type() -> None:
     runtime = _FakeRuntime(
         (
             json.dumps(
@@ -195,8 +192,6 @@ def test_qwen_projection_uses_evidence_score_and_recovers_bad_context() -> None:
                         {
                             "text": "ho",
                             "type": "TRIỆU_CHỨNG",
-                            "left_context": "x" * 200,
-                            "right_context": "y" * 200,
                             "confidence": 0.0,
                         }
                     ]
@@ -214,11 +209,18 @@ def test_qwen_projection_uses_evidence_score_and_recovers_bad_context() -> None:
         generation=GenerationConfig(),
     )
 
-    assert [proposal.span for proposal in result.proposals] == [(0, 2), (7, 9)]
-    assert {proposal.score for proposal in result.proposals} == {0.90}
-    assert not result.rejected
+    assert not result.proposals
+    assert result.rejected == (
+        {
+            "proposal_index": 0,
+            "reason": "invalid_proposal:unexpected_fields:confidence",
+            "pass_id": "recall",
+            "window_index": 0,
+        },
+    )
     prompt = runtime.calls[0][1].content
     assert '"confidence"' not in prompt
+    assert '"left_context"' not in prompt
 
 
 def test_missing_reviewer_retries_json_with_wrong_root_schema() -> None:
@@ -238,7 +240,7 @@ def test_missing_reviewer_retries_json_with_wrong_root_schema() -> None:
 
 def test_qwen_parser_accepts_bare_array_and_allowlisted_wrapper() -> None:
     responses = (
-        '[{"text":"ho","type":"TRIỆU_CHỨNG","confidence":0.9}]',
+        '[{"text":"ho","type":"TRIỆU_CHỨNG"}]',
         '{"missing_entities":[]}',
     )
     runtime = _FakeRuntime(responses)
@@ -271,12 +273,10 @@ def test_missing_reviewer_projects_only_unlabeled_occurrences() -> None:
                         {
                             "text": "ho",
                             "type": "TRIỆU_CHỨNG",
-                            "confidence": 0.9,
                         },
                         {
                             "text": "sốt",
                             "type": "TRIỆU_CHỨNG",
-                            "confidence": 0.9,
                         },
                     ]
                 },
@@ -358,14 +358,10 @@ def test_adjudication_replacement_must_overlap_original_span() -> None:
         (
             Phase1AdjudicationDecision(
                 proposal_id="p1",
-                action="REPLACE",
-                confidence=0.93,
-                evidence_quote="đau đầu nhẹ",
+                action="REPLACE_BOUNDARY",
                 replacement_text="đau đầu nhẹ",
-                replacement_type="TRIỆU_CHỨNG",
             ),
         ),
-        minimum_confidence=0.8,
     )
     rejected = apply_phase1_adjudication(
         text,
@@ -373,14 +369,10 @@ def test_adjudication_replacement_must_overlap_original_span() -> None:
         (
             Phase1AdjudicationDecision(
                 proposal_id="p1",
-                action="REPLACE",
-                confidence=0.93,
-                evidence_quote="đau bụng",
+                action="REPLACE_BOUNDARY",
                 replacement_text="đau bụng",
-                replacement_type="TRIỆU_CHỨNG",
             ),
         ),
-        minimum_confidence=0.8,
     )
 
     assert accepted[0].span == (0, 11)
@@ -388,7 +380,58 @@ def test_adjudication_replacement_must_overlap_original_span() -> None:
     assert text[accepted[0].span[0] : accepted[0].span[1]] == "đau đầu nhẹ"
 
 
-def test_quote_projection_uses_context_to_disambiguate_repeated_mentions() -> None:
+def test_qwen_verifier_returns_only_four_way_structured_actions() -> None:
+    runtime = _FakeRuntime(
+        (
+            json.dumps(
+                {
+                    "decisions": [
+                        {
+                            "proposal_id": "p1",
+                            "action": "REPLACE_TYPE",
+                            "replacement_text": None,
+                            "replacement_type": "CHẨN_ĐOÁN",
+                        }
+                    ]
+                },
+                ensure_ascii=False,
+            ),
+        )
+    )
+    adapter = Phase1QwenAdapter(runtime)
+    candidate = Phase1AdjudicationCandidate(
+        proposal_id="p1",
+        text="thiếu máu",
+        entity_type="KẾT_QUẢ_XÉT_NGHIỆM",
+        span=(0, 9),
+        sources=("qwen.recall", "xlmr"),
+        confidence=0.7,
+    )
+
+    decisions, response_sha256 = adapter.adjudicate(
+        "thiếu máu",
+        (candidate,),
+        generation=GenerationConfig(),
+    )
+    projected = apply_phase1_adjudication("thiếu máu", (candidate,), decisions)
+
+    assert response_sha256
+    assert decisions == (
+        Phase1AdjudicationDecision(
+            proposal_id="p1",
+            action="REPLACE_TYPE",
+            replacement_type="CHẨN_ĐOÁN",
+        ),
+    )
+    assert projected[0].span == candidate.span
+    assert projected[0].entity_type == EntityType.DISEASE
+    prompt = runtime.calls[0][1].content
+    assert "KEEP|DROP|REPLACE_BOUNDARY|REPLACE_TYPE" in prompt
+    assert '"confidence"' not in prompt
+    assert '"evidence_quote"' not in prompt
+
+
+def test_quote_projection_keeps_all_repeated_raw_occurrences() -> None:
     text = "ho nhẹ; sau đó ho tăng"
     rows, rejected = project_phase1_quoted_proposals(
         text,
@@ -396,15 +439,13 @@ def test_quote_projection_uses_context_to_disambiguate_repeated_mentions() -> No
             Phase1QuotedProposal(
                 text="ho",
                 entity_type="TRIỆU_CHỨNG",
-                confidence=0.9,
-                left_context="sau đó ",
             ),
         ),
         source="qwen.recall",
         evidence_id="recall.window-0",
     )
 
-    assert [row.span for row in rows] == [(15, 17)]
+    assert [row.span for row in rows] == [(0, 2), (15, 17)]
     assert rejected == []
 
 

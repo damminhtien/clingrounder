@@ -138,9 +138,10 @@ identity is recovered:
 | BF16 inference or larger batches | One 48 GiB GPU |
 | Training/fine-tuning | Not approved for the first experiment |
 
-Qwen must return exact source quotes, type, confidence, and optional local context. It must not
-return trusted offsets. Offset projection and repeated-occurrence recovery run locally against the
-immutable raw document.
+The recall pass returns only `text` and `type`. It does not return confidence, context anchors, or
+offsets. The verifier pass returns only `KEEP`, `DROP`, `REPLACE_BOUNDARY`, or `REPLACE_TYPE` plus
+the single replacement field required by that action. Offset projection, repeated-occurrence
+recovery, and every replacement are applied locally against the immutable raw document.
 
 Interrupted proposal runs can be continued with the same output directory:
 

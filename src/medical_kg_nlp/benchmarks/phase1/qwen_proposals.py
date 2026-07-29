@@ -44,8 +44,8 @@ __all__ = [
     "split_raw_text_windows",
 ]
 
-PHASE1_QWEN_PROMPT_VERSION = "phase1-qwen-extraction.v2"
-PHASE1_QWEN_REVIEW_PROMPT_VERSION = "phase1-qwen-review-missing.v2"
+PHASE1_QWEN_PROMPT_VERSION = "phase1-qwen-extraction.v3"
+PHASE1_QWEN_REVIEW_PROMPT_VERSION = "phase1-qwen-review-missing.v3"
 Phase1Label = Literal[
     "TRIỆU_CHỨNG",
     "TÊN_XÉT_NGHIỆM",
@@ -53,7 +53,12 @@ Phase1Label = Literal[
     "CHẨN_ĐOÁN",
     "THUỐC",
 ]
-AdjudicationAction = Literal["KEEP", "DROP", "REPLACE"]
+AdjudicationAction = Literal[
+    "KEEP",
+    "DROP",
+    "REPLACE_BOUNDARY",
+    "REPLACE_TYPE",
+]
 _StructuredT = TypeVar("_StructuredT")
 
 _LABEL_TO_ENTITY_TYPE: dict[str, EntityType] = {
@@ -65,11 +70,10 @@ _LABEL_TO_ENTITY_TYPE: dict[str, EntityType] = {
 }
 _ENTITY_TYPE_TO_LABEL = {value: key for key, value in _LABEL_TO_ENTITY_TYPE.items()}
 _MODEL_PROPOSAL_CONFIDENCE = 0.90
-_MAX_CONTEXT_CHARACTERS = 120
 _SYSTEM_PROMPT = """Bạn là bộ gán nhãn thực thể y khoa tiếng Việt.
 Chỉ dùng đúng 5 nhãn: TRIỆU_CHỨNG, TÊN_XÉT_NGHIỆM, KẾT_QUẢ_XÉT_NGHIỆM, CHẨN_ĐOÁN, THUỐC.
 Mỗi text phải là chuỗi trích nguyên văn, liên tục trong SOURCE. Không tự tính offset.
-Không tự chấm confidence; pipeline sẽ hiệu chỉnh theo agreement giữa các pass.
+Mỗi entity chỉ có hai field text và type. Không trả confidence, context, offset hoặc giải thích.
 THUỐC giữ full span nếu SOURCE có strength, dạng, route hoặc frequency đi cùng thuốc.
 Chỉ lấy kết quả định lượng/định tính khi có xét nghiệm hay dấu hiệu sinh tồn làm anchor.
 Không biến liều thuốc, route, frequency, ngày tháng hay số hành chính thành kết quả xét nghiệm.
@@ -79,7 +83,7 @@ SOURCE đã có một danh sách EXISTING_ENTITIES. Chỉ tìm thực thể y kh
 Không trả lại entity đã có cùng text và type.
 Chỉ dùng đúng 5 nhãn: TRIỆU_CHỨNG, TÊN_XÉT_NGHIỆM, KẾT_QUẢ_XÉT_NGHIỆM, CHẨN_ĐOÁN, THUỐC.
 Mỗi text phải là chuỗi trích nguyên văn, liên tục trong SOURCE. Không tự tính offset.
-Không tự chấm confidence; pipeline sẽ hiệu chỉnh theo agreement giữa các pass.
+Mỗi entity chỉ có hai field text và type. Không trả confidence, context, offset hoặc giải thích.
 THUỐC giữ full span nếu SOURCE có strength, dạng, route hoặc frequency đi cùng thuốc.
 Không biến liều thuốc, route, frequency, ngày tháng hay số hành chính thành kết quả xét nghiệm.
 Không thêm giải thích ngoài JSON theo schema được yêu cầu."""
@@ -102,26 +106,16 @@ class RawTextWindow:
 
 @dataclass(frozen=True, slots=True)
 class Phase1QuotedProposal:
-    """Validated model proposal before local offset projection."""
+    """Exact quote and type returned by a recall pass before local projection."""
 
     text: str
     entity_type: Phase1Label
-    confidence: float
-    left_context: str = ""
-    right_context: str = ""
 
     def __post_init__(self) -> None:
         if not self.text:
             raise ValueError("Quoted proposal text must be non-empty")
         if self.entity_type not in _LABEL_TO_ENTITY_TYPE:
             raise ValueError(f"Unsupported Phase 1 label: {self.entity_type}")
-        if not 0.0 <= self.confidence <= 1.0:
-            raise ValueError("Proposal confidence must be between zero and one")
-        if (
-            len(self.left_context) > _MAX_CONTEXT_CHARACTERS
-            or len(self.right_context) > _MAX_CONTEXT_CHARACTERS
-        ):
-            raise ValueError("Proposal context anchors must not exceed 120 characters")
 
 
 @dataclass(frozen=True, slots=True)
@@ -183,25 +177,28 @@ class Phase1AdjudicationCandidate:
 
 @dataclass(frozen=True, slots=True)
 class Phase1AdjudicationDecision:
-    """Structured Qwen decision whose replacement remains subject to local projection."""
+    """Verifier verdict whose replacements remain subject to local projection."""
 
     proposal_id: str
     action: AdjudicationAction
-    confidence: float
-    evidence_quote: str
     replacement_text: str | None = None
     replacement_type: Phase1Label | None = None
 
     def __post_init__(self) -> None:
-        if not self.proposal_id.strip() or not self.evidence_quote:
-            raise ValueError("Adjudication decisions require proposal_id and evidence_quote")
-        if not 0.0 <= self.confidence <= 1.0:
-            raise ValueError("Adjudication confidence must be between zero and one")
-        has_replacement = self.replacement_text is not None or self.replacement_type is not None
-        if self.action == "REPLACE":
-            if not self.replacement_text or self.replacement_type not in _LABEL_TO_ENTITY_TYPE:
-                raise ValueError("REPLACE requires replacement_text and replacement_type")
-        elif has_replacement:
+        if not self.proposal_id.strip():
+            raise ValueError("Adjudication decisions require proposal_id")
+        if self.action == "REPLACE_BOUNDARY":
+            if not self.replacement_text or self.replacement_type is not None:
+                raise ValueError(
+                    "REPLACE_BOUNDARY requires only replacement_text"
+                )
+        elif self.action == "REPLACE_TYPE":
+            if (
+                self.replacement_text is not None
+                or self.replacement_type not in _LABEL_TO_ENTITY_TYPE
+            ):
+                raise ValueError("REPLACE_TYPE requires only replacement_type")
+        elif self.replacement_text is not None or self.replacement_type is not None:
             raise ValueError("KEEP and DROP must not include replacement fields")
 
 
@@ -566,40 +563,21 @@ def project_phase1_quoted_proposals(
     evidence_id: str,
     source_offset: int = 0,
 ) -> tuple[list[EntityProposal], list[dict[str, Any]]]:
-    """Project quotes to all matching occurrences and preserve optional context anchors."""
+    """Project each quote to every exact raw-text occurrence.
+
+    INVARIANT: recall output contains no positional hints. Ambiguous repeated
+    mentions remain separate local proposals for later verification.
+    """
 
     projected: list[EntityProposal] = []
     rejected: list[dict[str, Any]] = []
     for index, proposal in enumerate(proposals):
-        exact_occurrences = _exact_occurrences(source_text, proposal.text)
-        occurrences = exact_occurrences
-        if proposal.left_context:
-            occurrences = [
-                start
-                for start in occurrences
-                if source_text[max(0, start - len(proposal.left_context)) : start].endswith(
-                    proposal.left_context
-                )
-            ]
-        if proposal.right_context:
-            occurrences = [
-                start
-                for start in occurrences
-                if source_text[start + len(proposal.text) :].startswith(proposal.right_context)
-            ]
-        context_projection = "matched"
-        if not occurrences and exact_occurrences:
-            # MODEL: exact quotation is the offset authority. Context anchors are only optional
-            # disambiguation hints, and local chat checkpoints sometimes copy a whole clause or
-            # invent spacing around an otherwise exact mention. Agreement gates still prevent a
-            # single recovered quote from entering final output.
-            occurrences = exact_occurrences
-            context_projection = "fallback_to_all_exact_occurrences"
+        occurrences = _exact_occurrences(source_text, proposal.text)
         if not occurrences:
             rejected.append(
                 {
                     "proposal_index": index,
-                    "reason": "quote_or_context_not_found",
+                    "reason": "exact_quote_not_found",
                     "text": proposal.text,
                     "type": proposal.entity_type,
                 }
@@ -613,17 +591,12 @@ def project_phase1_quoted_proposals(
                 span=(global_start, global_end),
                 candidate_types=(entity_type,),
                 source=source,
-                score=proposal.confidence,
+                # MODEL: recall models are not trusted to self-calibrate.
+                score=_MODEL_PROPOSAL_CONFIDENCE,
                 evidence_ids=(evidence_id,),
-                features=tuple(
-                    sorted(
-                        (
-                            ("left_context", proposal.left_context),
-                            ("quoted_text", proposal.text),
-                            ("right_context", proposal.right_context),
-                            ("context_projection", context_projection),
-                        )
-                    )
+                features=(
+                    ("projection", "all_exact_occurrences"),
+                    ("quoted_text", proposal.text),
                 ),
             )
             # INVARIANT: offsets are calculated only from an exact source quote.
@@ -696,10 +669,8 @@ def apply_phase1_adjudication(
     source_text: str,
     candidates: Sequence[Phase1AdjudicationCandidate],
     decisions: Sequence[Phase1AdjudicationDecision],
-    *,
-    minimum_confidence: float,
 ) -> tuple[EntityProposal, ...]:
-    """Apply decisions locally; replacement quotes must overlap the original candidate."""
+    """Apply verifier actions locally without accepting model offsets."""
 
     by_id = {candidate.proposal_id: candidate for candidate in candidates}
     if len(by_id) != len(candidates):
@@ -712,39 +683,47 @@ def apply_phase1_adjudication(
         decision = decision_by_id.get(proposal_id)
         if decision is None or decision.action == "DROP":
             continue
-        if decision.confidence < minimum_confidence:
-            continue
-        if decision.evidence_quote not in source_text:
-            continue
         if decision.action == "KEEP":
             output.append(
                 EntityProposal(
                     span=candidate.span,
                     candidate_types=(_LABEL_TO_ENTITY_TYPE[candidate.entity_type],),
                     source="qwen.adjudicated",
-                    score=decision.confidence,
+                    score=_MODEL_PROPOSAL_CONFIDENCE,
                     evidence_ids=(proposal_id,),
                     features=(("action", "KEEP"),),
                 )
             )
             continue
-        assert decision.replacement_text is not None
-        assert decision.replacement_type is not None
-        replacement_span = _overlapping_quote_span(
-            source_text,
-            decision.replacement_text,
-            candidate.span,
-        )
-        if replacement_span is None:
+        if decision.action == "REPLACE_BOUNDARY":
+            assert decision.replacement_text is not None
+            replacement_span = _overlapping_quote_span(
+                source_text,
+                decision.replacement_text,
+                candidate.span,
+            )
+            if replacement_span is None:
+                continue
+            output.append(
+                EntityProposal(
+                    span=replacement_span,
+                    candidate_types=(_LABEL_TO_ENTITY_TYPE[candidate.entity_type],),
+                    source="qwen.adjudicated",
+                    score=_MODEL_PROPOSAL_CONFIDENCE,
+                    evidence_ids=(proposal_id,),
+                    features=(("action", "REPLACE_BOUNDARY"),),
+                )
+            )
             continue
+        assert decision.replacement_type is not None
         output.append(
             EntityProposal(
-                span=replacement_span,
+                span=candidate.span,
                 candidate_types=(_LABEL_TO_ENTITY_TYPE[decision.replacement_type],),
                 source="qwen.adjudicated",
-                score=decision.confidence,
+                score=_MODEL_PROPOSAL_CONFIDENCE,
                 evidence_ids=(proposal_id,),
-                features=(("action", "REPLACE"),),
+                features=(("action", "REPLACE_TYPE"),),
             )
         )
     return _deduplicate_entity_proposals(output)
@@ -759,7 +738,7 @@ def build_phase1_qwen_extraction_messages(
     schema = (
         '{"entities":[{"text":"exact quote","type":"'
         + "|".join(target_types)
-        + '","left_context":"","right_context":""}]}'
+        + '"}]}'
     )
     return (
         ChatMessage(role="system", content=_SYSTEM_PROMPT),
@@ -795,7 +774,7 @@ def build_phase1_qwen_review_messages(
     schema = (
         '{"entities":[{"text":"exact missing quote",'
         '"type":"TRIỆU_CHỨNG|TÊN_XÉT_NGHIỆM|KẾT_QUẢ_XÉT_NGHIỆM|'
-        'CHẨN_ĐOÁN|THUỐC","left_context":"","right_context":""}]}'
+        'CHẨN_ĐOÁN|THUỐC"}]}'
     )
     return (
         ChatMessage(role="system", content=_REVIEW_SYSTEM_PROMPT),
@@ -821,7 +800,6 @@ def build_phase1_qwen_adjudication_messages(
             "text": item.text,
             "type": item.entity_type,
             "sources": list(item.sources),
-            "confidence": item.confidence,
         }
         for item in candidates
     ]
@@ -830,11 +808,12 @@ def build_phase1_qwen_adjudication_messages(
         ChatMessage(
             role="user",
             content=(
-                "Xét từng proposal. KEEP nếu span/type đúng; DROP nếu không phải entity; "
-                "REPLACE chỉ khi có exact replacement quote trong SOURCE. evidence_quote phải "
-                "là exact quote cùng clause. Trả JSON "
-                '{"decisions":[{"proposal_id":"...","action":"KEEP|DROP|REPLACE",'
-                '"confidence":0.0,"evidence_quote":"...",'
+                "Xét từng proposal. Chỉ trả verdict, không giải thích và không trả offset. "
+                "KEEP khi span/type đúng; DROP khi không phải entity; REPLACE_BOUNDARY khi chỉ "
+                "boundary sai và replacement_text là exact quote liên tục trong SOURCE; "
+                "REPLACE_TYPE khi chỉ type sai. Trả JSON "
+                '{"decisions":[{"proposal_id":"...",'
+                '"action":"KEEP|DROP|REPLACE_BOUNDARY|REPLACE_TYPE",'
                 '"replacement_text":null,"replacement_type":null}]}.\n'
                 f"PROPOSALS={json.dumps(serialized, ensure_ascii=False)}\n"
                 f"SOURCE_START\n{source_text}\nSOURCE_END"
@@ -915,6 +894,11 @@ def _parse_quoted_proposals(
             rejected.append({"proposal_index": index, "reason": "not_an_object"})
             continue
         try:
+            unexpected_fields = set(row) - {"text", "type"}
+            if unexpected_fields:
+                raise ValueError(
+                    "unexpected_fields:" + ",".join(sorted(unexpected_fields))
+                )
             entity_type = str(row.get("type", ""))
             if entity_type not in _LABEL_TO_ENTITY_TYPE:
                 raise ValueError("invalid_type")
@@ -922,18 +906,6 @@ def _parse_quoted_proposals(
                 Phase1QuotedProposal(
                     text=str(row.get("text", "")),
                     entity_type=entity_type,  # type: ignore[arg-type]
-                    # MODEL: self-reported confidence copied the schema placeholder in Qwen3.
-                    # Exact quote projection receives a fixed source score; independent pass or
-                    # support agreement remains the actual promotion signal.
-                    confidence=_MODEL_PROPOSAL_CONFIDENCE,
-                    left_context=_bounded_context(
-                        row.get("left_context", ""),
-                        side="left",
-                    ),
-                    right_context=_bounded_context(
-                        row.get("right_context", ""),
-                        side="right",
-                    ),
                 )
             )
         except (TypeError, ValueError) as error:
@@ -1029,17 +1001,6 @@ def _find_entity_array_start(raw_response: str) -> int:
     return min(starts)
 
 
-def _bounded_context(value: Any, *, side: Literal["left", "right"]) -> str:
-    """Retain only the context nearest the quote without trusting model offsets."""
-
-    text = str(value)
-    if len(text) <= _MAX_CONTEXT_CHARACTERS:
-        return text
-    if side == "left":
-        return text[-_MAX_CONTEXT_CHARACTERS:]
-    return text[:_MAX_CONTEXT_CHARACTERS]
-
-
 def _parse_adjudication_decisions(
     value: Any,
 ) -> tuple[Phase1AdjudicationDecision, ...]:
@@ -1049,8 +1010,24 @@ def _parse_adjudication_decisions(
     for row in value["decisions"]:
         if not isinstance(row, Mapping):
             raise StructuredResponseError("Adjudication decisions must be objects")
+        unexpected_fields = set(row) - {
+            "proposal_id",
+            "action",
+            "replacement_text",
+            "replacement_type",
+        }
+        if unexpected_fields:
+            raise StructuredResponseError(
+                "Unexpected adjudication fields: "
+                + ", ".join(sorted(unexpected_fields))
+            )
         action = str(row.get("action", ""))
-        if action not in {"KEEP", "DROP", "REPLACE"}:
+        if action not in {
+            "KEEP",
+            "DROP",
+            "REPLACE_BOUNDARY",
+            "REPLACE_TYPE",
+        }:
             raise StructuredResponseError(f"Invalid adjudication action: {action}")
         replacement_type = row.get("replacement_type")
         if replacement_type is not None and replacement_type not in _LABEL_TO_ENTITY_TYPE:
@@ -1059,8 +1036,6 @@ def _parse_adjudication_decisions(
             Phase1AdjudicationDecision(
                 proposal_id=str(row.get("proposal_id", "")),
                 action=action,  # type: ignore[arg-type]
-                confidence=float(row.get("confidence", 0.0)),
-                evidence_quote=str(row.get("evidence_quote", "")),
                 replacement_text=(
                     None if row.get("replacement_text") is None else str(row["replacement_text"])
                 ),

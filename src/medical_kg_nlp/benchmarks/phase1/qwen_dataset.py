@@ -27,7 +27,7 @@ __all__ = [
     "build_phase1_qwen_instruction_dataset",
 ]
 
-_SCHEMA_VERSION = "phase1-qwen-instructions.v1"
+_SCHEMA_VERSION = "phase1-qwen-instructions.v2"
 _FORBIDDEN_SOURCE_MARKERS = (
     "round2",
     "round-2",
@@ -243,9 +243,6 @@ def _extraction_record(row: Mapping[str, Any]) -> dict[str, Any]:
         unique_targets[key] = {
             "text": key[0],
             "type": key[1],
-            "left_context": "",
-            "right_context": "",
-            "confidence": 1.0,
         }
     assistant = json.dumps(
         {
@@ -320,9 +317,6 @@ def _build_review_records(
                         {
                             "text": str(entity["text"]),
                             "type": str(entity["type"]),
-                            "left_context": "",
-                            "right_context": "",
-                            "confidence": 1.0,
                         }
                         for entity in missing
                     ]
@@ -485,22 +479,29 @@ def _build_hard_negative_records(
                 sources=("xlmr",),
                 confidence=float(entity.get("confidence", 0.0)),
             )
-            if len(overlapping_gold) == 1:
-                gold_start, gold_end, gold_type = overlapping_gold[0]
+            if (
+                len(overlapping_gold) == 1
+                and overlapping_gold[0][2] == predicted_type
+            ):
+                gold_start, gold_end, _ = overlapping_gold[0]
                 decision = Phase1AdjudicationDecision(
                     proposal_id=candidate.proposal_id,
-                    action="REPLACE",
-                    confidence=1.0,
-                    evidence_quote=text[gold_start:gold_end],
+                    action="REPLACE_BOUNDARY",
                     replacement_text=text[gold_start:gold_end],
-                    replacement_type=gold_type,  # type: ignore[arg-type]
+                )
+            elif len(overlapping_gold) == 1 and (
+                overlapping_gold[0][0],
+                overlapping_gold[0][1],
+            ) == (start, end):
+                decision = Phase1AdjudicationDecision(
+                    proposal_id=candidate.proposal_id,
+                    action="REPLACE_TYPE",
+                    replacement_type=overlapping_gold[0][2],  # type: ignore[arg-type]
                 )
             else:
                 decision = Phase1AdjudicationDecision(
                     proposal_id=candidate.proposal_id,
                     action="DROP",
-                    confidence=1.0,
-                    evidence_quote=text[start:end],
                 )
             messages = build_phase1_qwen_adjudication_messages(text, (candidate,))
             assistant = json.dumps(
@@ -509,8 +510,6 @@ def _build_hard_negative_records(
                         {
                             "proposal_id": decision.proposal_id,
                             "action": decision.action,
-                            "confidence": decision.confidence,
-                            "evidence_quote": decision.evidence_quote,
                             "replacement_text": decision.replacement_text,
                             "replacement_type": decision.replacement_type,
                         }
