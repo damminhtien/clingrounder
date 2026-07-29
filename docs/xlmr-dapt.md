@@ -61,7 +61,8 @@ can dominate this run. Prefetch the immutable model revision before enabling
 
 ```bash
 hf download FacebookAI/xlm-roberta-base \
-  --revision e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
+  --revision e73636d4f797dec63c3081bb6ed5c7b0bb3f2089 \
+  --cache-dir .cache/medical-kg/model-training
 ```
 
 The repository commit must be clean. Run from the repository root with the

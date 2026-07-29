@@ -159,13 +159,19 @@ class XlmrDaptRunSpec:
 
     @property
     def prefetch_command(self) -> tuple[str, ...]:
-        return (
+        command: tuple[str, ...] = (
             "hf",
             "download",
             self.training.model_id,
             "--revision",
             self.training.revision,
         )
+        if self.training.cache_dir is not None:
+            command += (
+                "--cache-dir",
+                self.relative_path(self.training.cache_dir),
+            )
+        return command
 
     def relative_path(self, path: str | Path) -> str:
         try:

@@ -77,7 +77,7 @@ def test_dapt_run_rejects_round2_as_synonym_source(tmp_path: Path) -> None:
         load_xlmr_dapt_run_spec(config)
 
 
-def test_dapt_cli_commands_are_discoverable() -> None:
+def test_dapt_cli_commands_are_discoverable(tmp_path: Path) -> None:
     parser = build_parser()
 
     inspect_args = parser.parse_args(
@@ -99,6 +99,12 @@ def test_dapt_cli_commands_are_discoverable() -> None:
     assert inspect_args.handler == "model_inspect_xlmr_dapt_run"
     assert train_args.handler == "model_train_xlmr_dapt_run"
     assert train_args.max_steps == 1
+
+    spec = load_xlmr_dapt_run_spec(_write_run_fixture(tmp_path))
+    assert spec.prefetch_command[-2:] == (
+        "--cache-dir",
+        ".cache/model-training",
+    )
 
 
 def test_dapt_artifact_verifier_binds_model_and_objective_provenance(
@@ -283,6 +289,7 @@ synonym_pairs:
       sha256: {_sha256(terminology)}
 training:
   output_dir: outputs/model
+  cache_dir: .cache/model-training
   max_length: 64
   mlm_batch_size: 2
   contrastive_batch_size: 2
