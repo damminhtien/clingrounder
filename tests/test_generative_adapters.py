@@ -72,6 +72,18 @@ def test_model_budget_rejects_combined_qwen_and_xlmr_above_limit() -> None:
         )
 
 
+def test_model_budget_rejects_unknown_artifact_kind() -> None:
+    with pytest.raises(ValueError, match="Model kind"):
+        ModelBudgetEntry(
+            artifact_id="invalid",
+            model_id="example/invalid",
+            revision=_REVISION,
+            parameter_count=1,
+            kind="future",  # type: ignore[arg-type]
+            roles=("verifier",),
+        )
+
+
 def test_peft_runtime_loads_verified_adapter_without_merging(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

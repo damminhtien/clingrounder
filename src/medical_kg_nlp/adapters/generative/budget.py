@@ -31,6 +31,8 @@ class ModelBudgetEntry:
     def __post_init__(self) -> None:
         if not self.artifact_id.strip() or not self.model_id.strip():
             raise ValueError("Model budget entries require artifact_id and model_id")
+        if self.kind not in {"base", "adapter", "auxiliary"}:
+            raise ValueError("Model kind must be base, adapter, or auxiliary")
         # MODEL: mutable branches cannot prove which checkpoint produced a submission.
         if _COMMIT_SHA.fullmatch(self.revision) is None:
             raise ValueError("Model revision must be a full 40-character commit SHA")

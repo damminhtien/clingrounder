@@ -7,6 +7,10 @@ import json
 from pathlib import Path
 from typing import Literal, cast
 
+from medical_kg_nlp.adapters.generative import (
+    load_inference_budget_spec,
+    verify_inference_budget_spec,
+)
 from medical_kg_nlp.training import (
     CausalQLoRARunSpec,
     TokenClassifierRunSpec,
@@ -38,6 +42,7 @@ __all__ = [
     "build_dapt_corpus_run",
     "finalize_causal_qlora_run",
     "inspect_causal_qlora_run",
+    "inspect_inference_budget",
     "inspect_token_classifier_run",
     "inspect_xlmr_dapt_run",
     "train_causal_qlora_run",
@@ -46,6 +51,17 @@ __all__ = [
     "train_xlmr_dapt_run",
     "validate_token_dataset",
 ]
+
+
+def inspect_inference_budget(args: argparse.Namespace) -> int:
+    """Verify active model bytes and reserved capacity under one hard limit."""
+
+    report = verify_inference_budget_spec(load_inference_budget_spec(args.config))
+    output = getattr(args, "output", None)
+    if output is not None:
+        write_json(Path(output), report)
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
 
 
 def build_dapt_corpus_run(args: argparse.Namespace) -> int:

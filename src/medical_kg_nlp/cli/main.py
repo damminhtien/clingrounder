@@ -126,6 +126,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.model",
         "validate_token_dataset",
     ),
+    "model_inspect_inference_budget": (
+        "medical_kg_nlp.cli.commands.model",
+        "inspect_inference_budget",
+    ),
     "model_build_dapt_corpus": (
         "medical_kg_nlp.cli.commands.model",
         "build_dapt_corpus_run",

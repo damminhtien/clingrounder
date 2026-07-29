@@ -985,6 +985,14 @@ def _model_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser])
     model = commands.add_parser("model", help="Validate datasets and train local models.")
     operations = model.add_subparsers(dest="model_command", required=True)
 
+    inspect_budget = operations.add_parser(
+        "inspect-inference-budget",
+        help="Verify exact active parameter counts and reserved model capacity.",
+    )
+    inspect_budget.set_defaults(handler="model_inspect_inference_budget")
+    inspect_budget.add_argument("--config", required=True)
+    inspect_budget.add_argument("--output")
+
     build_dapt = operations.add_parser(
         "build-dapt-corpus",
         help="Build source-pinned MLM lanes, including an isolated Round 2 lane.",

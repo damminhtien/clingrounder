@@ -1,0 +1,59 @@
+# MODEL: active artifacts use measured counts; future learned components reserve hard upper bounds.
+schema_version: inference-model-budget-spec.v1
+run_root: ../..
+maximum_parameters: 8900000000
+
+active:
+  - artifact_id: qwen3-8b
+    model_id: Qwen/Qwen3-8B
+    revision: b968826d9c46dd6066d109eabc6255188de91218
+    parameter_count: 8190735360
+    kind: base
+    roles: [adjudication, assertion, audit, candidate_rerank, recall, targeted, verifier]
+    evidence:
+      kind: manifest
+      path: outputs/models/vast-backups/phase1-qwen3-8b-qlora-specialize-2026-07-28/run_manifest.json
+      sha256: 2fed95f6e2e19bfb27cf350fc80bf1a97ab3f3567a44a4d1368fbad3a8c4c73d
+      parameter_field: model.parameter_count
+
+  - artifact_id: target-five-type-xlmr
+    model_id: local/phase1-five-type-xlmr-qa-edu-e12-lr5e5
+    revision: 87c8f3ed79bf42f1afcca43b8da28cdd0f7bf8e9
+    parameter_count: 277461515
+    kind: auxiliary
+    roles: [boundary_verifier, ner, type_verifier]
+    evidence:
+      kind: safetensors
+      path: outputs/models/phase1-five-type-xlmr-qa-edu-e12-lr5e5-2026-07-27/final-model/model.safetensors
+      sha256: e77051f4f78f5d27a176e6c05598f504d22b50d7b74fd0f5a754b5380e840be3
+
+  - artifact_id: vietmed-ner-xlmr-base
+    model_id: leduckhai/VietMed-NER
+    revision: cccffb7de14423114f7d4bafc9f736b9d866e446
+    parameter_count: 277481509
+    kind: auxiliary
+    roles: [hard_negative, verifier]
+    evidence:
+      kind: manifest
+      path: outputs/models/phase1-vietmed-ner-round2-support/manifest.json
+      sha256: a5ac3f1d03f4ee8722d1d93bc0037f5c4f42059fa8d48775189d491a2c739d05
+      parameter_field: run_spec.model.parameter_count
+
+  - artifact_id: qwen-ie-lora
+    model_id: local/qwen3-phase1-qlora-specialize
+    revision: 2b3a98d4fa312ced50331f971fa6ec43a927e590
+    parameter_count: 43646976
+    kind: adapter
+    roles: [adjudication, assertion, recall, targeted]
+    evidence:
+      kind: safetensors
+      path: outputs/models/vast-backups/phase1-qwen3-8b-qlora-specialize-2026-07-28/final-adapter/adapter_model.safetensors
+      sha256: b2b2f09686e7b3ca23fafd08bc15ce200535ca3e303c93a70d5603399eef97f1
+
+reservations:
+  - artifact_id: qwen-link-lora
+    maximum_parameters: 32000000
+    roles: [candidate_rerank]
+  - artifact_id: calibrated-task-heads
+    maximum_parameters: 5000000
+    roles: [assertion, boundary, candidate, fusion, type]
