@@ -127,6 +127,7 @@ class Phase1MaxScorePipeline:
                 raw_rows,
                 source_text_by_document,
                 self.dictionary,
+                preserve_proposal_metadata=True,
             )
             canonical_sources[source_name] = canonical
             source_decisions.extend(

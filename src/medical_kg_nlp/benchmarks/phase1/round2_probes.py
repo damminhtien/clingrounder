@@ -560,12 +560,15 @@ def canonicalize_full_phase1_source(
     rows_by_doc: Mapping[str, list[dict[str, Any]]],
     source_text_by_doc: Mapping[str, str],
     dictionary: DictionaryStore,
+    *,
+    preserve_proposal_metadata: bool = False,
 ) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]], dict[str, int]]:
     """Preserve a source entity projection while removing non-canonical candidates.
 
     This adapter exists for externally produced, already scored artifacts. It does not infer new
     codes or repair spans. Candidate values survive only when the pinned terminology contains the
-    expected Phase 1 code system for that entity type.
+    expected Phase 1 code system for that entity type. Proposal fusion may opt into retaining
+    calibrated evidence fields; ordinary submission paths keep the strict five-field schema.
     """
 
     if set(rows_by_doc) != set(source_text_by_doc):
@@ -631,6 +634,12 @@ def canonicalize_full_phase1_source(
                 "candidates": retained,
                 "position": [start, end],
             }
+            if preserve_proposal_metadata:
+                # MODEL: confidence, source-task labels, and support-only ownership are verifier
+                # features. They are evidence, not Phase 1 output fields, so retention is opt-in.
+                for key in ("confidence", "score", "source_label", "support_only"):
+                    if key in row:
+                        canonical[key] = row[key]
             canonical_rows.append(canonical)
             seen_identities[(document_id, *_identity_key(canonical))] += 1
         output[document_id] = sorted(canonical_rows, key=_row_sort_key)

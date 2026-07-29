@@ -145,6 +145,47 @@ def test_max_score_pipeline_blocks_vietmed_only_source_task_proposal() -> None:
     )
 
 
+def test_max_score_pipeline_retains_verifier_confidence_and_support_metadata() -> None:
+    text = "Bệnh nhân đau ngực."
+    start = text.index("đau ngực")
+    documents = [ClinicalDocument(document_id="1", text=text)]
+    qwen = _row("đau ngực", "TRIỆU_CHỨNG", start)
+    vietmed = _row("đau ngực", "TRIỆU_CHỨNG", start)
+    vietmed.update(
+        {
+            "confidence": 0.93,
+            "source_label": "DISEASESYMTOM",
+            "support_only": True,
+        }
+    )
+    pipeline = Phase1MaxScorePipeline(
+        verifier=_accept_all_verifier(),
+        source_roles={
+            "qwen": ProposalSourceRole.LLM,
+            "vietmed": ProposalSourceRole.VERIFIER,
+        },
+        budget_manifest=_budget_manifest(),
+        dictionary=_dictionary(),
+        candidate_source_priority=("qwen", "vietmed"),
+    )
+
+    result = pipeline.run(
+        documents,
+        {
+            "qwen": {"1": [qwen]},
+            "vietmed": {"1": [vietmed]},
+        },
+    )
+
+    evidence = result.proposal_matrix["matrix"][0]["source_evidence"]["vietmed"]
+    assert evidence == {
+        "confidence": 0.93,
+        "source_labels": ["DISEASESYMTOM"],
+        "support_only": True,
+    }
+    assert len(result.rows_by_document["1"]) == 1
+
+
 def _row(
     text: str,
     entity_type: str,
