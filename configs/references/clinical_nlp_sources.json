@@ -1,0 +1,188 @@
+{
+  "schema_version": "clinical-nlp-reference-registry.v1",
+  "sources": [
+    {
+      "source_id": "medspacy",
+      "repository_url": "https://github.com/medspacy/medspacy.git",
+      "revision": "b7bb7d82f2e8fbadc9ab26d6b4c37578f8883c2c",
+      "checkout": "medspacy",
+      "license_status": "verified",
+      "license_spdx": "MIT",
+      "license_evidence": ["LICENSE"],
+      "inspected_paths": [
+        "medspacy/context/context_rule.py",
+        "medspacy/context/context_graph.py",
+        "medspacy/section_detection/section_rule.py"
+      ],
+      "adopt": [
+        "typed modifier rules",
+        "explicit termination and pseudo rules",
+        "modifier-target evidence graph",
+        "section rule metadata"
+      ],
+      "reject": ["spaCy-owned offsets", "English resource files"]
+    },
+    {
+      "source_id": "negbio",
+      "repository_url": "https://github.com/ncbi-nlp/NegBio.git",
+      "revision": "073199e2792824740e89844a59c13d3d40ce4d23",
+      "checkout": "negbio",
+      "license_status": "verified",
+      "license_spdx": "LicenseRef-US-Government-Public-Domain",
+      "license_evidence": ["LICENSE.txt"],
+      "inspected_paths": [
+        "negbio/neg/neg_detector.py",
+        "negbio/neg/semgraph.py",
+        "negbio/ngrex/pattern.py"
+      ],
+      "adopt": [
+        "dependency evidence as an optional scope signal",
+        "target-node anchored patterns",
+        "parse failure must fail open to deterministic linear scope"
+      ],
+      "reject": ["English dependency patterns", "NetworkX in the core assertion path"]
+    },
+    {
+      "source_id": "ctakes",
+      "repository_url": "https://github.com/apache/ctakes.git",
+      "revision": "660b1759008f481ed0ca0057db6d1dc55f9346ac",
+      "checkout": "ctakes",
+      "license_status": "verified",
+      "license_spdx": "Apache-2.0",
+      "license_evidence": ["LICENSE", "NOTICE"],
+      "inspected_paths": [
+        "ctakes-assertion/src/main/java/org/apache/ctakes/assertion/eval/AssertionEvaluation.java",
+        "ctakes-assertion/src/main/java/org/apache/ctakes/assertion/pipelines/GenerateDependencyRepresentation.java"
+      ],
+      "adopt": [
+        "independent assertion attributes",
+        "feature extraction separated from decoders",
+        "per-attribute evaluation and domain adaptation"
+      ],
+      "reject": ["UIMA runtime", "Java type system", "English lexical features"]
+    },
+    {
+      "source_id": "sapbert",
+      "repository_url": "https://github.com/cambridgeltl/sapbert.git",
+      "revision": "1a528f66d277d91f99b6463b43ce5309a9279506",
+      "checkout": "sapbert",
+      "license_status": "verified",
+      "license_spdx": "MIT",
+      "license_evidence": ["LICENSE"],
+      "inspected_paths": [
+        "src/data_loader.py",
+        "src/metric_learning.py",
+        "evaluation/eval.py",
+        "training_data/README.md"
+      ],
+      "adopt": [
+        "same-concept synonym pair curriculum",
+        "bounded metric-learning datasets",
+        "recall-at-k evaluation before reranking"
+      ],
+      "reject": ["UMLS data bundled by reference", "unbounded pairwise alias expansion"]
+    },
+    {
+      "source_id": "biomedical_entity_linking",
+      "repository_url": "https://github.com/davidkartchner/biomedical-entity-linking.git",
+      "revision": "d67188dae703664dc94b9911dd4eb2b9e17698fa",
+      "checkout": "biomedical-entity-linking",
+      "license_status": "partial",
+      "license_spdx": null,
+      "license_evidence": ["arboel/LICENSE"],
+      "inspected_paths": [
+        "bioel/bioel/evaluate.py",
+        "bioel/bioel/utils/solve_abbreviation/solve_abbreviations.py",
+        "bioel/bioel/models/arboel/crossencoder/data/top_cands.py"
+      ],
+      "adopt": [
+        "common candidate benchmark contract",
+        "strict and relaxed multi-code ranking metrics",
+        "abbreviation expansion before retrieval"
+      ],
+      "reject": ["code copying outside clearly licensed subtrees", "runtime shell cloning"]
+    },
+    {
+      "source_id": "prompt_bioel",
+      "repository_url": "https://github.com/HITsz-TMG/Prompt-BioEL.git",
+      "revision": "482290ad7c8a957bb18385cf85c0090e9bd22d01",
+      "checkout": "prompt-bioel",
+      "license_status": "unverified",
+      "license_spdx": null,
+      "license_evidence": [],
+      "inspected_paths": ["data_disambiguation.py", "loss.py", "disambiguation.py"],
+      "adopt": [
+        "cross-candidate listwise input contract",
+        "multiple valid candidates represented as a positive set",
+        "candidate order randomization during training"
+      ],
+      "reject": ["code copying", "English prompt text", "fixed candidate count at runtime"]
+    },
+    {
+      "source_id": "medxn",
+      "repository_url": "https://github.com/OHNLP/MedXN.git",
+      "revision": "74e0fbd52d6fb2ee03a2e590b3f6eb47996d0ad9",
+      "checkout": "medxn",
+      "license_status": "file_level",
+      "license_spdx": "Apache-2.0",
+      "license_evidence": [
+        "src/main/java/org/ohnlp/medxn/ae/MedAttrAnnotator.java",
+        "src/main/java/org/ohnlp/medxn/ae/MedNormRxCUIAnnotator.java"
+      ],
+      "inspected_paths": [
+        "src/main/java/org/ohnlp/medxn/ae/MedAttrAnnotator.java",
+        "src/main/java/org/ohnlp/medxn/ae/MedNormRxCUIAnnotator.java"
+      ],
+      "adopt": [
+        "separate drug span from structured medication attributes",
+        "resource-backed attribute patterns",
+        "compose RxNorm evidence from ingredient, strength and dose form"
+      ],
+      "reject": ["UIMA runtime", "Java core", "English regex inventory"]
+    },
+    {
+      "source_id": "vietmed_ner",
+      "repository_url": "https://github.com/leduckhai/MultiMed.git",
+      "revision": "ea25e7f81fe347047622e4c53857a9f7d170699e",
+      "checkout": "multimed",
+      "license_status": "user_authorized",
+      "license_spdx": null,
+      "license_evidence": [],
+      "inspected_paths": [
+        "VietMed-NER/README.md",
+        "VietMed-NER/bert_based_models.py",
+        "VietMed-NER/modified_seqeval.py"
+      ],
+      "adopt": [
+        "Vietnamese medical encoder curriculum",
+        "reference-text and ASR-noise evaluation slices",
+        "word-to-subword label alignment"
+      ],
+      "reject": [
+        "direct mapping of 18 source labels to target labels",
+        "source test split for target calibration",
+        "model-produced offsets"
+      ]
+    },
+    {
+      "source_id": "vihealthbert",
+      "repository_url": "https://huggingface.co/demdecuong/vihealthbert-base-word",
+      "revision": "f89e80b461e86f9cfc1c84019bd819830c24b6c5",
+      "checkout": "vihealthbert-base-word",
+      "license_status": "unverified",
+      "license_spdx": null,
+      "license_evidence": [],
+      "inspected_paths": ["README.md", "config.json"],
+      "adopt": [
+        "Vietnamese healthcare representation benchmark",
+        "encoder-only verifier initialization",
+        "domain-adaptive pretraining comparison"
+      ],
+      "reject": [
+        "direct NER offsets after word segmentation",
+        "Java VnCoreNLP in the core runtime",
+        "unpinned model loading"
+      ]
+    }
+  ]
+}
