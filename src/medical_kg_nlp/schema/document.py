@@ -7,6 +7,10 @@ class Section:
     title: str
     span: tuple[int, int]
     text: str
+    category: str | None = None
+    heading_span: tuple[int, int] | None = None
+    parent_title: str | None = None
+    rule_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -21,4 +25,3 @@ class ClinicalDocument:
     document_id: str
     text: str
     metadata: dict[str, str] = field(default_factory=dict)
-
