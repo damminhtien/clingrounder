@@ -26,6 +26,14 @@ from medical_kg_nlp.training.dapt_corpus import (
     build_dapt_corpus,
     load_dapt_corpus_build_spec,
 )
+from medical_kg_nlp.training.dapt_run_spec import (
+    DaptLaneInput,
+    XlmrDaptRunSpec,
+    XlmrDaptTrainingConfig,
+    inspect_xlmr_dapt_inputs,
+    load_xlmr_dapt_run_spec,
+    verify_xlmr_dapt_run_artifact,
+)
 from medical_kg_nlp.training.huggingface_token_classifier import (
     fingerprint_model_directory,
     inspect_token_classifier_training_inputs,
@@ -68,6 +76,10 @@ from medical_kg_nlp.training.token_labels import (
     find_unaligned_annotations,
     project_record_to_token_windows,
 )
+from medical_kg_nlp.training.xlmr_dapt import (
+    train_xlmr_dapt,
+    xlmr_dapt_input_provenance,
+)
 from medical_kg_nlp.training.terminology_pairs import (
     SynonymPairMode,
     TerminologyPairConfig,
@@ -84,6 +96,7 @@ __all__ = [
     "DaptCorpusBuildSpec",
     "DaptCorpusLaneKind",
     "DaptCorpusLaneSpec",
+    "DaptLaneInput",
     "FastTokenizerPort",
     "GPURequirements",
     "InstructionDatasetReport",
@@ -101,6 +114,8 @@ __all__ = [
     "TokenClassifierTrainingConfig",
     "TokenClassifierRunSpec",
     "TokenizedTrainingWindow",
+    "XlmrDaptRunSpec",
+    "XlmrDaptTrainingConfig",
     "build_bio_label_vocabulary",
     "build_dapt_corpus",
     "build_listwise_linking_record",
@@ -113,23 +128,28 @@ __all__ = [
     "fingerprint_model_directory",
     "find_unaligned_annotations",
     "inspect_token_classifier_training_inputs",
+    "inspect_xlmr_dapt_inputs",
     "inspect_local_runtime",
     "inspect_causal_qlora_inputs",
     "iter_span_training_records",
     "load_causal_instruction_records",
     "load_causal_qlora_run_spec",
     "load_dapt_corpus_build_spec",
+    "load_xlmr_dapt_run_spec",
     "project_record_to_token_windows",
     "render_listwise_input",
     "load_token_classifier_run_spec",
     "scan_span_dataset",
     "shuffle_listwise_candidates",
     "train_huggingface_token_classifier",
+    "train_xlmr_dapt",
     "tokenize_causal_instruction",
     "train_causal_qlora",
     "validate_span_dataset_manifest",
     "verify_token_classifier_artifact",
     "verify_token_classifier_run_artifact",
+    "verify_xlmr_dapt_run_artifact",
     "verify_saved_token_classifier",
     "write_terminology_pair_dataset",
+    "xlmr_dapt_input_provenance",
 ]

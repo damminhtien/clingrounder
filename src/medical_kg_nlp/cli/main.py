@@ -130,6 +130,14 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.model",
         "build_dapt_corpus_run",
     ),
+    "model_inspect_xlmr_dapt_run": (
+        "medical_kg_nlp.cli.commands.model",
+        "inspect_xlmr_dapt_run",
+    ),
+    "model_train_xlmr_dapt_run": (
+        "medical_kg_nlp.cli.commands.model",
+        "train_xlmr_dapt_run",
+    ),
     "model_train_token_classifier": (
         "medical_kg_nlp.cli.commands.model",
         "train_token_classifier",

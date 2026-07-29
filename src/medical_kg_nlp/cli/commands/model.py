@@ -11,18 +11,23 @@ from medical_kg_nlp.training import (
     CausalQLoRARunSpec,
     TokenClassifierRunSpec,
     TokenClassifierTrainingConfig,
+    XlmrDaptRunSpec,
     assert_local_gpu_runtime,
     build_dapt_corpus,
     finalize_causal_qlora_artifact,
     inspect_causal_qlora_inputs,
     inspect_local_runtime,
     inspect_token_classifier_training_inputs,
+    inspect_xlmr_dapt_inputs,
     load_causal_qlora_run_spec,
     load_dapt_corpus_build_spec,
+    load_xlmr_dapt_run_spec,
     load_token_classifier_run_spec,
     train_causal_qlora,
     train_huggingface_token_classifier,
+    train_xlmr_dapt,
     verify_token_classifier_run_artifact,
+    verify_xlmr_dapt_run_artifact,
     verify_saved_token_classifier,
 )
 from medical_kg_nlp.mining.io import write_json
@@ -34,9 +39,11 @@ __all__ = [
     "finalize_causal_qlora_run",
     "inspect_causal_qlora_run",
     "inspect_token_classifier_run",
+    "inspect_xlmr_dapt_run",
     "train_causal_qlora_run",
     "train_token_classifier",
     "train_token_classifier_run",
+    "train_xlmr_dapt_run",
     "validate_token_dataset",
 ]
 
@@ -47,6 +54,143 @@ def build_dapt_corpus_run(args: argparse.Namespace) -> int:
     manifest = build_dapt_corpus(load_dapt_corpus_build_spec(args.config))
     print(json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
+
+
+def inspect_xlmr_dapt_run(args: argparse.Namespace) -> int:
+    """Validate joint DAPT inputs and render a reproducible GPU command."""
+
+    spec = load_xlmr_dapt_run_spec(args.config)
+    manifest_path = spec.training.output_dir / "run_manifest.json"
+    trained_artifact = (
+        verify_xlmr_dapt_run_artifact(spec)
+        if manifest_path.is_file()
+        else {
+            "status": "absent",
+            "manifest": spec.relative_path(manifest_path),
+        }
+    )
+    payload = {
+        "status": "validated_not_executed",
+        "run_id": spec.run_id,
+        "run_spec": {
+            "path": spec.config_relative_path,
+            "path_base": "run_root",
+            "sha256": sha256_file(spec.config_path),
+        },
+        "environment": {
+            "lock_path": spec.relative_path(spec.environment_lock_path),
+            "lock_sha256": spec.environment_lock_sha256,
+            "install_command": ["uv", "sync", "--frozen", "--extra", "ml"],
+        },
+        "inputs": inspect_xlmr_dapt_inputs(spec),
+        "model": {
+            "model_id": spec.training.model_id,
+            "revision": spec.training.revision,
+            "source_url": spec.model_source_url,
+            "license": spec.model_license,
+        },
+        "runtime_requirements": spec.runtime.to_dict(),
+        "local_runtime": inspect_local_runtime(spec.runtime),
+        "trained_artifact": trained_artifact,
+        "commands": {
+            "working_directory": "run_root",
+            "prefetch": list(spec.prefetch_command),
+            "smoke": [
+                "medical-kg",
+                "model",
+                "train-xlmr-dapt-run",
+                "--config",
+                spec.config_relative_path,
+                "--max-steps",
+                "1",
+                "--output-dir",
+                "outputs/smoke/xlmr-dapt",
+            ],
+            "train": [
+                "medical-kg",
+                "model",
+                "train-xlmr-dapt-run",
+                "--config",
+                spec.config_relative_path,
+            ],
+        },
+    }
+    print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def train_xlmr_dapt_run(args: argparse.Namespace) -> int:
+    """Execute joint DAPT only after immutable-input and Linux/CUDA gates pass."""
+
+    spec = load_xlmr_dapt_run_spec(args.config)
+    input_report = inspect_xlmr_dapt_inputs(spec)
+    gpu_runtime = assert_local_gpu_runtime(spec.runtime)
+    output_override = _xlmr_dapt_run_root_path(
+        spec,
+        getattr(args, "output_dir", None),
+    )
+    resume_checkpoint = _xlmr_dapt_run_root_path(
+        spec,
+        getattr(args, "resume_from_checkpoint", None),
+    )
+    max_steps = getattr(args, "max_steps", None)
+    manifest = dict(
+        train_xlmr_dapt(
+            spec.training,
+            mixed_precision=spec.runtime.precision,
+            manifest_root=spec.run_root,
+            resume_from_checkpoint=resume_checkpoint,
+            max_steps_override=max_steps,
+            output_dir_override=output_override,
+        )
+    )
+    output_dir = (
+        spec.training.output_dir if output_override is None else output_override
+    )
+    manifest["run_spec"] = {
+        "path": spec.config_relative_path,
+        "path_base": "run_root",
+        "sha256": sha256_file(spec.config_path),
+        "run_id": spec.run_id,
+    }
+    manifest["environment"] = {
+        "lock_path": spec.relative_path(spec.environment_lock_path),
+        "lock_sha256": spec.environment_lock_sha256,
+        "install_command": ["uv", "sync", "--frozen", "--extra", "ml"],
+    }
+    manifest["input_verification"] = input_report
+    manifest["gpu_runtime"] = gpu_runtime
+    manifest["purpose"] = "smoke" if max_steps is not None else "training"
+    manifest["promotion_eligible"] = max_steps is None
+    write_json(output_dir / "run_manifest.json", manifest)
+    print(
+        json.dumps(
+            {
+                "status": "trained",
+                "run_id": spec.run_id,
+                "manifest": spec.relative_path(output_dir / "run_manifest.json"),
+                "metrics": manifest["metrics"],
+                "gpu_runtime": gpu_runtime,
+                "promotion_eligible": manifest["promotion_eligible"],
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    return 0
+
+
+def _xlmr_dapt_run_root_path(
+    spec: XlmrDaptRunSpec,
+    value: str | None,
+) -> Path | None:
+    if value is None:
+        return None
+    path = Path(value)
+    resolved = path.resolve() if path.is_absolute() else (spec.run_root / path).resolve()
+    spec.relative_path(resolved)
+    return resolved
 
 
 def finalize_causal_qlora_run(args: argparse.Namespace) -> int:

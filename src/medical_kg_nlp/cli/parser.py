@@ -992,6 +992,30 @@ def _model_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser])
     build_dapt.set_defaults(handler="model_build_dapt_corpus")
     build_dapt.add_argument("--config", required=True)
 
+    inspect_dapt = operations.add_parser(
+        "inspect-xlmr-dapt-run",
+        help="Verify joint MLM/contrastive inputs and Round 2 provenance without ML imports.",
+    )
+    inspect_dapt.set_defaults(handler="model_inspect_xlmr_dapt_run")
+    inspect_dapt.add_argument("--config", required=True)
+
+    train_dapt = operations.add_parser(
+        "train-xlmr-dapt-run",
+        help="Validate Linux/CUDA and train one pinned joint XLM-R DAPT run.",
+    )
+    train_dapt.set_defaults(handler="model_train_xlmr_dapt_run")
+    train_dapt.add_argument("--config", required=True)
+    train_dapt.add_argument("--resume-from-checkpoint")
+    train_dapt.add_argument(
+        "--max-steps",
+        type=int,
+        help="Smoke-only optimizer-step override; output is marked non-promotable.",
+    )
+    train_dapt.add_argument(
+        "--output-dir",
+        help="Run-root-relative smoke output; the checked-in training path is unchanged.",
+    )
+
     validate = operations.add_parser(
         "validate-token-dataset",
         help="Validate mined spans and train/evaluation label compatibility.",
