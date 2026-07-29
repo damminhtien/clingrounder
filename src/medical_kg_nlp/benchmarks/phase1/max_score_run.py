@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, cast
 
@@ -43,6 +43,7 @@ from medical_kg_nlp.mining.io import (
     write_jsonl,
     write_text,
 )
+from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
 from medical_kg_nlp.utils.hashing import sha256_file
 from medical_kg_nlp.utils.io import read_yaml
 from medical_kg_nlp.utils.run_output import create_hashed_run_dir
@@ -105,6 +106,7 @@ class Phase1MaxScoreRunSpec:
     expected_count: int
     budget_spec_path: Path
     verifier: PinnedPhase1Artifact
+    proposal_thresholds: tuple[tuple[str, float], ...]
     sources: tuple[Phase1ProposalSourceSpec, ...]
     dictionaries: tuple[PinnedPhase1Artifact, ...]
     candidate_source_priority: tuple[str, ...]
@@ -125,6 +127,16 @@ class Phase1MaxScoreRunSpec:
             raise ValueError("Candidate priority must name every proposal source")
         if not self.dictionaries:
             raise ValueError("Max-score run requires pinned terminology sources")
+        threshold_types = {entity_type for entity_type, _ in self.proposal_thresholds}
+        if threshold_types and threshold_types != set(PHASE1_ALLOWED_TYPES):
+            raise ValueError(
+                "Proposal threshold overrides must define every Phase 1 entity type"
+            )
+        if len(threshold_types) != len(self.proposal_thresholds) or any(
+            not 0.0 <= threshold <= 1.0
+            for _, threshold in self.proposal_thresholds
+        ):
+            raise ValueError("Proposal threshold overrides are invalid")
         if not self.run_label.strip():
             raise ValueError("Max-score run label must be non-empty")
 
@@ -162,6 +174,7 @@ def load_phase1_max_score_run_spec(
         expected_count=int(documents_raw.get("expected_count", 100)),
         budget_spec_path=budget_spec_path,
         verifier=_pinned_artifact(verifier_raw, run_root),
+        proposal_thresholds=_threshold_overrides(raw.get("proposal_thresholds")),
         sources=tuple(
             Phase1ProposalSourceSpec(
                 name=_required_string(row, "name"),
@@ -210,6 +223,18 @@ def run_phase1_max_score(spec: Phase1MaxScoreRunSpec) -> dict[str, Any]:
     if not isinstance(verifier_payload, Mapping):
         raise ValueError("Proposal verifier artifact must be a JSON object")
     verifier = Phase1ProposalVerifier.from_dict(verifier_payload)
+    if spec.proposal_thresholds:
+        # MODEL: the learned probabilities stay immutable while an aggregate public-density
+        # operating point may replace the development thresholds for every entity type.
+        overrides = dict(spec.proposal_thresholds)
+        verifier = replace(
+            verifier,
+            thresholds=spec.proposal_thresholds,
+            genre_thresholds=tuple(
+                (genre, entity_type, overrides[entity_type])
+                for genre, entity_type, _ in verifier.genre_thresholds
+            ),
+        )
     documents = load_phase1_round2_documents(
         load_documents(spec.documents.path),
         expected_archive_sha256=spec.source_archive_sha256,
@@ -255,6 +280,7 @@ def run_phase1_max_score(spec: Phase1MaxScoreRunSpec) -> dict[str, Any]:
                 {"name": source.name, "role": source.role.value}
                 for source in spec.sources
             ],
+            "proposal_thresholds": dict(spec.proposal_thresholds),
             "candidate_source_priority": list(spec.candidate_source_priority),
             "assertion_regimes": list(spec.assertion_regimes),
             "candidate_policy": spec.candidate_policy,
@@ -402,6 +428,24 @@ def _string_tuple(value: object, field: str) -> tuple[str, ...]:
     if not result or any(not item for item in result):
         raise ValueError(f"{field} must contain non-empty strings")
     return result
+
+
+def _threshold_overrides(value: object) -> tuple[tuple[str, float], ...]:
+    if value is None:
+        return ()
+    raw = _mapping(value, "proposal_thresholds")
+    thresholds: list[tuple[str, float]] = []
+    for entity_type, threshold in raw.items():
+        if (
+            not isinstance(entity_type, str)
+            or not isinstance(threshold, int | float)
+            or isinstance(threshold, bool)
+        ):
+            raise ValueError(
+                "Proposal threshold overrides must map type strings to numbers"
+            )
+        thresholds.append((entity_type, float(threshold)))
+    return tuple(sorted(thresholds))
 
 
 def _document_sort_key(document_id: str) -> tuple[int, int | str]:

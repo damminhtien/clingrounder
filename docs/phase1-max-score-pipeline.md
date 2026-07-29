@@ -48,6 +48,12 @@ budget_spec: configs/models/phase1-under9b-max.yaml
 verifier:
   path: outputs/phase1/proposal_fusion_20260729/calibrated_genre_f1/verifier.json
   sha256: <sha256>
+proposal_thresholds:
+  CHẨN_ĐOÁN: <aggregate operating point>
+  KẾT_QUẢ_XÉT_NGHIỆM: <aggregate operating point>
+  THUỐC: <aggregate operating point>
+  TRIỆU_CHỨNG: <aggregate operating point>
+  TÊN_XÉT_NGHIỆM: <aggregate operating point>
 sources:
   - name: rule
     role: rule
@@ -81,6 +87,10 @@ run_label: phase1-under9b-max
 
 `verifier` sources are support-only. A VietMed-only proposal is recorded and blocked; VietMed may
 increase confidence only when a target-task source proposes the same exact span and type.
+
+`proposal_thresholds` is optional, but when present it must define all five entity types. It changes
+only the operating point of the pinned probability model. Round 2 uses aggregate public-density
+calibration; the config must never contain document IDs, raw text, or absolute spans.
 
 ## Output
 

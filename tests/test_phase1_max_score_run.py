@@ -31,6 +31,13 @@ def test_max_score_run_spec_resolves_every_path_below_run_root(
     )
     assert spec.candidate_source_priority == ("qwen", "rule")
     assert spec.assertion_regimes == ("negation", "history")
+    assert spec.proposal_thresholds == (
+        ("CHẨN_ĐOÁN", 0.24),
+        ("KẾT_QUẢ_XÉT_NGHIỆM", 0.16),
+        ("THUỐC", 0.03),
+        ("TRIỆU_CHỨNG", 0.02),
+        ("TÊN_XÉT_NGHIỆM", 0.09),
+    )
 
 
 def test_pinned_artifact_rejects_replaced_bytes(tmp_path: Path) -> None:
@@ -77,6 +84,12 @@ budget_spec: budget.yaml
 verifier:
   path: verifier.json
   sha256: {"c" * 64}
+proposal_thresholds:
+  CHẨN_ĐOÁN: 0.24
+  KẾT_QUẢ_XÉT_NGHIỆM: 0.16
+  THUỐC: 0.03
+  TRIỆU_CHỨNG: 0.02
+  TÊN_XÉT_NGHIỆM: 0.09
 sources:
   - name: rule
     role: rule
