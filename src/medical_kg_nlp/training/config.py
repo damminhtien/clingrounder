@@ -18,6 +18,8 @@ class TokenClassifierTrainingConfig:
     output_dir: Path
     model_id: str
     revision: str
+    initialization_model_path: Path | None = None
+    initialization_model_fingerprint: str | None = None
     train_split: str = "train"
     evaluation_split: str | None = "development"
     internal_validation_fraction: float = 0.0
@@ -46,6 +48,26 @@ class TokenClassifierTrainingConfig:
             raise ValueError("model_id must be non-empty")
         if not self.revision.strip():
             raise ValueError("revision must pin a model commit or immutable release")
+        if (self.initialization_model_path is None) != (
+            self.initialization_model_fingerprint is None
+        ):
+            raise ValueError(
+                "initialization_model_path and initialization_model_fingerprint "
+                "must be provided together"
+            )
+        if (
+            self.initialization_model_fingerprint is not None
+            and (
+                len(self.initialization_model_fingerprint) != 64
+                or any(
+                    character not in "0123456789abcdef"
+                    for character in self.initialization_model_fingerprint
+                )
+            )
+        ):
+            raise ValueError(
+                "initialization_model_fingerprint must be a lowercase SHA-256 value"
+            )
         if not self.train_split.strip():
             raise ValueError("train_split must be non-empty")
         if self.evaluation_split is not None and not self.evaluation_split.strip():
@@ -98,6 +120,12 @@ class TokenClassifierTrainingConfig:
             "output_dir": _manifest_path(self.output_dir, root=path_root),
             "model_id": self.model_id,
             "revision": self.revision,
+            "initialization_model_path": (
+                None
+                if self.initialization_model_path is None
+                else _manifest_path(self.initialization_model_path, root=path_root)
+            ),
+            "initialization_model_fingerprint": self.initialization_model_fingerprint,
             "train_split": self.train_split,
             "evaluation_split": self.evaluation_split,
             "internal_validation_fraction": self.internal_validation_fraction,

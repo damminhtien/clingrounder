@@ -127,6 +127,10 @@ class TokenClassifierRunSpec:
     def prefetch_command(self) -> tuple[str, ...]:
         """Return an explicit networked prefetch command for the pinned checkpoint."""
 
+        if self.training.initialization_model_path is not None:
+            # SCALING: the verified DAPT directory is already on the host; an empty command makes
+            # the no-download contract explicit to orchestration and inspection tools.
+            return ()
         return (
             "hf",
             "download",
@@ -186,6 +190,19 @@ def load_token_classifier_run_spec(path: str | Path) -> TokenClassifierRunSpec:
         ),
         model_id=_required_string(model, "model_id"),
         revision=_required_string(model, "revision"),
+        initialization_model_path=(
+            None
+            if model.get("initialization_path") is None
+            else _resolve_run_path(
+                run_root,
+                _required_string(model, "initialization_path"),
+                field="model.initialization_path",
+            )
+        ),
+        initialization_model_fingerprint=_optional_sha256(
+            model.get("initialization_fingerprint"),
+            field="model.initialization_fingerprint",
+        ),
         train_split=str(dataset.get("train_split", "train")),
         evaluation_split=_optional_string(dataset.get("evaluation_split")),
         internal_validation_fraction=float(dataset.get("internal_validation_fraction", 0.0)),
@@ -267,6 +284,26 @@ def verify_token_classifier_run_artifact(
         raise ValueError("Training manifest model ID does not match the run specification")
     if model.get("revision") != spec.training.revision:
         raise ValueError("Training manifest model revision does not match the run specification")
+    initialization = _json_mapping(
+        model.get("initialization"),
+        "token-classifier initialization metadata",
+    )
+    if spec.training.initialization_model_path is None:
+        if initialization.get("kind") != "huggingface_cache":
+            raise ValueError("Training manifest initialization source does not match run spec")
+    else:
+        if initialization.get("kind") != "local_artifact":
+            raise ValueError("Training manifest initialization source does not match run spec")
+        if initialization.get("path") != spec.relative_path(
+            spec.training.initialization_model_path
+        ):
+            raise ValueError("Training manifest initialization path does not match run spec")
+        if initialization.get(
+            "fingerprint"
+        ) != spec.training.initialization_model_fingerprint:
+            raise ValueError(
+                "Training manifest initialization fingerprint does not match run spec"
+            )
 
     run_spec = _json_mapping(
         manifest.get("run_spec"),
@@ -394,6 +431,14 @@ def _optional_string(value: object) -> str | None:
         return None
     if not isinstance(value, str) or not value.strip():
         raise ValueError("Optional run-spec string must be non-empty")
+    return value
+
+
+def _optional_sha256(value: object, *, field: str) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str) or re.fullmatch(r"[0-9a-f]{64}", value) is None:
+        raise ValueError(f"{field} must be a lowercase SHA-256 value")
     return value
 
 

@@ -375,6 +375,18 @@ def inspect_token_classifier_run(args: argparse.Namespace) -> int:
                 "model": {
                     "model_id": spec.training.model_id,
                     "revision": spec.training.revision,
+                    "initialization_model": (
+                        None
+                        if spec.training.initialization_model_path is None
+                        else {
+                            "path": spec.relative_path(
+                                spec.training.initialization_model_path
+                            ),
+                            "fingerprint": (
+                                spec.training.initialization_model_fingerprint
+                            ),
+                        }
+                    ),
                     "source_url": spec.model_source_url,
                     "license": spec.model_license,
                 },

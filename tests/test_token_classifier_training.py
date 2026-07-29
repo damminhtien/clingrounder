@@ -282,6 +282,28 @@ def test_transformers_five_training_arguments_exclude_removed_overwrite_flag(
     assert arguments["load_best_model_at_end"] is True
 
 
+def test_local_initialization_model_is_content_verified(tmp_path: Path) -> None:
+    model_dir = tmp_path / "dapt-model"
+    model_dir.mkdir()
+    (model_dir / "config.json").write_text("{}\n", encoding="utf-8")
+    fingerprint = training_runtime.fingerprint_model_directory(model_dir)
+    config = TokenClassifierTrainingConfig(
+        dataset_path=tmp_path / "spans.jsonl",
+        dataset_manifest_path=tmp_path / "manifest.json",
+        output_dir=tmp_path / "model",
+        model_id="upstream/model",
+        revision="a" * 40,
+        initialization_model_path=model_dir,
+        initialization_model_fingerprint=fingerprint,
+    )
+
+    assert training_runtime._verify_initialization_model(config) == str(model_dir)
+
+    (model_dir / "config.json").write_text('{"changed": true}\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="fingerprint mismatch"):
+        training_runtime._verify_initialization_model(config)
+
+
 def _raw_record(record_id: str, split: str, text: str, label: str) -> dict[str, Any]:
     return {
         "record_id": record_id,

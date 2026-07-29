@@ -88,13 +88,15 @@ def train_huggingface_token_classifier(
 
     summary, vocabulary = inspect_token_classifier_training_inputs(config)
     _validate_output_directory(config)
+    initialization_model = _verify_initialization_model(config)
     torch, datasets, transformers = _load_training_dependencies()
     started_at = datetime.now(UTC).isoformat()
 
-    # MODEL: both tokenizer and model resolve from a pinned local cache only.
+    # MODEL: a DAPT initializer is loaded directly from its verified local artifact. Otherwise,
+    # the immutable Hub revision must already be present in the host's Hugging Face cache.
     tokenizer = transformers.AutoTokenizer.from_pretrained(
-        config.model_id,
-        revision=config.revision,
+        initialization_model,
+        revision=None if config.initialization_model_path is not None else config.revision,
         use_fast=True,
         local_files_only=True,
         trust_remote_code=False,
@@ -195,8 +197,8 @@ def train_huggingface_token_classifier(
     label_to_id = {label: index for index, label in enumerate(vocabulary)}
     id_to_label = {index: label for label, index in label_to_id.items()}
     model = transformers.AutoModelForTokenClassification.from_pretrained(
-        config.model_id,
-        revision=config.revision,
+        initialization_model,
+        revision=None if config.initialization_model_path is not None else config.revision,
         local_files_only=True,
         trust_remote_code=False,
         num_labels=len(vocabulary),
@@ -241,6 +243,18 @@ def train_huggingface_token_classifier(
         "model": {
             "model_id": config.model_id,
             "revision": config.revision,
+            "initialization": (
+                {
+                    "kind": "local_artifact",
+                    "path": _manifest_path(
+                        config.initialization_model_path,
+                        root=manifest_root,
+                    ),
+                    "fingerprint": config.initialization_model_fingerprint,
+                }
+                if config.initialization_model_path is not None
+                else {"kind": "huggingface_cache"}
+            ),
             "local_files_only": True,
             "output": _manifest_path(final_model_dir, root=manifest_root),
             "fingerprint": model_fingerprint,
@@ -504,6 +518,23 @@ def _validate_output_directory(config: TokenClassifierTrainingConfig) -> None:
             "resume a checkpoint, or pass overwrite_output"
         )
     output.mkdir(parents=True, exist_ok=True)
+
+
+def _verify_initialization_model(config: TokenClassifierTrainingConfig) -> str:
+    """Resolve and verify a local initializer before importing model frameworks."""
+
+    if config.initialization_model_path is None:
+        return config.model_id
+    model_path = config.initialization_model_path
+    if not model_path.is_dir():
+        raise ValueError(f"Initialization model directory does not exist: {model_path}")
+    actual_fingerprint = fingerprint_model_directory(model_path)
+    if actual_fingerprint != config.initialization_model_fingerprint:
+        raise ValueError(
+            "Initialization model fingerprint mismatch: "
+            f"expected {config.initialization_model_fingerprint}, got {actual_fingerprint}"
+        )
+    return str(model_path)
 
 
 def fingerprint_model_directory(path: str | Path) -> str:

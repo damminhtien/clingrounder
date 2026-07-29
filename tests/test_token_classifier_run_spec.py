@@ -85,6 +85,24 @@ def test_phase1_qa_educational_recovery_run_increases_optimizer_updates() -> Non
     assert spec.training.full_determinism is True
 
 
+def test_phase1_dapt_run_uses_verified_local_initializer_without_prefetch() -> None:
+    spec = load_token_classifier_run_spec(
+        "configs/models/phase1-five-type-xlmr-dapt-qa-edu-2026-07-29.yaml"
+    )
+
+    assert spec.training.initialization_model_path is not None
+    assert spec.training.initialization_model_path.name == "final-model"
+    assert spec.training.initialization_model_fingerprint == (
+        "e70b2dc1b57a4f52fed53ef260a069847b2e90e4fe0cc22aeb61949b4d486549"
+    )
+    assert spec.prefetch_command == ()
+    serialized = spec.training.to_dict(path_root=spec.run_root)
+    assert serialized["initialization_model_path"] == (
+        "outputs/models/xlmr-joint-dapt-2026-07-29/final-model"
+    )
+    assert str(spec.run_root) not in str(serialized)
+
+
 def test_phase1_qa_educational_lr_control_is_isolated() -> None:
     spec = load_token_classifier_run_spec(
         "configs/models/phase1-five-type-xlmr-qa-edu-e10-lr3e5-2026-07-27.yaml"
@@ -299,6 +317,7 @@ def test_inspection_verifies_returned_model_fingerprint(tmp_path: Path) -> None:
             "fingerprint": fingerprint,
             "model_id": "local/model",
             "revision": "a" * 40,
+            "initialization": {"kind": "huggingface_cache"},
         },
         "run_spec": {
             "sha256": sha256_file(config),
@@ -341,6 +360,7 @@ def test_run_artifact_rejects_cpu_smoke(tmp_path: Path) -> None:
                     "fingerprint": fingerprint_model_directory(model_dir),
                     "model_id": "local/model",
                     "revision": "a" * 40,
+                    "initialization": {"kind": "huggingface_cache"},
                 },
             }
         ),
