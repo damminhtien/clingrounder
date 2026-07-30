@@ -3,6 +3,23 @@
 Evaluation is built around the internal schema so public dataset adapters can normalize labels before
 metrics are computed.
 
+## Phase 1 Decision Authority
+
+Effective 2026-07-30, local Phase 1 metrics are diagnostic telemetry only. Exact-span F1, local
+WER proxies, manual-gold splits, and mined-corpus benchmarks may prioritize experiments, but they
+must not promote or reject a model. A keep/reject decision requires a recorded official submission
+result.
+
+Final-fit training uses all 100 manually reviewed records plus the owner-authorized, checksum-pinned
+private GT source. The old 76/24 and 60/16 splits remain useful for error analysis and training
+health, but no document stays excluded from final fit. Structural validation remains blocking:
+invalid offsets, schemas, code systems, parameter budgets, or artifact fingerprints must not be
+submitted.
+
+Friend31 output is distillation/reference evidence only. It is not a valid runtime source,
+submission seed, or reproducible baseline. The machine-readable contract is
+`configs/models/phase1-training-governance-2026-07-30.yaml`.
+
 ## Implemented Metrics
 
 - Exact span/type precision, recall, and F1.

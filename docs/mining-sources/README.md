@@ -17,7 +17,7 @@ knowledge may be promoted.
 | VietMed-NER | curated | training and verifier inference | [VietMed-NER](vietmed-ner.md) |
 | Viettel Medical Synthetic v1 | user synthetic | bounded train-only NER curriculum | [Viettel Medical Synthetic v1](viettel-medical-synthetic-v1.md) |
 | Phase 1 Round 2 input | acquired | local inference/audit only | [Phase 1 Round 2](phase1-round2.md) |
-| Phase 1 part 2 leaked bundle | quarantined | none | [Quarantine audit](phase1-part2-quarantine.md) |
+| Phase 1 part 2 private GT | acquired | training only | [Authorized training](phase1-part2-authorized-training.md) |
 | CodiEsp | promoted | runtime opt-in | [CodiEsp](codiesp.md) |
 | DailyMed SPL | promoted | runtime opt-in | [DailyMed](dailymed.md) |
 | DailyMed-RxNorm | promoted | runtime opt-in | [DailyMed](dailymed.md) |

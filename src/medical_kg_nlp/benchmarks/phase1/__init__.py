@@ -157,6 +157,10 @@ from medical_kg_nlp.benchmarks.phase1.round2_proposal_verifier import (
     apply_verified_proposal_additions,
     run_phase1_round2_proposal_verifier,
 )
+from medical_kg_nlp.benchmarks.phase1.training_governance import (
+    Phase1TrainingGovernance,
+    load_phase1_training_governance,
+)
 
 __all__ = [
     "Phase1SelectiveExportConfig",
@@ -190,6 +194,7 @@ __all__ = [
     "Phase1Round2ProbeConfig",
     "Phase1Round2ProposalVerifierConfig",
     "Phase1TextRegion",
+    "Phase1TrainingGovernance",
     "RegionProposalPolicy",
     "ScoredPhase1Proposal",
     "ScoredPhase1BoundaryVariant",
@@ -238,6 +243,7 @@ __all__ = [
     "infer_phase1_development_predictions",
     "load_phase1_text_documents",
     "load_phase1_round2_documents",
+    "load_phase1_training_governance",
     "merge_region_routed_proposals",
     "prediction_to_phase1_entities",
     "score_phase1_documents",

@@ -88,22 +88,29 @@ resources:
       Raw Round 2 input may be transferred temporarily to owner-authorized Vast.ai compute for
       inference. It is never a training, pseudo-label, redistribution, or runtime-memory source.
   - id: phase1_part2_leaked_bundle
-    name: Unverified Phase 1 part 2 annotation bundle
-    category: unauthorized_competition_annotation_bundle
+    name: Owner-authorized Phase 1 part 2 annotation bundle
+    category: private_competition_supervision
     version: sha256-46da2a7718078b95024e97feb66d49e44917d7b00b3981bad3eaaae13adc418e
     version_policy: pinned
-    access_class: quarantine
-    license_id: organizer_authorization_unverified
+    access_class: authorized_private
+    license_id: owner_confirmed_training_authorization_2026-07-30
     license_url: local-source://phase1-part2-leaked-bundle/authorization
-    redistribution: unknown
-    hosted_processing_allowed: false
+    redistribution: prohibited
+    hosted_processing_allowed: true
     retention: local_only
     connector: local_archive
-    parser: quarantine_audit_only
-    allowed_uses: [license_review, aggregate_quarantine_audit]
+    parser: phase1_lf_gold_archive
+    parser_options:
+      language: vi
+      input_member: input.zip
+      annotation_member: gt.zip
+      offset_coordinate_view: crlf_to_lf_child_document
+    allowed_uses:
+      [local_supervised_training, hosted_supervised_training, distillation, evaluation_diagnostics]
     notes: >-
-      The caller described this bundle as leaked. Labels, spans, aliases, thresholds, and
-      document-specific output are prohibited until the organizer supplies explicit authorization.
+      The data owner authorized supervised local and hosted training on 2026-07-30. Canonical
+      source bytes remain private and non-redistributable. Annotation offsets apply to LF child
+      documents, not the original CRLF archive bytes.
   - id: pmc_oa
     name: PubMed Central Open Access Subset
     category: case_reports_and_literature

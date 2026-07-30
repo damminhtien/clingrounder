@@ -40,10 +40,16 @@ def test_checked_in_mining_registry_is_strict_and_unique() -> None:
         "local_distribution_audit",
     )
     leaked = registry.by_id("phase1_part2_leaked_bundle")
-    assert leaked.access_class is AccessClass.QUARANTINE
-    assert leaked.redistribution is RedistributionPolicy.UNKNOWN
-    assert leaked.hosted_processing_allowed is False
-    assert leaked.allowed_uses == ("license_review", "aggregate_quarantine_audit")
+    assert leaked.access_class is AccessClass.AUTHORIZED_PRIVATE
+    assert leaked.redistribution is RedistributionPolicy.PROHIBITED
+    assert leaked.hosted_processing_allowed is True
+    assert leaked.parser_options["offset_coordinate_view"] == "crlf_to_lf_child_document"
+    assert leaked.allowed_uses == (
+        "local_supervised_training",
+        "hosted_supervised_training",
+        "distillation",
+        "evaluation_diagnostics",
+    )
 
 
 def test_registry_rejects_hosted_processing_for_dua_source() -> None:

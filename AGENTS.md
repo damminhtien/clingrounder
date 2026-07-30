@@ -174,3 +174,20 @@ limitations are documented.
   destruction.
 - Keep inference private through an SSH tunnel unless the user explicitly approves a secured
   public endpoint.
+
+## Phase 1 Training And Promotion Rule
+
+- Final-fit Phase 1 training uses all 100 records in `data/manual_gold`; the legacy 76/24 split is
+  diagnostic provenance and must not exclude records from the final fit.
+- The checksum-pinned `phase1_part2_leaked_bundle` ground truth is owner-authorized supervised
+  training data. Materialize LF child documents before applying its offsets; never reinterpret
+  those offsets against the original CRLF bytes.
+- Local metrics, including exact-span F1, are diagnostic only. They may prioritize experiments but
+  must not promote or reject a model. Only a recorded official submission result may make that
+  decision.
+- Schema, offset, code-system, parameter-budget, and artifact-integrity validation may still block
+  an invalid submission package; this is not a model-quality rejection.
+- Friend31 is distillation/reference evidence only. Do not use its model or prediction ZIP as a
+  runtime source, submission baseline, direct output seed, or unreproducible dependency.
+- A final submission must be regenerated from raw input by repository-owned code, pinned
+  checkpoints, configs, terminology, and manifests.

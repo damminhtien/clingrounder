@@ -1,0 +1,40 @@
+# Phase 1 supervision and decision authority. This policy intentionally supersedes legacy local
+# holdout promotion gates; those reports remain useful diagnostics.
+schema_version: phase1-training-governance.v1
+effective_from: "2026-07-30"
+
+manual_gold:
+  path: data/manual_gold
+  source_documents: data/raw/input
+  expected_document_count: 100
+  usage: train_all
+  legacy_split_role: diagnostic_only
+
+authorized_ground_truth:
+  source_id: phase1_part2_leaked_bundle
+  archive_env: PHASE1_PART2_ARCHIVE
+  archive_sha256: 46da2a7718078b95024e97feb66d49e44917d7b00b3981bad3eaaae13adc418e
+  input_zip_sha256: ecb0bb792ad8649b06dcfd10847a1d33c963a9332ac4690c56b0004643eceb5c
+  gt_zip_sha256: fbd75944ff485dcdb0257a33867ef0fc78ae29cd7dfa5b5bdd0ecd18baed28b3
+  expected_document_count: 100
+  usage: supervised_training
+  offset_coordinate_view: crlf_to_lf_child_document
+
+friend31:
+  source_id: friend31
+  role: distillation_reference_only
+  runtime_source_allowed: false
+  submission_seed_allowed: false
+
+decision_authority:
+  local_metrics: diagnostic_only
+  local_can_promote: false
+  local_can_reject: false
+  official_submission: sole_promotion_and_rejection_authority
+  hard_validation_can_block_packaging: true
+
+reproducibility:
+  require_repository_owned_inference: true
+  require_pinned_checkpoint: true
+  require_pinned_config: true
+  require_source_fingerprints: true

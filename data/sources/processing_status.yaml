@@ -56,14 +56,16 @@ sources:
       - outputs/mining/phase1-round2-2026-07-22
       - outputs/mining/phase1-round2-hosted-2026-07-27
   - source_id: phase1_part2_leaked_bundle
-    state: quarantined
-    promotion_boundary: none
-    dossier: docs/mining-sources/phase1-part2-quarantine.md
-    verified_on: 2026-07-26
+    state: acquired
+    promotion_boundary: training_only
+    dossier: docs/mining-sources/phase1-part2-authorized-training.md
+    verified_on: 2026-07-30
     summary: >-
-      The checksum-pinned local bundle was audited only at aggregate level. Its labels cannot enter
-      training, runtime recognition, linking, calibration, or competition output without explicit
-      organizer authorization.
+      The owner authorized the checksum-pinned labels for supervised training. The importer must
+      materialize LF child documents before applying offsets. Raw bytes remain private, and the
+      source is not a document-specific runtime memory or direct submission seed.
+    run_configs:
+      - configs/models/phase1-training-governance-2026-07-30.yaml
   - source_id: pmc_oa
     state: proposed
     promotion_boundary: review_only

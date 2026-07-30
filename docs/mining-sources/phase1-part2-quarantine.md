@@ -1,5 +1,10 @@
 # Phase 1 Part 2 Bundle: Quarantine Audit
 
+> **Historical policy:** quarantine restrictions in this document were superseded on 2026-07-30
+> by owner authorization for supervised training. See
+> [`phase1-part2-authorized-training.md`](phase1-part2-authorized-training.md). The checksums,
+> distribution analysis, and LF offset findings below remain valid.
+
 ## Policy Boundary
 
 The caller described this local bundle as data previously leaked by the competition organizer.
