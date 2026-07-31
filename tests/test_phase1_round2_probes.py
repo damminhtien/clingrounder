@@ -16,6 +16,7 @@ from medical_kg_nlp.benchmarks.phase1.round2_probes import (
     Phase1Round2ProbeConfig,
     RegionProposalPolicy,
     apply_reviewed_rxnorm_fill_empty,
+    apply_structured_rxnorm_fill_empty,
     apply_round2_candidate_policy,
     align_quoted_phase1_proposals,
     canonicalize_full_phase1_source,
@@ -420,6 +421,65 @@ def test_reviewed_rxnorm_fill_empty_rejects_unknown_pinned_code(
         )
 
 
+def test_structured_rxnorm_fill_empty_preserves_existing_rows_and_requires_one_code() -> None:
+    text = "metformin 500 mg tablet; metformin 1.5 mg po qhs; aspirin"
+    product = _row(text, "metformin 500 mg tablet", "THUỐC")
+    administered = _row(text, "metformin 1.5 mg po qhs", "THUỐC")
+    existing = _row(text, "aspirin", "THUỐC")
+    existing["candidates"] = ["1191"]
+    baseline = {"1": [product, administered, existing]}
+    dictionary = DictionaryStore(
+        [
+            ConceptEntry(
+                concept_id="rxnorm:500",
+                code="500",
+                code_system=CodeSystem.RXNORM,
+                canonical_name="metformin 500 MG Oral Tablet",
+                semantic_type=EntityType.DRUG,
+                aliases=("metformin",),
+                ingredient="metformin",
+                rxnorm_tty="SCD",
+            ),
+            ConceptEntry(
+                concept_id="rxnorm:850",
+                code="850",
+                code_system=CodeSystem.RXNORM,
+                canonical_name="metformin 850 MG Oral Tablet",
+                semantic_type=EntityType.DRUG,
+                aliases=("metformin",),
+                ingredient="metformin",
+                rxnorm_tty="SCD",
+            ),
+            ConceptEntry(
+                concept_id="rxnorm:1191",
+                code="1191",
+                code_system=CodeSystem.RXNORM,
+                canonical_name="aspirin",
+                semantic_type=EntityType.DRUG,
+                aliases=("aspirin",),
+                ingredient="aspirin",
+                rxnorm_tty="IN",
+            ),
+        ]
+    )
+
+    output, decisions, counters = apply_structured_rxnorm_fill_empty(
+        baseline,
+        dictionary=dictionary,
+    )
+
+    assert [row["candidates"] for row in output["1"]] == [["500"], [], ["1191"]]
+    assert [row["assertions"] for row in output["1"]] == [[], [], []]
+    assert [row["position"] for row in output["1"]] == [
+        row["position"] for row in baseline["1"]
+    ]
+    assert decisions[0]["reason"] == "unique_structured_rxnorm_exact_candidate"
+    assert decisions[0]["candidate"] == "500"
+    assert counters["row.filled"] == 1
+    assert counters["row.ambiguous_after_structure"] == 1
+    assert counters["row.preserved_nonempty"] == 1
+
+
 def test_round2_probe_runner_preserves_entities_and_candidates_for_assertions(
     tmp_path: Path,
 ) -> None:
@@ -557,6 +617,79 @@ def test_round2_probe_runner_builds_reviewed_rxnorm_fill_variant(
     assert candidate_variant["isolation_issues"] == []
 
 
+def test_round2_probe_runner_builds_structured_rxnorm_fill_variant(
+    tmp_path: Path,
+) -> None:
+    archive_sha256 = "a" * 64
+    source_document = _document(
+        "1",
+        "Danh sách thuốc trước nhập viện:\nmetformin 500 mg tablet",
+        archive_sha256,
+    )
+    documents_path = tmp_path / "documents.jsonl"
+    write_jsonl(documents_path, (source_document.to_dict(),))
+    base_dir = tmp_path / "base"
+    base_dir.mkdir()
+    (base_dir / "1.json").write_text(
+        _json([_row(source_document.text, "metformin 500 mg tablet", "THUỐC")]),
+        encoding="utf-8",
+    )
+    base_zip = tmp_path / "base.zip"
+    zip_phase1_output_dir(base_dir, base_zip)
+    dictionary_path = tmp_path / "dictionary.jsonl"
+    write_jsonl(
+        dictionary_path,
+        (
+            {
+                "concept_id": "rxnorm:500",
+                "code": "500",
+                "code_system": "RxNorm",
+                "canonical_name": "metformin 500 MG Oral Tablet",
+                "semantic_type": "DRUG",
+                "aliases": ["metformin"],
+                "ingredient": "metformin",
+                "rxnorm_tty": "SCD",
+            },
+            {
+                "concept_id": "rxnorm:850",
+                "code": "850",
+                "code_system": "RxNorm",
+                "canonical_name": "metformin 850 MG Oral Tablet",
+                "semantic_type": "DRUG",
+                "aliases": ["metformin"],
+                "ingredient": "metformin",
+                "rxnorm_tty": "SCD",
+            },
+        ),
+    )
+
+    report = run_phase1_round2_probes(
+        Phase1Round2ProbeConfig(
+            documents_path=documents_path,
+            expected_source_archive_sha256=archive_sha256,
+            base=base_zip,
+            expected_base_sha256=sha256_file(base_zip),
+            dictionary_paths=(dictionary_path,),
+            structured_rxnorm_fill_empty=True,
+            output_root=tmp_path / "runs",
+            expected_count=1,
+        )
+    )
+
+    variants = {variant["name"]: variant for variant in report["variants"]}
+    candidate_variant = variants["C_RX_STRUCTURED_FILL_EMPTY"]
+    output = load_phase1_output_source(candidate_variant["zip"])
+    assert output["1"][0]["candidates"] == ["500"]
+    assert candidate_variant["changed"] == {
+        "candidate_changed": 1,
+        "changed_row_count": 1,
+        "entity_added": 0,
+        "entity_removed": 0,
+    }
+    assert candidate_variant["validation_issue_count"] == 0
+    assert candidate_variant["isolation_issues"] == []
+
+
 def test_consensus_addition_can_fill_assertions_without_replacing_baseline(
     tmp_path: Path,
 ) -> None:
@@ -654,6 +787,9 @@ def test_round2_probe_cli_parser_accepts_named_sources() -> None:
             "3",
             "--reviewed-rxnorm-min-document-support",
             "2",
+            "--structured-rxnorm-fill-empty",
+            "--structured-rxnorm-minimum-score",
+            "0.97",
         ]
     )
 
@@ -670,6 +806,8 @@ def test_round2_probe_cli_parser_accepts_named_sources() -> None:
     assert args.reviewed_rxnorm_map == "reviewed.jsonl"
     assert args.reviewed_rxnorm_min_occurrence_support == 3
     assert args.reviewed_rxnorm_min_document_support == 2
+    assert args.structured_rxnorm_fill_empty is True
+    assert args.structured_rxnorm_minimum_score == 0.97
 
 
 def _row(text: str, mention: str, entity_type: str) -> dict[str, object]:

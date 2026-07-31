@@ -33,6 +33,8 @@ from medical_kg_nlp.benchmarks.phase1.round2 import (
     load_phase1_round2_documents,
 )
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.linking.candidate import Candidate
+from medical_kg_nlp.linking.rxnorm_reranker import StructuredRxNormReranker
 from medical_kg_nlp.mining.io import load_documents, write_json, write_jsonl
 from medical_kg_nlp.ontology.phase1 import (
     PHASE1_ALLOWED_TYPES,
@@ -41,6 +43,8 @@ from medical_kg_nlp.ontology.phase1 import (
 )
 from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
+from medical_kg_nlp.retrieval.query_expansion import build_retrieval_query_variants
 from medical_kg_nlp.utils.hashing import sha256_file
 from medical_kg_nlp.utils.run_output import create_hashed_run_dir
 from medical_kg_nlp.utils.text import normalize_for_match
@@ -51,6 +55,7 @@ __all__ = [
     "Phase1TextRegion",
     "RegionProposalPolicy",
     "apply_reviewed_rxnorm_fill_empty",
+    "apply_structured_rxnorm_fill_empty",
     "apply_round2_candidate_policy",
     "align_quoted_phase1_proposals",
     "canonicalize_full_phase1_source",
@@ -152,6 +157,8 @@ class Phase1Round2ProbeConfig:
     reviewed_rxnorm_map_path: Path | None = None
     reviewed_rxnorm_min_occurrence_support: int = 2
     reviewed_rxnorm_min_document_support: int = 1
+    structured_rxnorm_fill_empty: bool = False
+    structured_rxnorm_minimum_score: float = 0.95
 
     def __post_init__(self) -> None:
         if not re.fullmatch(r"[0-9a-f]{64}", self.expected_source_archive_sha256):
@@ -205,6 +212,8 @@ class Phase1Round2ProbeConfig:
             raise ValueError("Reviewed RxNorm occurrence support must be positive")
         if self.reviewed_rxnorm_min_document_support < 1:
             raise ValueError("Reviewed RxNorm document support must be positive")
+        if not 0.0 <= self.structured_rxnorm_minimum_score <= 1.0:
+            raise ValueError("Structured RxNorm minimum score must be between 0 and 1")
 
 
 @dataclass(frozen=True)
@@ -858,6 +867,147 @@ def apply_reviewed_rxnorm_fill_empty(
     return output, decisions, dict(sorted(counters.items()))
 
 
+def apply_structured_rxnorm_fill_empty(
+    rows_by_doc: Mapping[str, list[dict[str, Any]]],
+    *,
+    dictionary: DictionaryStore,
+    minimum_score: float = 0.95,
+) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]], dict[str, int]]:
+    """Fill only empty medication candidates after exact structured RxNorm resolution.
+
+    The probe is intentionally narrower than normal pipeline linking: it does not query fuzzy,
+    dense, or BM25 retrieval, and it abstains unless the RxNorm reranker leaves one high-scoring
+    code after hard identity/product conflicts. Existing candidates remain authoritative so the
+    official delta isolates newly linked empty rows.
+    """
+
+    if not 0.0 <= minimum_score <= 1.0:
+        raise ValueError("Structured RxNorm minimum score must be between 0 and 1")
+    reranker = StructuredRxNormReranker(InMemoryTerminologyRepository(dictionary))
+    output: dict[str, list[dict[str, Any]]] = {}
+    decisions: list[dict[str, Any]] = []
+    counters: Counter[str] = Counter()
+    for document_id in sorted(rows_by_doc, key=_document_sort_key):
+        transformed: list[dict[str, Any]] = []
+        for row in rows_by_doc[document_id]:
+            copied = _copy_row(row)
+            raw_candidates = copied.get("candidates", [])
+            if not isinstance(raw_candidates, list) or not all(
+                isinstance(value, str) for value in raw_candidates
+            ):
+                raise ValueError(f"{document_id}: candidates must be a string list")
+            counters["candidate.input"] += len(raw_candidates)
+            if raw_candidates:
+                # INVARIANT: the first public probe has no authority to replace a baseline code.
+                counters["row.preserved_nonempty"] += 1
+                counters["candidate.retained"] += len(raw_candidates)
+                transformed.append(copied)
+                continue
+            if str(copied.get("type", "")) != "THUỐC":
+                counters["row.skipped_non_medication"] += 1
+                transformed.append(copied)
+                continue
+
+            mention = str(copied.get("text", ""))
+            exact_candidates = _exact_rxnorm_candidates(dictionary, mention)
+            counters["retrieval.exact_candidate"] += len(exact_candidates)
+            if not exact_candidates:
+                counters["row.no_exact_rxnorm_candidate"] += 1
+                transformed.append(copied)
+                continue
+            ranked = reranker.rerank(exact_candidates, mention=mention)
+            if len(ranked) != 1:
+                counters["row.ambiguous_after_structure"] += 1
+                transformed.append(copied)
+                continue
+            selected = ranked[0]
+            if selected.code is None or selected.score < minimum_score:
+                counters["row.below_structured_threshold"] += 1
+                transformed.append(copied)
+                continue
+
+            copied["candidates"] = [selected.code]
+            transformed.append(copied)
+            counters["candidate.added"] += 1
+            counters["candidate.retained"] += 1
+            counters["row.filled"] += 1
+            decisions.append(
+                {
+                    "document_id": document_id,
+                    "stage": "candidate_rxnorm_structured_exact",
+                    "action": "fill_empty",
+                    "reason": "unique_structured_rxnorm_exact_candidate",
+                    "candidate": selected.code,
+                    "score": round(selected.score, 6),
+                    "retrieval_source": selected.source,
+                    "matched_alias": selected.matched_alias,
+                    "entity": _identity_payload(row),
+                }
+            )
+        output[document_id] = transformed
+
+    # INVARIANT: this overlay changes candidate arrays only; entities and assertions are frozen.
+    isolation_issues = validate_probe_isolation(
+        rows_by_doc,
+        output,
+        module="candidate",
+    )
+    if isolation_issues:
+        raise ValueError(f"Structured RxNorm probe isolation failed: {isolation_issues[:5]}")
+    counters["decision_total"] = len(decisions)
+    counters["output_entity_total"] = sum(len(rows) for rows in output.values())
+    counters["output_candidate_rows"] = sum(
+        bool(row.get("candidates")) for rows in output.values() for row in rows
+    )
+    return output, decisions, dict(sorted(counters.items()))
+
+
+def _exact_rxnorm_candidates(dictionary: DictionaryStore, mention: str) -> list[Candidate]:
+    """Retrieve bounded exact RxNorm rows from the mention and its medication-only variants."""
+
+    if not mention.strip():
+        return []
+    queries = [(mention, 1.0)]
+    queries.extend(
+        (variant.text, variant.score_multiplier)
+        for variant in build_retrieval_query_variants(mention, EntityType.DRUG)
+    )
+    by_concept: dict[str, Candidate] = {}
+    for query, multiplier in queries:
+        for source, base_score, entries in (
+            ("exact", 1.0, dictionary.exact_lookup(query)),
+            ("toneless", 0.92, dictionary.toneless_lookup(query)),
+        ):
+            for entry in entries:
+                if (
+                    entry.code_system is not CodeSystem.RXNORM
+                    or entry.semantic_type is not EntityType.DRUG
+                    or entry.code is None
+                ):
+                    continue
+                candidate = Candidate(
+                    concept_id=entry.concept_id,
+                    code=entry.code,
+                    code_system=entry.code_system,
+                    canonical_name=entry.canonical_name,
+                    semantic_type=entry.semantic_type,
+                    score=base_score * multiplier,
+                    source=source,
+                    matched_alias=query,
+                )
+                previous = by_concept.get(candidate.concept_id)
+                if previous is None or candidate.score > previous.score:
+                    by_concept[candidate.concept_id] = candidate
+    return sorted(
+        by_concept.values(),
+        key=lambda candidate: (
+            -candidate.score,
+            candidate.code or "",
+            candidate.concept_id,
+        ),
+    )
+
+
 def _load_reviewed_rxnorm_rules(
     path: Path,
     dictionary: DictionaryStore,
@@ -1038,6 +1188,8 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
             "reviewed_rxnorm_min_document_support": (
                 config.reviewed_rxnorm_min_document_support
             ),
+            "structured_rxnorm_fill_empty": config.structured_rxnorm_fill_empty,
+            "structured_rxnorm_minimum_score": config.structured_rxnorm_minimum_score,
         },
     )
 
@@ -1100,6 +1252,28 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
                 base=base,
                 decisions=reviewed_decisions,
                 counters=reviewed_counters,
+                run_dir=run_output.run_dir,
+                documents=documents,
+                dictionary=dictionary,
+            )
+        )
+
+    if config.structured_rxnorm_fill_empty:
+        structured_rows, structured_decisions, structured_counters = (
+            apply_structured_rxnorm_fill_empty(
+                base,
+                dictionary=dictionary,
+                minimum_score=config.structured_rxnorm_minimum_score,
+            )
+        )
+        variants.append(
+            _materialize_variant(
+                "C_RX_STRUCTURED_FILL_EMPTY",
+                module="candidate",
+                rows=structured_rows,
+                base=base,
+                decisions=structured_decisions,
+                counters=structured_counters,
                 run_dir=run_output.run_dir,
                 documents=documents,
                 dictionary=dictionary,
@@ -1303,6 +1477,12 @@ def run_phase1_round2_probes(config: Phase1Round2ProbeConfig) -> dict[str, Any]:
             if config.reviewed_rxnorm_map_path is not None
             else None
         ),
+        "structured_rxnorm_policy": {
+            "fill_empty": config.structured_rxnorm_fill_empty,
+            "minimum_score": config.structured_rxnorm_minimum_score,
+            "retrieval": "exact_and_toneless_medication_variants_only",
+            "replace_existing": False,
+        },
         "variants": variants,
         "public_promotion_gates": {
             "entity": {"minimum_wer_reduction": 2.0, "final_must_not_decrease": True},

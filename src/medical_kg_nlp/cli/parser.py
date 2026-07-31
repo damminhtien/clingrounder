@@ -417,6 +417,20 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         default=1,
         help="Minimum reviewed document support for an exact RxNorm mapping.",
     )
+    probes.add_argument(
+        "--structured-rxnorm-fill-empty",
+        action="store_true",
+        help=(
+            "Fill only empty medication candidates when exact/toneless structured RxNorm "
+            "retrieval yields one high-confidence code."
+        ),
+    )
+    probes.add_argument(
+        "--structured-rxnorm-minimum-score",
+        type=float,
+        default=0.95,
+        help="Minimum reranker score for --structured-rxnorm-fill-empty.",
+    )
 
     proposal_verify = round2_operations.add_parser(
         "proposal-verifier",

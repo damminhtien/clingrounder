@@ -622,6 +622,8 @@ def run_phase1_round2_probe_suite(args: argparse.Namespace) -> int:
             reviewed_rxnorm_min_document_support=(
                 args.reviewed_rxnorm_min_document_support
             ),
+            structured_rxnorm_fill_empty=args.structured_rxnorm_fill_empty,
+            structured_rxnorm_minimum_score=args.structured_rxnorm_minimum_score,
         )
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
