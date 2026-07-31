@@ -3,6 +3,7 @@
 from medical_kg_nlp.adapters.huggingface import (
     HuggingFaceCrossEncoderAdapter,
     HuggingFaceModelConfig,
+    HuggingFaceMulticlassTextClassifierAdapter,
     HuggingFaceSourceTokenClassifierAdapter,
     HuggingFaceTextEncoderAdapter,
     HuggingFaceTokenClassifierAdapter,
@@ -25,6 +26,7 @@ __all__ = [
     "DictionaryCandidateAdapter",
     "HuggingFaceCrossEncoderAdapter",
     "HuggingFaceModelConfig",
+    "HuggingFaceMulticlassTextClassifierAdapter",
     "HuggingFaceSourceTokenClassifierAdapter",
     "HuggingFaceTextEncoderAdapter",
     "HuggingFaceTokenClassifierAdapter",

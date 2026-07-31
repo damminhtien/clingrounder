@@ -14,6 +14,7 @@ import pytest
 from medical_kg_nlp.adapters import (
     HuggingFaceCrossEncoderAdapter,
     HuggingFaceModelConfig,
+    HuggingFaceMulticlassTextClassifierAdapter,
     HuggingFaceSourceTokenClassifierAdapter,
     HuggingFaceTextEncoderAdapter,
     HuggingFaceTokenClassifierAdapter,
@@ -242,6 +243,22 @@ def test_cross_encoder_reranks_without_changing_candidate_identity(
 
     assert [candidate.concept_id for candidate in reranked] == ["B", "A"]
     assert candidates[0].score == 0.9
+
+
+def test_multiclass_adapter_returns_label_keyed_normalized_probabilities(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    adapter = HuggingFaceMulticlassTextClassifierAdapter(
+        _model_config(),
+        labels=("EXACT", "SPURIOUS"),
+    )
+    monkeypatch.setattr(adapter, "_score_texts", lambda texts: [[2.0, 1.0] for _ in texts])
+
+    distributions = adapter.predict(("[ENTITY] đau ngực", "[ENTITY] sốt"))
+
+    assert len(distributions) == 2
+    assert dict(distributions[0])["EXACT"] == pytest.approx(2 / 3)
+    assert dict(distributions[0])["SPURIOUS"] == pytest.approx(1 / 3)
 
 
 def test_dense_retriever_enforces_repository_type_constraints() -> None:
