@@ -39,7 +39,7 @@ medical_kg_vast_install_project_runtime \
   "${PIP_CACHE_DIR}" \
   "accelerate==1.14.0" \
   "pydantic==2.13.4" \
-  "peft==0.18.1" \
+  "peft==0.19.1" \
   "PyYAML==6.0.3" \
   "tokenizers==0.22.2" \
   "transformers==5.13.0"

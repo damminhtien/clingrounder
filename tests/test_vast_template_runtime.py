@@ -84,6 +84,6 @@ def test_qwen_final_supervision_runner_installs_declared_adapter_runtime() -> No
         encoding="utf-8"
     )
 
-    assert '"peft==0.18.1"' in source
+    assert '"peft==0.19.1"' in source
     assert "PHASE1_PART2_ARCHIVE must point" in source
     assert "propose-final-supervision" in source
