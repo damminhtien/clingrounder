@@ -1,5 +1,6 @@
-# Public boundary probe. It differs from phase1-round2-full-oof-control only by the pinned
-# conservative verifier and active boundary policy, so BTC metrics isolate boundary replacement.
+# PUBLIC REJECTED: 25.3752 on 2026-07-31 (ZIP 47d659cc...). This full-OOF composition differs
+# from the 33.0750 public reference before boundary repair, so the result rejects the composition,
+# not the single boundary replacement in isolation. Do not submit this config again.
 schema_version: phase1-max-score-run-spec.v2
 run_root: ../..
 
