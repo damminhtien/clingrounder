@@ -13,6 +13,10 @@ from medical_kg_nlp.benchmarks.phase1.joint_span_sources import (
     build_phase1_token_model_proposal_rows,
     load_phase1_joint_span_source_rows,
 )
+from medical_kg_nlp.benchmarks.phase1.joint_span_token_source import (
+    Phase1TokenSourceConfig,
+    materialize_phase1_token_model_source,
+)
 from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRole
 from medical_kg_nlp.benchmarks.phase1.reviewed_corpus import Phase1ReviewedCorpus
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
@@ -20,6 +24,7 @@ from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.utils.text import normalize_for_match
+from medical_kg_nlp.utils.hashing import sha256_directory
 
 
 def test_token_model_rows_preserve_raw_offsets_and_matrix_source_evidence() -> None:
@@ -146,6 +151,36 @@ def test_loader_supports_governed_source_prefixed_document_ids(tmp_path: Path) -
     rows = load_phase1_joint_span_source_rows(tmp_path / "qwen", corpus)
 
     assert rows["authorized_gt:1"][0]["text"] == "ho"
+
+
+def test_token_source_artifact_is_complete_and_reloads_with_raw_offsets(tmp_path: Path) -> None:
+    corpus = Phase1ReviewedCorpus(
+        source_texts={"1": "đau ngực", "authorized_gt:1": "ho"},
+        gold_rows={"1": (), "authorized_gt:1": ()},
+        split_by_document={"1": "train", "authorized_gt:1": "train"},
+    )
+    model = tmp_path / "model"
+    model.mkdir()
+    (model / "config.json").write_text("{}", encoding="utf-8")
+    output = tmp_path / "xlmr-source"
+
+    report = materialize_phase1_token_model_source(
+        corpus,
+        Phase1TokenSourceConfig(
+            model_path=model,
+            model_fingerprint=sha256_directory(model),
+            model_id="FacebookAI/xlm-roberta-base",
+            base_revision="e73636d4f797dec63c3081bb6ed5c7b0bb3f2089",
+        ),
+        output_dir=output,
+        extractor=_StaticExtractor(),
+    )
+
+    assert report["document_count"] == 2
+    assert report["proposal_count"] == 2
+    assert load_phase1_joint_span_source_rows(output, corpus)["1"][0]["text"] == "đau ngực"
+    manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["provenance"]["checkpoint_sha256"] == sha256_directory(model)
 
 
 @dataclass(frozen=True)

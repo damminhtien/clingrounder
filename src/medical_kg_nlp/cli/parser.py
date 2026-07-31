@@ -1111,6 +1111,46 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         "--authorized-archive",
         help="Owner-authorized ground-truth archive; otherwise use the governed environment variable.",
     )
+    joint_span_token_source = joint_span_operations.add_parser(
+        "materialize-token-source",
+        help="Project one pinned local five-type token checkpoint into a governed source artifact.",
+    )
+    joint_span_token_source.set_defaults(
+        handler="benchmark_phase1_joint_span_materialize_token_source"
+    )
+    joint_span_token_source.add_argument("--model-path", required=True)
+    joint_span_token_source.add_argument("--model-fingerprint", required=True)
+    joint_span_token_source.add_argument("--model-id", required=True)
+    joint_span_token_source.add_argument("--base-revision", required=True)
+    joint_span_token_source.add_argument("--output-dir", required=True)
+    joint_span_token_source.add_argument("--source-name", default="xlmr")
+    joint_span_token_source.add_argument("--device", default="cpu")
+    joint_span_token_source.add_argument("--batch-size", type=int, default=16)
+    joint_span_token_source.add_argument("--max-length", type=int, default=512)
+    joint_span_token_source.add_argument("--stride", type=int, default=64)
+    joint_span_token_source.add_argument(
+        "--default-confidence-threshold",
+        type=float,
+        default=0.0,
+    )
+    joint_span_token_source.add_argument(
+        "--training-governance",
+        default="configs/models/phase1-training-governance-2026-07-30.yaml",
+    )
+    joint_span_token_source.add_argument(
+        "--model-split-manifest",
+        default="outputs/mining/model-datasets/phase1-manual-five-type-v1/split_manifest.json",
+    )
+    joint_span_token_source.add_argument(
+        "--frozen-split-manifest",
+        default="data/manual_gold/holdout_manifest.json",
+    )
+    joint_span_token_source.add_argument("--manual-input-dir", default="data/raw/input")
+    joint_span_token_source.add_argument("--manual-gold-dir", default="data/manual_gold")
+    joint_span_token_source.add_argument(
+        "--authorized-archive",
+        help="Owner-authorized ground-truth archive; otherwise use the governed environment variable.",
+    )
     joint_span_train = joint_span_operations.add_parser(
         "train",
         help="Train a pinned transformer verifier from a prepared final-fit lattice dataset.",

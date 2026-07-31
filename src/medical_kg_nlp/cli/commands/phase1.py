@@ -76,6 +76,10 @@ from medical_kg_nlp.benchmarks.phase1.final_supervision import (
 from medical_kg_nlp.benchmarks.phase1.joint_span_final_fit import (
     prepare_phase1_joint_span_final_fit,
 )
+from medical_kg_nlp.benchmarks.phase1.joint_span_token_source import (
+    Phase1TokenSourceConfig,
+    materialize_phase1_token_model_source,
+)
 from medical_kg_nlp.benchmarks.phase1.joint_span_training import (
     Phase1JointSpanTrainingConfig,
     train_phase1_joint_span_verifier,
@@ -156,6 +160,7 @@ __all__ = [
     "calibrate_phase1_proposals",
     "compare_phase1_model_variants",
     "inspect_phase1_qwen_run",
+    "materialize_phase1_joint_span_token_source_command",
     "prepare_phase1_joint_span_final_fit_command",
     "train_phase1_joint_span_verifier_command",
     "propose_phase1_qwen_entities",
@@ -981,6 +986,38 @@ def prepare_phase1_joint_span_final_fit_command(args: argparse.Namespace) -> int
         },
         output_dir=args.output_dir,
     )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def materialize_phase1_joint_span_token_source_command(args: argparse.Namespace) -> int:
+    """Run one pinned token checkpoint over all authorized final-fit source documents."""
+
+    corpus = load_phase1_final_supervision_corpus(
+        governance_path=args.training_governance,
+        model_split_manifest_path=args.model_split_manifest,
+        frozen_split_manifest_path=args.frozen_split_manifest,
+        manual_input_dir=args.manual_input_dir,
+        manual_gold_dir=args.manual_gold_dir,
+        authorized_archive_path=args.authorized_archive,
+    )
+    report = materialize_phase1_token_model_source(
+        corpus.reviewed,
+        Phase1TokenSourceConfig(
+            model_path=Path(args.model_path),
+            model_fingerprint=args.model_fingerprint,
+            model_id=args.model_id,
+            base_revision=args.base_revision,
+            device=args.device,
+            batch_size=args.batch_size,
+            max_length=args.max_length,
+            stride=args.stride,
+            default_confidence_threshold=args.default_confidence_threshold,
+        ),
+        output_dir=args.output_dir,
+        source_name=args.source_name,
+    )
+    report["final_supervision"] = corpus.manifest
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 

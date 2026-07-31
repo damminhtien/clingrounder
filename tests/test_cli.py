@@ -77,6 +77,33 @@ def test_joint_span_train_command_exposes_pinned_model_and_dataset_inputs() -> N
     assert args.max_length == 384
 
 
+def test_joint_span_token_source_command_exposes_checkpoint_provenance() -> None:
+    args = build_parser().parse_args(
+        [
+            "benchmark",
+            "phase1",
+            "joint-span",
+            "materialize-token-source",
+            "--model-path",
+            "outputs/models/final-model",
+            "--model-fingerprint",
+            "a" * 64,
+            "--model-id",
+            "FacebookAI/xlm-roberta-base",
+            "--base-revision",
+            "e73636d4f797dec63c3081bb6ed5c7b0bb3f2089",
+            "--output-dir",
+            "outputs/xlmr-source",
+            "--device",
+            "cuda",
+        ]
+    )
+
+    assert args.handler == "benchmark_phase1_joint_span_materialize_token_source"
+    assert args.device == "cuda"
+    assert args.source_name == "xlmr"
+
+
 def test_terminology_build_and_inspect_commands(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     source = tmp_path / "concepts.jsonl"
     source.write_text(

@@ -127,9 +127,16 @@ from medical_kg_nlp.benchmarks.phase1.joint_span_final_fit import (
 from medical_kg_nlp.benchmarks.phase1.joint_span_sources import (
     EntityProposalExtractorPort,
     build_phase1_joint_span_proposal_matrix,
+    build_phase1_medication_parser_source_rows,
     build_phase1_rule_source_rows,
     build_phase1_token_model_proposal_rows,
     load_phase1_joint_span_source_rows,
+    write_phase1_joint_span_source_artifact,
+)
+from medical_kg_nlp.benchmarks.phase1.joint_span_token_source import (
+    PHASE1_TOKEN_LABEL_MAP,
+    Phase1TokenSourceConfig,
+    materialize_phase1_token_model_source,
 )
 from medical_kg_nlp.benchmarks.phase1.model_region_augmentation import (
     Phase1RegionAugmentationConfig,
@@ -207,6 +214,7 @@ __all__ = [
     "Phase1ModelDatasetConfig",
     "Phase1JointSpanTrainingConfig",
     "Phase1JointSpanTrainingSummary",
+    "Phase1TokenSourceConfig",
     "EntityProposalExtractorPort",
     "Phase1HoldoutGate",
     "Phase1ModelSelectionConfig",
@@ -230,6 +238,7 @@ __all__ = [
     "PHASE1_FIVE_TYPE_LABELS",
     "PHASE1_NER_VARIANTS",
     "PHASE1_PROPOSAL_FEATURE_CONTRACT",
+    "PHASE1_TOKEN_LABEL_MAP",
     "DISEASE_SYMPTOM_FEATURE_CONTRACT",
     "DiseaseSymptomLabel",
     "DiseaseSymptomVerifier",
@@ -256,7 +265,9 @@ __all__ = [
     "build_phase1_proposal_matrix",
     "build_phase1_proposal_source_report",
     "build_phase1_joint_span_proposal_matrix",
+    "build_phase1_medication_parser_source_rows",
     "prepare_phase1_joint_span_final_fit",
+    "materialize_phase1_token_model_source",
     "build_phase1_rule_source_rows",
     "build_phase1_token_model_proposal_rows",
     "build_disease_symptom_verifier_dataset",
@@ -302,6 +313,7 @@ __all__ = [
     "write_phase1_boundary_dataset",
     "write_phase1_boundary_resolution",
     "write_phase1_boundary_verifier",
+    "write_phase1_joint_span_source_artifact",
     "write_disease_symptom_verifier",
     "zip_phase1_output_dir",
     "load_phase1_manual_gold_mining_corpus",

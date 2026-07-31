@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any, Protocol
@@ -21,6 +23,8 @@ from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
 from medical_kg_nlp.ontology.phase1 import PHASE1_TYPE_BY_ENTITY_TYPE
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.types import EntityType
+from medical_kg_nlp.mining.io import write_json, write_text
+from medical_kg_nlp.utils.hashing import sha256_directory
 
 __all__ = [
     "EntityProposalExtractorPort",
@@ -29,6 +33,7 @@ __all__ = [
     "build_phase1_rule_source_rows",
     "build_phase1_token_model_proposal_rows",
     "load_phase1_joint_span_source_rows",
+    "write_phase1_joint_span_source_artifact",
 ]
 
 
@@ -241,6 +246,87 @@ def build_phase1_token_model_proposal_rows(
             sorted(rows, key=lambda row: (row["position"], row["type"], row["proposal_id"]))
         )
     return rows_by_document
+
+
+def write_phase1_joint_span_source_artifact(
+    corpus: Phase1ReviewedCorpus,
+    rows_by_document: Mapping[str, Sequence[Mapping[str, Any]]],
+    *,
+    output_dir: str | Path,
+    source_name: str,
+    provenance: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Atomically persist one complete, independently reproducible proposal source.
+
+    Source artifacts deliberately retain unresolved proposal evidence rather than benchmark
+    prediction metadata. They can therefore be consumed by final-fit lattice construction without
+    a hidden dependency on a previous submission ZIP.
+
+    INVARIANT: every persisted row is revalidated against its immutable raw document before the
+    directory is promoted. A partial model run can never look like a complete source artifact.
+    """
+
+    if not source_name.strip():
+        raise ValueError("Joint span source name must be non-empty")
+    if set(rows_by_document) != set(corpus.source_texts):
+        raise ValueError("Joint span source rows must cover the full corpus exactly")
+    destination = Path(output_dir)
+    if destination.exists():
+        raise FileExistsError(f"Joint span source output already exists: {destination}")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary_root = Path(
+        tempfile.mkdtemp(prefix=f".{destination.name}.tmp-", dir=destination.parent)
+    )
+    try:
+        consensus = temporary_root / "consensus"
+        consensus.mkdir()
+        document_counts: dict[str, int] = {}
+        for document_id in sorted(corpus.source_texts, key=phase1_document_sort_key):
+            source_text = corpus.source_texts[document_id]
+            rows: list[dict[str, Any]] = []
+            for index, raw_row in enumerate(rows_by_document[document_id]):
+                row = dict(raw_row)
+                _validate_source_row(row, source_text, consensus / f"{document_id}.json", index)
+                # The path is the document identity; avoid duplicating a potentially stale ID inside
+                # the persisted entity payload.
+                row.pop("document_id", None)
+                rows.append(row)
+            ordered_rows = sorted(
+                rows,
+                key=lambda row: (
+                    row["position"],
+                    row["type"],
+                    str(row.get("proposal_id", "")),
+                ),
+            )
+            write_text(
+                consensus / f"{document_id}.json",
+                json.dumps(ordered_rows, ensure_ascii=False, indent=2) + "\n",
+            )
+            document_counts[document_id] = len(ordered_rows)
+        manifest = {
+            "schema_version": "phase1-joint-span-source.v1",
+            "source_name": source_name,
+            "document_count": len(document_counts),
+            "proposal_count": sum(document_counts.values()),
+            "proposal_count_by_document": document_counts,
+            "provenance": dict(provenance),
+        }
+        write_json(temporary_root / "manifest.json", manifest)
+        # SCALING: atomic rename avoids readers observing 200 model files at mixed revisions.
+        os.replace(temporary_root, destination)
+    except BaseException:
+        if temporary_root.exists():
+            import shutil
+
+            shutil.rmtree(temporary_root)
+        raise
+    return {
+        "output_dir": str(destination),
+        "sha256": sha256_directory(destination),
+        "document_count": len(corpus.source_texts),
+        "proposal_count": sum(len(rows) for rows in rows_by_document.values()),
+    }
 
 
 def build_phase1_joint_span_proposal_matrix(
