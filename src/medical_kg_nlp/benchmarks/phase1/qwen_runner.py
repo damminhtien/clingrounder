@@ -821,9 +821,11 @@ def _load_document_rows(
 
 
 def _has_document_outputs(output_dir: Path) -> bool:
+    """Detect resumable outputs for both numeric and governed source-prefixed document IDs."""
+
     return any(
         path.parent.name in {"consensus", "adjudicated", "review_additions", "reviewed"}
-        and path.stem.isdigit()
+        and path.name != "manifest.json"
         for path in output_dir.rglob("*.json")
     )
 
@@ -1124,26 +1126,28 @@ def _qwen_proposals_to_source_rows(
     proposals: Sequence[EntityProposal],
     source_text: str,
 ) -> list[dict[str, Any]]:
-    """Serialize every exact Qwen quote once while retaining its best confidence.
+    """Serialize every exact Qwen quote once per pass while retaining best confidence.
 
     The generic corpus runner deliberately bypasses Qwen-specific confirmation and overlap
     resolution. Those operations would collapse evidence before the learned joint verifier can
     inspect source agreement and competing boundaries.
     """
 
-    best_by_identity: dict[tuple[int, int, EntityType], EntityProposal] = {}
+    # Retain independent recall/targeted passes. The proposal matrix merges them under the
+    # top-level Qwen source, preserving pass agreement as evidence for the joint verifier.
+    best_by_identity: dict[tuple[int, int, EntityType, str], EntityProposal] = {}
     for proposal in proposals:
         entity_type = proposal.entity_type
         if entity_type is None:
             continue
         proposal.validate_offsets(source_text)
-        identity = (*proposal.span, entity_type)
+        identity = (*proposal.span, entity_type, proposal.source)
         current = best_by_identity.get(identity)
         if current is None or proposal.score > current.score:
             best_by_identity[identity] = proposal
 
     rows: list[dict[str, Any]] = []
-    for (start, end, entity_type), proposal in sorted(best_by_identity.items()):
+    for (start, end, entity_type, source_label), proposal in sorted(best_by_identity.items()):
         rows.append(
             {
                 "text": source_text[start:end],
@@ -1152,7 +1156,7 @@ def _qwen_proposals_to_source_rows(
                 "candidates": [],
                 "position": [start, end],
                 "confidence": proposal.score,
-                "source_label": proposal.source,
+                "source_label": source_label,
             }
         )
     return rows

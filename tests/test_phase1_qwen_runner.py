@@ -14,6 +14,7 @@ from medical_kg_nlp.benchmarks.phase1.qwen_proposals import Phase1QwenPassResult
 from medical_kg_nlp.benchmarks.phase1.qwen_runner import (
     Phase1QwenProposalRunConfig,
     _adjudication_candidates,
+    _has_document_outputs,
     _load_completed_document,
     _merge_review_rows,
     _prepare_resume_state,
@@ -56,7 +57,7 @@ def test_runner_round_trips_support_rows_without_assertion_or_candidates() -> No
     assert all(row["assertions"] == [] and row["candidates"] == [] for row in output)
 
 
-def test_exact_quote_source_keeps_best_score_for_duplicate_identity() -> None:
+def test_exact_quote_source_retains_independent_pass_evidence() -> None:
     text = "Bệnh nhân ho"
     proposals = (
         EntityProposal(
@@ -76,6 +77,15 @@ def test_exact_quote_source_keeps_best_score_for_duplicate_identity() -> None:
     rows = _qwen_proposals_to_source_rows(proposals, text)
 
     assert rows == [
+        {
+            "text": "ho",
+            "type": "TRIỆU_CHỨNG",
+            "assertions": [],
+            "candidates": [],
+            "position": [10, 12],
+            "confidence": 0.6,
+            "source_label": "qwen.recall",
+        },
         {
             "text": "ho",
             "type": "TRIỆU_CHỨNG",
@@ -306,6 +316,14 @@ def test_resume_state_blocks_mixed_run_fingerprints(tmp_path: Path) -> None:
             run_fingerprint="b" * 64,
             resume=True,
         )
+
+
+def test_resume_detects_authorized_source_prefixed_document_output(tmp_path: Path) -> None:
+    consensus = tmp_path / "consensus"
+    consensus.mkdir()
+    (consensus / "authorized_gt:1.json").write_text("[]\n", encoding="utf-8")
+
+    assert _has_document_outputs(tmp_path) is True
 
 
 class _RecordingAdapter:
