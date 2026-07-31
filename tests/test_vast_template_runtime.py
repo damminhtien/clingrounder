@@ -75,3 +75,15 @@ def test_qwen_proposal_runner_defaults_to_bounded_consensus_inference() -> None:
     assert '--extraction-mode "${EXTRACTION_MODE}"' in source
     assert "command+=(--no-adjudication)" in source
     assert "command+=(--resume)" in source
+
+
+def test_qwen_final_supervision_runner_installs_declared_adapter_runtime() -> None:
+    """A declared local LoRA adapter must not fail after checkpoint download."""
+
+    source = Path("scripts/vast/run_qwen_final_supervision.sh").read_text(
+        encoding="utf-8"
+    )
+
+    assert '"peft==0.18.1"' in source
+    assert "PHASE1_PART2_ARCHIVE must point" in source
+    assert "propose-final-supervision" in source

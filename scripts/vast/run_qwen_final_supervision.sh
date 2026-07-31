@@ -30,6 +30,8 @@ export HF_HOME PIP_CACHE_DIR
 
 # SCALING: use the CUDA-enabled PyTorch template and shared HF/pip caches. Do not create a new
 # virtual environment or redownload a cached checkpoint on every resumable proposal run.
+# MODEL: this pinned inference config declares a local LoRA adapter, so PEFT is a required runtime
+# dependency rather than an optional training-only extra.
 medical_kg_vast_verify_pytorch_template "${TEMPLATE_PYTHON}"
 medical_kg_vast_install_project_runtime \
   "${TEMPLATE_PYTHON}" \
@@ -37,6 +39,7 @@ medical_kg_vast_install_project_runtime \
   "${PIP_CACHE_DIR}" \
   "accelerate==1.14.0" \
   "pydantic==2.13.4" \
+  "peft==0.18.1" \
   "PyYAML==6.0.3" \
   "tokenizers==0.22.2" \
   "transformers==5.13.0"
