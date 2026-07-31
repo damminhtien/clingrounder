@@ -114,6 +114,13 @@ from medical_kg_nlp.benchmarks.phase1.model_dataset import (
 from medical_kg_nlp.benchmarks.phase1.model_runtime import (
     run_phase1_model_calibration,
 )
+from medical_kg_nlp.benchmarks.phase1.joint_span_training import (
+    Phase1JointSpanTrainingConfig,
+    Phase1JointSpanTrainingSummary,
+    inspect_phase1_joint_span_training_inputs,
+    train_phase1_joint_span_verifier,
+    verify_phase1_joint_span_verifier_artifact,
+)
 from medical_kg_nlp.benchmarks.phase1.model_region_augmentation import (
     Phase1RegionAugmentationConfig,
     RegionAugmentationKind,
@@ -188,6 +195,8 @@ __all__ = [
     "Phase1MaxScoreResult",
     "Phase1MaxScoreRunSpec",
     "Phase1ModelDatasetConfig",
+    "Phase1JointSpanTrainingConfig",
+    "Phase1JointSpanTrainingSummary",
     "Phase1HoldoutGate",
     "Phase1ModelSelectionConfig",
     "Phase1ProposalDataset",
@@ -253,6 +262,7 @@ __all__ = [
     "fit_disease_symptom_verifier",
     "filter_high_precision_qwen_proposals",
     "infer_phase1_development_predictions",
+    "inspect_phase1_joint_span_training_inputs",
     "load_phase1_text_documents",
     "load_phase1_round2_documents",
     "load_phase1_training_governance",
@@ -266,6 +276,7 @@ __all__ = [
     "validate_phase1_submission_documents",
     "validate_phase1_submission_dir",
     "validate_phase1_submission_zip",
+    "verify_phase1_joint_span_verifier_artifact",
     "write_phase1_output_dir",
     "write_phase1_proposal_dataset",
     "write_phase1_proposal_matrix",
@@ -283,6 +294,7 @@ __all__ = [
     "run_phase1_round2_probes",
     "run_phase1_round2_proposal_verifier",
     "run_phase1_model_calibration",
+    "train_phase1_joint_span_verifier",
     "run_phase1_max_score",
     "segment_phase1_text_regions",
     "align_quoted_phase1_proposals",
