@@ -2,7 +2,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from medical_kg_nlp.linking.candidate import Candidate
-from medical_kg_nlp.linking.reranker import HeuristicReranker
+from medical_kg_nlp.linking.rxnorm_reranker import StructuredRxNormReranker
 from medical_kg_nlp.linking.structured_rxnorm import rxnorm_structure_conflict
 from medical_kg_nlp.retrieval.pipeline import RetrievalPipeline
 from medical_kg_nlp.schema.annotation import CandidateConcept, EntityAnnotation
@@ -51,7 +51,9 @@ class EntityLinker:
             raise ValueError("candidate emit probabilities must be between 0 and 1")
         self.retrieval = retrieval
         self.repository = repository
-        self.reranker = HeuristicReranker(repository)
+        # Structured RxNorm reranking is the production owner of medication composition. The
+        # implementation delegates non-RxNorm candidates to the generic heuristic reranker.
+        self.reranker = StructuredRxNormReranker(repository)
         self.assignment_threshold = assignment_threshold
         self.assignment_margin = assignment_margin
         self.candidate_threshold = effective_candidate_threshold

@@ -10,6 +10,10 @@ from medical_kg_nlp.linking.graph_evidence import (
     GraphEvidenceReranker,
 )
 from medical_kg_nlp.linking.graph_second_pass import GraphEvidenceSecondPass
+from medical_kg_nlp.linking.rxnorm_reranker import (
+    StructuredRxNormReranker,
+    StructuredRxNormScore,
+)
 
 __all__ = [
     "Candidate",
@@ -18,4 +22,6 @@ __all__ = [
     "GraphEvidenceMatch",
     "GraphEvidenceReranker",
     "GraphEvidenceSecondPass",
+    "StructuredRxNormReranker",
+    "StructuredRxNormScore",
 ]
