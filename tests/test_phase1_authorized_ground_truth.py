@@ -23,6 +23,7 @@ def test_authorized_ground_truth_uses_lf_child_offsets_and_writes_manifest(tmp_p
 
     assert corpus.source_texts["authorized_gt:1"] == "đau\nsốt"
     assert corpus.gold_rows["authorized_gt:1"][1]["position"] == [4, 7]
+    assert corpus.duplicate_identity_count == 0
     assert manifest["document_count"] == 100
     documents = (tmp_path / "materialized" / "documents.jsonl").read_text(encoding="utf-8")
     assert "\\r" not in documents
@@ -40,7 +41,23 @@ def test_authorized_ground_truth_rejects_offsets_against_original_crlf_view(tmp_
         raise AssertionError("Expected CRLF-coordinate annotation to be rejected")
 
 
-def _archive(path: Path, *, invalid_lf_offset: bool = False) -> Path:
+def test_authorized_ground_truth_collapses_duplicate_ner_identity(tmp_path: Path) -> None:
+    archive = _archive(tmp_path / "part2.zip", duplicate_first_entity=True)
+    governance = _governance(tmp_path / "governance.yaml", archive)
+
+    corpus = load_phase1_authorized_ground_truth(governance, archive_path=archive)
+
+    assert corpus.source_annotation_count == 201
+    assert corpus.duplicate_identity_count == 1
+    assert len(corpus.gold_rows["authorized_gt:1"]) == 2
+
+
+def _archive(
+    path: Path,
+    *,
+    invalid_lf_offset: bool = False,
+    duplicate_first_entity: bool = False,
+) -> Path:
     input_payload = io.BytesIO()
     gt_payload = io.BytesIO()
     with ZipFile(input_payload, "w", ZIP_DEFLATED) as input_zip, ZipFile(
@@ -52,15 +69,15 @@ def _archive(path: Path, *, invalid_lf_offset: bool = False) -> Path:
             text = "đau\r\nsốt"
             input_zip.writestr(f"input/{index}.txt", text)
             end = 8 if invalid_lf_offset and index == 1 else 7
+            entities = [
+                {"text": "đau", "type": "TRIỆU_CHỨNG", "position": [0, 3]},
+                {"text": "sốt", "type": "TRIỆU_CHỨNG", "position": [4, end]},
+            ]
+            if duplicate_first_entity and index == 1:
+                entities.append(dict(entities[0]))
             gt_zip.writestr(
                 f"output/{index}.json",
-                json.dumps(
-                    [
-                        {"text": "đau", "type": "TRIỆU_CHỨNG", "position": [0, 3]},
-                        {"text": "sốt", "type": "TRIỆU_CHỨNG", "position": [4, end]},
-                    ],
-                    ensure_ascii=False,
-                ),
+                json.dumps(entities, ensure_ascii=False),
             )
     with ZipFile(path, "w", ZIP_DEFLATED) as parent:
         parent.writestr("input.zip", input_payload.getvalue())

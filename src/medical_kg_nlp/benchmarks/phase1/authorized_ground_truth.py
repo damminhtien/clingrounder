@@ -41,6 +41,8 @@ class Phase1AuthorizedGroundTruthCorpus:
     input_zip_sha256: str
     gt_zip_sha256: str
     offset_coordinate_view: str
+    source_annotation_count: int
+    duplicate_identity_count: int
 
     def __post_init__(self) -> None:
         if set(self.source_texts) != set(self.gold_rows):
@@ -83,10 +85,15 @@ def load_phase1_authorized_ground_truth(
 
     source_texts: dict[str, str] = {}
     gold_rows: dict[str, tuple[Mapping[str, object], ...]] = {}
+    source_annotation_count = 0
+    duplicate_identity_count = 0
     for original_id in sorted(input_rows, key=_document_sort_key):
         document_id = f"{_SOURCE_PREFIX}{original_id}"
         source_text = _to_lf_child_text(input_rows[original_id])
-        rows = annotation_rows[original_id]
+        source_rows = annotation_rows[original_id]
+        rows, duplicate_count = _deduplicate_entity_identities(source_rows)
+        source_annotation_count += len(source_rows)
+        duplicate_identity_count += duplicate_count
         _validate_rows(document_id, source_text, rows)
         source_texts[document_id] = source_text
         gold_rows[document_id] = rows
@@ -97,6 +104,8 @@ def load_phase1_authorized_ground_truth(
         input_zip_sha256=policy.input_zip_sha256,
         gt_zip_sha256=policy.gt_zip_sha256,
         offset_coordinate_view=policy.offset_coordinate_view,
+        source_annotation_count=source_annotation_count,
+        duplicate_identity_count=duplicate_identity_count,
     )
 
 
@@ -133,6 +142,11 @@ def materialize_phase1_authorized_ground_truth(
             "schema_version": _SCHEMA_VERSION,
             "source_id": "phase1_part2_leaked_bundle",
             "document_count": len(documents),
+            "source_annotation_count": corpus.source_annotation_count,
+            "deduplicated_annotation_count": sum(
+                len(rows) for rows in corpus.gold_rows.values()
+            ),
+            "duplicate_identity_count": corpus.duplicate_identity_count,
             "offset_coordinate_view": corpus.offset_coordinate_view,
             "inputs": {
                 "archive_sha256": corpus.archive_sha256,
@@ -233,7 +247,6 @@ def _validate_rows(
     source_text: str,
     rows: tuple[Mapping[str, object], ...],
 ) -> None:
-    seen: set[tuple[int, int, str]] = set()
     for row in rows:
         text = row.get("text")
         entity_type = row.get("type")
@@ -250,10 +263,29 @@ def _validate_rows(
             or source_text[start:end] != text
         ):
             raise ValueError(f"{document_id}: annotation violates the LF raw-offset invariant")
-        identity = (start, end, str(entity_type))
-        if identity in seen:
-            raise ValueError(f"{document_id}: duplicate annotation identity")
-        seen.add(identity)
+
+
+def _deduplicate_entity_identities(
+    rows: tuple[Mapping[str, object], ...],
+) -> tuple[tuple[Mapping[str, object], ...], int]:
+    """Collapse duplicate exact NER targets while preserving their source count in the manifest."""
+
+    deduplicated: list[Mapping[str, object]] = []
+    seen: set[tuple[object, object, tuple[object, ...]]] = set()
+    duplicates = 0
+    for row in rows:
+        position = row.get("position")
+        key = (
+            row.get("text"),
+            row.get("type"),
+            tuple(position) if isinstance(position, list) else (),
+        )
+        if key in seen:
+            duplicates += 1
+            continue
+        seen.add(key)
+        deduplicated.append(row)
+    return tuple(deduplicated), duplicates
 
 
 def _to_lf_child_text(source_text: str) -> str:
