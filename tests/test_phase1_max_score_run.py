@@ -31,6 +31,8 @@ def test_max_score_run_spec_resolves_every_path_below_run_root(
     )
     assert spec.candidate_source_priority == ("qwen", "rule")
     assert spec.assertion_regimes == ("negation", "history")
+    assert spec.boundary_verifier is None
+    assert spec.boundary_policy.mode == "disabled"
     assert spec.proposal_thresholds == (
         ("CHẨN_ĐOÁN", 0.24),
         ("KẾT_QUẢ_XÉT_NGHIỆM", 0.16),
@@ -38,6 +40,27 @@ def test_max_score_run_spec_resolves_every_path_below_run_root(
         ("TRIỆU_CHỨNG", 0.02),
         ("TÊN_XÉT_NGHIỆM", 0.09),
     )
+
+
+def test_max_score_run_spec_requires_artifact_for_conservative_boundary_policy(
+    tmp_path: Path,
+) -> None:
+    config = _write_spec(tmp_path)
+    config.write_text(
+        config.read_text(encoding="utf-8")
+        .replace(
+            "boundary_verifier: null",
+            f"boundary_verifier:\n  path: boundary-verifier.json\n  sha256: {'d' * 64}",
+        )
+        .replace("mode: disabled", "mode: conservative_replacement"),
+        encoding="utf-8",
+    )
+
+    spec = load_phase1_max_score_run_spec(config)
+
+    assert spec.boundary_verifier is not None
+    assert spec.boundary_verifier.path == tmp_path / "boundary-verifier.json"
+    assert spec.boundary_policy.mode == "conservative_replacement"
 
 
 def test_pinned_artifact_rejects_replaced_bytes(tmp_path: Path) -> None:
@@ -73,7 +96,7 @@ def _write_spec(root: Path) -> Path:
     config = root / "max-score.yaml"
     config.write_text(
         f"""
-schema_version: phase1-max-score-run-spec.v1
+schema_version: phase1-max-score-run-spec.v2
 run_root: .
 documents:
   path: documents.jsonl
@@ -84,6 +107,12 @@ budget_spec: budget.yaml
 verifier:
   path: verifier.json
   sha256: {"c" * 64}
+boundary_verifier: null
+boundary_policy:
+  mode: disabled
+  require_same_type: true
+  require_base_selected: true
+  preserve_unmodified_identity: true
 proposal_thresholds:
   CHẨN_ĐOÁN: 0.24
   KẾT_QUẢ_XÉT_NGHIỆM: 0.16

@@ -14,9 +14,13 @@ from medical_kg_nlp.adapters.generative.budget_spec import (
     verify_inference_budget_spec,
 )
 from medical_kg_nlp.benchmarks.phase1.max_score_pipeline import (
+    BoundaryPolicy,
     CandidateMetadataPolicy,
     Phase1MaxScorePipeline,
     Phase1MaxScoreResult,
+)
+from medical_kg_nlp.benchmarks.phase1.boundary_verifier import (
+    Phase1BoundaryVerifier,
 )
 from medical_kg_nlp.benchmarks.phase1.phase1 import (
     validate_phase1_submission_documents,
@@ -55,7 +59,7 @@ __all__ = [
     "run_phase1_max_score",
 ]
 
-_SPEC_SCHEMA = "phase1-max-score-run-spec.v1"
+_SPEC_SCHEMA = "phase1-max-score-run-spec.v2"
 _SHA256_RE = re.compile(r"[0-9a-f]{64}")
 
 
@@ -106,6 +110,8 @@ class Phase1MaxScoreRunSpec:
     expected_count: int
     budget_spec_path: Path
     verifier: PinnedPhase1Artifact
+    boundary_verifier: PinnedPhase1Artifact | None
+    boundary_policy: BoundaryPolicy
     proposal_thresholds: tuple[tuple[str, float], ...]
     sources: tuple[Phase1ProposalSourceSpec, ...]
     dictionaries: tuple[PinnedPhase1Artifact, ...]
@@ -127,6 +133,16 @@ class Phase1MaxScoreRunSpec:
             raise ValueError("Candidate priority must name every proposal source")
         if not self.dictionaries:
             raise ValueError("Max-score run requires pinned terminology sources")
+        if (
+            self.boundary_policy.mode == "conservative_replacement"
+            and self.boundary_verifier is None
+        ):
+            raise ValueError("Conservative boundary policy requires a pinned verifier")
+        if (
+            self.boundary_verifier is not None
+            and self.boundary_policy.mode != "conservative_replacement"
+        ):
+            raise ValueError("Pinned boundary verifier requires an active boundary policy")
         threshold_types = {entity_type for entity_type, _ in self.proposal_thresholds}
         if threshold_types and threshold_types != set(PHASE1_ALLOWED_TYPES):
             raise ValueError(
@@ -154,6 +170,8 @@ def load_phase1_max_score_run_spec(
     _require_below_root(config_path, run_root)
     documents_raw = _mapping(raw.get("documents"), "documents")
     verifier_raw = _mapping(raw.get("verifier"), "verifier")
+    boundary_verifier_raw = raw.get("boundary_verifier")
+    boundary_policy_raw = _mapping(raw.get("boundary_policy"), "boundary_policy")
     source_rows = _list_of_mappings(raw.get("sources"), "sources")
     dictionary_rows = _list_of_mappings(raw.get("dictionaries"), "dictionaries")
     output_root = _resolve(run_root, str(raw.get("output_root", "outputs/phase1/max-score")))
@@ -174,6 +192,15 @@ def load_phase1_max_score_run_spec(
         expected_count=int(documents_raw.get("expected_count", 100)),
         budget_spec_path=budget_spec_path,
         verifier=_pinned_artifact(verifier_raw, run_root),
+        boundary_verifier=(
+            None
+            if boundary_verifier_raw is None
+            else _pinned_artifact(
+                _mapping(boundary_verifier_raw, "boundary_verifier"),
+                run_root,
+            )
+        ),
+        boundary_policy=BoundaryPolicy.from_mapping(boundary_policy_raw),
         proposal_thresholds=_threshold_overrides(raw.get("proposal_thresholds")),
         sources=tuple(
             Phase1ProposalSourceSpec(
@@ -211,6 +238,8 @@ def run_phase1_max_score(spec: Phase1MaxScoreRunSpec) -> dict[str, Any]:
 
     spec.documents.verify(name="documents")
     spec.verifier.verify(name="proposal verifier")
+    if spec.boundary_verifier is not None:
+        spec.boundary_verifier.verify(name="boundary verifier")
     for source in spec.sources:
         source.artifact.verify(name=f"proposal source {source.name}")
     for index, artifact in enumerate(spec.dictionaries):
@@ -235,6 +264,14 @@ def run_phase1_max_score(spec: Phase1MaxScoreRunSpec) -> dict[str, Any]:
                 for genre, entity_type, _ in verifier.genre_thresholds
             ),
         )
+    boundary_verifier: Phase1BoundaryVerifier | None = None
+    if spec.boundary_verifier is not None:
+        boundary_payload = json.loads(
+            spec.boundary_verifier.path.read_text(encoding="utf-8")
+        )
+        if not isinstance(boundary_payload, Mapping):
+            raise ValueError("Boundary verifier artifact must be a JSON object")
+        boundary_verifier = Phase1BoundaryVerifier.from_dict(boundary_payload)
     documents = load_phase1_round2_documents(
         load_documents(spec.documents.path),
         expected_archive_sha256=spec.source_archive_sha256,
@@ -259,6 +296,8 @@ def run_phase1_max_score(spec: Phase1MaxScoreRunSpec) -> dict[str, Any]:
         candidate_source_priority=spec.candidate_source_priority,
         assertion_regimes=spec.assertion_regimes,
         candidate_policy=spec.candidate_policy,
+        boundary_verifier=boundary_verifier,
+        boundary_policy=spec.boundary_policy,
     )
     result = pipeline.run(documents, sources)
 
@@ -270,6 +309,11 @@ def run_phase1_max_score(spec: Phase1MaxScoreRunSpec) -> dict[str, Any]:
             spec.documents.path,
             spec.budget_spec_path,
             spec.verifier.path,
+            *(
+                (spec.boundary_verifier.path,)
+                if spec.boundary_verifier is not None
+                else ()
+            ),
             *(source.artifact.path for source in spec.sources),
             *(artifact.path for artifact in spec.dictionaries),
         ),
@@ -281,6 +325,15 @@ def run_phase1_max_score(spec: Phase1MaxScoreRunSpec) -> dict[str, Any]:
                 for source in spec.sources
             ],
             "proposal_thresholds": dict(spec.proposal_thresholds),
+            "boundary_verifier": (
+                None
+                if spec.boundary_verifier is None
+                else {
+                    "path": str(spec.boundary_verifier.path),
+                    "sha256": spec.boundary_verifier.sha256,
+                }
+            ),
+            "boundary_policy": spec.boundary_policy.to_dict(),
             "candidate_source_priority": list(spec.candidate_source_priority),
             "assertion_regimes": list(spec.assertion_regimes),
             "candidate_policy": spec.candidate_policy,
@@ -357,10 +410,16 @@ def _write_result(
         run_dir / "proposal_scores.jsonl",
         (item.to_dict() for item in result.proposal_scores),
     )
+    write_jsonl(
+        run_dir / "boundary_scores.jsonl",
+        (item.to_dict() for item in result.boundary_scores),
+    )
     write_jsonl(run_dir / "source_decisions.jsonl", result.source_decisions)
+    write_jsonl(run_dir / "boundary_decisions.jsonl", result.boundary_decisions)
     write_jsonl(run_dir / "assertion_decisions.jsonl", result.assertion_decisions)
     write_jsonl(run_dir / "candidate_decisions.jsonl", result.candidate_decisions)
     write_json(run_dir / "counters.json", result.counters)
+    write_json(run_dir / "boundary_report.json", result.boundary_report)
     return {
         "output_dir": str(output_dir),
         "zip_path": str(zip_path),
@@ -371,6 +430,7 @@ def _write_result(
         ),
         "validation_issue_count": 0,
         "counters": dict(result.counters),
+        "boundary": dict(result.boundary_report),
         "budget": {
             "total_parameters": result.budget_manifest["total_parameters"],
             "maximum_parameters": result.budget_manifest["maximum_parameters"],

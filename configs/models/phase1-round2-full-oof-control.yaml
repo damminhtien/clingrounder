@@ -1,7 +1,5 @@
-# PUBLIC REJECTED: 25.2683 on 2026-07-29. This config is retained only for reproducibility.
-# It must not replace the frozen 33.0750 Round 2 public reference.
-# The density-derived thresholds changed 3,218 entity identities and the candidate policy reduced
-# 1,844 public-reference code values to 413, causing regressions in every official metric.
+# Control for the conservative-boundary public experiment. This regenerates every entity from
+# pinned sources with the governed full-OOF proposal verifier and leaves boundary identities intact.
 schema_version: phase1-max-score-run-spec.v2
 run_root: ../..
 
@@ -13,26 +11,15 @@ documents:
 
 budget_spec: configs/models/phase1-under9b-max.yaml
 verifier:
-  path: outputs/phase1/proposal_fusion_20260729/calibrated_genre_f1/verifier.json
-  sha256: 3bce92b7f9fc524bf4b157f71e281f6077c4a9b1155fc52f9b08d3c3932b8889
+  path: outputs/phase1/proposal_fusion_20260731/full_oof_calibrator_v2/verifier.json
+  sha256: a286f71f0323c2be3342a5dfdefff066e006577f9499616d34677d2a25cde37c
 
-# This rejected historical run intentionally remains boundary-disabled. A new public boundary
-# probe must pin a current conservative verifier rather than silently reuse an incompatible v1
-# boundary artifact.
 boundary_verifier: null
 boundary_policy:
   mode: disabled
   require_same_type: true
   require_base_selected: true
   preserve_unmodified_identity: true
-
-# Aggregate Round 2 density calibration. No document ID, text, or absolute span is encoded here.
-proposal_thresholds:
-  CHẨN_ĐOÁN: 0.2428298896119345
-  KẾT_QUẢ_XÉT_NGHIỆM: 0.1620828237154454
-  THUỐC: 0.030734724819924335
-  TRIỆU_CHỨNG: 0.019857172026258994
-  TÊN_XÉT_NGHIỆM: 0.0948939884681583
 
 sources:
   - name: rule
@@ -60,9 +47,8 @@ dictionaries:
   - path: data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
     sha256: 42faaadeb12222ec099f05c398f3ff858866cb694cbb6dc0cb193f0ea23359cb
 
-# Candidate metadata comes only from an exact selected entity identity.
 candidate_source_priority: [qwen, rule, xlmr, vietmed]
 assertion_regimes: [negation, history]
 candidate_policy: rx_unique_keep_icd
 output_root: outputs/phase1/max-score
-run_label: phase1-under9b-max
+run_label: phase1-full-oof-control

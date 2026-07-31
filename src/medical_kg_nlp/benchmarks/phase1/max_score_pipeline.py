@@ -14,6 +14,15 @@ from medical_kg_nlp.benchmarks.phase1.phase1 import (
     Phase1ValidationIssue,
     validate_phase1_entities,
 )
+from medical_kg_nlp.benchmarks.phase1.boundary_overlay import (
+    BoundaryPolicy,
+    apply_conservative_boundary_overlay,
+)
+from medical_kg_nlp.benchmarks.phase1.boundary_verifier import (
+    Phase1BoundaryVerifier,
+    ScoredPhase1BoundaryVariant,
+    resolve_phase1_boundary_rows,
+)
 from medical_kg_nlp.benchmarks.phase1.phase1_proposals import (
     build_phase1_proposal_matrix,
 )
@@ -32,10 +41,16 @@ from medical_kg_nlp.benchmarks.phase1.round2_probes import (
     canonicalize_full_phase1_source,
 )
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.ontology.phase1 import PHASE1_CODABLE_TYPES
+from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatcher
+from medical_kg_nlp.ontology.phase1 import (
+    PHASE1_CODABLE_TYPES,
+    PHASE1_CODE_SYSTEM_BY_TYPE,
+    PHASE1_RULE_BY_TYPE,
+)
 from medical_kg_nlp.schema.document import ClinicalDocument
 
 __all__ = [
+    "BoundaryPolicy",
     "CandidateMetadataPolicy",
     "Phase1MaxScorePipeline",
     "Phase1MaxScoreResult",
@@ -61,10 +76,13 @@ class Phase1MaxScoreResult:
     rows_by_document: Mapping[str, tuple[Mapping[str, Any], ...]]
     proposal_matrix: Mapping[str, Any]
     proposal_scores: tuple[ScoredPhase1Proposal, ...]
+    boundary_scores: tuple[ScoredPhase1BoundaryVariant, ...]
     source_decisions: tuple[Mapping[str, Any], ...]
+    boundary_decisions: tuple[Mapping[str, Any], ...]
     assertion_decisions: tuple[Mapping[str, Any], ...]
     candidate_decisions: tuple[Mapping[str, Any], ...]
     counters: Mapping[str, int]
+    boundary_report: Mapping[str, int | float | None | str]
     budget_manifest: Mapping[str, Any]
 
 
@@ -84,6 +102,8 @@ class Phase1MaxScorePipeline:
     candidate_source_priority: tuple[str, ...]
     assertion_regimes: tuple[AssertionRegime, ...] = ("negation", "history")
     candidate_policy: CandidateMetadataPolicy = "rx_unique_keep_icd"
+    boundary_verifier: Phase1BoundaryVerifier | None = None
+    boundary_policy: BoundaryPolicy = BoundaryPolicy()
 
     def __post_init__(self) -> None:
         source_names = frozenset(self.source_roles)
@@ -99,6 +119,20 @@ class Phase1MaxScorePipeline:
             )
         if self.candidate_policy not in {"keep", "rx_unique_keep_icd"}:
             raise ValueError(f"Unsupported candidate policy {self.candidate_policy!r}")
+        if (
+            self.boundary_policy.mode == "conservative_replacement"
+            and self.boundary_verifier is None
+        ):
+            raise ValueError("Boundary replacement requires a pinned boundary verifier")
+        if self.boundary_verifier is not None:
+            if self.boundary_policy.mode != "conservative_replacement":
+                raise ValueError("A boundary verifier requires an active boundary policy")
+            if self.boundary_verifier.resolution_policy != "conservative_replacement":
+                raise ValueError("Max-score pipeline refuses open-ranker boundary output")
+            if not self.boundary_verifier.requires_base_probability:
+                raise ValueError(
+                    "Max-score boundary replacement requires proposal-conditioned scoring"
+                )
         _validate_budget_manifest(self.budget_manifest)
 
     def run(
@@ -185,10 +219,53 @@ class Phase1MaxScorePipeline:
             },
         )
 
+        boundary_scores: tuple[ScoredPhase1BoundaryVariant, ...] = ()
+        boundary_decisions: tuple[Mapping[str, Any], ...] = ()
+        boundary_report: Mapping[str, int | float | None | str] = {
+            "replacement_count": 0,
+            "replacement_correct": None,
+            "replacement_precision": None,
+            "base_errors_fixed": None,
+            "correct_bases_destroyed": None,
+            "net_exact_span_gain": None,
+            "label_status": "boundary_policy_disabled",
+        }
+        repaired = resolved
+        changed_identities: frozenset[tuple[str, str, str, int, int]] = frozenset()
+        if self.boundary_verifier is not None:
+            # MODEL: the boundary model scores alternatives around all eligible proposals, while
+            # the overlay remains anchored to the proposal verifier's accepted base identities.
+            boundary_resolved, boundary_scores = resolve_phase1_boundary_rows(
+                eligible_proposals,
+                source_text_by_document,
+                self.boundary_verifier,
+                proposal_verifier=self.verifier,
+                source_roles=self.source_roles,
+                dictionary_matcher=DictionaryMatcher(self.dictionary.aliases_for_ner()),
+            )
+            overlay = apply_conservative_boundary_overlay(
+                base_rows=resolved,
+                boundary_rows=boundary_resolved,
+                scored_variants=boundary_scores,
+                source_text_by_document=source_text_by_document,
+                verifier=self.boundary_verifier,
+                policy=self.boundary_policy,
+            )
+            repaired = {
+                document_id: [dict(row) for row in rows]
+                for document_id, rows in overlay.rows_by_document.items()
+            }
+            changed_identities = overlay.changed_identities
+            boundary_decisions = overlay.decisions
+            boundary_report = overlay.diagnostic_report
+            _merge_counters(counters, "boundary", overlay.counters)
+
         hydrated, metadata_decisions = _hydrate_selected_candidates(
-            resolved,
+            repaired,
             canonical_sources,
             self.candidate_source_priority,
+            dictionary=self.dictionary,
+            changed_identities=changed_identities,
         )
         source_decisions.extend(metadata_decisions)
         asserted, assertion_decisions, assertion_counters = (
@@ -244,10 +321,13 @@ class Phase1MaxScorePipeline:
             },
             proposal_matrix=matrix,
             proposal_scores=proposal_scores,
+            boundary_scores=boundary_scores,
             source_decisions=tuple(source_decisions),
+            boundary_decisions=boundary_decisions,
             assertion_decisions=tuple(assertion_decisions),
             candidate_decisions=tuple(candidate_decisions),
             counters=dict(sorted(counters.items())),
+            boundary_report=boundary_report,
             budget_manifest=dict(self.budget_manifest),
         )
 
@@ -256,8 +336,15 @@ def _hydrate_selected_candidates(
     resolved: Mapping[str, Sequence[Mapping[str, Any]]],
     sources: Mapping[str, Mapping[str, Sequence[Mapping[str, Any]]]],
     source_priority: Sequence[str],
+    *,
+    dictionary: DictionaryStore,
+    changed_identities: frozenset[tuple[str, str, str, int, int]],
 ) -> tuple[dict[str, list[dict[str, Any]]], list[Mapping[str, Any]]]:
-    """Copy metadata only from an exact selected identity in a pinned source."""
+    """Hydrate unchanged source metadata and relink changed boundary identities.
+
+    INVARIANT: a candidate list is never copied from a span with different raw offsets. Boundary
+    replacements use an exact unique terminology pass instead of inheriting old metadata.
+    """
 
     indexes = {
         source_name: {
@@ -278,6 +365,22 @@ def _hydrate_selected_candidates(
                 continue
             identity = (document_id, *_identity_key(row))
             hydrated["candidates"] = []
+            if identity in changed_identities:
+                candidates = _relink_changed_identity(row, dictionary)
+                hydrated["candidates"] = candidates
+                decisions.append(
+                    {
+                        "document_id": document_id,
+                        "stage": "candidate_metadata_relink",
+                        "action": (
+                            "emit_exact_unique" if candidates else "abstain_ambiguous_or_missing"
+                        ),
+                        "candidate_count": len(candidates),
+                        "entity": _identity_payload(row),
+                    }
+                )
+                hydrated_rows.append(hydrated)
+                continue
             for source_name in source_priority:
                 source_row = indexes[source_name].get(identity)
                 if source_row is None:
@@ -306,6 +409,29 @@ def _hydrate_selected_candidates(
             hydrated_rows.append(hydrated)
         output[document_id] = hydrated_rows
     return output, decisions
+
+
+def _relink_changed_identity(
+    row: Mapping[str, Any],
+    dictionary: DictionaryStore,
+) -> list[str]:
+    """Rerun exact type-filtered linking for a boundary-replaced span.
+
+    The final candidate policy still runs after this function. Here we only recover a single
+    exact terminology code; fuzzy retrieval would turn a boundary-only probe into a linking probe.
+    """
+
+    entity_type = str(row.get("type", ""))
+    expected_system = PHASE1_CODE_SYSTEM_BY_TYPE[entity_type]
+    expected_internal_type = PHASE1_RULE_BY_TYPE[entity_type].internal_type
+    codes = {
+        entry.code
+        for entry in dictionary.exact_lookup(str(row.get("text", "")))
+        if entry.code is not None
+        and entry.code_system is expected_system
+        and entry.semantic_type is expected_internal_type
+    }
+    return sorted(codes) if len(codes) == 1 else []
 
 
 def _validate_budget_manifest(manifest: Mapping[str, Any]) -> None:

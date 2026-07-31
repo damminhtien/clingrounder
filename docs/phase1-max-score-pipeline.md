@@ -7,8 +7,9 @@ pinned Rule/XLM-R/Qwen/VietMed outputs
 -> exact raw-offset proposal matrix
 -> calibrated probability
 -> global conflict resolver
+-> conservative boundary replacement
 -> selective assertion policy
--> candidate metadata hydration and abstention
+-> candidate relinking/metadata hydration and abstention
 -> strict validation
 -> deterministic ZIP
 ```
@@ -25,11 +26,12 @@ uv run medical-kg benchmark phase1 round2 max-score \
   --config configs/models/phase1-round2-max-score.yaml
 ```
 
-The config uses `phase1-max-score-run-spec.v1` and pins:
+The config uses `phase1-max-score-run-spec.v2` and pins:
 
 - the authorized-private `documents.jsonl` and original archive fingerprint;
 - the verified under-9B budget spec;
 - the calibrated proposal verifier;
+- an optional proposal-conditioned boundary verifier;
 - every source ZIP with a model-neutral role;
 - every terminology JSONL;
 - assertion and candidate policies.
@@ -37,7 +39,7 @@ The config uses `phase1-max-score-run-spec.v1` and pins:
 All paths resolve below `run_root`. Every file is checked against SHA-256 before parsing.
 
 ```yaml
-schema_version: phase1-max-score-run-spec.v1
+schema_version: phase1-max-score-run-spec.v2
 run_root: ../..
 documents:
   path: outputs/mining/phase1-round2-hosted-2026-07-27/documents.jsonl
@@ -48,6 +50,14 @@ budget_spec: configs/models/phase1-under9b-max.yaml
 verifier:
   path: outputs/phase1/proposal_fusion_20260729/calibrated_genre_f1/verifier.json
   sha256: <sha256>
+boundary_verifier:
+  path: outputs/phase1/proposal_fusion/boundary_conservative/verifier.json
+  sha256: <sha256>
+boundary_policy:
+  mode: conservative_replacement
+  require_same_type: true
+  require_base_selected: true
+  preserve_unmodified_identity: true
 proposal_thresholds:
   CHẨN_ĐOÁN: <aggregate operating point>
   KẾT_QUẢ_XÉT_NGHIỆM: <aggregate operating point>
@@ -92,6 +102,14 @@ increase confidence only when a target-task source proposes the same exact span 
 only the operating point of the pinned probability model. Round 2 uses aggregate public-density
 calibration; the config must never contain document IDs, raw text, or absolute spans.
 
+`boundary_verifier` is optional only when `boundary_policy.mode` is `disabled`. Submission runs
+never accept `open_ranker`. Conservative repair is limited to a selected base entity with the same
+type, a raw-exact variant above its boundary threshold and replacement margin, at least two source
+supports, and no overlap with another accepted entity. Headings and verifier-only proposals are
+blocked. When a boundary changes, the old assertion/candidate fields are discarded: assertions run
+again and candidate linking is restricted to a fresh exact unique terminology lookup. Unchanged
+identities preserve the pinned source metadata exactly.
+
 ## Output
 
 Each content-addressed run writes:
@@ -99,7 +117,9 @@ Each content-addressed run writes:
 - `output/` and deterministic `output.zip`;
 - verified budget manifest;
 - proposal matrix and calibrated scores;
-- source, assertion, and candidate decision traces;
+- proposal and boundary scores;
+- source, boundary, assertion, and candidate decision traces;
+- boundary diagnostic report, which leaves correctness fields unknown until official BTC results;
 - counters and run manifest.
 
 The run fails before ZIP creation for an exceeded parameter budget, replaced artifact, invalid raw

@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 from medical_kg_nlp.benchmarks.phase1.max_score_pipeline import (
+    BoundaryPolicy,
     Phase1MaxScorePipeline,
+)
+from medical_kg_nlp.benchmarks.phase1.boundary_verifier import (
+    Phase1BoundaryVerifier,
 )
 from medical_kg_nlp.benchmarks.phase1.proposal_calibration import (
     Phase1ProbabilityCalibrator,
@@ -186,6 +190,64 @@ def test_max_score_pipeline_retains_verifier_confidence_and_support_metadata() -
     assert len(result.rows_by_document["1"]) == 1
 
 
+def test_max_score_boundary_replacement_relinks_changed_identity() -> None:
+    text = "tăng huyết áp nặng"
+    documents = [ClinicalDocument(document_id="1", text=text)]
+    sources = {
+        "rule": {
+            "1": [
+                _row(
+                    "tăng huyết áp",
+                    "CHẨN_ĐOÁN",
+                    0,
+                    candidates=["I10"],
+                )
+            ]
+        },
+        "qwen": {
+            "1": [
+                _row(
+                    "tăng huyết áp",
+                    "CHẨN_ĐOÁN",
+                    0,
+                    candidates=["I10"],
+                )
+            ]
+        },
+    }
+    pipeline = Phase1MaxScorePipeline(
+        verifier=_accept_all_verifier(),
+        boundary_verifier=_boundary_expansion_verifier(),
+        boundary_policy=BoundaryPolicy(mode="conservative_replacement"),
+        source_roles={
+            "rule": ProposalSourceRole.RULE,
+            "qwen": ProposalSourceRole.LLM,
+        },
+        budget_manifest=_budget_manifest(),
+        dictionary=_dictionary(),
+        candidate_source_priority=("qwen", "rule"),
+        candidate_policy="keep",
+    )
+
+    result = pipeline.run(documents, sources)
+
+    assert result.rows_by_document["1"] == (
+        {
+            "text": "tăng huyết áp nặng",
+            "type": "CHẨN_ĐOÁN",
+            "assertions": [],
+            "position": [0, len(text)],
+            "candidates": [],
+        },
+    )
+    assert result.counters["boundary.replacement.applied"] == 1
+    assert any(
+        decision.get("stage") == "candidate_metadata_relink"
+        and decision.get("action") == "abstain_ambiguous_or_missing"
+        for decision in result.source_decisions
+    )
+
+
 def _row(
     text: str,
     entity_type: str,
@@ -221,6 +283,26 @@ def _accept_all_verifier() -> Phase1ProposalVerifier:
             (entity_type, 0.5) for entity_type in sorted(PHASE1_ALLOWED_TYPES)
         ),
         training_dataset_sha256="b" * 64,
+    )
+
+
+def _boundary_expansion_verifier() -> Phase1BoundaryVerifier:
+    return Phase1BoundaryVerifier(
+        model=SparseLogisticModel(
+            feature_names=("generator:token_window",),
+            weights=(12.0,),
+            bias=-6.0,
+        ),
+        thresholds=tuple(
+            (entity_type, 0.8) for entity_type in sorted(PHASE1_ALLOWED_TYPES)
+        ),
+        genre_thresholds=(),
+        replacement_margins=tuple(
+            (entity_type, 0.2) for entity_type in sorted(PHASE1_ALLOWED_TYPES)
+        ),
+        resolution_policy="conservative_replacement",
+        training_dataset_sha256="c" * 64,
+        requires_base_probability=True,
     )
 
 

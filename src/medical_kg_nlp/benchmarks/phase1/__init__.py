@@ -23,6 +23,11 @@ from medical_kg_nlp.benchmarks.phase1.boundary_verifier import (
     write_phase1_boundary_resolution,
     write_phase1_boundary_verifier,
 )
+from medical_kg_nlp.benchmarks.phase1.boundary_overlay import (
+    BoundaryOverlayResult,
+    BoundaryPolicy,
+    apply_conservative_boundary_overlay,
+)
 from medical_kg_nlp.benchmarks.phase1.adapter import (
     Phase1EvaluationAdapter,
     Phase1Record,
@@ -48,6 +53,7 @@ from medical_kg_nlp.benchmarks.phase1.proposal_dataset import (
 )
 from medical_kg_nlp.benchmarks.phase1.proposal_calibration import (
     Phase1ProbabilityCalibrator,
+    Phase1ProposalFitMode,
     Phase1ProposalVerifier,
     ScoredPhase1Proposal,
     fit_phase1_proposal_verifier,
@@ -188,6 +194,7 @@ __all__ = [
     "Phase1GenreBucket",
     "Phase1ProposalContext",
     "Phase1ProbabilityCalibrator",
+    "Phase1ProposalFitMode",
     "Phase1ProposalSource",
     "Phase1ProposalVerifier",
     "Phase1RecognitionMiningConfig",
@@ -212,6 +219,8 @@ __all__ = [
     "RegionAugmentationKind",
     "build_phase1_round2_audit",
     "build_phase1_boundary_dataset",
+    "BoundaryOverlayResult",
+    "BoundaryPolicy",
     "build_phase1_round2_golden",
     "apply_reviewed_rxnorm_fill_empty",
     "apply_round2_candidate_policy",
@@ -232,6 +241,7 @@ __all__ = [
     "extract_phase1_proposal_context",
     "extract_phase1_boundary_features",
     "boundary_cross_encoder_text",
+    "apply_conservative_boundary_overlay",
     "generate_phase1_boundary_variants",
     "label_phase1_boundary_variant",
     "fit_phase1_boundary_verifier",
