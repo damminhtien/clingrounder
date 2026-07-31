@@ -124,7 +124,9 @@ from medical_kg_nlp.benchmarks.phase1.joint_span_training import (
 from medical_kg_nlp.benchmarks.phase1.joint_span_sources import (
     EntityProposalExtractorPort,
     build_phase1_joint_span_proposal_matrix,
+    build_phase1_rule_source_rows,
     build_phase1_token_model_proposal_rows,
+    load_phase1_joint_span_source_rows,
 )
 from medical_kg_nlp.benchmarks.phase1.model_region_augmentation import (
     Phase1RegionAugmentationConfig,
@@ -251,6 +253,7 @@ __all__ = [
     "build_phase1_proposal_matrix",
     "build_phase1_proposal_source_report",
     "build_phase1_joint_span_proposal_matrix",
+    "build_phase1_rule_source_rows",
     "build_phase1_token_model_proposal_rows",
     "build_disease_symptom_verifier_dataset",
     "calibrate_phase1_model_thresholds",
@@ -271,6 +274,7 @@ __all__ = [
     "filter_high_precision_qwen_proposals",
     "infer_phase1_development_predictions",
     "inspect_phase1_joint_span_training_inputs",
+    "load_phase1_joint_span_source_rows",
     "load_phase1_text_documents",
     "load_phase1_round2_documents",
     "load_phase1_training_governance",

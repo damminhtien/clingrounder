@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping, Sequence
+from pathlib import Path
 from typing import Any, Protocol
 
 from medical_kg_nlp.benchmarks.phase1.phase1_proposals import (
@@ -11,13 +13,18 @@ from medical_kg_nlp.benchmarks.phase1.phase1_proposals import (
 from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRole
 from medical_kg_nlp.benchmarks.phase1.reviewed_corpus import Phase1ReviewedCorpus
 from medical_kg_nlp.benchmarks.phase1.split_contract import phase1_document_sort_key
+from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.ner.rule_ner import RuleBasedNER
+from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
 from medical_kg_nlp.ontology.phase1 import PHASE1_TYPE_BY_ENTITY_TYPE
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 
 __all__ = [
     "EntityProposalExtractorPort",
     "build_phase1_joint_span_proposal_matrix",
+    "build_phase1_rule_source_rows",
     "build_phase1_token_model_proposal_rows",
+    "load_phase1_joint_span_source_rows",
 ]
 
 
@@ -26,6 +33,93 @@ class EntityProposalExtractorPort(Protocol):
 
     def extract(self, source_text: str) -> Sequence[EntityAnnotation]:
         """Return independently projected proposal entities for one source text."""
+
+
+def build_phase1_rule_source_rows(
+    corpus: Phase1ReviewedCorpus,
+    dictionary: DictionaryStore,
+    *,
+    source_name: str = "rule",
+) -> dict[str, tuple[dict[str, Any], ...]]:
+    """Materialize unresolved RuleNER evidence in the common source-row contract.
+
+    Each candidate type is retained independently. This prevents the historical disease fallback
+    from hiding a disease/symptom conflict before the joint verifier can classify it.
+    """
+
+    if not source_name.strip():
+        raise ValueError("Rule proposal source name must be non-empty")
+    ner = RuleBasedNER(dictionary, disease_symptom_fallback="abstain")
+    rows_by_document: dict[str, tuple[dict[str, Any], ...]] = {}
+    for document_id in sorted(corpus.source_texts, key=phase1_document_sort_key):
+        source_text = corpus.source_texts[document_id]
+        rows: list[dict[str, Any]] = []
+        for proposal_index, proposal in enumerate(ner.extract_with_trace(source_text).trace.proposals):
+            proposal.validate_offsets(source_text)
+            start, end = proposal.span
+            for entity_type in proposal.candidate_types:
+                phase1_type = PHASE1_TYPE_BY_ENTITY_TYPE.get(entity_type)
+                if phase1_type is None:
+                    continue
+                rows.append(
+                    {
+                        "text": source_text[start:end],
+                        "type": phase1_type,
+                        "position": [start, end],
+                        "confidence": proposal.score,
+                        "source_label": proposal.source,
+                        "proposal_id": (
+                            f"{document_id}:{source_name}:{proposal_index}:{start}:{end}:"
+                            f"{phase1_type}"
+                        ),
+                    }
+                )
+        rows_by_document[document_id] = tuple(
+            sorted(rows, key=lambda row: (row["position"], row["type"], row["proposal_id"]))
+        )
+    return rows_by_document
+
+
+def load_phase1_joint_span_source_rows(
+    source_dir: str | Path,
+    corpus: Phase1ReviewedCorpus,
+) -> dict[str, tuple[dict[str, Any], ...]]:
+    """Load a persisted source by explicit corpus ID, including governed prefixed IDs.
+
+    Phase 1 submission loaders only accept numeric filenames. Joint training also consumes the
+    owner-authorized source IDs, so this loader validates a named source directory directly.
+    """
+
+    root = Path(source_dir)
+    document_root = root / "consensus" if (root / "consensus").is_dir() else root
+    if not document_root.is_dir():
+        raise FileNotFoundError(document_root)
+    rows_by_document: dict[str, tuple[dict[str, Any], ...]] = {}
+    for document_id in sorted(corpus.source_texts, key=phase1_document_sort_key):
+        path = document_root / f"{document_id}.json"
+        if not path.is_file():
+            raise FileNotFoundError(f"Joint span source is missing {path.name}")
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(raw, list) or any(not isinstance(row, Mapping) for row in raw):
+            raise ValueError(f"Joint span source must contain an entity list: {path}")
+        source_text = corpus.source_texts[document_id]
+        rows: list[dict[str, Any]] = []
+        for index, raw_row in enumerate(raw):
+            row = dict(raw_row)
+            _validate_source_row(row, source_text, path, index)
+            rows.append(row)
+        rows_by_document[document_id] = tuple(
+            sorted(rows, key=lambda row: (row["position"], row["type"], str(row.get("source_label", ""))))
+        )
+    expected_names = {f"{document_id}.json" for document_id in corpus.source_texts}
+    unexpected = {
+        path.name
+        for path in document_root.glob("*.json")
+        if path.name != "manifest.json" and path.name not in expected_names
+    }
+    if unexpected:
+        raise ValueError(f"Joint span source has unexpected documents: {sorted(unexpected)}")
+    return rows_by_document
 
 
 def build_phase1_token_model_proposal_rows(
@@ -136,3 +230,28 @@ def build_phase1_joint_span_proposal_matrix(
         )
         for document_id, rows in matrix_rows_by_document.items()
     }
+
+
+def _validate_source_row(
+    row: Mapping[str, Any],
+    source_text: str,
+    path: Path,
+    index: int,
+) -> None:
+    """Reject invalid persisted source evidence before source fusion can inspect it."""
+
+    text = row.get("text")
+    entity_type = row.get("type")
+    position = row.get("position")
+    if not isinstance(text, str) or not text or entity_type not in PHASE1_ALLOWED_TYPES:
+        raise ValueError(f"{path}:{index}: joint span source has invalid text/type")
+    if (
+        not isinstance(position, list)
+        or len(position) != 2
+        or any(isinstance(value, bool) or not isinstance(value, int) for value in position)
+    ):
+        raise ValueError(f"{path}:{index}: joint span source has invalid position")
+    start, end = position
+    # INVARIANT: persisted model evidence is never re-aligned or normalized during loading.
+    if start < 0 or end <= start or end > len(source_text) or source_text[start:end] != text:
+        raise ValueError(f"{path}:{index}: joint span source violates raw offsets")
