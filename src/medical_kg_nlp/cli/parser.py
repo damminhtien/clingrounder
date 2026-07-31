@@ -1151,6 +1151,12 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         "--authorized-archive",
         help="Owner-authorized ground-truth archive; otherwise use the governed environment variable.",
     )
+    joint_span_run = joint_span_operations.add_parser(
+        "run",
+        help="Resolve pinned raw sources with a learned joint span/type verifier and export a ZIP.",
+    )
+    joint_span_run.set_defaults(handler="benchmark_phase1_joint_span_run")
+    joint_span_run.add_argument("--config", required=True)
     joint_span_train = joint_span_operations.add_parser(
         "train",
         help="Train a pinned transformer verifier from a prepared final-fit lattice dataset.",

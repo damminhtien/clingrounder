@@ -138,6 +138,13 @@ from medical_kg_nlp.benchmarks.phase1.joint_span_token_source import (
     Phase1TokenSourceConfig,
     materialize_phase1_token_model_source,
 )
+from medical_kg_nlp.benchmarks.phase1.joint_span_run import (
+    Phase1JointSpanDirectoryArtifact,
+    Phase1JointSpanModelSourceSpec,
+    Phase1JointSpanRunSpec,
+    load_phase1_joint_span_run_spec,
+    run_phase1_joint_span,
+)
 from medical_kg_nlp.benchmarks.phase1.model_region_augmentation import (
     Phase1RegionAugmentationConfig,
     RegionAugmentationKind,
@@ -215,6 +222,9 @@ __all__ = [
     "Phase1JointSpanTrainingConfig",
     "Phase1JointSpanTrainingSummary",
     "Phase1TokenSourceConfig",
+    "Phase1JointSpanDirectoryArtifact",
+    "Phase1JointSpanModelSourceSpec",
+    "Phase1JointSpanRunSpec",
     "EntityProposalExtractorPort",
     "Phase1HoldoutGate",
     "Phase1ModelSelectionConfig",
@@ -290,6 +300,7 @@ __all__ = [
     "infer_phase1_development_predictions",
     "inspect_phase1_joint_span_training_inputs",
     "load_phase1_joint_span_source_rows",
+    "load_phase1_joint_span_run_spec",
     "load_phase1_text_documents",
     "load_phase1_round2_documents",
     "load_phase1_training_governance",
@@ -324,6 +335,7 @@ __all__ = [
     "run_phase1_model_calibration",
     "train_phase1_joint_span_verifier",
     "run_phase1_max_score",
+    "run_phase1_joint_span",
     "segment_phase1_text_regions",
     "align_quoted_phase1_proposals",
     "write_phase1_round2_audit",

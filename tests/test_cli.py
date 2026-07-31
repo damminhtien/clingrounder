@@ -104,6 +104,21 @@ def test_joint_span_token_source_command_exposes_checkpoint_provenance() -> None
     assert args.source_name == "xlmr"
 
 
+def test_joint_span_run_command_accepts_only_a_pinned_config() -> None:
+    args = build_parser().parse_args(
+        [
+            "benchmark",
+            "phase1",
+            "joint-span",
+            "run",
+            "--config",
+            "configs/phase1_joint_span_submission.yaml",
+        ]
+    )
+
+    assert args.handler == "benchmark_phase1_joint_span_run"
+
+
 def test_terminology_build_and_inspect_commands(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     source = tmp_path / "concepts.jsonl"
     source.write_text(

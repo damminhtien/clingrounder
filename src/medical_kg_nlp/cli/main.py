@@ -134,6 +134,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.phase1",
         "materialize_phase1_joint_span_token_source_command",
     ),
+    "benchmark_phase1_joint_span_run": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "run_phase1_joint_span_command",
+    ),
     "benchmark_phase1_joint_span_train": (
         "medical_kg_nlp.cli.commands.phase1",
         "train_phase1_joint_span_verifier_command",

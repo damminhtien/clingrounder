@@ -80,6 +80,10 @@ from medical_kg_nlp.benchmarks.phase1.joint_span_token_source import (
     Phase1TokenSourceConfig,
     materialize_phase1_token_model_source,
 )
+from medical_kg_nlp.benchmarks.phase1.joint_span_run import (
+    load_phase1_joint_span_run_spec,
+    run_phase1_joint_span,
+)
 from medical_kg_nlp.benchmarks.phase1.joint_span_training import (
     Phase1JointSpanTrainingConfig,
     train_phase1_joint_span_verifier,
@@ -161,6 +165,7 @@ __all__ = [
     "compare_phase1_model_variants",
     "inspect_phase1_qwen_run",
     "materialize_phase1_joint_span_token_source_command",
+    "run_phase1_joint_span_command",
     "prepare_phase1_joint_span_final_fit_command",
     "train_phase1_joint_span_verifier_command",
     "propose_phase1_qwen_entities",
@@ -1018,6 +1023,14 @@ def materialize_phase1_joint_span_token_source_command(args: argparse.Namespace)
         source_name=args.source_name,
     )
     report["final_supervision"] = corpus.manifest
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def run_phase1_joint_span_command(args: argparse.Namespace) -> int:
+    """Run one fully pinned learned joint span/type submission composition."""
+
+    report = run_phase1_joint_span(load_phase1_joint_span_run_spec(args.config))
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 
