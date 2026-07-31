@@ -129,7 +129,7 @@ def build_phase1_joint_span_dataset(
     *,
     source_roles: Mapping[str, ProposalSourceRole | str],
     source_dataset_by_document: Mapping[str, str],
-    dictionary: DictionaryStore | None = None,
+    dictionary_matcher: DictionaryMatcher | None = None,
 ) -> Phase1JointSpanDataset:
     """Build balanced joint examples without adding gold-only candidates to the lattice.
 
@@ -151,9 +151,7 @@ def build_phase1_joint_span_dataset(
             source_text,
             proposal_rows_by_document.get(document_id, ()),
             source_roles=source_roles,
-            dictionary_matcher=(
-                None if dictionary is None else DictionaryMatcher(dictionary.aliases_for_ner())
-            ),
+            dictionary_matcher=dictionary_matcher,
         )
         gold_rows = corpus.gold_rows[document_id]
         labels = [
