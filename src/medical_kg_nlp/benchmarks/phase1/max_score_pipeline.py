@@ -54,6 +54,8 @@ __all__ = [
     "CandidateMetadataPolicy",
     "Phase1MaxScorePipeline",
     "Phase1MaxScoreResult",
+    "hydrate_phase1_selected_candidate_metadata",
+    "validate_phase1_inference_budget",
 ]
 
 CandidateMetadataPolicy = Literal["keep", "rx_unique_keep_icd"]
@@ -411,6 +413,30 @@ def _hydrate_selected_candidates(
     return output, decisions
 
 
+def hydrate_phase1_selected_candidate_metadata(
+    resolved: Mapping[str, Sequence[Mapping[str, Any]]],
+    sources: Mapping[str, Mapping[str, Sequence[Mapping[str, Any]]]],
+    source_priority: Sequence[str],
+    *,
+    dictionary: DictionaryStore,
+    changed_identities: frozenset[tuple[str, str, str, int, int]],
+) -> tuple[dict[str, list[dict[str, Any]]], list[Mapping[str, Any]]]:
+    """Hydrate candidates only for raw identities accepted by a resolver.
+
+    This public boundary is shared by the legacy and joint span pipelines. A generated lattice
+    variant is passed through ``changed_identities`` so it receives a fresh exact lookup instead
+    of metadata from the shorter or longer proposal that generated it.
+    """
+
+    return _hydrate_selected_candidates(
+        resolved,
+        sources,
+        source_priority,
+        dictionary=dictionary,
+        changed_identities=changed_identities,
+    )
+
+
 def _relink_changed_identity(
     row: Mapping[str, Any],
     dictionary: DictionaryStore,
@@ -474,6 +500,12 @@ def _validate_budget_manifest(manifest: Mapping[str, Any]) -> None:
         raise ValueError(
             f"Inference budget is missing required roles: {sorted(missing_roles)}"
         )
+
+
+def validate_phase1_inference_budget(manifest: Mapping[str, Any]) -> None:
+    """Validate an already-verified budget before either final resolver consumes it."""
+
+    _validate_budget_manifest(manifest)
 
 
 def _source_text_by_document(
