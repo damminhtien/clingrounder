@@ -76,6 +76,11 @@ from medical_kg_nlp.benchmarks.phase1.final_supervision import (
 from medical_kg_nlp.benchmarks.phase1.joint_span_final_fit import (
     prepare_phase1_joint_span_final_fit,
 )
+from medical_kg_nlp.benchmarks.phase1.joint_span_training import (
+    Phase1JointSpanTrainingConfig,
+    train_phase1_joint_span_verifier,
+    verify_phase1_joint_span_verifier_artifact,
+)
 from medical_kg_nlp.benchmarks.phase1.reviewed_corpus import (
     load_phase1_reviewed_corpus,
 )
@@ -152,6 +157,7 @@ __all__ = [
     "compare_phase1_model_variants",
     "inspect_phase1_qwen_run",
     "prepare_phase1_joint_span_final_fit_command",
+    "train_phase1_joint_span_verifier_command",
     "propose_phase1_qwen_entities",
     "propose_phase1_qwen_final_supervision_entities",
     "propose_phase1_vietnamese_support",
@@ -976,6 +982,47 @@ def prepare_phase1_joint_span_final_fit_command(args: argparse.Namespace) -> int
         output_dir=args.output_dir,
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def train_phase1_joint_span_verifier_command(args: argparse.Namespace) -> int:
+    """Train and verify one final-fit joint span/type cross encoder on a local GPU."""
+
+    config = Phase1JointSpanTrainingConfig(
+        dataset_path=Path(args.dataset),
+        dataset_manifest_path=Path(args.dataset_manifest),
+        output_dir=Path(args.output_dir),
+        model_id=args.model_id,
+        revision=args.revision,
+        initialization_model_path=(
+            None if args.initialization_model is None else Path(args.initialization_model)
+        ),
+        initialization_model_fingerprint=args.initialization_fingerprint,
+        max_length=args.max_length,
+        train_batch_size=args.train_batch_size,
+        evaluation_batch_size=args.evaluation_batch_size,
+        epochs=args.epochs,
+        learning_rate=args.learning_rate,
+        weight_decay=args.weight_decay,
+        warmup_ratio=args.warmup_ratio,
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
+        seed=args.seed,
+        fp16=args.fp16,
+        bf16=args.bf16,
+        use_cpu=args.use_cpu,
+        cache_dir=None if args.cache_dir is None else Path(args.cache_dir),
+        overwrite_output=args.overwrite_output,
+    )
+    report = train_phase1_joint_span_verifier(config)
+    verification = verify_phase1_joint_span_verifier_artifact(config)
+    print(
+        json.dumps(
+            {"training": report, "verification": verification},
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
     return 0
 
 

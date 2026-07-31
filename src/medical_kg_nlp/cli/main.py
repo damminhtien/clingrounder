@@ -130,6 +130,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.phase1",
         "prepare_phase1_joint_span_final_fit_command",
     ),
+    "benchmark_phase1_joint_span_train": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "train_phase1_joint_span_verifier_command",
+    ),
     "benchmark_phase1_qwen_vietnamese_support": (
         "medical_kg_nlp.cli.commands.phase1",
         "propose_phase1_vietnamese_support",

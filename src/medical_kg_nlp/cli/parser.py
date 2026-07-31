@@ -1111,6 +1111,32 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         "--authorized-archive",
         help="Owner-authorized ground-truth archive; otherwise use the governed environment variable.",
     )
+    joint_span_train = joint_span_operations.add_parser(
+        "train",
+        help="Train a pinned transformer verifier from a prepared final-fit lattice dataset.",
+    )
+    joint_span_train.set_defaults(handler="benchmark_phase1_joint_span_train")
+    joint_span_train.add_argument("--dataset", required=True)
+    joint_span_train.add_argument("--dataset-manifest", required=True)
+    joint_span_train.add_argument("--output-dir", required=True)
+    joint_span_train.add_argument("--model-id", required=True)
+    joint_span_train.add_argument("--revision", required=True)
+    joint_span_train.add_argument("--initialization-model")
+    joint_span_train.add_argument("--initialization-fingerprint")
+    joint_span_train.add_argument("--max-length", type=int, default=384)
+    joint_span_train.add_argument("--train-batch-size", type=int, default=8)
+    joint_span_train.add_argument("--evaluation-batch-size", type=int, default=16)
+    joint_span_train.add_argument("--epochs", type=float, default=4.0)
+    joint_span_train.add_argument("--learning-rate", type=float, default=2e-5)
+    joint_span_train.add_argument("--weight-decay", type=float, default=0.01)
+    joint_span_train.add_argument("--warmup-ratio", type=float, default=0.08)
+    joint_span_train.add_argument("--gradient-accumulation-steps", type=int, default=1)
+    joint_span_train.add_argument("--seed", type=int, default=42)
+    joint_span_train.add_argument("--fp16", action="store_true")
+    joint_span_train.add_argument("--bf16", action="store_true")
+    joint_span_train.add_argument("--use-cpu", action="store_true")
+    joint_span_train.add_argument("--cache-dir")
+    joint_span_train.add_argument("--overwrite-output", action="store_true")
     qwen_support = qwen_operations.add_parser(
         "build-vietnamese-support",
         help="Run a pinned Vietnamese NER model as support that Qwen must confirm.",

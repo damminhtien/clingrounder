@@ -51,6 +51,32 @@ def test_joint_span_final_fit_command_requires_independent_source_roles() -> Non
     assert args.dictionary[0].endswith("phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
 
 
+def test_joint_span_train_command_exposes_pinned_model_and_dataset_inputs() -> None:
+    args = build_parser().parse_args(
+        [
+            "benchmark",
+            "phase1",
+            "joint-span",
+            "train",
+            "--dataset",
+            "outputs/joint/examples.jsonl",
+            "--dataset-manifest",
+            "outputs/joint/manifest.json",
+            "--output-dir",
+            "outputs/model",
+            "--model-id",
+            "FacebookAI/xlm-roberta-base",
+            "--revision",
+            "e73636d4f797dec63c3081bb6ed5c7b0bb3f2089",
+            "--bf16",
+        ]
+    )
+
+    assert args.handler == "benchmark_phase1_joint_span_train"
+    assert args.bf16 is True
+    assert args.max_length == 384
+
+
 def test_terminology_build_and_inspect_commands(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     source = tmp_path / "concepts.jsonl"
     source.write_text(
