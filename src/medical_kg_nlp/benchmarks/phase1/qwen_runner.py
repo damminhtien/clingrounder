@@ -43,8 +43,10 @@ from medical_kg_nlp.schema.types import EntityType
 from medical_kg_nlp.utils.hashing import sha256_file
 
 __all__ = [
+    "Phase1QwenExactQuoteCorpusConfig",
     "Phase1QwenProposalRunConfig",
     "materialize_phase1_qwen_pass_source",
+    "run_phase1_qwen_exact_quote_corpus",
     "run_phase1_qwen_proposals",
 ]
 
@@ -107,6 +109,157 @@ class Phase1QwenProposalRunConfig:
             raise ValueError("Qwen review-only mode does not consume support sources")
         if self.extraction_mode not in {"recall_only", "recall_and_targeted"}:
             raise ValueError(f"Unsupported Qwen extraction mode: {self.extraction_mode}")
+
+
+@dataclass(frozen=True, slots=True)
+class Phase1QwenExactQuoteCorpusConfig:
+    """Run Qwen as a raw exact-quote source over governed supervision documents.
+
+    This source intentionally retains proposal recall. The joint lattice verifier, rather than
+    Qwen's own threshold or overlap resolver, later decides whether a proposal is exact.
+    """
+
+    output_dir: Path
+    extraction_mode: QwenExtractionMode = "recall_and_targeted"
+    resume: bool = False
+
+    def __post_init__(self) -> None:
+        if self.extraction_mode not in {"recall_only", "recall_and_targeted"}:
+            raise ValueError(f"Unsupported Qwen extraction mode: {self.extraction_mode}")
+
+
+def run_phase1_qwen_exact_quote_corpus(
+    run_spec: Phase1QwenRunSpec,
+    documents: Sequence[ClinicalDocument],
+    config: Phase1QwenExactQuoteCorpusConfig,
+) -> dict[str, Any]:
+    """Materialize Qwen recall/targeted quotes for any authorized immutable corpus.
+
+    Unlike the Round 2 runner, this function neither reads an archive nor emits a submission
+    candidate. Its output is a reproducible source for supervised lattice construction.
+    """
+
+    if not documents:
+        raise ValueError("Qwen exact-quote corpus must contain at least one document")
+    document_by_id = {document.document_id: document for document in documents}
+    if len(document_by_id) != len(documents):
+        raise ValueError("Qwen exact-quote corpus document IDs must be unique")
+    if any(not document.text for document in documents):
+        raise ValueError("Qwen exact-quote corpus documents must have text")
+    run_spec.verify_dataset_inputs()
+    adapter_verification = run_spec.verify_adapter_inputs()
+    output = config.output_dir
+    output.mkdir(parents=True, exist_ok=True)
+    proposal_dir = output / "consensus"
+    proposal_dir.mkdir(parents=True, exist_ok=True)
+    descriptor = {
+        "documents": {
+            "document_count": len(documents),
+            "sha256": _json_sha256(
+                {
+                    "documents": [
+                        {
+                            "document_id": document.document_id,
+                            "text_sha256": _text_sha256(document.text),
+                        }
+                        for document in sorted(documents, key=lambda item: item.document_id)
+                    ]
+                }
+            ),
+        },
+        "config": {
+            "extraction_mode": config.extraction_mode,
+            "run_spec_sha256": _json_sha256(run_spec.to_dict()),
+        },
+    }
+    resume_state = _prepare_resume_state(
+        output,
+        run_fingerprint=_json_sha256(
+            {"exact_quote_corpus": descriptor, "run_spec": run_spec.to_dict()}
+        ),
+        resume=config.resume,
+    )
+    adapter: Phase1QwenAdapter | None = None
+    counters: Counter[str] = Counter()
+    trace_rows: list[dict[str, Any]] = []
+    raw_rows: list[dict[str, Any]] = []
+    for document in sorted(documents, key=lambda item: item.document_id):
+        if config.resume:
+            resumed = _load_completed_document(
+                document,
+                consensus_dir=proposal_dir,
+                adjudicated_dir=None,
+                review_additions_dir=None,
+                reviewed_dir=None,
+                support_source_names=(),
+            )
+            if resumed is not None:
+                trace_rows.append(resumed["trace"])
+                counters.update(resumed["counters"])
+                continue
+        if adapter is None:
+            # SCALING: the 8B checkpoint is resident once for the full corpus, not once per note.
+            adapter = Phase1QwenAdapter(
+                _build_qwen_runtime(run_spec),
+                max_window_characters=run_spec.max_window_characters,
+                window_overlap_characters=run_spec.window_overlap_characters,
+                structured_retries=run_spec.structured_retries,
+            )
+        proposal_sources, pass_trace, pass_raw = _run_document_passes(
+            adapter,
+            run_spec,
+            document,
+            extraction_mode=config.extraction_mode,
+        )
+        all_proposals = [
+            proposal
+            for rows in proposal_sources.values()
+            for proposal in rows
+            if proposal.entity_type is not None
+        ]
+        rows = _qwen_proposals_to_source_rows(all_proposals, document.text)
+        _write_document_rows(proposal_dir / f"{document.document_id}.json", rows)
+        counters["proposal.entities"] += len(rows)
+        counters["proposal.raw_quotes"] += len(all_proposals)
+        trace_rows.append(
+            {
+                "document_id": document.document_id,
+                "text_sha256": _text_sha256(document.text),
+                "passes": pass_trace,
+                "proposal_source_counts": {
+                    name: len(rows) for name, rows in sorted(proposal_sources.items())
+                },
+                "proposal_entity_count": len(rows),
+                "resume": None,
+            }
+        )
+        raw_rows.extend(
+            {"document_id": document.document_id, **row} for row in pass_raw
+        )
+    trace_sha256 = write_jsonl(output / "trace.jsonl", trace_rows)
+    raw_sha256 = write_jsonl(output / "raw_responses.jsonl", raw_rows)
+    manifest = {
+        "schema_version": "phase1-qwen-exact-quote-corpus.v1",
+        "run_spec": run_spec.to_dict(),
+        "adapter_verification": adapter_verification,
+        "inputs": descriptor,
+        "outputs": {
+            "proposal_dir": str(proposal_dir),
+            "trace_sha256": trace_sha256,
+            "raw_responses_sha256": raw_sha256,
+        },
+        "counters": dict(sorted(counters.items())),
+        "policy": {
+            "output": "proposal_source_only",
+            "quote_projection": "exact_raw_substring",
+            "selection": "deferred_to_joint_span_verifier",
+            "assertions": [],
+            "candidates": [],
+            "resume_fingerprint": resume_state["run_fingerprint"],
+        },
+    }
+    write_json(output / "manifest.json", manifest)
+    return manifest
 
 
 def materialize_phase1_qwen_pass_source(
@@ -962,6 +1115,44 @@ def _proposals_to_rows(
                 "assertions": [],
                 "candidates": [],
                 "position": [start, end],
+            }
+        )
+    return rows
+
+
+def _qwen_proposals_to_source_rows(
+    proposals: Sequence[EntityProposal],
+    source_text: str,
+) -> list[dict[str, Any]]:
+    """Serialize every exact Qwen quote once while retaining its best confidence.
+
+    The generic corpus runner deliberately bypasses Qwen-specific confirmation and overlap
+    resolution. Those operations would collapse evidence before the learned joint verifier can
+    inspect source agreement and competing boundaries.
+    """
+
+    best_by_identity: dict[tuple[int, int, EntityType], EntityProposal] = {}
+    for proposal in proposals:
+        entity_type = proposal.entity_type
+        if entity_type is None:
+            continue
+        proposal.validate_offsets(source_text)
+        identity = (*proposal.span, entity_type)
+        current = best_by_identity.get(identity)
+        if current is None or proposal.score > current.score:
+            best_by_identity[identity] = proposal
+
+    rows: list[dict[str, Any]] = []
+    for (start, end, entity_type), proposal in sorted(best_by_identity.items()):
+        rows.append(
+            {
+                "text": source_text[start:end],
+                "type": _ENTITY_TYPE_TO_PHASE1_LABEL[entity_type],
+                "assertions": [],
+                "candidates": [],
+                "position": [start, end],
+                "confidence": proposal.score,
+                "source_label": proposal.source,
             }
         )
     return rows

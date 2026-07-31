@@ -18,13 +18,16 @@ from medical_kg_nlp.benchmarks.phase1.qwen_runner import (
     _merge_review_rows,
     _prepare_resume_state,
     _proposals_to_rows,
+    _qwen_proposals_to_source_rows,
     _rows_to_review_entities,
     _rows_to_proposals,
     _run_document_passes,
     _write_document_rows,
     materialize_phase1_qwen_pass_source,
 )
+from medical_kg_nlp.ner.proposal import EntityProposal
 from medical_kg_nlp.schema.document import ClinicalDocument
+from medical_kg_nlp.schema.types import EntityType
 
 
 def test_runner_round_trips_support_rows_without_assertion_or_candidates() -> None:
@@ -51,6 +54,38 @@ def test_runner_round_trips_support_rows_without_assertion_or_candidates() -> No
 
     assert [row["text"] for row in output] == ["ho", "tăng huyết áp"]
     assert all(row["assertions"] == [] and row["candidates"] == [] for row in output)
+
+
+def test_exact_quote_source_keeps_best_score_for_duplicate_identity() -> None:
+    text = "Bệnh nhân ho"
+    proposals = (
+        EntityProposal(
+            span=(10, 12),
+            candidate_types=(EntityType.SYMPTOM,),
+            source="qwen.recall",
+            score=0.6,
+        ),
+        EntityProposal(
+            span=(10, 12),
+            candidate_types=(EntityType.SYMPTOM,),
+            source="qwen.targeted.TRIỆU_CHỨNG",
+            score=0.9,
+        ),
+    )
+
+    rows = _qwen_proposals_to_source_rows(proposals, text)
+
+    assert rows == [
+        {
+            "text": "ho",
+            "type": "TRIỆU_CHỨNG",
+            "assertions": [],
+            "candidates": [],
+            "position": [10, 12],
+            "confidence": 0.9,
+            "source_label": "qwen.targeted.TRIỆU_CHỨNG",
+        }
+    ]
 
 
 def test_materialize_stored_qwen_pass_projects_offsets_and_verifies_hash(
