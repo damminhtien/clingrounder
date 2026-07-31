@@ -1053,6 +1053,64 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         default="recall_and_targeted",
     )
     qwen_final_supervision.add_argument("--resume", action="store_true")
+
+    joint_span = operations.add_parser(
+        "joint-span",
+        help="Prepare and train learned joint span/type verifier artifacts.",
+    )
+    joint_span_operations = joint_span.add_subparsers(
+        dest="phase1_joint_span_command",
+        required=True,
+    )
+    joint_span_prepare = joint_span_operations.add_parser(
+        "prepare-final-fit",
+        help=(
+            "Build a governed final-fit lattice dataset from RuleNER and independently "
+            "materialized model proposal sources."
+        ),
+    )
+    joint_span_prepare.set_defaults(handler="benchmark_phase1_joint_span_prepare_final_fit")
+    joint_span_prepare.add_argument(
+        "--model-source",
+        action="append",
+        required=True,
+        help="Pinned proposal artifact as NAME=DIRECTORY; repeat for Qwen/XLM-R.",
+    )
+    joint_span_prepare.add_argument(
+        "--source-role",
+        action="append",
+        required=True,
+        help="Role for every model source as NAME=llm|token_model|ensemble.",
+    )
+    joint_span_prepare.add_argument(
+        "--dictionary",
+        action="append",
+        default=[
+            "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+            "data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl",
+            "data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl",
+        ],
+        help="Canonical recognition dictionaries; repeat to add a pinned source.",
+    )
+    joint_span_prepare.add_argument("--output-dir", required=True)
+    joint_span_prepare.add_argument(
+        "--training-governance",
+        default="configs/models/phase1-training-governance-2026-07-30.yaml",
+    )
+    joint_span_prepare.add_argument(
+        "--model-split-manifest",
+        default="outputs/mining/model-datasets/phase1-manual-five-type-v1/split_manifest.json",
+    )
+    joint_span_prepare.add_argument(
+        "--frozen-split-manifest",
+        default="data/manual_gold/holdout_manifest.json",
+    )
+    joint_span_prepare.add_argument("--manual-input-dir", default="data/raw/input")
+    joint_span_prepare.add_argument("--manual-gold-dir", default="data/manual_gold")
+    joint_span_prepare.add_argument(
+        "--authorized-archive",
+        help="Owner-authorized ground-truth archive; otherwise use the governed environment variable.",
+    )
     qwen_support = qwen_operations.add_parser(
         "build-vietnamese-support",
         help="Run a pinned Vietnamese NER model as support that Qwen must confirm.",

@@ -73,6 +73,9 @@ from medical_kg_nlp.benchmarks.phase1.disease_symptom_verifier import (
 from medical_kg_nlp.benchmarks.phase1.final_supervision import (
     load_phase1_final_supervision_corpus,
 )
+from medical_kg_nlp.benchmarks.phase1.joint_span_final_fit import (
+    prepare_phase1_joint_span_final_fit,
+)
 from medical_kg_nlp.benchmarks.phase1.reviewed_corpus import (
     load_phase1_reviewed_corpus,
 )
@@ -148,6 +151,7 @@ __all__ = [
     "calibrate_phase1_proposals",
     "compare_phase1_model_variants",
     "inspect_phase1_qwen_run",
+    "prepare_phase1_joint_span_final_fit_command",
     "propose_phase1_qwen_entities",
     "propose_phase1_qwen_final_supervision_entities",
     "propose_phase1_vietnamese_support",
@@ -934,6 +938,43 @@ def propose_phase1_qwen_final_supervision_entities(args: argparse.Namespace) -> 
     )
     report["final_supervision"] = corpus.manifest
     write_json(Path(args.output_dir) / "manifest.json", report)
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def prepare_phase1_joint_span_final_fit_command(args: argparse.Namespace) -> int:
+    """Materialize final-fit span/type supervision from independent pinned proposals."""
+
+    named_sources = _named_paths(args.model_source)
+    source_names = [name for name, _ in named_sources]
+    if len(source_names) != len(set(source_names)):
+        raise ValueError("Joint span model sources must have unique names")
+    source_roles = _source_roles(args.source_role)
+    if set(source_names) != set(source_roles):
+        raise ValueError("Joint span model sources and --source-role must match exactly")
+    corpus = load_phase1_final_supervision_corpus(
+        governance_path=args.training_governance,
+        model_split_manifest_path=args.model_split_manifest,
+        frozen_split_manifest_path=args.frozen_split_manifest,
+        manual_input_dir=args.manual_input_dir,
+        manual_gold_dir=args.manual_gold_dir,
+        authorized_archive_path=args.authorized_archive,
+    )
+    dictionary = DictionaryStore(
+        [
+            entry
+            for path in args.dictionary
+            for entry in DictionaryStore.load_entries_jsonl(path)
+        ]
+    )
+    report = prepare_phase1_joint_span_final_fit(
+        corpus,
+        dictionary,
+        model_sources={
+            name: (path, source_roles[name]) for name, path in named_sources
+        },
+        output_dir=args.output_dir,
+    )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 

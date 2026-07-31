@@ -31,6 +31,26 @@ def test_qwen_final_supervision_command_has_governed_defaults() -> None:
     assert args.extraction_mode == "recall_and_targeted"
 
 
+def test_joint_span_final_fit_command_requires_independent_source_roles() -> None:
+    args = build_parser().parse_args(
+        [
+            "benchmark",
+            "phase1",
+            "joint-span",
+            "prepare-final-fit",
+            "--model-source",
+            "qwen=outputs/qwen-source",
+            "--source-role",
+            "qwen=llm",
+            "--output-dir",
+            "outputs/joint-span",
+        ]
+    )
+
+    assert args.handler == "benchmark_phase1_joint_span_prepare_final_fit"
+    assert args.dictionary[0].endswith("phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
+
+
 def test_terminology_build_and_inspect_commands(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     source = tmp_path / "concepts.jsonl"
     source.write_text(
