@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from medical_kg_nlp.benchmarks.phase1.joint_span_sources import (
+    build_phase1_medication_parser_source_rows,
     build_phase1_joint_span_proposal_matrix,
     build_phase1_rule_source_rows,
     build_phase1_token_model_proposal_rows,
@@ -89,6 +90,33 @@ def test_rule_source_rows_preserve_ambiguous_types_for_joint_verification() -> N
     assert [(row["text"], row["type"]) for row in rows["1"]] == [
         ("chóng mặt", "CHẨN_ĐOÁN"),
         ("chóng mặt", "TRIỆU_CHỨNG"),
+    ]
+
+
+def test_medication_parser_source_emits_only_a_valid_full_sig_span() -> None:
+    source = "1. aspirin 81 mg po daily điều trị đau"
+    corpus = Phase1ReviewedCorpus(
+        source_texts={"1": source},
+        gold_rows={"1": ()},
+        split_by_document={"1": "train"},
+    )
+    dictionary = DictionaryStore(
+        (
+            ConceptEntry(
+                concept_id="rx:aspirin",
+                code="1191",
+                code_system=CodeSystem.RXNORM,
+                canonical_name="aspirin",
+                semantic_type=EntityType.DRUG,
+                aliases=("aspirin",),
+            ),
+        )
+    )
+
+    rows = build_phase1_medication_parser_source_rows(corpus, dictionary)
+
+    assert [(row["text"], row["position"]) for row in rows["1"]] == [
+        ("aspirin 81 mg po daily", [3, 25])
     ]
 
 

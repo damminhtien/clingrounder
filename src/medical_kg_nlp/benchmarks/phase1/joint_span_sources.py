@@ -14,14 +14,18 @@ from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRol
 from medical_kg_nlp.benchmarks.phase1.reviewed_corpus import Phase1ReviewedCorpus
 from medical_kg_nlp.benchmarks.phase1.split_contract import phase1_document_sort_key
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.ner.medication_list_parser import MedicationListParser
+from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
 from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
 from medical_kg_nlp.ontology.phase1 import PHASE1_TYPE_BY_ENTITY_TYPE
 from medical_kg_nlp.schema.annotation import EntityAnnotation
+from medical_kg_nlp.schema.types import EntityType
 
 __all__ = [
     "EntityProposalExtractorPort",
     "build_phase1_joint_span_proposal_matrix",
+    "build_phase1_medication_parser_source_rows",
     "build_phase1_rule_source_rows",
     "build_phase1_token_model_proposal_rows",
     "load_phase1_joint_span_source_rows",
@@ -76,6 +80,75 @@ def build_phase1_rule_source_rows(
                 )
         rows_by_document[document_id] = tuple(
             sorted(rows, key=lambda row: (row["position"], row["type"], row["proposal_id"]))
+        )
+    return rows_by_document
+
+
+def build_phase1_medication_parser_source_rows(
+    corpus: Phase1ReviewedCorpus,
+    dictionary: DictionaryStore,
+    *,
+    source_name: str = "medication_parser",
+) -> dict[str, tuple[dict[str, Any], ...]]:
+    """Materialize structured full-SIG spans from independent medication parsing.
+
+    The parser does not discover a drug name. It uses the RuleNER drug recognition proposal as an
+    anchor, then emits only a longer contiguous medication span. Keeping this as a separate source
+    lets the joint verifier learn when exact medication structure is useful without silently
+    widening every drug in the final resolver.
+
+    INVARIANT: each emitted full span is clamped to the parsed list item's medication region and
+    is sliced from the untouched source text.
+    """
+
+    if not source_name.strip():
+        raise ValueError("Medication parser source name must be non-empty")
+    ner = RuleBasedNER(dictionary, disease_symptom_fallback="abstain")
+    mention_parser = MedicationMentionParser()
+    list_parser = MedicationListParser()
+    rows_by_document: dict[str, tuple[dict[str, Any], ...]] = {}
+    for document_id in sorted(corpus.source_texts, key=phase1_document_sort_key):
+        source_text = corpus.source_texts[document_id]
+        list_items = list_parser.items(source_text)
+        rows: list[dict[str, Any]] = []
+        seen: set[tuple[int, int]] = set()
+        for proposal_index, proposal in enumerate(ner.extract_with_trace(source_text).trace.proposals):
+            if EntityType.DRUG not in proposal.candidate_types:
+                continue
+            proposal.validate_offsets(source_text)
+            base_span = proposal.span
+            full_span = mention_parser.parse(source_text, base_span).full_span
+            containing_item = next(
+                (
+                    item
+                    for item in list_items
+                    if item.medication_span[0] <= base_span[0]
+                    and base_span[1] <= item.medication_span[1]
+                ),
+                None,
+            )
+            if containing_item is not None:
+                full_span = (full_span[0], min(full_span[1], containing_item.medication_span[1]))
+            if full_span == base_span or full_span in seen:
+                continue
+            start, end = full_span
+            if start != base_span[0] or end <= start or end > len(source_text):
+                raise ValueError("Medication parser emitted an invalid full span")
+            seen.add(full_span)
+            rows.append(
+                {
+                    "text": source_text[start:end],
+                    "type": "THUỐC",
+                    "position": [start, end],
+                    "confidence": min(0.99, proposal.score + 0.04),
+                    "source_label": "medication_full_span",
+                    "proposal_id": (
+                        f"{document_id}:{source_name}:{proposal_index}:{start}:{end}:THUỐC"
+                    ),
+                }
+            )
+        rows_by_document[document_id] = tuple(
+            sorted(rows, key=lambda row: (row["position"], row["proposal_id"]))
         )
     return rows_by_document
 

@@ -15,12 +15,14 @@ from medical_kg_nlp.benchmarks.phase1.joint_span_dataset import (
 )
 from medical_kg_nlp.benchmarks.phase1.joint_span_sources import (
     build_phase1_joint_span_proposal_matrix,
+    build_phase1_medication_parser_source_rows,
     build_phase1_rule_source_rows,
     load_phase1_joint_span_source_rows,
 )
 from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRole
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.mining.io import write_json
+from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatcher
 from medical_kg_nlp.utils.hashing import sha256_directory, sha256_file
 
 __all__ = ["prepare_phase1_joint_span_final_fit"]
@@ -47,9 +49,16 @@ def prepare_phase1_joint_span_final_fit(
     if any(not name.strip() for name in model_sources):
         raise ValueError("Joint span source names must be non-empty")
 
-    source_roles: dict[str, ProposalSourceRole] = {"rule": ProposalSourceRole.RULE}
+    source_roles: dict[str, ProposalSourceRole] = {
+        "rule": ProposalSourceRole.RULE,
+        "medication_parser": ProposalSourceRole.RULE,
+    }
     source_rows = {
         "rule": build_phase1_rule_source_rows(corpus.reviewed, dictionary),
+        "medication_parser": build_phase1_medication_parser_source_rows(
+            corpus.reviewed,
+            dictionary,
+        ),
     }
     source_descriptors: dict[str, dict[str, str]] = {}
     for name, (path, role) in sorted(model_sources.items()):
@@ -78,7 +87,9 @@ def prepare_phase1_joint_span_final_fit(
         matrix,
         source_roles=source_roles,
         source_dataset_by_document=corpus.source_by_document,
-        dictionary_matcher=None,
+        # Recognition aliases contribute bounded alternatives only around an existing source
+        # proposal. They cannot create a gold-seeded span in the learned lattice.
+        dictionary_matcher=DictionaryMatcher(dictionary.aliases_for_ner()),
     )
     output = Path(output_dir)
     paths = write_phase1_joint_span_dataset(dataset, output)
@@ -91,6 +102,10 @@ def prepare_phase1_joint_span_final_fit(
             "rule": {
                 "role": ProposalSourceRole.RULE.value,
                 "dictionary_entry_count": len(dictionary.entries),
+            },
+            "medication_parser": {
+                "role": ProposalSourceRole.RULE.value,
+                "kind": "structured_full_sig",
             },
             **source_descriptors,
         },
