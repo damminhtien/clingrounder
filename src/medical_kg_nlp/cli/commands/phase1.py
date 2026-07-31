@@ -70,6 +70,9 @@ from medical_kg_nlp.benchmarks.phase1.disease_symptom_verifier import (
     fit_disease_symptom_verifier,
     write_disease_symptom_verifier,
 )
+from medical_kg_nlp.benchmarks.phase1.final_supervision import (
+    load_phase1_final_supervision_corpus,
+)
 from medical_kg_nlp.benchmarks.phase1.reviewed_corpus import (
     load_phase1_reviewed_corpus,
 )
@@ -111,7 +114,9 @@ from medical_kg_nlp.benchmarks.phase1.qwen_run_spec import (
     load_phase1_qwen_run_spec,
 )
 from medical_kg_nlp.benchmarks.phase1.qwen_runner import (
+    Phase1QwenExactQuoteCorpusConfig,
     Phase1QwenProposalRunConfig,
+    run_phase1_qwen_exact_quote_corpus,
     run_phase1_qwen_proposals,
 )
 from medical_kg_nlp.benchmarks.phase1.vietnamese_support import (
@@ -144,6 +149,7 @@ __all__ = [
     "compare_phase1_model_variants",
     "inspect_phase1_qwen_run",
     "propose_phase1_qwen_entities",
+    "propose_phase1_qwen_final_supervision_entities",
     "propose_phase1_vietnamese_support",
     "run_phase1_round2_probe_suite",
     "run_phase1_round2_proposal_verifier_command",
@@ -894,6 +900,40 @@ def propose_phase1_qwen_entities(args: argparse.Namespace) -> int:
             resume=args.resume,
         ),
     )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def propose_phase1_qwen_final_supervision_entities(args: argparse.Namespace) -> int:
+    """Run Qwen exact quotes over the governed corpus used by the final joint verifier fit.
+
+    PRIVACY: the authorized archive remains an explicit input or configured environment value;
+    this command only writes its reproducible, local proposal-source artifact.
+    """
+
+    corpus = load_phase1_final_supervision_corpus(
+        governance_path=args.training_governance,
+        model_split_manifest_path=args.model_split_manifest,
+        frozen_split_manifest_path=args.frozen_split_manifest,
+        manual_input_dir=args.manual_input_dir,
+        manual_gold_dir=args.manual_gold_dir,
+        authorized_archive_path=args.authorized_archive,
+    )
+    documents = tuple(
+        ClinicalDocument(document_id=document_id, text=source_text)
+        for document_id, source_text in corpus.reviewed.source_texts.items()
+    )
+    report = run_phase1_qwen_exact_quote_corpus(
+        load_phase1_qwen_run_spec(args.config),
+        documents,
+        Phase1QwenExactQuoteCorpusConfig(
+            output_dir=Path(args.output_dir),
+            extraction_mode=args.extraction_mode,
+            resume=args.resume,
+        ),
+    )
+    report["final_supervision"] = corpus.manifest
+    write_json(Path(args.output_dir) / "manifest.json", report)
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 

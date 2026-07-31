@@ -8,7 +8,27 @@ from pathlib import Path
 import pytest
 
 from medical_kg_nlp.cli import main
+from medical_kg_nlp.cli.parser import build_parser
 from medical_kg_nlp.utils.io import read_jsonl, write_jsonl
+
+
+def test_qwen_final_supervision_command_has_governed_defaults() -> None:
+    args = build_parser().parse_args(
+        [
+            "benchmark",
+            "phase1",
+            "qwen",
+            "propose-final-supervision",
+            "--config",
+            "configs/qwen.yaml",
+            "--output-dir",
+            "outputs/qwen-source",
+        ]
+    )
+
+    assert args.handler == "benchmark_phase1_qwen_final_supervision_propose"
+    assert args.training_governance.endswith("phase1-training-governance-2026-07-30.yaml")
+    assert args.extraction_mode == "recall_and_targeted"
 
 
 def test_terminology_build_and_inspect_commands(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

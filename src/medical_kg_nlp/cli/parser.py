@@ -1020,6 +1020,39 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
             "raw offsets still match."
         ),
     )
+    qwen_final_supervision = qwen_operations.add_parser(
+        "propose-final-supervision",
+        help="Run Qwen exact-quote proposal passes over governed final-fit supervision only.",
+    )
+    qwen_final_supervision.set_defaults(
+        handler="benchmark_phase1_qwen_final_supervision_propose"
+    )
+    qwen_final_supervision.add_argument("--config", required=True)
+    qwen_final_supervision.add_argument("--output-dir", required=True)
+    qwen_final_supervision.add_argument(
+        "--training-governance",
+        default="configs/models/phase1-training-governance-2026-07-30.yaml",
+    )
+    qwen_final_supervision.add_argument(
+        "--model-split-manifest",
+        default="outputs/mining/model-datasets/phase1-manual-five-type-v1/split_manifest.json",
+    )
+    qwen_final_supervision.add_argument(
+        "--frozen-split-manifest",
+        default="data/manual_gold/holdout_manifest.json",
+    )
+    qwen_final_supervision.add_argument("--manual-input-dir", default="data/raw/input")
+    qwen_final_supervision.add_argument("--manual-gold-dir", default="data/manual_gold")
+    qwen_final_supervision.add_argument(
+        "--authorized-archive",
+        help="Owner-authorized nested archive; otherwise use the governed environment variable.",
+    )
+    qwen_final_supervision.add_argument(
+        "--extraction-mode",
+        choices=("recall_only", "recall_and_targeted"),
+        default="recall_and_targeted",
+    )
+    qwen_final_supervision.add_argument("--resume", action="store_true")
     qwen_support = qwen_operations.add_parser(
         "build-vietnamese-support",
         help="Run a pinned Vietnamese NER model as support that Qwen must confirm.",

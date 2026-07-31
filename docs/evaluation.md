@@ -16,6 +16,26 @@ health, but no document stays excluded from final fit. Structural validation rem
 invalid offsets, schemas, code systems, parameter budgets, or artifact fingerprints must not be
 submitted.
 
+### Joint Span Source Collection
+
+The joint span/type verifier is trained on a proposal lattice rather than only gold spans. Qwen
+exact-quote inference must therefore run over the governed final-fit corpus and write a source
+artifact, not a candidate submission. The command uses raw `[start, end)` projection and retains
+separate recall/targeted pass evidence for the learned fusion stage:
+
+```bash
+uv run medical-kg benchmark phase1 qwen propose-final-supervision \
+  --config configs/models/phase1-qwen3-8b-qlora-portable-inference-2026-07-31.yaml \
+  --output-dir outputs/models/phase1-qwen3-final-supervision-source
+```
+
+The owner-authorized archive is supplied through the governed `PHASE1_PART2_ARCHIVE` environment
+variable or `--authorized-archive`; it is never copied into a distributable source artifact.
+On Vast, use `scripts/vast/run_qwen_final_supervision.sh`, which reuses the CUDA template and
+shared Hugging Face cache. The resulting Qwen rows are proposal evidence only: the learned joint
+verifier performs global non-overlap selection, then assertion and linking are recomputed for the
+selected raw identities.
+
 Friend31 output is distillation/reference evidence only. It is not a valid runtime source,
 submission seed, or reproducible baseline. The machine-readable contract is
 `configs/models/phase1-training-governance-2026-07-30.yaml`.

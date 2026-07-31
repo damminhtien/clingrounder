@@ -122,6 +122,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.phase1",
         "propose_phase1_qwen_entities",
     ),
+    "benchmark_phase1_qwen_final_supervision_propose": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "propose_phase1_qwen_final_supervision_entities",
+    ),
     "benchmark_phase1_qwen_vietnamese_support": (
         "medical_kg_nlp.cli.commands.phase1",
         "propose_phase1_vietnamese_support",
