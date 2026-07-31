@@ -51,7 +51,7 @@ __all__ = [
     "run_phase1_joint_span",
 ]
 
-_SPEC_SCHEMA = "phase1-joint-span-run-spec.v1"
+_SPEC_SCHEMA = "phase1-joint-span-run-spec.v2"
 _SHA256_RE = re.compile(r"[0-9a-f]{64}")
 
 
@@ -145,6 +145,7 @@ class Phase1JointSpanRunSpec:
             raise ValueError("Joint verifier model identity and device must be non-empty")
         if self.verifier_batch_size < 1 or self.verifier_max_length < 32:
             raise ValueError("Joint verifier batch size or max length is invalid")
+        self.selection_policy.require_submission_calibration()
         source_names = tuple(source.name for source in self.model_sources)
         if not source_names or len(source_names) != len(set(source_names)):
             raise ValueError("Joint span model sources must be non-empty and unique")
@@ -405,18 +406,6 @@ def _pinned_directory(
 
 
 def _selection_policy(raw: Mapping[str, Any]) -> Phase1JointSpanSelectionPolicy:
-    thresholds_raw = _mapping(raw.get("type_thresholds"), "selection_policy.type_thresholds")
-    thresholds = tuple(
-        sorted(
-            (entity_type, float(threshold))
-            for entity_type, threshold in thresholds_raw.items()
-            if isinstance(entity_type, str)
-            and isinstance(threshold, int | float)
-            and not isinstance(threshold, bool)
-        )
-    )
-    if len(thresholds) != len(thresholds_raw):
-        raise ValueError("Joint span type thresholds must map strings to numbers")
     raw_genre_thresholds = raw.get("genre_type_thresholds", [])
     if not isinstance(raw_genre_thresholds, list):
         raise ValueError("Joint span genre thresholds must be a list")
@@ -433,7 +422,6 @@ def _selection_policy(raw: Mapping[str, Any]) -> Phase1JointSpanSelectionPolicy:
     if isinstance(cost, bool) or not isinstance(cost, int | float):
         raise ValueError("Joint span false positive cost must be numeric")
     return Phase1JointSpanSelectionPolicy(
-        type_thresholds=thresholds,
         genre_type_thresholds=tuple(sorted(genre_thresholds)),
         false_positive_cost=float(cost),
     )
@@ -441,7 +429,6 @@ def _selection_policy(raw: Mapping[str, Any]) -> Phase1JointSpanSelectionPolicy:
 
 def _selection_policy_payload(policy: Phase1JointSpanSelectionPolicy) -> dict[str, Any]:
     return {
-        "type_thresholds": dict(policy.type_thresholds),
         "genre_type_thresholds": [
             {"genre": genre, "type": entity_type, "threshold": threshold}
             for genre, entity_type, threshold in policy.genre_type_thresholds

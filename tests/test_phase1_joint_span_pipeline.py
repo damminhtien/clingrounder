@@ -106,12 +106,16 @@ def _probability(label: Phase1JointSpanLabel, is_full_medication: bool) -> float
 
 def _policy() -> Phase1JointSpanSelectionPolicy:
     return Phase1JointSpanSelectionPolicy(
-        type_thresholds=(
-            ("CHẨN_ĐOÁN", 0.5),
-            ("KẾT_QUẢ_XÉT_NGHIỆM", 0.5),
-            ("TÊN_XÉT_NGHIỆM", 0.5),
-            ("THUỐC", 0.5),
-            ("TRIỆU_CHỨNG", 0.5),
+        genre_type_thresholds=tuple(
+            (genre, entity_type, 0.5)
+            for genre in ("clinical", "educational", "qa", "unknown")
+            for entity_type in (
+                "CHẨN_ĐOÁN",
+                "KẾT_QUẢ_XÉT_NGHIỆM",
+                "TÊN_XÉT_NGHIỆM",
+                "THUỐC",
+                "TRIỆU_CHỨNG",
+            )
         )
     )
 

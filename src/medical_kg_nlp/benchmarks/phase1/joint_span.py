@@ -59,6 +59,12 @@ _EXACT_LABEL_BY_TYPE = {
     "TÊN_XÉT_NGHIỆM": "EXACT_LAB_TEST",
     "KẾT_QUẢ_XÉT_NGHIỆM": "EXACT_LAB_RESULT",
 }
+_REQUIRED_CALIBRATED_GENRES = (
+    Phase1GenreBucket.CLINICAL.value,
+    Phase1GenreBucket.EDUCATIONAL.value,
+    Phase1GenreBucket.QUESTION_ANSWER.value,
+)
+_LOGIT_EPSILON = 1e-6
 
 
 class Phase1JointSpanLabel(StrEnum):
@@ -156,23 +162,17 @@ class Phase1JointSpanVerifierPort(Protocol):
 
 @dataclass(frozen=True, slots=True)
 class Phase1JointSpanSelectionPolicy:
-    """Explicit genre/type thresholds and false-positive utility cost.
+    """Pinned genre/type operating points and a false-positive utility cost.
 
-    ``global_per_type`` is an intentional fallback, not a clinical threshold reused for a
-    question-answer document. The resolver records that fallback for each scored candidate.
+    The policy deliberately has no global type fallback. A Q&A or educational candidate without
+    an explicit calibrated operating point must abstain instead of inheriting a clinical gate.
     """
 
-    type_thresholds: tuple[tuple[str, float], ...]
-    genre_type_thresholds: tuple[tuple[str, str, float], ...] = ()
+    genre_type_thresholds: tuple[tuple[str, str, float], ...]
     false_positive_cost: float = 1.0
 
     def __post_init__(self) -> None:
         expected = set(PHASE1_ALLOWED_TYPES)
-        observed = {entity_type for entity_type, _ in self.type_thresholds}
-        if observed != expected or len(observed) != len(self.type_thresholds):
-            raise ValueError("Joint span policy must define one threshold for every entity type")
-        if any(not 0.0 < value < 1.0 for _, value in self.type_thresholds):
-            raise ValueError("Joint span type thresholds must be within (0, 1)")
         genre_keys: set[tuple[str, str]] = set()
         for genre, entity_type, value in self.genre_type_thresholds:
             Phase1GenreBucket(genre)
@@ -188,10 +188,16 @@ class Phase1JointSpanSelectionPolicy:
     def conservative_default(cls) -> "Phase1JointSpanSelectionPolicy":
         """Return a traceable baseline until OOF calibration creates pinned thresholds."""
 
-        return cls(tuple((entity_type, 0.5) for entity_type in sorted(PHASE1_ALLOWED_TYPES)))
+        return cls(
+            tuple(
+                (genre, entity_type, 0.5)
+                for genre in tuple(item.value for item in Phase1GenreBucket)
+                for entity_type in sorted(PHASE1_ALLOWED_TYPES)
+            )
+        )
 
-    def threshold_for(self, candidate: Phase1JointSpanCandidate) -> tuple[float, str]:
-        """Resolve an operating point without silently borrowing clinical calibration."""
+    def threshold_for(self, candidate: Phase1JointSpanCandidate) -> tuple[float | None, str]:
+        """Return the explicit operating point or an abstention reason for this genre."""
 
         by_genre = {
             (genre, entity_type): threshold
@@ -200,19 +206,37 @@ class Phase1JointSpanSelectionPolicy:
         key = (candidate.genre, candidate.variant.entity_type)
         if key in by_genre:
             return by_genre[key], "genre_type"
-        return dict(self.type_thresholds)[candidate.variant.entity_type], "global_per_type"
+        return None, "missing_genre_calibration"
+
+    def require_submission_calibration(self) -> None:
+        """Reject a submission spec unless every output-capable genre/type pair is pinned.
+
+        The resolver itself permits partial policies so an offline diagnostic can demonstrate a
+        safe abstention. An official runner cannot silently leave such a gap.
+        """
+
+        observed = {(genre, entity_type) for genre, entity_type, _ in self.genre_type_thresholds}
+        missing = tuple(
+            (genre, entity_type)
+            for genre in _REQUIRED_CALIBRATED_GENRES
+            for entity_type in sorted(PHASE1_ALLOWED_TYPES)
+            if (genre, entity_type) not in observed
+        )
+        if missing:
+            rendered = ", ".join(f"{genre}/{entity_type}" for genre, entity_type in missing)
+            raise ValueError(f"Joint span submission policy lacks calibrated thresholds: {rendered}")
 
 
 @dataclass(frozen=True, slots=True)
 class ScoredPhase1JointSpanCandidate:
-    """Auditable score, expected gain, and final global-resolution decision."""
+    """Auditable calibrated score, log-odds utility, and global-resolution decision."""
 
     candidate: Phase1JointSpanCandidate
     prediction: Phase1JointSpanPrediction
     exact_probability: float
-    threshold: float
+    threshold: float | None
     threshold_source: str
-    expected_exact_gain: float
+    selection_utility: float | None
     selected: bool
     rejection_reason: str | None
 
@@ -223,7 +247,7 @@ class ScoredPhase1JointSpanCandidate:
             "exact_probability": self.exact_probability,
             "threshold": self.threshold,
             "threshold_source": self.threshold_source,
-            "expected_exact_gain": self.expected_exact_gain,
+            "selection_utility": self.selection_utility,
             "selected": self.selected,
             "rejection_reason": self.rejection_reason,
         }
@@ -301,7 +325,12 @@ def resolve_phase1_joint_span_lattice(
     *,
     policy: Phase1JointSpanSelectionPolicy,
 ) -> tuple[dict[str, list[dict[str, Any]]], tuple[ScoredPhase1JointSpanCandidate, ...]]:
-    """Select a maximum expected-gain, non-overlapping entity set across all proposal sources."""
+    """Select a maximum-utility, non-overlapping entity set across all proposal sources.
+
+    MODEL: calibrated exact probabilities are transformed to log-odds before weighted interval
+    scheduling. This keeps a probability's evidence strength additive across non-overlapping
+    candidates while the calibrated threshold remains an explicit precision gate.
+    """
 
     predictions = tuple(verifier.predict(candidates))
     if len(predictions) != len(candidates):
@@ -313,20 +342,23 @@ def resolve_phase1_joint_span_lattice(
     if set(by_variant_id) != expected_ids:
         raise ValueError("Joint span verifier predictions do not match the candidate lattice")
 
-    admissible: list[tuple[Phase1JointSpanCandidate, float, float, str]] = []
+    admissible: list[tuple[Phase1JointSpanCandidate, float, float, float, str]] = []
     rejected: dict[str, str] = {}
     for candidate in candidates:
         prediction = by_variant_id[candidate.variant.variant_id]
         exact_probability = prediction.exact_probability(candidate)
         threshold, threshold_source = policy.threshold_for(candidate)
-        expected_gain = exact_probability - policy.false_positive_cost * (1.0 - exact_probability)
+        if threshold is None:
+            rejected[candidate.variant.variant_id] = "missing_genre_calibration"
+            continue
+        utility = _selection_utility(exact_probability, policy.false_positive_cost)
         if exact_probability < threshold:
             rejected[candidate.variant.variant_id] = "below_calibrated_threshold"
             continue
-        if expected_gain <= 0.0:
-            rejected[candidate.variant.variant_id] = "non_positive_expected_gain"
+        if utility <= 0.0:
+            rejected[candidate.variant.variant_id] = "non_positive_log_odds_utility"
             continue
-        admissible.append((candidate, exact_probability, expected_gain, threshold_source))
+        admissible.append((candidate, exact_probability, threshold, utility, threshold_source))
 
     graph = build_phase1_conflict_graph(
         tuple(
@@ -337,10 +369,10 @@ def resolve_phase1_joint_span_lattice(
                 entity_type=candidate.variant.entity_type,
                 probability=probability,
                 source_count=len(candidate.variant.sources),
-                decision_threshold=policy.threshold_for(candidate)[0],
-                utility_override=expected_gain,
+                decision_threshold=admissible_threshold,
+                utility_override=utility,
             )
-            for candidate, probability, expected_gain, _ in admissible
+            for candidate, probability, admissible_threshold, utility, _ in admissible
         )
     )
     selected_ids = {node.node_id for node in select_maximum_utility_nodes(graph)}
@@ -349,20 +381,24 @@ def resolve_phase1_joint_span_lattice(
     for candidate in candidates:
         prediction = by_variant_id[candidate.variant.variant_id]
         exact_probability = prediction.exact_probability(candidate)
-        threshold, threshold_source = policy.threshold_for(candidate)
-        expected_gain = exact_probability - policy.false_positive_cost * (1.0 - exact_probability)
+        candidate_threshold, candidate_threshold_source = policy.threshold_for(candidate)
+        candidate_utility = (
+            _selection_utility(exact_probability, policy.false_positive_cost)
+            if candidate_threshold is not None
+            else None
+        )
         selected = candidate.variant.variant_id in selected_ids
         reason = rejected.get(candidate.variant.variant_id)
         if not selected and reason is None:
-            reason = "conflicts_with_higher_expected_gain"
+            reason = "conflicts_with_higher_selection_utility"
         scored.append(
             ScoredPhase1JointSpanCandidate(
                 candidate=candidate,
                 prediction=prediction,
                 exact_probability=exact_probability,
-                threshold=threshold,
-                threshold_source=threshold_source,
-                expected_exact_gain=expected_gain,
+                threshold=candidate_threshold,
+                threshold_source=candidate_threshold_source,
+                selection_utility=candidate_utility,
                 selected=selected,
                 rejection_reason=reason,
             )
@@ -378,7 +414,7 @@ def resolve_phase1_joint_span_lattice(
                     "sources": list(variant.sources),
                     "source_count": len(variant.sources),
                     "proposal_id": variant.variant_id,
-                    "joint_expected_exact_gain": expected_gain,
+                    "joint_selection_utility": candidate_utility,
                     "joint_model_provenance": verifier.provenance,
                 }
             )
@@ -400,6 +436,18 @@ def _scored_candidate_sort_key(
     scored: ScoredPhase1JointSpanCandidate,
 ) -> tuple[Any, ...]:
     return _candidate_sort_key(scored.candidate)
+
+
+def _selection_utility(exact_probability: float, false_positive_cost: float) -> float:
+    """Return the calibrated log-odds utility of accepting one candidate.
+
+    ``false_positive_cost`` is a multiplicative loss ratio. Clamping only protects the audit
+    score from infinite logits when a finite-precision model emits zero or one exactly; it never
+    changes the raw probability used by the calibrated threshold gate.
+    """
+
+    clipped = min(max(exact_probability, _LOGIT_EPSILON), 1.0 - _LOGIT_EPSILON)
+    return math.log(clipped / (1.0 - clipped)) - math.log(false_positive_cost)
 
 
 def _output_position(row: Mapping[str, Any]) -> tuple[int, int]:
