@@ -121,6 +121,9 @@ from medical_kg_nlp.benchmarks.phase1.joint_span_training import (
     train_phase1_joint_span_verifier,
     verify_phase1_joint_span_verifier_artifact,
 )
+from medical_kg_nlp.benchmarks.phase1.joint_span_final_fit import (
+    prepare_phase1_joint_span_final_fit,
+)
 from medical_kg_nlp.benchmarks.phase1.joint_span_sources import (
     EntityProposalExtractorPort,
     build_phase1_joint_span_proposal_matrix,
@@ -253,6 +256,7 @@ __all__ = [
     "build_phase1_proposal_matrix",
     "build_phase1_proposal_source_report",
     "build_phase1_joint_span_proposal_matrix",
+    "prepare_phase1_joint_span_final_fit",
     "build_phase1_rule_source_rows",
     "build_phase1_token_model_proposal_rows",
     "build_disease_symptom_verifier_dataset",
