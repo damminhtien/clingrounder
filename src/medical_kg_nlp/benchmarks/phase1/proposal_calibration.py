@@ -7,7 +7,8 @@ import json
 import math
 from collections import Counter
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -40,12 +41,12 @@ from medical_kg_nlp.ner.document_structure import DocumentStructureAnalyzer
 from medical_kg_nlp.ontology.phase1 import (
     PHASE1_ALLOWED_TYPES,
     PHASE1_CODABLE_TYPES,
-    PHASE1_TYPE_PRIORITY,
 )
 from medical_kg_nlp.utils.hashing import sha256_file
 
 __all__ = [
     "Phase1ProbabilityCalibrator",
+    "Phase1ProposalFitMode",
     "Phase1ProposalVerifier",
     "ScoredPhase1Proposal",
     "fit_phase1_proposal_verifier",
@@ -55,12 +56,26 @@ __all__ = [
     "write_phase1_proposal_verifier",
 ]
 
-_VERIFIER_SCHEMA = "phase1-proposal-verifier.v3"
+_VERIFIER_SCHEMA = "phase1-proposal-verifier.v4"
 _CALIBRATOR_SCHEMA = "phase1-proposal-probability-calibrator.v1"
 _DEFAULT_CROSS_FIT_FOLDS = 5
 _MIN_GENRE_THRESHOLD_PROPOSALS = 20
 _MIN_GENRE_THRESHOLD_POSITIVES = 3
 _MIN_GENRE_THRESHOLD_NEGATIVES = 3
+_CALIBRATOR_TRAINING_CONFIG = SparseLogisticTrainingConfig(
+    epochs=500,
+    learning_rate=0.15,
+    learning_rate_decay=0.01,
+    l2=0.0005,
+    tolerance=1e-9,
+)
+
+
+class Phase1ProposalFitMode(StrEnum):
+    """Choose between legacy split diagnostics and the governed final-fit model."""
+
+    DEVELOPMENT = "development"
+    FULL_OOF = "full_oof"
 
 
 @dataclass(frozen=True, slots=True)
@@ -169,6 +184,8 @@ class Phase1ProposalVerifier:
     ] = ()
     genre_thresholds: tuple[tuple[str, str, float], ...] = ()
     minimum_development_precision: float | None = None
+    fit_mode: Phase1ProposalFitMode = Phase1ProposalFitMode.DEVELOPMENT
+    training_labels_scope: str = "legacy_train_development"
 
     def __post_init__(self) -> None:
         threshold_types = {entity_type for entity_type, _ in self.thresholds}
@@ -201,6 +218,15 @@ class Phase1ProposalVerifier:
             0.0 < self.minimum_development_precision <= 1.0
         ):
             raise ValueError("Minimum development precision must be within (0, 1]")
+        if self.training_labels_scope not in {
+            "legacy_train_development",
+            "all_governed_manual_gold",
+        }:
+            raise ValueError("Proposal verifier training-label scope is invalid")
+        if (
+            self.fit_mode is Phase1ProposalFitMode.FULL_OOF
+        ) != (self.training_labels_scope == "all_governed_manual_gold"):
+            raise ValueError("Proposal verifier fit mode and label scope disagree")
 
     @property
     def threshold_by_type(self) -> dict[str, float]:
@@ -261,6 +287,8 @@ class Phase1ProposalVerifier:
             "thresholds": dict(self.thresholds),
             "genre_thresholds": _nested_genre_thresholds(self.genre_thresholds),
             "minimum_development_precision": self.minimum_development_precision,
+            "fit_mode": self.fit_mode.value,
+            "training_labels_scope": self.training_labels_scope,
             "model": self.model.to_dict(),
             "probability_calibrator": self.probability_calibrator.to_dict(),
             "genre_probability_calibrators": {
@@ -326,6 +354,8 @@ class Phase1ProposalVerifier:
                 and not isinstance(payload.get("minimum_development_precision"), bool)
                 else None
             ),
+            fit_mode=Phase1ProposalFitMode(str(payload.get("fit_mode", ""))),
+            training_labels_scope=str(payload.get("training_labels_scope", "")),
         )
 
 
@@ -334,8 +364,9 @@ def fit_phase1_proposal_verifier(
     *,
     training_config: SparseLogisticTrainingConfig | None = None,
     minimum_development_precision: float | None = None,
+    fit_mode: Phase1ProposalFitMode | str = Phase1ProposalFitMode.DEVELOPMENT,
 ) -> tuple[Phase1ProposalVerifier, dict[str, Any]]:
-    """Fit on train, calibrate per-type thresholds on development, and report baselines."""
+    """Fit a learned exact-span/type verifier and its probability operating point."""
 
     if dataset.manifest.get("feature_contract") != PHASE1_PROPOSAL_FEATURE_CONTRACT:
         raise ValueError("Proposal dataset feature contract is incompatible")
@@ -343,6 +374,13 @@ def fit_phase1_proposal_verifier(
         0.0 < minimum_development_precision <= 1.0
     ):
         raise ValueError("Minimum development precision must be within (0, 1]")
+    active_fit_mode = Phase1ProposalFitMode(fit_mode)
+    if active_fit_mode is Phase1ProposalFitMode.FULL_OOF:
+        return _fit_phase1_proposal_verifier_full_oof(
+            dataset,
+            training_config=training_config,
+            minimum_precision=minimum_development_precision,
+        )
     train = tuple(example for example in dataset.examples if example.split == "train")
     development = tuple(
         example for example in dataset.examples if example.split == "development"
@@ -378,13 +416,7 @@ def fit_phase1_proposal_verifier(
     ]
     calibrator_model, calibrator_training_report = fit_sparse_logistic(
         calibrator_examples,
-        config=SparseLogisticTrainingConfig(
-            epochs=500,
-            learning_rate=0.15,
-            learning_rate_decay=0.01,
-            l2=0.0005,
-            tolerance=1e-9,
-        ),
+        config=_CALIBRATOR_TRAINING_CONFIG,
     )
     platt_calibrator = Phase1ProbabilityCalibrator(
         method="platt_document_grouped_oof",
@@ -488,6 +520,8 @@ def fit_phase1_proposal_verifier(
             )
         ),
         minimum_development_precision=minimum_development_precision,
+        fit_mode=active_fit_mode,
+        training_labels_scope="legacy_train_development",
     )
     learned_selected = _select_examples(
         development,
@@ -500,7 +534,11 @@ def fit_phase1_proposal_verifier(
         "schema_version": "phase1-proposal-calibration-report.v1",
         "feature_contract": PHASE1_PROPOSAL_FEATURE_CONTRACT,
         "training_dataset_sha256": dataset_sha256,
+        "fit_mode": active_fit_mode.value,
         "holdout_opened": False,
+        "decision_authority": "official_submission",
+        "local_metrics_role": "diagnostic_only",
+        "auto_promote": False,
         "operating_point": {
             "objective": (
                 "maximum_recall_at_minimum_precision"
@@ -562,6 +600,175 @@ def fit_phase1_proposal_verifier(
             "platt_top_weights": _top_weights(calibrator_model, limit=10),
             "genre_overrides": genre_calibration_report,
         },
+    }
+    return verifier, report
+
+
+def _fit_phase1_proposal_verifier_full_oof(
+    dataset: Phase1ProposalDataset,
+    *,
+    training_config: SparseLogisticTrainingConfig | None,
+    minimum_precision: float | None,
+) -> tuple[Phase1ProposalVerifier, dict[str, Any]]:
+    """Fit all supplied supervision while deriving probabilities from document-grouped OOF rows."""
+
+    examples = tuple(dataset.examples)
+    if not examples or {example.label for example in examples} != {0, 1}:
+        raise ValueError("Full-OOF proposal calibration requires both proposal labels")
+    active_training_config = training_config or SparseLogisticTrainingConfig()
+    sparse_examples = [
+        SparseBinaryExample(features=example.features, label=example.label)
+        for example in examples
+    ]
+    model, training_report = fit_sparse_logistic(
+        sparse_examples,
+        config=active_training_config,
+    )
+    out_of_fold_logits, cross_fit_report = _cross_fitted_logits(
+        examples,
+        config=active_training_config,
+    )
+    calibrator_examples = [
+        SparseBinaryExample.from_mapping(
+            _probability_calibration_features(logit, dict(example.features)),
+            label=example.label,
+        )
+        for example, logit in zip(examples, out_of_fold_logits, strict=True)
+    ]
+    calibrator_model, calibrator_training_report = fit_sparse_logistic(
+        calibrator_examples,
+        config=_CALIBRATOR_TRAINING_CONFIG,
+    )
+    platt_calibrator = Phase1ProbabilityCalibrator(
+        method="platt_document_grouped_oof",
+        model=calibrator_model,
+        fold_count=int(cross_fit_report["fold_count"]),
+        assignment_sha256=str(cross_fit_report["assignment_sha256"]),
+    )
+    raw_probabilities = tuple(_sigmoid(logit) for logit in out_of_fold_logits)
+    nested_platt_probabilities, nested_calibration_report = (
+        _cross_fitted_calibrator_probabilities(examples, out_of_fold_logits)
+    )
+    labels = [example.label for example in examples]
+    raw_metrics = binary_probability_metrics(labels, raw_probabilities)
+    platt_metrics = binary_probability_metrics(labels, nested_platt_probabilities)
+    use_platt = _calibration_metric_rank(platt_metrics) < _calibration_metric_rank(
+        raw_metrics
+    )
+    probability_calibrator = (
+        platt_calibrator
+        if use_platt
+        else Phase1ProbabilityCalibrator(
+            method="identity_logistic",
+            model=None,
+            fold_count=platt_calibrator.fold_count,
+            assignment_sha256=platt_calibrator.assignment_sha256,
+        )
+    )
+    operating_probabilities = (
+        nested_platt_probabilities if use_platt else raw_probabilities
+    )
+
+    # MODEL: threshold fitting consumes only OOF predictions. Relabeling the in-memory diagnostic
+    # view does not change source examples; it lets existing metric code aggregate all supplied
+    # supervision without restoring the obsolete 60/16 promotion gate.
+    operating_examples = tuple(
+        replace(example, split="development") for example in examples
+    )
+    gold_counts = _combined_gold_counts(dataset.manifest)
+    gold_genre_counts = _combined_gold_genre_counts(dataset.manifest)
+    thresholds, threshold_report = _calibrate_thresholds(
+        operating_examples,
+        operating_probabilities,
+        gold_counts,
+        minimum_precision=minimum_precision,
+    )
+    genre_thresholds, genre_threshold_report = _calibrate_genre_thresholds(
+        operating_examples,
+        operating_probabilities,
+        gold_genre_counts,
+        minimum_precision=minimum_precision,
+    )
+    selected = _select_examples(
+        operating_examples,
+        operating_probabilities,
+        thresholds,
+        genre_thresholds=genre_thresholds,
+        resolve_overlaps=True,
+    )
+    dataset_sha256 = _mapping_sha256(dataset.manifest)
+    verifier = Phase1ProposalVerifier(
+        model=model,
+        probability_calibrator=probability_calibrator,
+        thresholds=tuple(sorted(thresholds.items())),
+        training_dataset_sha256=dataset_sha256,
+        genre_thresholds=tuple(
+            sorted(
+                (genre, entity_type, threshold)
+                for (genre, entity_type), threshold in genre_thresholds.items()
+            )
+        ),
+        minimum_development_precision=minimum_precision,
+        fit_mode=Phase1ProposalFitMode.FULL_OOF,
+        training_labels_scope="all_governed_manual_gold",
+    )
+    report = {
+        "schema_version": "phase1-proposal-calibration-report.v1",
+        "feature_contract": PHASE1_PROPOSAL_FEATURE_CONTRACT,
+        "training_dataset_sha256": dataset_sha256,
+        "fit_mode": Phase1ProposalFitMode.FULL_OOF.value,
+        "holdout_opened": bool(
+            dataset.manifest.get("inputs", {}).get("holdout_labels_read", False)
+            if isinstance(dataset.manifest.get("inputs"), Mapping)
+            else False
+        ),
+        "decision_authority": "official_submission",
+        "local_metrics_role": "diagnostic_only",
+        "auto_promote": False,
+        "operating_point": {
+            "objective": (
+                "maximum_recall_at_minimum_precision"
+                if minimum_precision is not None
+                else "maximum_f1"
+            ),
+            "minimum_development_precision": minimum_precision,
+            "prediction_source": "document_grouped_out_of_fold",
+        },
+        "training": {
+            "base_model": training_report,
+            "cross_fit": cross_fit_report,
+            "probability_calibrator": calibrator_training_report,
+            "nested_probability_cross_fit": nested_calibration_report,
+        },
+        "probability_metrics": {
+            "all_supervision_out_of_fold_raw": raw_metrics,
+            "all_supervision_out_of_fold_platt": platt_metrics,
+        },
+        "probability_calibration": {
+            "selected_method": probability_calibrator.method,
+            "selection_split": "all_supervision_document_grouped_oof",
+            "selection_objective": "minimum_brier_then_log_loss_then_ece",
+            "fold_count": probability_calibrator.fold_count,
+            "assignment_sha256": probability_calibrator.assignment_sha256,
+            "candidates": {
+                "identity_logistic": raw_metrics,
+                "platt_document_grouped_oof": platt_metrics,
+            },
+            "platt_top_weights": _top_weights(calibrator_model, limit=10),
+        },
+        "threshold_calibration": threshold_report,
+        "genre_threshold_calibration": genre_threshold_report,
+        "diagnostic_selection": _selection_metrics(
+            selected,
+            gold_counts,
+            split="development",
+        ),
+        "coverage_ceiling": _coverage_ceiling(
+            operating_examples,
+            gold_counts,
+            split="development",
+        ),
+        "top_weights": _top_weights(model),
     }
     return verifier, report
 
@@ -746,10 +953,20 @@ def write_phase1_proposal_resolution(
         item.rejection_reason or "selected"
         for item in scored
     )
+    verifier_payload = json.loads(Path(verifier_path).read_text(encoding="utf-8"))
+    if not isinstance(verifier_payload, Mapping):
+        raise ValueError("Proposal verifier artifact must be an object")
+    training_labels_scope = str(
+        verifier_payload.get("training_labels_scope", "")
+    )
     manifest = {
         "schema_version": "phase1-proposal-resolution.v1",
         "feature_contract": PHASE1_PROPOSAL_FEATURE_CONTRACT,
-        "holdout_labels_opened": False,
+        "holdout_labels_opened": (
+            training_labels_scope == "all_governed_manual_gold"
+        ),
+        "verifier_fit_mode": verifier_payload.get("fit_mode"),
+        "training_labels_scope": training_labels_scope,
         "inputs": {
             "matrix": {
                 "path": str(matrix_path),
@@ -841,6 +1058,76 @@ def _cross_fitted_logits(
             "assignment_sha256": hashlib.sha256(
                 assignment.encode("utf-8")
             ).hexdigest(),
+            "folds": fold_reports,
+        },
+    )
+
+
+def _cross_fitted_calibrator_probabilities(
+    examples: Sequence[Phase1ProposalExample],
+    base_logits: Sequence[float],
+) -> tuple[tuple[float, ...], dict[str, Any]]:
+    """Evaluate Platt calibration without scoring a document used to fit that mapping."""
+
+    document_ids = sorted(
+        {example.document_id for example in examples},
+        key=_document_sort_key,
+    )
+    fold_by_document = _select_grouped_folds(examples, document_ids)
+    probabilities: list[float | None] = [None] * len(examples)
+    fold_reports: list[dict[str, Any]] = []
+    for fold in range(max(fold_by_document.values()) + 1):
+        training_indices = [
+            index
+            for index, example in enumerate(examples)
+            if fold_by_document[example.document_id] != fold
+        ]
+        validation_indices = [
+            index
+            for index, example in enumerate(examples)
+            if fold_by_document[example.document_id] == fold
+        ]
+        calibrator_model, _ = fit_sparse_logistic(
+            [
+                SparseBinaryExample.from_mapping(
+                    _probability_calibration_features(
+                        base_logits[index],
+                        dict(examples[index].features),
+                    ),
+                    label=examples[index].label,
+                )
+                for index in training_indices
+            ],
+            config=_CALIBRATOR_TRAINING_CONFIG,
+        )
+        for index in validation_indices:
+            probabilities[index] = calibrator_model.predict_probability(
+                _probability_calibration_features(
+                    base_logits[index],
+                    dict(examples[index].features),
+                )
+            )
+        fold_reports.append(
+            {
+                "fold": fold,
+                "train_example_count": len(training_indices),
+                "validation_example_count": len(validation_indices),
+                "validation_document_count": len(
+                    {
+                        examples[index].document_id
+                        for index in validation_indices
+                    }
+                ),
+            }
+        )
+    if any(value is None for value in probabilities):
+        raise RuntimeError("Calibrator cross-fitting did not score every proposal")
+    return (
+        tuple(float(value) for value in probabilities if value is not None),
+        {
+            "method": "document_grouped_nested_platt",
+            "fold_count": max(fold_by_document.values()) + 1,
+            "document_count": len(document_ids),
             "folds": fold_reports,
         },
     )
@@ -1234,16 +1521,34 @@ def _select_examples(
     ]
     if not resolve_overlaps:
         return tuple(example for example, _ in candidates)
-    accepted: list[tuple[Phase1ProposalExample, float]] = []
-    for example, probability in sorted(candidates, key=_scored_example_sort_key):
-        if any(
-            example.document_id == other.document_id
-            and _overlap(example.position, other.position)
-            for other, _ in accepted
-        ):
-            continue
-        accepted.append((example, probability))
-    return tuple(example for example, _ in accepted)
+    example_by_node_id: dict[str, Phase1ProposalExample] = {}
+    nodes: list[Phase1ConflictNode] = []
+    for index, (example, probability) in enumerate(candidates):
+        node_id = f"diagnostic:{index:08d}:{example.proposal_id}"
+        example_by_node_id[node_id] = example
+        threshold = active_genre_thresholds.get(
+            (
+                phase1_genre_bucket(example.genre).value,
+                example.entity_type,
+            ),
+            thresholds[example.entity_type],
+        )
+        nodes.append(
+            Phase1ConflictNode(
+                node_id=node_id,
+                document_id=example.document_id,
+                span=example.position,
+                entity_type=example.entity_type,
+                probability=probability,
+                source_count=max(1, len(example.sources)),
+                decision_threshold=threshold,
+            )
+        )
+    graph = build_phase1_conflict_graph(tuple(nodes))
+    return tuple(
+        example_by_node_id[node.node_id]
+        for node in select_maximum_utility_nodes(graph)
+    )
 
 
 def _resolve_runtime_overlaps(
@@ -1435,6 +1740,20 @@ def _gold_counts(manifest: Mapping[str, Any]) -> dict[tuple[str, str], int]:
     return counts
 
 
+def _combined_gold_counts(
+    manifest: Mapping[str, Any],
+) -> dict[tuple[str, str], int]:
+    """Aggregate legacy splits into the diagnostic view used by full-OOF fitting."""
+
+    combined: Counter[str] = Counter()
+    for (_, entity_type), count in _gold_counts(manifest).items():
+        combined[entity_type] += count
+    return {
+        ("development", entity_type): combined.get(entity_type, 0)
+        for entity_type in PHASE1_ALLOWED_TYPES
+    }
+
+
 def _gold_genre_counts(
     manifest: Mapping[str, Any],
 ) -> dict[tuple[str, str, str], int]:
@@ -1457,6 +1776,24 @@ def _gold_genre_counts(
         Phase1GenreBucket(genre)
         counts[(split, genre, entity_type)] = value
     return counts
+
+
+def _combined_gold_genre_counts(
+    manifest: Mapping[str, Any],
+) -> dict[tuple[str, str, str], int]:
+    """Aggregate legacy split labels while preserving genre/type support."""
+
+    combined: Counter[tuple[str, str]] = Counter()
+    for (_, genre, entity_type), count in _gold_genre_counts(manifest).items():
+        combined[(genre, entity_type)] += count
+    return {
+        ("development", genre.value, entity_type): combined.get(
+            (genre.value, entity_type),
+            0,
+        )
+        for genre in Phase1GenreBucket
+        for entity_type in PHASE1_ALLOWED_TYPES
+    }
 
 
 def _nested_genre_thresholds(
@@ -1504,38 +1841,6 @@ def _top_weights(model: SparseLogisticModel, limit: int = 25) -> dict[str, Any]:
     }
 
 
-def _scored_example_sort_key(
-    item: tuple[Phase1ProposalExample, float],
-) -> tuple[Any, ...]:
-    example, probability = item
-    return (
-        -probability,
-        -len(example.sources),
-        -PHASE1_TYPE_PRIORITY.get(example.entity_type, 0),
-        -(example.position[1] - example.position[0]),
-        _document_sort_key(example.document_id),
-        example.position,
-        example.entity_type,
-    )
-
-
-def _runtime_score_sort_key(
-    item: tuple[Mapping[str, Any], float, float],
-) -> tuple[Any, ...]:
-    row, probability, _ = item
-    position = _row_position(row)
-    raw_sources = row.get("sources")
-    source_count = len(raw_sources) if isinstance(raw_sources, list) else 0
-    entity_type = str(row.get("type", ""))
-    return (
-        -probability,
-        -source_count,
-        -PHASE1_TYPE_PRIORITY.get(entity_type, 0),
-        -(position[1] - position[0]),
-        _document_sort_key(str(row.get("document_id", ""))),
-        position,
-        entity_type,
-    )
 
 
 def _row_position(row: Mapping[str, Any]) -> tuple[int, int]:
@@ -1552,10 +1857,6 @@ def _row_position(row: Mapping[str, Any]) -> tuple[int, int]:
 def _phase1_output_sort_key(row: Mapping[str, Any]) -> tuple[int, int, str]:
     start, end = _row_position(row)
     return start, end, str(row.get("type", ""))
-
-
-def _overlap(left: tuple[int, int], right: tuple[int, int]) -> bool:
-    return min(left[1], right[1]) > max(left[0], right[0])
 
 
 def _mapping_sha256(payload: Mapping[str, Any]) -> str:

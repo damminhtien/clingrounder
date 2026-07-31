@@ -183,15 +183,11 @@ def select_maximum_utility_nodes(
 class _Selection:
     nodes: tuple[Phase1ConflictNode, ...] = ()
     utility: float = 0.0
-    source_agreement: int = 0
-    covered_characters: int = 0
 
     def append(self, node: Phase1ConflictNode) -> "_Selection":
         return _Selection(
             nodes=(*self.nodes, node),
             utility=self.utility + node.utility,
-            source_agreement=self.source_agreement + node.source_count,
-            covered_characters=self.covered_characters + node.span[1] - node.span[0],
         )
 
 
@@ -261,20 +257,12 @@ def _conflict_kind(
 
 
 def _better_selection(left: _Selection, right: _Selection) -> _Selection:
-    left_rank = (
-        round(left.utility, 12),
-        left.source_agreement,
-        left.covered_characters,
-        -len(left.nodes),
-    )
-    right_rank = (
-        round(right.utility, 12),
-        right.source_agreement,
-        right.covered_characters,
-        -len(right.nodes),
-    )
-    if left_rank != right_rank:
-        return left if left_rank > right_rank else right
+    # MODEL: source agreement and span length are already learned features. Reusing them here
+    # would silently turn calibrated probability back into a hand-tuned utility.
+    left_utility = round(left.utility, 12)
+    right_utility = round(right.utility, 12)
+    if left_utility != right_utility:
+        return left if left_utility > right_utility else right
     return left if _selection_signature(left) < _selection_signature(right) else right
 
 

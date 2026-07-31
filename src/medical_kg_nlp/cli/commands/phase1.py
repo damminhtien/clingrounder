@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from medical_kg_nlp.benchmarks.phase1.boundary_verifier import (
+    Phase1BoundaryFitMode,
     Phase1BoundaryVerifier,
     build_phase1_boundary_dataset,
     fit_phase1_boundary_verifier,
@@ -38,6 +39,7 @@ from medical_kg_nlp.benchmarks.phase1.model_selection import (
     write_phase1_model_selection_report,
 )
 from medical_kg_nlp.benchmarks.phase1.proposal_calibration import (
+    Phase1ProposalFitMode,
     Phase1ProposalVerifier,
     fit_phase1_proposal_verifier,
     resolve_phase1_proposal_rows,
@@ -229,6 +231,13 @@ def calibrate_phase1_proposals(args: argparse.Namespace) -> int:
     """Build frozen proposal labels and fit the portable verifier."""
 
     source_roles = _source_roles(args.source_role)
+    fit_mode = Phase1ProposalFitMode(args.fit_mode)
+    if (fit_mode is Phase1ProposalFitMode.FULL_OOF) != bool(
+        args.training_governance
+    ):
+        raise ValueError(
+            "full_oof and --training-governance must be enabled together"
+        )
     output = Path(args.output_dir)
     dataset = build_phase1_proposal_dataset(
         args.matrix,
@@ -237,11 +246,13 @@ def calibrate_phase1_proposals(args: argparse.Namespace) -> int:
         args.model_split_manifest,
         args.frozen_split_manifest,
         source_roles=source_roles,
+        training_governance_path=args.training_governance,
     )
     write_phase1_proposal_dataset(dataset, output / "dataset")
     verifier, report = fit_phase1_proposal_verifier(
         dataset,
         minimum_development_precision=args.minimum_development_precision,
+        fit_mode=fit_mode,
     )
     write_phase1_proposal_verifier(verifier, report, output)
     summary = {
@@ -290,6 +301,7 @@ def calibrate_phase1_boundaries(args: argparse.Namespace) -> int:
     """Build raw boundary alternatives and fit a genre-aware family ranker."""
 
     output = Path(args.output_dir)
+    fit_mode = Phase1BoundaryFitMode(args.fit_mode)
     if args.dataset_dir:
         dataset = load_phase1_boundary_dataset(args.dataset_dir)
     else:
@@ -307,6 +319,16 @@ def calibrate_phase1_boundaries(args: argparse.Namespace) -> int:
             input_dir=args.input_dir,
             gold_dir=args.gold_dir,
             frozen_manifest_path=args.frozen_split_manifest,
+            splits=(
+                ("train", "development", "holdout")
+                if fit_mode is Phase1BoundaryFitMode.FULL_OOF
+                else ("train", "development")
+            ),
+            training_governance_path=(
+                args.training_governance
+                if fit_mode is Phase1BoundaryFitMode.FULL_OOF
+                else None
+            ),
         )
         proposal_verifier = _load_proposal_verifier(args.proposal_verifier)
         dictionary_matcher = _load_dictionary_matcher(args.dictionary)
@@ -318,9 +340,14 @@ def calibrate_phase1_boundaries(args: argparse.Namespace) -> int:
             proposal_verifier_path=args.proposal_verifier,
             dictionary_matcher=dictionary_matcher,
             corpus_fingerprint_sha256=contract.corpus_fingerprint_sha256,
+            training_governance_path=(
+                args.training_governance
+                if fit_mode is Phase1BoundaryFitMode.FULL_OOF
+                else None
+            ),
         )
         write_phase1_boundary_dataset(dataset, output / "dataset")
-    verifier, report = fit_phase1_boundary_verifier(dataset)
+    verifier, report = fit_phase1_boundary_verifier(dataset, fit_mode=fit_mode)
     write_phase1_boundary_verifier(verifier, report, output)
     print(
         json.dumps(

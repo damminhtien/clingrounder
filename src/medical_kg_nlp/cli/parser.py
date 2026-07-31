@@ -509,6 +509,13 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         default="data/manual_gold/holdout_manifest.json",
     )
     proposal_calibrate.add_argument(
+        "--training-governance",
+        help=(
+            "Strict policy that authorizes all reviewed labels for final fitting. "
+            "Omit to preserve the legacy sealed-holdout diagnostic."
+        ),
+    )
+    proposal_calibrate.add_argument(
         "--source-role",
         action="append",
         required=True,
@@ -520,6 +527,15 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         help=(
             "Select the highest-recall per-type threshold meeting this precision; "
             "omit to maximize development F1."
+        ),
+    )
+    proposal_calibrate.add_argument(
+        "--fit-mode",
+        choices=("development", "full_oof"),
+        default="development",
+        help=(
+            "development preserves the legacy split diagnostic; full_oof fits every "
+            "supplied labeled proposal and derives thresholds from grouped OOF predictions."
         ),
     )
     proposal_calibrate.add_argument("--output-dir", required=True)
@@ -559,6 +575,16 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     boundary_calibrate.add_argument(
         "--proposal-verifier",
         help="Optional frozen proposal verifier used as one boundary feature.",
+    )
+    boundary_calibrate.add_argument(
+        "--fit-mode",
+        choices=["development", "full_oof"],
+        default="development",
+        help="Use full_oof only with governed all-manual-gold supervision.",
+    )
+    boundary_calibrate.add_argument(
+        "--training-governance",
+        help="Required by full_oof before opening the legacy holdout labels.",
     )
     boundary_calibrate.add_argument(
         "--dictionary",

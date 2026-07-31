@@ -10,6 +10,7 @@ import hashlib
 import math
 import re
 import unicodedata
+from collections import Counter
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
@@ -35,7 +36,7 @@ __all__ = [
     "phase1_genre_bucket",
 ]
 
-PHASE1_PROPOSAL_FEATURE_CONTRACT = "phase1-proposal-features.v4"
+PHASE1_PROPOSAL_FEATURE_CONTRACT = "phase1-proposal-features.v5"
 
 _UNIT_RE = re.compile(
     r"(?<!\w)(?:mg|mcg|µg|g|kg|ml|l|mmol|mol|meq|iu|u|"
@@ -143,6 +144,7 @@ def extract_phase1_proposal_features(
     active_structure = structure or DocumentStructureAnalyzer().analyze(source_text)
     sources = _proposal_sources(row, source_roles)
     roles = tuple(sorted({role for _, role in sources}, key=lambda role: role.value))
+    source_count_by_role = Counter(role for _, role in sources)
     genre = phase1_genre_bucket(active_structure.genre)
     status = str(row.get("status", "unknown"))
     normalized = normalize_for_match(mention)
@@ -168,12 +170,16 @@ def extract_phase1_proposal_features(
 
     for role in roles:
         features[f"role:{role.value}"] = 1.0
+        features[f"numeric:role_source_count:{role.value}"] = float(
+            source_count_by_role[role]
+        )
         features[f"interaction:role_type:{role.value}:{entity_type}"] = 1.0
         features[f"interaction:genre_role:{genre.value}:{role.value}"] = 1.0
         features[
             f"interaction:genre_role_type:{genre.value}:{role.value}:{entity_type}"
         ] = 1.0
     _add_source_evidence_features(features, row, sources)
+    _add_conflict_features(features, row, start=start, end=end)
     features[f"interaction:status_type:{status}:{entity_type}"] = 1.0
     features[
         f"interaction:genre_type:{genre.value}:{entity_type}"
@@ -296,6 +302,8 @@ def _add_source_evidence_features(
     if not isinstance(raw_evidence, Mapping):
         raise ValueError("Proposal source_evidence must be an object")
     scores_by_role: dict[ProposalSourceRole, list[float]] = {}
+    support_only_by_role: Counter[ProposalSourceRole] = Counter()
+    label_count_by_role: Counter[ProposalSourceRole] = Counter()
     for source, role in sources:
         evidence = raw_evidence.get(source, {})
         if not isinstance(evidence, Mapping):
@@ -312,6 +320,7 @@ def _add_source_evidence_features(
             scores_by_role.setdefault(role, []).append(float(confidence))
         if bool(evidence.get("support_only", False)):
             features[f"flag:role_support_only:{role.value}"] = 1.0
+            support_only_by_role[role] += 1
         labels = evidence.get("source_labels", [])
         if not isinstance(labels, list) or not all(
             isinstance(label, str) and label for label in labels
@@ -319,12 +328,100 @@ def _add_source_evidence_features(
             raise ValueError(f"Proposal source labels for {source!r} are invalid")
         for label in labels:
             _add_hash(features, f"source_label:{role.value}", label)
+            label_count_by_role[role] += 1
     for role, scores in scores_by_role.items():
         # MODEL: confidence scales differ across model families. The role-specific maximum keeps
         # their evidence separate and lets logistic calibration learn the useful scale.
         features[f"flag:role_confidence_present:{role.value}"] = 1.0
         features[f"numeric:role_confidence_max:{role.value}"] = max(scores)
         features[f"numeric:role_confidence_min:{role.value}"] = min(scores)
+        features[f"numeric:role_confidence_mean:{role.value}"] = sum(scores) / len(
+            scores
+        )
+    for role, count in support_only_by_role.items():
+        features[f"numeric:role_support_only_count:{role.value}"] = float(count)
+    for role, count in label_count_by_role.items():
+        features[f"numeric:role_source_label_count:{role.value}"] = float(count)
+
+
+def _add_conflict_features(
+    features: dict[str, float],
+    row: Mapping[str, Any],
+    *,
+    start: int,
+    end: int,
+) -> None:
+    """Describe competing boundaries/types before the learned resolver scores the row."""
+
+    raw_overlaps = row.get("overlap_agreements", [])
+    raw_type_conflicts = row.get("type_conflicts", [])
+    if not isinstance(raw_overlaps, list) or not isinstance(raw_type_conflicts, list):
+        raise ValueError("Proposal conflict evidence must be represented as lists")
+
+    overlap_source_counts: list[int] = []
+    contains_count = 0
+    contained_by_count = 0
+    left_crossing_count = 0
+    right_crossing_count = 0
+    for conflict in raw_overlaps:
+        if not isinstance(conflict, Mapping):
+            raise ValueError("Proposal overlap evidence must be an object")
+        position = conflict.get("position")
+        sources = conflict.get("sources", [])
+        if (
+            not isinstance(position, list)
+            or len(position) != 2
+            or not all(
+                isinstance(value, int) and not isinstance(value, bool)
+                for value in position
+            )
+            or not isinstance(sources, list)
+            or not all(isinstance(source, str) and source for source in sources)
+        ):
+            raise ValueError("Proposal overlap evidence is malformed")
+        other_start, other_end = position
+        overlap_source_counts.append(len(sources))
+        if start <= other_start and other_end <= end:
+            contains_count += 1
+        elif other_start <= start and end <= other_end:
+            contained_by_count += 1
+        elif other_start < start:
+            left_crossing_count += 1
+        else:
+            right_crossing_count += 1
+
+    conflict_source_counts: list[int] = []
+    for conflict in raw_type_conflicts:
+        if not isinstance(conflict, Mapping):
+            raise ValueError("Proposal type-conflict evidence must be an object")
+        conflict_type = conflict.get("type")
+        sources = conflict.get("sources", [])
+        if (
+            not isinstance(conflict_type, str)
+            or not conflict_type
+            or not isinstance(sources, list)
+            or not all(isinstance(source, str) and source for source in sources)
+        ):
+            raise ValueError("Proposal type-conflict evidence is malformed")
+        conflict_source_counts.append(len(sources))
+        features[f"conflict_type:{conflict_type}"] = 1.0
+
+    features["numeric:overlap_count"] = float(len(raw_overlaps))
+    features["numeric:type_conflict_count"] = float(len(raw_type_conflicts))
+    features["numeric:contains_competitor_count"] = float(contains_count)
+    features["numeric:contained_by_competitor_count"] = float(contained_by_count)
+    features["numeric:left_crossing_competitor_count"] = float(left_crossing_count)
+    features["numeric:right_crossing_competitor_count"] = float(right_crossing_count)
+    features["flag:has_overlap_competitor"] = float(bool(raw_overlaps))
+    features["flag:has_type_competitor"] = float(bool(raw_type_conflicts))
+    if overlap_source_counts:
+        features["numeric:max_overlap_competitor_sources"] = float(
+            max(overlap_source_counts)
+        )
+    if conflict_source_counts:
+        features["numeric:max_type_competitor_sources"] = float(
+            max(conflict_source_counts)
+        )
 
 
 def _add_surface_features(

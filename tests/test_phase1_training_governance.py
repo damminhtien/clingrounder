@@ -39,6 +39,8 @@ def test_local_metrics_cannot_decide_and_friend31_cannot_run() -> None:
         policy.decision_authority.official_submission
         == "sole_promotion_and_rejection_authority"
     )
+    assert policy.decision_authority.major_change_requires_submission_artifact is True
+    assert policy.decision_authority.major_change_may_close_without_artifact is False
 
 
 @pytest.mark.parametrize(
@@ -48,6 +50,7 @@ def test_local_metrics_cannot_decide_and_friend31_cannot_run() -> None:
         ("manual_gold", "usage", "train_split"),
         ("friend31", "runtime_source_allowed", True),
         ("decision_authority", "local_can_reject", True),
+        ("decision_authority", "major_change_may_close_without_artifact", True),
     ],
 )
 def test_policy_rejects_weakened_governance(

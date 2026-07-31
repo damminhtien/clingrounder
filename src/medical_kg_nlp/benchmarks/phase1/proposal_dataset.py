@@ -1,7 +1,8 @@
-"""Leakage-safe labeled proposal data for Phase 1 calibration.
+"""Labeled proposal data for diagnostic calibration and governed final fitting.
 
 This builder consumes an unlabeled proposal matrix but reads labels only for the frozen model
-train/development ids. The 24-document holdout remains sealed.
+train/development ids by default. A strict training-governance file may explicitly supersede the
+legacy split and authorize all reviewed labels for final fitting.
 """
 
 from __future__ import annotations
@@ -21,6 +22,9 @@ from medical_kg_nlp.benchmarks.phase1.proposal_features import (
     extract_phase1_proposal_features,
     phase1_genre_bucket,
 )
+from medical_kg_nlp.benchmarks.phase1.training_governance import (
+    load_phase1_training_governance,
+)
 from medical_kg_nlp.ner.document_structure import DocumentStructureAnalyzer
 from medical_kg_nlp.utils.hashing import sha256_file
 
@@ -31,7 +35,7 @@ __all__ = [
     "write_phase1_proposal_dataset",
 ]
 
-_DATASET_SCHEMA = "phase1-proposal-calibration-dataset.v3"
+_DATASET_SCHEMA = "phase1-proposal-calibration-dataset.v4"
 _ERROR_KINDS = frozenset(
     {"exact", "boundary", "type_confusion", "boundary_type_confusion", "spurious"}
 )
@@ -118,11 +122,13 @@ def build_phase1_proposal_dataset(
     frozen_holdout_manifest_path: str | Path,
     *,
     source_roles: Mapping[str, ProposalSourceRole | str],
+    training_governance_path: str | Path | None = None,
 ) -> Phase1ProposalDataset:
-    """Build exact proposal labels while proving the holdout was not opened.
+    """Build exact proposal labels under either the legacy or final-fit policy.
 
     INVARIANT: only ids listed under ``source_document_ids.train`` and ``development`` are read
-    from the gold directory. Round 2 ids and frozen holdout labels are rejected before I/O.
+    by default. Passing final-fit governance explicitly opens all 100 reviewed labels for
+    supervised fitting; Round 2 remains excluded.
     """
 
     matrix_file = Path(matrix_path)
@@ -137,6 +143,22 @@ def build_phase1_proposal_dataset(
         holdout_manifest,
     )
     selected_ids = frozenset(split_by_document)
+    holdout_labels_read = False
+    governance_file: Path | None = None
+    if training_governance_path is not None:
+        governance_file = Path(training_governance_path)
+        governance = load_phase1_training_governance(governance_file)
+        if governance.can_local_metric_decide():
+            raise ValueError("Final-fit governance cannot authorize local promotion")
+        selected_ids = frozenset({*selected_ids, *holdout_ids})
+        if len(selected_ids) != governance.manual_gold.expected_document_count:
+            raise ValueError(
+                "Final-fit manual-gold document count does not match governance"
+            )
+        split_by_document.update(
+            {document_id: "train" for document_id in holdout_ids}
+        )
+        holdout_labels_read = True
     assignments = _assignment_by_document(holdout_manifest)
 
     documents: dict[str, str] = {}
@@ -161,7 +183,10 @@ def build_phase1_proposal_dataset(
     }
     for row in rows:
         document_id = str(row.get("document_id", ""))
-        if document_id in holdout_ids or document_id not in selected_ids:
+        if (
+            not holdout_labels_read
+            and document_id in holdout_ids
+        ) or document_id not in selected_ids:
             continue
         source_text = documents[document_id]
         position = _position(row)
@@ -226,6 +251,8 @@ def build_phase1_proposal_dataset(
             document_id: phase1_genre_bucket(structure.genre).value
             for document_id, structure in structures.items()
         },
+        holdout_labels_read=holdout_labels_read,
+        training_governance_path=governance_file,
     )
     return Phase1ProposalDataset(examples=tuple(examples), manifest=manifest)
 
@@ -346,6 +373,9 @@ def _build_manifest(
     holdout_manifest: Mapping[str, Any],
     source_roles: Mapping[str, ProposalSourceRole | str],
     genre_by_document: Mapping[str, str],
+    *,
+    holdout_labels_read: bool,
+    training_governance_path: Path | None,
 ) -> dict[str, Any]:
     split_counts: Counter[str] = Counter()
     label_counts: Counter[str] = Counter()
@@ -398,10 +428,20 @@ def _build_manifest(
                 "fingerprint_sha256"
             ),
             "round2_included": False,
-            "holdout_labels_read": False,
+            "holdout_labels_read": holdout_labels_read,
             "excluded_holdout_document_ids_sha256": model_manifest[
                 "excluded_holdout"
             ]["document_ids_sha256"],
+            "training_governance_sha256": (
+                sha256_file(training_governance_path)
+                if training_governance_path is not None
+                else None
+            ),
+        },
+        "decision_authority": {
+            "local_metrics": "diagnostic_only",
+            "auto_promote": False,
+            "official_submission_required": True,
         },
         "label_policy": {
             "positive": "exact_raw_span_and_exact_phase1_type",

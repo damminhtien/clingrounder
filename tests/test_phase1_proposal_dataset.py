@@ -42,6 +42,19 @@ def test_proposal_features_use_roles_structure_and_bounded_hashes() -> None:
             "support_only": False,
         },
     }
+    row["overlap_agreements"] = [
+        {
+            "position": [start, start + len("aspirin")],
+            "text": "aspirin",
+            "sources": ["pipeline"],
+        }
+    ]
+    row["type_conflicts"] = [
+        {
+            "type": "KẾT_QUẢ_XÉT_NGHIỆM",
+            "sources": ["qwen"],
+        }
+    ]
 
     features = extract_phase1_proposal_features(
         row,
@@ -56,6 +69,12 @@ def test_proposal_features_use_roles_structure_and_bounded_hashes() -> None:
     assert features["role:llm"] == 1.0
     assert features["numeric:role_confidence_max:rule"] == 0.82
     assert features["numeric:role_confidence_max:llm"] == 0.91
+    assert features["numeric:role_source_count:rule"] == 1.0
+    assert features["numeric:role_source_count:llm"] == 1.0
+    assert features["numeric:overlap_count"] == 1.0
+    assert features["numeric:type_conflict_count"] == 1.0
+    assert features["numeric:contains_competitor_count"] == 1.0
+    assert features["conflict_type:KẾT_QUẢ_XÉT_NGHIỆM"] == 1.0
     assert features["section:medication"] == 1.0
     assert features["flag:list_item"] == 1.0
     assert features["flag:starts_list_item"] == 1.0
@@ -182,6 +201,98 @@ def test_proposal_dataset_rejects_holdout_fingerprint_drift(tmp_path: Path) -> N
                 "qwen": ProposalSourceRole.LLM,
             },
         )
+
+
+def test_final_fit_governance_reads_all_reviewed_manual_gold(tmp_path: Path) -> None:
+    input_dir = tmp_path / "input"
+    gold_dir = tmp_path / "gold"
+    input_dir.mkdir()
+    gold_dir.mkdir()
+    assignments: list[dict[str, str]] = []
+    matrix_rows: list[dict[str, object]] = []
+    document_ids = [str(index) for index in range(1, 101)]
+    for document_id in document_ids:
+        text = "sốt"
+        document_path = input_dir / f"{document_id}.txt"
+        gold_path = gold_dir / f"{document_id}.json"
+        document_path.write_text(text, encoding="utf-8")
+        gold_path.write_text(
+            json.dumps([_entity(text, "TRIỆU_CHỨNG", 0)], ensure_ascii=False),
+            encoding="utf-8",
+        )
+        assignments.append(
+            {
+                "document_id": document_id,
+                "split": "train" if int(document_id) <= 80 else "holdout",
+                "document_sha256": _sha256(document_path),
+                "gold_sha256": _sha256(gold_path),
+            }
+        )
+        matrix_rows.append(
+            _proposal(
+                text,
+                "TRIỆU_CHỨNG",
+                0,
+                sources=["pipeline"],
+                status="source_only",
+                proposal_id=f"proposal-{document_id}",
+                document_id=document_id,
+            )
+        )
+
+    train_ids = document_ids[:80]
+    holdout_ids = document_ids[80:]
+    holdout_manifest = {
+        "schema_version": "phase1-manual-gold-split.v1",
+        "corpus": {"fingerprint_sha256": "corpus-v1"},
+        "splits": {
+            "train": {"document_ids": train_ids},
+            "holdout": {"document_ids": holdout_ids},
+        },
+        "assignments": assignments,
+    }
+    holdout_path = tmp_path / "holdout.json"
+    holdout_path.write_text(json.dumps(holdout_manifest), encoding="utf-8")
+    model_manifest = {
+        "schema_version": "phase1-model-training-split.v1",
+        "source_corpus_fingerprint_sha256": "corpus-v1",
+        "round2_included": False,
+        "source_document_ids": {
+            "train": train_ids[:60],
+            "development": train_ids[60:],
+        },
+        "excluded_holdout": {
+            "document_count": len(holdout_ids),
+            "document_ids_sha256": hashlib.sha256(
+                "\n".join(sorted(holdout_ids, key=int)).encode("utf-8")
+            ).hexdigest(),
+        },
+    }
+    model_path = tmp_path / "model.json"
+    model_path.write_text(json.dumps(model_manifest), encoding="utf-8")
+    matrix_path = tmp_path / "matrix.jsonl"
+    matrix_path.write_text(
+        "".join(
+            json.dumps(row, ensure_ascii=False) + "\n" for row in matrix_rows
+        ),
+        encoding="utf-8",
+    )
+
+    dataset = build_phase1_proposal_dataset(
+        matrix_path,
+        input_dir,
+        gold_dir,
+        model_path,
+        holdout_path,
+        source_roles={"pipeline": ProposalSourceRole.RULE},
+        training_governance_path=(
+            "configs/models/phase1-training-governance-2026-07-30.yaml"
+        ),
+    )
+
+    assert len({example.document_id for example in dataset.examples}) == 100
+    assert dataset.manifest["inputs"]["holdout_labels_read"] is True
+    assert dataset.manifest["decision_authority"]["auto_promote"] is False
 
 
 def _write_dataset_fixture(tmp_path: Path) -> dict[str, Path]:

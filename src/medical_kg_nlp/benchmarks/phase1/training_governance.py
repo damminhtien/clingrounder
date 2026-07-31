@@ -60,6 +60,8 @@ class DecisionAuthorityPolicy(_FrozenPolicy):
     local_can_reject: Literal[False]
     official_submission: Literal["sole_promotion_and_rejection_authority"]
     hard_validation_can_block_packaging: Literal[True]
+    major_change_requires_submission_artifact: Literal[True]
+    major_change_may_close_without_artifact: Literal[False]
 
 
 class ReproducibilityPolicy(_FrozenPolicy):

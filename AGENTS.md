@@ -155,6 +155,12 @@ A task is done only when implementation is typed, tests pass or failures are rep
 regression is checked when spans are touched, JSON schema validation still works, and known
 limitations are documented.
 
+For Phase 1 competition work, every major change to supervision, proposal sources/features,
+calibration, boundary/type resolution, assertions, candidates, or operating thresholds must also
+produce a deterministic, strict-validated 100-document ZIP for official BTC evaluation. Local
+gold metrics are diagnostic telemetry only: they cannot promote or reject the change, and the
+experiment remains pending until its official submission metrics are recorded.
+
 ## Vast GPU Operating Rules
 
 - Prefer the machine's existing environment or a prebuilt Vast template, installing only missing pinned packages before creating a new environment because host downloads may be slow.

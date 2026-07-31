@@ -1,4 +1,4 @@
-"""Leakage-safe loader for the reviewed Phase 1 train/development corpus."""
+"""Load reviewed Phase 1 documents under an explicit training-governance contract."""
 
 from __future__ import annotations
 
@@ -11,6 +11,9 @@ from typing import Any
 from medical_kg_nlp.benchmarks.phase1.split_contract import (
     Phase1SplitContract,
     phase1_document_sort_key,
+)
+from medical_kg_nlp.benchmarks.phase1.training_governance import (
+    load_phase1_training_governance,
 )
 from medical_kg_nlp.utils.hashing import sha256_file
 
@@ -45,12 +48,23 @@ def load_phase1_reviewed_corpus(
     gold_dir: str | Path,
     frozen_manifest_path: str | Path,
     splits: Sequence[str] = ("train", "development"),
+    training_governance_path: str | Path | None = None,
 ) -> Phase1ReviewedCorpus:
-    """Read only requested non-holdout IDs and verify every raw/gold fingerprint."""
+    """Load reviewed records while preventing accidental sealed-holdout access.
 
-    invalid = set(splits) - {"train", "development"}
+    The legacy split stays available for diagnostics. Final-fit callers may request all three
+    splits only after pinning the governance policy that authorizes `manual_gold: train_all`.
+    """
+
+    invalid = set(splits) - {"train", "development", "holdout"}
     if invalid:
         raise ValueError(f"Reviewed corpus cannot open splits {sorted(invalid)}")
+    if "holdout" in splits:
+        if training_governance_path is None:
+            raise ValueError("Opening holdout labels requires Phase 1 training governance")
+        governance = load_phase1_training_governance(training_governance_path)
+        if governance.manual_gold.usage != "train_all":
+            raise ValueError("Training governance does not authorize full manual-gold fit")
     frozen_path = Path(frozen_manifest_path)
     if sha256_file(frozen_path) != contract.frozen_manifest_sha256:
         raise ValueError("Frozen split manifest changed after contract verification")

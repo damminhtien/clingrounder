@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from medical_kg_nlp.benchmarks.phase1.proposal_calibration import (
+    Phase1ProposalFitMode,
     Phase1ProposalVerifier,
     fit_phase1_proposal_verifier,
     resolve_phase1_proposal_rows,
@@ -127,6 +128,23 @@ def test_precision_operating_point_is_persisted() -> None:
         "objective": "maximum_recall_at_minimum_precision",
         "minimum_development_precision": 0.9,
     }
+
+
+def test_full_oof_fit_uses_all_examples_but_cannot_auto_promote() -> None:
+    verifier, report = fit_phase1_proposal_verifier(
+        _dataset(),
+        fit_mode=Phase1ProposalFitMode.FULL_OOF,
+    )
+
+    assert report["fit_mode"] == "full_oof"
+    assert report["decision_authority"] == "official_submission"
+    assert report["local_metrics_role"] == "diagnostic_only"
+    assert report["auto_promote"] is False
+    assert report["operating_point"]["prediction_source"] == (
+        "document_grouped_out_of_fold"
+    )
+    assert report["training"]["cross_fit"]["document_count"] == 6
+    assert set(verifier.threshold_by_type) == set(PHASE1_ALLOWED_TYPES)
 
 
 def _dataset() -> Phase1ProposalDataset:

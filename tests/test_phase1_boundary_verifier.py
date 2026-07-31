@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections import Counter
+from dataclasses import replace
 
 from medical_kg_nlp.benchmarks.phase1.boundary_variants import (
     PHASE1_BOUNDARY_FEATURE_CONTRACT,
@@ -17,6 +18,7 @@ from medical_kg_nlp.benchmarks.phase1.boundary_variants import (
 from medical_kg_nlp.benchmarks.phase1.boundary_verifier import (
     Phase1BoundaryDataset,
     Phase1BoundaryExample,
+    Phase1BoundaryFitMode,
     Phase1BoundaryVerifier,
     fit_phase1_boundary_verifier,
     load_phase1_boundary_dataset,
@@ -106,6 +108,21 @@ def test_boundary_dataset_round_trips_and_checks_sha256(tmp_path) -> None:
         raise AssertionError("Expected a modified dataset artifact to fail closed")
 
 
+def test_boundary_verifier_full_oof_uses_governed_all_manual_rows() -> None:
+    dataset = _full_oof_dataset()
+
+    verifier, report = fit_phase1_boundary_verifier(
+        dataset,
+        fit_mode=Phase1BoundaryFitMode.FULL_OOF,
+    )
+
+    assert verifier.fit_mode is Phase1BoundaryFitMode.FULL_OOF
+    assert verifier.training_labels_scope == "all_governed_manual_gold"
+    assert report["operating_probability_source"] == "document_grouped_out_of_fold"
+    assert report["holdout_opened"] is True
+    assert report["promotion_gate"]["public_probe_required"] is True
+
+
 def _dataset(*, requires_base_probability: bool = False) -> Phase1BoundaryDataset:
     examples: list[Phase1BoundaryExample] = []
     split_by_document = {
@@ -184,6 +201,30 @@ def _dataset(*, requires_base_probability: bool = False) -> Phase1BoundaryDatase
             ).hexdigest(),
             "requires_base_probability": requires_base_probability,
             "gold_entity_counts": gold_counts,
+        },
+    )
+
+
+def _full_oof_dataset() -> Phase1BoundaryDataset:
+    dataset = _dataset(requires_base_probability=True)
+    examples = tuple(
+        replace(example, split="holdout")
+        if example.variant.document_id == "6"
+        else example
+        for example in dataset.examples
+    )
+    counts = dict(dataset.manifest["gold_entity_counts"])
+    counts["development:TRIỆU_CHỨNG"] -= 1
+    counts["development:unknown:TRIỆU_CHỨNG"] -= 1
+    counts["holdout:TRIỆU_CHỨNG"] = 1
+    counts["holdout:unknown:TRIỆU_CHỨNG"] = 1
+    return Phase1BoundaryDataset(
+        examples=examples,
+        manifest={
+            **dataset.manifest,
+            "holdout_labels_read": True,
+            "training_governance_sha256": "c" * 64,
+            "gold_entity_counts": counts,
         },
     )
 

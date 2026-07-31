@@ -68,6 +68,28 @@ def test_weighted_scheduler_is_deterministic_on_equal_utility() -> None:
     assert len(first) == 1
 
 
+def test_weighted_scheduler_does_not_reapply_source_count_after_calibration() -> None:
+    first_graph = build_phase1_conflict_graph(
+        (
+            _node("a-single-source", (0, 4), "TRIỆU_CHỨNG", source_count=1),
+            _node("z-many-sources", (0, 4), "CHẨN_ĐOÁN", source_count=4),
+        )
+    )
+    reversed_counts_graph = build_phase1_conflict_graph(
+        (
+            _node("a-single-source", (0, 4), "TRIỆU_CHỨNG", source_count=4),
+            _node("z-many-sources", (0, 4), "CHẨN_ĐOÁN", source_count=1),
+        )
+    )
+
+    first_selected = select_maximum_utility_nodes(first_graph)
+    reversed_selected = select_maximum_utility_nodes(reversed_counts_graph)
+
+    assert [node.node_id for node in first_selected] == [
+        node.node_id for node in reversed_selected
+    ]
+
+
 def test_weighted_scheduler_respects_calibrated_threshold_below_half() -> None:
     graph = build_phase1_conflict_graph(
         (
@@ -93,6 +115,7 @@ def _node(
     *,
     probability: float = 0.8,
     decision_threshold: float = 0.5,
+    source_count: int = 1,
 ) -> Phase1ConflictNode:
     return Phase1ConflictNode(
         node_id=node_id,
@@ -100,6 +123,6 @@ def _node(
         span=span,
         entity_type=entity_type,
         probability=probability,
-        source_count=1,
+        source_count=source_count,
         decision_threshold=decision_threshold,
     )

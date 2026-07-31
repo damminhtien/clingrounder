@@ -145,11 +145,12 @@ risks before adding larger models.
 ### Proposal calibration
 
 Phase 1 proposal fusion uses a portable sparse logistic verifier rather than treating source
-agreement as an emission rule. The dataset builder reads only frozen model train/development
-documents, rejects Round 2 input, and verifies that the 24-document holdout is excluded. Its
-manifest fingerprints both the source matrix and the exact serialized feature rows. A positive
-label means exact raw span and exact Phase 1 type; boundary, type, boundary+type, and spurious
-proposals are explicit negatives.
+agreement as an emission rule. By default the dataset builder reads only frozen model
+train/development documents and verifies that the legacy 24-document holdout is excluded. A
+training-governance file may explicitly authorize all 100 reviewed documents for final fitting.
+Round 2 input remains excluded. The manifest fingerprints both the source matrix and the exact
+serialized feature rows. A positive label means exact raw span and exact Phase 1 type; boundary,
+type, boundary+type, and spurious proposals are explicit negatives.
 
 ```bash
 uv run medical-kg benchmark phase1 proposal-matrix \
@@ -178,6 +179,25 @@ uv run medical-kg benchmark phase1 proposal-resolve \
   --output-dir outputs/phase1/proposal-fusion/resolved
 ```
 
+The final-fit public-probe variant is explicit:
+
+```bash
+uv run medical-kg benchmark phase1 proposal-calibrate \
+  --matrix outputs/phase1/proposal-fusion/matrix/proposal_matrix.jsonl \
+  --source-role rule=rule \
+  --source-role xlmr=token_model \
+  --source-role qwen=llm \
+  --source-role vietmed=verifier \
+  --fit-mode full_oof \
+  --training-governance \
+    configs/models/phase1-training-governance-2026-07-30.yaml \
+  --output-dir outputs/phase1/proposal-fusion/final-fit
+```
+
+`full_oof` fits every proposal label supplied by the governed dataset and derives probability
+calibration plus thresholds from document-grouped OOF predictions. It is not a local promotion
+gate: the report sets `local_metrics_role: diagnostic_only` and `auto_promote: false`.
+
 `--minimum-development-precision` selects the highest-recall threshold meeting that precision
 separately for each entity type. Omitting it selects by development F1 and is suitable for source
 replacement experiments, not conservative additions to a strong baseline. The verifier records
@@ -185,7 +205,8 @@ its feature contract, feature-row SHA-256, thresholds, and calibration objective
 
 The matrix retains per-source presence, confidence, source-task labels, and support-only status.
 The model also uses bounded mention/context hashes, section, genre, question/answer role, span
-length, and type. Source names are mapped to portable roles before becoming features.
+length, type, source counts per role, verifier support, overlap/containment structure, and
+same-span type conflicts. Source names are mapped to portable roles before becoming features.
 
 Genre is calibrated as `clinical`, `qa`, or `educational` while one sparse verifier is shared.
 The artifact may store a probability calibrator and per-type operating point for each genre, but
@@ -257,17 +278,15 @@ uv run medical-kg benchmark phase1 boundary-calibrate \
   --output-dir outputs/phase1/proposal-fusion/boundary-resumed
 ```
 
-Probability calibration is leakage-safe:
+Probability calibration has two explicit modes:
 
-- the base classifier is cross-fitted by document on the 60-document train split;
-- a Platt candidate is fitted only on those out-of-fold logits;
-- raw logistic and Platt probabilities are compared by Brier score, log loss, then ECE on the
-  16-document development split;
-- the better mapping is frozen before per-type threshold selection;
-- the 24-document holdout is never opened.
+- `development` preserves the legacy 60/16 diagnostic and keeps the old holdout sealed;
+- `full_oof` fits all governed supervision and evaluates Platt calibration with a nested,
+  document-grouped cross-fit before selecting per-type and per-genre thresholds.
 
-The overlap resolver sorts accepted proposals by calibrated probability. Source count and model
-confidence are inputs to the learned probability, not hard-coded tie bonuses.
+The overlap resolver uses calibrated log-odds margin. Source count, model confidence, agreement,
+span length, and conflict structure are learned inputs; none are reapplied as hard-coded resolver
+bonuses or tie-breaks.
 
 Apply a frozen verifier to an unlabeled Round 2 proposal source with:
 

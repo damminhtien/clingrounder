@@ -7,9 +7,10 @@ import json
 import math
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
+from enum import StrEnum
 
 from medical_kg_nlp.benchmarks.phase1.boundary_variants import (
     PHASE1_BOUNDARY_FEATURE_CONTRACT,
@@ -59,6 +60,7 @@ from medical_kg_nlp.utils.io import read_jsonl
 __all__ = [
     "Phase1BoundaryDataset",
     "Phase1BoundaryExample",
+    "Phase1BoundaryFitMode",
     "Phase1BoundaryVerifier",
     "ScoredPhase1BoundaryVariant",
     "build_phase1_boundary_dataset",
@@ -71,14 +73,22 @@ __all__ = [
 ]
 
 _DATASET_SCHEMA = "phase1-boundary-dataset.v1"
-_VERIFIER_SCHEMA = "phase1-boundary-verifier.v2"
-_REPORT_SCHEMA = "phase1-boundary-training-report.v2"
+_VERIFIER_SCHEMA = "phase1-boundary-verifier.v3"
+_REPORT_SCHEMA = "phase1-boundary-training-report.v3"
 _RESOLUTION_SCHEMA = "phase1-boundary-resolution.v2"
 _MIN_GENRE_PROPOSALS = 20
 _MIN_GENRE_POSITIVES = 3
 _MIN_GENRE_NEGATIVES = 3
 _MAX_NEGATIVES_PER_POSITIVE_FAMILY = 4
 _MAX_NEGATIVES_PER_UNCOVERED_FAMILY = 2
+_FULL_OOF_FOLDS = 5
+
+
+class Phase1BoundaryFitMode(StrEnum):
+    """Choose a legacy diagnostic or governed all-manual final fit."""
+
+    DEVELOPMENT = "development"
+    FULL_OOF = "full_oof"
 
 
 @dataclass(frozen=True, slots=True)
@@ -97,8 +107,8 @@ class Phase1BoundaryExample:
     base_selected: bool
 
     def __post_init__(self) -> None:
-        if self.split not in {"train", "development"}:
-            raise ValueError("Boundary example split must be train or development")
+        if self.split not in {"train", "development", "holdout"}:
+            raise ValueError("Boundary example split is invalid")
         if self.label not in {0, 1}:
             raise ValueError("Boundary example label must be binary")
         error = BoundaryErrorLabel(self.error_label)
@@ -213,6 +223,8 @@ class Phase1BoundaryVerifier:
     resolution_policy: str
     training_dataset_sha256: str
     requires_base_probability: bool
+    fit_mode: Phase1BoundaryFitMode = Phase1BoundaryFitMode.DEVELOPMENT
+    training_labels_scope: str = "legacy_train_development"
 
     def __post_init__(self) -> None:
         threshold_types = {entity_type for entity_type, _ in self.thresholds}
@@ -253,6 +265,15 @@ class Phase1BoundaryVerifier:
             )
         if len(self.training_dataset_sha256) != 64:
             raise ValueError("Boundary verifier requires a dataset SHA-256")
+        if self.training_labels_scope not in {
+            "legacy_train_development",
+            "all_governed_manual_gold",
+        }:
+            raise ValueError("Boundary verifier training-label scope is invalid")
+        if (self.fit_mode is Phase1BoundaryFitMode.FULL_OOF) != (
+            self.training_labels_scope == "all_governed_manual_gold"
+        ):
+            raise ValueError("Boundary verifier fit mode and label scope disagree")
 
     @property
     def threshold_by_type(self) -> dict[str, float]:
@@ -294,6 +315,8 @@ class Phase1BoundaryVerifier:
             "feature_contract": PHASE1_BOUNDARY_FEATURE_CONTRACT,
             "training_dataset_sha256": self.training_dataset_sha256,
             "requires_base_probability": self.requires_base_probability,
+            "fit_mode": self.fit_mode.value,
+            "training_labels_scope": self.training_labels_scope,
             "resolution_policy": self.resolution_policy,
             "thresholds": dict(self.thresholds),
             "genre_thresholds": _nested_genre_thresholds(self.genre_thresholds),
@@ -339,6 +362,8 @@ class Phase1BoundaryVerifier:
             requires_base_probability=bool(
                 payload.get("requires_base_probability", False)
             ),
+            fit_mode=Phase1BoundaryFitMode(str(payload.get("fit_mode", ""))),
+            training_labels_scope=str(payload.get("training_labels_scope", "")),
         )
 
 
@@ -351,8 +376,9 @@ def build_phase1_boundary_dataset(
     proposal_verifier_path: str | Path | None = None,
     dictionary_matcher: DictionaryMatcher | None = None,
     corpus_fingerprint_sha256: str,
+    training_governance_path: str | Path | None = None,
 ) -> Phase1BoundaryDataset:
-    """Build candidate-level labels without reading any frozen holdout annotation."""
+    """Build raw-offset candidate labels under the selected supervised corpus policy."""
 
     matrix_file = Path(matrix_path)
     rows_by_document = _rows_by_document(read_jsonl(matrix_file))
@@ -444,7 +470,12 @@ def build_phase1_boundary_dataset(
         "examples_sha256": hashlib.sha256(serialized.encode("utf-8")).hexdigest(),
         "corpus_fingerprint_sha256": corpus_fingerprint_sha256,
         "round2_included": False,
-        "holdout_labels_read": False,
+        "holdout_labels_read": "holdout" in corpus.split_by_document.values(),
+        "training_governance_sha256": (
+            sha256_file(training_governance_path)
+            if training_governance_path is not None
+            else None
+        ),
         "requires_base_probability": proposal_verifier is not None,
         "inputs": {
             "proposal_matrix_sha256": sha256_file(matrix_file),
@@ -488,76 +519,85 @@ def fit_phase1_boundary_verifier(
     dataset: Phase1BoundaryDataset,
     *,
     training_config: SparseLogisticTrainingConfig | None = None,
+    fit_mode: Phase1BoundaryFitMode | str = Phase1BoundaryFitMode.DEVELOPMENT,
 ) -> tuple[Phase1BoundaryVerifier, dict[str, Any]]:
-    """Fit the shared scorer and calibrate type/genre thresholds on development."""
+    """Fit a boundary scorer and calibrate only a diagnostic operating point.
+
+    ``full_oof`` trains the runtime model on every governed manual row. Its thresholds and
+    replacement margins use document-grouped out-of-fold probabilities, never final-fit scores.
+    Official BTC evaluation remains the only promotion decision.
+    """
 
     if dataset.manifest.get("feature_contract") != PHASE1_BOUNDARY_FEATURE_CONTRACT:
         raise ValueError("Boundary dataset feature contract is incompatible")
+    active_fit_mode = Phase1BoundaryFitMode(fit_mode)
+    if active_fit_mode is Phase1BoundaryFitMode.FULL_OOF and (
+        not bool(dataset.manifest.get("holdout_labels_read", False))
+        or not isinstance(dataset.manifest.get("training_governance_sha256"), str)
+    ):
+        raise ValueError(
+            "Full OOF boundary fit requires governed all-manual-gold supervision"
+        )
+    active_training_config = training_config or _boundary_training_config()
     train = tuple(example for example in dataset.examples if example.split == "train")
     development = tuple(
         example for example in dataset.examples if example.split == "development"
     )
     if not train or not development:
         raise ValueError("Boundary verifier requires train and development examples")
-    sampled_train = _sample_training_examples(train)
-    family_sizes = Counter(
-        example.variant.family_id for example in sampled_train
-    )
-    positive_weight, negative_weight = _balanced_class_weights(
-        sampled_train,
-        family_sizes,
-    )
-    sparse_train = [
-        SparseBinaryExample.from_mapping(
-            dict(example.features),
-            label=example.label,
-            weight=(
-                positive_weight if example.label else negative_weight
-            )
-            / family_sizes[example.variant.family_id],
+    if active_fit_mode is Phase1BoundaryFitMode.FULL_OOF:
+        operating_examples = tuple(
+            replace(example, split="development") for example in dataset.examples
         )
-        for example in sampled_train
-    ]
-    model, training_report = fit_sparse_logistic(
-        sparse_train,
-        config=training_config
-        or SparseLogisticTrainingConfig(
-            epochs=100,
-            learning_rate=0.3,
-            learning_rate_decay=0.02,
-            l2=0.002,
-            tolerance=1e-8,
-        ),
-    )
-    probabilities = tuple(
-        model.predict_probability(dict(example.features))
-        for example in development
-    )
-    gold_counts = _gold_counts(dataset.manifest)
+        model, training_report, training_summary = _fit_boundary_model(
+            dataset.examples,
+            active_training_config,
+        )
+        probabilities, oof_report = _cross_fitted_boundary_probabilities(
+            dataset.examples,
+            active_training_config,
+        )
+        gold_counts = _combined_gold_counts(dataset.manifest)
+        calibration_source = "document_grouped_out_of_fold"
+        labels_scope = "all_governed_manual_gold"
+    else:
+        operating_examples = development
+        model, training_report, training_summary = _fit_boundary_model(
+            train,
+            active_training_config,
+        )
+        probabilities = tuple(
+            model.predict_probability(dict(example.features))
+            for example in development
+        )
+        gold_counts = _gold_counts(dataset.manifest)
+        oof_report = None
+        calibration_source = "development"
+        labels_scope = "legacy_train_development"
     thresholds, threshold_report = _calibrate_thresholds(
-        development,
+        operating_examples,
         probabilities,
         gold_counts,
     )
     genre_thresholds, genre_threshold_report = _calibrate_genre_thresholds(
-        development,
+        operating_examples,
         probabilities,
         gold_counts,
     )
     selected = _select_examples(
-        development,
+        operating_examples,
         probabilities,
         thresholds,
         genre_thresholds=genre_thresholds,
     )
     dataset_sha256 = str(dataset.manifest.get("examples_sha256", ""))
     replacement_margins, replacement_report = _calibrate_replacement_margins(
-        development,
+        operating_examples,
         probabilities,
         gold_counts,
     )
     conservative_selected = _select_conservative_examples(
-        development,
+        operating_examples,
         probabilities,
         replacement_margins,
     )
@@ -580,29 +620,31 @@ def fit_phase1_boundary_verifier(
         requires_base_probability=bool(
             dataset.manifest.get("requires_base_probability", False)
         ),
+        fit_mode=active_fit_mode,
+        training_labels_scope=labels_scope,
     )
     report = {
         "schema_version": _REPORT_SCHEMA,
         "feature_contract": PHASE1_BOUNDARY_FEATURE_CONTRACT,
         "training_dataset_sha256": dataset_sha256,
-        "holdout_opened": False,
+        "fit_mode": active_fit_mode.value,
+        "holdout_opened": bool(dataset.manifest.get("holdout_labels_read", False)),
         "evaluation_scope": "diagnostic_only_manual_gold",
+        "operating_probability_source": calibration_source,
         "training": {
             **training_report,
             "family_weighting": True,
-            "source_example_count": len(train),
-            "sampled_example_count": len(sampled_train),
+            **training_summary,
             "hard_negative_sampling": {
                 "positive_family_limit": _MAX_NEGATIVES_PER_POSITIVE_FAMILY,
                 "uncovered_family_limit": _MAX_NEGATIVES_PER_UNCOVERED_FAMILY,
             },
-            "positive_class_weight": positive_weight,
-            "negative_class_weight": negative_weight,
         },
-        "development_probability_metrics": binary_probability_metrics(
-            [example.label for example in development],
+        "operating_probability_metrics": binary_probability_metrics(
+            [example.label for example in operating_examples],
             probabilities,
         ),
+        "out_of_fold": oof_report,
         "threshold_calibration": threshold_report,
         "genre_threshold_calibration": genre_threshold_report,
         "replacement_margin_calibration": replacement_report,
@@ -613,7 +655,7 @@ def fit_phase1_boundary_verifier(
                 split="development",
             ),
             "base_proposal_verifier": _selection_metrics(
-                [example for example in development if example.base_selected],
+                [example for example in operating_examples if example.base_selected],
                 gold_counts,
                 split="development",
             ),
@@ -631,7 +673,7 @@ def fit_phase1_boundary_verifier(
                 gold_counts,
                 split="development",
             ),
-            "family_top1": _family_top1_metrics(development, probabilities),
+            "family_top1": _family_top1_metrics(operating_examples, probabilities),
             "by_genre": _selection_by_genre(
                 selected,
                 gold_counts,
@@ -640,12 +682,102 @@ def fit_phase1_boundary_verifier(
         },
         "candidate_coverage": {
             split: _coverage_metrics(dataset.examples, gold_counts, split)
-            for split in ("train", "development")
+            for split in ("train", "development", "holdout")
         },
         "top_weights": _top_weights(model),
     }
     report["promotion_gate"] = _diagnostic_promotion_gate(report)
     return verifier, report
+
+
+def _boundary_training_config() -> SparseLogisticTrainingConfig:
+    return SparseLogisticTrainingConfig(
+        epochs=100,
+        learning_rate=0.3,
+        learning_rate_decay=0.02,
+        l2=0.002,
+        tolerance=1e-8,
+    )
+
+
+def _fit_boundary_model(
+    examples: Sequence[Phase1BoundaryExample],
+    training_config: SparseLogisticTrainingConfig,
+) -> tuple[SparseLogisticModel, Mapping[str, Any], Mapping[str, int | float]]:
+    sampled = _sample_training_examples(examples)
+    if not sampled:
+        raise ValueError("Boundary verifier has no training examples")
+    family_sizes = Counter(example.variant.family_id for example in sampled)
+    positive_weight, negative_weight = _balanced_class_weights(sampled, family_sizes)
+    sparse_examples = [
+        SparseBinaryExample.from_mapping(
+            dict(example.features),
+            label=example.label,
+            weight=(positive_weight if example.label else negative_weight)
+            / family_sizes[example.variant.family_id],
+        )
+        for example in sampled
+    ]
+    model, report = fit_sparse_logistic(sparse_examples, config=training_config)
+    return model, report, {
+        "source_example_count": len(examples),
+        "sampled_example_count": len(sampled),
+        "positive_class_weight": positive_weight,
+        "negative_class_weight": negative_weight,
+    }
+
+
+def _cross_fitted_boundary_probabilities(
+    examples: Sequence[Phase1BoundaryExample],
+    training_config: SparseLogisticTrainingConfig,
+) -> tuple[tuple[float, ...], Mapping[str, Any]]:
+    """Score each boundary candidate with a model that did not train on its document."""
+
+    document_ids = sorted(
+        {example.variant.document_id for example in examples},
+        key=phase1_document_sort_key,
+    )
+    if len(document_ids) < _FULL_OOF_FOLDS:
+        raise ValueError("Full OOF boundary fit requires at least five documents")
+    fold_by_document = {
+        document_id: int(hashlib.sha256(document_id.encode("utf-8")).hexdigest()[:8], 16)
+        % _FULL_OOF_FOLDS
+        for document_id in document_ids
+    }
+    probabilities_by_variant_id: dict[str, float] = {}
+    reports: list[Mapping[str, Any]] = []
+    for fold in range(_FULL_OOF_FOLDS):
+        fitting = tuple(
+            example
+            for example in examples
+            if fold_by_document[example.variant.document_id] != fold
+        )
+        evaluation = tuple(
+            example
+            for example in examples
+            if fold_by_document[example.variant.document_id] == fold
+        )
+        if not evaluation:
+            continue
+        model, report, summary = _fit_boundary_model(fitting, training_config)
+        reports.append({"fold": fold, **summary, "training": report})
+        for example in evaluation:
+            probabilities_by_variant_id[example.variant.variant_id] = (
+                model.predict_probability(dict(example.features))
+            )
+    if len(probabilities_by_variant_id) != len(examples):
+        raise ValueError("Boundary OOF scoring did not cover every variant")
+    assignment = "\n".join(
+        f"{document_id}:{fold_by_document[document_id]}" for document_id in document_ids
+    )
+    return (
+        tuple(probabilities_by_variant_id[example.variant.variant_id] for example in examples),
+        {
+            "fold_count": _FULL_OOF_FOLDS,
+            "assignment_sha256": hashlib.sha256(assignment.encode("utf-8")).hexdigest(),
+            "folds": reports,
+        },
+    )
 
 
 def resolve_phase1_boundary_rows(
@@ -1820,10 +1952,24 @@ def _gold_counts(
             Phase1GenreBucket(genre)
         else:
             raise ValueError("Boundary gold count key is malformed")
-        if split not in {"train", "development"} or entity_type not in PHASE1_ALLOWED_TYPES:
+        if (
+            split not in {"train", "development", "holdout"}
+            or entity_type not in PHASE1_ALLOWED_TYPES
+        ):
             raise ValueError("Boundary gold count key is invalid")
         counts[(split, entity_type, genre)] = value
     return counts
+
+
+def _combined_gold_counts(
+    manifest: Mapping[str, Any],
+) -> dict[tuple[str, str, str | None], int]:
+    """Project all governed manual-gold counts into the diagnostic selector namespace."""
+
+    combined: Counter[tuple[str, str, str | None]] = Counter()
+    for (_, entity_type, genre), count in _gold_counts(manifest).items():
+        combined[("development", entity_type, genre)] += count
+    return dict(combined)
 
 
 def _rows_by_document(
