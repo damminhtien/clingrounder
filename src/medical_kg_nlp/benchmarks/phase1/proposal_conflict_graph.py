@@ -43,6 +43,7 @@ class Phase1ConflictNode:
     probability: float
     source_count: int
     decision_threshold: float = 0.5
+    utility_override: float | None = None
 
     def __post_init__(self) -> None:
         start, end = self.span
@@ -64,11 +65,18 @@ class Phase1ConflictNode:
             raise ValueError("Conflict node decision threshold must be within [0, 1]")
         if self.source_count <= 0:
             raise ValueError("Conflict node source_count must be positive")
+        if self.utility_override is not None and not math.isfinite(self.utility_override):
+            raise ValueError("Conflict node utility_override must be finite")
 
     @property
     def utility(self) -> float:
         """Return calibrated log-odds margin used by weighted interval scheduling."""
 
+        if self.utility_override is not None:
+            # MODEL: joint span verification optimizes expected exact-span gain directly. Keep
+            # the default log-odds rule for legacy proposal calibration, but let a verifier pass
+            # its already calibrated utility without converting it through a second threshold.
+            return self.utility_override
         # MODEL: the operating point may be below 0.5 for a recall-oriented entity type.
         # Subtracting its logit prevents the conflict resolver from silently reintroducing
         # a fixed 0.5 threshold after the calibrated gate has accepted a proposal.
