@@ -30,6 +30,8 @@ def test_sparse_logistic_learns_and_round_trips() -> None:
     )
     assert report["example_count"] == 4
     assert report["metrics"]["f1"] == 1.0
+    assert report["stop_reason"] in {"parameter_tolerance", "max_epochs"}
+    assert report["final_maximum_parameter_update"] >= 0.0
 
 
 def test_sparse_logistic_rejects_single_class_training() -> None:

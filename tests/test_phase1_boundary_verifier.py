@@ -121,6 +121,11 @@ def test_boundary_verifier_full_oof_uses_governed_all_manual_rows() -> None:
     assert report["operating_probability_source"] == "document_grouped_out_of_fold"
     assert report["holdout_opened"] is True
     assert report["promotion_gate"]["public_probe_required"] is True
+    coverage = report["candidate_coverage"]["all_governed_manual_gold"]
+    assert set(report["candidate_coverage"]) == {"all_governed_manual_gold"}
+    assert coverage["gold"] == 6
+    assert coverage["covered_gold"] == 6
+    assert coverage["recall"] == 1.0
 
 
 def _dataset(*, requires_base_probability: bool = False) -> Phase1BoundaryDataset:

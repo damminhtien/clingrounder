@@ -178,6 +178,7 @@ def fit_sparse_logistic(
     weights = [0.0] * len(feature_names)
     iterations = 0
     converged = False
+    maximum_delta = math.inf
 
     for epoch in range(config.epochs):
         gradients = [0.0] * len(weights)
@@ -219,6 +220,11 @@ def fit_sparse_logistic(
         "feature_count": len(feature_names),
         "iterations": iterations,
         "converged": converged,
+        # MODEL: full-batch optimization can legitimately hit the configured iteration budget.
+        # Persist the final update so downstream reports distinguish that case from a malformed
+        # fit or a falsely assumed convergence.
+        "stop_reason": "parameter_tolerance" if converged else "max_epochs",
+        "final_maximum_parameter_update": maximum_delta,
         "config": {
             "epochs": config.epochs,
             "learning_rate": config.learning_rate,

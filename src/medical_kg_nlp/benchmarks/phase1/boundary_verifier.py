@@ -680,10 +680,12 @@ def fit_phase1_boundary_verifier(
                 split="development",
             ),
         },
-        "candidate_coverage": {
-            split: _coverage_metrics(dataset.examples, gold_counts, split)
-            for split in ("train", "development", "holdout")
-        },
+        "candidate_coverage": _candidate_coverage_report(
+            dataset.examples,
+            operating_examples,
+            gold_counts,
+            fit_mode=active_fit_mode,
+        ),
         "top_weights": _top_weights(model),
     }
     report["promotion_gate"] = _diagnostic_promotion_gate(report)
@@ -692,7 +694,10 @@ def fit_phase1_boundary_verifier(
 
 def _boundary_training_config() -> SparseLogisticTrainingConfig:
     return SparseLogisticTrainingConfig(
-        epochs=100,
+        # SCALING: boundary variants create a wider sparse feature space than proposal rows.
+        # Use the library's full optimizer budget rather than stopping after the historic 100-step
+        # probe configuration; the training report still records an explicit max-epoch stop.
+        epochs=300,
         learning_rate=0.3,
         learning_rate_decay=0.02,
         l2=0.002,
@@ -1930,6 +1935,36 @@ def _coverage_metrics(
         "covered_gold": covered,
         "gold": gold,
         "recall": covered / gold if gold else 0.0,
+    }
+
+
+def _candidate_coverage_report(
+    original_examples: Sequence[Phase1BoundaryExample],
+    operating_examples: Sequence[Phase1BoundaryExample],
+    gold_counts: Mapping[tuple[str, str, str | None], int],
+    *,
+    fit_mode: Phase1BoundaryFitMode,
+) -> dict[str, dict[str, Any]]:
+    """Report coverage in the same split namespace as its gold denominator.
+
+    ``full_oof`` deliberately relabels all governed rows as ``development`` while it derives
+    operating probabilities out of fold. Reporting the original train/development/holdout rows
+    against that combined denominator made coverage appear impossible (for example, positive
+    coverage with zero gold). Keep the original split detail for legacy diagnostics, but publish
+    one explicit all-governed scope for full OOF.
+    """
+
+    if fit_mode is Phase1BoundaryFitMode.FULL_OOF:
+        return {
+            "all_governed_manual_gold": _coverage_metrics(
+                operating_examples,
+                gold_counts,
+                "development",
+            )
+        }
+    return {
+        split: _coverage_metrics(original_examples, gold_counts, split)
+        for split in ("train", "development", "holdout")
     }
 
 
