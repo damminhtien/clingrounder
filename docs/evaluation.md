@@ -84,6 +84,12 @@ uv run medical-kg benchmark phase1 joint-span materialize-token-bundle-source \
   --output-dir outputs/models/phase1-xlmr-final-token-bundle-source
 ```
 
+On Vast, the matching reusable-template runners are
+`scripts/vast/run_qwen_token_bundle.sh` and
+`scripts/vast/run_joint_span_token_bundle_source.sh`. They expect the pinned bundle and model
+directory to have been copied to the instance or persistent volume, preserve `HF_HOME`/pip caches,
+and resume only complete raw-text-verified Qwen child outputs.
+
 On a cached CUDA template, run:
 
 ```bash
