@@ -86,6 +86,22 @@ def test_joint_lattice_abstains_when_educational_has_no_calibrated_threshold() -
     assert scored[0].rejection_reason == "missing_genre_calibration"
 
 
+def test_joint_lattice_uses_pinned_qa_genre_when_template_is_ambiguous() -> None:
+    source = "Câu hỏi của người dùng: đau ngực là gì?"
+    lattice = generate_phase1_joint_span_lattice(
+        "doc-qa",
+        source,
+        [_row("doc-qa", "đau ngực", source.index("đau"))],
+        source_roles={"xlmr": ProposalSourceRole.LLM},
+        genre_override="qa",
+    )
+
+    candidate = next(item for item in lattice if item.variant.text == "đau ngực")
+
+    assert candidate.genre == "qa"
+    assert "[GENRE] qa" in candidate.cross_encoder_text
+
+
 def test_joint_lattice_uses_calibrated_log_odds_utility() -> None:
     source = "Hỏi: đau ngực là gì?"
     lattice = generate_phase1_joint_span_lattice(

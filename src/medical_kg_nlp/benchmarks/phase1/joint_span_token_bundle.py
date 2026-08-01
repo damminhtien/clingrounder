@@ -49,6 +49,7 @@ class Phase1JointSpanTokenBundle:
     corpus: Phase1ReviewedCorpus
     source_dataset_by_document: Mapping[str, str]
     oof_group_by_document: Mapping[str, str]
+    genre_by_document: Mapping[str, str]
     manifest: Mapping[str, Any]
 
     def __post_init__(self) -> None:
@@ -61,6 +62,8 @@ class Phase1JointSpanTokenBundle:
             raise ValueError("Joint span token bundle source provenance must cover every child document")
         if document_ids != set(self.oof_group_by_document):
             raise ValueError("Joint span token bundle OOF groups must cover every child document")
+        if document_ids != set(self.genre_by_document):
+            raise ValueError("Joint span token bundle genres must cover every child document")
         if set(self.corpus.split_by_document.values()) != {"train"}:
             raise ValueError("Joint span token bundle must be final-fit train supervision only")
 
@@ -89,6 +92,7 @@ def load_phase1_joint_span_token_bundle(
     gold_rows: dict[str, tuple[Mapping[str, Any], ...]] = {}
     source_dataset_by_document: dict[str, str] = {}
     oof_group_by_document: dict[str, str] = {}
+    genre_by_document: dict[str, str] = {}
     record_count = 0
     for line_number, raw in _iter_raw_rows(dataset):
         try:
@@ -105,6 +109,7 @@ def load_phase1_joint_span_token_bundle(
         )
         source_dataset_by_document[child_document_id] = _source_dataset(raw, record)
         oof_group_by_document[child_document_id] = _oof_group(raw, record)
+        genre_by_document[child_document_id] = _genre_for_record(record)
         record_count += 1
     if record_count != summary.record_count:
         raise RuntimeError("Joint span token bundle changed while it was being loaded")
@@ -125,6 +130,7 @@ def load_phase1_joint_span_token_bundle(
         },
         "child_document_count": len(source_texts),
         "oof_group_count": len(set(oof_group_by_document.values())),
+        "genre_counts": _count_values(genre_by_document),
         "source_dataset_counts": _count_values(source_dataset_by_document),
         "round2_included": False,
         "friend31_included": False,
@@ -138,6 +144,7 @@ def load_phase1_joint_span_token_bundle(
         corpus=corpus,
         source_dataset_by_document=source_dataset_by_document,
         oof_group_by_document=oof_group_by_document,
+        genre_by_document=genre_by_document,
         manifest=manifest,
     )
 
@@ -161,6 +168,7 @@ def prepare_phase1_joint_span_token_bundle(
         dictionary,
         source_dataset_by_document=bundle.source_dataset_by_document,
         oof_group_by_document=bundle.oof_group_by_document,
+        genre_by_document=bundle.genre_by_document,
         supervision_manifest=bundle.manifest,
         model_sources=model_sources or {},
         output_dir=output_dir,
@@ -256,6 +264,16 @@ def _oof_group(raw: Mapping[str, Any], record: SpanTrainingRecord) -> str:
     if origin.startswith("phase1-manual-gold:"):
         origin = origin.removeprefix("phase1-manual-gold:")
     return f"phase1-origin:{origin}"
+
+
+def _genre_for_record(record: SpanTrainingRecord) -> str:
+    """Use the bundle's immutable note kind instead of reclassifying a renderer template."""
+
+    return {
+        "phase1_final_supervision": "clinical",
+        "question_answer": "qa",
+        "educational": "educational",
+    }[record.note_type]
 
 
 def _validate_manifest_provenance(manifest: Mapping[str, Any]) -> None:

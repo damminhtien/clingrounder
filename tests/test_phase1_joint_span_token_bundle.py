@@ -62,6 +62,8 @@ def test_joint_span_token_bundle_keeps_child_offsets_and_parent_group(tmp_path: 
     )
     assert bundle.oof_group_by_document[clinical_id] == "phase1-origin:1"
     assert bundle.oof_group_by_document[qa_id] == "phase1-origin:1"
+    assert bundle.genre_by_document[clinical_id] == "clinical"
+    assert bundle.genre_by_document[qa_id] == "qa"
     assert bundle.manifest["dataset"]["sha256"] == sha256_file(dataset)
 
 

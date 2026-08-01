@@ -134,6 +134,7 @@ def build_phase1_joint_span_dataset(
     source_roles: Mapping[str, ProposalSourceRole | str],
     source_dataset_by_document: Mapping[str, str],
     oof_group_by_document: Mapping[str, str] | None = None,
+    genre_by_document: Mapping[str, str] | None = None,
     dictionary_matcher: DictionaryMatcher | None = None,
 ) -> Phase1JointSpanDataset:
     """Build balanced joint examples without adding gold-only candidates to the lattice.
@@ -153,6 +154,9 @@ def build_phase1_joint_span_dataset(
         raise ValueError("Joint span OOF groups must cover every corpus document")
     if any(not group_id.strip() for group_id in active_oof_groups.values()):
         raise ValueError("Joint span OOF groups must be non-empty")
+    active_genres = {} if genre_by_document is None else dict(genre_by_document)
+    if active_genres and set(corpus.source_texts) != set(active_genres):
+        raise ValueError("Joint span genre overrides must cover every corpus document")
     unknown_rows = set(proposal_rows_by_document) - set(corpus.source_texts)
     if unknown_rows:
         raise ValueError("Joint span proposal rows reference unknown corpus documents")
@@ -166,6 +170,7 @@ def build_phase1_joint_span_dataset(
             proposal_rows_by_document.get(document_id, ()),
             source_roles=source_roles,
             dictionary_matcher=dictionary_matcher,
+            genre_override=active_genres.get(document_id),
         )
         gold_rows = corpus.gold_rows[document_id]
         labels = [
@@ -207,6 +212,13 @@ def build_phase1_joint_span_dataset(
             sorted(Counter(source_dataset_by_document.values()).items())
         ),
         "oof_group_count": len(set(active_oof_groups.values())),
+        "genre_counts": dict(
+            sorted(
+                Counter(
+                    example.candidate.genre for example in examples
+                ).items()
+            )
+        ),
         "split_counts": dict(sorted(Counter(example.split for example in examples).items())),
         "label_counts": dict(sorted(Counter(example.label.value for example in examples).items())),
         "candidate_coverage": {

@@ -261,6 +261,7 @@ def generate_phase1_joint_span_lattice(
     source_roles: Mapping[str, ProposalSourceRole | str],
     dictionary_matcher: DictionaryMatcher | None = None,
     structure: DocumentStructure | None = None,
+    genre_override: Phase1GenreBucket | str | None = None,
 ) -> tuple[Phase1JointSpanCandidate, ...]:
     """Generate all bounded raw-offset alternatives for one document.
 
@@ -270,6 +271,11 @@ def generate_phase1_joint_span_lattice(
     """
 
     active_structure = structure or DocumentStructureAnalyzer().analyze(source_text)
+    active_genre = (
+        phase1_genre_bucket(active_structure.genre)
+        if genre_override is None
+        else Phase1GenreBucket(genre_override)
+    )
     variants = generate_phase1_boundary_variants(
         document_id,
         source_text,
@@ -291,12 +297,13 @@ def generate_phase1_joint_span_lattice(
         candidates.append(
             Phase1JointSpanCandidate(
                 variant=variant,
-                genre=phase1_genre_bucket(active_structure.genre).value,
+                genre=active_genre.value,
                 section=context.section,
                 cross_encoder_text=boundary_cross_encoder_text(
                     variant,
                     source_text,
                     structure=active_structure,
+                    genre_override=active_genre,
                 ),
             )
         )

@@ -40,6 +40,7 @@ def prepare_phase1_joint_span_final_fit(
             document_id: f"phase1-origin:{document_id}"
             for document_id in corpus.reviewed.source_texts
         },
+        genre_by_document=None,
         supervision_manifest=corpus.manifest,
         model_sources=model_sources,
         output_dir=output_dir,

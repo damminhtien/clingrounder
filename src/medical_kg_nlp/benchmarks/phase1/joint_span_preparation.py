@@ -32,6 +32,7 @@ def prepare_phase1_joint_span_supervision(
     *,
     source_dataset_by_document: Mapping[str, str],
     oof_group_by_document: Mapping[str, str],
+    genre_by_document: Mapping[str, str] | None,
     supervision_manifest: Mapping[str, Any],
     model_sources: Mapping[str, tuple[Path, ProposalSourceRole | str]],
     output_dir: str | Path,
@@ -53,7 +54,12 @@ def prepare_phase1_joint_span_supervision(
         raise ValueError("Joint span built-in source names cannot be overridden")
     if any(not name.strip() for name in model_sources):
         raise ValueError("Joint span model source names must be non-empty")
-    _validate_document_mappings(corpus, source_dataset_by_document, oof_group_by_document)
+    _validate_document_mappings(
+        corpus,
+        source_dataset_by_document,
+        oof_group_by_document,
+        genre_by_document,
+    )
 
     source_roles: dict[str, ProposalSourceRole] = {
         "rule": ProposalSourceRole.RULE,
@@ -91,6 +97,7 @@ def prepare_phase1_joint_span_supervision(
         source_roles=source_roles,
         source_dataset_by_document=source_dataset_by_document,
         oof_group_by_document=oof_group_by_document,
+        genre_by_document=genre_by_document,
         # Recognition aliases provide bounded candidates around independent source proposals only.
         dictionary_matcher=DictionaryMatcher(dictionary.aliases_for_ner()),
     )
@@ -132,6 +139,7 @@ def _validate_document_mappings(
     corpus: Phase1ReviewedCorpus,
     source_dataset_by_document: Mapping[str, str],
     oof_group_by_document: Mapping[str, str],
+    genre_by_document: Mapping[str, str] | None,
 ) -> None:
     document_ids = set(corpus.source_texts)
     if document_ids != set(source_dataset_by_document):
@@ -142,3 +150,5 @@ def _validate_document_mappings(
         raise ValueError("Joint span source dataset values must be non-empty")
     if any(not value.strip() for value in oof_group_by_document.values()):
         raise ValueError("Joint span OOF group values must be non-empty")
+    if genre_by_document is not None and document_ids != set(genre_by_document):
+        raise ValueError("Joint span genre mapping must cover the corpus exactly")

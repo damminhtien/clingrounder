@@ -15,6 +15,7 @@ from enum import StrEnum
 from typing import Any
 
 from medical_kg_nlp.benchmarks.phase1.proposal_features import (
+    Phase1GenreBucket,
     ProposalSourceRole,
     extract_phase1_proposal_context,
     extract_phase1_proposal_features,
@@ -317,6 +318,7 @@ def boundary_cross_encoder_text(
     source_text: str,
     *,
     structure: DocumentStructure | None = None,
+    genre_override: Phase1GenreBucket | str | None = None,
 ) -> str:
     """Render the stable joint input expected by a future sequence-classification adapter."""
 
@@ -326,11 +328,16 @@ def boundary_cross_encoder_text(
         source_text,
         structure=active_structure,
     )
+    active_genre = (
+        phase1_genre_bucket(context.genre)
+        if genre_override is None
+        else Phase1GenreBucket(genre_override)
+    )
     left = context.left_context[-_CONTEXT_CHARS:].replace("\n", " ")
     right = context.right_context[:_CONTEXT_CHARS].replace("\n", " ")
     return "\n".join(
         (
-            f"[GENRE] {phase1_genre_bucket(context.genre).value}",
+            f"[GENRE] {active_genre.value}",
             f"[SECTION] {context.section}",
             f"[QA_ROLE] {context.question_answer_role}",
             f"[TYPE] {variant.entity_type}",
