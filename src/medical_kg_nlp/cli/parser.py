@@ -1244,6 +1244,13 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     joint_span_train.add_argument("--revision", required=True)
     joint_span_train.add_argument("--initialization-model")
     joint_span_train.add_argument("--initialization-fingerprint")
+    joint_span_train.add_argument(
+        "--training-family-dataset-sha256",
+        help=(
+            "Full supervised lattice SHA-256 shared by OOF folds and the final fit; "
+            "required when --dataset is an OOF fold subset."
+        ),
+    )
     joint_span_train.add_argument("--max-length", type=int, default=384)
     joint_span_train.add_argument("--train-batch-size", type=int, default=8)
     joint_span_train.add_argument("--evaluation-batch-size", type=int, default=16)
@@ -1264,7 +1271,7 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     )
     joint_span_calibrate.set_defaults(handler="benchmark_phase1_joint_span_calibrate")
     joint_span_calibrate.add_argument("--observations", required=True)
-    joint_span_calibrate.add_argument("--verifier-fingerprint", required=True)
+    joint_span_calibrate.add_argument("--training-family-fingerprint", required=True)
     joint_span_calibrate.add_argument("--fold-assignment-sha256", required=True)
     joint_span_calibrate.add_argument("--output", required=True)
     joint_span_calibrate.add_argument("--report")

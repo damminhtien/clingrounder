@@ -55,7 +55,8 @@ __all__ = [
     "run_phase1_joint_span",
 ]
 
-_SPEC_SCHEMA = "phase1-joint-span-run-spec.v3"
+_SPEC_SCHEMA = "phase1-joint-span-run-spec.v4"
+_TRAINING_MANIFEST_SCHEMA = "phase1-joint-span-verifier-training.v2"
 _SHA256_RE = re.compile(r"[0-9a-f]{64}")
 
 
@@ -131,6 +132,7 @@ class Phase1JointSpanRunSpec:
     verifier_device: str
     verifier_batch_size: int
     verifier_max_length: int
+    verifier_training_manifest: Phase1JointSpanFileArtifact
     calibration: Phase1JointSpanFileArtifact
     model_sources: tuple[Phase1JointSpanModelSourceSpec, ...]
     dictionaries: tuple[Phase1JointSpanFileArtifact, ...]
@@ -195,6 +197,10 @@ def load_phase1_joint_span_run_spec(path: str | Path) -> Phase1JointSpanRunSpec:
         verifier_device=str(verifier_raw.get("device", "cpu")).strip(),
         verifier_batch_size=_required_int(verifier_raw, "batch_size", default=16),
         verifier_max_length=_required_int(verifier_raw, "max_length", default=384),
+        verifier_training_manifest=_pinned_file(
+            _mapping(verifier_raw.get("training_manifest"), "verifier.training_manifest"),
+            run_root,
+        ),
         calibration=_pinned_file(calibration_raw, run_root),
         model_sources=tuple(
             Phase1JointSpanModelSourceSpec(
@@ -229,6 +235,7 @@ def run_phase1_joint_span(spec: Phase1JointSpanRunSpec) -> dict[str, Any]:
 
     spec.documents.verify(name="documents")
     spec.verifier.verify(name="joint span verifier")
+    spec.verifier_training_manifest.verify(name="joint span verifier training manifest")
     spec.calibration.verify(name="joint span calibration")
     for source in spec.model_sources:
         source.artifact.verify(name=f"model source {source.name}")
@@ -262,8 +269,14 @@ def run_phase1_joint_span(spec: Phase1JointSpanRunSpec) -> dict[str, Any]:
         },
     }
     calibration = load_phase1_joint_span_calibration(spec.calibration.path)
-    if calibration.verifier_fingerprint != spec.verifier.sha256:
-        raise ValueError("Joint span calibration was not fitted for the pinned verifier artifact")
+    training_family_fingerprint = _verified_training_family_fingerprint(
+        spec.verifier_training_manifest.path,
+        verifier_fingerprint=spec.verifier.sha256,
+    )
+    if calibration.training_family_fingerprint != training_family_fingerprint:
+        raise ValueError(
+            "Joint span calibration and final verifier do not share a training family"
+        )
     base_verifier = HuggingFacePhase1JointSpanVerifier(
         HuggingFaceModelConfig(
             model_id=str(spec.verifier.path),
@@ -292,6 +305,7 @@ def run_phase1_joint_span(spec: Phase1JointSpanRunSpec) -> dict[str, Any]:
             spec.documents.path,
             spec.budget_spec_path,
             spec.verifier.path,
+            spec.verifier_training_manifest.path,
             spec.calibration.path,
             *(source.artifact.path for source in spec.model_sources),
             *(artifact.path for artifact in spec.dictionaries),
@@ -302,13 +316,15 @@ def run_phase1_joint_span(spec: Phase1JointSpanRunSpec) -> dict[str, Any]:
             "verifier": {
                 "model_id": spec.verifier_model_id,
                 "sha256": spec.verifier.sha256,
+                "training_manifest_sha256": spec.verifier_training_manifest.sha256,
+                "training_family_fingerprint": training_family_fingerprint,
                 "device": spec.verifier_device,
                 "batch_size": spec.verifier_batch_size,
                 "max_length": spec.verifier_max_length,
             },
             "calibration": {
                 "sha256": spec.calibration.sha256,
-                "verifier_fingerprint": calibration.verifier_fingerprint,
+                "training_family_fingerprint": calibration.training_family_fingerprint,
                 "oof_observations_sha256": calibration.oof_observations_sha256,
                 "fold_assignment_sha256": calibration.fold_assignment_sha256,
             },
@@ -339,6 +355,29 @@ def run_phase1_joint_span(spec: Phase1JointSpanRunSpec) -> dict[str, Any]:
         "run_manifest": str(run.manifest_path),
         **artifact_report,
     }
+
+
+def _verified_training_family_fingerprint(
+    path: Path,
+    *,
+    verifier_fingerprint: str,
+) -> str:
+    """Read a pinned final-fit manifest and prove it owns the selected model directory.
+
+    INVARIANT: OOF calibration is tied to the training family, not a fold checkpoint. The final
+    run still verifies the exact model directory before accepting the family relationship.
+    """
+
+    payload = _mapping(json.loads(path.read_text(encoding="utf-8")), "verifier training manifest")
+    if payload.get("schema_version") != _TRAINING_MANIFEST_SCHEMA:
+        raise ValueError("Unsupported joint span verifier training manifest schema")
+    model = _mapping(payload.get("model"), "joint span verifier training model")
+    if model.get("fingerprint") != verifier_fingerprint:
+        raise ValueError("Joint span verifier training manifest does not own the pinned model")
+    family = payload.get("training_family_fingerprint")
+    if not isinstance(family, str) or _SHA256_RE.fullmatch(family) is None:
+        raise ValueError("Joint span verifier training family fingerprint is invalid")
+    return family
 
 
 def _proposal_corpus(documents: Sequence[Any]) -> Phase1ReviewedCorpus:

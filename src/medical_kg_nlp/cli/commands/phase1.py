@@ -1092,7 +1092,7 @@ def calibrate_phase1_joint_span_command(args: argparse.Namespace) -> int:
     )
     calibration, report = fit_phase1_joint_span_calibration(
         observations,
-        verifier_fingerprint=args.verifier_fingerprint,
+        training_family_fingerprint=args.training_family_fingerprint,
         fold_assignment_sha256=args.fold_assignment_sha256,
         false_positive_cost=args.false_positive_cost,
     )
@@ -1130,6 +1130,7 @@ def train_phase1_joint_span_verifier_command(args: argparse.Namespace) -> int:
             None if args.initialization_model is None else Path(args.initialization_model)
         ),
         initialization_model_fingerprint=args.initialization_fingerprint,
+        training_family_dataset_sha256=args.training_family_dataset_sha256,
         max_length=args.max_length,
         train_batch_size=args.train_batch_size,
         evaluation_batch_size=args.evaluation_batch_size,

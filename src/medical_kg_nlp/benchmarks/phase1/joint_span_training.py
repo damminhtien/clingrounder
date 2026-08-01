@@ -24,11 +24,13 @@ __all__ = [
     "Phase1JointSpanTrainingConfig",
     "Phase1JointSpanTrainingSummary",
     "inspect_phase1_joint_span_training_inputs",
+    "phase1_joint_span_training_family_fingerprint",
     "train_phase1_joint_span_verifier",
     "verify_phase1_joint_span_verifier_artifact",
 ]
 
 _DATASET_SCHEMA = "phase1-joint-span-dataset.v1"
+_TRAINING_ARTIFACT_SCHEMA = "phase1-joint-span-verifier-training.v2"
 _LABELS = tuple(label.value for label in Phase1JointSpanLabel)
 
 
@@ -43,6 +45,7 @@ class Phase1JointSpanTrainingConfig:
     revision: str
     initialization_model_path: Path | None = None
     initialization_model_fingerprint: str | None = None
+    training_family_dataset_sha256: str | None = None
     max_length: int = 384
     train_batch_size: int = 8
     evaluation_batch_size: int = 16
@@ -71,6 +74,10 @@ class Phase1JointSpanTrainingConfig:
             self.initialization_model_fingerprint
         ):
             raise ValueError("initialization_model_fingerprint must be a lowercase SHA-256")
+        if self.training_family_dataset_sha256 is not None and not _is_sha256(
+            self.training_family_dataset_sha256
+        ):
+            raise ValueError("training_family_dataset_sha256 must be a lowercase SHA-256")
         if self.max_length < 32:
             raise ValueError("Joint span verifier max_length must be at least 32")
         if self.train_batch_size < 1 or self.evaluation_batch_size < 1:
@@ -99,6 +106,7 @@ class Phase1JointSpanTrainingConfig:
                 else str(self.initialization_model_path)
             ),
             "initialization_model_fingerprint": self.initialization_model_fingerprint,
+            "training_family_dataset_sha256": self.training_family_dataset_sha256,
             "max_length": self.max_length,
             "train_batch_size": self.train_batch_size,
             "evaluation_batch_size": self.evaluation_batch_size,
@@ -136,6 +144,40 @@ class Phase1JointSpanTrainingSummary:
             "label_counts": dict(sorted(self.label_counts.items())),
             "source_dataset_counts": dict(sorted(self.source_dataset_counts.items())),
         }
+
+
+def phase1_joint_span_training_family_fingerprint(
+    config: Phase1JointSpanTrainingConfig,
+    summary: Phase1JointSpanTrainingSummary,
+) -> str:
+    """Pin the shared OOF/final-fit training contract, excluding checkpoint byte identity.
+
+    MODEL: an OOF fold must be trained on a subset, so it cannot share the final model SHA-256.
+    This fingerprint binds both artifacts to the same full supervision corpus, initializer, label
+    space, and optimization recipe while keeping runtime paths and output locations irrelevant.
+    """
+
+    payload = {
+        "schema_version": "phase1-joint-span-training-family.v1",
+        "supervision_dataset_sha256": (
+            config.training_family_dataset_sha256 or summary.dataset_sha256
+        ),
+        "model_id": config.model_id,
+        "revision": config.revision,
+        "initialization_model_fingerprint": config.initialization_model_fingerprint,
+        "max_length": config.max_length,
+        "train_batch_size": config.train_batch_size,
+        "evaluation_batch_size": config.evaluation_batch_size,
+        "epochs": config.epochs,
+        "learning_rate": config.learning_rate,
+        "weight_decay": config.weight_decay,
+        "warmup_ratio": config.warmup_ratio,
+        "gradient_accumulation_steps": config.gradient_accumulation_steps,
+        "seed": config.seed,
+        "labels": list(_LABELS),
+        "loss_weighting": "inverse_frequency_capped_6",
+    }
+    return sha256_text(json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
 
 
 def inspect_phase1_joint_span_training_inputs(
@@ -214,6 +256,7 @@ def train_phase1_joint_span_verifier(
     """
 
     summary = inspect_phase1_joint_span_training_inputs(config)
+    training_family_fingerprint = phase1_joint_span_training_family_fingerprint(config, summary)
     _validate_output_directory(config)
     initialization = _initialization_model(config)
     torch, datasets, transformers = _load_training_dependencies()
@@ -294,7 +337,7 @@ def train_phase1_joint_span_verifier(
     tokenizer.save_pretrained(str(final_model))
     fingerprint = fingerprint_model_directory(final_model)
     manifest = {
-        "schema_version": "phase1-joint-span-verifier-training.v1",
+        "schema_version": _TRAINING_ARTIFACT_SCHEMA,
         "purpose": "final_fit_all_authorized_supervision",
         "promotion": "official_submission_metrics_only",
         "model": {
@@ -314,6 +357,7 @@ def train_phase1_joint_span_verifier(
             "labels": list(_LABELS),
         },
         "dataset": summary.to_dict(),
+        "training_family_fingerprint": training_family_fingerprint,
         "dataset_manifest_sha256": sha256_file(config.dataset_manifest_path),
         "configuration": config.to_dict(),
         "configuration_sha256": sha256_text(
@@ -344,10 +388,14 @@ def verify_phase1_joint_span_verifier_artifact(
     summary = inspect_phase1_joint_span_training_inputs(config)
     manifest_path = config.output_dir / "run_manifest.json"
     manifest = _load_mapping(manifest_path, "joint span training manifest")
-    if manifest.get("schema_version") != "phase1-joint-span-verifier-training.v1":
+    if manifest.get("schema_version") != _TRAINING_ARTIFACT_SCHEMA:
         raise ValueError("Unsupported joint span verifier artifact schema")
     if manifest.get("dataset") != summary.to_dict():
         raise ValueError("Joint span verifier dataset identity does not match")
+    if manifest.get("training_family_fingerprint") != phase1_joint_span_training_family_fingerprint(
+        config, summary
+    ):
+        raise ValueError("Joint span verifier training family does not match")
     if manifest.get("dataset_manifest_sha256") != sha256_file(config.dataset_manifest_path):
         raise ValueError("Joint span verifier dataset manifest does not match")
     model = _mapping(manifest.get("model"), "joint span verifier model")

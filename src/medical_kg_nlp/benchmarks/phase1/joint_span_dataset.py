@@ -158,17 +158,17 @@ def build_phase1_joint_span_dataset(
             (candidate, label_phase1_joint_span_candidate(candidate, gold_rows))
             for candidate in candidates
         ]
-        gold_total += len(gold_rows)
-        exact_covered += sum(
-            label in {
-                Phase1JointSpanLabel.EXACT_DISEASE,
-                Phase1JointSpanLabel.EXACT_SYMPTOM,
-                Phase1JointSpanLabel.EXACT_DRUG,
-                Phase1JointSpanLabel.EXACT_LAB_TEST,
-                Phase1JointSpanLabel.EXACT_LAB_RESULT,
-            }
-            for _, label in labels
-        )
+        # INVARIANT: coverage is recall over unique gold identities, not the number of exact
+        # lattice rows. Multiple generators can emit the same raw span/type candidate and must
+        # not inflate the OOF denominator or numerator.
+        gold_identities = {_row_identity(row) for row in gold_rows}
+        exact_candidate_identities = {
+            _candidate_identity(candidate)
+            for candidate, label in labels
+            if label.value.startswith("EXACT_")
+        }
+        gold_total += len(gold_identities)
+        exact_covered += len(gold_identities & exact_candidate_identities)
         for candidate, label in _sample_lattice_family_examples(labels):
             examples.append(
                 Phase1JointSpanExample(
@@ -206,6 +206,29 @@ def build_phase1_joint_span_dataset(
         "friend31_included": False,
     }
     return Phase1JointSpanDataset(tuple(examples), manifest)
+
+
+def _row_identity(row: Mapping[str, Any]) -> tuple[int, int, str]:
+    """Return the only identity an exact-span/type lattice candidate can cover."""
+
+    position = row.get("position")
+    entity_type = row.get("type")
+    if (
+        not isinstance(position, Sequence)
+        or isinstance(position, str)
+        or len(position) != 2
+        or any(isinstance(value, bool) or not isinstance(value, int) for value in position)
+        or not isinstance(entity_type, str)
+    ):
+        raise ValueError("Joint span gold rows require a raw position and Phase 1 type")
+    return position[0], position[1], entity_type
+
+
+def _candidate_identity(candidate: Phase1JointSpanCandidate) -> tuple[int, int, str]:
+    """Project one proposal onto the raw identity used by exact-label coverage."""
+
+    start, end = candidate.variant.position
+    return start, end, candidate.variant.entity_type
 
 
 def write_phase1_joint_span_dataset(

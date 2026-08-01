@@ -11,6 +11,7 @@ from medical_kg_nlp.benchmarks.phase1.joint_span import Phase1JointSpanLabel
 from medical_kg_nlp.benchmarks.phase1.joint_span_training import (
     Phase1JointSpanTrainingConfig,
     inspect_phase1_joint_span_training_inputs,
+    phase1_joint_span_training_family_fingerprint,
 )
 from medical_kg_nlp.utils.hashing import sha256_file
 
@@ -38,6 +39,37 @@ def test_inspect_joint_span_training_inputs_accepts_all_label_contracts(tmp_path
     assert summary.example_count == len(Phase1JointSpanLabel)
     assert summary.document_count == len(Phase1JointSpanLabel)
     assert summary.label_counts == {label.value: 1 for label in Phase1JointSpanLabel}
+
+
+def test_joint_span_training_family_fingerprint_ignores_output_directory(tmp_path: Path) -> None:
+    dataset = tmp_path / "examples.jsonl"
+    rows = [_row(index, label) for index, label in enumerate(Phase1JointSpanLabel)]
+    dataset.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "schema_version": "phase1-joint-span-dataset.v1",
+                "examples_sha256": sha256_file(dataset),
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    first = _config(dataset, manifest, tmp_path)
+    second = Phase1JointSpanTrainingConfig(
+        dataset_path=dataset,
+        dataset_manifest_path=manifest,
+        output_dir=tmp_path / "other-output",
+        model_id=first.model_id,
+        revision=first.revision,
+    )
+
+    assert phase1_joint_span_training_family_fingerprint(
+        first, inspect_phase1_joint_span_training_inputs(first)
+    ) == phase1_joint_span_training_family_fingerprint(
+        second, inspect_phase1_joint_span_training_inputs(second)
+    )
 
 
 def test_joint_span_training_rejects_manifest_hash_drift(tmp_path: Path) -> None:

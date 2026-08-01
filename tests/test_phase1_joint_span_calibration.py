@@ -24,7 +24,7 @@ from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRol
 def test_joint_span_calibration_fits_every_explicit_genre_type_pair() -> None:
     calibration, report = fit_phase1_joint_span_calibration(
         _observations(),
-        verifier_fingerprint="a" * 64,
+        training_family_fingerprint="a" * 64,
         fold_assignment_sha256="b" * 64,
         false_positive_cost=1.0,
     )
@@ -33,6 +33,7 @@ def test_joint_span_calibration_fits_every_explicit_genre_type_pair() -> None:
     assert calibration.selection_policy.threshold_for(_candidate())[0] is not None
     assert report["oof_fold_count"] == 2
     assert report["decision_authority"] == "official_submission"
+    assert all(group["training"]["converged"] for group in report["groups"])
 
 
 def test_joint_span_calibration_rejects_missing_qa_support() -> None:
@@ -41,7 +42,7 @@ def test_joint_span_calibration_rejects_missing_qa_support() -> None:
     with pytest.raises(ValueError, match="qa/"):
         fit_phase1_joint_span_calibration(
             observations,
-            verifier_fingerprint="a" * 64,
+            training_family_fingerprint="a" * 64,
             fold_assignment_sha256="b" * 64,
         )
 
@@ -49,7 +50,7 @@ def test_joint_span_calibration_rejects_missing_qa_support() -> None:
 def test_calibrated_verifier_changes_only_type_compatible_exact_probability() -> None:
     calibration, _ = fit_phase1_joint_span_calibration(
         _observations(),
-        verifier_fingerprint="a" * 64,
+        training_family_fingerprint="a" * 64,
         fold_assignment_sha256="b" * 64,
     )
     candidate = _candidate()
@@ -72,7 +73,7 @@ def test_calibrated_verifier_changes_only_type_compatible_exact_probability() ->
 def test_calibration_artifact_cannot_restore_a_global_fallback() -> None:
     calibration, _ = fit_phase1_joint_span_calibration(
         _observations(),
-        verifier_fingerprint="a" * 64,
+        training_family_fingerprint="a" * 64,
         fold_assignment_sha256="b" * 64,
     )
     payload = calibration.to_dict()

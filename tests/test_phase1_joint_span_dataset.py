@@ -36,6 +36,32 @@ def test_joint_span_dataset_reports_missing_gold_without_gold_seeding() -> None:
     assert all(example.candidate.variant.text != "buồn nôn" for example in dataset.examples)
 
 
+def test_joint_span_dataset_coverage_counts_unique_gold_identity_once() -> None:
+    corpus = Phase1ReviewedCorpus(
+        source_texts={"1": "đau ngực"},
+        gold_rows={
+            "1": (
+                {"text": "đau ngực", "type": "TRIỆU_CHỨNG", "position": [0, 8]},
+                {"text": "đau ngực", "type": "TRIỆU_CHỨNG", "position": [0, 8]},
+            )
+        },
+        split_by_document={"1": "train"},
+    )
+
+    dataset = build_phase1_joint_span_dataset(
+        corpus,
+        {"1": [{**_row(), "text": "đau ngực", "position": [0, 8]}]},
+        source_roles={"rule:dictionary": ProposalSourceRole.RULE},
+        source_dataset_by_document={"1": "manual_gold"},
+    )
+
+    assert dataset.manifest["candidate_coverage"] == {
+        "covered_gold": 1,
+        "gold": 1,
+        "recall": 1.0,
+    }
+
+
 def _row() -> dict[str, object]:
     return {
         "document_id": "1",

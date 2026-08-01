@@ -49,8 +49,20 @@ def _write_fixture(*, root: Path) -> tuple[Path, dict[str, Path]]:
     (qwen / "consensus").mkdir(parents=True)
     (qwen / "consensus" / "1.json").write_text("[]\n", encoding="utf-8")
     calibration = root / "calibration.json"
+    training_manifest = root / "verifier-training-manifest.json"
+    family = "d" * 64
+    training_manifest.write_text(
+        json.dumps(
+            {
+                "schema_version": "phase1-joint-span-verifier-training.v2",
+                "model": {"fingerprint": sha256_directory(verifier)},
+                "training_family_fingerprint": family,
+            }
+        ),
+        encoding="utf-8",
+    )
     calibration.write_text(
-        json.dumps(_calibration_payload(sha256_directory(verifier)), ensure_ascii=False),
+        json.dumps(_calibration_payload(family), ensure_ascii=False),
         encoding="utf-8",
     )
     return root, {
@@ -60,13 +72,14 @@ def _write_fixture(*, root: Path) -> tuple[Path, dict[str, Path]]:
         "verifier": verifier,
         "qwen": qwen,
         "calibration": calibration,
+        "training_manifest": training_manifest,
     }
 
 
-def _calibration_payload(verifier_fingerprint: str) -> dict[str, object]:
+def _calibration_payload(training_family_fingerprint: str) -> dict[str, object]:
     return {
-        "schema_version": "phase1-joint-span-calibration.v1",
-        "verifier_fingerprint": verifier_fingerprint,
+        "schema_version": "phase1-joint-span-calibration.v2",
+        "training_family_fingerprint": training_family_fingerprint,
         "oof_observations_sha256": "b" * 64,
         "fold_assignment_sha256": "c" * 64,
         "false_positive_cost": 1.0,
@@ -94,7 +107,7 @@ def _calibration_payload(verifier_fingerprint: str) -> dict[str, object]:
 
 def _config_payload(paths: dict[str, Path]) -> dict[str, object]:
     return {
-        "schema_version": "phase1-joint-span-run-spec.v3",
+        "schema_version": "phase1-joint-span-run-spec.v4",
         "run_root": ".",
         "documents": {
             "path": paths["documents"].name,
@@ -107,6 +120,10 @@ def _config_payload(paths: dict[str, Path]) -> dict[str, object]:
             "path": paths["verifier"].name,
             "sha256": sha256_directory(paths["verifier"]),
             "model_id": "FacebookAI/xlm-roberta-base",
+            "training_manifest": {
+                "path": paths["training_manifest"].name,
+                "sha256": sha256_file(paths["training_manifest"]),
+            },
         },
         "calibration": {
             "path": paths["calibration"].name,

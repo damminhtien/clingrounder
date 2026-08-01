@@ -35,7 +35,7 @@ __all__ = [
     "load_phase1_joint_span_calibration",
 ]
 
-_SCHEMA_VERSION = "phase1-joint-span-calibration.v1"
+_SCHEMA_VERSION = "phase1-joint-span-calibration.v2"
 _EPSILON = 1e-6
 _REQUIRED_GENRES = ("clinical", "educational", "qa")
 
@@ -155,16 +155,25 @@ class Phase1JointSpanCalibrationPoint:
 
 @dataclass(frozen=True, slots=True)
 class Phase1JointSpanCalibration:
-    """Pinned OOF-derived Platt mappings and resolver policy for one verifier checkpoint."""
+    """Pinned OOF-derived mappings for one reproducible verifier training family.
 
-    verifier_fingerprint: str
+    OOF fold checkpoints necessarily differ from the final-fit checkpoint byte-for-byte. The
+    training-family fingerprint instead pins their shared supervision, initializer, label space,
+    and optimizer contract without falsely claiming that a final-fit model generated OOF scores.
+    """
+
+    training_family_fingerprint: str
     oof_observations_sha256: str
     fold_assignment_sha256: str
     false_positive_cost: float
     points: tuple[Phase1JointSpanCalibrationPoint, ...]
 
     def __post_init__(self) -> None:
-        for value in (self.verifier_fingerprint, self.oof_observations_sha256, self.fold_assignment_sha256):
+        for value in (
+            self.training_family_fingerprint,
+            self.oof_observations_sha256,
+            self.fold_assignment_sha256,
+        ):
             if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
                 raise ValueError("Joint span calibration fingerprints must be lowercase SHA-256")
         if not math.isfinite(self.false_positive_cost) or self.false_positive_cost <= 0.0:
@@ -238,7 +247,7 @@ class Phase1JointSpanCalibration:
 
         return {
             "schema_version": _SCHEMA_VERSION,
-            "verifier_fingerprint": self.verifier_fingerprint,
+            "training_family_fingerprint": self.training_family_fingerprint,
             "oof_observations_sha256": self.oof_observations_sha256,
             "fold_assignment_sha256": self.fold_assignment_sha256,
             "false_positive_cost": self.false_positive_cost,
@@ -258,7 +267,9 @@ class Phase1JointSpanCalibration:
         if isinstance(cost, bool) or not isinstance(cost, int | float):
             raise ValueError("Joint span calibration false_positive_cost must be numeric")
         return cls(
-            verifier_fingerprint=_required_string(payload, "verifier_fingerprint"),
+            training_family_fingerprint=_required_string(
+                payload, "training_family_fingerprint"
+            ),
             oof_observations_sha256=_required_string(payload, "oof_observations_sha256"),
             fold_assignment_sha256=_required_string(payload, "fold_assignment_sha256"),
             false_positive_cost=float(cost),
@@ -301,7 +312,7 @@ class CalibratedPhase1JointSpanVerifier:
 def fit_phase1_joint_span_calibration(
     observations: Sequence[Phase1JointSpanCalibrationObservation],
     *,
-    verifier_fingerprint: str,
+    training_family_fingerprint: str,
     fold_assignment_sha256: str,
     false_positive_cost: float = 1.0,
 ) -> tuple[Phase1JointSpanCalibration, dict[str, Any]]:
@@ -367,7 +378,7 @@ def fit_phase1_joint_span_calibration(
         for item in sorted(observations, key=lambda item: (item.document_id, item.variant_id, item.fold))
     )
     calibration = Phase1JointSpanCalibration(
-        verifier_fingerprint=verifier_fingerprint,
+        training_family_fingerprint=training_family_fingerprint,
         oof_observations_sha256=hashlib.sha256(serialized.encode("utf-8")).hexdigest(),
         fold_assignment_sha256=fold_assignment_sha256,
         false_positive_cost=false_positive_cost,
@@ -416,29 +427,95 @@ def _validate_oof_observations(
 def _fit_platt(
     observations: Sequence[Phase1JointSpanCalibrationObservation],
 ) -> tuple[float, float, dict[str, Any]]:
-    """Fit a regularized two-parameter Platt mapping with deterministic gradient descent."""
+    """Fit regularized Platt scaling with a deterministic damped Newton solver.
+
+    The old gradient loop routinely exhausted its step budget and persisted
+    ``converged=false``. Calibration is a gating artifact, so an unconverged fit is unsafe: this
+    solver either reaches a stationary optimum or raises instead of writing a misleading report.
+    """
 
     slope, intercept = 1.0, 0.0
-    learning_rate = 0.08
     l2 = 0.01
-    converged = False
-    for step in range(1, 2001):
-        slope_gradient = l2 * (slope - 1.0)
-        intercept_gradient = l2 * intercept
-        for item in observations:
-            probability = _sigmoid(slope * _logit(item.exact_probability) + intercept)
-            error = probability - float(item.is_exact)
-            slope_gradient += error * _logit(item.exact_probability)
-            intercept_gradient += error
-        scale = 1.0 / len(observations)
-        next_slope = max(-12.0, min(12.0, slope - learning_rate * slope_gradient * scale))
-        next_intercept = max(-12.0, min(12.0, intercept - learning_rate * intercept_gradient * scale))
-        if max(abs(next_slope - slope), abs(next_intercept - intercept)) < 1e-8:
-            slope, intercept, converged = next_slope, next_intercept, True
-            break
-        slope, intercept = next_slope, next_intercept
-        learning_rate *= 0.999
-    return slope, intercept, {"steps": step, "converged": converged, "l2": l2}
+    tolerance = 1e-8
+    maximum_steps = 100
+    values = tuple((_logit(item.exact_probability), float(item.is_exact)) for item in observations)
+    current_loss = _platt_loss(values, slope, intercept, l2=l2)
+    for step in range(1, maximum_steps + 1):
+        gradient_slope = l2 * (slope - 1.0)
+        gradient_intercept = l2 * intercept
+        hessian_ss = l2
+        hessian_si = 0.0
+        hessian_ii = l2
+        for value, label in values:
+            probability = _sigmoid(slope * value + intercept)
+            error = probability - label
+            curvature = probability * (1.0 - probability)
+            gradient_slope += error * value
+            gradient_intercept += error
+            hessian_ss += curvature * value * value
+            hessian_si += curvature * value
+            hessian_ii += curvature
+        scale = 1.0 / len(values)
+        gradient_slope = gradient_slope * scale + l2 * (1.0 - scale) * (slope - 1.0)
+        gradient_intercept = gradient_intercept * scale + l2 * (1.0 - scale) * intercept
+        hessian_ss = hessian_ss * scale + l2 * (1.0 - scale)
+        hessian_si *= scale
+        hessian_ii = hessian_ii * scale + l2 * (1.0 - scale)
+        gradient_norm = max(abs(gradient_slope), abs(gradient_intercept))
+        if gradient_norm < tolerance:
+            return slope, intercept, {
+                "steps": step,
+                "converged": True,
+                "l2": l2,
+                "gradient_norm": gradient_norm,
+                "solver": "damped_newton",
+            }
+        determinant = hessian_ss * hessian_ii - hessian_si * hessian_si
+        if determinant <= _EPSILON:
+            raise RuntimeError("Joint span Platt Hessian is singular")
+        delta_slope = (hessian_ii * gradient_slope - hessian_si * gradient_intercept) / determinant
+        delta_intercept = (
+            -hessian_si * gradient_slope + hessian_ss * gradient_intercept
+        ) / determinant
+        accepted = False
+        for backtrack in range(25):
+            scale_factor = 0.5**backtrack
+            next_slope = max(-12.0, min(12.0, slope - scale_factor * delta_slope))
+            next_intercept = max(
+                -12.0,
+                min(12.0, intercept - scale_factor * delta_intercept),
+            )
+            next_loss = _platt_loss(values, next_slope, next_intercept, l2=l2)
+            if next_loss < current_loss - 1e-14:
+                slope, intercept, current_loss, accepted = (
+                    next_slope,
+                    next_intercept,
+                    next_loss,
+                    True,
+                )
+                break
+        if not accepted:
+            raise RuntimeError("Joint span Platt fit could not reduce its objective")
+    raise RuntimeError(
+        "Joint span Platt fit did not converge; inspect OOF score separation before calibration"
+    )
+
+
+def _platt_loss(
+    values: Sequence[tuple[float, float]],
+    slope: float,
+    intercept: float,
+    *,
+    l2: float,
+) -> float:
+    """Return the regularized mean logistic loss without numeric overflow."""
+
+    loss = 0.0
+    for value, label in values:
+        logit = slope * value + intercept
+        # ``logaddexp(0, logit) - label * logit`` is stable for extreme probabilities.
+        loss += max(logit, 0.0) + math.log1p(math.exp(-abs(logit))) - label * logit
+    return loss / len(values) + 0.5 * l2 * ((slope - 1.0) ** 2 + intercept**2)
 
 
 def _select_expected_gain_threshold(
