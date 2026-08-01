@@ -84,6 +84,10 @@ from medical_kg_nlp.benchmarks.phase1.final_supervision import (
 from medical_kg_nlp.benchmarks.phase1.joint_span_final_fit import (
     prepare_phase1_joint_span_final_fit,
 )
+from medical_kg_nlp.benchmarks.phase1.joint_span_token_bundle import (
+    load_phase1_joint_span_token_bundle,
+    prepare_phase1_joint_span_token_bundle,
+)
 from medical_kg_nlp.benchmarks.phase1.joint_span_calibration import (
     Phase1JointSpanCalibrationObservation,
     fit_phase1_joint_span_calibration,
@@ -183,13 +187,16 @@ __all__ = [
     "compare_phase1_model_variants",
     "inspect_phase1_qwen_run",
     "materialize_phase1_joint_span_token_source_command",
+    "materialize_phase1_joint_span_token_bundle_source_command",
     "run_phase1_joint_span_transformer_oof_command",
     "calibrate_phase1_joint_span_command",
     "run_phase1_joint_span_command",
     "prepare_phase1_joint_span_final_fit_command",
+    "prepare_phase1_joint_span_token_bundle_command",
     "train_phase1_joint_span_verifier_command",
     "propose_phase1_qwen_entities",
     "propose_phase1_qwen_final_supervision_entities",
+    "propose_phase1_qwen_token_bundle_entities",
     "propose_phase1_vietnamese_support",
     "run_phase1_round2_probe_suite",
     "run_phase1_round2_proposal_verifier_command",
@@ -1019,6 +1026,33 @@ def propose_phase1_qwen_final_supervision_entities(args: argparse.Namespace) -> 
     return 0
 
 
+def propose_phase1_qwen_token_bundle_entities(args: argparse.Namespace) -> int:
+    """Run two-pass exact-quote Qwen inference over every governed mixed-genre child text."""
+
+    bundle = load_phase1_joint_span_token_bundle(
+        dataset_path=args.dataset,
+        manifest_path=args.dataset_manifest,
+        build_manifest_path=args.bundle_build_manifest,
+    )
+    documents = tuple(
+        ClinicalDocument(document_id=document_id, text=source_text)
+        for document_id, source_text in bundle.corpus.source_texts.items()
+    )
+    report = run_phase1_qwen_exact_quote_corpus(
+        load_phase1_qwen_run_spec(args.config),
+        documents,
+        Phase1QwenExactQuoteCorpusConfig(
+            output_dir=Path(args.output_dir),
+            extraction_mode=args.extraction_mode,
+            resume=args.resume,
+        ),
+    )
+    report["token_bundle"] = bundle.manifest
+    write_json(Path(args.output_dir) / "manifest.json", report)
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
 def prepare_phase1_joint_span_final_fit_command(args: argparse.Namespace) -> int:
     """Materialize final-fit span/type supervision from independent pinned proposals."""
 
@@ -1046,6 +1080,40 @@ def prepare_phase1_joint_span_final_fit_command(args: argparse.Namespace) -> int
     )
     report = prepare_phase1_joint_span_final_fit(
         corpus,
+        dictionary,
+        model_sources={
+            name: (path, source_roles[name]) for name, path in named_sources
+        },
+        output_dir=args.output_dir,
+    )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def prepare_phase1_joint_span_token_bundle_command(args: argparse.Namespace) -> int:
+    """Prepare the governed mixed-genre token bundle for joint span OOF/model training."""
+
+    named_sources = _named_paths(args.model_source)
+    source_names = [name for name, _ in named_sources]
+    if len(source_names) != len(set(source_names)):
+        raise ValueError("Joint span model sources must have unique names")
+    source_roles = _source_roles(args.source_role)
+    if set(source_names) != set(source_roles):
+        raise ValueError("Joint span model sources and --source-role must match exactly")
+    bundle = load_phase1_joint_span_token_bundle(
+        dataset_path=args.dataset,
+        manifest_path=args.dataset_manifest,
+        build_manifest_path=args.bundle_build_manifest,
+    )
+    dictionary = DictionaryStore(
+        [
+            entry
+            for path in args.dictionary
+            for entry in DictionaryStore.load_entries_jsonl(path)
+        ]
+    )
+    report = prepare_phase1_joint_span_token_bundle(
+        bundle,
         dictionary,
         model_sources={
             name: (path, source_roles[name]) for name, path in named_sources
@@ -1084,6 +1152,36 @@ def materialize_phase1_joint_span_token_source_command(args: argparse.Namespace)
         source_name=args.source_name,
     )
     report["final_supervision"] = corpus.manifest
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def materialize_phase1_joint_span_token_bundle_source_command(args: argparse.Namespace) -> int:
+    """Project a pinned token checkpoint over the same child texts used by joint-span OOF."""
+
+    bundle = load_phase1_joint_span_token_bundle(
+        dataset_path=args.dataset,
+        manifest_path=args.dataset_manifest,
+        build_manifest_path=args.bundle_build_manifest,
+    )
+    report = materialize_phase1_token_model_source(
+        bundle.corpus,
+        Phase1TokenSourceConfig(
+            model_path=Path(args.model_path),
+            model_fingerprint=args.model_fingerprint,
+            model_id=args.model_id,
+            base_revision=args.base_revision,
+            device=args.device,
+            batch_size=args.batch_size,
+            max_length=args.max_length,
+            stride=args.stride,
+            default_confidence_threshold=args.default_confidence_threshold,
+        ),
+        output_dir=args.output_dir,
+        source_name=args.source_name,
+    )
+    report["token_bundle"] = bundle.manifest
+    write_json(Path(args.output_dir) / "manifest.json", report)
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 

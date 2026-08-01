@@ -42,10 +42,52 @@ the final model must prove the same full supervision data, initializer, label co
 optimization recipe. This avoids the invalid claim that a final-fit model itself produced OOF
 scores. There is no clinical fallback for missing `qa` or `educational` genre/type support.
 
+Prepare the mixed-genre lattice before OOF fitting. The adapter turns every token chunk into an
+immutable child document and groups all chunks plus renderer children of the same source note into
+one OOF fold. It validates the token bundle manifest and rejects Round 2 and Friend31 provenance:
+
+```bash
+uv run medical-kg benchmark phase1 joint-span prepare-token-bundle \
+  --dataset outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1/spans.jsonl \
+  --dataset-manifest outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1/manifest.json \
+  --bundle-build-manifest outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1/build_manifest.json \
+  --model-source qwen=outputs/models/phase1-qwen3-final-token-bundle-source \
+  --source-role qwen=llm \
+  --model-source xlmr=outputs/models/phase1-xlmr-final-token-bundle-source \
+  --source-role xlmr=token_model \
+  --output-dir outputs/models/phase1-joint-span-mixed-genre
+```
+
+The command accepts no model source only for a rule/structured-medication bootstrap that checks
+bundle, offset, and OOF-group contracts. That artifact is not a submission verifier: its candidate
+coverage report diagnoses proposal recall, and final training should add independently materialized
+Qwen and XLM-R sources over the same child document IDs.
+
+Materialize those sources with the same bundle paths. This avoids mixing spans emitted from parent
+notes with chunk-local training coordinates:
+
+```bash
+uv run medical-kg benchmark phase1 qwen propose-token-bundle \
+  --config configs/models/phase1-qwen3-8b-qlora-portable-inference-2026-07-31.yaml \
+  --dataset outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1/spans.jsonl \
+  --dataset-manifest outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1/manifest.json \
+  --output-dir outputs/models/phase1-qwen3-final-token-bundle-source
+
+uv run medical-kg benchmark phase1 joint-span materialize-token-bundle-source \
+  --dataset outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1/spans.jsonl \
+  --dataset-manifest outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1/manifest.json \
+  --model-path outputs/models/phase1-xlmr-dapt/final-model \
+  --model-fingerprint <checkpoint-directory-sha256> \
+  --model-id FacebookAI/xlm-roberta-base \
+  --base-revision <pinned-base-revision> \
+  --device cuda \
+  --output-dir outputs/models/phase1-xlmr-final-token-bundle-source
+```
+
 On a cached CUDA template, run:
 
 ```bash
-DATASET_DIR=outputs/models/phase1-joint-span-final-fit \
+DATASET_DIR=outputs/models/phase1-joint-span-mixed-genre \
 INITIALIZATION_MODEL=outputs/models/phase1-xlmr-dapt/final-model \
 INITIALIZATION_FINGERPRINT=<sha256> \
 scripts/vast/run_joint_span_oof.sh

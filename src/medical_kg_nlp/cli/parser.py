@@ -1128,6 +1128,22 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         default="recall_and_targeted",
     )
     qwen_final_supervision.add_argument("--resume", action="store_true")
+    qwen_token_bundle = qwen_operations.add_parser(
+        "propose-token-bundle",
+        help="Run Qwen exact-quote proposal passes over a governed mixed-genre token bundle.",
+    )
+    qwen_token_bundle.set_defaults(handler="benchmark_phase1_qwen_token_bundle_propose")
+    qwen_token_bundle.add_argument("--config", required=True)
+    qwen_token_bundle.add_argument("--dataset", required=True)
+    qwen_token_bundle.add_argument("--dataset-manifest", required=True)
+    qwen_token_bundle.add_argument("--bundle-build-manifest")
+    qwen_token_bundle.add_argument("--output-dir", required=True)
+    qwen_token_bundle.add_argument(
+        "--extraction-mode",
+        choices=("recall_only", "recall_and_targeted"),
+        default="recall_and_targeted",
+    )
+    qwen_token_bundle.add_argument("--resume", action="store_true")
 
     joint_span = operations.add_parser(
         "joint-span",
@@ -1186,6 +1202,42 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         "--authorized-archive",
         help="Owner-authorized ground-truth archive; otherwise use the governed environment variable.",
     )
+    joint_span_prepare_bundle = joint_span_operations.add_parser(
+        "prepare-token-bundle",
+        help=(
+            "Build a grouped mixed-genre lattice from the pinned final token bundle; model "
+            "sources are optional for the initial rule/medication bootstrap."
+        ),
+    )
+    joint_span_prepare_bundle.set_defaults(
+        handler="benchmark_phase1_joint_span_prepare_token_bundle"
+    )
+    joint_span_prepare_bundle.add_argument("--dataset", required=True)
+    joint_span_prepare_bundle.add_argument("--dataset-manifest", required=True)
+    joint_span_prepare_bundle.add_argument("--bundle-build-manifest")
+    joint_span_prepare_bundle.add_argument("--output-dir", required=True)
+    joint_span_prepare_bundle.add_argument(
+        "--model-source",
+        action="append",
+        default=[],
+        help="Pinned source artifact as NAME=DIRECTORY; repeat for Qwen/XLM-R.",
+    )
+    joint_span_prepare_bundle.add_argument(
+        "--source-role",
+        action="append",
+        default=[],
+        help="Role for every model source as NAME=llm|token_model|ensemble.",
+    )
+    joint_span_prepare_bundle.add_argument(
+        "--dictionary",
+        action="append",
+        default=[
+            "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+            "data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl",
+            "data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl",
+        ],
+        help="Canonical recognition dictionaries; repeat to add a pinned source.",
+    )
     joint_span_token_source = joint_span_operations.add_parser(
         "materialize-token-source",
         help="Project one pinned local five-type token checkpoint into a governed source artifact.",
@@ -1225,6 +1277,34 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     joint_span_token_source.add_argument(
         "--authorized-archive",
         help="Owner-authorized ground-truth archive; otherwise use the governed environment variable.",
+    )
+    joint_span_token_bundle_source = joint_span_operations.add_parser(
+        "materialize-token-bundle-source",
+        help=(
+            "Project one pinned local five-type checkpoint over the child texts used by mixed-genre "
+            "joint-span OOF."
+        ),
+    )
+    joint_span_token_bundle_source.set_defaults(
+        handler="benchmark_phase1_joint_span_materialize_token_bundle_source"
+    )
+    joint_span_token_bundle_source.add_argument("--dataset", required=True)
+    joint_span_token_bundle_source.add_argument("--dataset-manifest", required=True)
+    joint_span_token_bundle_source.add_argument("--bundle-build-manifest")
+    joint_span_token_bundle_source.add_argument("--model-path", required=True)
+    joint_span_token_bundle_source.add_argument("--model-fingerprint", required=True)
+    joint_span_token_bundle_source.add_argument("--model-id", required=True)
+    joint_span_token_bundle_source.add_argument("--base-revision", required=True)
+    joint_span_token_bundle_source.add_argument("--output-dir", required=True)
+    joint_span_token_bundle_source.add_argument("--source-name", default="xlmr")
+    joint_span_token_bundle_source.add_argument("--device", default="cpu")
+    joint_span_token_bundle_source.add_argument("--batch-size", type=int, default=16)
+    joint_span_token_bundle_source.add_argument("--max-length", type=int, default=512)
+    joint_span_token_bundle_source.add_argument("--stride", type=int, default=64)
+    joint_span_token_bundle_source.add_argument(
+        "--default-confidence-threshold",
+        type=float,
+        default=0.0,
     )
     joint_span_run = joint_span_operations.add_parser(
         "run",

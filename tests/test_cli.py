@@ -51,6 +51,26 @@ def test_joint_span_final_fit_command_requires_independent_source_roles() -> Non
     assert args.dictionary[0].endswith("phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
 
 
+def test_joint_span_token_bundle_command_accepts_rule_medication_bootstrap() -> None:
+    args = build_parser().parse_args(
+        [
+            "benchmark",
+            "phase1",
+            "joint-span",
+            "prepare-token-bundle",
+            "--dataset",
+            "outputs/bundle/spans.jsonl",
+            "--dataset-manifest",
+            "outputs/bundle/manifest.json",
+            "--output-dir",
+            "outputs/joint-span-bundle",
+        ]
+    )
+
+    assert args.handler == "benchmark_phase1_joint_span_prepare_token_bundle"
+    assert args.model_source == []
+
+
 def test_joint_span_train_command_exposes_pinned_model_and_dataset_inputs() -> None:
     args = build_parser().parse_args(
         [
@@ -104,6 +124,56 @@ def test_joint_span_token_source_command_exposes_checkpoint_provenance() -> None
     assert args.source_name == "xlmr"
 
 
+def test_joint_span_token_bundle_source_command_uses_pinned_bundle_inputs() -> None:
+    args = build_parser().parse_args(
+        [
+            "benchmark",
+            "phase1",
+            "joint-span",
+            "materialize-token-bundle-source",
+            "--dataset",
+            "outputs/bundle/spans.jsonl",
+            "--dataset-manifest",
+            "outputs/bundle/manifest.json",
+            "--model-path",
+            "outputs/model",
+            "--model-fingerprint",
+            "a" * 64,
+            "--model-id",
+            "FacebookAI/xlm-roberta-base",
+            "--base-revision",
+            "e73636d4f797dec63c3081bb6ed5c7b0bb3f2089",
+            "--output-dir",
+            "outputs/xlmr-bundle-source",
+        ]
+    )
+
+    assert args.handler == "benchmark_phase1_joint_span_materialize_token_bundle_source"
+    assert args.device == "cpu"
+
+
+def test_qwen_token_bundle_command_has_two_pass_default() -> None:
+    args = build_parser().parse_args(
+        [
+            "benchmark",
+            "phase1",
+            "qwen",
+            "propose-token-bundle",
+            "--config",
+            "configs/qwen.yaml",
+            "--dataset",
+            "outputs/bundle/spans.jsonl",
+            "--dataset-manifest",
+            "outputs/bundle/manifest.json",
+            "--output-dir",
+            "outputs/qwen-bundle-source",
+        ]
+    )
+
+    assert args.handler == "benchmark_phase1_qwen_token_bundle_propose"
+    assert args.extraction_mode == "recall_and_targeted"
+
+
 def test_joint_span_run_command_accepts_only_a_pinned_config() -> None:
     args = build_parser().parse_args(
         [
@@ -128,7 +198,7 @@ def test_joint_span_calibration_command_requires_oof_provenance() -> None:
             "calibrate",
             "--observations",
             "outputs/joint/oof-observations.jsonl",
-            "--verifier-fingerprint",
+            "--training-family-fingerprint",
             "a" * 64,
             "--fold-assignment-sha256",
             "b" * 64,

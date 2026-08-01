@@ -134,13 +134,25 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.phase1",
         "propose_phase1_qwen_final_supervision_entities",
     ),
+    "benchmark_phase1_qwen_token_bundle_propose": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "propose_phase1_qwen_token_bundle_entities",
+    ),
     "benchmark_phase1_joint_span_prepare_final_fit": (
         "medical_kg_nlp.cli.commands.phase1",
         "prepare_phase1_joint_span_final_fit_command",
     ),
+    "benchmark_phase1_joint_span_prepare_token_bundle": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "prepare_phase1_joint_span_token_bundle_command",
+    ),
     "benchmark_phase1_joint_span_materialize_token_source": (
         "medical_kg_nlp.cli.commands.phase1",
         "materialize_phase1_joint_span_token_source_command",
+    ),
+    "benchmark_phase1_joint_span_materialize_token_bundle_source": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "materialize_phase1_joint_span_token_bundle_source_command",
     ),
     "benchmark_phase1_joint_span_run": (
         "medical_kg_nlp.cli.commands.phase1",

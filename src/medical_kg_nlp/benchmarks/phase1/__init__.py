@@ -132,6 +132,11 @@ from medical_kg_nlp.benchmarks.phase1.joint_span_training import (
 from medical_kg_nlp.benchmarks.phase1.joint_span_final_fit import (
     prepare_phase1_joint_span_final_fit,
 )
+from medical_kg_nlp.benchmarks.phase1.joint_span_token_bundle import (
+    Phase1JointSpanTokenBundle,
+    load_phase1_joint_span_token_bundle,
+    prepare_phase1_joint_span_token_bundle,
+)
 from medical_kg_nlp.benchmarks.phase1.joint_span_sources import (
     EntityProposalExtractorPort,
     build_phase1_joint_span_proposal_matrix,
@@ -289,6 +294,9 @@ __all__ = [
     "build_phase1_joint_span_proposal_matrix",
     "build_phase1_medication_parser_source_rows",
     "prepare_phase1_joint_span_final_fit",
+    "Phase1JointSpanTokenBundle",
+    "load_phase1_joint_span_token_bundle",
+    "prepare_phase1_joint_span_token_bundle",
     "materialize_phase1_token_model_source",
     "build_phase1_rule_source_rows",
     "build_phase1_token_model_proposal_rows",
