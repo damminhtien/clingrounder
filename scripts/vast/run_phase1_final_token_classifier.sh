@@ -48,6 +48,36 @@ path = snapshot_download(
 print({"cached_model": path})
 PY
 
+# MODEL: prove that this exact template, checkpoint revision, and CUDA stack can execute a
+# token-classification loss before the full final fit consumes the GPU reservation. The test uses
+# only a synthetic sentence and never touches either authorized supervision source.
+HF_HUB_OFFLINE=1 "${TEMPLATE_PYTHON}" - <<PY
+import torch
+from transformers import AutoModelForTokenClassification, AutoTokenizer
+
+model_id = "${MODEL_ID}"
+revision = "${MODEL_REVISION}"
+tokenizer = AutoTokenizer.from_pretrained(
+    model_id,
+    revision=revision,
+    local_files_only=True,
+    use_fast=True,
+)
+model = AutoModelForTokenClassification.from_pretrained(
+    model_id,
+    revision=revision,
+    local_files_only=True,
+    num_labels=11,
+).to("cuda")
+batch = tokenizer("Bệnh nhân khó thở khi gắng sức.", return_tensors="pt")
+batch = {name: value.to("cuda") for name, value in batch.items()}
+labels = torch.full_like(batch["input_ids"], fill_value=-100)
+labels[:, 1] = 0
+loss = model(**batch, labels=labels).loss
+loss.backward()
+print({"smoke_loss": round(float(loss.detach().cpu()), 6), "gpu": torch.cuda.get_device_name(0)})
+PY
+
 # INVARIANT: the dataset loader verifies the authorization manifest and LF child-document offsets
 # before writing token windows. Round 2 and Friend31 cannot enter this final-fit source.
 "${TEMPLATE_PYTHON}" -m medical_kg_nlp.cli \
