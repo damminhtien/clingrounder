@@ -76,6 +76,7 @@ class _OofExample:
     candidate: Phase1JointSpanCandidate
     label: Phase1JointSpanLabel
     source_dataset: str
+    oof_group_id: str
 
 
 def assign_phase1_joint_span_oof_folds(
@@ -115,19 +116,19 @@ def run_phase1_joint_span_transformer_oof(
 
     summary = inspect_phase1_joint_span_training_inputs(config.training)
     examples = _load_examples(config.training.dataset_path)
-    document_ids = sorted({example.candidate.variant.document_id for example in examples})
-    fold_by_document = assign_phase1_joint_span_oof_folds(
-        document_ids,
+    group_ids = sorted({example.oof_group_id for example in examples})
+    fold_by_group = assign_phase1_joint_span_oof_folds(
+        group_ids,
         fold_count=config.fold_count,
     )
-    _validate_fold_training_support(examples, fold_by_document, config.fold_count)
+    _validate_fold_training_support(examples, fold_by_group, config.fold_count)
     family_fingerprint = phase1_joint_span_training_family_fingerprint(
         config.training,
         summary,
     )
     _prepare_output_directory(config)
     assignment_payload = _fold_assignment_payload(
-        fold_by_document,
+        fold_by_group,
         dataset_sha256=summary.dataset_sha256,
         training_family_fingerprint=family_fingerprint,
     )
@@ -139,12 +140,12 @@ def run_phase1_joint_span_transformer_oof(
         fold_examples = tuple(
             example
             for example in examples
-            if fold_by_document[example.candidate.variant.document_id] == fold
+            if fold_by_group[example.oof_group_id] == fold
         )
         train_examples = tuple(
             example
             for example in examples
-            if fold_by_document[example.candidate.variant.document_id] != fold
+            if fold_by_group[example.oof_group_id] != fold
         )
         if not fold_examples or not train_examples:
             raise ValueError(f"Joint span OOF fold {fold} has empty train or validation data")
@@ -166,7 +167,7 @@ def run_phase1_joint_span_transformer_oof(
             key=lambda item: (item.document_id, item.variant_id, item.fold),
         )
     )
-    coverage = _validate_oof_coverage(examples, ordered_observations, fold_by_document)
+    coverage = _validate_oof_coverage(examples, ordered_observations, fold_by_group)
     observations_path = config.output_dir / "oof_observations.jsonl"
     observations_sha256 = write_jsonl(
         observations_path,
@@ -420,6 +421,7 @@ def _load_examples(path: Path) -> tuple[_OofExample, ...]:
                     candidate=candidate,
                     label=label,
                     source_dataset=source_dataset,
+                    oof_group_id=_oof_group_id(row, candidate.variant.document_id),
                 )
             )
     if not rows:
@@ -454,7 +456,7 @@ def _label_from_row(row: Mapping[str, Any]) -> Phase1JointSpanLabel:
 
 def _validate_fold_training_support(
     examples: Sequence[_OofExample],
-    fold_by_document: Mapping[str, int],
+    fold_by_group: Mapping[str, int],
     fold_count: int,
 ) -> None:
     """Reject folds whose train subset cannot satisfy the eight-class model contract."""
@@ -464,7 +466,7 @@ def _validate_fold_training_support(
         observed = {
             item.label.value
             for item in examples
-            if fold_by_document[item.candidate.variant.document_id] != fold
+            if fold_by_group[item.oof_group_id] != fold
         }
         missing = sorted(expected_labels - observed)
         if missing:
@@ -476,7 +478,7 @@ def _validate_fold_training_support(
 def _validate_oof_coverage(
     examples: Sequence[_OofExample],
     observations: Sequence[Phase1JointSpanCalibrationObservation],
-    fold_by_document: Mapping[str, int],
+    fold_by_group: Mapping[str, int],
 ) -> dict[str, Any]:
     """Prove one OOF prediction per lattice candidate and report its real denominator."""
 
@@ -496,13 +498,13 @@ def _validate_oof_coverage(
         document_id = example.candidate.variant.document_id
         if observation.document_id != document_id:
             raise ValueError("Joint span transformer OOF observation document changed")
-        if observation.fold != f"fold-{fold_by_document[document_id]}":
+        if observation.fold != f"fold-{fold_by_group[example.oof_group_id]}":
             raise ValueError("Joint span transformer OOF observation used the wrong fold")
         if observation.genre != example.candidate.genre or observation.entity_type != example.candidate.variant.entity_type:
             raise ValueError("Joint span transformer OOF observation changed candidate type evidence")
         if observation.is_exact != (example.label is example.candidate.expected_exact_label):
             raise ValueError("Joint span transformer OOF observation changed its gold target")
-    expected_documents = set(fold_by_document)
+    expected_documents = {example.candidate.variant.document_id for example in examples}
     observed_documents = {item.document_id for item in observations}
     if observed_documents != expected_documents:
         raise ValueError("Joint span transformer OOF did not cover every source document")
@@ -533,7 +535,7 @@ def _validate_oof_coverage(
 
 
 def _fold_assignment_payload(
-    fold_by_document: Mapping[str, int],
+    fold_by_group: Mapping[str, int],
     *,
     dataset_sha256: str,
     training_family_fingerprint: str,
@@ -541,14 +543,14 @@ def _fold_assignment_payload(
     """Write a separate human-readable assignment before GPU work starts."""
 
     assignments = [
-        {"document_id": document_id, "fold": fold}
-        for document_id, fold in sorted(fold_by_document.items())
+        {"group_id": group_id, "fold": fold}
+        for group_id, fold in sorted(fold_by_group.items())
     ]
     return {
         "schema_version": _FOLD_ASSIGNMENT_SCHEMA,
         "dataset_sha256": dataset_sha256,
         "training_family_fingerprint": training_family_fingerprint,
-        "fold_count": max(fold_by_document.values()) + 1,
+        "fold_count": max(fold_by_group.values()) + 1,
         "assignments": assignments,
     }
 
@@ -567,6 +569,20 @@ def _load_observations(path: Path) -> tuple[Phase1JointSpanCalibrationObservatio
                 raise ValueError(f"{path}:{line_number}: OOF observation must be an object")
             rows.append(Phase1JointSpanCalibrationObservation.from_dict(payload))
     return tuple(rows)
+
+
+def _oof_group_id(row: Mapping[str, Any], document_id: str) -> str:
+    """Return the immutable source group that must remain inside one OOF fold.
+
+    Chunked token datasets use one child document per window. An explicit ``oof_group_id`` keeps
+    all windows and synthetic renderings of one source note out of the corresponding fold's train
+    split. Legacy joint datasets omit the field and safely group by their document identity.
+    """
+
+    value = row.get("oof_group_id", document_id)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("Joint span OOF group ID must be a non-empty string")
+    return value
 
 
 def _model_fingerprint_from_fold_manifest(payload: Mapping[str, Any]) -> str:

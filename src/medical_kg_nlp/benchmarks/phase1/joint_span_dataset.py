@@ -45,12 +45,15 @@ class Phase1JointSpanExample:
     label: Phase1JointSpanLabel
     split: str
     source_dataset: str
+    oof_group_id: str
 
     def __post_init__(self) -> None:
         if self.split not in {"train", "development", "holdout"}:
             raise ValueError("Joint span example split is invalid")
         if not self.source_dataset.strip():
             raise ValueError("Joint span example source dataset is required")
+        if not self.oof_group_id.strip():
+            raise ValueError("Joint span example OOF group ID is required")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -58,6 +61,7 @@ class Phase1JointSpanExample:
             "label": self.label.value,
             "split": self.split,
             "source_dataset": self.source_dataset,
+            "oof_group_id": self.oof_group_id,
         }
 
 
@@ -129,6 +133,7 @@ def build_phase1_joint_span_dataset(
     *,
     source_roles: Mapping[str, ProposalSourceRole | str],
     source_dataset_by_document: Mapping[str, str],
+    oof_group_by_document: Mapping[str, str] | None = None,
     dictionary_matcher: DictionaryMatcher | None = None,
 ) -> Phase1JointSpanDataset:
     """Build balanced joint examples without adding gold-only candidates to the lattice.
@@ -139,6 +144,15 @@ def build_phase1_joint_span_dataset(
 
     if set(corpus.source_texts) != set(source_dataset_by_document):
         raise ValueError("Joint span source provenance must cover every corpus document")
+    active_oof_groups = (
+        {document_id: document_id for document_id in corpus.source_texts}
+        if oof_group_by_document is None
+        else dict(oof_group_by_document)
+    )
+    if set(corpus.source_texts) != set(active_oof_groups):
+        raise ValueError("Joint span OOF groups must cover every corpus document")
+    if any(not group_id.strip() for group_id in active_oof_groups.values()):
+        raise ValueError("Joint span OOF groups must be non-empty")
     unknown_rows = set(proposal_rows_by_document) - set(corpus.source_texts)
     if unknown_rows:
         raise ValueError("Joint span proposal rows reference unknown corpus documents")
@@ -176,6 +190,7 @@ def build_phase1_joint_span_dataset(
                     label=label,
                     split=corpus.split_by_document[document_id],
                     source_dataset=source_dataset_by_document[document_id],
+                    oof_group_id=active_oof_groups[document_id],
                 )
             )
     examples.sort(key=_example_sort_key)
@@ -191,6 +206,7 @@ def build_phase1_joint_span_dataset(
         "source_dataset_counts": dict(
             sorted(Counter(source_dataset_by_document.values()).items())
         ),
+        "oof_group_count": len(set(active_oof_groups.values())),
         "split_counts": dict(sorted(Counter(example.split for example in examples).items())),
         "label_counts": dict(sorted(Counter(example.label.value for example in examples).items())),
         "candidate_coverage": {
