@@ -19,7 +19,12 @@ def test_joint_span_run_spec_requires_generated_model_source_and_calibration(tmp
     spec = load_phase1_joint_span_run_spec(config)
 
     assert spec.model_sources[0].role.value == "llm"
-    assert spec.candidate_source_priority == ("rule", "medication_parser", "qwen")
+    assert spec.candidate_source_priority == (
+        "rule",
+        "dictionary_trie",
+        "medication_parser",
+        "qwen",
+    )
     assert spec.calibration.sha256 == sha256_file(paths["calibration"])
 
 
@@ -140,7 +145,7 @@ def _config_payload(paths: dict[str, Path]) -> dict[str, object]:
         "dictionaries": [
             {"path": paths["dictionary"].name, "sha256": sha256_file(paths["dictionary"])}
         ],
-        "candidate_source_priority": ["rule", "medication_parser", "qwen"],
+        "candidate_source_priority": ["rule", "dictionary_trie", "medication_parser", "qwen"],
         "assertion_regimes": ["negation", "history"],
         "candidate_policy": "rx_unique_keep_icd",
         "output_root": "outputs",

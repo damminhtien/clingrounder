@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from medical_kg_nlp.benchmarks.phase1.joint_span_sources import (
+    build_phase1_dictionary_trie_source_rows,
     build_phase1_medication_parser_source_rows,
     build_phase1_joint_span_proposal_matrix,
     build_phase1_rule_source_rows,
@@ -95,6 +96,32 @@ def test_rule_source_rows_preserve_ambiguous_types_for_joint_verification() -> N
     assert [(row["text"], row["type"]) for row in rows["1"]] == [
         ("chóng mặt", "CHẨN_ĐOÁN"),
         ("chóng mặt", "TRIỆU_CHỨNG"),
+    ]
+
+
+def test_dictionary_trie_source_adds_independent_typed_match() -> None:
+    corpus = Phase1ReviewedCorpus(
+        source_texts={"1": "Bệnh nhân đau ngực"},
+        gold_rows={"1": ()},
+        split_by_document={"1": "train"},
+    )
+    dictionary = DictionaryStore(
+        (
+            ConceptEntry(
+                concept_id="symptom:chest-pain",
+                code="LOCAL-CHEST-PAIN",
+                code_system=CodeSystem.LOCAL,
+                canonical_name="đau ngực",
+                semantic_type=EntityType.SYMPTOM,
+                aliases=("đau ngực",),
+            ),
+        )
+    )
+
+    rows = build_phase1_dictionary_trie_source_rows(corpus, dictionary)
+
+    assert [(row["text"], row["type"], row["position"]) for row in rows["1"]] == [
+        ("đau ngực", "TRIỆU_CHỨNG", [10, 18]),
     ]
 
 

@@ -23,6 +23,7 @@ from medical_kg_nlp.benchmarks.phase1.joint_span_pipeline import (
     Phase1JointSpanResult,
 )
 from medical_kg_nlp.benchmarks.phase1.joint_span_sources import (
+    build_phase1_dictionary_trie_source_rows,
     build_phase1_medication_parser_source_rows,
     build_phase1_rule_source_rows,
     load_phase1_joint_span_source_rows,
@@ -111,7 +112,7 @@ class Phase1JointSpanModelSourceSpec:
     artifact: Phase1JointSpanDirectoryArtifact
 
     def __post_init__(self) -> None:
-        if not self.name.strip() or self.name in {"rule", "medication_parser"}:
+        if not self.name.strip() or self.name in {"rule", "dictionary_trie", "medication_parser"}:
             raise ValueError("Joint span model source name is reserved or empty")
         if self.role is ProposalSourceRole.VERIFIER:
             raise ValueError("Verifier-only evidence cannot introduce joint span candidates")
@@ -154,7 +155,7 @@ class Phase1JointSpanRunSpec:
         source_names = tuple(source.name for source in self.model_sources)
         if not source_names or len(source_names) != len(set(source_names)):
             raise ValueError("Joint span model sources must be non-empty and unique")
-        all_source_names = {"rule", "medication_parser", *source_names}
+        all_source_names = {"rule", "dictionary_trie", "medication_parser", *source_names}
         if set(self.candidate_source_priority) != all_source_names:
             raise ValueError("Candidate priority must name generated and model sources exactly once")
         if len(self.candidate_source_priority) != len(all_source_names):
@@ -257,11 +258,13 @@ def run_phase1_joint_span(spec: Phase1JointSpanRunSpec) -> dict[str, Any]:
     )
     source_roles = {
         "rule": ProposalSourceRole.RULE,
+        "dictionary_trie": ProposalSourceRole.RULE,
         "medication_parser": ProposalSourceRole.RULE,
         **{source.name: source.role for source in spec.model_sources},
     }
     proposal_sources = {
         "rule": build_phase1_rule_source_rows(corpus, dictionary),
+        "dictionary_trie": build_phase1_dictionary_trie_source_rows(corpus, dictionary),
         "medication_parser": build_phase1_medication_parser_source_rows(corpus, dictionary),
         **{
             source.name: load_phase1_joint_span_source_rows(source.artifact.path, corpus)

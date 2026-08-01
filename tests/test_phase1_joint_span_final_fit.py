@@ -65,6 +65,7 @@ def test_final_fit_preparation_aligns_rule_and_qwen_with_provenance(tmp_path: Pa
     )
 
     assert report["sources"]["qwen"]["role"] == "llm"
+    assert report["sources"]["dictionary_trie"]["kind"] == "independent_typed_lexical_proposals"
     assert report["policy"]["round2_included"] is False
     assert report["policy"]["friend31_included"] is False
     assert Path(report["dataset"]["examples_path"]).is_file()

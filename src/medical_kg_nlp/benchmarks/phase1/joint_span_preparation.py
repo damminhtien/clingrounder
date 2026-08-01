@@ -11,6 +11,7 @@ from medical_kg_nlp.benchmarks.phase1.joint_span_dataset import (
     write_phase1_joint_span_dataset,
 )
 from medical_kg_nlp.benchmarks.phase1.joint_span_sources import (
+    build_phase1_dictionary_trie_source_rows,
     build_phase1_joint_span_proposal_matrix,
     build_phase1_medication_parser_source_rows,
     build_phase1_rule_source_rows,
@@ -41,16 +42,16 @@ def prepare_phase1_joint_span_supervision(
 ) -> dict[str, Any]:
     """Prepare a reproducible lattice dataset from a corpus and independently pinned sources.
 
-    RuleNER plus the medication parser are always separate evidence sources.  A final production
-    verifier may require a model source, while bootstrap OOF data can be constructed first to
-    validate the mixed-genre data contract before GPU artifacts exist.
+    RuleNER, the independent dictionary trie, and the medication parser are separate evidence
+    sources.  A final production verifier may require a model source, while bootstrap OOF data
+    can be constructed first to validate the mixed-genre data contract before GPU artifacts exist.
     """
 
     if not purpose.strip():
         raise ValueError("Joint span preparation purpose is required")
     if require_model_source and not model_sources:
         raise ValueError("Joint span preparation requires at least one model proposal source")
-    if "rule" in model_sources or "medication_parser" in model_sources:
+    if {"rule", "dictionary_trie", "medication_parser"} & set(model_sources):
         raise ValueError("Joint span built-in source names cannot be overridden")
     if any(not name.strip() for name in model_sources):
         raise ValueError("Joint span model source names must be non-empty")
@@ -63,10 +64,12 @@ def prepare_phase1_joint_span_supervision(
 
     source_roles: dict[str, ProposalSourceRole] = {
         "rule": ProposalSourceRole.RULE,
+        "dictionary_trie": ProposalSourceRole.RULE,
         "medication_parser": ProposalSourceRole.RULE,
     }
     source_rows = {
         "rule": build_phase1_rule_source_rows(corpus, dictionary),
+        "dictionary_trie": build_phase1_dictionary_trie_source_rows(corpus, dictionary),
         "medication_parser": build_phase1_medication_parser_source_rows(corpus, dictionary),
     }
     source_descriptors: dict[str, dict[str, str]] = {}
@@ -111,6 +114,11 @@ def prepare_phase1_joint_span_supervision(
         "sources": {
             "rule": {
                 "role": ProposalSourceRole.RULE.value,
+                "dictionary_entry_count": len(dictionary.entries),
+            },
+            "dictionary_trie": {
+                "role": ProposalSourceRole.RULE.value,
+                "kind": "independent_typed_lexical_proposals",
                 "dictionary_entry_count": len(dictionary.entries),
             },
             "medication_parser": {

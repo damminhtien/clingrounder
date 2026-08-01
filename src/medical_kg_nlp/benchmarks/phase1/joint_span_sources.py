@@ -16,6 +16,7 @@ from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRol
 from medical_kg_nlp.benchmarks.phase1.reviewed_corpus import Phase1ReviewedCorpus
 from medical_kg_nlp.benchmarks.phase1.split_contract import phase1_document_sort_key
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatcher
 from medical_kg_nlp.ner.medication_list_parser import MedicationListParser
 from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
@@ -28,6 +29,7 @@ from medical_kg_nlp.utils.hashing import sha256_directory
 
 __all__ = [
     "EntityProposalExtractorPort",
+    "build_phase1_dictionary_trie_source_rows",
     "build_phase1_joint_span_proposal_matrix",
     "build_phase1_medication_parser_source_rows",
     "build_phase1_rule_source_rows",
@@ -42,6 +44,82 @@ class EntityProposalExtractorPort(Protocol):
 
     def extract(self, source_text: str) -> Sequence[EntityAnnotation]:
         """Return independently projected proposal entities for one source text."""
+
+
+def build_phase1_dictionary_trie_source_rows(
+    corpus: Phase1ReviewedCorpus,
+    dictionary: DictionaryStore,
+    *,
+    source_name: str = "dictionary_trie",
+) -> dict[str, tuple[dict[str, Any], ...]]:
+    """Materialize all typed lexical matches as an independent proposal source.
+
+    ``RuleBasedNER`` has its own precision policy and can reject a valid lexical match before a
+    learned verifier sees it.  The joint lattice needs this source separately: it raises the
+    proposal-recall ceiling without deciding that a dictionary hit is an output entity.
+
+    INVARIANT: the matcher returns offsets into ``source_text`` and every emitted row is sliced
+    from that untouched text.  The later cross encoder, not this source, resolves aliases that
+    are ambiguous by context or Phase 1 type.
+    """
+
+    if not source_name.strip():
+        raise ValueError("Dictionary trie proposal source name must be non-empty")
+    matcher = DictionaryMatcher(dictionary.aliases_for_ner())
+    rows_by_document: dict[str, tuple[dict[str, Any], ...]] = {}
+    for document_id in sorted(corpus.source_texts, key=phase1_document_sort_key):
+        source_text = corpus.source_texts[document_id]
+        rows: list[dict[str, Any]] = []
+        # Concept-level aliases can collide on one Phase 1 span/type.  The matrix merges source
+        # evidence by identity, so retain the source labels while preventing needless duplicates.
+        seen: set[tuple[int, int, str, str]] = set()
+        for index, match in enumerate(
+            matcher.find_candidates(
+                source_text,
+                require_boundaries=True,
+                min_alias_chars=2,
+            )
+        ):
+            phase1_type = PHASE1_TYPE_BY_ENTITY_TYPE.get(match.entry.semantic_type)
+            if phase1_type is None:
+                continue
+            start, end = match.span
+            if source_text[start:end] != match.text:
+                raise ValueError("Dictionary trie match violates raw offsets")
+            identity = (start, end, phase1_type, match.entry.concept_id)
+            if identity in seen:
+                continue
+            seen.add(identity)
+            rows.append(
+                {
+                    "document_id": document_id,
+                    "proposal_id": (
+                        f"{document_id}:{source_name}:{index}:{start}:{end}:{phase1_type}:"
+                        f"{match.entry.concept_id}"
+                    ),
+                    "text": match.text,
+                    "type": phase1_type,
+                    "position": [start, end],
+                    # Exact normalized aliases are stronger source evidence than toneless ones,
+                    # but neither value is a selection decision.
+                    "confidence": 0.82 if match.match_kind == "exact" else 0.68,
+                    "source_label": (
+                        f"{match.entry.semantic_type.value}:{match.match_kind}:"
+                        f"{match.entry.concept_id}"
+                    ),
+                }
+            )
+        rows_by_document[document_id] = tuple(
+            sorted(
+                rows,
+                key=lambda row: (
+                    row["position"],
+                    row["type"],
+                    row["proposal_id"],
+                ),
+            )
+        )
+    return rows_by_document
 
 
 def build_phase1_rule_source_rows(
