@@ -797,6 +797,38 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         help="Drop chunks without an entity after deterministic chunking.",
     )
 
+    model_data_final_fit = model_data_operations.add_parser(
+        "build-final-fit",
+        help="Build five-type NER supervision from all authorized final-fit Phase 1 records.",
+    )
+    model_data_final_fit.set_defaults(handler="benchmark_phase1_model_data_build_final_fit")
+    model_data_final_fit.add_argument("--output-dir", required=True)
+    model_data_final_fit.add_argument(
+        "--training-governance",
+        default="configs/models/phase1-training-governance-2026-07-30.yaml",
+    )
+    model_data_final_fit.add_argument(
+        "--model-split-manifest",
+        default="outputs/mining/model-datasets/phase1-manual-five-type-v1/split_manifest.json",
+    )
+    model_data_final_fit.add_argument(
+        "--frozen-split-manifest",
+        default="data/manual_gold/holdout_manifest.json",
+    )
+    model_data_final_fit.add_argument("--manual-input-dir", default="data/raw/input")
+    model_data_final_fit.add_argument("--manual-gold-dir", default="data/manual_gold")
+    model_data_final_fit.add_argument(
+        "--authorized-archive",
+        help="Owner-authorized ground-truth archive; otherwise use the governed environment variable.",
+    )
+    model_data_final_fit.add_argument("--max-characters", type=int, default=1600)
+    model_data_final_fit.add_argument("--empty-chunk-rate", type=float, default=1.0)
+    model_data_final_fit.add_argument(
+        "--exclude-empty-chunks",
+        action="store_true",
+        help="Drop chunks without an entity after deterministic chunking.",
+    )
+
     model_data_augment = model_data_operations.add_parser(
         "augment-regions",
         help="Add bounded train-only Q&A and educational discourse views.",

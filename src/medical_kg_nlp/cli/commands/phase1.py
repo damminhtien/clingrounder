@@ -22,6 +22,10 @@ from medical_kg_nlp.benchmarks.phase1.model_dataset import (
     Phase1ModelDatasetConfig,
     build_phase1_model_dataset,
 )
+from medical_kg_nlp.benchmarks.phase1.final_token_dataset import (
+    Phase1FinalTokenDatasetConfig,
+    build_phase1_final_token_dataset,
+)
 from medical_kg_nlp.benchmarks.phase1.model_runtime import (
     run_phase1_model_calibration,
 )
@@ -156,6 +160,7 @@ __all__ = [
     "augment_phase1_model_regions",
     "augment_phase1_model_user_synthetic",
     "build_phase1_model_data",
+    "build_phase1_final_token_data",
     "calibrate_phase1_boundaries",
     "build_phase1_proposal_matrix_command",
     "build_phase1_qwen_data",
@@ -795,6 +800,30 @@ def build_phase1_model_data(args: argparse.Namespace) -> int:
             public_spec_expected=Path(args.public_spec_expected),
             development_fraction=args.development_fraction,
             split_salt=args.split_salt,
+            max_characters=args.max_characters,
+            include_empty_chunks=not args.exclude_empty_chunks,
+            empty_chunk_rate=args.empty_chunk_rate,
+        ),
+    )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def build_phase1_final_token_data(args: argparse.Namespace) -> int:
+    """Build all-authorized token-classifier data for one final Phase 1 fit."""
+
+    corpus = load_phase1_final_supervision_corpus(
+        governance_path=args.training_governance,
+        model_split_manifest_path=args.model_split_manifest,
+        frozen_split_manifest_path=args.frozen_split_manifest,
+        manual_input_dir=args.manual_input_dir,
+        manual_gold_dir=args.manual_gold_dir,
+        authorized_archive_path=args.authorized_archive,
+    )
+    report = build_phase1_final_token_dataset(
+        corpus,
+        args.output_dir,
+        config=Phase1FinalTokenDatasetConfig(
             max_characters=args.max_characters,
             include_empty_chunks=not args.exclude_empty_chunks,
             empty_chunk_rate=args.empty_chunk_rate,
