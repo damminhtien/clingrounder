@@ -150,6 +150,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.phase1",
         "train_phase1_joint_span_verifier_command",
     ),
+    "benchmark_phase1_joint_span_train_oof": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "run_phase1_joint_span_transformer_oof_command",
+    ),
     "benchmark_phase1_joint_span_calibrate": (
         "medical_kg_nlp.cli.commands.phase1",
         "calibrate_phase1_joint_span_command",

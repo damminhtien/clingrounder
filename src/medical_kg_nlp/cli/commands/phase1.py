@@ -88,6 +88,10 @@ from medical_kg_nlp.benchmarks.phase1.joint_span_calibration import (
     Phase1JointSpanCalibrationObservation,
     fit_phase1_joint_span_calibration,
 )
+from medical_kg_nlp.benchmarks.phase1.joint_span_oof import (
+    Phase1JointSpanOofConfig,
+    run_phase1_joint_span_transformer_oof,
+)
 from medical_kg_nlp.benchmarks.phase1.joint_span_token_source import (
     Phase1TokenSourceConfig,
     materialize_phase1_token_model_source,
@@ -179,6 +183,7 @@ __all__ = [
     "compare_phase1_model_variants",
     "inspect_phase1_qwen_run",
     "materialize_phase1_joint_span_token_source_command",
+    "run_phase1_joint_span_transformer_oof_command",
     "calibrate_phase1_joint_span_command",
     "run_phase1_joint_span_command",
     "prepare_phase1_joint_span_final_fit_command",
@@ -1156,6 +1161,48 @@ def train_phase1_joint_span_verifier_command(args: argparse.Namespace) -> int:
             sort_keys=True,
         )
     )
+    return 0
+
+
+def run_phase1_joint_span_transformer_oof_command(args: argparse.Namespace) -> int:
+    """Cross-fit transformer lattice scores before fitting any resolver calibration."""
+
+    training = Phase1JointSpanTrainingConfig(
+        dataset_path=Path(args.dataset),
+        dataset_manifest_path=Path(args.dataset_manifest),
+        # The OOF runner replaces this path per fold; keeping it explicit makes the base recipe
+        # serializable and prevents a fold checkpoint from becoming an implicit final artifact.
+        output_dir=Path(args.output_dir),
+        model_id=args.model_id,
+        revision=args.revision,
+        initialization_model_path=(
+            None if args.initialization_model is None else Path(args.initialization_model)
+        ),
+        initialization_model_fingerprint=args.initialization_fingerprint,
+        max_length=args.max_length,
+        train_batch_size=args.train_batch_size,
+        evaluation_batch_size=args.evaluation_batch_size,
+        epochs=args.epochs,
+        learning_rate=args.learning_rate,
+        weight_decay=args.weight_decay,
+        warmup_ratio=args.warmup_ratio,
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
+        seed=args.seed,
+        fp16=args.fp16,
+        bf16=args.bf16,
+        use_cpu=args.use_cpu,
+        cache_dir=None if args.cache_dir is None else Path(args.cache_dir),
+    )
+    report = run_phase1_joint_span_transformer_oof(
+        Phase1JointSpanOofConfig(
+            training=training,
+            output_dir=Path(args.output_dir),
+            fold_count=args.fold_count,
+            inference_device=args.inference_device,
+            resume=args.resume,
+        )
+    )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 
 

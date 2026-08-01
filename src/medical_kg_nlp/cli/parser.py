@@ -1265,6 +1265,42 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     joint_span_train.add_argument("--use-cpu", action="store_true")
     joint_span_train.add_argument("--cache-dir")
     joint_span_train.add_argument("--overwrite-output", action="store_true")
+    joint_span_train_oof = joint_span_operations.add_parser(
+        "train-oof",
+        help=(
+            "Document-grouped cross-fit local joint-span verifiers and write calibration-ready "
+            "OOF probabilities; no final-fit model is used for calibration."
+        ),
+    )
+    joint_span_train_oof.set_defaults(handler="benchmark_phase1_joint_span_train_oof")
+    joint_span_train_oof.add_argument("--dataset", required=True)
+    joint_span_train_oof.add_argument("--dataset-manifest", required=True)
+    joint_span_train_oof.add_argument("--output-dir", required=True)
+    joint_span_train_oof.add_argument("--model-id", required=True)
+    joint_span_train_oof.add_argument("--revision", required=True)
+    joint_span_train_oof.add_argument("--initialization-model")
+    joint_span_train_oof.add_argument("--initialization-fingerprint")
+    joint_span_train_oof.add_argument("--fold-count", type=int, default=5)
+    joint_span_train_oof.add_argument("--inference-device", default="cuda")
+    joint_span_train_oof.add_argument("--max-length", type=int, default=384)
+    joint_span_train_oof.add_argument("--train-batch-size", type=int, default=8)
+    joint_span_train_oof.add_argument("--evaluation-batch-size", type=int, default=16)
+    joint_span_train_oof.add_argument("--epochs", type=float, default=4.0)
+    joint_span_train_oof.add_argument("--learning-rate", type=float, default=2e-5)
+    joint_span_train_oof.add_argument("--weight-decay", type=float, default=0.01)
+    joint_span_train_oof.add_argument("--warmup-ratio", type=float, default=0.08)
+    joint_span_train_oof.add_argument("--gradient-accumulation-steps", type=int, default=1)
+    joint_span_train_oof.add_argument("--seed", type=int, default=42)
+    oof_precision = joint_span_train_oof.add_mutually_exclusive_group()
+    oof_precision.add_argument("--fp16", action="store_true")
+    oof_precision.add_argument("--bf16", action="store_true")
+    joint_span_train_oof.add_argument("--use-cpu", action="store_true")
+    joint_span_train_oof.add_argument("--cache-dir")
+    joint_span_train_oof.add_argument(
+        "--resume",
+        action="store_true",
+        help="Reuse only completed folds whose manifest, model identity, and OOF rows validate.",
+    )
     joint_span_calibrate = joint_span_operations.add_parser(
         "calibrate",
         help="Fit pinned genre/type calibration from document-grouped OOF joint verifier scores.",

@@ -30,6 +30,39 @@ uv run medical-kg benchmark phase1 model-data build-final-fit-bundle \
 The current deterministic build contains 901 chunks, 19,270 entities, and 54 approved synthetic
 records (5.99%). The default Vast token-classifier runner materializes this bundle before training.
 
+### Joint Span OOF Calibration
+
+The joint span/type cross encoder uses a separate document-grouped OOF run before final fitting.
+Each fold trains only on the other documents, emits a probability for the candidate's compatible
+`EXACT_*` class, and writes `oof_observations.jsonl` without raw note text. Its coverage report
+uses unique lattice candidate identities and fails if any candidate or document is unscored.
+
+The calibration artifact is pinned to a **training family** rather than to a fold checkpoint SHA:
+the final model must prove the same full supervision data, initializer, label contract, and
+optimization recipe. This avoids the invalid claim that a final-fit model itself produced OOF
+scores. There is no clinical fallback for missing `qa` or `educational` genre/type support.
+
+On a cached CUDA template, run:
+
+```bash
+DATASET_DIR=outputs/models/phase1-joint-span-final-fit \
+INITIALIZATION_MODEL=outputs/models/phase1-xlmr-dapt/final-model \
+INITIALIZATION_FINGERPRINT=<sha256> \
+scripts/vast/run_joint_span_oof.sh
+```
+
+Then materialize the final cross encoder with the identical training family and fit the resolver
+calibration from the OOF observations only:
+
+```bash
+uv run medical-kg benchmark phase1 joint-span calibrate \
+  --observations outputs/models/phase1-joint-span-xlmr-dapt-oof-2026-08-01/oof_observations.jsonl \
+  --training-family-fingerprint <manifest-training-family-sha256> \
+  --fold-assignment-sha256 <fold-assignments-json-sha256> \
+  --output outputs/models/phase1-joint-span-calibration.json \
+  --report outputs/models/phase1-joint-span-calibration-report.json
+```
+
 ### Joint Span Source Collection
 
 The joint span/type verifier is trained on a proposal lattice rather than only gold spans. Qwen
