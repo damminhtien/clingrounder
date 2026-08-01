@@ -1215,6 +1215,17 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     joint_span_train.add_argument("--use-cpu", action="store_true")
     joint_span_train.add_argument("--cache-dir")
     joint_span_train.add_argument("--overwrite-output", action="store_true")
+    joint_span_calibrate = joint_span_operations.add_parser(
+        "calibrate",
+        help="Fit pinned genre/type calibration from document-grouped OOF joint verifier scores.",
+    )
+    joint_span_calibrate.set_defaults(handler="benchmark_phase1_joint_span_calibrate")
+    joint_span_calibrate.add_argument("--observations", required=True)
+    joint_span_calibrate.add_argument("--verifier-fingerprint", required=True)
+    joint_span_calibrate.add_argument("--fold-assignment-sha256", required=True)
+    joint_span_calibrate.add_argument("--output", required=True)
+    joint_span_calibrate.add_argument("--report")
+    joint_span_calibrate.add_argument("--false-positive-cost", type=float, default=1.0)
     qwen_support = qwen_operations.add_parser(
         "build-vietnamese-support",
         help="Run a pinned Vietnamese NER model as support that Qwen must confirm.",

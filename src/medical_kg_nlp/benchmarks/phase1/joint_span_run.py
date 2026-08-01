@@ -15,6 +15,9 @@ from medical_kg_nlp.adapters.generative.budget_spec import (
 )
 from medical_kg_nlp.adapters.huggingface import HuggingFaceModelConfig
 from medical_kg_nlp.benchmarks.phase1.joint_span import Phase1JointSpanSelectionPolicy
+from medical_kg_nlp.benchmarks.phase1.joint_span_calibration import (
+    load_phase1_joint_span_calibration,
+)
 from medical_kg_nlp.benchmarks.phase1.joint_span_pipeline import (
     Phase1JointSpanPipeline,
     Phase1JointSpanResult,
@@ -26,6 +29,7 @@ from medical_kg_nlp.benchmarks.phase1.joint_span_sources import (
 )
 from medical_kg_nlp.benchmarks.phase1.joint_span_verifier import (
     HuggingFacePhase1JointSpanVerifier,
+    calibrate_phase1_joint_span_verifier,
 )
 from medical_kg_nlp.benchmarks.phase1.max_score_pipeline import CandidateMetadataPolicy
 from medical_kg_nlp.benchmarks.phase1.phase1 import (
@@ -51,7 +55,7 @@ __all__ = [
     "run_phase1_joint_span",
 ]
 
-_SPEC_SCHEMA = "phase1-joint-span-run-spec.v2"
+_SPEC_SCHEMA = "phase1-joint-span-run-spec.v3"
 _SHA256_RE = re.compile(r"[0-9a-f]{64}")
 
 
@@ -127,7 +131,7 @@ class Phase1JointSpanRunSpec:
     verifier_device: str
     verifier_batch_size: int
     verifier_max_length: int
-    selection_policy: Phase1JointSpanSelectionPolicy
+    calibration: Phase1JointSpanFileArtifact
     model_sources: tuple[Phase1JointSpanModelSourceSpec, ...]
     dictionaries: tuple[Phase1JointSpanFileArtifact, ...]
     candidate_source_priority: tuple[str, ...]
@@ -145,7 +149,6 @@ class Phase1JointSpanRunSpec:
             raise ValueError("Joint verifier model identity and device must be non-empty")
         if self.verifier_batch_size < 1 or self.verifier_max_length < 32:
             raise ValueError("Joint verifier batch size or max length is invalid")
-        self.selection_policy.require_submission_calibration()
         source_names = tuple(source.name for source in self.model_sources)
         if not source_names or len(source_names) != len(set(source_names)):
             raise ValueError("Joint span model sources must be non-empty and unique")
@@ -173,6 +176,7 @@ def load_phase1_joint_span_run_spec(path: str | Path) -> Phase1JointSpanRunSpec:
     _require_below_root(config_path, run_root)
     documents_raw = _mapping(raw.get("documents"), "documents")
     verifier_raw = _mapping(raw.get("verifier"), "verifier")
+    calibration_raw = _mapping(raw.get("calibration"), "calibration")
     source_rows = _list_of_mappings(raw.get("model_sources"), "model_sources")
     dictionary_rows = _list_of_mappings(raw.get("dictionaries"), "dictionaries")
     output_root = _resolve(run_root, str(raw.get("output_root", "outputs/phase1/joint-span")))
@@ -191,7 +195,7 @@ def load_phase1_joint_span_run_spec(path: str | Path) -> Phase1JointSpanRunSpec:
         verifier_device=str(verifier_raw.get("device", "cpu")).strip(),
         verifier_batch_size=_required_int(verifier_raw, "batch_size", default=16),
         verifier_max_length=_required_int(verifier_raw, "max_length", default=384),
-        selection_policy=_selection_policy(_mapping(raw.get("selection_policy"), "selection_policy")),
+        calibration=_pinned_file(calibration_raw, run_root),
         model_sources=tuple(
             Phase1JointSpanModelSourceSpec(
                 name=_required_string(row, "name"),
@@ -225,6 +229,7 @@ def run_phase1_joint_span(spec: Phase1JointSpanRunSpec) -> dict[str, Any]:
 
     spec.documents.verify(name="documents")
     spec.verifier.verify(name="joint span verifier")
+    spec.calibration.verify(name="joint span calibration")
     for source in spec.model_sources:
         source.artifact.verify(name=f"model source {source.name}")
     for index, artifact in enumerate(spec.dictionaries):
@@ -256,7 +261,10 @@ def run_phase1_joint_span(spec: Phase1JointSpanRunSpec) -> dict[str, Any]:
             for source in spec.model_sources
         },
     }
-    verifier = HuggingFacePhase1JointSpanVerifier(
+    calibration = load_phase1_joint_span_calibration(spec.calibration.path)
+    if calibration.verifier_fingerprint != spec.verifier.sha256:
+        raise ValueError("Joint span calibration was not fitted for the pinned verifier artifact")
+    base_verifier = HuggingFacePhase1JointSpanVerifier(
         HuggingFaceModelConfig(
             model_id=str(spec.verifier.path),
             revision=spec.verifier.sha256,
@@ -265,9 +273,10 @@ def run_phase1_joint_span(spec: Phase1JointSpanRunSpec) -> dict[str, Any]:
             max_length=spec.verifier_max_length,
         )
     )
+    verifier = calibrate_phase1_joint_span_verifier(base_verifier, calibration)
     result = Phase1JointSpanPipeline(
         verifier=verifier,
-        selection_policy=spec.selection_policy,
+        selection_policy=calibration.selection_policy,
         source_roles=source_roles,
         budget_manifest=budget_manifest,
         dictionary=dictionary,
@@ -283,6 +292,7 @@ def run_phase1_joint_span(spec: Phase1JointSpanRunSpec) -> dict[str, Any]:
             spec.documents.path,
             spec.budget_spec_path,
             spec.verifier.path,
+            spec.calibration.path,
             *(source.artifact.path for source in spec.model_sources),
             *(artifact.path for artifact in spec.dictionaries),
         ),
@@ -296,11 +306,17 @@ def run_phase1_joint_span(spec: Phase1JointSpanRunSpec) -> dict[str, Any]:
                 "batch_size": spec.verifier_batch_size,
                 "max_length": spec.verifier_max_length,
             },
+            "calibration": {
+                "sha256": spec.calibration.sha256,
+                "verifier_fingerprint": calibration.verifier_fingerprint,
+                "oof_observations_sha256": calibration.oof_observations_sha256,
+                "fold_assignment_sha256": calibration.fold_assignment_sha256,
+            },
             "model_sources": [
                 {"name": source.name, "role": source.role.value, "sha256": source.artifact.sha256}
                 for source in spec.model_sources
             ],
-            "selection_policy": _selection_policy_payload(spec.selection_policy),
+            "selection_policy": _selection_policy_payload(calibration.selection_policy),
             "candidate_source_priority": list(spec.candidate_source_priority),
             "assertion_regimes": list(spec.assertion_regimes),
             "candidate_policy": spec.candidate_policy,
@@ -403,28 +419,6 @@ def _pinned_directory(
     path = _resolve(run_root, _required_string(raw, "path"))
     _require_below_root(path, run_root)
     return Phase1JointSpanDirectoryArtifact(path=path, sha256=_required_string(raw, "sha256"))
-
-
-def _selection_policy(raw: Mapping[str, Any]) -> Phase1JointSpanSelectionPolicy:
-    raw_genre_thresholds = raw.get("genre_type_thresholds", [])
-    if not isinstance(raw_genre_thresholds, list):
-        raise ValueError("Joint span genre thresholds must be a list")
-    genre_thresholds: list[tuple[str, str, float]] = []
-    for item in raw_genre_thresholds:
-        row = _mapping(item, "selection_policy.genre_type_thresholds")
-        threshold = row.get("threshold")
-        if isinstance(threshold, bool) or not isinstance(threshold, int | float):
-            raise ValueError("Joint span genre threshold must be numeric")
-        genre_thresholds.append(
-            (_required_string(row, "genre"), _required_string(row, "type"), float(threshold))
-        )
-    cost = raw.get("false_positive_cost", 1.0)
-    if isinstance(cost, bool) or not isinstance(cost, int | float):
-        raise ValueError("Joint span false positive cost must be numeric")
-    return Phase1JointSpanSelectionPolicy(
-        genre_type_thresholds=tuple(sorted(genre_thresholds)),
-        false_positive_cost=float(cost),
-    )
 
 
 def _selection_policy_payload(policy: Phase1JointSpanSelectionPolicy) -> dict[str, Any]:

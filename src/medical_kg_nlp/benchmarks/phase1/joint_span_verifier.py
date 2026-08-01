@@ -8,13 +8,17 @@ from medical_kg_nlp.adapters.huggingface.config import HuggingFaceModelConfig
 from medical_kg_nlp.adapters.huggingface.multiclass_text_classifier import (
     HuggingFaceMulticlassTextClassifierAdapter,
 )
+from medical_kg_nlp.benchmarks.phase1.joint_span_calibration import (
+    CalibratedPhase1JointSpanVerifier,
+    Phase1JointSpanCalibration,
+)
 from medical_kg_nlp.benchmarks.phase1.joint_span import (
     Phase1JointSpanCandidate,
     Phase1JointSpanLabel,
     Phase1JointSpanPrediction,
 )
 
-__all__ = ["HuggingFacePhase1JointSpanVerifier"]
+__all__ = ["HuggingFacePhase1JointSpanVerifier", "calibrate_phase1_joint_span_verifier"]
 
 
 class HuggingFacePhase1JointSpanVerifier:
@@ -48,3 +52,12 @@ class HuggingFacePhase1JointSpanVerifier:
             )
             for candidate, distribution in zip(candidates, distributions, strict=True)
         )
+
+
+def calibrate_phase1_joint_span_verifier(
+    verifier: HuggingFacePhase1JointSpanVerifier,
+    calibration: Phase1JointSpanCalibration,
+) -> CalibratedPhase1JointSpanVerifier:
+    """Attach a pinned OOF calibration without allowing it to change source spans or types."""
+
+    return CalibratedPhase1JointSpanVerifier(verifier, calibration)

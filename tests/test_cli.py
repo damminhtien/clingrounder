@@ -119,6 +119,28 @@ def test_joint_span_run_command_accepts_only_a_pinned_config() -> None:
     assert args.handler == "benchmark_phase1_joint_span_run"
 
 
+def test_joint_span_calibration_command_requires_oof_provenance() -> None:
+    args = build_parser().parse_args(
+        [
+            "benchmark",
+            "phase1",
+            "joint-span",
+            "calibrate",
+            "--observations",
+            "outputs/joint/oof-observations.jsonl",
+            "--verifier-fingerprint",
+            "a" * 64,
+            "--fold-assignment-sha256",
+            "b" * 64,
+            "--output",
+            "outputs/joint/calibration.json",
+        ]
+    )
+
+    assert args.handler == "benchmark_phase1_joint_span_calibrate"
+    assert args.false_positive_cost == 1.0
+
+
 def test_terminology_build_and_inspect_commands(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     source = tmp_path / "concepts.jsonl"
     source.write_text(
