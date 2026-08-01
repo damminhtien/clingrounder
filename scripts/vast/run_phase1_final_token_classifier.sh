@@ -11,10 +11,11 @@ REPO_ROOT="${REPO_ROOT:-/workspace/medical-kg}"
 TEMPLATE_PYTHON="${TEMPLATE_PYTHON:-/venv/main/bin/python}"
 HF_HOME="${HF_HOME:-/workspace/hf}"
 PIP_CACHE_DIR="${PIP_CACHE_DIR:-/workspace/pip-cache}"
-RUN_CONFIG="${RUN_CONFIG:-configs/models/phase1-five-type-xlmr-final-supervision-2026-08-01.yaml}"
+RUN_CONFIG="${RUN_CONFIG:-configs/models/phase1-five-type-xlmr-final-supervision-qa-edu-2026-08-01.yaml}"
 MODEL_ID="${MODEL_ID:-FacebookAI/xlm-roberta-base}"
 MODEL_REVISION="${MODEL_REVISION:-e73636d4f797dec63c3081bb6ed5c7b0bb3f2089}"
 MAX_RUNTIME_SECONDS="${MAX_RUNTIME_SECONDS:-10800}"
+OUTPUT_MANIFEST="${OUTPUT_MANIFEST:-outputs/models/phase1-five-type-xlmr-final-supervision-qa-edu-2026-08-01/run_manifest.json}"
 
 if [[ -z "${PHASE1_PART2_ARCHIVE:-}" ]]; then
   printf 'PHASE1_PART2_ARCHIVE must point to the owner-authorized supervised archive.\n' >&2
@@ -84,10 +85,16 @@ PY
   benchmark phase1 model-data build-final-fit \
   --output-dir outputs/mining/model-datasets/phase1-final-supervision-five-type-v1
 
+# MODEL: this dataset adds renderer-derived Vietnamese Q&A/educational examples only. It is
+# bounded below 40% and cannot pull Round 2, Friend31, or a cached prediction into final fitting.
+"${TEMPLATE_PYTHON}" -m medical_kg_nlp.cli \
+  benchmark phase1 model-data build-final-fit-bundle \
+  --output-dir outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1
+
 # MODEL: this source feeds the learned joint lattice; it is not independently promoted by local
 # metrics. The official BTC artifact remains the only quality decision point.
 timeout --signal=TERM "${MAX_RUNTIME_SECONDS}" "${TEMPLATE_PYTHON}" -m medical_kg_nlp.cli \
   model train-token-classifier-run \
   --config "${RUN_CONFIG}"
 
-test -f outputs/models/phase1-five-type-xlmr-final-supervision-2026-08-01/run_manifest.json
+test -f "${OUTPUT_MANIFEST}"

@@ -26,6 +26,10 @@ from medical_kg_nlp.benchmarks.phase1.final_token_dataset import (
     Phase1FinalTokenDatasetConfig,
     build_phase1_final_token_dataset,
 )
+from medical_kg_nlp.benchmarks.phase1.final_token_training_bundle import (
+    Phase1FinalTokenTrainingBundleConfig,
+    build_phase1_final_token_training_bundle,
+)
 from medical_kg_nlp.benchmarks.phase1.model_runtime import (
     run_phase1_model_calibration,
 )
@@ -165,6 +169,7 @@ __all__ = [
     "augment_phase1_model_user_synthetic",
     "build_phase1_model_data",
     "build_phase1_final_token_data",
+    "build_phase1_final_token_training_bundle_command",
     "calibrate_phase1_boundaries",
     "build_phase1_proposal_matrix_command",
     "build_phase1_qwen_data",
@@ -833,6 +838,23 @@ def build_phase1_final_token_data(args: argparse.Namespace) -> int:
             include_empty_chunks=not args.exclude_empty_chunks,
             empty_chunk_rate=args.empty_chunk_rate,
         ),
+    )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def build_phase1_final_token_training_bundle_command(args: argparse.Namespace) -> int:
+    """Combine final supervision with bounded, provenance-checked genre augmentation."""
+
+    report = build_phase1_final_token_training_bundle(
+        Phase1FinalTokenTrainingBundleConfig(
+            final_dataset_path=Path(args.final_dataset),
+            final_manifest_path=Path(args.final_manifest),
+            augmentation_dataset_path=Path(args.augmentation_dataset),
+            augmentation_manifest_path=Path(args.augmentation_manifest),
+            output_dir=Path(args.output_dir),
+            maximum_synthetic_fraction=args.maximum_synthetic_fraction,
+        )
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0

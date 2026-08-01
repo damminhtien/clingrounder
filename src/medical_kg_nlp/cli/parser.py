@@ -829,6 +829,49 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         help="Drop chunks without an entity after deterministic chunking.",
     )
 
+    model_data_final_bundle = model_data_operations.add_parser(
+        "build-final-fit-bundle",
+        help="Combine final supervision with bounded Q&A/educational synthetic records.",
+    )
+    model_data_final_bundle.set_defaults(
+        handler="benchmark_phase1_model_data_build_final_fit_bundle"
+    )
+    model_data_final_bundle.add_argument(
+        "--final-dataset",
+        default=(
+            "outputs/mining/model-datasets/"
+            "phase1-final-supervision-five-type-v1/spans.jsonl"
+        ),
+    )
+    model_data_final_bundle.add_argument(
+        "--final-manifest",
+        default=(
+            "outputs/mining/model-datasets/"
+            "phase1-final-supervision-five-type-v1/manifest.json"
+        ),
+    )
+    model_data_final_bundle.add_argument(
+        "--augmentation-dataset",
+        default=(
+            "outputs/mining/model-datasets/"
+            "phase1-manual-five-type-qa-edu-v1/spans.jsonl"
+        ),
+    )
+    model_data_final_bundle.add_argument(
+        "--augmentation-manifest",
+        default=(
+            "outputs/mining/model-datasets/"
+            "phase1-manual-five-type-qa-edu-v1/manifest.json"
+        ),
+    )
+    model_data_final_bundle.add_argument("--output-dir", required=True)
+    model_data_final_bundle.add_argument(
+        "--maximum-synthetic-fraction",
+        type=float,
+        default=0.4,
+        help="Hard cap for approved Q&A/educational synthetic chunk share.",
+    )
+
     model_data_augment = model_data_operations.add_parser(
         "augment-regions",
         help="Add bounded train-only Q&A and educational discourse views.",

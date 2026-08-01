@@ -98,6 +98,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.phase1",
         "build_phase1_final_token_data",
     ),
+    "benchmark_phase1_model_data_build_final_fit_bundle": (
+        "medical_kg_nlp.cli.commands.phase1",
+        "build_phase1_final_token_training_bundle_command",
+    ),
     "benchmark_phase1_model_data_augment_regions": (
         "medical_kg_nlp.cli.commands.phase1",
         "augment_phase1_model_regions",

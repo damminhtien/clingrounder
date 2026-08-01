@@ -115,6 +115,10 @@ from medical_kg_nlp.benchmarks.phase1.final_token_dataset import (
     Phase1FinalTokenDatasetConfig,
     build_phase1_final_token_dataset,
 )
+from medical_kg_nlp.benchmarks.phase1.final_token_training_bundle import (
+    Phase1FinalTokenTrainingBundleConfig,
+    build_phase1_final_token_training_bundle,
+)
 from medical_kg_nlp.benchmarks.phase1.model_runtime import (
     run_phase1_model_calibration,
 )
@@ -224,6 +228,7 @@ __all__ = [
     "Phase1MaxScoreRunSpec",
     "Phase1ModelDatasetConfig",
     "Phase1FinalTokenDatasetConfig",
+    "Phase1FinalTokenTrainingBundleConfig",
     "Phase1JointSpanTrainingConfig",
     "Phase1JointSpanTrainingSummary",
     "Phase1TokenSourceConfig",
@@ -276,6 +281,7 @@ __all__ = [
     "build_phase1_region_augmented_dataset",
     "build_phase1_model_dataset",
     "build_phase1_final_token_dataset",
+    "build_phase1_final_token_training_bundle",
     "build_phase1_model_splits",
     "build_phase1_proposal_dataset",
     "build_phase1_proposal_matrix",

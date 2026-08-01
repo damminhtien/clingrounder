@@ -16,6 +16,20 @@ health, but no document stays excluded from final fit. Structural validation rem
 invalid offsets, schemas, code systems, parameter budgets, or artifact fingerprints must not be
 submitted.
 
+The final XLM-R source also includes a bounded renderer-derived Vietnamese Q&A/educational view to
+teach genre-specific span boundaries. It copies only raw-offset-valid `train` records whose source
+is `synthetic:phase1-region-renderer.v1`; manual records are not duplicated, and Round 2,
+quarantine, and Friend31 provenance are rejected. Recreate the ignored training artifact rather
+than copying it between machines:
+
+```bash
+uv run medical-kg benchmark phase1 model-data build-final-fit-bundle \
+  --output-dir outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1
+```
+
+The current deterministic build contains 901 chunks, 19,270 entities, and 54 approved synthetic
+records (5.99%). The default Vast token-classifier runner materializes this bundle before training.
+
 ### Joint Span Source Collection
 
 The joint span/type verifier is trained on a proposal lattice rather than only gold spans. Qwen
