@@ -87,6 +87,26 @@ resources:
     notes: >-
       Raw Round 2 input may be transferred temporarily to owner-authorized Vast.ai compute for
       inference. It is never a training, pseudo-label, redistribution, or runtime-memory source.
+  - id: phase1_manual_gold
+    name: Locally reviewed Phase 1 clinical annotations
+    category: private_competition_supervision
+    version: reviewed-100-documents-2026-07
+    version_policy: pinned
+    access_class: authorized_private
+    license_id: owner_reviewed_competition_data
+    license_url: local-source://phase1-manual-gold/authorization
+    redistribution: prohibited
+    hosted_processing_allowed: true
+    retention: local_only
+    connector: local_archive
+    parser: phase1_manual_gold
+    parser_options:
+      language: vi
+      offset_coordinate_view: source_text
+    allowed_uses: [local_supervised_training, hosted_supervised_training, evaluation_diagnostics]
+    notes: >-
+      One hundred annotations were reviewed against private competition notes. Public Git retains
+      only checksums, review policy, and benchmark code; annotation and source bytes stay local.
   - id: phase1_part2_leaked_bundle
     name: Owner-authorized Phase 1 part 2 annotation bundle
     category: private_competition_supervision

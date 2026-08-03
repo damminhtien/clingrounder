@@ -21,13 +21,18 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from medical_kg_nlp.utils.hashing import sha256_file
+
 __all__ = [
     "PublicationDisposition",
+    "LocalArtifactInventory",
+    "LocalArtifactRecord",
     "PublicPathRule",
     "PublicRepositoryPolicy",
     "PublicReleaseIssue",
     "PublicReleaseReport",
     "audit_public_repository",
+    "build_local_artifact_inventory",
     "load_public_repository_policy",
     "report_json",
 ]
@@ -67,6 +72,7 @@ class PublicPathRule(BaseModel):
     source_ids: tuple[str, ...] = ()
     notice_path: str | None = None
     allow_large_files: bool = False
+    inventory_local_bytes: bool = False
 
     @field_validator("patterns")
     @classmethod
@@ -153,6 +159,32 @@ class PublicReleaseReport(BaseModel):
     protected_file_count: int
     disposition_counts: dict[str, int]
     issues: tuple[PublicReleaseIssue, ...]
+
+
+class LocalArtifactRecord(BaseModel):
+    """Content identity for one non-public file retained outside Git."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    path: str
+    rule_id: str
+    disposition: Literal["manifest_only", "local_only"]
+    source_ids: tuple[str, ...]
+    byte_size: int = Field(ge=0)
+    sha256: str = Field(min_length=64, max_length=64)
+
+
+class LocalArtifactInventory(BaseModel):
+    """Deterministic inventory that preserves provenance without restricted bytes."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: Literal["medical-kg.local-artifact-inventory.v1"]
+    policy_path: str
+    policy_sha256: str = Field(min_length=64, max_length=64)
+    artifact_count: int = Field(ge=0)
+    total_bytes: int = Field(ge=0)
+    artifacts: tuple[LocalArtifactRecord, ...]
 
 
 def load_public_repository_policy(path: str | Path) -> PublicRepositoryPolicy:
@@ -302,6 +334,74 @@ def audit_public_repository(
     )
 
 
+def build_local_artifact_inventory(
+    root: str | Path,
+    policy_path: str | Path,
+) -> LocalArtifactInventory:
+    """Fingerprint explicitly inventoried local-only and manifest-only files.
+
+    SCALING: only roots derived from rules with ``inventory_local_bytes=true`` are
+    traversed. Generated run directories remain local but do not become an accidental,
+    ever-growing release contract.
+    """
+
+    repository_root = Path(root).resolve()
+    policy_source = Path(policy_path).resolve()
+    policy = load_public_repository_policy(policy_source)
+    candidates: set[Path] = set()
+    for inventory_rule in policy.rules:
+        if not inventory_rule.inventory_local_bytes:
+            continue
+        if inventory_rule.disposition not in {
+            PublicationDisposition.LOCAL_ONLY,
+            PublicationDisposition.MANIFEST_ONLY,
+        }:
+            raise ValueError(
+                f"Rule {inventory_rule.id} inventories bytes that are already redistributable"
+            )
+        for pattern in inventory_rule.patterns:
+            search_root = repository_root / _static_pattern_prefix(pattern)
+            if search_root.is_file():
+                candidates.add(search_root)
+            elif search_root.is_dir():
+                candidates.update(path for path in search_root.rglob("*") if path.is_file())
+
+    records: list[LocalArtifactRecord] = []
+    for path in sorted(candidates):
+        relative_path = path.relative_to(repository_root).as_posix()
+        matched_rule = _matching_rule(relative_path, policy.rules)
+        if matched_rule is None or not matched_rule.inventory_local_bytes:
+            continue
+        if matched_rule.disposition not in {
+            PublicationDisposition.LOCAL_ONLY,
+            PublicationDisposition.MANIFEST_ONLY,
+        }:
+            continue
+        disposition: Literal["manifest_only", "local_only"] = (
+            "manifest_only"
+            if matched_rule.disposition is PublicationDisposition.MANIFEST_ONLY
+            else "local_only"
+        )
+        records.append(
+            LocalArtifactRecord(
+                path=relative_path,
+                rule_id=matched_rule.id,
+                disposition=disposition,
+                source_ids=matched_rule.source_ids,
+                byte_size=path.stat().st_size,
+                sha256=sha256_file(path),
+            )
+        )
+    return LocalArtifactInventory(
+        schema_version="medical-kg.local-artifact-inventory.v1",
+        policy_path=_display_path(policy_source, repository_root),
+        policy_sha256=sha256_file(policy_source),
+        artifact_count=len(records),
+        total_bytes=sum(record.byte_size for record in records),
+        artifacts=tuple(records),
+    )
+
+
 def _git_tracked_paths(root: Path) -> tuple[str, ...]:
     completed = subprocess.run(
         ["git", "-C", str(root), "ls-files", "-z"],
@@ -371,6 +471,17 @@ def _portable_pattern(value: str) -> str:
     if pattern.endswith("/"):
         raise ValueError("public release patterns must name files or use an explicit wildcard")
     return pattern
+
+
+def _static_pattern_prefix(pattern: str) -> Path:
+    parts: list[str] = []
+    for part in PurePosixPath(pattern).parts:
+        if any(character in part for character in "*?["):
+            break
+        parts.append(part)
+    if not parts:
+        raise ValueError(f"inventory pattern requires a static repository prefix: {pattern}")
+    return Path(*parts)
 
 
 def _display_path(path: Path, root: Path) -> str:

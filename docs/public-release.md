@@ -34,6 +34,19 @@ uv run medical-kg release audit \
   --root .
 ```
 
+Before removing restricted bytes from the Git index, or after refreshing an authorized local
+snapshot, rebuild its deterministic inventory:
+
+```bash
+uv run medical-kg release inventory \
+  --policy configs/repository/public-release.yaml \
+  --root . \
+  --output data/provenance/local-artifacts.json
+```
+
+Only rules with `inventory_local_bytes: true` are traversed. This keeps canonical terminology and
+reviewed supervision verifiable while excluding transient run directories from the stable manifest.
+
 ## Reproducing Restricted Experiments
 
 1. Clone the public repository and install the locked environment.

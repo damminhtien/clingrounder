@@ -277,6 +277,18 @@ def _release_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser
     )
     audit.add_argument("--output")
 
+    inventory = operations.add_parser(
+        "inventory",
+        help="Fingerprint policy-selected local artifacts without publishing their bytes.",
+    )
+    inventory.set_defaults(handler="release_inventory")
+    inventory.add_argument("--root", default=".")
+    inventory.add_argument(
+        "--policy",
+        default="configs/repository/public-release.yaml",
+    )
+    inventory.add_argument("--output", required=True)
+
 
 def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     benchmark = commands.add_parser("benchmark", help="Run task-specific benchmark plugins.")

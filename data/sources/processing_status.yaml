@@ -55,6 +55,17 @@ sources:
     artifact_roots:
       - outputs/mining/phase1-round2-2026-07-22
       - outputs/mining/phase1-round2-hosted-2026-07-27
+  - source_id: phase1_manual_gold
+    state: curated
+    promotion_boundary: training_only
+    dossier: docs/mining-sources/phase1-manual-gold.md
+    verified_on: 2026-08-03
+    summary: >-
+      One hundred reviewed annotations are retained locally for benchmark reproduction and model
+      diagnostics. Their content is excluded from public Git and fingerprinted by the public local
+      artifact inventory.
+    artifact_roots:
+      - data/manual_gold
   - source_id: phase1_part2_leaked_bundle
     state: acquired
     promotion_boundary: training_only

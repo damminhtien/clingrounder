@@ -1,0 +1,1507 @@
+{
+  "schema_version": "medical-kg.local-artifact-inventory.v1",
+  "policy_path": "configs/repository/public-release.yaml",
+  "policy_sha256": "359a419bdf295df57f1c7c3794d431ef00519d45d07efd4a51c1bba2ffa9b27a",
+  "artifact_count": 147,
+  "total_bytes": 620849141,
+  "artifacts": [
+    {
+      "path": "data/heuristics/false_positive_blacklist.jsonl",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1668,
+      "sha256": "074d2f80c00e7e359a3b104d4f4d07da4f134dffcefcb6376f6e3f778c699d62"
+    },
+    {
+      "path": "data/heuristics/phase1_assertion_overlays.jsonl",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1583,
+      "sha256": "942f797098de325a9c481d2aba86dbd0a4a9f757424baebcf1937f0e55d3339b"
+    },
+    {
+      "path": "data/indexes/lexical_index.json",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 75555,
+      "sha256": "5a1bf343790231f9c66bdfe2976ded116513f34e36eead5c62b0ae0dbd6b3582"
+    },
+    {
+      "path": "data/manual_gold/1.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 8419,
+      "sha256": "98278e7d2f815b4d4f78c0f382f5127dedafa9dc8dbb407f2f5a90e5566109e5"
+    },
+    {
+      "path": "data/manual_gold/10.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 2823,
+      "sha256": "6db6e6ba44910c55c448748c3119814a406229cd7879dbd930b91b6d839cd4a8"
+    },
+    {
+      "path": "data/manual_gold/100.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 5203,
+      "sha256": "059da8c46578a4645ac849b39f226071586a56bfe46fa24f339af7a9bc0069d0"
+    },
+    {
+      "path": "data/manual_gold/11.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1677,
+      "sha256": "69fda66e63866672e7534e88e7395471b477308c9ed32ce128f6fa7d0e62558b"
+    },
+    {
+      "path": "data/manual_gold/12.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 4135,
+      "sha256": "0792ced6db77f1bb93f90c6672ac72c0e213f7e8ec52058ec016ca03d55e065d"
+    },
+    {
+      "path": "data/manual_gold/13.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 6282,
+      "sha256": "59c0c0e9b7132d3da244f7518f7e52e429d41bea3d293648ae3a216fff8c19d1"
+    },
+    {
+      "path": "data/manual_gold/14.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 2826,
+      "sha256": "e483afb6ead67f56dcfeeabcde77624993cf978feb69b6a886803092919de209"
+    },
+    {
+      "path": "data/manual_gold/15.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 712,
+      "sha256": "7d53af557fa0665ac2c873d645049f3c970b0fe843ab2c311dacd5fc4eb74924"
+    },
+    {
+      "path": "data/manual_gold/16.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 9275,
+      "sha256": "b7065f960a7f6b66b2a45c814d05a352c7f3f8f89eda5773788de1f855adaddc"
+    },
+    {
+      "path": "data/manual_gold/17.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 8932,
+      "sha256": "50f9953b674f0450e3a35b09ce496bbede6b84380819760b44cd5aa880a9af6b"
+    },
+    {
+      "path": "data/manual_gold/18.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 2012,
+      "sha256": "81fa5d45fb5f997ee4000317d608805d45332637bc60f5851fe076f3d7931cea"
+    },
+    {
+      "path": "data/manual_gold/19.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 3416,
+      "sha256": "bcd505629f1bebbddcd4f216f411139c6f9a1ffcd3c81ad8c6c488e1bedf8a10"
+    },
+    {
+      "path": "data/manual_gold/2.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 900,
+      "sha256": "480c552ad9a5b7c0ebfeb7ce83758c4a7607151f03a4cf4d19d8d60c5d91dad6"
+    },
+    {
+      "path": "data/manual_gold/20.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 10337,
+      "sha256": "4994fdcf2cd5c0a966b26c395d1e1fd7c4b304a6c87e6dd76850e041a5cc35c6"
+    },
+    {
+      "path": "data/manual_gold/21.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 906,
+      "sha256": "3619dfef15a7386177e4bdac446eaad3791d66e2024f64f01780226ac2973874"
+    },
+    {
+      "path": "data/manual_gold/22.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1031,
+      "sha256": "60beea51ab050f79b9c029ef957cdbf58abd47738b3a84e8218ef0537c0860e5"
+    },
+    {
+      "path": "data/manual_gold/23.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 8257,
+      "sha256": "bc3dc3f27c95765772cba99b5eee89d344cee86ba7665ccba5834f12e87e2f4c"
+    },
+    {
+      "path": "data/manual_gold/24.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 3540,
+      "sha256": "b5cb1b553692e90cdc913fba25f05752b4ff3fa657a29ca5aa9eef2532c49a1a"
+    },
+    {
+      "path": "data/manual_gold/25.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 651,
+      "sha256": "d27c20e84605b80aa2e758d0dd09fb27e1671b00e4d7529a7f7c1fe553cfe969"
+    },
+    {
+      "path": "data/manual_gold/26.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 786,
+      "sha256": "92e57f55d3d7f7642f54bcb584f18156dd823960a71b61f6a4f96fcd57f01788"
+    },
+    {
+      "path": "data/manual_gold/27.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 3882,
+      "sha256": "9c82ac96b07f1b73faf749b0017c64f9aec9de1a1b847ea826c9be78c0015b6d"
+    },
+    {
+      "path": "data/manual_gold/28.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 8158,
+      "sha256": "dbab18ef6b1e00c52d1cb4f215f8cb4738c750fb8068291da7c26bcbf2f90169"
+    },
+    {
+      "path": "data/manual_gold/29.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1218,
+      "sha256": "c90cafa358d39f352ae50d38aca475cf896f6211f79f3640c34967d1b0c23b15"
+    },
+    {
+      "path": "data/manual_gold/3.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 10153,
+      "sha256": "34f9bc17dc5da661b4cda0fb4a898a80bce8b8537917a6be7ba543aef2dc9734"
+    },
+    {
+      "path": "data/manual_gold/30.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 3091,
+      "sha256": "8d21dca27425af873168c71fb46eea02346d07cc2c4f0c213892b7d5c9749b6b"
+    },
+    {
+      "path": "data/manual_gold/31.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 884,
+      "sha256": "ce7c6bced5a26dd8f6e56c1be6ee317f005f85c4b8b2a4283c51141e36496685"
+    },
+    {
+      "path": "data/manual_gold/32.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 7069,
+      "sha256": "a0d5068dd28665fa3e39a278ba846c6661faaa20026dcdcb987295cbeb19e535"
+    },
+    {
+      "path": "data/manual_gold/33.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 4831,
+      "sha256": "a6cb4d4899681c124ac4242d6b0339c5b53ece08713802b2560cf3387c2b586e"
+    },
+    {
+      "path": "data/manual_gold/34.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 4289,
+      "sha256": "459cbeec6951948146db01d1c4d6d6c10a42ae88463aed5d52435da36004b9d5"
+    },
+    {
+      "path": "data/manual_gold/35.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 8683,
+      "sha256": "06eface078ba986470ee560eee30ed6acfd46d77b791b9a2b90b1c49507badb9"
+    },
+    {
+      "path": "data/manual_gold/36.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 6723,
+      "sha256": "b160cbbe9cc731c273d89c2432bb9b67c57e841753d7b2daad48d451388aef6e"
+    },
+    {
+      "path": "data/manual_gold/37.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 5999,
+      "sha256": "40438389e683ad0a058f907fe7d3a5e375955790c998945d1aa518d6da2d0c08"
+    },
+    {
+      "path": "data/manual_gold/38.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 3409,
+      "sha256": "fb8ce3b9e7db192a638f1f5d95f169314a38340dd69b172184f786abe6faa42b"
+    },
+    {
+      "path": "data/manual_gold/39.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1971,
+      "sha256": "bc94f73613403e4c8451078df6f40474e3d6b246e6b2a2dbcd14490f2ccf24df"
+    },
+    {
+      "path": "data/manual_gold/4.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 5857,
+      "sha256": "c16ed3b74634d35056c753d9ccb7ea0c6feaf88ab6f128695fdf28741c540330"
+    },
+    {
+      "path": "data/manual_gold/40.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 5417,
+      "sha256": "04bf04fdd458b6e1646234419d50c95a5513c9d34dd056ec02c11ca8427d7a0b"
+    },
+    {
+      "path": "data/manual_gold/41.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 11468,
+      "sha256": "86730ec4ee5e2fccf451b2effd7a55051580850c51a08af8913f453a4a7ab9e8"
+    },
+    {
+      "path": "data/manual_gold/42.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 3487,
+      "sha256": "3c72a7e334af6d8294f3990ec6cc6054cd32c8ab99ce6f91172f3101a5c89b4f"
+    },
+    {
+      "path": "data/manual_gold/43.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 4413,
+      "sha256": "ae5eba3e54d5fba4e1b056371d56fa8aaeaa1be056e5534481e2e3eb0f99c614"
+    },
+    {
+      "path": "data/manual_gold/44.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 7272,
+      "sha256": "206fd0bcec97ab79d9292c0381cf15da6e16f274b4a45a2cfc57873a5431651a"
+    },
+    {
+      "path": "data/manual_gold/45.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 2662,
+      "sha256": "c3c426edf2aee6de1bad230325d4ecd9ce21a6f212ec93b06e02bfc661b582d0"
+    },
+    {
+      "path": "data/manual_gold/46.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1172,
+      "sha256": "56ce26411402c40169bd56b04eaa8a2c23233f344701111dc7f28a696cd28f98"
+    },
+    {
+      "path": "data/manual_gold/47.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 4884,
+      "sha256": "d3720c43e7cec69cbca5809cd97127b05a9c985e941378069d3359f366a4c076"
+    },
+    {
+      "path": "data/manual_gold/48.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 7002,
+      "sha256": "b5495a0b016d8ed36000a2c170fa1dba082ffacec724e8d0518fa2c53fcbafd5"
+    },
+    {
+      "path": "data/manual_gold/49.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 2937,
+      "sha256": "814ed54653f4e945c023ad0aeacf3d884235852b5c1ed15f81586acc6267f529"
+    },
+    {
+      "path": "data/manual_gold/5.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 4209,
+      "sha256": "039097e9d443a828c8368bfd44cdd74852206153698ae33ba4ca5d1ff47a0ca3"
+    },
+    {
+      "path": "data/manual_gold/50.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 9958,
+      "sha256": "d13bf3389cf0e7f5eb60314b6caa1e215cdefa235cee0acd9a99d56a0b65901a"
+    },
+    {
+      "path": "data/manual_gold/51.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 4539,
+      "sha256": "e9270ec69ed72d27654c22e3fad54e5be7760ec04b6f8b433bdfe3452ebe240c"
+    },
+    {
+      "path": "data/manual_gold/52.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 2412,
+      "sha256": "a7892230d79221f39cff9cfc05a1cfcfed1184b7b0075451ba10c235d73e3362"
+    },
+    {
+      "path": "data/manual_gold/53.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 2229,
+      "sha256": "40626dd62a3815b197f5d0e5392611789f8581b816dbc20c01c012645587345f"
+    },
+    {
+      "path": "data/manual_gold/54.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 12582,
+      "sha256": "c026be435604d604aa324d10d513ce7959edffb9a0a81ba3d624f7cab12d2506"
+    },
+    {
+      "path": "data/manual_gold/55.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 628,
+      "sha256": "b7e953dbb62ec41e240035bcbf17ef3ea80db76c5a727168c203176fda91543d"
+    },
+    {
+      "path": "data/manual_gold/56.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 7769,
+      "sha256": "ab15b067910aa528ba8758f432ccf092763371c15ed095db4e23ca8bffceac9d"
+    },
+    {
+      "path": "data/manual_gold/57.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1016,
+      "sha256": "9c5678e482810b2f7d2201fa59fd85d8a002d1cf268629c2b0d6bb60fe2729bf"
+    },
+    {
+      "path": "data/manual_gold/58.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 11323,
+      "sha256": "961b4734ed62fd6e2dac4f84bdfb41366bcf609d06f2b5deac0b6e01e75aee4b"
+    },
+    {
+      "path": "data/manual_gold/59.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 5338,
+      "sha256": "b8bc04938aa43649a7a649574431c112f16cda83399292f62cf0b90b92a7e63b"
+    },
+    {
+      "path": "data/manual_gold/6.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1167,
+      "sha256": "93c42c03192f6e278957c2d99cc089bc6e737e8b2eaa1844d2394de29267cf03"
+    },
+    {
+      "path": "data/manual_gold/60.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1545,
+      "sha256": "8efb9bd31e72dfa9c6c4d1a89578630d789bb36790495bfa682309b8a1608a8e"
+    },
+    {
+      "path": "data/manual_gold/61.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1677,
+      "sha256": "12208e63400f38c3816b05151626a92bf5a3414e41dacb5a8e45fafd39db3574"
+    },
+    {
+      "path": "data/manual_gold/62.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1090,
+      "sha256": "fd3b462181fee79b4d8cc2d17e99fc8c11eed207b7809f6647ac6f6d862b21fb"
+    },
+    {
+      "path": "data/manual_gold/63.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 6834,
+      "sha256": "82671c3a5bc910a0e825fb0ef15e692d05a3296af3c9bf7927fcc39de59289e2"
+    },
+    {
+      "path": "data/manual_gold/64.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 6083,
+      "sha256": "0863b079ca6715cce30bfe26787bfd1b45229eefa933322ee01052d7ae4fcca8"
+    },
+    {
+      "path": "data/manual_gold/65.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 2126,
+      "sha256": "b3f09781149b8cd8a499bddef32f7631290bcdfff885d400f8a1f2544973776d"
+    },
+    {
+      "path": "data/manual_gold/66.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 7262,
+      "sha256": "b791e0cc5aab5b4965aababa583c8e782a66727ba72ff24f0a0a0b422d210fea"
+    },
+    {
+      "path": "data/manual_gold/67.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1599,
+      "sha256": "e765303f43236199a6cc249aa015d71f5ed25402b04d01bc7442022854b8cc75"
+    },
+    {
+      "path": "data/manual_gold/68.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 762,
+      "sha256": "8fb8f1d7bbd906741d319f6b73a08284cbcaa43024b1ee381f296a2344890248"
+    },
+    {
+      "path": "data/manual_gold/69.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 4208,
+      "sha256": "3a94276218b47fa9af7542a95d6c7fa6a006d4e72accc106b356d0e07f2c2e6d"
+    },
+    {
+      "path": "data/manual_gold/7.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 5969,
+      "sha256": "bcd60bc91656f05cfd3652d7db6e56c2a4d5b47eea366d580667ec2b65441fb7"
+    },
+    {
+      "path": "data/manual_gold/70.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 12424,
+      "sha256": "7f8a76c64f5d6d4fc4803e0a698b64d0bdf0915eee2b89206f5476f2daf82aab"
+    },
+    {
+      "path": "data/manual_gold/71.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 5760,
+      "sha256": "60e6bebcac69511115dca03079eb24410127e3ef02a0334b85038378ab72748f"
+    },
+    {
+      "path": "data/manual_gold/72.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 6606,
+      "sha256": "ba50b2223b029a70417961d18f55a4c345a7bbc8c16918e5e1e50b7f4ebbc061"
+    },
+    {
+      "path": "data/manual_gold/73.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 6300,
+      "sha256": "12a7d062b4dc8993b7ef0615dec432fde8c2ef7c21a44f781ab21eea4cdcf0e8"
+    },
+    {
+      "path": "data/manual_gold/74.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 7121,
+      "sha256": "84982de4bd0719ca5f720298b6fe2878adbad823803866896ca840ad5473b071"
+    },
+    {
+      "path": "data/manual_gold/75.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 5316,
+      "sha256": "3a11871fec42201f43aa2cdd8512a8f98e6a80cefca18b14dcef7068a57335b2"
+    },
+    {
+      "path": "data/manual_gold/76.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 6437,
+      "sha256": "04d2990d908aa1ba260377e76d89e65085309c7479cd7cd97c9e2ea515bbd638"
+    },
+    {
+      "path": "data/manual_gold/77.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 3458,
+      "sha256": "1e381d90b465d85154a2675b6a51458855d5be21222e02e9d9fabc6106aeff8b"
+    },
+    {
+      "path": "data/manual_gold/78.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 3022,
+      "sha256": "7b70911c74e9003a07d0791864733a8993848a826974aa3523facd1de279c88f"
+    },
+    {
+      "path": "data/manual_gold/79.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 851,
+      "sha256": "97449cdf386b5c2ec5c60d439e1a8ecf75b0dad50d16d3cc2bac463e25b62d25"
+    },
+    {
+      "path": "data/manual_gold/8.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 3064,
+      "sha256": "9581edc1a401e1e329730819087ecf832258d9c136e3c02333c52bb9860ec91c"
+    },
+    {
+      "path": "data/manual_gold/80.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1556,
+      "sha256": "09c868af5e5bdf63d7b5fdf7358686576aac3797fd7a4a92d88989cc174f4030"
+    },
+    {
+      "path": "data/manual_gold/81.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1184,
+      "sha256": "6e116fe72a07bcb31a07c1942ed9ab8dbe941c6ea964ab5263d703e235cf35a5"
+    },
+    {
+      "path": "data/manual_gold/82.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 5268,
+      "sha256": "fc8eee971c0d4f4bd1cd8161fe3362fa15d52bcca52bbb95265251d215d63e72"
+    },
+    {
+      "path": "data/manual_gold/83.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1220,
+      "sha256": "4dce34079a460968fad5195a07296e60184bf5637f3827bc9c58b98e4ccaee5c"
+    },
+    {
+      "path": "data/manual_gold/84.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 7456,
+      "sha256": "1b84f0817bdd2548939259a31930ce1f371eee33aa5377cef7b71021049de3d8"
+    },
+    {
+      "path": "data/manual_gold/85.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1750,
+      "sha256": "706f8e07c69105640f96123773ff17f38917bce899ae26a99faea62fe60f35f1"
+    },
+    {
+      "path": "data/manual_gold/86.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 2944,
+      "sha256": "b0e6447b47e61928310b4653fd2d82f0c22949f2a6e2d475e306a18afa81ad63"
+    },
+    {
+      "path": "data/manual_gold/87.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 2515,
+      "sha256": "ce6eb58c6d9aef812b44135cd10403a17d3ecac14b9b6477fb56ecb93ab81929"
+    },
+    {
+      "path": "data/manual_gold/88.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 3656,
+      "sha256": "efd591f553d49ede10d7c7da63c4da8fb6295b1a077cfde34a5a6266ae275a1c"
+    },
+    {
+      "path": "data/manual_gold/89.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 2026,
+      "sha256": "a54a577e4f57318d81db3c99540c3154965bd2f2341af16cdf8c2e506a72e0e9"
+    },
+    {
+      "path": "data/manual_gold/9.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 3203,
+      "sha256": "ed710996546b7e81dd19e220a21de5a789556890bab5fc7e50ae1af699000f79"
+    },
+    {
+      "path": "data/manual_gold/90.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 703,
+      "sha256": "d2ec1832f8fc94fa1c0bf822eaab1287648508c246755fffd560b81b4b96a447"
+    },
+    {
+      "path": "data/manual_gold/91.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 2738,
+      "sha256": "78754decca2c8e0e0b73cfd4477061bafe41f8feecb2ac038f45fccef517aaa1"
+    },
+    {
+      "path": "data/manual_gold/92.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1332,
+      "sha256": "85ba9de72c505a1164f9e0468f3d1e5bde956aeaf96219ad8a05a98ef40c0686"
+    },
+    {
+      "path": "data/manual_gold/93.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1028,
+      "sha256": "8c446b107a43f3fa6e0ada970991648dac19d4ffb87232548201e38442838561"
+    },
+    {
+      "path": "data/manual_gold/94.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 3208,
+      "sha256": "3561fbb3c30c81b044561c4a37d0ca454fdc2b386d93f7b16f963fbb8c873aed"
+    },
+    {
+      "path": "data/manual_gold/95.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 2147,
+      "sha256": "47ba3f43dd31b793e9047a38f16933ffa539d00896f689f49d4c6950a4e4d9cd"
+    },
+    {
+      "path": "data/manual_gold/96.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 7535,
+      "sha256": "ac47356be501bcea6fa7a6ff9a7eb60b1e1a94a2b0baa45a1bb973dc42bb9d13"
+    },
+    {
+      "path": "data/manual_gold/97.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 5450,
+      "sha256": "dceaac615fa90e53a55979487f0d778c7ff41b2502e8be2239d06bab9a7369ca"
+    },
+    {
+      "path": "data/manual_gold/98.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1667,
+      "sha256": "6066d93c9b6a04dcea144dafd9ebb98806139f6e2445472f71c9e4ddfef61b1f"
+    },
+    {
+      "path": "data/manual_gold/99.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1037,
+      "sha256": "ed6401c5f38388d2d0977d7053da80ad3742d5d1b15cc2dd11b0646f6f6cb629"
+    },
+    {
+      "path": "data/manual_gold/README.md",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 3467,
+      "sha256": "cf0af9f5699f1c9675a11f5eef1cab71c1ab5646523f40c5207d8b11e1b1c8b3"
+    },
+    {
+      "path": "data/manual_gold/calibrated_assertion_evidence.jsonl",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 4005,
+      "sha256": "49efd876948e270a4496883f6a8a32c253a1d9d07e8e84eceb85d2a8db8563ca"
+    },
+    {
+      "path": "data/manual_gold/candidate_audit.md",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 35532,
+      "sha256": "e71fd9ac8233935bec96090238bd8b5b4440f367986fa8c17625c747d5ffe44c"
+    },
+    {
+      "path": "data/manual_gold/compiled/annotation_knowledge.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 677137,
+      "sha256": "1a5040389f2cc70dfe04991d39d0b581591b8248a47180e94527204f45045b3f"
+    },
+    {
+      "path": "data/manual_gold/compiled/conflict_resolutions.jsonl",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 24384,
+      "sha256": "66ad744d5fc8f4e0bac923b7eebf3dd6a97e0d25a154e42568f3049609fb7c6e"
+    },
+    {
+      "path": "data/manual_gold/compiled/conflict_summary.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 82,
+      "sha256": "7b0af66ce620ac1212d301f1533d62e0392787a4787788efe23f543d727453f8"
+    },
+    {
+      "path": "data/manual_gold/compiled/phase1_annotation_policy.yaml",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 20570,
+      "sha256": "3214e1ec17f3a9d6c343e6d28ec28cbf597176a734cb6fe7d739a33e5b4da591"
+    },
+    {
+      "path": "data/manual_gold/compiled/policy_conflicts.csv",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 134,
+      "sha256": "1e97c6d2cf20a177e66d6e24a93b768eafc8ef3cd0a067c8ab75509138a9572b"
+    },
+    {
+      "path": "data/manual_gold/compiled/report.md",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 882,
+      "sha256": "07d1728a97605239fe458e4d32b1a0f3478e17cc00cf9fc3b0cbebd5fc580007"
+    },
+    {
+      "path": "data/manual_gold/conflict_decisions.jsonl",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 10586,
+      "sha256": "d74139f98588123f1af9fcb06af7f2028d77249bab65e6310f15f0221b6a2f46"
+    },
+    {
+      "path": "data/manual_gold/convention_decisions.jsonl",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 2899,
+      "sha256": "95a118d594a9f81394df4ab7b82d430046a917aec64cf34aba97c057835f2cfc"
+    },
+    {
+      "path": "data/manual_gold/entity_only_baseline.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 3246,
+      "sha256": "51c04a38466fb5e6df43ff0c630edd0e1d251620b1d8d577c562698ea8f34fd4"
+    },
+    {
+      "path": "data/manual_gold/holdout_manifest.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 26485,
+      "sha256": "8502f86512ec74a9741f4426667efb92eb5259fd60939ed30aebe47e9adad871"
+    },
+    {
+      "path": "data/manual_gold/model_holdout_baseline.json",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1178,
+      "sha256": "425ec67407af50197d4993f74b77285fa387ba6300e8cee86c77d82d1273fd14"
+    },
+    {
+      "path": "data/manual_gold/review_manifest.jsonl",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 141229,
+      "sha256": "c21235d8e8f5d941a6b9745ad3f6ee55c924ca1ca8e10e7c8e7f5476d27a59eb"
+    },
+    {
+      "path": "data/manual_gold/reviewed_candidate_concepts.jsonl",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 259201,
+      "sha256": "f2ae1f91729005ca51f35a5ffbf0fc33aa48e91c3bc34a2a8ff52a92f53503f8"
+    },
+    {
+      "path": "data/manual_gold/reviewed_candidate_map.jsonl",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 135483,
+      "sha256": "eff97f5f53f6a154a79def91565ee0d1217f0ea812a4c32afee946e39b6f4c43"
+    },
+    {
+      "path": "data/standards/icd10_vn/processed/06-byt-kem.layout.txt",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 25350269,
+      "sha256": "6ee8b03917d1cfcca4f3d5e25380561e249691f3bcd5e0a3e83b7860c9aa33b0"
+    },
+    {
+      "path": "data/standards/icd10_vn/processed/06-byt-kem.sample.tsv",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 346328,
+      "sha256": "8d1f8e7625fb7d67d155af04c4034e081d507feb20905f812a17c371e4b1b98c"
+    },
+    {
+      "path": "data/standards/icd10_vn/processed/06-byt-kem.tsv",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 118706661,
+      "sha256": "cba0961824ad71095d393805bdac2bf4078c4635e43977d1f6ae973da9b099cc"
+    },
+    {
+      "path": "data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 10099386,
+      "sha256": "3598730336de5cba96ce030c09380a63e26055e87b0bde189e0064c8fa6f5e51"
+    },
+    {
+      "path": "data/standards/icd10_vn/processed/tt06_icd10_extract.jsonl",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 4442222,
+      "sha256": "590511627c87993918c554ff2f08a04a3f8df2c9b4114789682e858d404798cd"
+    },
+    {
+      "path": "data/standards/icd10_vn/processed/tt06_icd10_extract_manifest.json",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 336,
+      "sha256": "8a871585815364ca94b043f24c919996a75afbe70ebff4567b5d7d577f414775"
+    },
+    {
+      "path": "data/standards/icd10_vn/processed/tt06_icd10_import_manifest.json",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 1006,
+      "sha256": "37b4c30bf388821def96a8354a5b1953b154e2fc366797654b079f68e15d2a57"
+    },
+    {
+      "path": "data/standards/icd10_vn/raw/06-byt-kem.pdf",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 21988472,
+      "sha256": "8639f5eeb77b571363dc841923095895d2498748f9bc6620f50710a6da9159e2"
+    },
+    {
+      "path": "data/standards/phase1_reviewed/allowed_standard_concepts.tsv",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 510,
+      "sha256": "4d24b5da9f0d1d302940c3170507ccb72d23a134b983ed069a3bc05c64fb5b38"
+    },
+    {
+      "path": "data/standards/phase1_seed_tt06_controlled_concepts.jsonl",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 251284,
+      "sha256": "b22639e7bc3cec814c8d87ce5e08c0f66c5e44cebd7a1e530f00f2614b5368e1"
+    },
+    {
+      "path": "data/standards/phase1_seed_tt06_controlled_lexical_index.json",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 63376,
+      "sha256": "f29c009f908a96aca5ad285a65bda8404871644aaeb012571524bf85830a6143"
+    },
+    {
+      "path": "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 341320,
+      "sha256": "24d4e3943c383355571243b4c3bb100ce90cb63b4f2a055ca29bc22f60a1ccdb"
+    },
+    {
+      "path": "data/standards/phase1_seed_tt06_rxnorm_controlled_lexical_index.json",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 121576,
+      "sha256": "b6d2a0f45b9dd37762d094170e1497d4ccddbd44f5e1f61bac2ae1b5f2ebd9b0"
+    },
+    {
+      "path": "data/standards/rxnorm/processed/rxnorm_06012026_to_07062026_comparison.json",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 1804,
+      "sha256": "89f2c3965ca2280708b8a1abc1b09f9d167a3245d74f26154c9aaeee556c85fd"
+    },
+    {
+      "path": "data/standards/rxnorm/processed/rxnorm_data_csv_profile.json",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 677,
+      "sha256": "2b3dec8e869b249c6f4f6aff56269469d1a1c185e274510db00098c462f449c1"
+    },
+    {
+      "path": "data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 46502437,
+      "sha256": "42faaadeb12222ec099f05c398f3ff858866cb694cbb6dc0cb193f0ea23359cb"
+    },
+    {
+      "path": "data/standards/rxnorm/processed/rxnorm_full_07062026_import_manifest.json",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 5446,
+      "sha256": "1681c1750cd8b9af56a4a12476e8d7d2920260f6da9c51ec7dcc8cb1a07a6ebc"
+    },
+    {
+      "path": "data/standards/rxnorm/processed/rxnorm_prescribable_06012026_concepts.jsonl",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 28800750,
+      "sha256": "30b99a7ed33224d906cacdacd15a470d70a512ea38703dcafc6d37e91f1b3d30"
+    },
+    {
+      "path": "data/standards/rxnorm/processed/rxnorm_prescribable_06012026_import_manifest.json",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 5060,
+      "sha256": "da4a535bf3ad1a0170a326144a107a8064f151169ad4f36f8c06ddcda6286ea4"
+    },
+    {
+      "path": "data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 28798243,
+      "sha256": "a24997240080023175b7b662d272fa869bee82e12eae5e5c01488384b98ce69a"
+    },
+    {
+      "path": "data/standards/rxnorm/processed/rxnorm_prescribable_07062026_import_manifest.json",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 5271,
+      "sha256": "b0f2d5020a049899ed7cb8a4ddc97d935d8678a8339e44efce7fbe1b08e93b82"
+    },
+    {
+      "path": "data/standards/rxnorm/raw/RxNorm_full_07062026.zip",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 259313098,
+      "sha256": "53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c"
+    },
+    {
+      "path": "data/standards/rxnorm/raw/RxNorm_full_prescribe_06012026.zip",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 73814435,
+      "sha256": "66a1f8d347168e009a8296e3b41555a12062d1116e4003d2eaad2ef63f2ded4a"
+    },
+    {
+      "path": "data/standards/source_versions.json",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 2626,
+      "sha256": "69fb7d02713f50334c56092497e28b73dbfbeb92f1e4dbbd2566e7fbec48bef7"
+    },
+    {
+      "path": "data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 21962,
+      "sha256": "8a9416031cab473c9c410f0f740adc57d82f6feb21ca1a2bd7fa1145d16b5105"
+    },
+    {
+      "path": "data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_import_manifest.json",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 588,
+      "sha256": "bb840880fcd25133aec35771fea2dd352f70cc8674b23b5c1ab8f7a4c2e33036"
+    },
+    {
+      "path": "data/standards/vn_clinical_lexicon/raw/reviewed_terms.tsv",
+      "rule_id": "terminology-source-and-derived-bytes",
+      "disposition": "manifest_only",
+      "source_ids": [
+        "vn_moh_guidelines",
+        "rxnorm_full_2026_07_06"
+      ],
+      "byte_size": 7334,
+      "sha256": "2d903bf2d266cf31e443e93de89eb9e7e7d4fb3021922756f44edb010e67963c"
+    }
+  ]
+}

@@ -50,6 +50,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.release",
         "audit_release",
     ),
+    "release_inventory": (
+        "medical_kg_nlp.cli.commands.release",
+        "inventory_local_artifacts",
+    ),
     "model_validate_token_dataset": (
         "medical_kg_nlp.cli.commands.model",
         "validate_token_dataset",

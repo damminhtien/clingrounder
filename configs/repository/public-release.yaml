@@ -10,6 +10,7 @@ required_tracked_paths:
   - data/sources/mining_registry.yaml
   - data/sources/processing_status.yaml
   - data/releases/open-ner-retrieval-v1.lock.json
+  - data/provenance/local-artifacts.json
   - docs/public-release.md
 
 rules:
@@ -17,6 +18,7 @@ rules:
     patterns:
       - data/sources/**
       - data/releases/**
+      - data/provenance/**
       - data/raw/.gitkeep
       - data/processed/.gitkeep
     disposition: redistributable
@@ -36,8 +38,9 @@ rules:
       - data/heuristics/phase1_assertion_overlays.jsonl
       - data/heuristics/false_positive_blacklist.jsonl
     disposition: local_only
-    source_ids: [phase1_part2_leaked_bundle]
+    source_ids: [phase1_manual_gold]
     rationale: Competition annotations and overlays are authorized locally but not redistributable.
+    inventory_local_bytes: true
 
   - id: terminology-source-and-derived-bytes
     patterns:
@@ -46,6 +49,7 @@ rules:
     disposition: manifest_only
     source_ids: [vn_moh_guidelines, rxnorm_full_2026_07_06]
     rationale: Full terminology bytes are restored from pinned sources and verified by manifests.
+    inventory_local_bytes: true
 
   - id: generated-run-artifacts
     patterns:

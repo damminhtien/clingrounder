@@ -10,6 +10,7 @@ import yaml
 from medical_kg_nlp.cli.parser import build_parser
 from medical_kg_nlp.governance.public_release import (
     audit_public_repository,
+    build_local_artifact_inventory,
     load_public_repository_policy,
 )
 
@@ -113,6 +114,43 @@ def test_public_release_policy_requires_notice_only_for_attributed_rules(
         load_public_repository_policy(path)
 
 
+def test_local_inventory_hashes_only_explicit_restricted_roots(tmp_path: Path) -> None:
+    private = tmp_path / "data" / "private" / "gold.json"
+    transient = tmp_path / "outputs" / "run.json"
+    private.parent.mkdir(parents=True)
+    transient.parent.mkdir(parents=True)
+    private.write_text("[]\n", encoding="utf-8")
+    transient.write_text("{}\n", encoding="utf-8")
+    policy = _write_policy(
+        tmp_path,
+        rules=[
+            {
+                "id": "private-gold",
+                "patterns": ["data/private/**"],
+                "disposition": "local_only",
+                "rationale": "Private labels stay outside Git.",
+                "inventory_local_bytes": True,
+                "source_ids": [],
+            },
+            {
+                "id": "transient-output",
+                "patterns": ["outputs/**"],
+                "disposition": "local_only",
+                "rationale": "Transient runs are not stable release inputs.",
+            },
+        ],
+    )
+
+    first = build_local_artifact_inventory(tmp_path, policy)
+    second = build_local_artifact_inventory(tmp_path, policy)
+
+    assert first == second
+    assert first.artifact_count == 1
+    assert first.artifacts[0].path == "data/private/gold.json"
+    assert first.artifacts[0].byte_size == 3
+    assert len(first.artifacts[0].sha256) == 64
+
+
 def test_release_audit_parser_is_task_neutral() -> None:
     args = build_parser().parse_args(
         ["release", "audit", "--policy", "policy.yaml", "--root", "."]
@@ -120,6 +158,11 @@ def test_release_audit_parser_is_task_neutral() -> None:
 
     assert args.handler == "release_audit"
     assert args.output is None
+
+    inventory = build_parser().parse_args(
+        ["release", "inventory", "--output", "local-artifacts.json"]
+    )
+    assert inventory.handler == "release_inventory"
 
 
 def _write_policy(
