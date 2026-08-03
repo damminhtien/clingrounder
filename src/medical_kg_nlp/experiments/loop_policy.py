@@ -161,12 +161,13 @@ AGENT_PLAYBOOKS: dict[str, AgentPlaybook] = {
             "src/medical_kg_nlp/experiments/loop_policy.py",
             "src/medical_kg_nlp/benchmarks/phase1/runner.py",
             "scripts/validate_phase1_submission.py",
-            "tests/test_phase1.py",
-            "tests/test_pipeline_report.py",
+            "tests/benchmarks/phase1/test_phase1.py",
+            "tests/benchmarks/phase1/test_pipeline_report.py",
             "tests/test_loop_engineer.py",
         ),
         commands=(
-            "uv run pytest tests/test_phase1.py tests/test_pipeline_report.py tests/test_loop_engineer.py -q",
+            "uv run pytest -o addopts='' tests/benchmarks/phase1/test_phase1.py "
+            "tests/benchmarks/phase1/test_pipeline_report.py tests/test_loop_engineer.py -q",
             "uv run ruff check .",
         ),
         guardrails=(
@@ -181,11 +182,12 @@ AGENT_PLAYBOOKS: dict[str, AgentPlaybook] = {
             "src/medical_kg_nlp/evaluation/pipeline_report.py",
             "src/medical_kg_nlp/benchmarks/phase1/runner.py",
             "scripts/validate_phase1_submission.py",
-            "tests/test_phase1.py",
+            "tests/benchmarks/phase1/test_phase1.py",
             "docs/evaluation.md",
         ),
         commands=(
-            "uv run pytest tests/test_phase1.py tests/test_pipeline_report.py -q",
+            "uv run pytest -o addopts='' tests/benchmarks/phase1/test_phase1.py "
+            "tests/benchmarks/phase1/test_pipeline_report.py -q",
             "uv run ruff check .",
         ),
         guardrails=(

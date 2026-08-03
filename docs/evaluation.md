@@ -235,7 +235,7 @@ database, FTS, and ANN decision.
 
 Terminology verification has three deliberately separate roles:
 
-- `tests/test_btc_phase1_sample.py` checks the organizer's executable span/type/assertion/candidate
+- `tests/benchmarks/phase1/test_btc_phase1_sample.py` checks the organizer's executable span/type/assertion/candidate
   convention only. Its benchmark-local vocabulary and reviewed mappings are not runtime defaults.
 - `tests/test_standard_release_contract.py` checks current TT06 and July 6, 2026 RxNorm manifests,
   profile paths, a July-only RxCUI, and typed repository queries against both full releases.

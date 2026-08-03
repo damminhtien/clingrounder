@@ -23,7 +23,7 @@ The exact example remains frozen in:
 ```text
 tests/fixtures/phase1/btc_medication_list_crlf.txt
 tests/fixtures/phase1/btc_medication_list_expected.json
-tests/test_btc_phase1_sample.py
+tests/benchmarks/phase1/test_btc_phase1_sample.py
 ```
 
 ## Compilation Policy

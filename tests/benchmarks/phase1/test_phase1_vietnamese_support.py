@@ -18,7 +18,7 @@ from medical_kg_nlp.benchmarks.phase1.vietnamese_support import (
 from medical_kg_nlp.ner.proposal import EntityProposal
 from medical_kg_nlp.schema.types import EntityType
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 
 
 def test_vietmed_verifier_and_qwen_remain_below_nine_billion_parameters() -> None:

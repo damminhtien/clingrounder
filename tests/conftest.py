@@ -6,19 +6,27 @@ import pytest
 
 
 _PRIVATE_PHASE1_TESTS = {
-    "tests/test_manual_gold.py::test_validate_complete_manual_gold_batch",
+    (
+        "tests/benchmarks/phase1/test_manual_gold.py::"
+        "test_validate_complete_manual_gold_batch"
+    ),
     "tests/test_rule_ner.py::test_rule_ner_phase1_latency_under_100ms_per_note",
 }
+_PHASE1_BENCHMARK_PREFIX = "tests/benchmarks/phase1/"
 
 
+@pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
-    """Skip tests that require the private Phase 1 corpus when it is unavailable.
+    """Classify optional benchmark tests and skip unavailable private-corpus checks.
 
-    The repository intentionally ignores ``data/raw/*``. Public GitHub Actions
-    runners therefore cannot execute corpus-wide validation or latency tests,
-    while local environments with the complete 100-document corpus still run
-    them normally.
+    Phase 1 tests live below one discoverable directory and run in nightly/full
+    verification. The repository intentionally ignores ``data/raw/*``; checks
+    requiring that corpus are skipped when its 100 source files are absent.
     """
+
+    for item in items:
+        if item.nodeid.startswith(_PHASE1_BENCHMARK_PREFIX):
+            item.add_marker(pytest.mark.benchmark)
 
     input_dir = Path("data/raw/input")
     corpus_files = list(input_dir.glob("*.txt")) if input_dir.is_dir() else []

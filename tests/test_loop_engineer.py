@@ -125,9 +125,11 @@ def test_loop_engineer_evaluation_path_uses_split_module_playbook() -> None:
         "src/medical_kg_nlp/experiments/loop_policy.py",
     }
     assert "src/medical_kg_nlp/experiments/loop_analysis.py" in loop_report["agent"]["brief"]
-    assert "uv run pytest tests/test_phase1.py tests/test_pipeline_report.py tests/test_loop_engineer.py -q" in (
-        action["commands"]
+    command = (
+        "uv run pytest -o addopts='' tests/benchmarks/phase1/test_phase1.py "
+        "tests/benchmarks/phase1/test_pipeline_report.py tests/test_loop_engineer.py -q"
     )
+    assert command in action["commands"]
 
 
 def test_loop_engineer_prefers_phase1_score_when_report_has_phase1_metrics() -> None:
