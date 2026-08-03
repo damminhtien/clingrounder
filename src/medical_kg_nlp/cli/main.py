@@ -12,6 +12,10 @@ __all__ = ["main"]
 
 _HANDLERS = {
     "pipeline_run": ("medical_kg_nlp.cli.commands.pipeline", "run_pipeline"),
+    "pipeline_inspect_config": (
+        "medical_kg_nlp.cli.commands.pipeline",
+        "inspect_pipeline_config",
+    ),
     "terminology_build": ("medical_kg_nlp.cli.commands.terminology", "build_index"),
     "terminology_query_set": (
         "medical_kg_nlp.cli.commands.terminology",

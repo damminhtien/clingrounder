@@ -31,6 +31,73 @@ def test_qwen_final_supervision_command_has_governed_defaults() -> None:
     assert args.extraction_mode == "recall_and_targeted"
 
 
+def test_pipeline_run_requires_an_explicit_profile() -> None:
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(
+            [
+                "pipeline",
+                "run",
+                "--input",
+                "data/samples/sample_notes.jsonl",
+                "--output",
+                "outputs/predictions.jsonl",
+            ]
+        )
+
+
+def test_pipeline_config_inspection_exposes_effective_defaults(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert (
+        main(
+            [
+                "pipeline",
+                "inspect-config",
+                "--config",
+                "configs/pipeline/clinical-baseline.yaml",
+                "--check-resources",
+            ]
+        )
+        == 0
+    )
+
+    report = json.loads(capsys.readouterr().out)
+    assert report["profile"]["id"] == "clinical-baseline"
+    assert report["effective_config"]["pipeline"]["max_candidates"] == 20
+    assert all(resource["exists"] for resource in report["resources"])
+
+
+def test_pipeline_run_writes_reproducibility_manifest(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    output = tmp_path / "predictions.jsonl"
+    assert (
+        main(
+            [
+                "pipeline",
+                "run",
+                "--config",
+                "configs/pipeline/clinical-baseline.yaml",
+                "--input",
+                "data/samples/sample_notes.jsonl",
+                "--output",
+                str(output),
+                "--parallel-backend",
+                "serial",
+            ]
+        )
+        == 0
+    )
+
+    command_report = json.loads(capsys.readouterr().out)
+    manifest = json.loads(Path(command_report["manifest"]).read_text(encoding="utf-8"))
+    assert manifest["schema_version"] == "medical-kg.pipeline-run.v1"
+    assert manifest["profile"]["profile"]["id"] == "clinical-baseline"
+    assert manifest["input"]["sha256"]
+    assert manifest["output"]["sha256"]
+
+
 def test_joint_span_final_fit_command_requires_independent_source_roles() -> None:
     args = build_parser().parse_args(
         [

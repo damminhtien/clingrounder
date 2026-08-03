@@ -84,6 +84,50 @@ models:
     )
 
 
+def test_showcase_profile_is_self_describing_and_portable() -> None:
+    resolved = ResolvedPipelineConfig.load(
+        "configs/pipeline/clinical-baseline.yaml",
+        require_profile=True,
+    )
+
+    assert resolved.profile is not None
+    assert resolved.profile.profile_id == "clinical-baseline"
+    report = resolved.inspection_report()
+    assert report["schema_version"] == "medical-kg.pipeline-profile.v1"
+    assert report["profile"]["maturity"] == "stable"
+    assert all(resource["exists"] for resource in report["resources"])
+    assert report["effective_config"]["pipeline"]["enable_context"] is True
+
+
+def test_reusable_profile_rejects_hidden_top_level_config(tmp_path: Path) -> None:
+    profile = tmp_path / "profile.yaml"
+    profile.write_text(
+        """\
+schema_version: medical-kg.pipeline-profile.v1
+profile:
+  id: typo
+  title: Typo profile
+  description: Invalid hidden setting
+  maturity: stable
+terminology: {}
+pipeline: {}
+magic_threshold: 0.9
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="Unknown pipeline config keys: magic_threshold"):
+        ResolvedPipelineConfig.load(profile, require_profile=True)
+
+
+def test_reusable_profile_requires_metadata(tmp_path: Path) -> None:
+    profile = tmp_path / "profile.yaml"
+    profile.write_text("terminology: {}\npipeline: {}\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="requires a profile block"):
+        ResolvedPipelineConfig.load(profile, require_profile=True)
+
+
 def test_rebased_pipeline_profile_round_trips_effective_paths(tmp_path: Path) -> None:
     source_dir = tmp_path / "source"
     source_dir.mkdir()

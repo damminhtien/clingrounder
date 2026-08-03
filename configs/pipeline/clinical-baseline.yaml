@@ -1,0 +1,28 @@
+schema_version: medical-kg.pipeline-profile.v1
+profile:
+  id: clinical-baseline
+  title: Deterministic clinical NLP baseline
+  description: >-
+    Portable rule, assertion, terminology-linking, relation, and validation workflow over the
+    small redistributable dictionaries included with the repository.
+  maturity: stable
+  required_extras: []
+  tags: [clinical-nlp, vietnamese, deterministic, quickstart]
+
+terminology:
+  recognition_path: ../../data/dictionaries/seed_concepts.jsonl
+  abbreviation_path: ../../data/dictionaries/abbreviations.jsonl
+  alias_overlay_path: ../../data/dictionaries/vietnamese_medical_alias.jsonl
+  cache_dir: ../../.cache/medical-kg/terminology
+
+pipeline:
+  version: 0.3.0-clinical-baseline
+  enable_context: true
+  enable_linking: true
+  enable_candidate_reranking: true
+  enable_graph_evidence_reranking: false
+  enable_entity_kg_validation: true
+  enable_relations: true
+  enable_relation_kg_validation: true
+  max_candidates: 20
+  candidate_sources: [exact, abbreviation, fuzzy, char_ngram, bm25]

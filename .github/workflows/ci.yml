@@ -47,6 +47,7 @@ jobs:
       - name: Pipeline smoke
         run: |
           .venv/bin/medical-kg pipeline run \
+            --config configs/pipeline/clinical-baseline.yaml \
             --input data/samples/sample_notes.jsonl \
             --output outputs/predictions.jsonl
           .venv/bin/medical-kg validate \

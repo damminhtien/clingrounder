@@ -33,7 +33,7 @@ test-targeted:
 	$(PYTHON) -m pytest tests/test_schema.py tests/test_offset_mapping.py tests/test_kg_constraints.py -q
 
 pipeline:
-	$(PYTHON) -m medical_kg_nlp.cli pipeline run --input data/samples/sample_notes.jsonl --output outputs/predictions.jsonl
+	$(PYTHON) -m medical_kg_nlp.cli pipeline run --config configs/pipeline/clinical-baseline.yaml --input data/samples/sample_notes.jsonl --output outputs/predictions.jsonl
 
 validate:
 	$(PYTHON) -m medical_kg_nlp.cli validate --pred outputs/predictions.jsonl --documents data/samples/sample_notes.jsonl --dictionary data/dictionaries/seed_concepts.jsonl

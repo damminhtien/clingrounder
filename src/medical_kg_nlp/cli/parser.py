@@ -134,11 +134,31 @@ def _kg_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) ->
 def _pipeline_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     pipeline = commands.add_parser("pipeline", help="Run pipeline operations.")
     operations = pipeline.add_subparsers(dest="pipeline_command", required=True)
+    inspect = operations.add_parser(
+        "inspect-config",
+        help="Resolve a self-describing profile and print every effective setting.",
+    )
+    inspect.set_defaults(handler="pipeline_inspect_config")
+    inspect.add_argument("--config", required=True)
+    inspect.add_argument(
+        "--check-resources",
+        action="store_true",
+        help="Exit non-zero when a declared file or index is missing.",
+    )
+
     run = operations.add_parser("run", help="Run the configured pipeline over JSONL documents.")
     run.set_defaults(handler="pipeline_run")
     run.add_argument("--input", required=True)
     run.add_argument("--output", required=True)
-    run.add_argument("--config")
+    run.add_argument(
+        "--config",
+        required=True,
+        help="Self-describing pipeline profile; no implicit CLI profile is selected.",
+    )
+    run.add_argument(
+        "--manifest",
+        help="Run manifest path; defaults to <output>.manifest.json.",
+    )
     run.add_argument("--dictionary")
     run.add_argument("--abbreviations")
     run.add_argument("--run-root")
