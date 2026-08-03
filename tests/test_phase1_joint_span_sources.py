@@ -13,6 +13,7 @@ from medical_kg_nlp.benchmarks.phase1.joint_span_sources import (
     build_phase1_rule_source_rows,
     build_phase1_token_model_proposal_rows,
     load_phase1_joint_span_source_rows,
+    verify_phase1_joint_span_source_artifact,
 )
 from medical_kg_nlp.benchmarks.phase1.joint_span_token_source import (
     Phase1TokenSourceConfig,
@@ -208,6 +209,63 @@ def test_token_source_artifact_is_complete_and_reloads_with_raw_offsets(tmp_path
     assert load_phase1_joint_span_source_rows(output, corpus)["1"][0]["text"] == "đau ngực"
     manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["provenance"]["checkpoint_sha256"] == sha256_directory(model)
+
+
+def test_source_artifact_requires_explicit_safe_provenance(tmp_path: Path) -> None:
+    corpus = Phase1ReviewedCorpus(
+        source_texts={"1": "ho"},
+        gold_rows={"1": ()},
+        split_by_document={"1": "train"},
+    )
+    source = tmp_path / "source"
+    consensus = source / "consensus"
+    consensus.mkdir(parents=True)
+    (consensus / "1.json").write_text("[]\n", encoding="utf-8")
+    (source / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "phase1-joint-span-source.v1",
+                "document_count": 1,
+                "round2_included": False,
+                "friend31_included": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    artifact = verify_phase1_joint_span_source_artifact(source, corpus)
+
+    assert artifact["document_count"] == 1
+    assert artifact["schema_version"] == "phase1-joint-span-source.v1"
+
+
+def test_source_artifact_rejects_missing_or_unsafe_provenance(tmp_path: Path) -> None:
+    corpus = Phase1ReviewedCorpus(
+        source_texts={"1": "ho"},
+        gold_rows={"1": ()},
+        split_by_document={"1": "train"},
+    )
+    source = tmp_path / "source"
+    consensus = source / "consensus"
+    consensus.mkdir(parents=True)
+    (consensus / "1.json").write_text("[]\n", encoding="utf-8")
+    (source / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "phase1-joint-span-source.v1",
+                "document_count": 1,
+                "round2_included": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    try:
+        verify_phase1_joint_span_source_artifact(source, corpus)
+    except ValueError as error:
+        assert "round2_included=true" in str(error)
+    else:  # pragma: no cover - documents the required rejection.
+        raise AssertionError("Unsafe source provenance must be rejected")
 
 
 @dataclass(frozen=True)

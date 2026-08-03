@@ -56,6 +56,17 @@ def test_final_fit_preparation_aligns_rule_and_qwen_with_provenance(tmp_path: Pa
     consensus.mkdir(parents=True)
     _write_source(consensus / "1.json", "ho", 10, 12)
     _write_source(consensus / "authorized_gt:1.json", "sốt", 10, 13)
+    (qwen / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "phase1-joint-span-source.v1",
+                "document_count": 2,
+                "round2_included": False,
+                "friend31_included": False,
+            }
+        ),
+        encoding="utf-8",
+    )
 
     report = prepare_phase1_joint_span_final_fit(
         corpus,
@@ -94,6 +105,45 @@ def test_final_fit_preparation_rejects_verifier_only_source(tmp_path: Path) -> N
         assert "Verifier-only" in str(error)
     else:  # pragma: no cover - documents the required rejection.
         raise AssertionError("Verifier-only source must be rejected")
+
+
+def test_final_fit_preparation_rejects_round2_source_provenance(tmp_path: Path) -> None:
+    corpus = Phase1FinalSupervisionCorpus(
+        reviewed=Phase1ReviewedCorpus(
+            source_texts={"1": "ho"},
+            gold_rows={"1": (_row("ho", 0, 2),)},
+            split_by_document={"1": "train"},
+        ),
+        source_by_document={"1": "manual_gold"},
+        manifest={},
+    )
+    source = tmp_path / "invalid"
+    consensus = source / "consensus"
+    consensus.mkdir(parents=True)
+    _write_source(consensus / "1.json", "ho", 0, 2)
+    (source / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "phase1-joint-span-source.v1",
+                "document_count": 1,
+                "round2_included": True,
+                "friend31_included": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    try:
+        prepare_phase1_joint_span_final_fit(
+            corpus,
+            DictionaryStore(()),
+            model_sources={"qwen": (source, ProposalSourceRole.LLM)},
+            output_dir=tmp_path / "prepared",
+        )
+    except ValueError as error:
+        assert "round2_included=true" in str(error)
+    else:  # pragma: no cover - documents the required rejection.
+        raise AssertionError("Round 2 source provenance must be rejected")
 
 
 def _row(text: str, start: int, end: int) -> dict[str, object]:

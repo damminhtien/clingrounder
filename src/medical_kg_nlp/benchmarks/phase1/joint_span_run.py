@@ -27,6 +27,7 @@ from medical_kg_nlp.benchmarks.phase1.joint_span_sources import (
     build_phase1_medication_parser_source_rows,
     build_phase1_rule_source_rows,
     load_phase1_joint_span_source_rows,
+    verify_phase1_joint_span_source_artifact,
 )
 from medical_kg_nlp.benchmarks.phase1.joint_span_verifier import (
     HuggingFacePhase1JointSpanVerifier,
@@ -262,6 +263,10 @@ def run_phase1_joint_span(spec: Phase1JointSpanRunSpec) -> dict[str, Any]:
         "medication_parser": ProposalSourceRole.RULE,
         **{source.name: source.role for source in spec.model_sources},
     }
+    source_artifacts = {
+        source.name: verify_phase1_joint_span_source_artifact(source.artifact.path, corpus)
+        for source in spec.model_sources
+    }
     proposal_sources = {
         "rule": build_phase1_rule_source_rows(corpus, dictionary),
         "dictionary_trie": build_phase1_dictionary_trie_source_rows(corpus, dictionary),
@@ -335,6 +340,7 @@ def run_phase1_joint_span(spec: Phase1JointSpanRunSpec) -> dict[str, Any]:
                 {"name": source.name, "role": source.role.value, "sha256": source.artifact.sha256}
                 for source in spec.model_sources
             ],
+            "model_source_artifacts": source_artifacts,
             "selection_policy": _selection_policy_payload(calibration.selection_policy),
             "candidate_source_priority": list(spec.candidate_source_priority),
             "assertion_regimes": list(spec.assertion_regimes),

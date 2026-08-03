@@ -16,6 +16,7 @@ from medical_kg_nlp.benchmarks.phase1.joint_span_sources import (
     build_phase1_medication_parser_source_rows,
     build_phase1_rule_source_rows,
     load_phase1_joint_span_source_rows,
+    verify_phase1_joint_span_source_artifact,
 )
 from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRole
 from medical_kg_nlp.benchmarks.phase1.reviewed_corpus import Phase1ReviewedCorpus
@@ -80,6 +81,7 @@ def prepare_phase1_joint_span_supervision(
         parsed_role = ProposalSourceRole(role)
         if parsed_role is ProposalSourceRole.VERIFIER:
             raise ValueError("Verifier-only evidence cannot be a joint span lattice source")
+        artifact = verify_phase1_joint_span_source_artifact(source_path, corpus)
         source_roles[name] = parsed_role
         source_rows[name] = load_phase1_joint_span_source_rows(source_path, corpus)
         # INVARIANT: directory contents, not a user-provided label, pin the source revision.
@@ -87,6 +89,8 @@ def prepare_phase1_joint_span_supervision(
             "path": str(source_path),
             "sha256": sha256_directory(source_path),
             "role": parsed_role.value,
+            "manifest_sha256": artifact["manifest_sha256"],
+            "schema_version": artifact["schema_version"],
         }
 
     matrix = build_phase1_joint_span_proposal_matrix(

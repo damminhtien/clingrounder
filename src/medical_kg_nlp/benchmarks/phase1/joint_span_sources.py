@@ -25,7 +25,7 @@ from medical_kg_nlp.ontology.phase1 import PHASE1_TYPE_BY_ENTITY_TYPE
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.types import EntityType
 from medical_kg_nlp.mining.io import write_json, write_text
-from medical_kg_nlp.utils.hashing import sha256_directory
+from medical_kg_nlp.utils.hashing import sha256_directory, sha256_file
 
 __all__ = [
     "EntityProposalExtractorPort",
@@ -35,8 +35,16 @@ __all__ = [
     "build_phase1_rule_source_rows",
     "build_phase1_token_model_proposal_rows",
     "load_phase1_joint_span_source_rows",
+    "verify_phase1_joint_span_source_artifact",
     "write_phase1_joint_span_source_artifact",
 ]
+
+_SOURCE_ARTIFACT_SCHEMAS = frozenset(
+    {
+        "phase1-joint-span-source.v1",
+        "phase1-qwen-exact-quote-corpus.v1",
+    }
+)
 
 
 class EntityProposalExtractorPort(Protocol):
@@ -44,6 +52,51 @@ class EntityProposalExtractorPort(Protocol):
 
     def extract(self, source_text: str) -> Sequence[EntityAnnotation]:
         """Return independently projected proposal entities for one source text."""
+
+
+def verify_phase1_joint_span_source_artifact(
+    source_dir: str | Path,
+    corpus: Phase1ReviewedCorpus,
+) -> dict[str, Any]:
+    """Validate a complete proposal source before it can enter final verifier supervision.
+
+    This guard sits before source loading rather than relying on filenames or caller intent.
+    Source artifacts from Round 2, Friend31, or an incomplete model run cannot enter OOF/final
+    fitting merely because their per-document JSON happens to share the expected shape.
+
+    PRIVACY: the manifest records only fingerprints and provenance flags.  It never inspects or
+    copies the source texts held by ``corpus``.
+    """
+
+    root = Path(source_dir)
+    manifest_path = root / "manifest.json"
+    if not root.is_dir() or not manifest_path.is_file():
+        raise FileNotFoundError(f"Joint span source artifact manifest is absent: {manifest_path}")
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise ValueError(f"Joint span source artifact has invalid manifest JSON: {manifest_path}") from error
+    if not isinstance(payload, Mapping):
+        raise ValueError("Joint span source artifact manifest must be an object")
+    schema = payload.get("schema_version")
+    if schema not in _SOURCE_ARTIFACT_SCHEMAS:
+        raise ValueError(f"Unsupported joint span source artifact schema: {schema!r}")
+    _require_explicit_safe_provenance(payload)
+    document_count = _declared_document_count(payload)
+    if document_count != len(corpus.source_texts):
+        raise ValueError(
+            "Joint span source artifact document count differs from the governed corpus: "
+            f"artifact={document_count}, corpus={len(corpus.source_texts)}"
+        )
+    # INVARIANT: revalidate every persisted span against the exact source corpus before source
+    # fusion.  This also proves the root/consensus layout covers every document ID exactly once.
+    load_phase1_joint_span_source_rows(root, corpus)
+    return {
+        "schema_version": str(schema),
+        "manifest_sha256": sha256_file(manifest_path),
+        "directory_sha256": sha256_directory(root),
+        "document_count": document_count,
+    }
 
 
 def build_phase1_dictionary_trie_source_rows(
@@ -276,6 +329,53 @@ def load_phase1_joint_span_source_rows(
     if unexpected:
         raise ValueError(f"Joint span source has unexpected documents: {sorted(unexpected)}")
     return rows_by_document
+
+
+def _require_explicit_safe_provenance(payload: Mapping[str, Any]) -> None:
+    """Require affirmative exclusion of forbidden training/runtime sources.
+
+    A missing value is not equivalent to ``false``.  This prevents a legacy artifact with no
+    provenance contract from silently joining the supervised lattice.
+    """
+
+    for key in ("round2_included", "friend31_included"):
+        values = tuple(_nested_boolean_values(payload, key))
+        if not values:
+            raise ValueError(f"Joint span source artifact lacks explicit {key} provenance")
+        if any(values):
+            raise ValueError(f"Joint span source artifact rejects {key}=true")
+
+
+def _nested_boolean_values(value: object, target_key: str) -> list[bool]:
+    """Collect explicit provenance booleans without interpreting unrelated string fields."""
+
+    values: list[bool] = []
+    if isinstance(value, Mapping):
+        for key, child in value.items():
+            if key == target_key:
+                if not isinstance(child, bool):
+                    raise ValueError(f"Joint span source provenance {target_key} must be boolean")
+                values.append(child)
+            values.extend(_nested_boolean_values(child, target_key))
+    elif isinstance(value, list):
+        for child in value:
+            values.extend(_nested_boolean_values(child, target_key))
+    return values
+
+
+def _declared_document_count(payload: Mapping[str, Any]) -> int:
+    """Read the count from either native or Qwen exact-quote source manifests."""
+
+    direct = payload.get("document_count")
+    if isinstance(direct, int) and not isinstance(direct, bool) and direct >= 1:
+        return direct
+    inputs = payload.get("inputs")
+    if isinstance(inputs, Mapping):
+        documents = inputs.get("documents")
+        count = documents.get("document_count") if isinstance(documents, Mapping) else None
+        if isinstance(count, int) and not isinstance(count, bool) and count >= 1:
+            return count
+    raise ValueError("Joint span source artifact has no valid document count")
 
 
 def build_phase1_token_model_proposal_rows(

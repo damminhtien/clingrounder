@@ -1152,6 +1152,9 @@ def materialize_phase1_joint_span_token_source_command(args: argparse.Namespace)
         source_name=args.source_name,
     )
     report["final_supervision"] = corpus.manifest
+    # INVARIANT: the source verifier requires explicit provenance on the persisted artifact, not
+    # only in the transient CLI report printed to the terminal.
+    write_json(Path(args.output_dir) / "manifest.json", report)
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 
