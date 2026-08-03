@@ -26,10 +26,7 @@ from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
 from medical_kg_nlp.ner.rule_engine import RuleNerEngine, RuleNerEngineResult
 from medical_kg_nlp.ner.span_resolver import EvidenceWeightedSpanResolver
 from medical_kg_nlp.ner.type_resolver import ContextualEntityTypeResolver
-from medical_kg_nlp.ontology.false_positive import (
-    DEFAULT_FALSE_POSITIVE_PATH,
-    load_false_positive_rules,
-)
+from medical_kg_nlp.ontology.false_positive import load_false_positive_rules
 from medical_kg_nlp.schema.annotation import (
     AmbiguousEntityProposal,
     EntityAnnotation,
@@ -47,11 +44,13 @@ class RuleBasedNER:
         self,
         store: DictionaryStore,
         *,
-        false_positive_path: str | Path | None = DEFAULT_FALSE_POSITIVE_PATH,
+        false_positive_path: str | Path | None = None,
         disease_symptom_fallback: Literal["disease", "abstain"] = "disease",
         contextual_alias_rules: tuple[ContextualAliasRule, ...] = (),
     ) -> None:
         matcher = DictionaryMatcher(store.aliases_for_ner())
+        # Benchmark-calibrated suppression tables are optional dependencies. Keeping the default
+        # empty prevents local competition artifacts from changing a reusable pipeline silently.
         false_positive_rules = load_false_positive_rules(false_positive_path)
         type_resolver = ContextualEntityTypeResolver(
             disease_symptom_fallback=disease_symptom_fallback,

@@ -43,6 +43,7 @@ terminology:
   abbreviation_path: ../../data/abbreviations.jsonl
   alias_overlay_path: ../../data/vietnamese_aliases.jsonl
   contextual_alias_path: ../../data/contextual_aliases.yaml
+  false_positive_path: ../../data/false_positive_rules.jsonl
 pipeline:
   enable_relations: false
   enable_relation_kg_validation: false
@@ -81,6 +82,9 @@ models:
     )
     assert resolved.factory_config.contextual_alias_path == str(
         tmp_path / "project" / "data" / "contextual_aliases.yaml"
+    )
+    assert resolved.factory_config.false_positive_path == str(
+        tmp_path / "project" / "data" / "false_positive_rules.jsonl"
     )
 
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -14,7 +15,6 @@ from medical_kg_nlp.benchmarks.phase1.phase1 import (
     Phase1SelectiveExportConfig,
     _maximum_weight_assignment,
     build_phase1_report,
-    load_calibrated_assertion_map,
     load_reviewed_candidate_map,
     load_phase1_text_documents,
     prediction_to_phase1_entities,
@@ -25,6 +25,7 @@ from medical_kg_nlp.benchmarks.phase1.phase1 import (
     write_phase1_output_dir,
     zip_phase1_output_dir,
 )
+from medical_kg_nlp.benchmarks.phase1.assertion_overlays import Phase1AssertionOverlay
 from medical_kg_nlp.benchmarks.phase1.phase1_submission_analysis import build_phase1_submission_analysis
 from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
 from medical_kg_nlp.schema.annotation import (
@@ -531,7 +532,17 @@ def test_prediction_to_phase1_entities_exports_negated_historical_multilabel() -
         "test",
     )
 
-    rows = prediction_to_phase1_entities(prediction, source_text=text)
+    rows = prediction_to_phase1_entities(
+        prediction,
+        source_text=text,
+        assertion_overlays=(
+            Phase1AssertionOverlay(
+                assertion="isHistorical",
+                entity_types=(EntityType.DISEASE.value,),
+                left_regex=re.compile(r"tiền sử\s*$", re.IGNORECASE),
+            ),
+        ),
+    )
 
     assert rows[0]["assertions"] == ["isNegated", "isHistorical"]
     assert validate_phase1_entities(rows, text) == []
@@ -551,7 +562,22 @@ def test_prediction_to_phase1_entities_exports_negated_family_history_multilabel
         "test",
     )
 
-    rows = prediction_to_phase1_entities(prediction, source_text=text)
+    rows = prediction_to_phase1_entities(
+        prediction,
+        source_text=text,
+        assertion_overlays=(
+            Phase1AssertionOverlay(
+                assertion="isFamily",
+                entity_types=(EntityType.DISEASE.value,),
+                left_regex=re.compile(r"tiền sử gia đình\s*$", re.IGNORECASE),
+            ),
+            Phase1AssertionOverlay(
+                assertion="isHistorical",
+                entity_types=(EntityType.DISEASE.value,),
+                left_regex=re.compile(r"tiền sử gia đình\s*$", re.IGNORECASE),
+            ),
+        ),
+    )
 
     assert rows[0]["assertions"] == ["isNegated", "isFamily", "isHistorical"]
     assert validate_phase1_entities(rows, text) == []
@@ -588,7 +614,17 @@ def test_prediction_to_phase1_entities_limits_allergy_history_overlay_to_drugs()
         "test",
     )
 
-    rows = prediction_to_phase1_entities(prediction, source_text=text)
+    rows = prediction_to_phase1_entities(
+        prediction,
+        source_text=text,
+        assertion_overlays=(
+            Phase1AssertionOverlay(
+                assertion="isHistorical",
+                entity_types=(EntityType.DRUG.value,),
+                left_regex=re.compile(r"Dị ứng:\s*Dị ứng\s*$", re.IGNORECASE),
+            ),
+        ),
+    )
     by_text = {row["text"]: row for row in rows}
 
     assert by_text["furosemide"]["assertions"] == ["isHistorical"]
@@ -839,28 +875,22 @@ def test_phase1_configs_separate_entity_only_and_full_execution() -> None:
     assert selective["selective"]["candidates"]["enabled"] is False
     assert selective["pipeline"]["enable_context"] is True
 
-    reviewed = load_reviewed_candidate_map(
-        selective_candidates["selective"]["candidates"]["reviewed_map"]
-    )
-    calibrated_evidence = load_calibrated_assertion_map(
-        selective_candidates["selective"]["assertions"]["calibrated_evidence_map"]
-    )
-    parsed = Phase1SelectiveExportConfig.from_mapping(
-        selective_candidates["selective"],
-        reviewed_candidates=reviewed,
-        calibrated_assertion_evidence=calibrated_evidence,
-    )
-    assert parsed.candidate_enabled is True
-    assert parsed.candidate_source_thresholds == {
-        (CodeSystem.ICD10, "dictionary_exact"): 0.99505,
-        (CodeSystem.RXNORM, "dictionary_exact"): 0.989362,
+    candidate_config = selective_candidates["selective"]["candidates"]
+    assertion_config = selective_candidates["selective"]["assertions"]
+    assert candidate_config["enabled"] is True
+    assert candidate_config["source_thresholds"] == {
+        "ICD-10": {"dictionary_exact": 0.99505},
+        "RxNorm": {"dictionary_exact": 0.989362},
     }
+    assert str(candidate_config["reviewed_map"]).startswith("data/manual_gold/")
+    assert str(assertion_config["calibrated_evidence_map"]).startswith(
+        "data/manual_gold/"
+    )
     assert selective_candidates["pipeline"]["link_emit_probabilities_by_source"] == {
         "ICD-10:dictionary_exact": 0.99505,
         "RxNorm:dictionary_exact": 0.989362,
     }
-    assert parsed.assertion_require_calibrated_evidence is True
-    assert parsed.calibrated_assertion_evidence
+    assert assertion_config["require_calibrated_evidence"] is True
 
 
 def test_stable_phase1_config_root_does_not_advertise_selective_mode() -> None:

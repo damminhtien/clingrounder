@@ -1,18 +1,22 @@
+"""Context-sensitive suppression rules for dictionary entity proposals.
+
+The rule engine is reusable; rule inventories are supplied by the application or
+benchmark that owns them. Importing the package never discovers repository-local
+heuristics implicitly.
+"""
+
 from __future__ import annotations
 
 import json
 import re
 from dataclasses import dataclass
-from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
 from medical_kg_nlp.utils.text import normalize_for_match
 
 
-DEFAULT_FALSE_POSITIVE_PATH = (
-    Path(__file__).resolve().parents[3] / "data" / "heuristics" / "false_positive_blacklist.jsonl"
-)
+__all__ = ["FalsePositiveRule", "load_false_positive_rules"]
 
 
 @dataclass(frozen=True)
@@ -59,19 +63,15 @@ class FalsePositiveRule:
 
 
 def load_false_positive_rules(
-    path: str | Path | None = DEFAULT_FALSE_POSITIVE_PATH,
+    path: str | Path | None = None,
 ) -> tuple[FalsePositiveRule, ...]:
+    """Load an explicitly selected rule table, or no rules when omitted."""
+
     if path is None:
         return ()
     rule_path = Path(path)
     if not rule_path.exists():
-        if rule_path != DEFAULT_FALSE_POSITIVE_PATH:
-            raise FileNotFoundError(f"False-positive rule file does not exist: {rule_path}")
-        resource = files("medical_kg_nlp").joinpath("resources/false_positive_blacklist.jsonl")
-        if not resource.is_file():
-            raise FileNotFoundError("Packaged false-positive rule resource is missing.")
-        with resource.open("r", encoding="utf-8") as handle:
-            return _load_rules(handle, Path(str(resource)))
+        raise FileNotFoundError(f"False-positive rule file does not exist: {rule_path}")
     with rule_path.open("r", encoding="utf-8") as handle:
         return _load_rules(handle, rule_path)
 

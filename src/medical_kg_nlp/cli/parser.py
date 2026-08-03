@@ -364,6 +364,10 @@ def _register_phase1_benchmark_parser(
         default="pipeline",
     )
     submission.add_argument(
+        "--assertion-overlay",
+        help="Optional Phase 1 assertion-overlay JSONL selected explicitly by the benchmark.",
+    )
+    submission.add_argument(
         "--candidate-policy",
         choices=("empty", "pipeline"),
         default="pipeline",

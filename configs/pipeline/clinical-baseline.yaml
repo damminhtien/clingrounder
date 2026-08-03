@@ -13,6 +13,8 @@ terminology:
   recognition_path: ../../data/dictionaries/seed_concepts.jsonl
   abbreviation_path: ../../data/dictionaries/abbreviations.jsonl
   alias_overlay_path: ../../data/dictionaries/vietnamese_medical_alias.jsonl
+  # Suppression policies are domain/benchmark resources and must be selected explicitly.
+  false_positive_path: null
   cache_dir: ../../.cache/medical-kg/terminology
 
 pipeline:

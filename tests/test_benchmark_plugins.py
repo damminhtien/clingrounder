@@ -43,7 +43,10 @@ def test_phase1_plugin_preserves_existing_cli_contract() -> None:
             "submission",
             "--input-dir",
             "input",
+            "--assertion-overlay",
+            "private/assertions.jsonl",
         ]
     )
 
     assert args.handler == "benchmark_phase1_submission"
+    assert args.assertion_overlay == "private/assertions.jsonl"

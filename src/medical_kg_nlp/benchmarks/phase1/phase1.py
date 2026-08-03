@@ -9,9 +9,8 @@ from typing import Any, Literal, cast
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.linking.expected_jaccard import expected_jaccard_prefix
-from medical_kg_nlp.ontology.phase1_assertions import (
+from medical_kg_nlp.benchmarks.phase1.assertion_overlays import (
     Phase1AssertionOverlay,
-    load_phase1_assertion_overlays,
 )
 from medical_kg_nlp.ontology.phase1 import (
     PHASE1_ALLOWED_ASSERTIONS,
@@ -36,7 +35,6 @@ _PHASE1_ASSERTION_BY_STATUS = {
     AssertionStatus.FAMILY: "isFamily",
     AssertionStatus.HISTORICAL: "isHistorical",
 }
-_PHASE1_ASSERTION_OVERLAYS: tuple[Phase1AssertionOverlay, ...] = load_phase1_assertion_overlays()
 _SELECTIVE_EVIDENCE_SCOPES = frozenset({"left", "right", "bidirectional", "section_prior"})
 Phase1ExportPolicy = Literal["empty", "pipeline", "selective"]
 
@@ -192,6 +190,7 @@ def prediction_to_phase1_entities(
     assertion_policy: Phase1ExportPolicy = "pipeline",
     candidate_policy: Phase1ExportPolicy = "pipeline",
     selective_config: Phase1SelectiveExportConfig | None = None,
+    assertion_overlays: Sequence[Phase1AssertionOverlay] = (),
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for entity in prediction.entities:
@@ -207,6 +206,7 @@ def prediction_to_phase1_entities(
                 assertion_policy=assertion_policy,
                 candidate_policy=candidate_policy,
                 selective_config=selective_config,
+                assertion_overlays=assertion_overlays,
             )
         )
     return rows
@@ -221,6 +221,7 @@ def entity_to_phase1(
     assertion_policy: Phase1ExportPolicy = "pipeline",
     candidate_policy: Phase1ExportPolicy = "pipeline",
     selective_config: Phase1SelectiveExportConfig | None = None,
+    assertion_overlays: Sequence[Phase1AssertionOverlay] = (),
 ) -> dict[str, Any]:
     _validate_export_policy(assertion_policy, "assertion_policy")
     _validate_export_policy(candidate_policy, "candidate_policy")
@@ -231,7 +232,7 @@ def entity_to_phase1(
         "text": text,
         "type": phase1_type,
         "assertions": (
-            _phase1_assertions(entity, source_text)
+            _phase1_assertions(entity, source_text, assertion_overlays)
             if assertion_policy == "pipeline" and phase1_type in PHASE1_ASSERTABLE_TYPES
             else _selective_assertions(entity, phase1_type, selective_config)
             if assertion_policy == "selective"
@@ -577,6 +578,7 @@ def write_phase1_output_dir(
     assertion_policy: Phase1ExportPolicy = "pipeline",
     candidate_policy: Phase1ExportPolicy = "pipeline",
     selective_config: Phase1SelectiveExportConfig | None = None,
+    assertion_overlays: Sequence[Phase1AssertionOverlay] = (),
 ) -> None:
     path = Path(output_dir)
     path.mkdir(parents=True, exist_ok=True)
@@ -593,6 +595,7 @@ def write_phase1_output_dir(
             assertion_policy=assertion_policy,
             candidate_policy=candidate_policy,
             selective_config=selective_config,
+            assertion_overlays=assertion_overlays,
         )
         (path / f"{prediction.document_id}.json").write_text(
             json.dumps(rows, ensure_ascii=False, indent=2) + "\n",
@@ -843,7 +846,11 @@ def _phase1_by_document(
     }
 
 
-def _phase1_assertions(entity: EntityAnnotation, source_text: str | None) -> list[str]:
+def _phase1_assertions(
+    entity: EntityAnnotation,
+    source_text: str | None,
+    overlays: Sequence[Phase1AssertionOverlay],
+) -> list[str]:
     labels: set[str] = set()
     statuses = set(entity.assertion_features.statuses()) or {entity.assertion}
     for status in statuses:
@@ -851,7 +858,7 @@ def _phase1_assertions(entity: EntityAnnotation, source_text: str | None) -> lis
         if value:
             labels.add(value)
     if source_text is not None:
-        for overlay in _PHASE1_ASSERTION_OVERLAYS:
+        for overlay in overlays:
             if overlay.matches(source_text, entity.span, entity_type=entity.type.value):
                 labels.add(overlay.assertion)
     return [label for label in PHASE1_ALLOWED_ASSERTIONS if label in labels]

@@ -235,9 +235,13 @@ def _public_lab_store() -> DictionaryStore:
     return DictionaryStore([*seed.entries, *entries])
 
 
+@pytest.mark.private
 def test_rule_ner_blocks_ambiguous_yeu_to_and_chu_yeu_contexts() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
-    entities = RuleBasedNER(store).extract(
+    entities = RuleBasedNER(
+        store,
+        false_positive_path="data/heuristics/false_positive_blacklist.jsonl",
+    ).extract(
         "Các yếu tố làm nặng thêm: gắng sức. Đau chủ yếu sau ăn. Bệnh nhân mệt mỏi, yếu cơ và yếu sức.",
     )
     by_text = {entity.text: entity for entity in entities}
@@ -259,10 +263,14 @@ def test_rule_ner_prefers_long_phase1_symptom_spans() -> None:
     assert "phù" not in by_text
 
 
+@pytest.mark.private
 def test_rule_ner_blocks_phase1_history_of_ho_artifact_before_disease_name() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     text = "Các bệnh lý mạn tính - ho Rung nhĩ. Triệu chứng hiện tại - ho khan, ho đánh thức và ho mạn tính."
-    entities = RuleBasedNER(store).extract(text)
+    entities = RuleBasedNER(
+        store,
+        false_positive_path="data/heuristics/false_positive_blacklist.jsonl",
+    ).extract(text)
     cough_spans = [
         entity.span
         for entity in entities
@@ -275,10 +283,14 @@ def test_rule_ner_blocks_phase1_history_of_ho_artifact_before_disease_name() -> 
     )
 
 
+@pytest.mark.private
 def test_rule_ner_blocks_cancer_inside_cea_lab_name_but_keeps_real_cancer_mentions() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     text = "CEA (kháng nguyên ung thư phôi) tăng nhẹ. Tiền sử ung thư đại tràng."
-    entities = RuleBasedNER(store).extract(text)
+    entities = RuleBasedNER(
+        store,
+        false_positive_path="data/heuristics/false_positive_blacklist.jsonl",
+    ).extract(text)
     cancer_spans = [
         entity.span
         for entity in entities
@@ -289,13 +301,17 @@ def test_rule_ner_blocks_cancer_inside_cea_lab_name_but_keeps_real_cancer_mentio
     assert all(entity.text.lower() != "ung thư phôi" for entity in entities)
 
 
+@pytest.mark.private
 def test_rule_ner_blocks_spouse_azithromycin_but_keeps_patient_use() -> None:
     store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     text = (
         "Vợ có các triệu chứng tương tự, được chẩn đoán là giãn phế quản, "
         "phản ứng tốt với azithromycin. Bệnh nhân được kê azithromycin."
     )
-    entities = RuleBasedNER(store).extract(text)
+    entities = RuleBasedNER(
+        store,
+        false_positive_path="data/heuristics/false_positive_blacklist.jsonl",
+    ).extract(text)
     drug_texts = [entity.text for entity in entities if entity.type == EntityType.DRUG]
 
     assert drug_texts == ["azithromycin"]

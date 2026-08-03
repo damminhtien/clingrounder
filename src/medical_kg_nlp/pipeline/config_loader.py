@@ -30,6 +30,7 @@ _TERMINOLOGY_SINGLE_PATHS = (
     "abbreviation_path",
     "alias_overlay_path",
     "contextual_alias_path",
+    "false_positive_path",
 )
 _TERMINOLOGY_PATH_LISTS = (
     "normalization_paths",
@@ -128,6 +129,7 @@ class ResolvedPipelineConfig:
                         "abbreviation_path": config.abbreviation_path,
                         "alias_overlay_path": config.alias_overlay_path,
                         "contextual_alias_path": config.contextual_alias_path,
+                        "false_positive_path": config.false_positive_path,
                     },
                     "pipeline": {
                         "version": config.pipeline_version,
@@ -185,6 +187,7 @@ def _materialize_terminology_paths(
             "abbreviation_path": config.abbreviation_path,
             "alias_overlay_path": config.alias_overlay_path,
             "contextual_alias_path": config.contextual_alias_path,
+            "false_positive_path": config.false_positive_path,
         }
     )
     output["terminology"] = terminology
@@ -348,6 +351,7 @@ def _resource_report(config: PipelineFactoryConfig) -> list[dict[str, object]]:
         ("terminology.abbreviation_path", config.abbreviation_path),
         ("terminology.alias_overlay_path", config.alias_overlay_path),
         ("terminology.contextual_alias_path", config.contextual_alias_path),
+        ("terminology.false_positive_path", config.false_positive_path),
     ]
     values.extend(
         (f"terminology.normalization_paths[{index}]", value)

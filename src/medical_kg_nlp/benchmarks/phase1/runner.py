@@ -14,6 +14,9 @@ from medical_kg_nlp.benchmarks.phase1.phase1 import (
     write_phase1_output_dir,
     zip_phase1_output_dir,
 )
+from medical_kg_nlp.benchmarks.phase1.assertion_overlays import (
+    load_phase1_assertion_overlays,
+)
 from medical_kg_nlp.benchmarks.phase1.round2 import load_phase1_round2_documents
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.mining.io import load_documents
@@ -49,6 +52,7 @@ class Phase1BenchmarkConfig:
     expected_source_archive_sha256: str | None = None
     pipeline_config_path: Path | None = None
     validation_dictionary_paths: tuple[Path, ...] = ()
+    assertion_overlay_path: Path | None = None
     assertion_policy: BenchmarkExportPolicy = "pipeline"
     candidate_policy: BenchmarkExportPolicy = "pipeline"
     max_candidates: int = 5
@@ -81,6 +85,7 @@ def run_phase1_benchmark(config: Phase1BenchmarkConfig) -> dict[str, Any]:
         source_text_by_document=source_text_by_document,
         assertion_policy=config.assertion_policy,
         candidate_policy=config.candidate_policy,
+        assertion_overlays=load_phase1_assertion_overlays(config.assertion_overlay_path),
     )
     dictionary = _load_validation_dictionary(config)
     directory_issues = validate_phase1_submission_documents(
@@ -113,6 +118,11 @@ def run_phase1_benchmark(config: Phase1BenchmarkConfig) -> dict[str, Any]:
         "zip_path": str(config.zip_path),
         "assertion_policy": config.assertion_policy,
         "candidate_policy": config.candidate_policy,
+        "assertion_overlay_path": (
+            str(config.assertion_overlay_path)
+            if config.assertion_overlay_path is not None
+            else None
+        ),
         "pipeline_config": str(config.pipeline_config_path)
         if config.pipeline_config_path is not None
         else None,

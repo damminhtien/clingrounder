@@ -1,3 +1,5 @@
+"""Optional assertion overlays owned by the archived Phase 1 benchmark."""
+
 from __future__ import annotations
 
 import json
@@ -7,10 +9,9 @@ from pathlib import Path
 from typing import Any
 
 
-DEFAULT_PHASE1_ASSERTION_OVERLAY_PATH = (
-    Path(__file__).resolve().parents[3] / "data" / "heuristics" / "phase1_assertion_overlays.jsonl"
-)
 PHASE1_ASSERTION_VALUES = {"isNegated", "isFamily", "isHistorical"}
+
+__all__ = ["Phase1AssertionOverlay", "load_phase1_assertion_overlays"]
 
 
 @dataclass(frozen=True)
@@ -53,13 +54,15 @@ class Phase1AssertionOverlay:
 
 
 def load_phase1_assertion_overlays(
-    path: str | Path | None = DEFAULT_PHASE1_ASSERTION_OVERLAY_PATH,
+    path: str | Path | None,
 ) -> tuple[Phase1AssertionOverlay, ...]:
+    """Load a benchmark-owned overlay without discovering local files implicitly."""
+
     if path is None:
         return ()
     overlay_path = Path(path)
     if not overlay_path.exists():
-        return ()
+        raise FileNotFoundError(f"Phase 1 assertion overlay does not exist: {overlay_path}")
     overlays: list[Phase1AssertionOverlay] = []
     with overlay_path.open("r", encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, start=1):

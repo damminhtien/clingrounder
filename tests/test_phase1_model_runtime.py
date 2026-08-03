@@ -260,11 +260,14 @@ def _selection_fixture(tmp_path: Path) -> Phase1ModelSelectionConfig:
         ),
         encoding="utf-8",
     )
+    baseline = tmp_path / "model_holdout_baseline.json"
+    baseline.write_text("{}\n", encoding="utf-8")
     return Phase1ModelSelectionConfig(
         input_dir=input_dir,
         gold_dir=gold_dir,
         model_split_manifest=model_split,
         frozen_split_manifest=frozen,
+        holdout_baseline_artifact=baseline,
         threshold_grid=(0.0, 0.5, 0.75),
     )
 

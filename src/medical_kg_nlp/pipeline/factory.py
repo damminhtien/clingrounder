@@ -73,6 +73,7 @@ class PipelineFactoryConfig:
     abbreviation_path: str = "data/dictionaries/abbreviations.jsonl"
     alias_overlay_path: str | None = "data/dictionaries/vietnamese_medical_alias.jsonl"
     contextual_alias_path: str | None = None
+    false_positive_path: str | None = None
     pipeline_version: str = "0.2.0"
     options: PipelineOptions = field(default_factory=PipelineOptions)
     models: PipelineModelConfig = field(default_factory=PipelineModelConfig)
@@ -137,6 +138,9 @@ class PipelineFactoryConfig:
             ),
             contextual_alias_path=_optional_string(
                 terminology.get("contextual_alias_path")
+            ),
+            false_positive_path=_optional_string(
+                terminology.get("false_positive_path")
             ),
             pipeline_version=_string(pipeline, "version", cls.pipeline_version),
             options=PipelineOptions.from_mapping(pipeline),
@@ -241,6 +245,7 @@ class PipelineFactory:
                         RuleBasedNER(
                             recognition_store,
                             contextual_alias_rules=contextual_alias_rules,
+                            false_positive_path=resolved.false_positive_path,
                         )
                     ),
                 )
@@ -251,6 +256,7 @@ class PipelineFactory:
                 RuleBasedNER(
                     recognition_store,
                     contextual_alias_rules=contextual_alias_rules,
+                    false_positive_path=resolved.false_positive_path,
                 )
             )
         assertion_classifier = (

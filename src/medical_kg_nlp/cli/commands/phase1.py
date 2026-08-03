@@ -232,6 +232,7 @@ def run_phase1_submission(args: argparse.Namespace) -> int:
             resolved_config={
                 "source_archive_sha256": args.source_archive_sha256,
                 "assertion_policy": args.assertion_policy,
+                "assertion_overlay": args.assertion_overlay,
                 "candidate_policy": args.candidate_policy,
                 "max_candidates": args.max_candidates,
                 "parallel_backend": args.parallel_backend,
@@ -257,6 +258,9 @@ def run_phase1_submission(args: argparse.Namespace) -> int:
                 Path(path) for path in args.validation_dictionaries
             ),
             assertion_policy=cast(BenchmarkExportPolicy, args.assertion_policy),
+            assertion_overlay_path=(
+                Path(args.assertion_overlay) if args.assertion_overlay else None
+            ),
             candidate_policy=cast(BenchmarkExportPolicy, args.candidate_policy),
             max_candidates=args.max_candidates,
             backend=cast(ParallelBackend, args.parallel_backend),
