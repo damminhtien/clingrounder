@@ -23,7 +23,11 @@ from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.terminology.ports import TerminologyRepository
 from medical_kg_nlp.utils.text import normalize_for_match
 
-__all__ = ["StructuredRxNormReranker", "StructuredRxNormScore"]
+__all__ = [
+    "StructuredRxNormReranker",
+    "StructuredRxNormScore",
+    "build_rxnorm_mention_profile",
+]
 
 _BARE_TTYS = frozenset({"IN", "MIN", "PIN", "BN"})
 _PRODUCT_TTYS = frozenset({"SCD", "SBD"})
@@ -101,7 +105,7 @@ class StructuredRxNormReranker:
             for candidate in candidates
             if (entry := self.repository.get_by_concept_id(candidate.concept_id)) is not None
         }
-        profile = _mention_profile(mention, entries.values())
+        profile = build_rxnorm_mention_profile(mention, entries.values())
         reranked: list[Candidate] = []
         fallback_candidates: list[Candidate] = []
         for candidate in candidates:
@@ -139,7 +143,7 @@ class StructuredRxNormReranker:
     ) -> StructuredRxNormScore:
         """Return the complete structured score for one dictionary-constrained candidate."""
 
-        active_profile = profile or _mention_profile(mention, (entry,))
+        active_profile = profile or build_rxnorm_mention_profile(mention, (entry,))
         compatibility = rxnorm_compatibility(
             mention,
             entry,
@@ -193,7 +197,7 @@ class StructuredRxNormReranker:
         )
 
 
-def _mention_profile(
+def build_rxnorm_mention_profile(
     mention: str,
     entries: Iterable[ConceptEntry],
 ) -> RxNormMentionProfile:

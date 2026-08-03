@@ -10,16 +10,25 @@ from __future__ import annotations
 import hashlib
 import json
 import random
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import Any, Sequence
 
 from medical_kg_nlp.linking.candidate import Candidate
-from medical_kg_nlp.retrieval.constraints import ALLOWED_CODE_SYSTEMS
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from medical_kg_nlp.linking.listwise import (
+    ListwiseCandidateOption,
+    ListwiseStructuredMention,
+    build_listwise_linking_query,
+    render_listwise_candidate,
+)
+from medical_kg_nlp.schema.types import EntityType
+from medical_kg_nlp.terminology.ports import TerminologyRepository
 
 __all__ = [
+    "CandidateRecallError",
     "ListwiseCandidateOption",
     "ListwiseLinkingRecord",
+    "PairwiseLinkingExample",
+    "build_pairwise_linking_examples",
     "build_listwise_linking_record",
     "evaluate_listwise_scores",
     "render_listwise_input",
@@ -27,28 +36,8 @@ __all__ = [
 ]
 
 
-@dataclass(frozen=True, slots=True)
-class ListwiseCandidateOption:
-    """One type-compatible option in a retrieved candidate group."""
-
-    concept_id: str
-    code: str | None
-    code_system: CodeSystem
-    canonical_name: str
-    matched_alias: str | None
-    retrieval_score: float
-    sources: tuple[str, ...]
-
-    def to_json(self) -> dict[str, Any]:
-        return {
-            "concept_id": self.concept_id,
-            "code": self.code,
-            "code_system": self.code_system.value,
-            "canonical_name": self.canonical_name,
-            "matched_alias": self.matched_alias,
-            "retrieval_score": self.retrieval_score,
-            "sources": list(self.sources),
-        }
+class CandidateRecallError(ValueError):
+    """Raised when retrieval omitted every supervised positive candidate."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,6 +50,9 @@ class ListwiseLinkingRecord:
     entity_type: EntityType
     candidates: tuple[ListwiseCandidateOption, ...]
     positive_indices: tuple[int, ...]
+    structured_mention: ListwiseStructuredMention = field(
+        default_factory=ListwiseStructuredMention
+    )
 
     def __post_init__(self) -> None:
         if not self.query_id.strip() or not self.mention.strip():
@@ -86,8 +78,29 @@ class ListwiseLinkingRecord:
             "mention": self.mention,
             "context": self.context,
             "entity_type": self.entity_type.value,
+            "structured_mention": self.structured_mention.to_json(),
             "candidates": [candidate.to_json() for candidate in self.candidates],
             "positive_indices": list(self.positive_indices),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class PairwiseLinkingExample:
+    """One XLM-R-compatible mention/candidate pair expanded from a listwise record."""
+
+    query_id: str
+    candidate_index: int
+    query_text: str
+    candidate_text: str
+    label: int
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "query_id": self.query_id,
+            "candidate_index": self.candidate_index,
+            "query_text": self.query_text,
+            "candidate_text": self.candidate_text,
+            "label": self.label,
         }
 
 
@@ -99,39 +112,26 @@ def build_listwise_linking_record(
     entity_type: EntityType,
     candidates: Sequence[Candidate],
     positive_codes: Sequence[str],
+    repository: TerminologyRepository | None = None,
 ) -> ListwiseLinkingRecord:
     """Convert constrained retrieval output into one positive-set record."""
 
     if not positive_codes:
         raise ValueError("positive_codes must be non-empty.")
-    options: list[ListwiseCandidateOption] = []
-    for candidate in candidates:
-        if candidate.semantic_type != entity_type:
-            raise ValueError(
-                f"Candidate {candidate.concept_id} has incompatible semantic type."
-            )
-        allowed = ALLOWED_CODE_SYSTEMS.get(entity_type)
-        if allowed is not None and candidate.code_system not in allowed:
-            raise ValueError(
-                f"Candidate {candidate.concept_id} has incompatible code system."
-            )
-        options.append(
-            ListwiseCandidateOption(
-                concept_id=candidate.concept_id,
-                code=candidate.code,
-                code_system=candidate.code_system,
-                canonical_name=candidate.canonical_name,
-                matched_alias=candidate.matched_alias,
-                retrieval_score=candidate.score,
-                sources=candidate.sources,
-            )
-        )
+    query = build_listwise_linking_query(
+        query_id=query_id,
+        mention=mention,
+        context=context,
+        entity_type=entity_type,
+        candidates=candidates,
+        repository=repository,
+    )
     expected = set(positive_codes)
     positive_indices = tuple(
-        index for index, candidate in enumerate(options) if candidate.code in expected
+        index for index, candidate in enumerate(query.candidates) if candidate.code in expected
     )
     if not positive_indices:
-        raise ValueError(
+        raise CandidateRecallError(
             "No positive code is present in the retrieved candidates; fix recall before reranking."
         )
     return ListwiseLinkingRecord(
@@ -139,9 +139,35 @@ def build_listwise_linking_record(
         mention=mention,
         context=context,
         entity_type=entity_type,
-        candidates=tuple(options),
+        candidates=query.candidates,
         positive_indices=positive_indices,
+        structured_mention=query.structured_mention,
     )
+
+
+def build_pairwise_linking_examples(
+    records: Sequence[ListwiseLinkingRecord],
+) -> tuple[PairwiseLinkingExample, ...]:
+    """Expand listwise supervision for a cheap sequence-classification baseline."""
+
+    examples: list[PairwiseLinkingExample] = []
+    for record in records:
+        positives = set(record.positive_indices)
+        query_text = (
+            f"[TYPE] {record.entity_type.value}\n"
+            f"[MENTION] {record.mention}\n[CONTEXT] {record.context}"
+        )
+        examples.extend(
+            PairwiseLinkingExample(
+                query_id=record.query_id,
+                candidate_index=index,
+                query_text=query_text,
+                candidate_text=render_listwise_candidate(candidate),
+                label=int(index in positives),
+            )
+            for index, candidate in enumerate(record.candidates)
+        )
+    return tuple(examples)
 
 
 def shuffle_listwise_candidates(
@@ -176,13 +202,15 @@ def render_listwise_input(record: ListwiseLinkingRecord) -> str:
         f"[TYPE] {record.entity_type.value}",
         f"[MENTION] {record.mention}",
         f"[CONTEXT] {record.context}",
+        "[STRUCTURED_MENTION] "
+        + json.dumps(record.structured_mention.to_json(), ensure_ascii=False, sort_keys=True),
         "[CANDIDATES]",
     ]
     for index, candidate in enumerate(record.candidates):
         alias = candidate.matched_alias or ""
         code = candidate.code or ""
         lines.append(
-            f"[{index}] {candidate.code_system.value}|{code}|"
+            f"[{index}] {candidate.code_system}|{code}|"
             f"{candidate.canonical_name}|{alias}"
         )
     return "\n".join(lines)
@@ -193,6 +221,8 @@ def evaluate_listwise_scores(
     scores: dict[str, Sequence[float]],
     *,
     recall_cutoffs: tuple[int, ...] = (1, 5, 10, 20),
+    abstained_query_ids: Sequence[str] = (),
+    order_consistency: dict[str, float] | None = None,
 ) -> dict[str, Any]:
     """Evaluate positive-set rank metrics for any listwise model adapter."""
 
@@ -200,6 +230,11 @@ def evaluate_listwise_scores(
         raise ValueError("At least one listwise record is required.")
     ranks: list[int] = []
     rows: list[dict[str, Any]] = []
+    abstained = set(abstained_query_ids)
+    consistency = order_consistency or {}
+    jaccards: list[float] = []
+    caught_errors = 0
+    abstention_count = 0
     for record in records:
         row_scores = scores.get(record.query_id)
         if row_scores is None or len(row_scores) != len(record.candidates):
@@ -215,12 +250,23 @@ def evaluate_listwise_scores(
             if candidate_index in positive
         )
         ranks.append(rank)
+        is_abstained = record.query_id in abstained
+        emitted = set() if is_abstained else {ranked_indices[0]}
+        union = emitted | positive
+        jaccard = len(emitted & positive) / len(union) if union else 1.0
+        jaccards.append(jaccard)
+        if is_abstained:
+            abstention_count += 1
+            caught_errors += int(rank > 1)
         rows.append(
             {
                 "query_id": record.query_id,
                 "best_positive_rank": rank,
                 "top_candidate_index": ranked_indices[0],
                 "top1_correct": rank == 1,
+                "abstained": is_abstained,
+                "jaccard_after_emission": jaccard,
+                "order_consistency": consistency.get(record.query_id),
             }
         )
     total = len(ranks)
@@ -232,6 +278,14 @@ def evaluate_listwise_scores(
             for cutoff in recall_cutoffs
         },
         "mrr": sum(1.0 / rank for rank in ranks) / total,
+        "top1_accuracy": sum(rank == 1 for rank in ranks) / total,
+        "jaccard_after_emission": sum(jaccards) / total,
+        "order_consistency": (
+            sum(consistency.values()) / len(consistency) if consistency else None
+        ),
+        "abstention_precision": (
+            caught_errors / abstention_count if abstention_count else None
+        ),
         "rows": rows,
     }
 
