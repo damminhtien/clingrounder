@@ -24,7 +24,7 @@ from medical_kg_nlp.benchmarks.phase1.phase1_selective_overlays import (
 )
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
-from medical_kg_nlp.ontology.phase1 import (
+from medical_kg_nlp.benchmarks.phase1.ontology import (
     PHASE1_ALLOWED_TYPES,
     PHASE1_CODABLE_TYPES,
     expected_code_system,

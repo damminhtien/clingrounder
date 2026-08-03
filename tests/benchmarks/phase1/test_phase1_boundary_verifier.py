@@ -32,7 +32,7 @@ from medical_kg_nlp.benchmarks.phase1.proposal_calibration import (
 )
 from medical_kg_nlp.evaluation.sparse_logistic import SparseLogisticModel
 from medical_kg_nlp.ner.document_structure import DocumentStructureAnalyzer
-from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_ALLOWED_TYPES
 
 
 def test_boundary_verifier_ranks_full_span_and_round_trips() -> None:

@@ -18,7 +18,7 @@ from medical_kg_nlp.benchmarks.phase1.phase1_rule_registry import (
     phase1_rule_registry_from_data,
 )
 from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
-from medical_kg_nlp.ontology.phase1 import PHASE1_TYPE_PRIORITY
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_TYPE_PRIORITY
 from medical_kg_nlp.utils.text import normalize_for_match
 
 

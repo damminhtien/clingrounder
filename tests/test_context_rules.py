@@ -359,6 +359,21 @@ def test_negation_still_overrides_historical_section_prior() -> None:
     assert features.historical is True
 
 
+def test_section_prior_respects_data_driven_entity_type_scope() -> None:
+    text = "metoprolol điều trị đau ngực"
+    sentence = Sentence(
+        span=(0, len(text)),
+        text=text,
+        section_title="Thuốc trước khi nhập viện",
+    )
+    drug, _ = _typed_entity(text, "metoprolol", EntityType.DRUG)
+    symptom, _ = _typed_entity(text, "đau ngực", EntityType.SYMPTOM)
+    classifier = AssertionClassifier()
+
+    assert classifier.classify(drug, sentence) == AssertionStatus.HISTORICAL
+    assert classifier.classify(symptom, sentence) == AssertionStatus.PRESENT
+
+
 def test_lab_test_can_be_negated_or_planned() -> None:
     negated, negated_sentence = _typed_entity(
         "Chưa thực hiện xét nghiệm CRP.",

@@ -18,7 +18,7 @@ from medical_kg_nlp.benchmarks.phase1.training_governance import (
     load_phase1_training_governance,
 )
 from medical_kg_nlp.mining.io import write_json, write_jsonl
-from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_ALLOWED_TYPES
 from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
 
 __all__ = [

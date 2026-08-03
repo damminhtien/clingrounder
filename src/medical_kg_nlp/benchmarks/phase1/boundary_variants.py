@@ -30,7 +30,7 @@ from medical_kg_nlp.ner.document_structure import (
 from medical_kg_nlp.ner.extractors.boundary import ClinicalBoundaryProposalExtractor
 from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
 from medical_kg_nlp.ner.proposal import EntityProposal
-from medical_kg_nlp.ontology.phase1 import (
+from medical_kg_nlp.benchmarks.phase1.ontology import (
     PHASE1_ALLOWED_TYPES,
     PHASE1_TYPE_BY_ENTITY_TYPE,
     PHASE1_TYPE_PRIORITY,

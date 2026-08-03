@@ -47,7 +47,7 @@ from medical_kg_nlp.mining.io import (
     write_jsonl,
     write_text,
 )
-from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_ALLOWED_TYPES
 from medical_kg_nlp.utils.hashing import sha256_file
 from medical_kg_nlp.utils.io import read_yaml
 from medical_kg_nlp.utils.run_output import create_hashed_run_dir

@@ -23,7 +23,7 @@ from medical_kg_nlp.mining.io import write_json, write_jsonl, write_text
 from medical_kg_nlp.mining.lexicon import build_mention_inventory
 from medical_kg_nlp.mining.recognition_benchmark import benchmark_recognition_dictionary
 from medical_kg_nlp.mining.recognition_knowledge import compile_recognition_knowledge
-from medical_kg_nlp.ontology.phase1 import PHASE1_RULE_BY_TYPE
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_RULE_BY_TYPE
 from medical_kg_nlp.utils.hashing import sha256_file
 from medical_kg_nlp.utils.io import read_yaml
 

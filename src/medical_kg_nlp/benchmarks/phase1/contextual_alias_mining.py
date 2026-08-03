@@ -10,7 +10,7 @@ from typing import Any
 
 from medical_kg_nlp.mining.lexicon import MentionInventoryEntry
 from medical_kg_nlp.ner.extractors.contextual_alias import ContextGate
-from medical_kg_nlp.ontology.phase1 import PHASE1_RULE_BY_TYPE
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_RULE_BY_TYPE
 from medical_kg_nlp.schema.types import EntityType
 from medical_kg_nlp.utils.text import (
     normalize_for_match,

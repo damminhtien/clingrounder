@@ -17,7 +17,7 @@ from medical_kg_nlp.benchmarks.phase1.proposal_features import (
     PHASE1_PROPOSAL_FEATURE_CONTRACT,
     ProposalSourceRole,
 )
-from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_ALLOWED_TYPES
 
 
 def test_proposal_verifier_learns_calibrates_and_round_trips() -> None:

@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from medical_kg_nlp.benchmarks.phase1.phase1 import _match_phase1_rows
-from medical_kg_nlp.ontology.phase1 import PHASE1_ASSERTABLE_TYPES, PHASE1_CODABLE_TYPES
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_ASSERTABLE_TYPES, PHASE1_CODABLE_TYPES
 
 
 MANUAL_GOLD_HOLDOUT_MODULUS = 5

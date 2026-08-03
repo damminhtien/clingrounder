@@ -23,7 +23,7 @@ from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.mining.io import write_json, write_jsonl
 from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatcher
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
-from medical_kg_nlp.ontology.phase1 import PHASE1_TYPE_BY_ENTITY_TYPE
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_TYPE_BY_ENTITY_TYPE
 
 __all__ = [
     "Phase1JointSpanDataset",

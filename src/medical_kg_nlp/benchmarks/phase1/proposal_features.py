@@ -22,7 +22,7 @@ from medical_kg_nlp.ner.document_structure import (
     DocumentStructureAnalyzer,
     classify_section_heading_label,
 )
-from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_ALLOWED_TYPES
 from medical_kg_nlp.utils.text import normalize_for_match
 
 __all__ = [

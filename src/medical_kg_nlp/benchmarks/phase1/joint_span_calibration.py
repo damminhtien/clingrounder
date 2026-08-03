@@ -24,7 +24,7 @@ from medical_kg_nlp.benchmarks.phase1.joint_span import (
     Phase1JointSpanVerifierPort,
 )
 from medical_kg_nlp.benchmarks.phase1.proposal_features import Phase1GenreBucket
-from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_ALLOWED_TYPES
 
 __all__ = [
     "CalibratedPhase1JointSpanVerifier",

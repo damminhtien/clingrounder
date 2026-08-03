@@ -21,7 +21,7 @@ from medical_kg_nlp.benchmarks.phase1.phase1 import (
 )
 from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import load_phase1_output_source
 from medical_kg_nlp.mining.io import write_json
-from medical_kg_nlp.ontology.phase1 import PHASE1_ENTITY_TYPE_RULES
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_ENTITY_TYPE_RULES
 from medical_kg_nlp.pipeline.runner import PipelineRunner
 from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.output import ClinicalPrediction

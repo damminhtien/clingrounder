@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.ontology.phase1 import (
+from medical_kg_nlp.benchmarks.phase1.ontology import (
     PHASE1_CODABLE_TYPES,
     PHASE1_TYPE_BY_ENTITY_TYPE,
     expected_code_system,

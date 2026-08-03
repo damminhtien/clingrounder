@@ -24,7 +24,7 @@ from medical_kg_nlp.mining.dedup import StableTextDeduplicator
 from medical_kg_nlp.mining.io import write_json, write_jsonl
 from medical_kg_nlp.mining.model_dataset import SpanDatasetConfig, export_span_dataset
 from medical_kg_nlp.mining.records import MinedDocument
-from medical_kg_nlp.ontology.phase1 import PHASE1_ENTITY_TYPE_RULES
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_ENTITY_TYPE_RULES
 from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
 
 __all__ = [

@@ -27,7 +27,7 @@ from medical_kg_nlp.mining.records import (
     ReviewStatus,
 )
 from medical_kg_nlp.mining.recognition_knowledge import RecognitionKnowledgePolicy
-from medical_kg_nlp.ontology.phase1 import PHASE1_RULE_BY_TYPE
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_RULE_BY_TYPE
 from medical_kg_nlp.utils.io import read_source_text
 from medical_kg_nlp.utils.text import normalize_for_match
 

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from medical_kg_nlp.ontology.phase1 import (
+from medical_kg_nlp.benchmarks.phase1.ontology import (
     PHASE1_ASSERTABLE_TYPES,
     PHASE1_CODABLE_TYPES,
     PHASE1_TYPE_BY_ENTITY_TYPE,

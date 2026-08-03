@@ -20,7 +20,7 @@ from medical_kg_nlp.benchmarks.phase1.joint_span_preparation import (
 )
 from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRole
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.ontology.phase1 import PHASE1_TYPE_BY_ENTITY_TYPE
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_TYPE_BY_ENTITY_TYPE
 from medical_kg_nlp.schema.types import EntityType
 from medical_kg_nlp.training.span_dataset import (
     SpanTrainingRecord,

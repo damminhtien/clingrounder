@@ -15,7 +15,7 @@ from medical_kg_nlp.benchmarks.phase1.phase1_rule_registry import (
     Phase1RuleRegistry,
     phase1_rule_registry_from_data,
 )
-from medical_kg_nlp.ontology.phase1 import (
+from medical_kg_nlp.benchmarks.phase1.ontology import (
     PHASE1_ASSERTABLE_TYPES,
     PHASE1_CODABLE_TYPES,
     PHASE1_RULE_BY_TYPE,

@@ -17,7 +17,6 @@ from medical_kg_nlp.schema.annotation import (
 from medical_kg_nlp.schema.document import Sentence
 from medical_kg_nlp.schema.types import AssertionStatus
 from medical_kg_nlp.schema.types import EntityType
-from medical_kg_nlp.ontology.phase1 import PHASE1_TYPE_BY_ENTITY_TYPE, section_rule_for_heading
 
 
 _CLAUSE_BOUNDARY_RE = re.compile(r"[\n.;:!?]|,\s+")
@@ -224,11 +223,10 @@ class AssertionClassifier:
         if sentence is None or not sentence.section_title:
             return None
         title = sentence.section_title.lower().strip()
-        rule = section_rule_for_heading(title)
-        if rule is not None and rule.type_prior is not None:
-            if PHASE1_TYPE_BY_ENTITY_TYPE.get(entity.type) != rule.type_prior:
-                return None
-        return self.registry.section_prior(title)
+        prior = self.registry.section_prior(title)
+        if prior is None or not prior.applies_to(entity.type):
+            return None
+        return prior
 
     @staticmethod
     def _local_left_context(text: str, entity_start: int) -> str:

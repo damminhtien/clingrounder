@@ -42,7 +42,7 @@ from medical_kg_nlp.benchmarks.phase1.round2_probes import (
 )
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatcher
-from medical_kg_nlp.ontology.phase1 import (
+from medical_kg_nlp.benchmarks.phase1.ontology import (
     PHASE1_CODABLE_TYPES,
     PHASE1_CODE_SYSTEM_BY_TYPE,
     PHASE1_RULE_BY_TYPE,

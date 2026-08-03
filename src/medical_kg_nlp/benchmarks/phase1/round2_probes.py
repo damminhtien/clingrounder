@@ -36,7 +36,7 @@ from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.linking.rxnorm_reranker import StructuredRxNormReranker
 from medical_kg_nlp.mining.io import load_documents, write_json, write_jsonl
-from medical_kg_nlp.ontology.phase1 import (
+from medical_kg_nlp.benchmarks.phase1.ontology import (
     PHASE1_ALLOWED_TYPES,
     PHASE1_CODE_SYSTEM_BY_TYPE,
     PHASE1_TYPE_PRIORITY,

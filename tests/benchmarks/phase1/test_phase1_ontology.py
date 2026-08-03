@@ -1,4 +1,4 @@
-from medical_kg_nlp.ontology.phase1 import (
+from medical_kg_nlp.benchmarks.phase1.ontology import (
     PHASE1_ALLOWED_ASSERTIONS,
     PHASE1_ALLOWED_TYPES,
     PHASE1_REQUIRED_KEYS,

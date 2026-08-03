@@ -20,8 +20,8 @@ from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatcher
 from medical_kg_nlp.ner.medication_list_parser import MedicationListParser
 from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
-from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
-from medical_kg_nlp.ontology.phase1 import PHASE1_TYPE_BY_ENTITY_TYPE
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_ALLOWED_TYPES
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_TYPE_BY_ENTITY_TYPE
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.types import EntityType
 from medical_kg_nlp.mining.io import write_json, write_text

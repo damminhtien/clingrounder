@@ -26,7 +26,7 @@ from medical_kg_nlp.benchmarks.phase1.reviewed_corpus import (
 from medical_kg_nlp.benchmarks.phase1.split_contract import (
     phase1_document_sort_key,
 )
-from medical_kg_nlp.ontology.phase1 import (
+from medical_kg_nlp.benchmarks.phase1.ontology import (
     PHASE1_ALLOWED_TYPES,
     PHASE1_TYPE_BY_ENTITY_TYPE,
 )

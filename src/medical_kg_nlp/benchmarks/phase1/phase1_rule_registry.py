@@ -8,7 +8,7 @@ from typing import Any, Iterable, Mapping
 
 import yaml
 
-from medical_kg_nlp.ontology.phase1 import PHASE1_TYPE_PRIORITY
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_TYPE_PRIORITY
 from medical_kg_nlp.utils.text import normalize_for_match
 
 

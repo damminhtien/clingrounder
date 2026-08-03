@@ -14,7 +14,7 @@ from medical_kg_nlp.benchmarks.phase1.boundary_verifier import (
     ScoredPhase1BoundaryVariant,
 )
 from medical_kg_nlp.evaluation.sparse_logistic import SparseLogisticModel
-from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_ALLOWED_TYPES
 
 
 def test_exact_boundary_is_not_replaced() -> None:

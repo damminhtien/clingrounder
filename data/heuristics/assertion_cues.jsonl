@@ -73,7 +73,7 @@
 {"cue":"tiền sử bệnh","assertion":"HISTORICAL","language":"vi","scope":"section_prior","source_ids":["context_algorithm","seed"],"notes":"Phase 1 medical-history section prior."}
 {"cue":"tiền sử bệnh nội khoa","assertion":"HISTORICAL","language":"vi","scope":"section_prior","source_ids":["context_algorithm","seed"],"notes":"Phase 1 internal-medical-history section prior."}
 {"cue":"các bệnh lý mạn tính","assertion":"HISTORICAL","language":"vi","scope":"section_prior","source_ids":["context_algorithm","seed"],"notes":"Phase 1 chronic-condition section prior."}
-{"cue":"thuốc trước khi nhập viện","assertion":"HISTORICAL","language":"vi","scope":"section_prior","source_ids":["context_algorithm","seed"],"notes":"Pre-admission medication section prior."}
+{"cue":"thuốc trước khi nhập viện","assertion":"HISTORICAL","language":"vi","scope":"section_prior","source_ids":["context_algorithm","seed"],"allowed_entity_types":["DRUG"],"notes":"Pre-admission medication section prior applies only to medication entities."}
 {"cue":"các sự kiện trước khi nhập viện","assertion":"HISTORICAL","language":"vi","scope":"section_prior","source_ids":["context_algorithm","seed"],"notes":"Pre-admission event section prior."}
 {"cue":"tình trạng ngay trước khi nhập viện","assertion":"HISTORICAL","language":"vi","scope":"section_prior","source_ids":["context_algorithm","seed"],"notes":"Immediate pre-admission status section prior."}
 {"cue":"plan","assertion":"PLANNED","language":"en","scope":"section_prior","source_ids":["context_algorithm"],"notes":"Plan section prior."}

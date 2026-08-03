@@ -17,7 +17,7 @@ from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRol
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.evaluation.sparse_logistic import SparseLogisticModel
-from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_ALLOWED_TYPES
 from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 

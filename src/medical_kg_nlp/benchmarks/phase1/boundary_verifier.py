@@ -49,7 +49,7 @@ from medical_kg_nlp.ner.document_structure import (
     DocumentStructure,
     DocumentStructureAnalyzer,
 )
-from medical_kg_nlp.ontology.phase1 import (
+from medical_kg_nlp.benchmarks.phase1.ontology import (
     PHASE1_ALLOWED_TYPES,
     PHASE1_CODABLE_TYPES,
     PHASE1_TYPE_PRIORITY,

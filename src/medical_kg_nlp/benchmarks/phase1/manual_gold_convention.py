@@ -7,7 +7,7 @@ from typing import Any
 
 from medical_kg_nlp.ner.medication_list_parser import MedicationListParser
 from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
-from medical_kg_nlp.ontology.phase1 import (
+from medical_kg_nlp.benchmarks.phase1.ontology import (
     PHASE1_ASSERTABLE_TYPES,
     PHASE1_CODABLE_TYPES,
 )

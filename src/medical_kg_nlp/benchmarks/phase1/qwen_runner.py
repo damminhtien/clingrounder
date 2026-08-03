@@ -37,7 +37,7 @@ from medical_kg_nlp.mining.io import (
 )
 from medical_kg_nlp.ner.proposal import EntityProposal
 from medical_kg_nlp.ner.span_resolver import EvidenceWeightedSpanResolver
-from medical_kg_nlp.ontology.phase1 import PHASE1_ALLOWED_TYPES
+from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_ALLOWED_TYPES
 from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.types import EntityType
 from medical_kg_nlp.utils.hashing import sha256_file
