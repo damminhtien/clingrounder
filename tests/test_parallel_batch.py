@@ -58,6 +58,8 @@ def test_run_pipeline_cli_accepts_parallel_workers(tmp_path: Path) -> None:
             "medical_kg_nlp.cli",
             "pipeline",
             "run",
+            "--config",
+            "configs/pipeline/clinical-baseline.yaml",
             "--input",
             "data/samples/sample_notes.jsonl",
             "--output",

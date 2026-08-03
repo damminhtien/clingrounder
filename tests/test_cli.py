@@ -526,6 +526,8 @@ def test_pipeline_run_command_writes_predictions(tmp_path: Path) -> None:
             [
                 "pipeline",
                 "run",
+                "--config",
+                "configs/pipeline/clinical-baseline.yaml",
                 "--input",
                 "data/samples/sample_notes.jsonl",
                 "--output",
