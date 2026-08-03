@@ -5,6 +5,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from medical_kg_nlp.evaluation.data_profile import profile_paths
 
 
@@ -29,6 +31,7 @@ def test_profile_paths_reports_core_distributions() -> None:
     assert context_cues["negation:không ghi nhận"] == 1
 
 
+@pytest.mark.integration
 def test_profile_data_cli_writes_json_and_markdown(tmp_path: Path) -> None:
     json_path = tmp_path / "profile.json"
     markdown_path = tmp_path / "profile.md"

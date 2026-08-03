@@ -6,7 +6,10 @@ import os
 import subprocess
 from pathlib import Path
 
+import pytest
 
+
+@pytest.mark.integration
 def test_vast_template_helper_preserves_template_dependencies(tmp_path: Path) -> None:
     """The helper must verify CUDA and install the project without resolving Torch again."""
 

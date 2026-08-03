@@ -255,6 +255,7 @@ def test_sqlite_graph_rejects_stale_inputs_and_unknown_endpoints(tmp_path: Path)
         )
 
 
+@pytest.mark.integration
 def test_kg_cli_builds_manifest_and_queries_code(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

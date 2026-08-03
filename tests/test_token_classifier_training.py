@@ -240,6 +240,7 @@ def test_saved_model_verification_checks_projected_raw_offsets(
     assert report["offset_mismatch_count"] == 0
 
 
+@pytest.mark.integration
 def test_training_import_does_not_import_model_frameworks() -> None:
     process = subprocess.run(
         [

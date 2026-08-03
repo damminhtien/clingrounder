@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+from functools import lru_cache
 from pathlib import Path
 from typing import BinaryIO
 
@@ -31,7 +32,10 @@ class MemoryTransport:
         return io.BytesIO(self.payloads[uri])
 
 
+@lru_cache(maxsize=1)
 def _registry():
+    """Share the immutable source registry across connector contract tests."""
+
     return load_source_registry("data/sources/mining_registry.yaml")
 
 

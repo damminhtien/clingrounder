@@ -122,6 +122,7 @@ def test_model_adapter_construction_does_not_import_optional_dependencies(
     assert calls == 1
 
 
+@pytest.mark.integration
 def test_core_pipeline_import_does_not_import_model_frameworks() -> None:
     process = subprocess.run(
         [
