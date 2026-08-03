@@ -526,7 +526,7 @@ all compiler decisions are under:
 Reproduce the mining gate:
 
 ```bash
-uv run python scripts/mine_phase1_recognition_knowledge.py
+uv run python scripts/benchmarks/phase1/mine_phase1_recognition_knowledge.py
 ```
 
 The generated `pipeline_profile_fragment.yaml` can be merged into a pipeline profile. The checked-in

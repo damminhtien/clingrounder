@@ -129,7 +129,7 @@ Observed source predictions and compatibility rows:
 The run used one RTX 4090 with the `vastai/pytorch:cuda-13.0.3-auto` template, Torch
 `2.12.0+cu130`, CUDA 13.0, and Transformers 5.13.0. Reusing the template environment reduced
 bootstrap from an aborted 1.8 GB isolated dependency download to about 23 MB of additional Python
-packages. The reproducible entry point is `scripts/vast/run_vietmed_support.sh`.
+packages. The reproducible entry point is `scripts/benchmarks/phase1/vast/run_vietmed_support.sh`.
 
 The scored 31.2236 artifact is not ground truth, but comparison against its frozen 3,340-entity
 projection is useful for routing:

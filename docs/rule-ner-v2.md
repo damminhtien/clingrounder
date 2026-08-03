@@ -78,7 +78,7 @@ Run from the repository root at the exact source-control revision:
 ```bash
 uv sync --frozen --extra dev
 
-uv run python scripts/mine_phase1_recognition_knowledge.py
+uv run python scripts/benchmarks/phase1/mine_phase1_recognition_knowledge.py
 
 uv run medical-kg benchmark phase1 submission \
   --input-dir data/raw/input \
@@ -91,7 +91,7 @@ uv run medical-kg benchmark phase1 submission \
   --parallel-backend serial \
   --workers 1
 
-uv run python scripts/analyze_phase1_entity_wer.py \
+uv run python scripts/benchmarks/phase1/analyze_phase1_entity_wer.py \
   --pred outputs/phase1/rule_ner_v2_structured_symptom_boundary/output.zip \
   --stage contextual_alias=outputs/phase1/rule_ner_v2_contextual_alias/output.zip \
   --final-source-name structured_symptom_boundary \

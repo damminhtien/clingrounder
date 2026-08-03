@@ -75,7 +75,7 @@ jobs:
           uv sync --frozen --extra dev --extra data --python "$pythonLocation/bin/python"
 
       - name: Release and integration tests
-        # These exercise SQLite, process workers, reports, and deterministic Phase 1 ZIPs.
+        # These exercise SQLite, process workers, reports, and deterministic artifacts.
         run: .venv/bin/pytest -o addopts='' -m "(integration or release) and not private and not model" tests
 
       - name: Public repository audit

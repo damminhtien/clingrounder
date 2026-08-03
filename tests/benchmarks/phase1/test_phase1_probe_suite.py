@@ -100,7 +100,7 @@ def test_top10_probe_suite_cli_builds_isolated_validated_artifacts(
 
     command = [
         sys.executable,
-        "scripts/run_phase1_top10_probes.py",
+        "scripts/benchmarks/phase1/run_phase1_top10_probes.py",
         "--base",
         str(base_dir),
         "--source",

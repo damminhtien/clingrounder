@@ -935,7 +935,7 @@ def test_phase1_pre_submit_gate_writes_analysis_and_loop_artifacts(tmp_path: Pat
     result = subprocess.run(
         [
             sys.executable,
-            "scripts/phase1_pre_submit_gate.py",
+            "scripts/benchmarks/phase1/phase1_pre_submit_gate.py",
             "--input-dir",
             str(input_dir),
             "--zip",

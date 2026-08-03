@@ -100,7 +100,7 @@ def test_manual_gold_cli_smoke(tmp_path: Path) -> None:
     result = subprocess.run(
         [
             sys.executable,
-            "scripts/evaluate_phase1_manual_gold.py",
+            "scripts/benchmarks/phase1/evaluate_phase1_manual_gold.py",
             "--gold-dir",
             str(gold_dir),
             "--pred-dir",

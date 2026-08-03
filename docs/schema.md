@@ -10,12 +10,12 @@ Internal schemas live under `src/medical_kg_nlp/schema/` and use typed dataclass
   list. `assertion_evidence` records the rule id, cue, assertion, and scope behind each decision.
 - `MedicationMention`: original drug span, validated full medication span, and typed component spans
   for administered dose, form, release, route, frequency, duration, transition, and context text.
-  Product strength remains dictionary metadata and is not conflated with administered dose. Phase 1 export reads
-  this structure and does not apply a second regex span patch.
+  Product strength remains dictionary metadata and is not conflated with administered dose.
+  Task exporters read this structure and must not apply a second regex span patch.
 - `CandidateConcept`: dictionary candidate metadata for debugging and selective export. It records
   independent `retrieval_score` and `emit_probability` values, the primary `source`, all
   `evidence_sources`, `matched_alias`, `qualified`, and `qualification_reason`. Unqualified
-  candidates remain available in traces but are not eligible for Phase 1 export. No confidence is
+  candidates remain available in traces but are not eligible for final assignment. No confidence is
   inferred from exact matching: sources without an explicit calibrated probability carry `0.0`.
 - `RelationAnnotation`: typed edge between entity ids with optional evidence span.
 - `ClinicalPrediction`: exported prediction object with `document_id`, `text_hash`, entities,
@@ -61,13 +61,10 @@ The internal prediction schema is intentionally strict and version-forward. Miss
 `assertion_evidence`, legacy candidate `score`, implicit qualification, or missing source provenance
 is a schema error rather than a compatibility fallback.
 
-Phase 1 external JSON has a narrower conditional contract. `text`, `type`, `assertions`, and
-`position` are always required. `candidates` is required for `THUỐC` and `CHẨN_ĐOÁN`; for the
-other three types it may be omitted or emitted as an empty list. Source TXT is decoded from raw
-bytes with UTF-8 BOM handling and without universal-newline translation, so CRLF offsets remain
-stable through inference, validation, ZIP validation, and hashing.
+External task schemas belong to benchmark adapters. The archived Phase 1 JSON contract and its
+CRLF-sensitive export rules are documented under
+[`docs/benchmarks/phase1`](benchmarks/phase1/README.md).
 
-Medication normalization uses two vocabularies in full mode: a small recognition dictionary for
-NER and a larger normalization dictionary for candidate retrieval and validation. Official BTC
-sample mappings are stored as provenance-bearing exact mention memory and are ignored unless the
-target RxCUI exists in the loaded normalization dictionary.
+Medication normalization can use a small recognition dictionary for NER and a larger terminology
+repository for candidate retrieval and validation. Reviewed exact mention memory is optional,
+provenance-bearing, and ignored unless its target exists in the active repository.

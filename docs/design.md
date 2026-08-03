@@ -81,7 +81,7 @@ Future public-dataset adapters should convert all gold labels to the same intern
 - Public clinical datasets have licensing constraints, so adapters need local file paths.
 - Rule-based context can over-scope cues in long sentences.
 - Vietnamese abbreviation and synonym coverage is limited.
-- The final competition may score shorter or longer entity boundaries differently.
+- External tasks may use different entity-boundary conventions, so adapters need explicit tests.
 
 ## Future Adaptation Strategy
 

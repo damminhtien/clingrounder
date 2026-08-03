@@ -405,7 +405,7 @@ def build_phase1_top10_probe_suite(config: Phase1Top10ProbeConfig) -> dict[str, 
         ],
         "promotion_policy": (
             "No variant is auto-promoted from local metrics. Submit isolated probes and record "
-            "public results with scripts/record_phase1_public_probe.py."
+            "public results with scripts/benchmarks/phase1/record_phase1_public_probe.py."
         ),
     }
     _write_json(run_dir / "run_manifest.json", manifest)
@@ -740,7 +740,7 @@ def _render_summary(manifest: Mapping[str, Any]) -> str:
         [
             "",
             "Local train metrics are diagnostic only. Public promotion must use an isolated probe and "
-            "`scripts/record_phase1_public_probe.py`.",
+            "`scripts/benchmarks/phase1/record_phase1_public_probe.py`.",
             "",
         ]
     )

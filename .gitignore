@@ -254,7 +254,5 @@ __marimo__/
 
 .DS_Store
 data/.DS_Store
-# docs/source_of_truths/
 outputs/phase1/
 outputs/runs/
-PLAN.md

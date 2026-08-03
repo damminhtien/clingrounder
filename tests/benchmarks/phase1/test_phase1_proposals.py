@@ -114,7 +114,7 @@ def test_proposal_matrix_cli_smoke(tmp_path: Path) -> None:
     subprocess.run(
         [
             sys.executable,
-            "scripts/build_phase1_proposal_matrix.py",
+            "scripts/benchmarks/phase1/build_phase1_proposal_matrix.py",
             "--source",
             f"a={source_a}",
             "--source",

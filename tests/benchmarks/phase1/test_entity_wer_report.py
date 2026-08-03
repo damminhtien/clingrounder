@@ -109,7 +109,7 @@ def test_entity_wer_cli_smoke(tmp_path: Path) -> None:
     result = subprocess.run(
         [
             sys.executable,
-            "scripts/analyze_phase1_entity_wer.py",
+            "scripts/benchmarks/phase1/analyze_phase1_entity_wer.py",
             "--gold-dir",
             str(gold_dir),
             "--pred",

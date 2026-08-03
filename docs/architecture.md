@@ -112,10 +112,10 @@ gate remains candidate recall at 20 plus a model-revision-specific latency/RSS b
 expensive retriever or reranker is promoted.
 
 Generated candidates remain in internal predictions for recall/rank analysis. Only candidates with
-`qualified=true` are eligible for Phase 1 export. `retrieval_score` ranks candidates;
+`qualified=true` are eligible for final assignment or task export. `retrieval_score` ranks candidates;
 `emit_probability` is a separate calibrated decision value. The primary source and all fusion
-evidence sources are stored separately. Selective Phase 1 export applies a `(code system, primary
-source)` threshold matrix and an exact reviewed whitelist after qualification.
+evidence sources are stored separately. A benchmark adapter may apply a task-specific threshold
+matrix or reviewed whitelist after qualification without changing reusable retrieval behavior.
 
 Reviewed mention memory is optional and fail-closed. Each row is keyed by normalized mention plus
 entity type and must carry reviewed status, source SHA-256, and compatible terminology releases.

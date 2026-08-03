@@ -244,7 +244,7 @@ def test_annotation_knowledge_cli_smoke(tmp_path: Path) -> None:
     result = subprocess.run(
         [
             sys.executable,
-            "scripts/build_phase1_annotation_knowledge.py",
+            "scripts/benchmarks/phase1/build_phase1_annotation_knowledge.py",
             "--gold-dir",
             str(gold_dir),
             "--manifest",
@@ -299,7 +299,7 @@ def test_annotation_knowledge_cli_fails_on_unresolved_conflict(tmp_path: Path) -
     result = subprocess.run(
         [
             sys.executable,
-            "scripts/build_phase1_annotation_knowledge.py",
+            "scripts/benchmarks/phase1/build_phase1_annotation_knowledge.py",
             "--gold-dir",
             str(gold_dir),
             "--manifest",

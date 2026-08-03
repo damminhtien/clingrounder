@@ -16,7 +16,7 @@ def test_validate_complete_manual_gold_batch() -> None:
     result = subprocess.run(
         [
             sys.executable,
-            "scripts/validate_manual_gold.py",
+            "scripts/benchmarks/phase1/validate_manual_gold.py",
             "--expected-count",
             "100",
             "--input-dir",

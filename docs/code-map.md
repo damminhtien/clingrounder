@@ -41,13 +41,14 @@ composition root that turns config into a runnable component graph.
 | `linking/` | Candidate reranking, qualification, and assignment | Terminology storage |
 | `ner/` | Rule extraction and medication/lab span helpers | Pipeline construction |
 | `context/` | Assertion scope and cue execution | Competition labels |
+| `ontology/` | Reusable suppression-rule contracts | Task schemas or code priorities |
 | `relations/`, `kg/` | Relation extraction and medical constraints | Task packaging |
-| `evaluation/` | Neutral records, matchers, metrics, and report rendering | Phase 1 imports |
+| `evaluation/` | Neutral records, matchers, metrics, and report rendering | Benchmark imports |
 | `experiments/` | Ablations, journals, and agent-facing experiment loops | Reusable metrics |
-| `benchmarks/phase1/` | Phase 1 schema, scoring, export, and campaign code | Generic evaluation behavior |
+| `benchmarks/phase1/` | Archived task schema, ontology, CLI handlers, scoring, export, and campaign code | Generic evaluation behavior |
 | `validation/` | Core/development/release severity and generic artifact checks | Task-specific ZIP layout |
 | `mining/` | Licensed acquisition, immutable artifacts, parsers, curation, terminology evidence, review, model datasets, and snapshots | Competition schemas or hosted services |
-| `cli/` | `argparse` command routing and thin IO handlers | Metrics or pipeline algorithms |
+| `cli/` | `argparse` routing and reusable thin IO handlers | Benchmark handlers, metrics, or pipeline algorithms |
 
 ## Rule NER
 
@@ -175,12 +176,8 @@ medical-kg pipeline run
 medical-kg terminology build|inspect|query-set|benchmark
 medical-kg evaluate
 medical-kg validate
-medical-kg benchmark phase1 submission
-medical-kg benchmark phase1 round2 audit
-medical-kg benchmark phase1 round2 probes
-medical-kg benchmark phase1 model-data build
-medical-kg benchmark phase1 model-data augment-regions
-medical-kg benchmark phase1 model-data calibrate
+medical-kg benchmark list
+medical-kg benchmark phase1 --help
 medical-kg data registry validate
 medical-kg data source sync
 medical-kg data dataset build

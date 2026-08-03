@@ -1,6 +1,6 @@
 terminology:
   # Opt-in profile: this recognition overlay passed the frozen Phase 1 holdout gate.
-  # Re-run scripts/mine_phase1_recognition_knowledge.py when the gold corpus changes.
+  # Re-run scripts/benchmarks/phase1/mine_phase1_recognition_knowledge.py when the gold corpus changes.
   recognition_path: ../../../../data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
   additional_recognition_paths:
     - ../../../../outputs/mining/knowledge/phase1-recognition-115886bf9d22/recognition_concepts.jsonl
