@@ -10,7 +10,7 @@ from medical_kg_nlp.benchmarks.plugins import BenchmarkHandler
 
 __all__ = ["PHASE1_PLUGIN", "Phase1BenchmarkPlugin"]
 
-_COMMAND_MODULE = "medical_kg_nlp.cli.commands.phase1"
+_COMMAND_MODULE = "medical_kg_nlp.benchmarks.phase1.commands"
 _HANDLER_FUNCTIONS = {
     "benchmark_phase1_submission": "run_phase1_submission",
     "benchmark_phase1_round2_audit": "audit_phase1_round2",
