@@ -12,6 +12,7 @@ from typing import Any
 import pytest
 
 from medical_kg_nlp.adapters import (
+    DictionaryCandidateAdapter,
     HuggingFaceCrossEncoderAdapter,
     HuggingFaceModelConfig,
     HuggingFaceMulticlassTextClassifierAdapter,
@@ -31,6 +32,7 @@ from medical_kg_nlp.adapters.model_spans import (
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.linking.candidate import Candidate
+from medical_kg_nlp.linking.rxnorm_reranker import StructuredRxNormReranker
 from medical_kg_nlp.pipeline import PipelineFactory, PipelineFactoryConfig, PipelineModelConfig
 from medical_kg_nlp.pipeline.options import PipelineOptions
 from medical_kg_nlp.retrieval import DenseHit, DenseRetrieverAdapter
@@ -246,6 +248,30 @@ def test_cross_encoder_reranks_without_changing_candidate_identity(
     assert candidates[0].score == 0.9
 
 
+def test_cross_encoder_never_restores_candidate_rejected_by_base_reranker(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    base_reranker = _RejectFirstCandidateReranker()
+    adapter = HuggingFaceCrossEncoderAdapter(
+        _model_config(),
+        model_weight=1.0,
+        base_reranker=base_reranker,
+    )
+    candidates = [_candidate("REJECTED", 0.9), _candidate("KEPT", 0.2)]
+    scored_pairs: list[tuple[str, str]] = []
+
+    def score_pairs(pairs: list[tuple[str, str]]) -> list[float]:
+        scored_pairs.extend(pairs)
+        return [0.8]
+
+    monkeypatch.setattr(adapter, "_score_pairs", score_pairs)
+
+    reranked = adapter.rerank(candidates, "context", "mention")
+
+    assert [candidate.concept_id for candidate in reranked] == ["KEPT"]
+    assert scored_pairs == [("mention\ncontext", "KEPT")]
+
+
 def test_multiclass_adapter_returns_label_keyed_normalized_probabilities(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -354,7 +380,13 @@ def test_factory_wires_cross_encoder_without_loading_weights(tmp_path: Path) -> 
 
     runner = PipelineFactory.from_config(config)
 
-    assert isinstance(runner.components.candidate_reranker, HuggingFaceCrossEncoderAdapter)
+    reranker = runner.components.candidate_reranker
+    assert isinstance(reranker, HuggingFaceCrossEncoderAdapter)
+    assert isinstance(reranker.base_reranker, DictionaryCandidateAdapter)
+    assert isinstance(
+        reranker.base_reranker.implementation.reranker,
+        StructuredRxNormReranker,
+    )
 
 
 def _model_config() -> HuggingFaceModelConfig:
@@ -391,6 +423,17 @@ def _candidate(concept_id: str, score: float) -> Candidate:
         score=score,
         source="exact",
     )
+
+
+class _RejectFirstCandidateReranker:
+    def rerank(
+        self,
+        candidates: list[Candidate],
+        context_window: str = "",
+        mention: str = "",
+    ) -> list[Candidate]:
+        del context_window, mention
+        return candidates[1:]
 
 
 class _FakeTensor:

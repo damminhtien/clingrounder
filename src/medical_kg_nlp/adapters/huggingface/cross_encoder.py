@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import replace
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from medical_kg_nlp.adapters.huggingface.config import HuggingFaceModelConfig
 from medical_kg_nlp.adapters.huggingface.runtime import (
@@ -13,6 +13,9 @@ from medical_kg_nlp.adapters.huggingface.runtime import (
     _probability,
 )
 from medical_kg_nlp.linking.candidate import Candidate
+
+if TYPE_CHECKING:
+    from medical_kg_nlp.pipeline.ports import CandidateRerankerPort
 
 __all__ = ["HuggingFaceCrossEncoderAdapter"]
 
@@ -26,6 +29,7 @@ class HuggingFaceCrossEncoderAdapter:
         *,
         model_weight: float = 0.75,
         positive_label_index: int = 1,
+        base_reranker: CandidateRerankerPort | None = None,
     ) -> None:
         if not 0.0 <= model_weight <= 1.0:
             raise ValueError("model_weight must be between 0 and 1")
@@ -34,6 +38,7 @@ class HuggingFaceCrossEncoderAdapter:
         self.config = config
         self.model_weight = model_weight
         self.positive_label_index = positive_label_index
+        self.base_reranker = base_reranker
         self._loaded: tuple[Any, Any, Any] | None = None
 
     def rerank(
@@ -44,11 +49,22 @@ class HuggingFaceCrossEncoderAdapter:
     ) -> list[Candidate]:
         """Score mention/concept pairs in bounded batches and preserve candidate identity."""
 
-        if not candidates:
+        base_candidates = (
+            list(candidates)
+            if self.base_reranker is None
+            else self.base_reranker.rerank(
+                candidates,
+                context_window=context_window,
+                mention=mention,
+            )
+        )
+        if not base_candidates:
             return []
+        # INVARIANT: model scoring cannot restore a medication candidate rejected by structured
+        # RxNorm compatibility. The model only reorders the bounded, type-safe candidate set.
         query = mention if not context_window else f"{mention}\n{context_window}"
         scores = self._score_pairs(
-            [(query, candidate.canonical_name) for candidate in candidates]
+            [(query, candidate.canonical_name) for candidate in base_candidates]
         )
         reranked = [
             replace(
@@ -58,7 +74,7 @@ class HuggingFaceCrossEncoderAdapter:
                     + self.model_weight * model_score
                 ),
             )
-            for candidate, model_score in zip(candidates, scores, strict=True)
+            for candidate, model_score in zip(base_candidates, scores, strict=True)
         ]
         return sorted(
             reranked,

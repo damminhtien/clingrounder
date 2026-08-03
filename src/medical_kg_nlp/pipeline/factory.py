@@ -300,10 +300,13 @@ class PipelineFactory:
 
         candidate_reranker: CandidateRerankerPort | None = candidate_adapter
         if options.enable_linking and resolved.models.candidate_reranker is not None:
+            if candidate_adapter is None:
+                raise RuntimeError("Structured candidate reranker is unavailable")
             candidate_reranker = HuggingFaceCrossEncoderAdapter(
                 resolved.models.candidate_reranker,
                 model_weight=resolved.models.candidate_reranker_weight,
                 positive_label_index=resolved.models.candidate_positive_label_index,
+                base_reranker=candidate_adapter,
             )
 
         document_candidate_reranker = None

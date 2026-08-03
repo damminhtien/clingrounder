@@ -130,8 +130,14 @@ type as distinct concepts. In particular, `po` is a route rather than evidence f
 candidate only when the mention provides product evidence such as amount plus explicit form or
 release type. Dose ranges and route/frequency SIG amounts remain administered or ambiguous doses
 and can affect ranking without rejecting a valid product. Explicit product-strength, release-type,
-or dose-form conflicts retain a structured rejection reason; rejected candidates remain in the
-internal list for error analysis rather than being deleted from retrieval traces.
+or dose-form conflicts retain a structured rejection reason through the scoring API; production
+reranking removes those candidates before qualification and model scoring.
+
+Mention-level model rerankers are composed after `StructuredRxNormReranker`. A cross-encoder may
+reorder candidates that survive medication compatibility checks, but it cannot restore a candidate
+rejected for an explicit ingredient, ingredient-count, product-strength, release, or dosage-form
+conflict. This order is enforced by `PipelineFactory` even when an optional model adapter is
+enabled; route and administered-dose differences remain soft ranking evidence.
 
 Dictionary aliases with unresolved cross-type semantics are retained as non-exportable
 `AmbiguousEntityProposal` records. Rule-only extraction abstains. A hybrid extractor may use an
