@@ -1,7 +1,7 @@
 # Contributing
 
-Thanks for improving this prototype. The project is a Python-first clinical NLP and medical KG
-retrieval baseline, so correctness and reproducibility matter more than broad refactors.
+Thanks for improving the toolkit. The project is a Python-first clinical NLP and medical KG
+research system, so correctness, modularity, and reproducibility matter more than broad refactors.
 
 ## Ground Rules
 

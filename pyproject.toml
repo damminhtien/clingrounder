@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "medical-kg-nlp"
 version = "0.2.0"
-description = "Prototype for ontological reasoning in medical knowledge retrieval"
+description = "Offset-safe clinical NLP, terminology linking, and medical knowledge graph toolkit"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"

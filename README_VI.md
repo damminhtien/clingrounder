@@ -1,581 +1,223 @@
-# Ontological Reasoning in Medical Knowledge Retrieval
+# Medical KG NLP
 
-Repo này biến văn bản bệnh án thành dữ liệu có cấu trúc:
+Bộ công cụ Clinical NLP bảo toàn offset để trích xuất khái niệm y khoa, phân tích ngữ cảnh,
+chuẩn hóa thuật ngữ và kiểm tra đồ thị quan hệ. Repo ưu tiên tiếng Việt và văn bản trộn
+Việt-Anh, nhưng các contract lõi không phụ thuộc ngôn ngữ.
 
-- tìm **entity**: bệnh, triệu chứng, thuốc, xét nghiệm;
-- xác định **assertion**: đang mắc, bị phủ định, thuộc tiền sử, thuộc người nhà, chỉ là nghi ngờ...;
-- nối entity với mã chuẩn như **ICD-10** và **RxNorm**;
-- kiểm tra kết quả bằng luật ontology/KG;
-- xuất JSON và ZIP đúng schema Phase 1.
+Project đồng thời là thư viện có thể tái sử dụng và research portfolio. Rule engine, model local,
+terminology repository, evaluation và data mining dùng chung các interface ổn định. Code của cuộc
+thi cũ được giữ dưới dạng benchmark plugin tùy chọn, không được nạp bởi pipeline mặc định.
 
-Hiểu nôm na, hệ thống đi từ:
+> Đây là phần mềm nghiên cứu, không phải thiết bị y tế và không được dùng làm căn cứ duy nhất cho
+> quyết định lâm sàng.
 
-```text
-Bệnh nhân có tiền sử đái tháo đường type 2, đang dùng metformin 500 mg.
+## Khả Năng Chính
+
+- Nhận diện bệnh, triệu chứng, thuốc, xét nghiệm, kết quả và thuộc tính thuốc.
+- Bảo toàn chính xác `[start, end)` trên raw text qua normalization và tokenization.
+- Phân loại phủ định, tiền sử, gia đình, nghi ngờ, kế hoạch, điều kiện và đã khỏi.
+- Retrieval và linking ICD-10, RxNorm, terminology nội bộ theo đúng entity type.
+- Trích xuất relation và chặn edge vi phạm ràng buộc y khoa.
+- Xây SQLite FTS5 index bất biến từ JSONL terminology chuẩn.
+- Đánh giá entity, assertion, linking, relation và runtime độc lập với từng đề thi.
+- Mining dữ liệu có license, provenance, dedup, review queue và snapshot chống leakage.
+
+## Nguyên Tắc Thiết Kế
+
+1. Raw offset là nguồn sự thật; normalized text chỉ phục vụ lookup.
+2. Không output code ngoài terminology đã load hoặc sai code system.
+3. `PipelineFactory` là composition root duy nhất; runner không tự đọc config hay dựng model.
+4. Rule và model là adapter có thể thay thế qua cùng một port.
+5. Mọi nguồn dữ liệu, model revision và derived artifact đều có fingerprint/provenance.
+6. Benchmark không được định nghĩa behavior của core toolkit.
+
+## Kiến Trúc
+
+```mermaid
+flowchart LR
+    A[Raw document] --> B[Section và sentence]
+    B --> C[Entity proposal adapters]
+    C --> D[Span và type resolver]
+    D --> E[Assertion context graph]
+    D --> F[Candidate retrieval]
+    T[(JSONL / SQLite terminology)] --> C
+    T --> F
+    F --> G[Reranking và assignment]
+    E --> H[Relation và KG validation]
+    G --> H
+    H --> I[Validated prediction]
 ```
 
-đến dữ liệu gần như:
+Luồng dependency chính:
+
+```text
+schema + preprocessing + terminology ports
+                    ↓
+              pipeline ports
+                    ↓
+          rule và model adapters
+                    ↓
+             PipelineComponents
+                    ↓
+              PipelineRunner
+
+generic evaluation ← task adapter ← optional benchmark plugin
+```
+
+Xem [architecture](docs/architecture.md) và [code map](docs/code-map.md) để biết ownership.
+
+## Chạy Nhanh
+
+Hỗ trợ Python 3.11 đến 3.14.
+
+```bash
+git clone https://github.com/damminhtien/ontological-reasoning-in-medical-knowledge-retrieval.git
+cd ontological-reasoning-in-medical-knowledge-retrieval
+uv sync --extra dev
+
+uv run medical-kg pipeline run \
+  --config configs/pipeline/clinical-baseline.yaml \
+  --input data/samples/sample_notes.jsonl \
+  --output outputs/sample-predictions.jsonl
+```
+
+Output có dạng:
 
 ```json
 {
-  "entities": [
-    {
-      "text": "đái tháo đường type 2",
-      "type": "DISEASE",
-      "assertion": "HISTORICAL",
-      "code_system": "ICD-10",
-      "code": "E11"
-    },
-    {
-      "text": "metformin",
-      "type": "DRUG",
-      "assertion": "PRESENT",
-      "code_system": "RxNorm",
-      "code": "6809"
-    }
-  ]
+  "text": "viêm phổi",
+  "span": [102, 111],
+  "type": "DISEASE",
+  "assertion": "POSSIBLE",
+  "code_system": "ICD-10",
+  "code": "J18.9"
 }
 ```
 
-> Đây là hệ thống **hybrid**: rule-based NER + dictionary retrieval + heuristic reranking + ontology validation. Nó chưa phải một neural model end-to-end.
-
-Python hỗ trợ: **3.11–3.14**.
-
-Sơ đồ ownership và extension point: [`docs/code-map.md`](docs/code-map.md).
-Hướng dẫn migration breaking 0.2: [`docs/migration-v0.2.md`](docs/migration-v0.2.md).
-
----
-
-## Repo đang làm được gì?
-
-- Typed schema cho document, entity, candidate, relation và prediction.
-- Preprocessing giữ đúng offset gốc.
-- Dictionary ICD-10, RxNorm, alias tiếng Việt và abbreviation.
-- Exact, fuzzy, character n-gram và BM25 retrieval.
-- Rule-based NER dựa trên dictionary, thuốc, liều dùng và xét nghiệm.
-- Assertion: `PRESENT`, `NEGATED`, `HISTORICAL`, `FAMILY`, `POSSIBLE`, `PLANNED`, `RESOLVED`.
-- Relation: `TREATS`, `HAS_DOSE`, `SUGGESTS` và một số quan hệ nội bộ khác.
-- Ontology/KG constraints để chặn code system hoặc relation không hợp lệ.
-- Phase 1 exporter, validator, ZIP builder, evaluation và error analysis.
-
-Ba ưu tiên chính của repo:
-
-1. **Span và offset phải đúng tuyệt đối**.
-2. **Không sinh mã ngoài dictionary hoặc sai code system**.
-3. **Mỗi bước phải debug được**.
-
----
-
-# Kiến trúc mô hình
-
-## 1. Luồng tổng thể
-
-```mermaid
-flowchart LR
-    A[Raw clinical text] --> B[Preprocessing]
-    B --> C[Section + sentence splitting]
-    C --> D[Entity extraction / NER]
-    D --> E[Assertion classification]
-    E --> F[Candidate generation]
-    F --> G[Candidate reranking]
-    G --> H[Code assignment or abstention]
-    H --> I[Ontology / KG validation]
-    I --> J[Relation extraction]
-    J --> K[Internal JSON]
-    K --> L[Phase 1 JSON + ZIP]
-    L --> M[Validation + evaluation]
-```
-
-Xương sống của pipeline nằm ở:
-
-```text
-src/medical_kg_nlp/pipeline/runner.py
-```
-
-Hàm nên đọc đầu tiên:
-
-```python
-PipelineRunner.process_document_with_trace()
-```
-
-Mỗi stage ghi timing và counter vào `PipelineTrace`, nên có thể biết stage nào chậm, tìm được bao nhiêu entity, sinh bao nhiêu candidate và gán được bao nhiêu code.
-
-## 2. Các khối chính
-
-```mermaid
-flowchart TB
-    A[Clinical text]
-
-    subgraph P[Preprocessing]
-        P1[Offset mapping]
-        P2[Section splitter]
-        P3[Sentence splitter]
-    end
-
-    subgraph N[Entity extraction]
-        N1[DictionaryStore]
-        N2[Aho-Corasick matcher]
-        N3[RuleBasedNER]
-        N4[Drug / strength / lab regex]
-    end
-
-    subgraph C[Context reasoning]
-        C1[Assertion cues]
-        C2[Clause and scope rules]
-        C3[Section priors]
-    end
-
-    subgraph L[Entity linking]
-        L1[Exact / abbreviation]
-        L2[Fuzzy / n-gram / BM25]
-        L3[Merge + deduplicate]
-        L4[Rerank]
-        L5[Assign or abstain]
-    end
-
-    subgraph R[Ontology reasoning]
-        R1[Code-system constraints]
-        R2[Relation rules]
-        R3[KG validation]
-    end
-
-    subgraph O[Output]
-        O1[ClinicalPrediction]
-        O2[Phase 1 exporter]
-        O3[Schema / offset / ZIP validator]
-    end
-
-    A --> P --> N --> C --> L --> R --> O
-```
-
-## 3. Entity extraction
-
-```text
-Dictionary aliases
-    ↓
-Aho-Corasick quét văn bản
-    ↓
-Kiểm tra word boundary
-    ↓
-Map offset về source text
-    ↓
-Giải quyết duplicate / overlap
-    ↓
-Bổ sung entity từ regex thuốc, strength và lab
-    ↓
-EntityAnnotation
-```
-
-Code chính:
-
-```text
-src/medical_kg_nlp/ner/dictionary_matcher.py
-src/medical_kg_nlp/ner/rule_ner.py
-src/medical_kg_nlp/ner/medication_attribute_extractor.py
-src/medical_kg_nlp/ner/lab_observation_extractor.py
-```
-
-Aho-Corasick chỉ tìm chuỗi từ dictionary. Nó không hiểu phủ định, tiền sử hay mã chuẩn. Assertion và entity linking xử lý các phần đó.
-
-## 4. Assertion
-
-Assertion trả lời: entity này đang ở trạng thái nào?
-
-```text
-"viêm phổi"                     → PRESENT
-"không ghi nhận viêm phổi"      → NEGATED
-"tiền sử viêm phổi"             → HISTORICAL
-"cha bệnh nhân bị ung thư phổi" → FAMILY
-"nghi viêm phổi"                → POSSIBLE
-```
-
-Classifier dùng cue trái/phải, clause boundary, scope reset và section title. Nó cũng chặn các trường hợp dễ hiểu sai như `không loại trừ`.
-
-Code chính:
-
-```text
-src/medical_kg_nlp/context/assertion.py
-src/medical_kg_nlp/context/cue_loader.py
-src/medical_kg_nlp/context/rules.py
-```
-
-## 5. Entity linking
-
-Entity linking nối mention trong bệnh án với concept chuẩn:
-
-```text
-"đái tháo đường type 2" → ICD-10 E11
-"metformin"              → RxNorm 6809
-```
-
-```mermaid
-flowchart LR
-    A[Entity mention] --> B[Exact]
-    A --> C[Abbreviation]
-    A --> D[Fuzzy]
-    A --> E[Character n-gram]
-    A --> F[BM25]
-    B --> G[Merge candidates]
-    C --> G
-    D --> G
-    E --> G
-    F --> G
-    G --> H[Deduplicate by code]
-    H --> I[Filter by entity type]
-    I --> J[Rerank with mention + context]
-    J --> K{Score and margin<br/>đủ tin cậy?}
-    K -->|Có| L[Assign code]
-    K -->|Không| M[Abstain]
-```
-
-Retrieval source mặc định:
-
-```python
-("exact", "abbreviation", "fuzzy", "char_ngram", "bm25")
-```
-
-Tham số mặc định:
-
-```text
-max_candidates       = 20
-assignment_threshold = 0.75
-assignment_margin    = 0.05
-context_window       = 80 ký tự
-```
-
-Code chỉ được gán khi top score đủ cao và đủ cách biệt với candidate thứ hai. Nếu chưa đủ chắc chắn, hệ thống **abstain** thay vì cố đoán.
-
-Code chính:
-
-```text
-src/medical_kg_nlp/retrieval/pipeline.py
-src/medical_kg_nlp/terminology/sqlite_repository.py
-src/medical_kg_nlp/linking/reranker.py
-src/medical_kg_nlp/linking/linker.py
-```
-
-## 6. Ontology/KG validation
-
-Validation chặn các output vô lý:
-
-```text
-DRUG    → ICD-10   ❌
-DISEASE → RxNorm   ❌
-DRUG    → RxNorm   ✅
-DISEASE → ICD-10   ✅
-```
-
-Code chính:
-
-```text
-src/medical_kg_nlp/kg/constraints.py
-src/medical_kg_nlp/kg/validator.py
-src/medical_kg_nlp/kg/ontology_reasoner.py
-```
-
----
-
-# Hai policy export Phase 1
-
-## `entity_only`: submission ổn định
-
-Dùng `--assertion-policy empty --candidate-policy empty` với command benchmark Phase 1. Policy này:
-
-- chỉ tập trung vào entity extraction;
-- xuất `assertions: []`;
-- xuất `candidates: []`;
-- không dựng các stage không ảnh hưởng tới submission.
-
-Mục tiêu là tránh để assertion hoặc candidate chưa đủ precision làm giảm điểm.
-
-## `full`: thử nghiệm đầy đủ
-
-Dùng `--assertion-policy pipeline --candidate-policy pipeline` để xuất kết quả nội bộ. Pipeline
-đầy đủ bật:
-
-- assertion classification;
-- candidate generation;
-- candidate reranking;
-- confidence-based assignment;
-- entity KG validation.
-
-`full` không mặc nhiên tốt hơn `entity_only`; phải đo trên local/manual gold trước khi dùng cho submission.
-
----
-
-# Cài đặt nhanh
-
-## Dùng `uv` — khuyến nghị
+Validate và evaluate:
 
 ```bash
-uv sync --extra dev
-uv run pre-commit install
-```
+uv run medical-kg validate \
+  --profile development \
+  --pred outputs/sample-predictions.jsonl \
+  --documents data/samples/sample_notes.jsonl \
+  --dictionary data/dictionaries/seed_concepts.jsonl
 
-## Không dùng `uv`
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -e ".[dev]"
-pre-commit install
-```
-
-Windows PowerShell:
-
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev]"
-pre-commit install
-```
-
----
-
-# Chạy thử
-
-```bash
-uv run medical-kg pipeline run \
-  --input data/samples/sample_notes.jsonl \
-  --output outputs/predictions.jsonl
-```
-
-Sample hiện cho ra các entity tiêu biểu:
-
-```text
-đái tháo đường type 2 → HISTORICAL → ICD-10 E11
-viêm phổi             → POSSIBLE   → ICD-10 J18.9
-hen phế quản          → NEGATED    → ICD-10 J45
-metformin             → PRESENT    → RxNorm 6809
-ung thư phổi          → FAMILY     → ICD-10 C34
-```
-
-Chạy test:
-
-```bash
-uv run pytest tests
-```
-
----
-
-# Build submission Phase 1
-
-```bash
-uv run medical-kg benchmark phase1 \
-  --input-dir data/raw/input \
-  --output-dir outputs/phase1/current/output \
-  --zip outputs/phase1/current/output.zip \
-  --dictionary data/dictionaries/seed_concepts.jsonl \
-  --assertion-policy empty \
-  --candidate-policy empty
-```
-
-Script sẽ:
-
-1. đọc `1.txt ... 100.txt`;
-2. chạy pipeline;
-3. xuất `1.json ... 100.json`;
-4. kiểm tra schema, offset và candidate;
-5. tạo ZIP;
-6. kiểm tra cấu trúc ZIP.
-
-Các experiment chuyên biệt vẫn có thể dùng `--run-root` và manifest riêng; command benchmark ổn định
-chỉ ghi đúng các đường dẫn artifact được truyền vào.
-
----
-
-# Đánh giá
-
-Internal JSONL:
-
-```bash
 uv run medical-kg evaluate \
   --gold data/samples/gold.jsonl \
-  --pred outputs/predictions.jsonl
+  --pred outputs/sample-predictions.jsonl \
+  --error-analysis outputs/sample-errors.json
 ```
 
-Phase 1 manual gold:
+## Profile Và Extension Point
+
+| Profile | Mục đích |
+| --- | --- |
+| `configs/pipeline/clinical-baseline.yaml` | Baseline deterministic nhỏ, chạy ngay |
+| `configs/pipeline/full_terminology.yaml` | ICD-10/RxNorm đầy đủ qua SQLite |
+| `configs/pipeline/full_terminology_kg_exact.yaml` | Terminology đầy đủ và graph evidence |
+| `configs/pipeline/mined_vietbioner_silver.yaml` | Vietnamese recognition overlay đã review |
+
+CLI không tự chọn profile ẩn. Model profile phải pin `model_id` và `revision`; adapter Hugging Face
+chỉ dùng model local và lazy-load extra `ml`.
+
+Các port công khai gồm:
+
+- `EntityExtractorPort`
+- `AssertionClassifierPort`
+- `CandidateRetrieverPort`
+- `CandidateRerankerPort`
+- `RelationExtractorPort`
+- `TerminologyRepository`
+
+## Terminology Và Scale
+
+JSONL là source of truth. SQLite FTS5 là index derived, content-addressed, read-only và dùng
+thread-local connection.
 
 ```bash
-python scripts/evaluate_phase1_manual_gold.py \
-  --gold-dir data/manual_gold \
-  --pred-dir outputs/phase1/<run>/phase1/output \
-  --output-dir outputs/evaluation/manual_gold
+uv run medical-kg terminology build \
+  --source data/processed/full_concepts.jsonl \
+  --cache-dir .cache/medical-kg/terminology
+
+uv run medical-kg terminology inspect \
+  --index .cache/medical-kg/terminology/<fingerprint>.sqlite3 \
+  --query metformin \
+  --entity-type DRUG \
+  --code-system RxNorm
 ```
 
-Ablation:
+Exact, abbreviation, fuzzy, char n-gram, BM25, dense tùy chọn và graph retrieval đều nằm sau cùng
+một retrieval pipeline. Type/code-system filter luôn chạy trước assignment.
+
+## Các Nhánh Nghiên Cứu
+
+- Proposal-first NER với dictionary, medication, lab, boundary, transformer và generative adapter.
+- Structured RxNorm linking tách ingredient, brand, strength, dose, form, route và release.
+- Assertion context graph lưu cue, scope, termination và provenance.
+- Hybrid retrieval tách retrieval score, qualification và final assignment.
+- Graph evidence reranker chỉ bổ sung evidence có giới hạn, không tự sinh candidate.
+- Data miner từ source discovery đến snapshot, review và model dataset.
+
+Đọc tiếp:
+
+- [Rule NER V2](docs/rule-ner-v2.md)
+- [Reference implementations](docs/reference-implementations.md)
+- [Data mining](docs/data-mining.md)
+- [Mining reproducibility](docs/mining-reproducibility.md)
+
+## Data Và Provenance
+
+Public Git chỉ chứa code, fixture được phép phân phối, policy, dossier, checksum và lệnh rebuild.
+Clinical text hạn chế, terminology có license, manual labels, checkpoint và generated runs vẫn được
+giữ ở local/object storage. Danh tính artifact nằm trong `data/provenance/local-artifacts.json`.
 
 ```bash
-python scripts/run_ablation.py \
-  --config configs/ablations.yaml \
-  --run-root outputs/runs
+uv run medical-kg release audit \
+  --policy configs/repository/public-release.yaml \
+  --root .
 ```
 
-Chi tiết: [`docs/evaluation.md`](docs/evaluation.md).
+Xem [public release policy](docs/public-release.md).
 
----
+## Benchmark Plugin Tùy Chọn
 
-# Cấu trúc repo
-
-```text
-configs/                  Cấu hình YAML
-data/dictionaries/        Dictionary và alias runtime
-data/standards/           Concept chuẩn cho Phase 1
-data/samples/             Dữ liệu nhỏ để chạy thử
-docs/                     Kiến trúc, schema, invariant, evaluation
-scripts/                  Import dữ liệu và experiment chuyên biệt
-
-src/medical_kg_nlp/
-├── schema/               Kiểu dữ liệu nội bộ
-├── pipeline/             Port, composition root, runner, parallel batch
-├── adapters/             Rule/model implementation có thể thay thế
-├── preprocessing/        Section, sentence, normalize, offset mapping
-├── dictionaries/         JSONL canonical và source importer
-├── terminology/          Repository port và SQLite FTS5 index
-├── ner/                  Entity extraction
-├── context/              Assertion classification
-├── retrieval/            Ghép lexical/dense retriever
-├── linking/              Reranking và code assignment
-├── kg/                   Ontology/KG constraints
-├── relations/            Relation extraction
-├── evaluation/           Metric/report độc lập đề bài
-├── experiments/          Ablation, journal và loop tooling
-├── benchmarks/phase1/    Adapter/scorer/exporter Phase 1
-├── validation/           Profile core/development/release
-├── cli/                  Handler của command medical-kg
-└── utils/                IO, hashing, logging, text utilities
-
-tests/                    Fast contract và các tier opt-in
-```
-
----
-
-# Nên đọc code theo thứ tự nào?
-
-```text
-1. README.md
-2. docs/invariants.md
-3. docs/code-map.md
-4. src/medical_kg_nlp/pipeline/ports.py
-5. src/medical_kg_nlp/pipeline/factory.py
-6. src/medical_kg_nlp/pipeline/runner.py
-7. src/medical_kg_nlp/schema/annotation.py
-8. src/medical_kg_nlp/terminology/ports.py
-9. src/medical_kg_nlp/retrieval/pipeline.py
-10. src/medical_kg_nlp/benchmarks/phase1/phase1.py
-11. tests/test_pipeline_contracts.py
-```
-
-Breakpoint tốt nhất:
-
-```python
-PipelineRunner.process_document_with_trace()
-```
-
-Theo dõi:
-
-```text
-text
-→ dictionary matches
-→ entities
-→ assertion_features
-→ generated_candidates
-→ reranked_candidates
-→ assigned code
-→ Phase 1 rows
-```
-
----
-
-# Các invariant không được phá
-
-## Offset
-
-```python
-source_text[start:end] == entity.text
-```
-
-## Code system
-
-```text
-DISEASE → ICD-10
-DRUG    → RxNorm
-```
-
-## Candidate
-
-- Candidate phải tồn tại trong dictionary được cấu hình.
-- Candidate phải được lọc theo entity type.
-- Các row cùng `(code_system, code)` phải được deduplicate trước khi lấy top-k.
-
-## Assertion
-
-Cue ở clause trước không được tự động lan sang entity ở clause sau.
-
-Chi tiết: [`docs/invariants.md`](docs/invariants.md).
-
----
-
-# Lệnh thường dùng
+Benchmark tiếng Việt cũ được giữ để tái lập nghiên cứu:
 
 ```bash
-make lint
-make type
-make test
-make pipeline
-make validate
-make evaluate
-make profile
-make phase1-submit
-make phase1-validate
-make ablation
+uv run medical-kg benchmark list
+uv run medical-kg benchmark phase1 --help
+uv run pytest -o addopts='' -m "benchmark and not private and not model" \
+  tests/benchmarks/phase1
 ```
 
-Optional dependencies:
+Config nằm tại [`configs/benchmarks/phase1`](configs/benchmarks/phase1/README.md), tài liệu lịch sử
+nằm tại [`docs/benchmarks/phase1`](docs/benchmarks/phase1/README.md). Core pipeline không tự load
+resource hoặc heuristic của benchmark.
+
+## Development
 
 ```bash
-uv sync --extra data
-uv sync --extra retrieval
-uv sync --extra graph
-uv sync --extra ml
-uv sync --extra cli
-uv sync --extra api
-uv sync --extra experiment
+# Fast unit + contract suite
+uv run pytest tests
+
+# Toàn bộ public suite
+uv run pytest -o addopts='' tests
+
+uv run ruff check .
+uv run mypy src
 ```
 
----
+Marker tùy chọn gồm `integration`, `release`, `benchmark`, `private`, `model`. Các invariant về
+schema, offset, code system và relation endpoint luôn là hard gate.
 
-# Giới hạn hiện tại
+## Tài Liệu
 
-- Recognition runtime vẫn dùng tập con đã review; normalization có thể dùng toàn bộ TT06/RxNorm
-  qua SQLite FTS5 index được build trước.
-- Adapter Hugging Face local cho NER và reranker đã có, nhưng chưa bật model mặc định. Config phải
-  khóa `model_id` và `revision`, còn dependency `ml` chỉ được lazy-load khi inference.
-- Rule-based assertion vẫn có thể sai với câu dài hoặc ngữ nghĩa phức tạp.
-- Entity linking phụ thuộc mạnh vào candidate recall và chất lượng dictionary.
-- Dense retrieval chưa phải thành phần mặc định.
-- Hidden Phase 1 không có gold label; local score chỉ đáng tin trên synthetic/manual gold đã review.
+- [Code map](docs/code-map.md)
+- [Schema](docs/schema.md)
+- [Invariants](docs/invariants.md)
+- [Evaluation](docs/evaluation.md)
+- [Dictionaries](docs/dictionaries.md)
+- [Contributor workflow](docs/hacking.md)
 
-Ưu tiên hiện tại là làm chắc schema, offset, entity extraction, linking constraints, context handling và khả năng debug trước khi đưa model lớn vào.
-
----
-
-# Tài liệu liên quan
-
-- [`docs/architecture.md`](docs/architecture.md): kiến trúc kỹ thuật chi tiết.
-- [`docs/design.md`](docs/design.md): quyết định thiết kế.
-- [`docs/schema.md`](docs/schema.md): schema nội bộ.
-- [`docs/invariants.md`](docs/invariants.md): các điều kiện không được phá.
-- [`docs/dictionaries.md`](docs/dictionaries.md): dictionary và source data.
-- [`docs/evaluation.md`](docs/evaluation.md): metric và evaluation workflow.
-- [`AGENTS.md`](AGENTS.md): hướng dẫn cho coding agents.
-
----
-
-# Project hygiene
-
-- License: MIT — [`LICENSE`](LICENSE).
-- Contribution: [`CONTRIBUTING.md`](CONTRIBUTING.md).
-- Security: [`SECURITY.md`](SECURITY.md).
-- Code of conduct: [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
-- Changelog: [`CHANGELOG.md`](CHANGELOG.md).
+Project sử dụng [MIT License](LICENSE).
