@@ -261,6 +261,21 @@ def _validate_parser(commands: argparse._SubParsersAction[argparse.ArgumentParse
 def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     benchmark = commands.add_parser("benchmark", help="Run task-specific benchmark plugins.")
     plugins = benchmark.add_subparsers(dest="benchmark_name", required=True)
+    list_command = plugins.add_parser("list", help="List installed benchmark plugins.")
+    list_command.set_defaults(handler="benchmark_list")
+    # Plugins own task schemas and handlers. Importing the core CLI does not import
+    # their model, scorer, or data modules.
+    from medical_kg_nlp.benchmarks.registry import benchmark_plugins
+
+    for plugin in benchmark_plugins():
+        plugin.register_cli(plugins)
+
+
+def _register_phase1_benchmark_parser(
+    plugins: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> None:
+    """Compatibility parser registration owned by the optional Phase 1 plugin."""
+
     phase1 = plugins.add_parser("phase1", help="Run Phase 1 benchmark workflows.")
     operations = phase1.add_subparsers(dest="phase1_command", required=True)
 

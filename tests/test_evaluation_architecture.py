@@ -10,7 +10,10 @@ from pathlib import Path
 import pytest
 
 from medical_kg_nlp import __version__
-from medical_kg_nlp.benchmarks.phase1 import Phase1EvaluationAdapter, Phase1Record
+from medical_kg_nlp.benchmarks.phase1.adapter import (
+    Phase1EvaluationAdapter,
+    Phase1Record,
+)
 from medical_kg_nlp.evaluation import (
     EvaluationDocument,
     EvaluationEntity,

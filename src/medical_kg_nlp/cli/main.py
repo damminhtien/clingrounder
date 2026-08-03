@@ -42,141 +42,9 @@ _HANDLERS = {
     "kg_inspect": ("medical_kg_nlp.cli.commands.kg", "inspect_graph_index"),
     "evaluate": ("medical_kg_nlp.cli.commands.evaluate", "evaluate"),
     "validate": ("medical_kg_nlp.cli.commands.validate", "validate"),
-    "benchmark_phase1_submission": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "run_phase1_submission",
-    ),
-    "benchmark_phase1_round2_audit": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "audit_phase1_round2",
-    ),
-    "benchmark_phase1_round2_probes": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "run_phase1_round2_probe_suite",
-    ),
-    "benchmark_phase1_round2_proposal_verifier": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "run_phase1_round2_proposal_verifier_command",
-    ),
-    "benchmark_phase1_round2_max_score": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "run_phase1_round2_max_score",
-    ),
-    "benchmark_phase1_round2_golden": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "build_phase1_round2_golden_command",
-    ),
-    "benchmark_phase1_proposal_calibrate": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "calibrate_phase1_proposals",
-    ),
-    "benchmark_phase1_proposal_matrix": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "build_phase1_proposal_matrix_command",
-    ),
-    "benchmark_phase1_proposal_resolve": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "resolve_phase1_proposals",
-    ),
-    "benchmark_phase1_boundary_calibrate": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "calibrate_phase1_boundaries",
-    ),
-    "benchmark_phase1_boundary_resolve": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "resolve_phase1_boundaries",
-    ),
-    "benchmark_phase1_proposal_score": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "score_phase1_proposal_sources",
-    ),
-    "benchmark_phase1_type_verifier": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "train_phase1_type_verifier",
-    ),
-    "benchmark_phase1_model_data_build": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "build_phase1_model_data",
-    ),
-    "benchmark_phase1_model_data_build_final_fit": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "build_phase1_final_token_data",
-    ),
-    "benchmark_phase1_model_data_build_final_fit_bundle": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "build_phase1_final_token_training_bundle_command",
-    ),
-    "benchmark_phase1_model_data_augment_regions": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "augment_phase1_model_regions",
-    ),
-    "benchmark_phase1_model_data_augment_user_synthetic": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "augment_phase1_model_user_synthetic",
-    ),
-    "benchmark_phase1_model_data_calibrate": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "calibrate_phase1_model_data",
-    ),
-    "benchmark_phase1_model_data_compare": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "compare_phase1_model_variants",
-    ),
-    "benchmark_phase1_qwen_data_build": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "build_phase1_qwen_data",
-    ),
-    "benchmark_phase1_qwen_inspect": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "inspect_phase1_qwen_run",
-    ),
-    "benchmark_phase1_qwen_propose": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "propose_phase1_qwen_entities",
-    ),
-    "benchmark_phase1_qwen_final_supervision_propose": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "propose_phase1_qwen_final_supervision_entities",
-    ),
-    "benchmark_phase1_qwen_token_bundle_propose": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "propose_phase1_qwen_token_bundle_entities",
-    ),
-    "benchmark_phase1_joint_span_prepare_final_fit": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "prepare_phase1_joint_span_final_fit_command",
-    ),
-    "benchmark_phase1_joint_span_prepare_token_bundle": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "prepare_phase1_joint_span_token_bundle_command",
-    ),
-    "benchmark_phase1_joint_span_materialize_token_source": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "materialize_phase1_joint_span_token_source_command",
-    ),
-    "benchmark_phase1_joint_span_materialize_token_bundle_source": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "materialize_phase1_joint_span_token_bundle_source_command",
-    ),
-    "benchmark_phase1_joint_span_run": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "run_phase1_joint_span_command",
-    ),
-    "benchmark_phase1_joint_span_train": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "train_phase1_joint_span_verifier_command",
-    ),
-    "benchmark_phase1_joint_span_train_oof": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "run_phase1_joint_span_transformer_oof_command",
-    ),
-    "benchmark_phase1_joint_span_calibrate": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "calibrate_phase1_joint_span_command",
-    ),
-    "benchmark_phase1_qwen_vietnamese_support": (
-        "medical_kg_nlp.cli.commands.phase1",
-        "propose_phase1_vietnamese_support",
+    "benchmark_list": (
+        "medical_kg_nlp.cli.commands.benchmark",
+        "list_benchmarks",
     ),
     "model_validate_token_dataset": (
         "medical_kg_nlp.cli.commands.model",
@@ -358,7 +226,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not isinstance(handler_name, str):
         parser.print_help()
         return 2
-    module_name, function_name = _HANDLERS[handler_name]
+    target = _HANDLERS.get(handler_name)
+    if target is None:
+        from medical_kg_nlp.benchmarks.registry import resolve_benchmark_handler
+
+        benchmark_target = resolve_benchmark_handler(handler_name)
+        if benchmark_target is None:
+            raise KeyError(f"Unknown CLI handler: {handler_name}")
+        module_name, function_name = benchmark_target.module, benchmark_target.function
+    else:
+        module_name, function_name = target
     module = importlib.import_module(module_name)
     handler = getattr(module, function_name)
     return int(_typed_handler(handler)(args))
