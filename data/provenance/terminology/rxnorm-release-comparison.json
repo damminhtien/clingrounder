@@ -1,0 +1,55 @@
+{
+  "baseline": {
+    "concepts": 40667,
+    "path": "data/standards/rxnorm/processed/rxnorm_prescribable_06012026_concepts.jsonl",
+    "release_date": "2026-06-01",
+    "sha256": "30b99a7ed33224d906cacdacd15a470d70a512ea38703dcafc6d37e91f1b3d30",
+    "source_id": "rxnorm_prescribable_2026_06_01"
+  },
+  "candidate": {
+    "concepts": 40675,
+    "path": "data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl",
+    "release_date": "2026-07-06",
+    "sha256": "a24997240080023175b7b662d272fa869bee82e12eae5e5c01488384b98ce69a",
+    "source_id": "rxnorm_prescribable_2026_07_06"
+  },
+  "candidate_full_fallback": {
+    "concepts": 73912,
+    "path": "data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl",
+    "sha256": "42faaadeb12222ec099f05c398f3ff858866cb694cbb6dc0cb193f0ea23359cb",
+    "source_id": "rxnorm_full_2026_07_06"
+  },
+  "concept_diff": {
+    "added": 96,
+    "canonical_name_changes": 0,
+    "removed": 88,
+    "shared": 40579,
+    "status_changes": 0
+  },
+  "decision": {
+    "status": "promoted",
+    "promoted_date": "2026-07-25",
+    "reason": "Runtime full-terminology profiles are pinned to the audited July prescribable and full sources; June remains available only for historical reproduction."
+  },
+  "raw_bundle": {
+    "archive_member_roots": [
+      "prescribe/rrf",
+      "rrf"
+    ],
+    "path": "data/standards/rxnorm/raw/RxNorm_full_07062026.zip",
+    "sha256": "53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c"
+  },
+  "runtime_coverage": {
+    "codes": 139,
+    "july_full_covered": 139,
+    "july_prescribable_covered": 135,
+    "missing_from_july_union": [],
+    "prescribable_missing_full_present": [
+      "203546",
+      "215101",
+      "42844",
+      "74170"
+    ],
+    "removed_by_july_prescribable": []
+  }
+}

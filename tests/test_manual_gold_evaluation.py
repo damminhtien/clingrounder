@@ -56,7 +56,7 @@ def test_manual_gold_gate_applies_holdout_thresholds() -> None:
             }
         }
     }
-    baseline = json.loads(Path("data/manual_gold/entity_only_baseline.json").read_text(encoding="utf-8"))
+    baseline = _entity_only_baseline()
 
     gate = compare_manual_gold_gate(report, baseline)
 
@@ -76,7 +76,7 @@ def test_manual_gold_gate_treats_error_caps_as_diagnostics() -> None:
             }
         }
     }
-    baseline = json.loads(Path("data/manual_gold/entity_only_baseline.json").read_text(encoding="utf-8"))
+    baseline = _entity_only_baseline()
 
     gate = compare_manual_gold_gate(report, baseline)
 
@@ -132,4 +132,22 @@ def _row(
         "assertions": assertions or [],
         "candidates": candidates or [],
         "position": [0, len(text)],
+    }
+
+
+def _entity_only_baseline() -> dict[str, object]:
+    """Keep gate semantics testable without shipping private benchmark annotations."""
+
+    return {
+        "local": {
+            "holdout": {
+                "score": 35.893679,
+                "text_score": 0.494593,
+                "error_counts": {
+                    "phase1_missing_entity": 185,
+                    "phase1_spurious_entity": 23,
+                    "phase1_text_boundary": 68,
+                },
+            }
+        }
     }

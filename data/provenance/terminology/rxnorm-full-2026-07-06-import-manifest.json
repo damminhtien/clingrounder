@@ -1,0 +1,201 @@
+{
+  "concepts": 73912,
+  "release_profiles": [
+    {
+      "archive_member_root": "rrf",
+      "path": "data/standards/rxnorm/raw/RxNorm_full_07062026.zip",
+      "required_files": {
+        "RXNCONSO.RRF": true,
+        "RXNREL.RRF": true,
+        "RXNSAT.RRF": true
+      },
+      "rxnconso": {
+        "accepted_concepts": 73912,
+        "accepted_term_rows": 73912,
+        "active_concepts": 128694,
+        "active_rxnorm_rows": 209650,
+        "language_counts": {
+          "ENG": 1202603
+        },
+        "malformed_rows": 0,
+        "rxnorm_rows": 362409,
+        "suppress_counts": {
+          "E": 7155,
+          "N": 202495,
+          "O": 152759
+        },
+        "total_rows": 1202603,
+        "tty_counts": {
+          "BN": 11892,
+          "BPCK": 1008,
+          "DF": 191,
+          "DFG": 47,
+          "ET": 11,
+          "GPCK": 925,
+          "IN": 14648,
+          "MIN": 3841,
+          "PIN": 3643,
+          "PSN": 38936,
+          "SBD": 24060,
+          "SBDC": 19514,
+          "SBDF": 14605,
+          "SBDFP": 5165,
+          "SBDG": 20254,
+          "SCD": 40027,
+          "SCDC": 28326,
+          "SCDF": 15179,
+          "SCDFP": 4542,
+          "SCDG": 16443,
+          "SCDGP": 4816,
+          "SY": 67101,
+          "TMSY": 27235
+        }
+      },
+      "rxnrel": {
+        "active_rows": 2259114,
+        "malformed_rows": 0,
+        "rel_counts": {
+          "RB": 393603,
+          "RN": 393603,
+          "RO": 901920,
+          "SY": 569988
+        },
+        "rela_counts": {
+          "<blank>": 569988,
+          "BOSS_OF": 8774,
+          "CONSISTS_OF": 116818,
+          "CONSTITUTES": 116818,
+          "CONTAINED_IN": 3338,
+          "CONTAINS": 3338,
+          "DOSEFORMGROUP_OF": 36697,
+          "DOSE_FORM_OF": 95804,
+          "FORM_OF": 18169,
+          "HAS_BOSS": 8774,
+          "HAS_DOSEFORMGROUP": 36697,
+          "HAS_DOSE_FORM": 95804,
+          "HAS_FORM": 18169,
+          "HAS_INGREDIENT": 158909,
+          "HAS_INGREDIENTS": 11967,
+          "HAS_PART": 10549,
+          "HAS_PRECISE_INGREDIENT": 12287,
+          "HAS_QUANTIFIED_FORM": 6834,
+          "HAS_TRADENAME": 118543,
+          "INCLUDED_IN": 6267,
+          "INCLUDES": 6267,
+          "INGREDIENTS_OF": 11967,
+          "INGREDIENT_OF": 158909,
+          "INVERSE_ISA": 239554,
+          "ISA": 239554,
+          "PART_OF": 10549,
+          "PRECISE_INGREDIENT_OF": 12287,
+          "QUANTIFIED_FORM_OF": 6834,
+          "REFORMULATED_TO": 53,
+          "REFORMULATION_OF": 53,
+          "TRADENAME_OF": 118543
+        },
+        "rxnorm_rows": 2259114,
+        "suppress_counts": {
+          "<blank>": 2259114
+        },
+        "total_rows": 7423180
+      },
+      "rxnsat": {
+        "active_rows": 817115,
+        "attribute_counts": {
+          "AMBIGUITY_FLAG": 8744,
+          "NDC": 249706,
+          "ORIG_CODE": 135,
+          "ORIG_SOURCE": 135,
+          "RXN_ACTIVATED": 7649,
+          "RXN_AI": 70868,
+          "RXN_AM": 70868,
+          "RXN_AVAILABLE_STRENGTH": 52532,
+          "RXN_BN_CARDINALITY": 11882,
+          "RXN_BOSS_FROM": 70868,
+          "RXN_BOSS_STRENGTH_DENOM_UNIT": 16483,
+          "RXN_BOSS_STRENGTH_DENOM_VALUE": 16483,
+          "RXN_BOSS_STRENGTH_NUM_UNIT": 16483,
+          "RXN_BOSS_STRENGTH_NUM_VALUE": 16483,
+          "RXN_HUMAN_DRUG": 23879,
+          "RXN_IN_EXPRESSED_FLAG": 4518,
+          "RXN_OBSOLETED": 92535,
+          "RXN_QUALITATIVE_DISTINCTION": 377,
+          "RXN_QUANTITY": 7066,
+          "RXN_STRENGTH": 28326,
+          "RXN_VET_DRUG": 1898,
+          "RXTERM_FORM": 49197
+        },
+        "malformed_rows": 0,
+        "rxnorm_rows": 817115,
+        "status_attribute_counts": {
+          "RXN_ACTIVATED": 7649,
+          "RXN_OBSOLETED": 92535,
+          "RXN_QUANTITY": 7066
+        },
+        "suppress_counts": {
+          "N": 817115
+        },
+        "total_rows": 7687120
+      }
+    }
+  ],
+  "row_enrichment": {
+    "inactive_or_obsolete": 0,
+    "with_brand_name": 34449,
+    "with_dose_form": 46670,
+    "with_ingredient": 54211,
+    "with_status": 73912,
+    "with_strength": 22500
+  },
+  "source_counts": {
+    "rxnorm_full_2026_07_06": 73912
+  },
+  "source_inputs": [
+    "data/standards/rxnorm/raw/RxNorm_full_07062026.zip"
+  ],
+  "source_parse_counts": [
+    {
+      "archive_member_root": "rrf",
+      "attributes": 811108,
+      "enrichment_terms": 175943,
+      "parser": "full_rxnorm",
+      "path": "data/standards/rxnorm/raw/RxNorm_full_07062026.zip",
+      "relations": 1676592,
+      "terms": 73912
+    }
+  ],
+  "source_policy": {
+    "fallback_ttys": [
+      "SCD",
+      "SBD",
+      "IN",
+      "PIN",
+      "MIN",
+      "SCDF",
+      "SBDF",
+      "GPCK",
+      "BPCK",
+      "BN"
+    ],
+    "notes": "Use Current Prescribable Content as the primary Phase 1 drug dictionary and the full monthly release as fallback coverage. RXNREL and RXNSAT are parsed for ingredient, brand, dose-form, strength, and activation/obsoletion metadata when present.",
+    "preferred_tty_order": [
+      "SCD",
+      "SBD",
+      "IN",
+      "PIN",
+      "MIN",
+      "SCDF",
+      "SBDF",
+      "GPCK",
+      "BPCK"
+    ],
+    "source": {
+      "fallback_file": "RxNorm_full_07062026.zip",
+      "fallback_source_id": "rxnorm_full_2026_07_06",
+      "primary_file": "RxNorm_full_07062026.zip",
+      "primary_source_id": "rxnorm_prescribable_2026_07_06",
+      "release_date": "2026-07-06",
+      "source": "NLM RxNorm"
+    }
+  }
+}

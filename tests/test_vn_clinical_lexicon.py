@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from medical_kg_nlp.dictionaries.vn_clinical_lexicon import (
     VN_CLINICAL_LEXICON_SOURCE_ID,
     build_vn_clinical_lexicon_manifest,
@@ -45,6 +47,7 @@ def test_parse_vn_clinical_lexicon_writes_local_concept_rows(tmp_path: Path) -> 
     assert manifest["by_semantic_type"] == {"LAB_TEST": 1, "PROCEDURE": 1}
 
 
+@pytest.mark.private
 def test_reviewed_lexicon_contains_phase1_train_split_lab_tests() -> None:
     rows, warnings = parse_vn_clinical_lexicon("data/standards/vn_clinical_lexicon/raw/reviewed_terms.tsv")
     by_id = {row["concept_id"]: row for row in rows}

@@ -17,15 +17,12 @@ from medical_kg_nlp.terminology import (
 
 
 def test_runtime_source_versions_match_tt06_and_rxnorm_import_manifests() -> None:
-    versions = _load_json(Path("data/standards/source_versions.json"))
+    versions = _load_json(Path("data/provenance/terminology/source-versions.json"))
     tt06_manifest = _load_json(
-        Path("data/standards/icd10_vn/processed/tt06_icd10_import_manifest.json")
+        Path("data/provenance/terminology/icd10-vn-import-manifest.json")
     )
     rxnorm_manifest = _load_json(
-        Path(
-            "data/standards/rxnorm/processed/"
-            "rxnorm_full_07062026_import_manifest.json"
-        )
+        Path("data/provenance/terminology/rxnorm-full-2026-07-06-import-manifest.json")
     )
 
     icd_source = versions["icd10_vn"]
@@ -65,6 +62,7 @@ def test_full_profiles_query_current_full_tt06_and_rxnorm_without_sample_memory(
         assert terminology.get("reviewed_mention_path") is None
 
 
+@pytest.mark.private
 def test_current_rxnorm_contains_july_only_concept_not_present_in_june_snapshot() -> None:
     july = Path(
         "data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl"
@@ -82,6 +80,7 @@ def test_current_rxnorm_contains_july_only_concept_not_present_in_june_snapshot(
 
 
 @pytest.mark.release
+@pytest.mark.private
 def test_runtime_repository_queries_current_tt06_and_july_rxnorm_releases() -> None:
     """Exercise the typed query contract on concepts absent from legacy seed/release data."""
 

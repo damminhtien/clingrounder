@@ -59,6 +59,8 @@ reviewed supervision verifiable while excluding transient run directories from t
 Absence from Git does not weaken provenance: SHA-256 identities, source versions, parser versions,
 configs, and rebuild commands remain public. A source whose terms prohibit redistribution can
 therefore be reproduced by an authorized user without exposing its bytes to everyone else.
+Detailed terminology import summaries are mirrored under `data/provenance/terminology/`; their
+canonical generated datasets remain outside Git.
 
 ## Adding Data
 

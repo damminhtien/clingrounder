@@ -1,0 +1,37 @@
+{
+  "concepts": 14925,
+  "source_counts": {
+    "icd10_vn_tt06_2026": 14925,
+    "icd_kcb_vn": 19
+  },
+  "source_inputs": [
+    "data/standards/icd10_vn/processed/tt06_icd10_extract.jsonl",
+    "data/dictionaries/vietnamese_medical_alias.jsonl"
+  ],
+  "source_parse_counts": [
+    {
+      "concepts": 14925,
+      "parser": "icd10_vn_tt06",
+      "path": "data/standards/icd10_vn/processed/tt06_icd10_extract.jsonl"
+    }
+  ],
+  "source_policy": {
+    "lookup_source_ids": [
+      "icd_kcb_vn"
+    ],
+    "non_primary_source_ids": [
+      "cdc_icd10cm_2026"
+    ],
+    "notes": "For Phase 1, Vietnamese ICD-10 labels should come from TT 06/2026/TT-BYT or reviewed KCB extracts. CDC ICD-10-CM is not the primary source.",
+    "primary_source": {
+      "effective_date": "2026-07-01",
+      "issued_date": "2026-04-02",
+      "primary_file": "06-byt-kem.pdf",
+      "source": "TT 06/2026/TT-BYT",
+      "source_id": "icd10_vn_tt06_2026"
+    },
+    "reference_source_ids": [
+      "who_icd10_2019"
+    ]
+  }
+}

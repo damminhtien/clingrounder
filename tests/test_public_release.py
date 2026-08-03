@@ -165,6 +165,17 @@ def test_release_audit_parser_is_task_neutral() -> None:
     assert inventory.handler == "release_inventory"
 
 
+@pytest.mark.release
+def test_checked_in_public_repository_policy_passes() -> None:
+    root = Path(__file__).resolve().parents[1]
+    report = audit_public_repository(
+        root,
+        root / "configs/repository/public-release.yaml",
+    )
+
+    assert report.valid is True, report.model_dump(mode="json")
+
+
 def _write_policy(
     root: Path,
     *,

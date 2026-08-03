@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
 from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
 from medical_kg_nlp.schema.types import AssertionStatus, EntityType, RelationType
@@ -27,13 +30,20 @@ def test_pipeline_smoke_source_backed_treatment_seed() -> None:
     assert any(relation.type == RelationType.TREATS for relation in prediction.relations)
 
 
-def test_pipeline_can_add_reviewed_vietnamese_clinical_lexicon() -> None:
+def test_pipeline_can_add_reviewed_vietnamese_clinical_lexicon(tmp_path: Path) -> None:
+    additional_dictionary = tmp_path / "reviewed-public-fixture.jsonl"
+    rows = [
+        _local_concept("SYMPTOM_DYSURIA", "SYMPTOM", "tiểu buốt"),
+        _local_concept("SYMPTOM_DYSPHAGIA", "SYMPTOM", "khó nuốt"),
+        _local_concept("PROC_CORONARY_ANGIOGRAPHY", "PROCEDURE", "chụp mạch vành"),
+    ]
+    additional_dictionary.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+        encoding="utf-8",
+    )
     runner = PipelineFactory.from_config(
         PipelineFactoryConfig(
-            additional_recognition_dictionary_path=(
-                "data/standards/vn_clinical_lexicon/processed/"
-                "vn_clinical_lexicon_concepts.jsonl"
-            )
+            additional_recognition_dictionary_path=str(additional_dictionary)
         )
     )
     prediction = runner.process_text(
@@ -45,6 +55,18 @@ def test_pipeline_can_add_reviewed_vietnamese_clinical_lexicon() -> None:
     assert by_text["tiểu buốt"].code == "SYMPTOM_DYSURIA"
     assert by_text["khó nuốt"].code == "SYMPTOM_DYSPHAGIA"
     assert by_text["chụp mạch vành"].type == EntityType.PROCEDURE
+
+
+def _local_concept(code: str, semantic_type: str, alias: str) -> dict[str, object]:
+    return {
+        "concept_id": f"LOCAL:{code}",
+        "code": code,
+        "code_system": "LOCAL",
+        "canonical_name": alias,
+        "semantic_type": semantic_type,
+        "aliases": [alias],
+        "source": "synthetic_test_fixture",
+    }
 
 
 def test_pipeline_phase1_sections_drive_historical_context_and_skip_dose_result() -> None:

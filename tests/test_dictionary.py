@@ -2,6 +2,8 @@ import json
 import subprocess
 import sys
 
+import pytest
+
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
@@ -213,6 +215,7 @@ def test_phase1_ontology_lite_drug_terms_map_to_rxnorm() -> None:
         assert all(candidate.code_system == CodeSystem.RXNORM for candidate in candidates)
 
 
+@pytest.mark.private
 def test_phase1_controlled_rxnorm_uses_ingredient_for_bare_brand_and_scd_for_full_product() -> None:
     store = DictionaryStore.from_jsonl(
         "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
@@ -249,6 +252,7 @@ def test_phase1_frequent_symptom_and_lab_terms_are_dictionary_constrained() -> N
     assert troponin[0].code == "TROPONIN"
 
 
+@pytest.mark.private
 def test_phase1_controlled_dictionary_includes_reviewed_vietnamese_symptom_and_lab_aliases() -> None:
     store = DictionaryStore.from_jsonl("data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
     generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")
@@ -276,6 +280,7 @@ def test_phase1_controlled_dictionary_includes_reviewed_vietnamese_symptom_and_l
     assert all(candidate.code_system == CodeSystem.LOCAL for candidate in ct)
 
 
+@pytest.mark.private
 def test_phase1_controlled_dictionary_includes_reviewed_standard_allowlist() -> None:
     store = DictionaryStore.from_jsonl("data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl")
     generator = _retrieval(store, "data/dictionaries/abbreviations.jsonl")

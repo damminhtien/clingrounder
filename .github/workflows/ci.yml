@@ -76,4 +76,7 @@ jobs:
 
       - name: Release and integration tests
         # These exercise SQLite, process workers, reports, and deterministic Phase 1 ZIPs.
-        run: .venv/bin/pytest -o addopts='' -m "integration or release" tests
+        run: .venv/bin/pytest -o addopts='' -m "(integration or release) and not private and not model" tests
+
+      - name: Public repository audit
+        run: .venv/bin/medical-kg release audit --root .

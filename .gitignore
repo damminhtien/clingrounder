@@ -106,8 +106,13 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
-# Local licensed RxNorm bundle exceeds GitHub's per-file size limit; keep its checksum in manifests.
-data/standards/rxnorm/raw/RxNorm_full_07062026.zip
+# Canonical research bytes are restored from source manifests or local/CAS storage.
+# Public Git keeps only synthetic fixtures and data/provenance checksums.
+data/manual_gold/
+data/standards/
+data/indexes/
+data/heuristics/phase1_assertion_overlays.jsonl
+data/heuristics/false_positive_blacklist.jsonl
 *.duckdb
 *.sqlite
 *.sqlite3
@@ -124,6 +129,8 @@ outputs/mining/
 outputs/models/
 outputs/profiles/
 outputs/smoke/
+# Generated runs can contain private text or model outputs. Curated examples belong in data/samples.
+outputs/
 
 # Shallow third-party checkouts used for architecture audits; only our audit manifests are tracked.
 external/reference_repos/

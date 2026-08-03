@@ -1,4 +1,0 @@
-concept_id	code	alias	source_id	reason	review_date
-ICD10:S72.0	S72.0	Gãy cổ xương đùi	icd10_vn_tt06_2026	Exact TT06 phrase appears in Phase 1 input; allow despite S-prefix injury guard.	2026-07-06
-ICD10:T68	T68	Hạ thân nhiệt	icd10_vn_tt06_2026	Exact TT06 phrase appears in Phase 1 input; allow despite T-prefix injury/external-cause guard.	2026-07-06
-ICD10:R44.0	R44.0	Ảo thanh	icd10_vn_tt06_2026	Exact TT06 phrase appears in Phase 1 input; allow despite broad R-prefix symptom guard.	2026-07-06

@@ -146,9 +146,7 @@ def test_rule_ner_prefers_combination_drug_over_overlapping_ingredients() -> Non
 
 
 def test_rule_ner_extracts_vietnamese_vital_sign_names_and_value_spans() -> None:
-    store = DictionaryStore.from_jsonl(
-        "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
-    )
+    store = _public_lab_store()
     text = (
         "Dấu hiệu sinh tồn: huyết áp 159/72, nhịp thở 20, nhịp tim 84, "
         "SpO2 96%, nhiệt độ 36.7°c. Tăng huyết áp đang điều trị."
@@ -172,9 +170,7 @@ def test_rule_ner_extracts_vietnamese_vital_sign_names_and_value_spans() -> None
 
 
 def test_rule_ner_extracts_bare_and_qualitative_results_only_after_lab_anchors() -> None:
-    store = DictionaryStore.from_jsonl(
-        "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
-    )
+    store = _public_lab_store()
     text = "Kali: 2.4; creatinine (serum) = 1.3. Chụp CT không ghi nhận gì bất thường. Số trần 42."
 
     entities = RuleBasedNER(store).extract(text)
@@ -190,9 +186,7 @@ def test_rule_ner_extracts_bare_and_qualitative_results_only_after_lab_anchors()
 
 
 def test_rule_ner_does_not_treat_dates_or_drug_doses_as_anchored_lab_results() -> None:
-    store = DictionaryStore.from_jsonl(
-        "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
-    )
+    store = _public_lab_store()
     text = "Creatinine ngày 12/07/2026. Dùng metoprolol 25 mg. Kali được bổ sung 40 mg."
 
     entities = RuleBasedNER(store).extract(text)
@@ -204,9 +198,7 @@ def test_rule_ner_does_not_treat_dates_or_drug_doses_as_anchored_lab_results() -
 
 
 def test_rule_ner_extracts_qualitative_results_before_or_after_lab_anchor() -> None:
-    store = DictionaryStore.from_jsonl(
-        "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
-    )
+    store = _public_lab_store()
     text = "Glucose là thấp. tăng Cr theo phòng cấp cứu. Kali tăng cao."
 
     entities = RuleBasedNER(store).extract(text)
@@ -215,6 +207,32 @@ def test_rule_ner_extracts_qualitative_results_before_or_after_lab_anchor() -> N
     assert "thấp" in lab_result_texts
     assert "tăng" in lab_result_texts
     assert "tăng cao" in lab_result_texts
+
+
+def _public_lab_store() -> DictionaryStore:
+    """Build a small public fixture for lab extraction and offset contracts."""
+
+    seed = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    test_concepts = [
+        ("BLOOD_PRESSURE", "Blood pressure", ("huyết áp",)),
+        ("RESPIRATORY_RATE", "Respiratory rate", ("nhịp thở",)),
+        ("HEART_RATE", "Heart rate", ("nhịp tim",)),
+        ("OXYGEN_SATURATION", "Oxygen saturation", ("SpO2",)),
+        ("TEMPERATURE", "Temperature", ("nhiệt độ",)),
+        ("CT", "Computed tomography", ("Chụp CT",)),
+    ]
+    entries = [
+        ConceptEntry(
+            concept_id=f"LOCAL:TEST_{code}",
+            code=code,
+            code_system=CodeSystem.LOCAL,
+            canonical_name=name,
+            semantic_type=EntityType.LAB_TEST,
+            aliases=aliases,
+        )
+        for code, name, aliases in test_concepts
+    ]
+    return DictionaryStore([*seed.entries, *entries])
 
 
 def test_rule_ner_blocks_ambiguous_yeu_to_and_chu_yeu_contexts() -> None:

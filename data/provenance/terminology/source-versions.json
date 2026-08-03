@@ -1,0 +1,49 @@
+{
+  "icd10_vn": {
+    "source_id": "icd10_vn_tt06_2026",
+    "source": "TT 06/2026/TT-BYT",
+    "issuing_body": "Bộ Y tế",
+    "issued_date": "2026-04-02",
+    "effective_date": "2026-07-01",
+    "primary_file": "06-byt-kem.pdf",
+    "lookup_source_ids": ["icd_kcb_vn"],
+    "reference_source_ids": ["who_icd10_2019"],
+    "non_primary_source_ids": ["cdc_icd10cm_2026"],
+    "notes": "Phase 1 ICD candidates should use Vietnamese ICD-10 labels from TT 06/2026/TT-BYT or reviewed KCB extracts. CDC ICD-10-CM is not a primary source."
+  },
+  "rxnorm": {
+    "source": "NLM RxNorm",
+    "release_date": "2026-07-06",
+    "primary_source_id": "rxnorm_prescribable_2026_07_06",
+    "primary_file": "data/standards/rxnorm/processed/rxnorm_prescribable_07062026_concepts.jsonl",
+    "fallback_source_id": "rxnorm_full_2026_07_06",
+    "fallback_file": "data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl",
+    "raw_file": "data/standards/rxnorm/raw/RxNorm_full_07062026.zip",
+    "raw_sha256": "53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c",
+    "tty_priority": ["SCD", "SBD", "IN", "PIN", "MIN", "SCDF", "SBDF", "GPCK", "BPCK"],
+    "notes": "Use July 6 Current Prescribable Content as primary and the same release's full terminology as fallback coverage.",
+    "previous_release": {
+      "status": "superseded",
+      "release_date": "2026-06-01",
+      "primary_source_id": "rxnorm_prescribable_2026_06_01",
+      "fallback_source_id": "rxnorm_full_2026_06_01",
+      "comparison_file": "data/standards/rxnorm/processed/rxnorm_06012026_to_07062026_comparison.json"
+    }
+  },
+  "vn_clinical_lexicon": {
+    "source": "Reviewed Vietnamese LOCAL clinical lexicon",
+    "source_id": "vn_clinical_lexicon_reviewed_2026_07_05",
+    "release_date": "2026-07-05",
+    "raw_file": "data/standards/vn_clinical_lexicon/raw/reviewed_terms.tsv",
+    "processed_file": "data/standards/vn_clinical_lexicon/processed/vn_clinical_lexicon_concepts.jsonl",
+    "phase1_allowed_new_semantic_types": ["DISEASE", "DRUG", "SYMPTOM", "LAB_TEST"],
+    "notes": "Reviewed LOCAL symptom and lab aliases can be merged into Phase 1 runtime; procedure rows are kept for later phases until export support exists."
+  },
+  "phase1_reviewed_standard_allowlist": {
+    "source": "Reviewed Phase 1 standard concept allowlist",
+    "source_id": "phase1_reviewed_standard_allowlist_2026_07_06",
+    "release_date": "2026-07-06",
+    "raw_file": "data/standards/phase1_reviewed/allowed_standard_concepts.tsv",
+    "notes": "Manually reviewed exact-match standard concept exceptions for controlled runtime merge guards."
+  }
+}

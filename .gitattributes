@@ -11,5 +11,3 @@
 *.yml text eol=lf
 *.ipynb diff=jupyter
 tests/fixtures/phase1/*_crlf.txt -text
-data/standards/icd10_vn/processed/06-byt-kem.tsv filter=lfs diff=lfs merge=lfs -text
-data/standards/rxnorm/raw/RxNorm_full_prescribe_06012026.zip filter=lfs diff=lfs merge=lfs -text

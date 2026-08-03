@@ -1,0 +1,10 @@
+{
+  "first_code": "A00",
+  "last_code": "U85",
+  "output_jsonl": "data/standards/icd10_vn/processed/tt06_icd10_extract.jsonl",
+  "output_tsv": "data/standards/icd10_vn/processed/06-byt-kem.tsv",
+  "rows": 14925,
+  "source_id": "icd10_vn_tt06_2026",
+  "source_pdf": "data/standards/icd10_vn/raw/06-byt-kem.pdf",
+  "unique_codes": 14925
+}

@@ -13,9 +13,7 @@ from medical_kg_nlp.schema.types import CodeSystem, EntityType
 def test_rule_ner_trace_records_cross_source_overlap_decisions() -> None:
     text = "Tăng huyết áp đang điều trị."
     ner = RuleBasedNER(
-        DictionaryStore.from_jsonl(
-            "data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
-        )
+        DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
     )
 
     result = ner.extract_with_trace(text)
