@@ -1,0 +1,58 @@
+schema_version: medical-kg.public-repository-policy.v1
+
+# Data and generated artifacts fail closed. Source code, docs, configs, and tests remain
+# subject to credential scanning even though they do not need path-by-path classification.
+protected_roots: [data, outputs, models, checkpoints]
+max_tracked_file_bytes: 5242880
+source_registry_path: data/sources/mining_registry.yaml
+
+required_tracked_paths:
+  - data/sources/mining_registry.yaml
+  - data/sources/processing_status.yaml
+  - data/releases/open-ner-retrieval-v1.lock.json
+  - docs/public-release.md
+
+rules:
+  - id: public-provenance
+    patterns:
+      - data/sources/**
+      - data/releases/**
+      - data/raw/.gitkeep
+      - data/processed/.gitkeep
+    disposition: redistributable
+    rationale: Source policy, processing status, and checksum locks contain no corpus bytes.
+
+  - id: public-core-fixtures
+    patterns:
+      - data/samples/**
+      - data/dictionaries/**
+      - data/heuristics/assertion_cues.jsonl
+    disposition: redistributable
+    rationale: Small project-authored fixtures and bootstrap resources support the public quickstart.
+
+  - id: private-benchmark-supervision
+    patterns:
+      - data/manual_gold/**
+      - data/heuristics/phase1_assertion_overlays.jsonl
+      - data/heuristics/false_positive_blacklist.jsonl
+    disposition: local_only
+    source_ids: [phase1_part2_leaked_bundle]
+    rationale: Competition annotations and overlays are authorized locally but not redistributable.
+
+  - id: terminology-source-and-derived-bytes
+    patterns:
+      - data/standards/**
+      - data/indexes/**
+    disposition: manifest_only
+    source_ids: [vn_moh_guidelines, rxnorm_full_2026_07_06]
+    rationale: Full terminology bytes are restored from pinned sources and verified by manifests.
+
+  - id: generated-run-artifacts
+    patterns:
+      - outputs/**
+      - models/**
+      - checkpoints/**
+    disposition: local_only
+    rationale: Runs may contain private text, predictions, model weights, or machine-specific state.
+
+secret_scan_excludes: []

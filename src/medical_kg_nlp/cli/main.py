@@ -46,6 +46,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.benchmark",
         "list_benchmarks",
     ),
+    "release_audit": (
+        "medical_kg_nlp.cli.commands.release",
+        "audit_release",
+    ),
     "model_validate_token_dataset": (
         "medical_kg_nlp.cli.commands.model",
         "validate_token_dataset",

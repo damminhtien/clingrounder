@@ -20,6 +20,7 @@ def build_parser() -> argparse.ArgumentParser:
     _kg_parser(commands)
     _evaluate_parser(commands)
     _validate_parser(commands)
+    _release_parser(commands)
     _benchmark_parser(commands)
     _model_parser(commands)
     _data_parser(commands)
@@ -256,6 +257,25 @@ def _validate_parser(commands: argparse._SubParsersAction[argparse.ArgumentParse
     )
     validate.add_argument("--artifact")
     validate.add_argument("--expected-file", action="append", default=[])
+
+
+def _release_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    release = commands.add_parser(
+        "release",
+        help="Audit repository contents before public publication.",
+    )
+    operations = release.add_subparsers(dest="release_command", required=True)
+    audit = operations.add_parser(
+        "audit",
+        help="Check tracked data policy, attribution, file size, and credentials.",
+    )
+    audit.set_defaults(handler="release_audit")
+    audit.add_argument("--root", default=".")
+    audit.add_argument(
+        "--policy",
+        default="configs/repository/public-release.yaml",
+    )
+    audit.add_argument("--output")
 
 
 def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
