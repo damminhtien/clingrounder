@@ -80,11 +80,9 @@ class Phase1BenchmarkPlugin:
         self,
         parsers: argparse._SubParsersAction[argparse.ArgumentParser],
     ) -> None:
-        # The parser body is migrated separately from handler ownership so this
-        # compatibility boundary remains reviewable and behavior-preserving.
-        from medical_kg_nlp.cli.parser import _register_phase1_benchmark_parser
+        from medical_kg_nlp.benchmarks.phase1.cli import register_phase1_cli
 
-        _register_phase1_benchmark_parser(parsers)
+        register_phase1_cli(parsers)
 
     def handlers(self) -> Mapping[str, BenchmarkHandler]:
         return {

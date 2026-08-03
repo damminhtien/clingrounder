@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 
+import medical_kg_nlp.cli.parser as core_parser
 from medical_kg_nlp.benchmarks.registry import (
     benchmark_plugins,
     resolve_benchmark_handler,
@@ -22,6 +23,7 @@ def test_phase1_is_an_optional_benchmark_plugin() -> None:
     assert target is not None
     assert target.module == "medical_kg_nlp.cli.commands.phase1"
     assert target.function == "run_phase1_submission"
+    assert not hasattr(core_parser, "_register_phase1_benchmark_parser")
 
 
 def test_benchmark_list_is_task_neutral(capsys) -> None:
