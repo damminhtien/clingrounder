@@ -85,7 +85,7 @@ uv run medical-kg benchmark phase1 submission \
   --output-dir outputs/phase1/rule_ner_v2_structured_symptom_boundary/output \
   --zip outputs/phase1/rule_ner_v2_structured_symptom_boundary/output.zip \
   --dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl \
-  --pipeline-config configs/pipeline/rule_ner_mined_recognition.yaml \
+  --pipeline-config configs/benchmarks/phase1/pipeline/rule_ner_mined_recognition.yaml \
   --assertion-policy empty \
   --candidate-policy empty \
   --parallel-backend serial \

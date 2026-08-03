@@ -148,7 +148,7 @@ uv run medical-kg benchmark phase1 model-data augment-regions \
 | run-spec SHA-256 | `08889ebb934b1feefa4e5885545ab0b81d634d859f41ec35d3752bd0cc02eeb1` |
 
 The pinned run spec is
-`configs/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml`; its model checkpoint and XLM-R
+`configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml`; its model checkpoint and XLM-R
 revision are unchanged from the base experiment. This is an untrained input artifact, not evidence
 of improved NER yet. Local inspection reports `validated_not_executed`; promotion requires
 development comparison against the base model before local Round 2 inference.
@@ -554,9 +554,9 @@ uv sync --frozen --extra ml
 uv run hf download FacebookAI/xlm-roberta-base \
   --revision e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
 uv run medical-kg model inspect-token-classifier-run \
-  --config configs/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
+  --config configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
 CUDA_VISIBLE_DEVICES=0 uv run medical-kg model train-token-classifier-run \
-  --config configs/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
+  --config configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
 ```
 
 The training command uses batch 4, gradient accumulation 4, three epochs, BF16, seed 42, and full
@@ -574,7 +574,7 @@ Run verified development inference and per-type calibration as one bounded comma
 
 ```bash
 uv run medical-kg benchmark phase1 model-data calibrate \
-  --pipeline-config configs/pipeline/phase1-five-type-qa-edu-model-only.yaml \
+  --pipeline-config configs/benchmarks/phase1/pipeline/phase1-five-type-qa-edu-model-only.yaml \
   --output-dir outputs/models/phase1-five-type-qa-edu-calibration
 ```
 
@@ -621,7 +621,7 @@ uv run medical-kg data registry validate \
   --processing-index data/sources/processing_status.yaml
 
 uv run medical-kg data run \
-  --plan configs/mining/phase1-round2-2026-07-22.yaml
+  --plan configs/benchmarks/phase1/mining/phase1-round2-2026-07-22.yaml
 ```
 
 Write the deterministic audit reports through the benchmark-owned CLI:

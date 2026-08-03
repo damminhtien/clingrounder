@@ -1,0 +1,78 @@
+# MODEL: specialized QLoRA adapter over the immutable Qwen3-8B base checkpoint.
+schema_version: phase1-qwen-run.v1
+run_id: phase1-qwen3-8b-qlora-inference-2026-07-28
+run_root: ../../../..
+
+model:
+  artifact_id: qwen3-8b
+  model_id: Qwen/Qwen3-8B
+  revision: b968826d9c46dd6066d109eabc6255188de91218
+  parameter_count: 8190735360
+  kind: base
+  roles: [adjudication, recall, targeted]
+  source_url: https://huggingface.co/Qwen/Qwen3-8B
+  license: Apache-2.0
+
+adapter:
+  artifact_id: qwen3-phase1-qlora-specialize
+  model_id: local/qwen3-phase1-qlora-specialize
+  revision: 2b3a98d4fa312ced50331f971fa6ec43a927e590
+  parameter_count: 43646976
+  kind: adapter
+  roles: [adjudication, recall, targeted]
+  path: outputs/models/phase1-qwen3-8b-qlora-specialize-2026-07-28/final-adapter
+  fingerprint: ec5a1abae0723c80cd53f24dbf4cd19184d4107d5edc55411ba5e1074384bf05
+  provenance:
+    manifest: outputs/models/phase1-qwen3-8b-qlora-specialize-2026-07-28/run_manifest.json
+    manifest_sha256: 2fed95f6e2e19bfb27cf350fc80bf1a97ab3f3567a44a4d1368fbad3a8c4c73d
+
+budget:
+  maximum_parameters: 9000000000
+  auxiliary: []
+
+dataset:
+  path: outputs/mining/model-datasets/phase1-qwen-instructions-v1/extraction.jsonl
+  manifest: outputs/mining/model-datasets/phase1-qwen-instructions-v1/manifest.json
+
+runtime:
+  device: cuda
+  dtype: bf16
+  local_files_only: true
+  max_window_characters: 12000
+  window_overlap_characters: 800
+  structured_retries: 1
+
+generation:
+  # MODEL: bounded prefix recovery retained the complete retry projection at 512 tokens on the
+  # representative diagnostic note. Production keeps a 2x margin for denser notes.
+  recall:
+    max_new_tokens: 1024
+    temperature: 0.0
+    top_p: 1.0
+    seed: 42
+    enable_thinking: false
+    stop_on_complete_json: true
+  targeted:
+    max_new_tokens: 1024
+    temperature: 0.0
+    top_p: 1.0
+    seed: 43
+    enable_thinking: false
+    stop_on_complete_json: true
+  adjudication:
+    max_new_tokens: 3072
+    temperature: 0.0
+    top_p: 1.0
+    seed: 44
+    enable_thinking: true
+
+# MODEL: thresholds remain frozen from development-only configuration.
+thresholds:
+  TRIỆU_CHỨNG: 0.75
+  TÊN_XÉT_NGHIỆM: 0.80
+  KẾT_QUẢ_XÉT_NGHIỆM: 0.85
+  CHẨN_ĐOÁN: 0.80
+  THUỐC: 0.85
+
+remote:
+  maximum_vast_cost_usd: 6.0

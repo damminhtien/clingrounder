@@ -45,7 +45,7 @@ boundaries. The importer must therefore:
 ## Training And Decision Contract
 
 The effective machine-readable policy is
-`configs/models/phase1-training-governance-2026-07-30.yaml`.
+`configs/benchmarks/phase1/models/phase1-training-governance-2026-07-30.yaml`.
 
 - Final fit uses all 100 manually reviewed Round 1 records and all 100 records from this source.
 - A local metric is diagnostic only and cannot promote or reject a model.

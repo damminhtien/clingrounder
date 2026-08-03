@@ -1,0 +1,47 @@
+# MODEL: final token source fit over the complete owner-authorized 200-document corpus.
+schema_version: token-classifier-run.v2
+run_id: phase1-five-type-xlmr-final-supervision-2026-08-01
+run_root: ../../../..
+
+environment:
+  lock_path: uv.lock
+  lock_sha256: f1affea66092c72ef7d0c3968cfa5ac9d2e7e603fd05ceb0d5e1f991fd1448ab
+
+dataset:
+  path: outputs/mining/model-datasets/phase1-final-supervision-five-type-v1/spans.jsonl
+  manifest: outputs/mining/model-datasets/phase1-final-supervision-five-type-v1/manifest.json
+  train_split: train
+  evaluation_split: null
+
+model:
+  model_id: FacebookAI/xlm-roberta-base
+  revision: e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
+  source_url: https://huggingface.co/FacebookAI/xlm-roberta-base
+  license: MIT
+
+training:
+  output_dir: outputs/models/phase1-five-type-xlmr-final-supervision-2026-08-01
+  cache_dir: .cache/medical-kg/model-training
+  max_length: 512
+  stride: 64
+  train_batch_size: 8
+  evaluation_batch_size: 16
+  gradient_accumulation_steps: 1
+  epochs: 8.0
+  learning_rate: 0.00003
+  weight_decay: 0.01
+  warmup_ratio: 0.08
+  preprocessing_workers: 4
+  seed: 42
+  full_determinism: true
+  unaligned_span_policy: mask
+  overwrite_output: false
+  save_only_model: true
+
+runtime:
+  operating_system: linux
+  accelerator: cuda
+  minimum_devices: 1
+  minimum_vram_gib: 16
+  minimum_compute_capability: [8, 0]
+  precision: bf16

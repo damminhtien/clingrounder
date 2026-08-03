@@ -46,7 +46,7 @@ def test_runtime_source_versions_match_tt06_and_rxnorm_import_manifests() -> Non
 
 def test_full_profiles_query_current_full_tt06_and_rxnorm_without_sample_memory() -> None:
     for path in (
-        Path("configs/phase1_full.yaml"),
+        Path("configs/benchmarks/phase1/submission/full.yaml"),
         Path("configs/pipeline/full_terminology.yaml"),
     ):
         payload = yaml.safe_load(path.read_text(encoding="utf-8"))

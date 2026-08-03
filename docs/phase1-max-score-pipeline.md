@@ -23,7 +23,7 @@ Run:
 
 ```bash
 uv run medical-kg benchmark phase1 round2 max-score \
-  --config configs/models/phase1-round2-max-score.yaml
+  --config configs/benchmarks/phase1/models/phase1-round2-max-score.yaml
 ```
 
 The config uses `phase1-max-score-run-spec.v2` and pins:
@@ -46,7 +46,7 @@ documents:
   sha256: <sha256>
   source_archive_sha256: <original-input-archive-sha256>
   expected_count: 100
-budget_spec: configs/models/phase1-under9b-max.yaml
+budget_spec: configs/benchmarks/phase1/models/phase1-under9b-max.yaml
 verifier:
   path: outputs/phase1/proposal_fusion_20260729/calibrated_genre_f1/verifier.json
   sha256: <sha256>

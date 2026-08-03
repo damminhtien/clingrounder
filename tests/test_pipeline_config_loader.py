@@ -251,7 +251,7 @@ pipeline:
 
 
 def test_checked_in_full_profile_composes_tt06_and_rxnorm_without_btc_memory() -> None:
-    resolved = ResolvedPipelineConfig.load("configs/phase1_full.yaml")
+    resolved = ResolvedPipelineConfig.load("configs/benchmarks/phase1/submission/full.yaml")
     sources = tuple(Path(path) for path in resolved.factory_config.normalization_dictionary_paths)
 
     assert [path.name for path in sources] == [
@@ -265,7 +265,7 @@ def test_checked_in_full_profile_composes_tt06_and_rxnorm_without_btc_memory() -
 
 
 def test_round2_full_profile_adds_reviewed_recognition_sources() -> None:
-    resolved = ResolvedPipelineConfig.load("configs/phase1_round2_full.yaml")
+    resolved = ResolvedPipelineConfig.load("configs/benchmarks/phase1/submission/round2-full.yaml")
     factory = resolved.factory_config
 
     assert [
@@ -278,7 +278,7 @@ def test_round2_full_profile_adds_reviewed_recognition_sources() -> None:
 
 def test_rule_ner_mined_recognition_profile_does_not_compose_linking() -> None:
     resolved = ResolvedPipelineConfig.load(
-        "configs/pipeline/rule_ner_mined_recognition.yaml"
+        "configs/benchmarks/phase1/pipeline/rule_ner_mined_recognition.yaml"
     )
     factory = resolved.factory_config
 

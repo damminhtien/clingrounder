@@ -842,8 +842,8 @@ def test_phase1_zip_is_deterministic_across_source_mtimes(tmp_path: Path) -> Non
 
 
 def test_phase1_configs_separate_entity_only_and_full_execution() -> None:
-    entity_only = read_yaml("configs/phase1_submission.yaml")
-    full = read_yaml("configs/phase1_full.yaml")
+    entity_only = read_yaml("configs/benchmarks/phase1/submission/entity-only.yaml")
+    full = read_yaml("configs/benchmarks/phase1/submission/full.yaml")
     experiment_root = Path("configs/benchmarks/phase1/experiments")
     selective = read_yaml(experiment_root / "legacy_selective.yaml")
     selective_candidates = read_yaml(
@@ -894,7 +894,9 @@ def test_phase1_configs_separate_entity_only_and_full_execution() -> None:
 
 
 def test_stable_phase1_config_root_does_not_advertise_selective_mode() -> None:
-    stable_configs = sorted(Path("configs").glob("phase1*.yaml"))
+    stable_configs = sorted(
+        Path("configs/benchmarks/phase1/submission").glob("*.yaml")
+    )
 
     assert stable_configs
     assert all(read_yaml(path).get("mode") != "selective" for path in stable_configs)

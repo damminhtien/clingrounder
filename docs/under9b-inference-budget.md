@@ -7,7 +7,7 @@ Verify the pinned plan with:
 
 ```bash
 uv run medical-kg model inspect-inference-budget \
-  --config configs/models/phase1-under9b-max.yaml \
+  --config configs/benchmarks/phase1/models/phase1-under9b-max.yaml \
   --output outputs/models/under9b-budget.json
 ```
 

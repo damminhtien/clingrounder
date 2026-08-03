@@ -29,7 +29,9 @@ def test_checked_in_qwen_run_specs_are_pinned(
     config_name: str,
     parameter_count: int,
 ) -> None:
-    spec = load_phase1_qwen_run_spec(Path("configs/models") / config_name)
+    spec = load_phase1_qwen_run_spec(
+        Path("configs/benchmarks/phase1/models") / config_name
+    )
 
     assert spec.model.parameter_count == parameter_count
     assert spec.budget.total_parameters == parameter_count
@@ -41,7 +43,7 @@ def test_checked_in_qwen_run_specs_are_pinned(
 
 def test_checked_in_qlora_inference_run_pins_adapter_provenance() -> None:
     spec = load_phase1_qwen_run_spec(
-        "configs/models/phase1-qwen3-8b-qlora-inference-2026-07-28.yaml"
+        "configs/benchmarks/phase1/models/phase1-qwen3-8b-qlora-inference-2026-07-28.yaml"
     )
 
     assert spec.adapter is not None
@@ -58,12 +60,12 @@ def test_checked_in_qlora_inference_run_pins_adapter_provenance() -> None:
 
 
 def test_qwen_run_spec_rejects_cost_above_user_limit(tmp_path: Path) -> None:
-    source = Path("configs/models/phase1-qwen3-8b-2026-07-27.yaml").read_text(
+    source = Path("configs/benchmarks/phase1/models/phase1-qwen3-8b-2026-07-27.yaml").read_text(
         encoding="utf-8"
     )
     config = tmp_path / "config.yaml"
     config.write_text(
-        source.replace("run_root: ../..", "run_root: .").replace(
+        source.replace("run_root: ../../../..", "run_root: .").replace(
             "maximum_vast_cost_usd: 6.0",
             "maximum_vast_cost_usd: 6.01",
         ),
@@ -194,12 +196,12 @@ def _write_peft_qwen_spec(
         json.dumps(manifest, sort_keys=True),
         encoding="utf-8",
     )
-    source = Path("configs/models/phase1-qwen3-8b-2026-07-27.yaml").read_text(
+    source = Path("configs/benchmarks/phase1/models/phase1-qwen3-8b-2026-07-27.yaml").read_text(
         encoding="utf-8"
     )
     config = root / "qwen-peft.yaml"
     config.write_text(
-        source.replace("run_root: ../..", "run_root: .")
+        source.replace("run_root: ../../../..", "run_root: .")
         + f"""
 
 adapter:

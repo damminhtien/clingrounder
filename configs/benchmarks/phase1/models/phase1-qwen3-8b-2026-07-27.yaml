@@ -1,0 +1,63 @@
+# MODEL: official Qwen3-8B checkpoint pinned to an immutable Hugging Face commit.
+schema_version: phase1-qwen-run.v1
+run_id: phase1-qwen3-8b-2026-07-27
+run_root: ../../../..
+
+model:
+  artifact_id: qwen3-8b
+  model_id: Qwen/Qwen3-8B
+  revision: b968826d9c46dd6066d109eabc6255188de91218
+  parameter_count: 8190735360
+  kind: base
+  roles: [adjudication, recall, targeted]
+  source_url: https://huggingface.co/Qwen/Qwen3-8B
+  license: Apache-2.0
+
+budget:
+  maximum_parameters: 9000000000
+  # MODEL: XLM-R may be added here only when it is actually loaded as a verifier.
+  auxiliary: []
+
+dataset:
+  path: outputs/mining/model-datasets/phase1-qwen-instructions-v1/extraction.jsonl
+  manifest: outputs/mining/model-datasets/phase1-qwen-instructions-v1/manifest.json
+
+runtime:
+  device: cuda
+  dtype: bf16
+  local_files_only: true
+  max_window_characters: 12000
+  window_overlap_characters: 800
+  structured_retries: 1
+
+generation:
+  recall:
+    max_new_tokens: 3072
+    temperature: 0.0
+    top_p: 1.0
+    seed: 42
+    enable_thinking: false
+  targeted:
+    max_new_tokens: 2048
+    temperature: 0.0
+    top_p: 1.0
+    seed: 43
+    enable_thinking: false
+  adjudication:
+    max_new_tokens: 3072
+    temperature: 0.0
+    top_p: 1.0
+    seed: 44
+    enable_thinking: true
+
+# MODEL: these are initial development thresholds, not Round 2-calibrated values.
+thresholds:
+  TRIỆU_CHỨNG: 0.75
+  TÊN_XÉT_NGHIỆM: 0.80
+  KẾT_QUẢ_XÉT_NGHIỆM: 0.85
+  CHẨN_ĐOÁN: 0.80
+  THUỐC: 0.85
+
+remote:
+  # COST: orchestration must stop before this run exceeds the user-approved amount.
+  maximum_vast_cost_usd: 6.0

@@ -16,7 +16,7 @@ DOCUMENTS="${DOCUMENTS:-outputs/mining/phase1-round2-hosted-2026-07-27/documents
 REVIEW_SOURCE="${REVIEW_SOURCE:-friend31=outputs/inputs/friend31-strict-known.zip}"
 OUTPUT_DIR="${OUTPUT_DIR:-outputs/models/phase1-qwen3-friend31-review}"
 SOURCE_ARCHIVE_SHA256="${SOURCE_ARCHIVE_SHA256:-989d82404a9c1f3739e15d68a1e69d0f1f90d35c93c04ab0988e071fc1525545}"
-CONFIG="${CONFIG:-configs/models/phase1-qwen3-8b-vietmed-verifier-2026-07-27.yaml}"
+CONFIG="${CONFIG:-configs/benchmarks/phase1/models/phase1-qwen3-8b-vietmed-verifier-2026-07-27.yaml}"
 MODEL_ID="${MODEL_ID:-Qwen/Qwen3-8B}"
 MODEL_REVISION="${MODEL_REVISION:-b968826d9c46dd6066d109eabc6255188de91218}"
 REVIEW_MAX_ROUNDS="${REVIEW_MAX_ROUNDS:-2}"

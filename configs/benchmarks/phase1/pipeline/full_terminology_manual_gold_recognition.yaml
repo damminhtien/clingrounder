@@ -1,0 +1,34 @@
+terminology:
+  # Opt-in profile: this recognition overlay passed the frozen Phase 1 holdout gate.
+  # Re-run scripts/mine_phase1_recognition_knowledge.py when the gold corpus changes.
+  recognition_path: ../../../../data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
+  additional_recognition_paths:
+    - ../../../../outputs/mining/knowledge/phase1-recognition-115886bf9d22/recognition_concepts.jsonl
+  abbreviation_path: ../../../../data/dictionaries/abbreviations.jsonl
+  alias_overlay_path: ../../../../data/dictionaries/vietnamese_medical_alias.jsonl
+
+  # SCALING: recognition and normalization use separate stores so the full releases do not
+  # inflate the in-memory Aho-Corasick matcher used for every note.
+  normalization_paths:
+    - ../../../../data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl
+    - ../../../../data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
+  normalization_alias_overlay_paths:
+    - ../../../../outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl
+    - ../../../../outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl
+    - ../../../../outputs/mining/knowledge/phase1-reviewed-candidate-aliases-2026-07-18/alias_overlay.jsonl
+  normalization_index_path: ../../../../.cache/medical-kg/terminology/terminology-22107a23c578611e2514.sqlite3
+  reviewed_mention_path: ../../../../outputs/mining/knowledge/phase1-reviewed-candidate-aliases-2026-07-18/reviewed_memory.jsonl
+  knowledge_graph_index_path: ../../../../.cache/medical-kg/knowledge-graph/knowledge-graph-668ddc869e58db0583c0.sqlite3
+  cache_dir: ../../../../.cache/medical-kg/terminology
+  query_cache_size: 4096
+
+pipeline:
+  version: "0.2.0-full-terminology-manual-gold-recognition"
+  enable_context: true
+  enable_linking: true
+  enable_candidate_reranking: true
+  enable_entity_kg_validation: true
+  enable_relations: false
+  enable_relation_kg_validation: false
+  max_candidates: 20
+  candidate_sources: [exact, abbreviation, fuzzy, char_ngram, bm25]

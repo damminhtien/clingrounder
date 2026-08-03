@@ -68,7 +68,7 @@ notes with chunk-local training coordinates:
 
 ```bash
 uv run medical-kg benchmark phase1 qwen propose-token-bundle \
-  --config configs/models/phase1-qwen3-8b-qlora-portable-inference-2026-07-31.yaml \
+  --config configs/benchmarks/phase1/models/phase1-qwen3-8b-qlora-portable-inference-2026-07-31.yaml \
   --dataset outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1/spans.jsonl \
   --dataset-manifest outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1/manifest.json \
   --output-dir outputs/models/phase1-qwen3-final-token-bundle-source
@@ -120,7 +120,7 @@ separate recall/targeted pass evidence for the learned fusion stage:
 
 ```bash
 uv run medical-kg benchmark phase1 qwen propose-final-supervision \
-  --config configs/models/phase1-qwen3-8b-qlora-portable-inference-2026-07-31.yaml \
+  --config configs/benchmarks/phase1/models/phase1-qwen3-8b-qlora-portable-inference-2026-07-31.yaml \
   --output-dir outputs/models/phase1-qwen3-final-supervision-source
 ```
 
@@ -133,7 +133,7 @@ selected raw identities.
 
 Friend31 output is distillation/reference evidence only. It is not a valid runtime source,
 submission seed, or reproducible baseline. The machine-readable contract is
-`configs/models/phase1-training-governance-2026-07-30.yaml`.
+`configs/benchmarks/phase1/models/phase1-training-governance-2026-07-30.yaml`.
 
 ## Implemented Metrics
 
@@ -204,13 +204,13 @@ uv run medical-kg benchmark phase1 submission \
 
 ### Full terminology runtime
 
-`configs/phase1_full.yaml` uses the full TT06 ICD-10 and July 6, 2026 RxNorm releases for
+`configs/benchmarks/phase1/submission/full.yaml` uses the full TT06 ICD-10 and July 6, 2026 RxNorm releases for
 normalization. It does not use the seed dictionary as the complete linking database. The smaller
 recognition store is intentional: NER trigger coverage and normalization vocabulary are different
 precision controls.
 
 Build the full terminology index explicitly, then point the pipeline config at the resulting
-immutable SQLite file. `configs/phase1_full_diagnostic.yaml` remains an experiment config for
+immutable SQLite file. `configs/benchmarks/phase1/submission/full-diagnostic.yaml` remains an experiment config for
 profiling lexical sources and internal stages; it should not be promoted merely because it returns
 more candidates.
 
@@ -223,7 +223,7 @@ uv run medical-kg terminology build \
 uv run medical-kg pipeline run \
   --input data/samples/sample_notes.jsonl \
   --output outputs/benchmarks/phase1_full/predictions.jsonl \
-  --config configs/phase1_full_diagnostic.yaml \
+  --config configs/benchmarks/phase1/submission/full-diagnostic.yaml \
   --run-root outputs/benchmarks/phase1_full \
   --run-label all-lexical
 ```
@@ -305,7 +305,7 @@ uv run medical-kg benchmark phase1 proposal-calibrate \
   --source-role vietmed=verifier \
   --fit-mode full_oof \
   --training-governance \
-    configs/models/phase1-training-governance-2026-07-30.yaml \
+    configs/benchmarks/phase1/models/phase1-training-governance-2026-07-30.yaml \
   --output-dir outputs/phase1/proposal-fusion/final-fit
 ```
 
@@ -754,7 +754,7 @@ uv run python scripts/run_phase1_top10_probes.py \
 ```
 
 The Top-1 campaign baseline and promotion thresholds are pinned in
-`configs/phase1_top1_campaign.yaml`. New runs should pass
+`configs/benchmarks/phase1/experiments/top1-campaign.yaml`. New runs should pass
 `--expected-base-sha256 ab9644f4d635132eee6462929461cf0d9b3bd3b9059e5a598704349410b54644`.
 Candidate probes require three exact independent proposal sources by default and are emitted as
 `C_*_ONE`, `C_*_THREE`, and `C_*_TEN`; submit the next tier only after the previous tier wins.
@@ -781,7 +781,7 @@ the same clause. Medication dose/strength/route/frequency values are traced as i
 attributes and omitted from Phase 1 lab-result output. Boundary discovery uses only train documents,
 requires repeated document support, rejects punctuation crossing, and writes draft rules to
 `boundary_rule_candidates.yaml`; drafts do not execute. Review and promote general rules by changing
-`review_status` in a registry such as `configs/phase1_top10_rule_registry.yaml`, then pass it through
+`review_status` in a registry such as `data/manual_gold/derived/top10-rule-registry.yaml`, then pass it through
 `--rule-registry`.
 
 Candidate probes remain empty unless the exact entity span/type is agreed by at least two of three

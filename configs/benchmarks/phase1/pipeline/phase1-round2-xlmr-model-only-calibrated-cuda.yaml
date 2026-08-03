@@ -1,0 +1,46 @@
+# Calibrated independent XLM-R proposal source for owner-authorized Round 2 inference.
+terminology:
+  # PipelineFactory requires recognition resources even though model-only extraction never queries
+  # the dictionary adapter.
+  recognition_path: ../../../../data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
+  abbreviation_path: ../../../../data/dictionaries/abbreviations.jsonl
+  alias_overlay_path: null
+  reviewed_mention_path: null
+
+pipeline:
+  version: "0.2.0-phase1-round2-xlmr-model-only-calibrated"
+  # INVARIANT: this source measures entity proposals only; metadata is added by isolated probes.
+  enable_context: false
+  enable_linking: false
+  enable_candidate_reranking: false
+  enable_graph_evidence_reranking: false
+  enable_entity_kg_validation: false
+  enable_relations: false
+  enable_relation_kg_validation: false
+  candidate_sources: [exact]
+
+models:
+  entity_extractor:
+    # MODEL: checkpoint identity and five thresholds are frozen by development calibration.
+    run_spec: ../models/phase1-five-type-xlmr-qa-edu-e12-lr5e5-2026-07-27.yaml
+    model_id: ../../../../outputs/models/phase1-five-type-xlmr-qa-edu-e12-lr5e5-2026-07-27/final-model
+    revision: e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
+    device: cuda
+    batch_size: 8
+    max_length: 512
+    stride: 64
+    default_confidence_threshold: 0.0
+    confidence_thresholds:
+      DISEASE: 0.8
+      DRUG: 0.8
+      LAB_RESULT: 0.5
+      LAB_TEST: 0.8
+      SYMPTOM: 0.8
+    combine_with_dictionary: false
+
+provenance:
+  phase1_model_calibration:
+    selection_split: development
+    holdout_status: sealed
+    model_fingerprint: 169a02de77d1198e062789271aac563c8000e8aa0ef7e4c95a1ed06ea07d771a
+    calibration_sha256: 817d2184fb96e1021b88d41a52f09d48d73d1a3efb378b7fec311f20425a9cd6

@@ -14,7 +14,7 @@ below are committed on top of it.
 | Candidate merge was order-dependent and occurrence-based | Fixed | Evidence is grouped once per unique source, ranked deterministically, and deduplicated by `(code_system, code)`. All source evidence remains on the internal candidate. |
 | Linker always assigned top-1 | Fixed | Assignment requires both `link_assignment_threshold` and `link_assignment_margin`; candidate lists remain available when normalization abstains. |
 | Dictionary NER discarded the matched concept | Fixed | Exact/toneless dictionary entities pin a candidate and code only when the alias has one compatible output code. Ambiguous aliases remain unlinked. |
-| Entity-only submission ran discarded stages | Fixed | `configs/phase1_submission.yaml` is a validated `entity_only` contract with context/linking/KG/relation stages disabled. `configs/phase1_full.yaml` is the explicit full mode. |
+| Entity-only submission ran discarded stages | Fixed | `configs/benchmarks/phase1/submission/entity-only.yaml` is a validated `entity_only` contract with context/linking/KG/relation stages disabled. `configs/benchmarks/phase1/submission/full.yaml` is the explicit full mode. |
 | Cue scope metadata was ignored | Fixed | Left, right, bidirectional, and section-prior cues are loaded separately; section priors no longer leak into lexical cue lists. |
 | LAB_TEST/LAB_RESULT were always PRESENT | Fixed | Lab observations use the same scoped assertion classifier as other entities. Regression cases cover negated, planned, and historical labs. |
 | Dose/route/frequency used LAB_RESULT | Fixed | Dedicated medication attribute entity types and typed relations replace LAB_RESULT tails. LAB values remain connected only through `HAS_VALUE`. |

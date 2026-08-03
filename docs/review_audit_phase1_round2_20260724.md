@@ -121,7 +121,7 @@ input.
 
 ## Reviewed Recognition Result - 2026-07-25
 
-The reproducible full-pipeline profile in `configs/phase1_round2_full.yaml` added the reviewed VN
+The reproducible full-pipeline profile in `configs/benchmarks/phase1/submission/round2-full.yaml` added the reviewed VN
 clinical lexicon and the train-compiled recognition overlay that had passed the legacy holdout
 gate. It retained context, exact full-terminology linking, reranking, and entity KG validation,
 while limiting export to one candidate per entity.

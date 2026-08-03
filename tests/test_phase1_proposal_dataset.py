@@ -286,7 +286,7 @@ def test_final_fit_governance_reads_all_reviewed_manual_gold(tmp_path: Path) -> 
         holdout_path,
         source_roles={"pipeline": ProposalSourceRole.RULE},
         training_governance_path=(
-            "configs/models/phase1-training-governance-2026-07-30.yaml"
+            "configs/benchmarks/phase1/models/phase1-training-governance-2026-07-30.yaml"
         ),
     )
 

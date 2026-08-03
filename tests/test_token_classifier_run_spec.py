@@ -41,7 +41,7 @@ def test_checked_in_full_type_run_spec_pins_dataset_and_checkpoint() -> None:
 
 def test_phase1_run_spec_pins_five_type_dataset_and_full_gpu_schedule() -> None:
     spec = load_token_classifier_run_spec(
-        "configs/models/phase1-five-type-xlmr-base-2026-07-22.yaml"
+        "configs/benchmarks/phase1/models/phase1-five-type-xlmr-base-2026-07-22.yaml"
     )
 
     assert spec.training.model_id == "FacebookAI/xlm-roberta-base"
@@ -58,7 +58,7 @@ def test_phase1_run_spec_pins_five_type_dataset_and_full_gpu_schedule() -> None:
 
 def test_phase1_qa_educational_run_spec_uses_isolated_augmented_dataset() -> None:
     spec = load_token_classifier_run_spec(
-        "configs/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml"
+        "configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml"
     )
 
     assert spec.training.model_id == "FacebookAI/xlm-roberta-base"
@@ -76,7 +76,7 @@ def test_phase1_qa_educational_run_spec_uses_isolated_augmented_dataset() -> Non
 
 def test_phase1_qa_educational_recovery_run_increases_optimizer_updates() -> None:
     spec = load_token_classifier_run_spec(
-        "configs/models/phase1-five-type-xlmr-qa-edu-e12-lr5e5-2026-07-27.yaml"
+        "configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-e12-lr5e5-2026-07-27.yaml"
     )
 
     assert spec.training.epochs == 12.0
@@ -87,7 +87,7 @@ def test_phase1_qa_educational_recovery_run_increases_optimizer_updates() -> Non
 
 def test_phase1_dapt_run_uses_verified_local_initializer_without_prefetch() -> None:
     spec = load_token_classifier_run_spec(
-        "configs/models/phase1-five-type-xlmr-dapt-qa-edu-2026-07-29.yaml"
+        "configs/benchmarks/phase1/models/phase1-five-type-xlmr-dapt-qa-edu-2026-07-29.yaml"
     )
 
     assert spec.training.initialization_model_path is not None
@@ -107,7 +107,7 @@ def test_phase1_dapt_run_uses_verified_local_initializer_without_prefetch() -> N
 
 def test_phase1_qa_educational_lr_control_is_isolated() -> None:
     spec = load_token_classifier_run_spec(
-        "configs/models/phase1-five-type-xlmr-qa-edu-e10-lr3e5-2026-07-27.yaml"
+        "configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-e10-lr3e5-2026-07-27.yaml"
     )
 
     assert spec.training.epochs == 10.0
@@ -117,7 +117,7 @@ def test_phase1_qa_educational_lr_control_is_isolated() -> None:
 
 def test_phase1_qa_educational_pipeline_points_to_matching_run_spec() -> None:
     resolved = ResolvedPipelineConfig.load(
-        "configs/pipeline/phase1-five-type-qa-edu-model-only.yaml"
+        "configs/benchmarks/phase1/pipeline/phase1-five-type-qa-edu-model-only.yaml"
     )
     extractor = resolved.factory_config.models.entity_extractor
 
@@ -136,7 +136,7 @@ def test_phase1_qa_educational_pipeline_points_to_matching_run_spec() -> None:
 
 def test_phase1_qa_educational_recovery_pipeline_points_to_selected_model() -> None:
     resolved = ResolvedPipelineConfig.load(
-        "configs/pipeline/phase1-five-type-qa-edu-e12-lr5e5-model-only.yaml"
+        "configs/benchmarks/phase1/pipeline/phase1-five-type-qa-edu-e12-lr5e5-model-only.yaml"
     )
     extractor = resolved.factory_config.models.entity_extractor
 
@@ -152,7 +152,7 @@ def test_phase1_qa_educational_recovery_pipeline_points_to_selected_model() -> N
 
 def test_round2_calibrated_pipeline_freezes_selected_thresholds() -> None:
     resolved = ResolvedPipelineConfig.load(
-        "configs/pipeline/phase1-round2-xlmr-model-only-calibrated-cuda.yaml"
+        "configs/benchmarks/phase1/pipeline/phase1-round2-xlmr-model-only-calibrated-cuda.yaml"
     )
     models = resolved.factory_config.models
 

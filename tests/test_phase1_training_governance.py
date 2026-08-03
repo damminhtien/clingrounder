@@ -13,7 +13,7 @@ from medical_kg_nlp.benchmarks.phase1.training_governance import (
 )
 
 
-POLICY_PATH = "configs/models/phase1-training-governance-2026-07-30.yaml"
+POLICY_PATH = "configs/benchmarks/phase1/models/phase1-training-governance-2026-07-30.yaml"
 
 
 def test_checked_in_policy_uses_all_manual_and_authorized_gt_records() -> None:

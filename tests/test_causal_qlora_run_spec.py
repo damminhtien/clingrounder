@@ -16,10 +16,10 @@ from medical_kg_nlp.utils.hashing import sha256_file
 
 def test_checked_in_qwen_stages_pin_model_data_and_adapter_handoff() -> None:
     curriculum = load_causal_qlora_run_spec(
-        "configs/models/phase1-qwen3-8b-qlora-curriculum-2026-07-28.yaml"
+        "configs/benchmarks/phase1/models/phase1-qwen3-8b-qlora-curriculum-2026-07-28.yaml"
     )
     specialize = load_causal_qlora_run_spec(
-        "configs/models/phase1-qwen3-8b-qlora-specialize-2026-07-28.yaml"
+        "configs/benchmarks/phase1/models/phase1-qwen3-8b-qlora-specialize-2026-07-28.yaml"
     )
 
     assert curriculum.training.parameter_count == 8_190_735_360

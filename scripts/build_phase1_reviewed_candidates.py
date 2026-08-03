@@ -31,7 +31,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--registry-output",
-        default="configs/phase1_reviewed_candidate_registry.yaml",
+        default="data/manual_gold/derived/reviewed-candidate-registry.yaml",
     )
     parser.add_argument(
         "--audit-output",

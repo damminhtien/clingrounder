@@ -76,7 +76,7 @@ run_manifest.json:
 The pinned run spec is:
 
 ```text
-configs/models/phase1-qwen3-8b-qlora-inference-2026-07-28.yaml
+configs/benchmarks/phase1/models/phase1-qwen3-8b-qlora-inference-2026-07-28.yaml
 ```
 
 The production run used `recall_only`; the five targeted passes and thinking

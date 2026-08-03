@@ -53,14 +53,14 @@ separate reproducibility guide: [`xlmr-dapt.md`](xlmr-dapt.md).
 The original pinned run is:
 
 ```text
-configs/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
+configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
 ```
 
 That three-epoch schedule collapsed to the `O` class in the first executed GPU experiment. The
 selected recovery schedule is:
 
 ```text
-configs/models/phase1-five-type-xlmr-qa-edu-e12-lr5e5-2026-07-27.yaml
+configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-e12-lr5e5-2026-07-27.yaml
 ```
 
 See [`experiments/vast-xlmr-2026-07-27.md`](experiments/vast-xlmr-2026-07-27.md) for the executed
@@ -221,7 +221,7 @@ uv run medical-kg benchmark phase1 model-data augment-regions \
   --output-dir outputs/mining/model-datasets/phase1-manual-five-type-qa-edu-v1
 
 uv run medical-kg model inspect-token-classifier-run \
-  --config configs/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
+  --config configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
 
 tar -czf outputs/models/phase1-five-type-xlmr-qa-edu-training-inputs.tar.gz \
   -C outputs/mining/model-datasets/phase1-manual-five-type-qa-edu-v1 \
@@ -341,10 +341,10 @@ uv run hf download FacebookAI/xlm-roberta-base \
   --revision e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
 
 uv run medical-kg model inspect-token-classifier-run \
-  --config configs/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
+  --config configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
 
 CUDA_VISIBLE_DEVICES=0 uv run medical-kg model train-token-classifier-run \
-  --config configs/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml \
+  --config configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml \
   2>&1 | tee outputs/models/phase1-five-type-xlmr-qa-edu-2026-07-26/train.log
 ```
 
@@ -379,10 +379,10 @@ Copy the archive back, extract it to the same repository-relative output path, t
 
 ```bash
 uv run medical-kg model inspect-token-classifier-run \
-  --config configs/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
+  --config configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
 
 uv run medical-kg benchmark phase1 model-data calibrate \
-  --pipeline-config configs/pipeline/phase1-five-type-qa-edu-model-only.yaml \
+  --pipeline-config configs/benchmarks/phase1/pipeline/phase1-five-type-qa-edu-model-only.yaml \
   --output-dir outputs/models/phase1-five-type-qa-edu-calibration
 ```
 
@@ -393,10 +393,10 @@ For the selected recovery run, use:
 
 ```bash
 uv run medical-kg model inspect-token-classifier-run \
-  --config configs/models/phase1-five-type-xlmr-qa-edu-e12-lr5e5-2026-07-27.yaml
+  --config configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-e12-lr5e5-2026-07-27.yaml
 
 uv run medical-kg benchmark phase1 model-data calibrate \
-  --pipeline-config configs/pipeline/phase1-five-type-qa-edu-e12-lr5e5-model-only.yaml \
+  --pipeline-config configs/benchmarks/phase1/pipeline/phase1-five-type-qa-edu-e12-lr5e5-model-only.yaml \
   --output-dir outputs/models/calibration-e12-lr5e5-2026-07-27
 ```
 

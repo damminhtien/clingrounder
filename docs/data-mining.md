@@ -531,7 +531,7 @@ uv run python scripts/mine_phase1_recognition_knowledge.py
 
 The generated `pipeline_profile_fragment.yaml` can be merged into a pipeline profile. The checked-in
 snapshot profile used for the end-to-end replay is
-`configs/pipeline/full_terminology_manual_gold_recognition.yaml`; it intentionally points to the
+`configs/benchmarks/phase1/pipeline/full_terminology_manual_gold_recognition.yaml`; it intentionally points to the
 hashed artifact rather than silently rebuilding or replacing a dictionary at startup.
 
 For model NER, export the reconciled raw spans without changing offsets or leaking the development

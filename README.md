@@ -437,7 +437,7 @@ Inspect the pinned five-type XLM-R run before moving it to an authorized Linux/B
 
 ```bash
 uv run medical-kg model inspect-token-classifier-run \
-  --config configs/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
+  --config configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
 ```
 
 After the verified `final-model/` and `run_manifest.json` return to this checkout, run development

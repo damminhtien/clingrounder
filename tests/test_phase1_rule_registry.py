@@ -83,8 +83,9 @@ def test_rule_registry_only_activates_reviewed_rules() -> None:
     ]
 
 
-def test_checked_in_top10_registry_keeps_discovered_rules_draft() -> None:
-    registry = load_phase1_rule_registry("configs/phase1_top10_rule_registry.yaml")
+@pytest.mark.private
+def test_local_top10_registry_keeps_discovered_rules_draft() -> None:
+    registry = load_phase1_rule_registry("data/manual_gold/derived/top10-rule-registry.yaml")
 
     assert len(registry.rules) == 2
     assert registry.active_rules() == ()

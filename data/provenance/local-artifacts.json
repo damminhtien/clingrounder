@@ -2,8 +2,8 @@
   "schema_version": "medical-kg.local-artifact-inventory.v1",
   "policy_path": "configs/repository/public-release.yaml",
   "policy_sha256": "359a419bdf295df57f1c7c3794d431ef00519d45d07efd4a51c1bba2ffa9b27a",
-  "artifact_count": 147,
-  "total_bytes": 620849141,
+  "artifact_count": 149,
+  "total_bytes": 620994250,
   "artifacts": [
     {
       "path": "data/heuristics/false_positive_blacklist.jsonl",
@@ -1145,6 +1145,26 @@
       ],
       "byte_size": 2899,
       "sha256": "95a118d594a9f81394df4ab7b82d430046a917aec64cf34aba97c057835f2cfc"
+    },
+    {
+      "path": "data/manual_gold/derived/reviewed-candidate-registry.yaml",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 144088,
+      "sha256": "4dc0e1f750a0c7ab32d8edc099cd801fe4d24b71b7e22596e5723c22cc83e60c"
+    },
+    {
+      "path": "data/manual_gold/derived/top10-rule-registry.yaml",
+      "rule_id": "private-benchmark-supervision",
+      "disposition": "local_only",
+      "source_ids": [
+        "phase1_manual_gold"
+      ],
+      "byte_size": 1021,
+      "sha256": "397a5904d3f7c4626c646bee58d3b4c3cb568deda9509d530d40670141351ac1"
     },
     {
       "path": "data/manual_gold/entity_only_baseline.json",

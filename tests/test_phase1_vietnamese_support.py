@@ -23,11 +23,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_vietmed_verifier_and_qwen_remain_below_nine_billion_parameters() -> None:
     support = load_phase1_vietnamese_support_spec(
-        ROOT / "configs/models/phase1-vietmed-ner-verifier-2026-07-27.yaml"
+        ROOT / "configs/benchmarks/phase1/models/phase1-vietmed-ner-verifier-2026-07-27.yaml"
     )
     qwen = load_phase1_qwen_run_spec(
         ROOT
-        / "configs/models/phase1-qwen3-8b-vietmed-verifier-2026-07-27.yaml"
+        / "configs/benchmarks/phase1/models/phase1-qwen3-8b-vietmed-verifier-2026-07-27.yaml"
     )
 
     assert support.model.parameter_count == 277_481_509

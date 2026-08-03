@@ -211,7 +211,7 @@ def test_phase1_round2_plan_requires_runtime_archive_and_pins_sha256(
         f"file://{tmp_path / 'encrypted-artifact-store'}",
     )
 
-    plan = load_mining_plan("configs/mining/phase1-round2-2026-07-22.yaml")
+    plan = load_mining_plan("configs/benchmarks/phase1/mining/phase1-round2-2026-07-22.yaml")
     source = plan.sources[0]
 
     assert source.source_id == "phase1_round2_input"

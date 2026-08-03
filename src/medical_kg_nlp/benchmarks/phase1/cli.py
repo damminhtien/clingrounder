@@ -580,7 +580,7 @@ def register_phase1_cli(
     model_data_final_fit.add_argument("--output-dir", required=True)
     model_data_final_fit.add_argument(
         "--training-governance",
-        default="configs/models/phase1-training-governance-2026-07-30.yaml",
+        default="configs/benchmarks/phase1/models/phase1-training-governance-2026-07-30.yaml",
     )
     model_data_final_fit.add_argument(
         "--model-split-manifest",
@@ -781,7 +781,7 @@ def register_phase1_cli(
     model_data_calibrate.set_defaults(handler="benchmark_phase1_model_data_calibrate")
     model_data_calibrate.add_argument(
         "--pipeline-config",
-        default="configs/pipeline/phase1-five-type-model-only.yaml",
+        default="configs/benchmarks/phase1/pipeline/phase1-five-type-model-only.yaml",
         help="Verified model-only pipeline profile.",
     )
     model_data_calibrate.add_argument("--output-dir", required=True)
@@ -881,7 +881,7 @@ def register_phase1_cli(
     qwen_final_supervision.add_argument("--output-dir", required=True)
     qwen_final_supervision.add_argument(
         "--training-governance",
-        default="configs/models/phase1-training-governance-2026-07-30.yaml",
+        default="configs/benchmarks/phase1/models/phase1-training-governance-2026-07-30.yaml",
     )
     qwen_final_supervision.add_argument(
         "--model-split-manifest",
@@ -961,7 +961,7 @@ def register_phase1_cli(
     joint_span_prepare.add_argument("--output-dir", required=True)
     joint_span_prepare.add_argument(
         "--training-governance",
-        default="configs/models/phase1-training-governance-2026-07-30.yaml",
+        default="configs/benchmarks/phase1/models/phase1-training-governance-2026-07-30.yaml",
     )
     joint_span_prepare.add_argument(
         "--model-split-manifest",
@@ -1037,7 +1037,7 @@ def register_phase1_cli(
     )
     joint_span_token_source.add_argument(
         "--training-governance",
-        default="configs/models/phase1-training-governance-2026-07-30.yaml",
+        default="configs/benchmarks/phase1/models/phase1-training-governance-2026-07-30.yaml",
     )
     joint_span_token_source.add_argument(
         "--model-split-manifest",
