@@ -61,6 +61,14 @@ class CachedTerminologyRepository:
             lambda: self.repository.get_by_code(code_system, code),
         )
 
+    def contains(self, code_system: CodeSystem, code: str) -> bool:
+        """Cache bounded membership checks independently from concept hydration."""
+
+        return self._get_or_load(
+            ("contains", code_system.value, code),
+            lambda: self.repository.contains(code_system, code),
+        )
+
     def exact_lookup(
         self,
         mention: str,

@@ -9,11 +9,26 @@ import pytest
 import yaml
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.terminology import (
     CompositeTerminologyRepository,
     InMemoryTerminologyRepository,
 )
+
+
+def test_composite_membership_checks_each_release_component() -> None:
+    icd = InMemoryTerminologyRepository(
+        DictionaryStore([_membership_entry("ICD:I10", "I10", CodeSystem.ICD10)])
+    )
+    rxnorm = InMemoryTerminologyRepository(
+        DictionaryStore([_membership_entry("RX:6809", "6809", CodeSystem.RXNORM)])
+    )
+    repository = CompositeTerminologyRepository((icd, rxnorm))
+
+    assert repository.contains(CodeSystem.ICD10, "I10")
+    assert repository.contains(CodeSystem.RXNORM, "6809")
+    assert not repository.contains(CodeSystem.RXNORM, "MISSING")
 
 
 def test_runtime_source_versions_match_tt06_and_rxnorm_import_manifests() -> None:
@@ -129,6 +144,24 @@ def _load_json(path: Path) -> dict[str, object]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     assert isinstance(payload, dict)
     return payload
+
+
+def _membership_entry(
+    concept_id: str,
+    code: str,
+    code_system: CodeSystem,
+) -> ConceptEntry:
+    return ConceptEntry(
+        concept_id=concept_id,
+        code=code,
+        code_system=code_system,
+        canonical_name=code,
+        semantic_type=(
+            EntityType.DRUG
+            if code_system is CodeSystem.RXNORM
+            else EntityType.DISEASE
+        ),
+    )
 
 
 def _find_code(path: Path, code: str) -> dict[str, object] | None:

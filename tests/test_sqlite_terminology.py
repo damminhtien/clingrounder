@@ -34,6 +34,16 @@ def test_sqlite_exact_and_toneless_lookup_match_in_memory_store(tmp_path: Path) 
     assert repository.toneless_lookup("dai thao duong")[0].code == "E11.9"
     assert repository.get_by_code(CodeSystem.RXNORM, "6809").canonical_name == "metformin"
     assert repository.get_by_concept_id("ICD:E11.9") == expected[0]
+    assert repository.contains(CodeSystem.ICD10, "E11.9")
+    assert repository.contains(CodeSystem.RXNORM, "6809")
+    assert not repository.contains(CodeSystem.ICD10, "MISSING")
+    with sqlite3.connect(manifest.index_path) as connection:
+        plan = connection.execute(
+            "EXPLAIN QUERY PLAN SELECT 1 FROM concepts "
+            "WHERE code_system = ? AND code = ? LIMIT 1",
+            ("ICD-10", "E11.9"),
+        ).fetchall()
+    assert any("concepts_code_idx" in str(row) for row in plan)
 
 
 def test_sqlite_filters_type_and_code_system_before_limit(tmp_path: Path) -> None:

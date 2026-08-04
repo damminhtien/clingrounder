@@ -25,6 +25,11 @@ class InMemoryTerminologyRepository:
     def get_by_code(self, code_system: CodeSystem, code: str) -> ConceptEntry | None:
         return self.store.by_code_system_code.get((code_system, code))
 
+    def contains(self, code_system: CodeSystem, code: str) -> bool:
+        """Check the store's immutable code index without scanning entries."""
+
+        return (code_system, code) in self.store.by_code_system_code
+
     def exact_lookup(
         self,
         mention: str,

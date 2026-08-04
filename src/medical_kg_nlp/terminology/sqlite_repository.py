@@ -111,6 +111,16 @@ class SQLiteTerminologyRepository:
         ).fetchone()
         return _entry_from_row(row) if row is not None else None
 
+    def contains(self, code_system: CodeSystem, code: str) -> bool:
+        """Check the indexed release key without hydrating a complete concept row."""
+
+        row = self._connection().execute(
+            "SELECT 1 FROM concepts WHERE code_system = ? AND code = ? LIMIT 1",
+            (code_system.value, code),
+        ).fetchone()
+        # SCALING: concepts_code_idx makes validation O(log n) per distinct code.
+        return row is not None
+
     def exact_lookup(
         self,
         mention: str,

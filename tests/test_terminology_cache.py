@@ -37,6 +37,10 @@ class _CountingRepository:
         self._record("code")
         return self.entry if (code_system, code) == (self.entry.code_system, self.entry.code) else None
 
+    def contains(self, code_system: CodeSystem, code: str) -> bool:
+        self._record("contains")
+        return (code_system, code) == (self.entry.code_system, self.entry.code)
+
     def exact_lookup(self, mention: str, **_: object) -> list[ConceptEntry]:
         self._record("exact")
         return [self.entry] if mention.casefold() in {"tăng huyết áp", "TĂNG HUYẾT ÁP".casefold()} else []
@@ -75,6 +79,17 @@ def test_cache_is_bounded_and_caches_missing_identifiers() -> None:
 
     assert source.calls["concept"] == 1
     assert repository.cache_info().current_size == 2
+
+
+def test_cache_reuses_membership_results() -> None:
+    source = _CountingRepository(_concept())
+    repository = CachedTerminologyRepository(source, max_size=8)
+
+    assert repository.contains(CodeSystem.ICD10, "I10")
+    assert repository.contains(CodeSystem.ICD10, "I10")
+    assert not repository.contains(CodeSystem.ICD10, "MISSING")
+
+    assert source.calls == {"contains": 2}
 
 
 def test_warm_cache_is_deterministic_across_threads() -> None:

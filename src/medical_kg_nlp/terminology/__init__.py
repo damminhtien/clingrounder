@@ -20,6 +20,7 @@ from medical_kg_nlp.terminology.index_builder import (
 )
 from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
 from medical_kg_nlp.terminology.ports import (
+    TerminologyMembershipPort,
     TerminologyRepository,
     TerminologySearchHit,
 )
@@ -37,6 +38,7 @@ __all__ = [
     "InMemoryTerminologyRepository",
     "SQLiteTerminologyRepository",
     "TERMINOLOGY_INDEX_SCHEMA_VERSION",
+    "TerminologyMembershipPort",
     "TerminologyRepository",
     "TerminologySearchHit",
     "TerminologyCacheInfo",

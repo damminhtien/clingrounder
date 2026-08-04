@@ -39,6 +39,11 @@ class CompositeTerminologyRepository:
                 return entry
         return None
 
+    def contains(self, code_system: CodeSystem, code: str) -> bool:
+        """Return membership from the first release component containing the code."""
+
+        return any(repository.contains(code_system, code) for repository in self.repositories)
+
     def exact_lookup(
         self,
         mention: str,

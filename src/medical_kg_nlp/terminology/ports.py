@@ -9,7 +9,11 @@ from typing import Protocol
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 
-__all__ = ["TerminologyRepository", "TerminologySearchHit"]
+__all__ = [
+    "TerminologyMembershipPort",
+    "TerminologyRepository",
+    "TerminologySearchHit",
+]
 
 
 @dataclass(frozen=True)
@@ -36,7 +40,13 @@ class TerminologySearchHit:
             raise ValueError("Terminology search hits require a match kind")
 
 
-class TerminologyRepository(Protocol):
+class TerminologyMembershipPort(Protocol):
+    """Prove code membership in one active, versioned terminology release."""
+
+    def contains(self, code_system: CodeSystem, code: str) -> bool: ...
+
+
+class TerminologyRepository(TerminologyMembershipPort, Protocol):
     """Resolve concepts without exposing JSONL, memory, or SQLite internals."""
 
     def get_by_concept_id(self, concept_id: str) -> ConceptEntry | None: ...
