@@ -5,6 +5,14 @@ from __future__ import annotations
 from pathlib import Path
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.linking.learned_edits import (
+    LearnedEditModel,
+    LearnedEditRetrieverAdapter,
+)
+from medical_kg_nlp.linking.mention_code_memory import (
+    MentionCodeMemory,
+    MentionCodeMemoryRetrieverAdapter,
+)
 from medical_kg_nlp.retrieval.adapters import (
     AbbreviationRetrieverAdapter,
     BM25RetrieverAdapter,
@@ -20,6 +28,7 @@ from medical_kg_nlp.retrieval.bm25_retriever import BM25Retriever
 from medical_kg_nlp.retrieval.fuzzy_matcher import FuzzyMatcher
 from medical_kg_nlp.retrieval.ngram_retriever import CharNgramRetriever
 from medical_kg_nlp.retrieval.pipeline import RetrievalPipeline
+from medical_kg_nlp.retrieval.dense_retriever import DenseRetrieverAdapter
 from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
 from medical_kg_nlp.terminology.ports import TerminologyRepository
 from medical_kg_nlp.kg.ports import KnowledgeGraphRepositoryPort
@@ -39,6 +48,9 @@ def build_in_memory_retrieval_pipeline(
     max_candidates: int = 20,
     retrieval_sources: tuple[str, ...] | None = None,
     mention_memory_path: str | Path | None = None,
+    mention_code_memory: MentionCodeMemory | None = None,
+    learned_edit_model: LearnedEditModel | None = None,
+    dense_retriever: DenseRetrieverAdapter | None = None,
 ) -> RetrievalPipeline:
     """Compose the default rule retrievers over an in-memory terminology."""
 
@@ -50,6 +62,9 @@ def build_in_memory_retrieval_pipeline(
         max_candidates=max_candidates,
         retrieval_sources=retrieval_sources,
         mention_memory_path=mention_memory_path,
+        mention_code_memory=mention_code_memory,
+        learned_edit_model=learned_edit_model,
+        dense_retriever=dense_retriever,
     )
 
 
@@ -63,11 +78,20 @@ def build_rule_retrieval_pipeline(
     mention_memory_path: str | Path | None = None,
     use_fts_for_bm25: bool = False,
     knowledge_graph_repository: KnowledgeGraphRepositoryPort | None = None,
+    mention_code_memory: MentionCodeMemory | None = None,
+    learned_edit_model: LearnedEditModel | None = None,
+    dense_retriever: DenseRetrieverAdapter | None = None,
 ) -> RetrievalPipeline:
     """Compose selected retrievers while keeping the pipeline storage-neutral."""
 
     selected = set(retrieval_sources or DEFAULT_RETRIEVAL_SOURCES)
-    supported = {*DEFAULT_RETRIEVAL_SOURCES, "kg_exact"}
+    supported = {
+        *DEFAULT_RETRIEVAL_SOURCES,
+        "dense",
+        "kg_exact",
+        "learned_edit",
+        "mention_memory",
+    }
     unknown = selected - supported
     if unknown:
         raise ValueError(f"Unknown retrieval source(s): {sorted(unknown)}")
@@ -75,10 +99,34 @@ def build_rule_retrieval_pipeline(
     adapters: list[MentionRetrieverAdapter] = [
         ReviewedMentionRetrieverAdapter.from_jsonl(repository, mention_memory_path)
     ]
+    if "mention_memory" in selected:
+        if mention_code_memory is None:
+            raise ValueError("mention_memory retrieval requires a mention-code memory artifact")
+        adapters.append(
+            MentionCodeMemoryRetrieverAdapter(
+                mention_code_memory,
+                repository,
+                high_confidence_only=True,
+            )
+        )
     if "exact" in selected:
         adapters.append(ExactRetrieverAdapter(repository))
     if "abbreviation" in selected:
         adapters.append(AbbreviationRetrieverAdapter.from_jsonl(repository, abbreviation_path))
+    if "learned_edit" in selected:
+        if learned_edit_model is None:
+            raise ValueError("learned_edit retrieval requires a learned-edit artifact")
+        adapters.append(LearnedEditRetrieverAdapter(learned_edit_model, repository))
+    if "mention_memory" in selected:
+        if mention_code_memory is None:  # pragma: no cover - guarded above
+            raise RuntimeError("Mention-code memory composition invariant failed")
+        adapters.append(
+            MentionCodeMemoryRetrieverAdapter(
+                mention_code_memory,
+                repository,
+                high_confidence_only=False,
+            )
+        )
     # SCALING: approximate in-memory indexes stay recognition-sized when normalization uses
     # SQLite. FTS is the persistent lexical source over the complete terminology.
     if "fuzzy" in selected:
@@ -91,6 +139,10 @@ def build_rule_retrieval_pipeline(
             if use_fts_for_bm25
             else BM25RetrieverAdapter(BM25Retriever(approximate_store))
         )
+    if "dense" in selected:
+        if dense_retriever is None:
+            raise ValueError("dense retrieval requires an encoder and vector index")
+        adapters.append(dense_retriever)
     if "kg_exact" in selected:
         if knowledge_graph_repository is None:
             raise ValueError("kg_exact retrieval requires a knowledge graph repository")

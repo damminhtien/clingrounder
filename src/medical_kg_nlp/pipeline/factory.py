@@ -19,6 +19,7 @@ from medical_kg_nlp.adapters.generative import (
 from medical_kg_nlp.adapters.hybrid import HybridEntityExtractorAdapter
 from medical_kg_nlp.adapters.huggingface import (
     HuggingFaceCrossEncoderAdapter,
+    HuggingFaceTextEncoderAdapter,
     HuggingFaceTokenClassifierAdapter,
 )
 from medical_kg_nlp.adapters.medication import MedicationMentionEntityExtractorAdapter
@@ -30,6 +31,8 @@ from medical_kg_nlp.kg.sqlite_repository import SQLiteKnowledgeGraphRepository
 from medical_kg_nlp.linking.graph_evidence import GraphEvidenceReranker
 from medical_kg_nlp.linking.graph_second_pass import GraphEvidenceSecondPass
 from medical_kg_nlp.linking.linker import EntityLinker
+from medical_kg_nlp.linking.learned_edits import load_learned_edit_model
+from medical_kg_nlp.linking.mention_code_memory import load_mention_code_memory
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
 from medical_kg_nlp.ner.extractors.contextual_alias import (
     load_contextual_alias_rules,
@@ -45,6 +48,8 @@ from medical_kg_nlp.preprocessing.normalizer import (
 )
 from medical_kg_nlp.relations.rule_relations import RuleRelationExtractor
 from medical_kg_nlp.retrieval.rule_factory import build_rule_retrieval_pipeline
+from medical_kg_nlp.retrieval.dense_retriever import DenseRetrieverAdapter
+from medical_kg_nlp.retrieval.synonym_index import FaissSynonymVectorIndex
 from medical_kg_nlp.schema.types import EntityType
 from medical_kg_nlp.terminology import (
     CachedTerminologyRepository,
@@ -72,6 +77,10 @@ class PipelineFactoryConfig:
     # Benchmark-specific reviewed memory is terminal on match, so reusable
     # profiles must opt in with an explicit, versioned artifact.
     reviewed_mention_path: str | None = None
+    mention_code_memory_path: str | None = None
+    learned_edit_path: str | None = None
+    synonym_index_path: str | None = None
+    synonym_index_terminology_fingerprint: str | None = None
     additional_recognition_dictionary_path: str | None = None
     additional_recognition_dictionary_paths: tuple[str, ...] = ()
     abbreviation_path: str = "data/dictionaries/abbreviations.jsonl"
@@ -124,6 +133,14 @@ class PipelineFactoryConfig:
             ),
             reviewed_mention_path=_optional_string(
                 terminology.get("reviewed_mention_path", cls.reviewed_mention_path)
+            ),
+            mention_code_memory_path=_optional_string(
+                terminology.get("mention_code_memory_path")
+            ),
+            learned_edit_path=_optional_string(terminology.get("learned_edit_path")),
+            synonym_index_path=_optional_string(terminology.get("synonym_index_path")),
+            synonym_index_terminology_fingerprint=_optional_string(
+                terminology.get("synonym_index_terminology_fingerprint")
             ),
             additional_recognition_dictionary_path=_optional_string(
                 terminology.get("additional_recognition_path")
@@ -211,6 +228,42 @@ class PipelineFactory:
             )
 
         options = resolved.options
+        mention_code_memory = (
+            load_mention_code_memory(resolved.mention_code_memory_path)
+            if "mention_memory" in options.candidate_sources
+            and resolved.mention_code_memory_path is not None
+            else None
+        )
+        learned_edit_model = (
+            load_learned_edit_model(resolved.learned_edit_path)
+            if "learned_edit" in options.candidate_sources
+            and resolved.learned_edit_path is not None
+            else None
+        )
+        dense_retriever = None
+        if "dense" in options.candidate_sources:
+            if (
+                resolved.models.candidate_dense_encoder is None
+                or resolved.synonym_index_path is None
+                or resolved.synonym_index_terminology_fingerprint is None
+            ):
+                raise ValueError(
+                    "Dense retrieval requires models.candidate_dense_encoder plus "
+                    "terminology.synonym_index_path and terminology fingerprint"
+                )
+            dense_model = resolved.models.candidate_dense_encoder
+            dense_retriever = DenseRetrieverAdapter(
+                encoder=HuggingFaceTextEncoderAdapter(dense_model),
+                index=FaissSynonymVectorIndex(
+                    resolved.synonym_index_path,
+                    expected_model_id=dense_model.model_id,
+                    expected_revision=dense_model.revision,
+                    expected_terminology_fingerprint=(
+                        resolved.synonym_index_terminology_fingerprint
+                    ),
+                ),
+                repository=terminology_repository,
+            )
         knowledge_graph_repository = None
         needs_knowledge_graph = (
             "kg_exact" in options.candidate_sources
@@ -281,6 +334,9 @@ class PipelineFactory:
                     mention_memory_path=resolved.reviewed_mention_path,
                     use_fts_for_bm25=uses_sqlite_normalization,
                     knowledge_graph_repository=knowledge_graph_repository,
+                    mention_code_memory=mention_code_memory,
+                    learned_edit_model=learned_edit_model,
+                    dense_retriever=dense_retriever,
                 ),
                 terminology_repository,
                 assignment_threshold=options.link_assignment_threshold,

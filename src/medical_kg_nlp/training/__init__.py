@@ -90,6 +90,10 @@ from medical_kg_nlp.training.terminology_pairs import (
     build_terminology_synonym_pairs,
     write_terminology_pair_dataset,
 )
+from medical_kg_nlp.training.synonym_retrieval import (
+    SynonymRetrievalExample,
+    build_synonym_retrieval_examples,
+)
 
 __all__ = [
     "CausalInstructionRecord",
@@ -112,6 +116,7 @@ __all__ = [
     "SpanTrainingEntity",
     "SpanTrainingRecord",
     "SynonymPairMode",
+    "SynonymRetrievalExample",
     "TerminologyPairConfig",
     "TerminologySynonymPair",
     "TokenAlignmentPolicy",
@@ -126,6 +131,7 @@ __all__ = [
     "build_listwise_linking_record",
     "build_pairwise_linking_examples",
     "build_terminology_synonym_pairs",
+    "build_synonym_retrieval_examples",
     "assert_local_gpu_runtime",
     "compute_bio_span_metrics",
     "decode_bio_spans",

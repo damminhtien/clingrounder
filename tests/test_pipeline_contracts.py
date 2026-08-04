@@ -136,8 +136,18 @@ def test_factory_config_accepts_multiple_canonical_terminology_sources() -> None
                 ],
                 "query_cache_size": 128,
                 "reviewed_mention_path": "reviewed-memory.jsonl",
+                "mention_code_memory_path": "mention-code-memory.jsonl",
+                "learned_edit_path": "learned-edits.jsonl",
+                "synonym_index_path": "synonym-index",
+                "synonym_index_terminology_fingerprint": "a" * 64,
                 "additional_recognition_paths": ["vn.jsonl", "mined.jsonl"],
-            }
+            },
+            "models": {
+                "candidate_dense_encoder": {
+                    "model_id": "local/xlmr-linker",
+                    "revision": "abc123",
+                }
+            },
         }
     )
 
@@ -148,6 +158,12 @@ def test_factory_config_accepts_multiple_canonical_terminology_sources() -> None
     )
     assert config.terminology_query_cache_size == 128
     assert config.reviewed_mention_path == "reviewed-memory.jsonl"
+    assert config.mention_code_memory_path == "mention-code-memory.jsonl"
+    assert config.learned_edit_path == "learned-edits.jsonl"
+    assert config.synonym_index_path == "synonym-index"
+    assert config.synonym_index_terminology_fingerprint == "a" * 64
+    assert config.models.candidate_dense_encoder is not None
+    assert config.models.candidate_dense_encoder.revision == "abc123"
     assert config.additional_recognition_dictionary_paths == ("vn.jsonl", "mined.jsonl")
 
 

@@ -140,6 +140,10 @@ def test_rebased_pipeline_profile_round_trips_effective_paths(tmp_path: Path) ->
         """\
 terminology:
   recognition_path: data/recognition.jsonl
+  mention_code_memory_path: artifacts/mention-memory.jsonl
+  learned_edit_path: artifacts/learned-edits.jsonl
+  synonym_index_path: artifacts/synonym-index
+  synonym_index_terminology_fingerprint: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   abbreviation_path: data/abbreviations.jsonl
   alias_overlay_path: null
 pipeline:
@@ -150,6 +154,9 @@ models:
     run_spec: models/run.yaml
     model_id: models/final-model
     revision: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  candidate_dense_encoder:
+    model_id: models/linking-encoder
+    revision: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 """,
         encoding="utf-8",
     )
@@ -176,6 +183,14 @@ models:
     assert not Path(
         written["models"]["entity_extractor"]["model_id"]
     ).is_absolute()
+    assert not Path(
+        written["models"]["candidate_dense_encoder"]["model_id"]
+    ).is_absolute()
+    assert not Path(
+        written["terminology"]["mention_code_memory_path"]
+    ).is_absolute()
+    assert not Path(written["terminology"]["learned_edit_path"]).is_absolute()
+    assert not Path(written["terminology"]["synonym_index_path"]).is_absolute()
 
 
 def test_resolved_profile_composes_and_builds_zip_outside_profile_cwd(

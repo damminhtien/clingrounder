@@ -114,6 +114,7 @@ class PipelineModelConfig:
     candidate_reranker_weight: float = 0.75
     candidate_positive_label_index: int = 1
     candidate_listwise_reranker: ListwiseRerankerModelConfig | None = None
+    candidate_dense_encoder: HuggingFaceModelConfig | None = None
 
     @classmethod
     def from_mapping(cls, payload: Mapping[str, object]) -> "PipelineModelConfig":
@@ -127,6 +128,10 @@ class PipelineModelConfig:
         listwise_payload = _optional_mapping(
             payload.get("candidate_listwise_reranker"),
             "candidate_listwise_reranker",
+        )
+        dense_payload = _optional_mapping(
+            payload.get("candidate_dense_encoder"),
+            "candidate_dense_encoder",
         )
         if reranker_payload is not None and listwise_payload is not None:
             raise ValueError(
@@ -148,6 +153,14 @@ class PipelineModelConfig:
         listwise_model = (
             ListwiseRerankerModelConfig.from_mapping(listwise_payload)
             if listwise_payload is not None
+            else None
+        )
+        dense_model = (
+            HuggingFaceModelConfig.from_mapping(
+                dense_payload,
+                name="candidate_dense_encoder",
+            )
+            if dense_payload is not None
             else None
         )
         entity_label_map = _label_map(entity_payload or {})
@@ -190,6 +203,7 @@ class PipelineModelConfig:
             candidate_reranker_weight=reranker_weight,
             candidate_positive_label_index=positive_label_index,
             candidate_listwise_reranker=listwise_model,
+            candidate_dense_encoder=dense_model,
         )
 
 

@@ -19,6 +19,15 @@ from medical_kg_nlp.retrieval.rule_factory import (
     build_in_memory_retrieval_pipeline,
     build_rule_retrieval_pipeline,
 )
+from medical_kg_nlp.retrieval.synonym_index import (
+    FaissSynonymVectorIndex,
+    InMemorySynonymVectorIndex,
+    SynonymIndexMetadata,
+    SynonymVectorRecord,
+    build_synonym_vector_records,
+    fingerprint_terminology_entries,
+    write_faiss_synonym_index,
+)
 
 __all__ = [
     "CharNgramRetriever",
@@ -26,10 +35,17 @@ __all__ = [
     "DenseHit",
     "DenseRetrieverAdapter",
     "DenseVectorIndexPort",
+    "FaissSynonymVectorIndex",
+    "InMemorySynonymVectorIndex",
     "RetrievalPipeline",
     "RetrievalQueryVariant",
     "TextEncoderPort",
+    "SynonymIndexMetadata",
+    "SynonymVectorRecord",
     "build_in_memory_retrieval_pipeline",
     "build_retrieval_query_variants",
     "build_rule_retrieval_pipeline",
+    "build_synonym_vector_records",
+    "fingerprint_terminology_entries",
+    "write_faiss_synonym_index",
 ]

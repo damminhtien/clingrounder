@@ -13,9 +13,12 @@ from medical_kg_nlp.terminology.ports import TerminologyRepository
 __all__ = ["ALLOWED_CODE_SYSTEMS", "RetrievalPipeline"]
 
 SOURCE_WEIGHTS = {
+    "mention_memory": 1.0,
+    "mention_memory_prior": 0.84,
     "exact": 1.0,
     "toneless": 0.92,
     "abbreviation": 0.92,
+    "learned_edit": 0.88,
     "fuzzy": 0.72,
     "char_ngram": 0.62,
     "dense": 0.58,

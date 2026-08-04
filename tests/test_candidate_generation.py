@@ -1,7 +1,18 @@
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
+from medical_kg_nlp.linking.learned_edits import (
+    LearnedEditObservation,
+    learn_edit_transformations,
+)
+from medical_kg_nlp.linking.mention_code_memory import (
+    MentionCodeMemoryObservation,
+    build_mention_code_memory,
+)
+from medical_kg_nlp.retrieval.dense_retriever import DenseHit, DenseRetrieverAdapter
 from medical_kg_nlp.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
 from medical_kg_nlp.retrieval.ngram_retriever import CharNgramRetriever
 from medical_kg_nlp.schema.types import EntityType
+from medical_kg_nlp.schema.types import CodeSystem
+from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
 
 
 def test_candidate_generation_handles_vietnamese_alias() -> None:
@@ -58,3 +69,73 @@ def test_candidate_generation_rejects_unknown_retrieval_source() -> None:
         assert "dense" in str(error)
     else:
         raise AssertionError("Expected unknown retrieval source to fail.")
+
+
+def test_learned_retrieval_sources_follow_precision_first_order() -> None:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    repository = InMemoryTerminologyRepository(store)
+    memory = build_mention_code_memory(
+        tuple(
+            MentionCodeMemoryObservation(
+                document_id=str(index),
+                mention="THA",
+                entity_type=EntityType.DISEASE,
+                genre="unknown",
+                code_system=CodeSystem.ICD10,
+                code="I10",
+            )
+            for index in range(3)
+        )
+    )
+    edits = learn_edit_transformations(
+        tuple(
+            LearnedEditObservation("đtđ", "đái tháo đường type 2", EntityType.DISEASE)
+            for _ in range(3)
+        )
+    )
+    dense = DenseRetrieverAdapter(_Encoder(), _DenseIndex(), repository)
+
+    pipeline = _retrieval(
+        store,
+        "data/dictionaries/abbreviations.jsonl",
+        retrieval_sources=(
+            "mention_memory",
+            "exact",
+            "abbreviation",
+            "learned_edit",
+            "bm25",
+            "dense",
+        ),
+        mention_code_memory=memory,
+        learned_edit_model=edits,
+        dense_retriever=dense,
+    )
+
+    assert [adapter.source for adapter in pipeline.retrievers] == [
+        "reviewed_memory",
+        "mention_memory",
+        "exact",
+        "abbreviation",
+        "learned_edit",
+        "mention_memory",
+        "bm25",
+        "dense",
+    ]
+
+
+class _Encoder:
+    def encode(self, texts: tuple[str, ...]) -> list[tuple[float, ...]]:
+        return [(1.0, 0.0) for _ in texts]
+
+
+class _DenseIndex:
+    def search(
+        self,
+        vector: tuple[float, ...],
+        *,
+        entity_type: EntityType,
+        code_systems: tuple[CodeSystem, ...] | None,
+        limit: int,
+    ) -> list[DenseHit]:
+        del vector, entity_type, code_systems, limit
+        return []

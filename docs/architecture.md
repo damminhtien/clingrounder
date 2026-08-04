@@ -89,9 +89,12 @@ Candidate generation must avoid brute-force mention-to-dictionary comparison. Th
 
 ```text
 mention
+  -> reviewed exact memory
+  -> cross-fitted mention/code memory (terminal only at support >= 2 and p >= 0.95)
   -> exact lookup
   -> return immediately when exact/type-compatible output has one unique code
   -> abbreviation lookup
+  -> learned edit expansion (support >= 3 and precision >= 0.90)
   -> fuzzy top-k
   -> character n-gram top-k
   -> BM25 top-k
@@ -138,6 +141,21 @@ reorder candidates that survive medication compatibility checks, but it cannot r
 rejected for an explicit ingredient, ingredient-count, product-strength, release, or dosage-form
 conflict. This order is enforced by `PipelineFactory` even when an optional model adapter is
 enabled; route and administered-dose differences remain soft ranking evidence.
+
+Learned linking artifacts are explicit and portable. Mention/code memory is keyed by normalized
+mention, entity type, and document genre; local evaluation must build it with document-grouped
+cross-fitting. Learned edits transform lookup queries rather than source text and can execute only
+after support/precision gates. Synonym-aligned dense retrieval reuses a pinned XLM-R encoder and a
+prebuilt FAISS `IndexFlatIP` directory whose manifest pins model revision and terminology
+fingerprint. Vector shards are separated by entity type and code system before nearest-neighbor
+`LIMIT`; dense evidence cannot override a unique exact terminal match.
+
+Candidate emission is separate from retrieval. ICD-10 and RxNorm use independent policies: ICD can
+retain a bounded multi-code set and never compresses an existing multi-code result unless an
+isolated probe explicitly enables change, while RxNorm abstains on structured conflicts and low
+top-1/top-2 margins. The generic selector enumerates every valid subset of the top five candidates
+and can consume feature-bucket calibration for expected Jaccard. Local utilities are diagnostics;
+benchmark plugins retain authority over promotion rules.
 
 Dictionary aliases with unresolved cross-type semantics are retained as non-exportable
 `AmbiguousEntityProposal` records. Rule-only extraction abstains. A hybrid extractor may use an

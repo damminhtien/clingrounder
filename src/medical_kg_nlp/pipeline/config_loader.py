@@ -26,6 +26,9 @@ _TERMINOLOGY_SINGLE_PATHS = (
     "knowledge_graph_index_path",
     "cache_dir",
     "reviewed_mention_path",
+    "mention_code_memory_path",
+    "learned_edit_path",
+    "synonym_index_path",
     "additional_recognition_path",
     "abbreviation_path",
     "alias_overlay_path",
@@ -37,7 +40,12 @@ _TERMINOLOGY_PATH_LISTS = (
     "normalization_alias_overlay_paths",
     "additional_recognition_paths",
 )
-_MODEL_BLOCKS = ("entity_extractor", "candidate_reranker")
+_MODEL_BLOCKS = (
+    "entity_extractor",
+    "candidate_reranker",
+    "candidate_listwise_reranker",
+    "candidate_dense_encoder",
+)
 
 
 @dataclass(frozen=True)
@@ -120,6 +128,12 @@ class ResolvedPipelineConfig:
                         "cache_dir": config.terminology_cache_dir,
                         "query_cache_size": config.terminology_query_cache_size,
                         "reviewed_mention_path": config.reviewed_mention_path,
+                        "mention_code_memory_path": config.mention_code_memory_path,
+                        "learned_edit_path": config.learned_edit_path,
+                        "synonym_index_path": config.synonym_index_path,
+                        "synonym_index_terminology_fingerprint": (
+                            config.synonym_index_terminology_fingerprint
+                        ),
                         "additional_recognition_path": (
                             config.additional_recognition_dictionary_path
                         ),
@@ -178,6 +192,12 @@ def _materialize_terminology_paths(
             "knowledge_graph_index_path": config.knowledge_graph_index_path,
             "cache_dir": config.terminology_cache_dir,
             "reviewed_mention_path": config.reviewed_mention_path,
+            "mention_code_memory_path": config.mention_code_memory_path,
+            "learned_edit_path": config.learned_edit_path,
+            "synonym_index_path": config.synonym_index_path,
+            "synonym_index_terminology_fingerprint": (
+                config.synonym_index_terminology_fingerprint
+            ),
             "additional_recognition_path": (
                 config.additional_recognition_dictionary_path
             ),
@@ -267,6 +287,11 @@ def _resolve_factory_defaults(
         ),
         terminology_cache_dir=_resolve_path(base_dir, config.terminology_cache_dir),
         reviewed_mention_path=_resolve_optional(base_dir, config.reviewed_mention_path),
+        mention_code_memory_path=_resolve_optional(
+            base_dir, config.mention_code_memory_path
+        ),
+        learned_edit_path=_resolve_optional(base_dir, config.learned_edit_path),
+        synonym_index_path=_resolve_optional(base_dir, config.synonym_index_path),
         additional_recognition_dictionary_path=_resolve_optional(
             base_dir, config.additional_recognition_dictionary_path
         ),
@@ -344,6 +369,9 @@ def _resource_report(config: PipelineFactoryConfig) -> list[dict[str, object]]:
         ("terminology.normalization_index_path", config.normalization_index_path),
         ("terminology.knowledge_graph_index_path", config.knowledge_graph_index_path),
         ("terminology.reviewed_mention_path", config.reviewed_mention_path),
+        ("terminology.mention_code_memory_path", config.mention_code_memory_path),
+        ("terminology.learned_edit_path", config.learned_edit_path),
+        ("terminology.synonym_index_path", config.synonym_index_path),
         (
             "terminology.additional_recognition_path",
             config.additional_recognition_dictionary_path,
