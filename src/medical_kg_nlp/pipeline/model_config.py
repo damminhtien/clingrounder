@@ -4,11 +4,100 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Literal, cast
 
+from medical_kg_nlp.adapters.generative import GenerationConfig
 from medical_kg_nlp.adapters.huggingface import HuggingFaceModelConfig
 from medical_kg_nlp.schema.types import EntityType
 
-__all__ = ["PipelineModelConfig"]
+__all__ = ["ListwiseRerankerModelConfig", "PipelineModelConfig"]
+
+
+@dataclass(frozen=True)
+class ListwiseRerankerModelConfig:
+    """Pinned local causal-LM and bounded listwise inference policy."""
+
+    model: HuggingFaceModelConfig
+    generation: GenerationConfig
+    dtype: Literal["auto", "bf16", "fp16", "fp32"] = "bf16"
+    local_files_only: bool = True
+    candidate_limit: int = 12
+    model_weight: float = 0.75
+    shuffle_seed: int = 42
+    structured_retries: int = 1
+
+    @classmethod
+    def from_mapping(
+        cls,
+        payload: Mapping[str, object],
+    ) -> "ListwiseRerankerModelConfig":
+        model = HuggingFaceModelConfig.from_mapping(
+            payload,
+            name="candidate_listwise_reranker",
+        )
+        dtype = payload.get("dtype", cls.dtype)
+        if dtype not in {"auto", "bf16", "fp16", "fp32"}:
+            raise ValueError(
+                "models.candidate_listwise_reranker.dtype must be auto, bf16, fp16, or fp32"
+            )
+        local_files_only = payload.get("local_files_only", cls.local_files_only)
+        if not isinstance(local_files_only, bool):
+            raise ValueError(
+                "models.candidate_listwise_reranker.local_files_only must be boolean"
+            )
+        candidate_limit = _integer(payload, "candidate_limit", cls.candidate_limit)
+        if not 2 <= candidate_limit <= 12:
+            raise ValueError(
+                "models.candidate_listwise_reranker.candidate_limit must be between 2 and 12"
+            )
+        model_weight = _probability(
+            payload,
+            "model_weight",
+            cls.model_weight,
+        )
+        shuffle_seed = _integer(payload, "shuffle_seed", cls.shuffle_seed)
+        structured_retries = _integer(
+            payload,
+            "structured_retries",
+            cls.structured_retries,
+        )
+        if structured_retries < 0:
+            raise ValueError(
+                "models.candidate_listwise_reranker.structured_retries cannot be negative"
+            )
+        max_new_tokens = _integer(
+            payload,
+            "max_new_tokens",
+            512,
+        )
+        temperature = _nonnegative_float(payload, "temperature", 0.0)
+        top_p = _probability_value(
+            payload.get("top_p", 1.0),
+            "models.candidate_listwise_reranker.top_p",
+        )
+        seed = _integer(payload, "seed", 42)
+        enable_thinking = payload.get("enable_thinking", False)
+        if not isinstance(enable_thinking, bool):
+            raise ValueError(
+                "models.candidate_listwise_reranker.enable_thinking must be boolean"
+            )
+        return cls(
+            model=model,
+            generation=GenerationConfig(
+                max_new_tokens=max_new_tokens,
+                temperature=temperature,
+                top_p=top_p,
+                seed=seed,
+                enable_thinking=enable_thinking,
+                stop_on_complete_json=True,
+            ),
+            dtype=cast(Literal["auto", "bf16", "fp16", "fp32"], dtype),
+            local_files_only=local_files_only,
+            candidate_limit=candidate_limit,
+            model_weight=model_weight,
+            shuffle_seed=shuffle_seed,
+            structured_retries=structured_retries,
+        )
 
 
 @dataclass(frozen=True)
@@ -24,6 +113,7 @@ class PipelineModelConfig:
     candidate_reranker: HuggingFaceModelConfig | None = None
     candidate_reranker_weight: float = 0.75
     candidate_positive_label_index: int = 1
+    candidate_listwise_reranker: ListwiseRerankerModelConfig | None = None
 
     @classmethod
     def from_mapping(cls, payload: Mapping[str, object]) -> "PipelineModelConfig":
@@ -34,6 +124,14 @@ class PipelineModelConfig:
             payload.get("candidate_reranker"),
             "candidate_reranker",
         )
+        listwise_payload = _optional_mapping(
+            payload.get("candidate_listwise_reranker"),
+            "candidate_listwise_reranker",
+        )
+        if reranker_payload is not None and listwise_payload is not None:
+            raise ValueError(
+                "Configure only one of candidate_reranker or candidate_listwise_reranker"
+            )
         entity_model = (
             HuggingFaceModelConfig.from_mapping(entity_payload, name="entity_extractor")
             if entity_payload is not None
@@ -45,6 +143,11 @@ class PipelineModelConfig:
                 name="candidate_reranker",
             )
             if reranker_payload is not None
+            else None
+        )
+        listwise_model = (
+            ListwiseRerankerModelConfig.from_mapping(listwise_payload)
+            if listwise_payload is not None
             else None
         )
         entity_label_map = _label_map(entity_payload or {})
@@ -86,6 +189,7 @@ class PipelineModelConfig:
             candidate_reranker=reranker_model,
             candidate_reranker_weight=reranker_weight,
             candidate_positive_label_index=positive_label_index,
+            candidate_listwise_reranker=listwise_model,
         )
 
 
@@ -159,4 +263,18 @@ def _probability_value(value: object, path: str) -> float:
     result = float(value)
     if not 0.0 <= result <= 1.0:
         raise ValueError(f"{path} must be between 0 and 1")
+    return result
+
+
+def _nonnegative_float(
+    payload: Mapping[str, object],
+    key: str,
+    default: float,
+) -> float:
+    value = payload.get(key, default)
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise ValueError(f"models.{key} must be numeric")
+    result = float(value)
+    if result < 0.0:
+        raise ValueError(f"models.{key} cannot be negative")
     return result

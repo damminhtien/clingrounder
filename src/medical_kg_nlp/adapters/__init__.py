@@ -1,5 +1,6 @@
 """Built-in adapters for pipeline ports."""
 
+from medical_kg_nlp.adapters.generative import GenerativeListwiseRerankerAdapter
 from medical_kg_nlp.adapters.huggingface import (
     HuggingFaceCrossEncoderAdapter,
     HuggingFaceModelConfig,
@@ -24,6 +25,7 @@ from medical_kg_nlp.adapters.rules import (
 
 __all__ = [
     "DictionaryCandidateAdapter",
+    "GenerativeListwiseRerankerAdapter",
     "HuggingFaceCrossEncoderAdapter",
     "HuggingFaceModelConfig",
     "HuggingFaceMulticlassTextClassifierAdapter",

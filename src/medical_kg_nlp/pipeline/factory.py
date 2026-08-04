@@ -12,6 +12,10 @@ from medical_kg_nlp.adapters.rules import (
     RuleEntityExtractorAdapter,
     RuleRelationExtractorAdapter,
 )
+from medical_kg_nlp.adapters.generative import (
+    GenerativeListwiseRerankerAdapter,
+    TransformersCausalLMRuntime,
+)
 from medical_kg_nlp.adapters.hybrid import HybridEntityExtractorAdapter
 from medical_kg_nlp.adapters.huggingface import (
     HuggingFaceCrossEncoderAdapter,
@@ -307,6 +311,30 @@ class PipelineFactory:
                 model_weight=resolved.models.candidate_reranker_weight,
                 positive_label_index=resolved.models.candidate_positive_label_index,
                 base_reranker=candidate_adapter,
+            )
+        elif (
+            options.enable_linking
+            and resolved.models.candidate_listwise_reranker is not None
+        ):
+            if candidate_adapter is None:
+                raise RuntimeError("Structured candidate reranker is unavailable")
+            listwise = resolved.models.candidate_listwise_reranker
+            runtime = TransformersCausalLMRuntime(
+                model_id=listwise.model.model_id,
+                revision=listwise.model.revision,
+                device=listwise.model.device,
+                dtype=listwise.dtype,
+                local_files_only=listwise.local_files_only,
+            )
+            candidate_reranker = GenerativeListwiseRerankerAdapter(
+                runtime,
+                terminology_repository,
+                generation=listwise.generation,
+                base_reranker=candidate_adapter,
+                candidate_limit=listwise.candidate_limit,
+                model_weight=listwise.model_weight,
+                shuffle_seed=listwise.shuffle_seed,
+                structured_retries=listwise.structured_retries,
             )
 
         document_candidate_reranker = None
