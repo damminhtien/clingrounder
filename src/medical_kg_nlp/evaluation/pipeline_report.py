@@ -5,7 +5,7 @@ import json
 from collections import Counter
 from pathlib import Path
 from statistics import mean, median
-from typing import Any, cast
+from typing import Any
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.evaluation.data_profile import profile_dataset, render_markdown
@@ -23,6 +23,7 @@ from medical_kg_nlp.schema.document import ClinicalDocument, Section, Sentence
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.types import AssertionStatus, EntityType
 from medical_kg_nlp.schema.validator import PredictionValidator
+from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
 from medical_kg_nlp.utils.io import write_jsonl
 from medical_kg_nlp.utils.text import text_window
 
@@ -189,7 +190,10 @@ def _validation_issues(
     documents_by_id: dict[str, ClinicalDocument],
     dictionary: DictionaryStore | None,
 ) -> list[dict[str, Any]]:
-    validator = PredictionValidator(cast(Any, dictionary))
+    terminology = (
+        InMemoryTerminologyRepository(dictionary) if dictionary is not None else None
+    )
+    validator = PredictionValidator(terminology)
     rows: list[dict[str, Any]] = []
     for prediction in predictions:
         document = documents_by_id.get(prediction.document_id)

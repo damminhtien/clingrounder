@@ -324,14 +324,14 @@ class PipelineRunner:
             counters["relations"] = len(prediction.relations)
 
         with trace.stage("prediction_validation") as counters:
-            issues = PredictionValidator().validate_prediction(
+            terminology = self.components.terminology_repository
+            issues = PredictionValidator(terminology).validate_prediction(
                 prediction,
                 source_text=loaded_document.text,
             )
             profiled_issues = apply_validation_profile(
                 issues,
                 ValidationProfile.CORE,
-                terminology_loaded=False,
             )
             errors = [
                 item

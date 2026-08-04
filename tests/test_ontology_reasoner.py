@@ -24,8 +24,11 @@ def test_kg_validator_rejects_is_a_relation_that_contradicts_dictionary_hierarch
     valid_relation = RelationAnnotation("R1", "E1", "E2", RelationType.IS_A, 1.0)
     invalid_relation = RelationAnnotation("R2", "E2", "E1", RelationType.IS_A, 1.0)
 
-    valid, valid_issues = KGValidator(store).validate_relations([child, parent], [valid_relation])
-    invalid, invalid_issues = KGValidator(store).validate_relations(
+    reasoner = OntologyReasoner(store)
+    valid, valid_issues = KGValidator(reasoner).validate_relations(
+        [child, parent], [valid_relation]
+    )
+    invalid, invalid_issues = KGValidator(reasoner).validate_relations(
         [child, parent], [invalid_relation]
     )
 

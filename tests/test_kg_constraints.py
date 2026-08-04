@@ -36,7 +36,7 @@ def test_ontology_code_systems_are_type_constrained() -> None:
     assert CodeSystem.HPO in (allowed_code_systems(EntityType.FINDING) or ())
 
 
-def test_kg_validator_resets_invalid_code_system_to_none() -> None:
+def test_kg_validator_reports_without_deleting_invalid_assignment() -> None:
     entity = EntityAnnotation(
         id="E1",
         span=(0, 9),
@@ -66,10 +66,10 @@ def test_kg_validator_resets_invalid_code_system_to_none() -> None:
     entities, issues = KGValidator().validate_entities([entity])
 
     assert [issue.kind for issue in issues] == ["invalid_code_system"]
-    assert entities[0].code_system == CodeSystem.NONE
-    assert entities[0].code is None
-    assert entities[0].candidates == []
-    assert entity_code_system_valid(entities[0])
+    assert entities[0].code_system == CodeSystem.ICD10
+    assert entities[0].code == "E11"
+    assert len(entities[0].candidates) == 1
+    assert not entity_code_system_valid(entities[0])
 
 
 def test_treats_requires_drug_head() -> None:

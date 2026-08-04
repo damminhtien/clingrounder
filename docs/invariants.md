@@ -15,6 +15,11 @@
 ## Dictionary Safety
 
 - Output codes must exist in the loaded dictionary.
+- Assigned codes are valid only as `(CodeSystem.NONE, null)` or `(non-NONE, non-null)` pairs.
+- The final pipeline gate proves every assigned code against the active terminology release through
+  `TerminologyMembershipPort`; entity type compatibility alone is insufficient.
+- Qualified candidates must belong to the active terminology. Unknown unqualified candidates are
+  debug-only and require an explicit validator policy; release validation rejects them.
 - Entity type and code system must be compatible.
 - `DRUG` can map to `RxNorm` or `NONE`, never ICD-10.
 - `DISEASE` can map to ICD-10, MONDO, UMLS, SNOMED, or `NONE`, never RxNorm or HPO.
@@ -48,4 +53,5 @@
 
 Use `medical-kg validate` to check schema, offsets, dictionary codes, and KG relation constraints
 before treating exported JSONL as valid output. Runtime uses the `core` profile; ordinary CLI checks
-use `development`; submission and artifact gates use `release`.
+use `development`; submission and artifact gates use `release`. A release check containing assigned
+codes must receive a terminology source, otherwise membership cannot be proved and validation fails.

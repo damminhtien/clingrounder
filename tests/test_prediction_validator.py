@@ -5,13 +5,14 @@ from typing import Any
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.schema.validator import PredictionValidator
+from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
 from medical_kg_nlp.utils.io import read_jsonl
 
 
 def test_prediction_validator_accepts_sample_gold() -> None:
     payload = _sample_prediction_payload()
     source_text = _sample_source_text()
-    validator = PredictionValidator(DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl"))
+    validator = _validator()
 
     prediction, issues = validator.validate_payload(payload, source_text=source_text)
 
@@ -22,7 +23,7 @@ def test_prediction_validator_accepts_sample_gold() -> None:
 def test_prediction_validator_reports_offset_mismatch() -> None:
     payload = _sample_prediction_payload()
     payload["entities"][0]["span"] = [0, 5]
-    validator = PredictionValidator()
+    validator = _validator()
 
     _, issues = validator.validate_payload(payload, source_text=_sample_source_text())
 
@@ -33,7 +34,7 @@ def test_prediction_validator_reports_invalid_code_system() -> None:
     payload = _sample_prediction_payload()
     payload["entities"][7]["code_system"] = "ICD-10"
     payload["entities"][7]["code"] = "E11"
-    validator = PredictionValidator(DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl"))
+    validator = _validator()
 
     _, issues = validator.validate_payload(payload, source_text=_sample_source_text())
 
@@ -43,11 +44,62 @@ def test_prediction_validator_reports_invalid_code_system() -> None:
 def test_prediction_validator_reports_unknown_dictionary_code() -> None:
     payload = _sample_prediction_payload()
     payload["entities"][0]["code"] = "MISSING"
-    validator = PredictionValidator(DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl"))
+    validator = _validator()
 
     _, issues = validator.validate_payload(payload, source_text=_sample_source_text())
 
     assert any(issue.kind == "unknown_dictionary_code" for issue in issues)
+
+
+def test_prediction_validator_accepts_valid_icd_and_rxnorm_membership() -> None:
+    payload = _sample_prediction_payload()
+
+    _, issues = _validator().validate_payload(
+        payload,
+        source_text=_sample_source_text(),
+    )
+
+    assert issues == []
+
+
+def test_prediction_validator_reports_nonexistent_rxnorm_code() -> None:
+    payload = _sample_prediction_payload()
+    payload["entities"][7]["code"] = "999999999"
+
+    _, issues = _validator().validate_payload(
+        payload,
+        source_text=_sample_source_text(),
+    )
+
+    assert any(
+        issue.kind == "unknown_dictionary_code"
+        and issue.path == "$.entities[7].code"
+        for issue in issues
+    )
+
+
+def test_prediction_validator_rejects_incomplete_assigned_code_pair() -> None:
+    payload = _sample_prediction_payload()
+    payload["entities"][0]["code"] = None
+    payload["entities"][1]["code_system"] = "NONE"
+
+    _, issues = _validator().validate_payload(
+        payload,
+        source_text=_sample_source_text(),
+    )
+
+    assert [issue.kind for issue in issues].count("invalid_code_assignment") == 2
+
+
+def test_prediction_validator_requires_membership_provider_for_release_gate() -> None:
+    payload = _sample_prediction_payload()
+
+    _, issues = PredictionValidator().validate_payload(
+        payload,
+        source_text=_sample_source_text(),
+    )
+
+    assert any(issue.kind == "terminology_membership_unavailable" for issue in issues)
 
 
 def test_prediction_validator_reports_unknown_candidate_dictionary_code() -> None:
@@ -67,7 +119,7 @@ def test_prediction_validator_reports_unknown_candidate_dictionary_code() -> Non
             "qualification_reason": "test_candidate",
         }
     ]
-    validator = PredictionValidator(DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl"))
+    validator = _validator()
 
     _, issues = validator.validate_payload(payload, source_text=_sample_source_text())
 
@@ -76,6 +128,43 @@ def test_prediction_validator_reports_unknown_candidate_dictionary_code() -> Non
         and issue.path == "$.entities[0].candidates[0].code"
         for issue in issues
     )
+
+
+def test_unknown_unqualified_candidate_requires_explicit_debug_policy() -> None:
+    payload = _sample_prediction_payload()
+    candidate = _valid_candidate_payload()
+    candidate["code"] = "MISSING"
+    candidate["qualified"] = False
+    payload["entities"][0]["candidates"] = [candidate]
+
+    _, strict_issues = _validator().validate_payload(
+        payload,
+        source_text=_sample_source_text(),
+    )
+    _, debug_issues = _validator(
+        allow_unknown_unqualified_candidates=True
+    ).validate_payload(payload, source_text=_sample_source_text())
+
+    assert any(
+        issue.kind == "unknown_unqualified_candidate_code"
+        for issue in strict_issues
+    )
+    assert not any("candidate" in issue.path for issue in debug_issues)
+
+
+def test_candidate_code_system_and_code_must_be_present_together() -> None:
+    payload = _sample_prediction_payload()
+    candidate = _valid_candidate_payload()
+    candidate["code"] = None
+    candidate["qualified"] = False
+    payload["entities"][0]["candidates"] = [candidate]
+
+    _, issues = _validator().validate_payload(
+        payload,
+        source_text=_sample_source_text(),
+    )
+
+    assert any(issue.kind == "invalid_candidate_code_assignment" for issue in issues)
 
 
 def test_prediction_validator_reports_invalid_candidate_code_system() -> None:
@@ -95,7 +184,7 @@ def test_prediction_validator_reports_invalid_candidate_code_system() -> None:
             "qualification_reason": "test_candidate",
         }
     ]
-    validator = PredictionValidator(DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl"))
+    validator = _validator()
 
     _, issues = validator.validate_payload(payload, source_text=_sample_source_text())
 
@@ -107,7 +196,7 @@ def test_prediction_validator_requires_candidate_qualification_metadata() -> Non
     candidate = _valid_candidate_payload()
     del candidate["qualified"]
     payload["entities"][0]["candidates"] = [candidate]
-    validator = PredictionValidator()
+    validator = _validator()
 
     prediction, issues = validator.validate_payload(payload, source_text=_sample_source_text())
 
@@ -119,7 +208,7 @@ def test_prediction_validator_rejects_non_boolean_candidate_qualification() -> N
     payload = _sample_prediction_payload()
     payload["entities"][0]["candidates"] = [_valid_candidate_payload()]
     payload["entities"][0]["candidates"][0]["qualified"] = "yes"
-    validator = PredictionValidator()
+    validator = _validator()
 
     prediction, issues = validator.validate_payload(payload, source_text=_sample_source_text())
 
@@ -133,7 +222,7 @@ def test_prediction_validator_rejects_legacy_candidate_score() -> None:
     candidate["score"] = candidate.pop("retrieval_score")
     payload["entities"][0]["candidates"] = [candidate]
 
-    prediction, issues = PredictionValidator().validate_payload(
+    prediction, issues = _validator().validate_payload(
         payload,
         source_text=_sample_source_text(),
     )
@@ -146,7 +235,7 @@ def test_prediction_validator_requires_assertion_evidence_field() -> None:
     payload = _sample_prediction_payload()
     del payload["entities"][0]["assertion_evidence"]
 
-    prediction, issues = PredictionValidator().validate_payload(
+    prediction, issues = _validator().validate_payload(
         payload,
         source_text=_sample_source_text(),
     )
@@ -166,7 +255,7 @@ def test_prediction_validator_round_trips_assertion_evidence() -> None:
         }
     ]
 
-    prediction, issues = PredictionValidator().validate_payload(
+    prediction, issues = _validator().validate_payload(
         payload,
         source_text=_sample_source_text(),
     )
@@ -183,7 +272,7 @@ def test_prediction_validator_round_trips_structured_medication_mention() -> Non
         "full_span": [160, 175],
         "components": [{"kind": "strength", "span": [170, 175]}],
     }
-    validator = PredictionValidator()
+    validator = _validator()
 
     prediction, issues = validator.validate_payload(payload, source_text=_sample_source_text())
 
@@ -201,7 +290,7 @@ def test_prediction_validator_rejects_unknown_medication_component_kind() -> Non
         "full_span": [160, 175],
         "components": [{"kind": "unknown", "span": [170, 175]}],
     }
-    validator = PredictionValidator()
+    validator = _validator()
 
     prediction, issues = validator.validate_payload(payload, source_text=_sample_source_text())
 
@@ -212,7 +301,7 @@ def test_prediction_validator_rejects_unknown_medication_component_kind() -> Non
 def test_prediction_validator_reports_invalid_relation_reference() -> None:
     payload = _sample_prediction_payload()
     payload["relations"][0]["tail"] = "NO_SUCH_ENTITY"
-    validator = PredictionValidator()
+    validator = _validator()
 
     _, issues = validator.validate_payload(payload, source_text=_sample_source_text())
 
@@ -222,7 +311,7 @@ def test_prediction_validator_reports_invalid_relation_reference() -> None:
 def test_prediction_validator_reports_schema_error() -> None:
     payload = _sample_prediction_payload()
     payload["entities"][0]["type"] = "ILLNESS"
-    validator = PredictionValidator()
+    validator = _validator()
 
     prediction, issues = validator.validate_payload(payload, source_text=_sample_source_text())
 
@@ -236,6 +325,17 @@ def _sample_prediction_payload() -> dict[str, Any]:
 
 def _sample_source_text() -> str:
     return str(read_jsonl("data/samples/sample_notes.jsonl")[0]["text"])
+
+
+def _validator(
+    *,
+    allow_unknown_unqualified_candidates: bool = False,
+) -> PredictionValidator:
+    store = DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    return PredictionValidator(
+        InMemoryTerminologyRepository(store),
+        allow_unknown_unqualified_candidates=allow_unknown_unqualified_candidates,
+    )
 
 
 def _valid_candidate_payload() -> dict[str, object]:

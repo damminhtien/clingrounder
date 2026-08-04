@@ -41,7 +41,10 @@ issues instead of silently accepting invalid output. It checks:
 - duplicate entity and relation ids;
 - source-text offsets and text hash when document text is supplied;
 - entity/code-system compatibility;
-- entity and candidate dictionary membership when a dictionary is supplied;
+- assigned entity membership in the active terminology release;
+- qualified candidate membership, with explicit debug-only handling for unknown unqualified
+  candidates;
+- consistent `(code_system, code)` presence for entities and candidates;
 - candidate code-system compatibility with the parent entity type;
 - complete candidate retrieval/emission provenance and assertion evidence;
 - structured medication spans and component kinds when present;

@@ -492,6 +492,32 @@ def test_validate_command_profiles_hash_mismatch(
     assert release["errors"] >= 1
 
 
+def test_release_validation_requires_terminology_for_assigned_codes(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    predictions = tmp_path / "predictions.jsonl"
+    write_jsonl(predictions, read_jsonl("data/samples/gold.jsonl"))
+
+    exit_code = main(
+        [
+            "validate",
+            "--pred",
+            str(predictions),
+            "--documents",
+            "data/samples/sample_notes.jsonl",
+            "--profile",
+            "release",
+        ]
+    )
+    captured = capsys.readouterr()
+    report = json.loads(captured.out)
+
+    assert exit_code == 1
+    assert report["errors"] > 0
+    assert "terminology_membership_unavailable" in captured.err
+
+
 def test_evaluate_command_writes_error_analysis(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

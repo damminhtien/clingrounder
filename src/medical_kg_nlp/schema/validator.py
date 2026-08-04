@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Protocol, overload
+from typing import Any, overload
 
 from medical_kg_nlp.kg.constraints import (
     code_system_valid_for_entity_type,
@@ -23,6 +23,7 @@ from medical_kg_nlp.schema.annotation import (
 )
 from medical_kg_nlp.schema.output import ClinicalPrediction, PredictionMetadata
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType, RelationType
+from medical_kg_nlp.terminology.ports import TerminologyMembershipPort
 from medical_kg_nlp.utils.hashing import sha256_text
 
 __all__ = [
@@ -30,15 +31,6 @@ __all__ = [
     "PredictionValidator",
     "prediction_from_json",
 ]
-
-
-class _DictionaryEntry(Protocol):
-    code_system: CodeSystem
-    code: str | None
-
-
-class _DictionaryStore(Protocol):
-    entries: Sequence[_DictionaryEntry]
 
 
 @dataclass(frozen=True)
@@ -56,14 +48,16 @@ class PredictionValidationIssue:
 class PredictionValidator:
     """Detect schema and medical-invariant violations in one prediction."""
 
-    def __init__(self, dictionary: _DictionaryStore | None = None) -> None:
-        self._allowed_codes: set[tuple[CodeSystem, str]] = set()
-        if dictionary is not None:
-            self._allowed_codes = {
-                (entry.code_system, entry.code)
-                for entry in dictionary.entries
-                if entry.code is not None
-            }
+    def __init__(
+        self,
+        terminology: TerminologyMembershipPort | None = None,
+        *,
+        allow_unknown_unqualified_candidates: bool = False,
+    ) -> None:
+        self._terminology = terminology
+        self._allow_unknown_unqualified_candidates = (
+            allow_unknown_unqualified_candidates
+        )
 
     def validate_payload(
         self,
@@ -117,6 +111,19 @@ class PredictionValidator:
                 except ValueError as error:
                     issues.append(PredictionValidationIssue("offset", path, str(error)))
 
+            assignment_consistent = _code_assignment_consistent(
+                entity.code_system,
+                entity.code,
+            )
+            if not assignment_consistent:
+                issues.append(
+                    PredictionValidationIssue(
+                        "invalid_code_assignment",
+                        f"{path}.code",
+                        _inconsistent_code_message(entity.code_system, entity.code),
+                    )
+                )
+
             if not entity_code_system_valid(entity):
                 issues.append(
                     PredictionValidationIssue(
@@ -126,21 +133,34 @@ class PredictionValidator:
                     )
                 )
 
-            if self._allowed_codes and entity.code is not None:
-                if (entity.code_system, entity.code) not in self._allowed_codes:
-                    issues.append(
-                        PredictionValidationIssue(
-                            "unknown_dictionary_code",
-                            f"{path}.code",
-                            (
-                                f"{entity.code_system.value} code {entity.code!r} is not "
-                                "present in the loaded dictionary."
-                            ),
-                        )
-                    )
+            if assignment_consistent and entity.code is not None:
+                membership_issue = self._membership_issue(
+                    entity.code_system,
+                    entity.code,
+                    path=f"{path}.code",
+                    candidate=False,
+                    qualified=True,
+                )
+                if membership_issue is not None:
+                    issues.append(membership_issue)
 
             for candidate_index, candidate in enumerate(entity.candidates):
                 candidate_path = f"{path}.candidates[{candidate_index}]"
+                candidate_consistent = _code_assignment_consistent(
+                    candidate.code_system,
+                    candidate.code,
+                )
+                if not candidate_consistent:
+                    issues.append(
+                        PredictionValidationIssue(
+                            "invalid_candidate_code_assignment",
+                            f"{candidate_path}.code",
+                            _inconsistent_code_message(
+                                candidate.code_system,
+                                candidate.code,
+                            ),
+                        )
+                    )
                 if not code_system_valid_for_entity_type(entity.type, candidate.code_system):
                     issues.append(
                         PredictionValidationIssue(
@@ -152,18 +172,16 @@ class PredictionValidator:
                             ),
                         )
                     )
-                if self._allowed_codes and candidate.code is not None:
-                    if (candidate.code_system, candidate.code) not in self._allowed_codes:
-                        issues.append(
-                            PredictionValidationIssue(
-                                "unknown_dictionary_code",
-                                f"{candidate_path}.code",
-                                (
-                                    f"{candidate.code_system.value} candidate code "
-                                    f"{candidate.code!r} is not present in the loaded dictionary."
-                                ),
-                            )
-                        )
+                if candidate_consistent and candidate.code is not None:
+                    membership_issue = self._membership_issue(
+                        candidate.code_system,
+                        candidate.code,
+                        path=f"{candidate_path}.code",
+                        candidate=True,
+                        qualified=candidate.qualified,
+                    )
+                    if membership_issue is not None:
+                        issues.append(membership_issue)
 
         entities_by_id = {entity.id: entity for entity in prediction.entities}
         relation_ids: set[str] = set()
@@ -203,6 +221,49 @@ class PredictionValidator:
                     )
 
         return issues
+
+    def _membership_issue(
+        self,
+        code_system: CodeSystem,
+        code: str,
+        *,
+        path: str,
+        candidate: bool,
+        qualified: bool,
+    ) -> PredictionValidationIssue | None:
+        if self._terminology is None:
+            return PredictionValidationIssue(
+                "terminology_membership_unavailable",
+                path,
+                "Code membership cannot be proved without an active terminology release.",
+            )
+        if self._terminology.contains(code_system, code):
+            return None
+        if candidate and not qualified:
+            if self._allow_unknown_unqualified_candidates:
+                return None
+            kind = "unknown_unqualified_candidate_code"
+        else:
+            kind = "unknown_dictionary_code"
+        subject = "candidate code" if candidate else "code"
+        return PredictionValidationIssue(
+            kind,
+            path,
+            (
+                f"{code_system.value} {subject} {code!r} is not present in the "
+                "active terminology release."
+            ),
+        )
+
+
+def _code_assignment_consistent(code_system: CodeSystem, code: str | None) -> bool:
+    return (code_system is CodeSystem.NONE) == (code is None)
+
+
+def _inconsistent_code_message(code_system: CodeSystem, code: str | None) -> str:
+    if code_system is CodeSystem.NONE:
+        return "CodeSystem.NONE requires a null code."
+    return f"{code_system.value} requires a non-null assigned code."
 
 
 def prediction_from_json(payload: Mapping[str, Any]) -> ClinicalPrediction:

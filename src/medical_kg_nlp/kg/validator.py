@@ -1,11 +1,10 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.kg.constraints import entity_code_system_valid, relation_type_valid
 from medical_kg_nlp.kg.ontology_reasoner import OntologyReasoner
 from medical_kg_nlp.schema.annotation import EntityAnnotation, RelationAnnotation
-from medical_kg_nlp.schema.types import CodeSystem, RelationType
+from medical_kg_nlp.schema.types import RelationType
 
 
 @dataclass(frozen=True)
@@ -16,8 +15,10 @@ class ValidationIssue:
 
 
 class KGValidator:
-    def __init__(self, dictionary: DictionaryStore | None = None) -> None:
-        self.reasoner = OntologyReasoner(dictionary) if dictionary is not None else None
+    """Check KG constraints without owning terminology storage or mutating entities."""
+
+    def __init__(self, reasoner: OntologyReasoner | None = None) -> None:
+        self.reasoner = reasoner
 
     def validate_entities(
         self, entities: list[EntityAnnotation]
@@ -35,9 +36,7 @@ class KGValidator:
                         message=f"{entity.type.value} cannot map to {entity.code_system.value}",
                     )
                 )
-                entity.code = None
-                entity.code_system = CodeSystem.NONE
-                entity.candidates = []
+                # INVARIANT: final validation must observe the original invalid assignment.
                 valid.append(entity)
         return valid, issues
 

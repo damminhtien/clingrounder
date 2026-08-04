@@ -5,11 +5,11 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from typing import Any, cast
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.schema.validator import PredictionValidationIssue, PredictionValidator
 from medical_kg_nlp.utils.io import read_jsonl
+from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
 from medical_kg_nlp.validation import (
     ValidationProfile,
     ValidationSeverity,
@@ -26,7 +26,10 @@ def validate(args: argparse.Namespace) -> int:
     profile = ValidationProfile(args.profile)
     documents = _load_documents(args.documents) if args.documents else {}
     dictionary = DictionaryStore.from_jsonl(args.dictionary) if args.dictionary else None
-    validator = PredictionValidator(cast(Any, dictionary))
+    terminology = (
+        InMemoryTerminologyRepository(dictionary) if dictionary is not None else None
+    )
+    validator = PredictionValidator(terminology)
     profiled = []
     seen_documents: set[str] = set()
     rows = read_jsonl(args.pred)
@@ -51,7 +54,6 @@ def validate(args: argparse.Namespace) -> int:
             apply_validation_profile(
                 issues,
                 profile,
-                terminology_loaded=dictionary is not None,
             )
         )
 

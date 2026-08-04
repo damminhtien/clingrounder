@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 import pytest
 
+from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.pipeline import (
     PipelineComponents,
     PipelineFactory,
@@ -14,7 +15,10 @@ from medical_kg_nlp.pipeline import (
 )
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.terminology import CachedTerminologyRepository
+from medical_kg_nlp.terminology import (
+    CachedTerminologyRepository,
+    InMemoryTerminologyRepository,
+)
 
 
 @dataclass(frozen=True)
@@ -37,6 +41,25 @@ class InvalidDrugCodeExtractorAdapter:
                 type=EntityType.DRUG,
                 code_system=CodeSystem.ICD10,
                 code="I10",
+                confidence=1.0,
+            )
+        ]
+
+
+@dataclass(frozen=True)
+class FabricatedDiseaseCodeExtractorAdapter:
+    """Return a correctly typed code absent from the active release."""
+
+    def extract(self, source_text: str) -> list[EntityAnnotation]:
+        return [
+            EntityAnnotation(
+                id="e1",
+                span=(0, len(source_text)),
+                text=source_text,
+                normalized_text=source_text.casefold(),
+                type=EntityType.DISEASE,
+                code_system=CodeSystem.ICD10,
+                code="ZZZ.999",
                 confidence=1.0,
             )
         ]
@@ -89,6 +112,30 @@ def test_pipeline_runner_always_enforces_core_validation() -> None:
 
     with pytest.raises(ValueError, match="invalid_code_system"):
         runner.process_text("doc", "aspirin")
+
+
+def test_pipeline_runner_rejects_fabricated_correctly_typed_code() -> None:
+    options = PipelineOptions(
+        enable_context=False,
+        enable_linking=False,
+        enable_candidate_reranking=False,
+        enable_entity_kg_validation=False,
+        enable_relations=False,
+        enable_relation_kg_validation=False,
+    )
+    terminology = InMemoryTerminologyRepository(
+        DictionaryStore.from_jsonl("data/dictionaries/seed_concepts.jsonl")
+    )
+    runner = PipelineRunner(
+        PipelineComponents(
+            entity_extractor=FabricatedDiseaseCodeExtractorAdapter(),
+            terminology_repository=terminology,
+            options=options,
+        )
+    )
+
+    with pytest.raises(ValueError, match="unknown_dictionary_code"):
+        runner.process_text("doc", "bệnh giả")
 
 
 def test_pipeline_components_reject_missing_enabled_port() -> None:

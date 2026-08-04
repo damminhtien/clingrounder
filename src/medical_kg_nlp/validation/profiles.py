@@ -22,7 +22,10 @@ _HARD_ERROR_KINDS = frozenset(
         "duplicate_relation_id",
         "offset",
         "invalid_code_system",
+        "invalid_code_assignment",
         "invalid_candidate_code_system",
+        "invalid_candidate_code_assignment",
+        "unknown_unqualified_candidate_code",
         "invalid_relation",
         "invalid_evidence_span",
     }
@@ -60,15 +63,13 @@ class ProfiledValidationIssue:
 def apply_validation_profile(
     issues: list[PredictionValidationIssue],
     profile: ValidationProfile,
-    *,
-    terminology_loaded: bool,
 ) -> list[ProfiledValidationIssue]:
     """Classify issues while keeping schema, offset, type, and relation errors blocking."""
 
     return [
         ProfiledValidationIssue(
             issue=issue,
-            severity=_severity(issue, profile, terminology_loaded=terminology_loaded),
+            severity=_severity(issue, profile),
         )
         for issue in issues
     ]
@@ -77,8 +78,6 @@ def apply_validation_profile(
 def _severity(
     issue: PredictionValidationIssue,
     profile: ValidationProfile,
-    *,
-    terminology_loaded: bool,
 ) -> ValidationSeverity:
     if issue.kind in _HARD_ERROR_KINDS:
         return ValidationSeverity.ERROR
@@ -88,9 +87,15 @@ def _severity(
             if profile is ValidationProfile.RELEASE
             else ValidationSeverity.WARNING
         )
+    if issue.kind == "terminology_membership_unavailable":
+        return (
+            ValidationSeverity.WARNING
+            if profile is ValidationProfile.DEVELOPMENT
+            else ValidationSeverity.ERROR
+        )
     if issue.kind == "unknown_dictionary_code":
         is_candidate = ".candidates[" in issue.path
-        if terminology_loaded and not is_candidate:
+        if not is_candidate:
             # INVARIANT: an assigned output code must exist in the loaded terminology.
             return ValidationSeverity.ERROR
         if profile is ValidationProfile.RELEASE:

@@ -18,7 +18,7 @@ def test_hard_invariants_are_errors_in_every_profile() -> None:
     issue = PredictionValidationIssue("offset", "$.entities[0]", "mismatch")
 
     severities = {
-        apply_validation_profile([issue], profile, terminology_loaded=False)[0].severity
+        apply_validation_profile([issue], profile)[0].severity
         for profile in ValidationProfile
     }
 
@@ -43,12 +43,10 @@ def test_development_warns_for_hash_and_unknown_internal_candidate() -> None:
     development = apply_validation_profile(
         issues,
         ValidationProfile.DEVELOPMENT,
-        terminology_loaded=True,
     )
     release = apply_validation_profile(
         issues,
         ValidationProfile.RELEASE,
-        terminology_loaded=True,
     )
 
     assert [item.severity for item in development] == [
@@ -57,6 +55,50 @@ def test_development_warns_for_hash_and_unknown_internal_candidate() -> None:
         ValidationSeverity.ERROR,
     ]
     assert {item.severity for item in release} == {ValidationSeverity.ERROR}
+
+
+def test_assigned_unknown_code_is_always_error_but_candidate_is_profiled() -> None:
+    assigned = PredictionValidationIssue(
+        "unknown_dictionary_code",
+        "$.entities[0].code",
+        "unknown assigned code",
+    )
+    candidate = PredictionValidationIssue(
+        "unknown_dictionary_code",
+        "$.entities[0].candidates[0].code",
+        "unknown candidate code",
+    )
+
+    assert [
+        item.severity
+        for item in apply_validation_profile(
+            [assigned, candidate],
+            ValidationProfile.DEVELOPMENT,
+        )
+    ] == [ValidationSeverity.ERROR, ValidationSeverity.WARNING]
+    assert {
+        item.severity
+        for item in apply_validation_profile(
+            [assigned, candidate],
+            ValidationProfile.RELEASE,
+        )
+    } == {ValidationSeverity.ERROR}
+
+
+def test_missing_terminology_warns_in_development_and_blocks_production() -> None:
+    issue = PredictionValidationIssue(
+        "terminology_membership_unavailable",
+        "$.entities[0].code",
+        "missing release",
+    )
+
+    assert apply_validation_profile(
+        [issue], ValidationProfile.DEVELOPMENT
+    )[0].severity is ValidationSeverity.WARNING
+    assert {
+        apply_validation_profile([issue], profile)[0].severity
+        for profile in (ValidationProfile.CORE, ValidationProfile.RELEASE)
+    } == {ValidationSeverity.ERROR}
 
 
 def test_artifact_checks_run_only_for_release(tmp_path: Path) -> None:

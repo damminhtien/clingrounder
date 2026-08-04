@@ -28,6 +28,7 @@ from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.merge import merge_concept_entries
 from medical_kg_nlp.kg.validator import KGValidator
 from medical_kg_nlp.kg.sqlite_repository import SQLiteKnowledgeGraphRepository
+from medical_kg_nlp.kg.ontology_reasoner import OntologyReasoner
 from medical_kg_nlp.linking.graph_evidence import GraphEvidenceReranker
 from medical_kg_nlp.linking.graph_second_pass import GraphEvidenceSecondPass
 from medical_kg_nlp.linking.linker import EntityLinker
@@ -415,7 +416,7 @@ class PipelineFactory:
         knowledge_validator = (
             KGValidatorAdapter(
                 KGValidator(
-                    recognition_store
+                    OntologyReasoner(recognition_store)
                     if options.enable_entity_kg_validation
                     or options.enable_relation_kg_validation
                     else None

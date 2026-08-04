@@ -157,6 +157,13 @@ top-1/top-2 margins. The generic selector enumerates every valid subset of the t
 and can consume feature-bucket calibration for expected Jaccard. Local utilities are diagnostics;
 benchmark plugins retain authority over promotion rules.
 
+Terminology membership is a production validation dependency rather than a KG concern.
+`TerminologyMembershipPort.contains(code_system, code)` is implemented by in-memory, SQLite,
+composite, and cached repositories. The final runner gate receives the same repository selected by
+`PipelineFactory`; SQLite checks use the indexed `(code_system, code)` key and never scan the full
+release. KG validation reports incompatible assignments without rewriting them, so final validation
+can record the original error before any exporter applies task-specific formatting.
+
 Dictionary aliases with unresolved cross-type semantics are retained as non-exportable
 `AmbiguousEntityProposal` records. Rule-only extraction abstains. A hybrid extractor may use an
 exact-span proposal as a small support bonus only when an independent model predicts one of its
