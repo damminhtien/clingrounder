@@ -8,6 +8,8 @@ from medical_kg_nlp.linking.learned_edits import (
     LearnedEditObservation,
     LearnedEditRetrieverAdapter,
     learn_edit_transformations,
+    load_learned_edit_model,
+    write_learned_edit_model,
 )
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
@@ -122,6 +124,17 @@ def test_retriever_resolves_only_type_compatible_dictionary_codes() -> None:
 
     assert [item.code for item in candidates] == ["E11.9"]
     assert candidates[0].source == "learned_edit"
+
+
+def test_learned_edit_model_round_trip(tmp_path) -> None:
+    model = learn_edit_transformations(
+        tuple(_observation("đtđ", "đái tháo đường") for _ in range(3))
+    )
+    path = tmp_path / "edits.jsonl"
+
+    write_learned_edit_model(model, path)
+
+    assert load_learned_edit_model(path) == model
 
 
 def _observation(

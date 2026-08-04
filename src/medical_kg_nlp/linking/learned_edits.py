@@ -8,16 +8,18 @@ all entity offsets and dictionary constraints.
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from difflib import SequenceMatcher
-from typing import Literal
+from pathlib import Path
+from typing import Literal, cast
 
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.retrieval.constraints import allowed_code_systems
 from medical_kg_nlp.schema.types import EntityType
 from medical_kg_nlp.terminology.ports import TerminologyRepository
 from medical_kg_nlp.utils.text import normalize_for_match, strip_vietnamese_tones
+from medical_kg_nlp.utils.io import read_jsonl, write_jsonl
 
 __all__ = [
     "EditContextConstraints",
@@ -27,6 +29,8 @@ __all__ = [
     "LearnedEditRule",
     "LearnedEditVariant",
     "learn_edit_transformations",
+    "load_learned_edit_model",
+    "write_learned_edit_model",
 ]
 
 EditKind = Literal["whole", "token", "restore_diacritics"]
@@ -85,6 +89,45 @@ class LearnedEditRule:
             raise ValueError("Learned edit has invalid support counts")
         if not 0.0 <= self.precision <= 1.0:
             raise ValueError("Learned edit precision must be between 0 and 1")
+
+    def to_json(self) -> dict[str, object]:
+        return {
+            "rule_id": self.rule_id,
+            "kind": self.kind,
+            "source": self.source,
+            "target": self.target,
+            "support": self.support,
+            "correct_count": self.correct_count,
+            "precision": self.precision,
+            "entity_type": self.entity_type.value,
+            "context_constraints": {
+                "genre": self.context_constraints.genre,
+                "section": self.context_constraints.section,
+            },
+        }
+
+    @classmethod
+    def from_json(cls, payload: Mapping[str, object]) -> "LearnedEditRule":
+        raw_constraints = payload.get("context_constraints", {})
+        if not isinstance(raw_constraints, Mapping):
+            raise ValueError("Learned edit context_constraints must be an object")
+        raw_kind = str(payload.get("kind", ""))
+        if raw_kind not in {"whole", "token", "restore_diacritics"}:
+            raise ValueError(f"Unknown learned edit kind {raw_kind!r}")
+        return cls(
+            rule_id=str(payload.get("rule_id", "")),
+            kind=cast(EditKind, raw_kind),
+            source=str(payload.get("source", "")),
+            target=str(payload.get("target", "")),
+            support=_integer_payload(payload, "support"),
+            correct_count=_integer_payload(payload, "correct_count"),
+            precision=_float_payload(payload, "precision"),
+            entity_type=EntityType(str(payload.get("entity_type", ""))),
+            context_constraints=EditContextConstraints(
+                _optional_payload_text(raw_constraints.get("genre")),
+                _optional_payload_text(raw_constraints.get("section")),
+            ),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -286,6 +329,49 @@ def learn_edit_transformations(
     )
 
 
+def write_learned_edit_model(model: LearnedEditModel, path: str | Path) -> None:
+    """Write model metadata followed by deterministic rule rows."""
+
+    write_jsonl(
+        path,
+        (
+            {
+                "record_type": "metadata",
+                "schema_version": "learned-edits.v1",
+                "minimum_support": model.minimum_support,
+                "minimum_precision": model.minimum_precision,
+            },
+            *(
+                {"record_type": "rule", **rule.to_json()}
+                for rule in model.rules
+            ),
+        ),
+    )
+
+
+def load_learned_edit_model(path: str | Path) -> LearnedEditModel:
+    """Load a prebuilt learned-edit artifact without inducing rules at startup."""
+
+    rows = read_jsonl(path)
+    if not rows or rows[0].get("record_type") != "metadata":
+        raise ValueError("Learned-edit artifact requires a leading metadata row")
+    metadata = rows[0]
+    if metadata.get("schema_version") != "learned-edits.v1":
+        raise ValueError("Unsupported learned-edit artifact schema")
+    rules = tuple(
+        LearnedEditRule.from_json(row)
+        for row in rows[1:]
+        if row.get("record_type") == "rule"
+    )
+    if len(rules) != len(rows) - 1:
+        raise ValueError("Learned-edit artifact contains an unknown record type")
+    return LearnedEditModel(
+        rules=rules,
+        minimum_support=_integer_payload(metadata, "minimum_support"),
+        minimum_precision=_float_payload(metadata, "minimum_precision"),
+    )
+
+
 def _signatures_for_observation(
     observation: LearnedEditObservation,
 ) -> tuple[_RuleSignature, ...]:
@@ -383,3 +469,21 @@ def _rule_order(rule: LearnedEditRule) -> tuple[int, float, int, int, str]:
     )
     kind_priority = {"whole": 0, "restore_diacritics": 1, "token": 2}[rule.kind]
     return (-specificity, -rule.precision, -rule.support, kind_priority, rule.rule_id)
+
+
+def _integer_payload(payload: Mapping[str, object], field: str) -> int:
+    value = payload.get(field)
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"Learned edit {field} must be an integer")
+    return value
+
+
+def _float_payload(payload: Mapping[str, object], field: str) -> float:
+    value = payload.get(field)
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"Learned edit {field} must be numeric")
+    return float(value)
+
+
+def _optional_payload_text(value: object) -> str | None:
+    return value if isinstance(value, str) and value else None

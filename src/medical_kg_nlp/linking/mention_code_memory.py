@@ -11,10 +11,13 @@ import math
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.terminology.ports import TerminologyRepository
+from medical_kg_nlp.utils.io import read_jsonl, write_jsonl
 from medical_kg_nlp.utils.text import normalize_for_match
 
 __all__ = [
@@ -26,6 +29,8 @@ __all__ = [
     "MentionCodeMemoryRetrieverAdapter",
     "build_cross_fitted_mention_code_memory",
     "build_mention_code_memory",
+    "load_mention_code_memory",
+    "write_mention_code_memory",
 ]
 
 _DEFAULT_GENRE = "unknown"
@@ -108,6 +113,57 @@ class MentionCodeMemoryRecord:
         return (
             self.document_support >= minimum_document_support
             and self.most_common_probability >= minimum_probability
+        )
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "normalized_mention": self.normalized_mention,
+            "entity_type": self.entity_type.value,
+            "genre": self.genre,
+            "code_counts": [
+                {
+                    "code_system": identity.code_system.value,
+                    "code": identity.code,
+                    "count": count,
+                }
+                for identity, count in self.code_counts
+            ],
+            "document_support": self.document_support,
+            "entropy": self.entropy,
+            "most_common_probability": self.most_common_probability,
+        }
+
+    @classmethod
+    def from_json(cls, payload: Mapping[str, object]) -> "MentionCodeMemoryRecord":
+        raw_counts = payload.get("code_counts")
+        if not isinstance(raw_counts, list):
+            raise ValueError("Mention-code memory code_counts must be a list")
+        counts: list[tuple[MentionCodeIdentity, int]] = []
+        for raw_count in raw_counts:
+            if not isinstance(raw_count, Mapping):
+                raise ValueError("Mention-code memory count must be an object")
+            count = raw_count.get("count")
+            if isinstance(count, bool) or not isinstance(count, int):
+                raise ValueError("Mention-code memory count must be an integer")
+            counts.append(
+                (
+                    MentionCodeIdentity(
+                        CodeSystem(str(raw_count.get("code_system", ""))),
+                        str(raw_count.get("code", "")),
+                    ),
+                    count,
+                )
+            )
+        return cls(
+            normalized_mention=str(payload.get("normalized_mention", "")),
+            entity_type=EntityType(str(payload.get("entity_type", ""))),
+            genre=str(payload.get("genre", "")),
+            code_counts=tuple(counts),
+            document_support=_integer_payload(payload, "document_support"),
+            entropy=_float_payload(payload, "entropy"),
+            most_common_probability=_float_payload(
+                payload, "most_common_probability"
+            ),
         )
 
 
@@ -230,6 +286,8 @@ class MentionCodeMemoryRetrieverAdapter:
 
 def build_mention_code_memory(
     observations: Iterable[MentionCodeMemoryObservation],
+    *,
+    include_genre_fallback: bool = True,
 ) -> MentionCodeMemory:
     """Aggregate supervised observations into deterministic distribution records."""
 
@@ -238,12 +296,10 @@ def build_mention_code_memory(
         list[MentionCodeMemoryObservation],
     ] = defaultdict(list)
     for observation in observations:
-        key = (
-            normalize_for_match(observation.mention),
-            observation.entity_type,
-            observation.genre,
-        )
-        grouped[key].append(observation)
+        normalized = normalize_for_match(observation.mention)
+        grouped[(normalized, observation.entity_type, observation.genre)].append(observation)
+        if include_genre_fallback and observation.genre != _DEFAULT_GENRE:
+            grouped[(normalized, observation.entity_type, _DEFAULT_GENRE)].append(observation)
 
     records: list[MentionCodeMemoryRecord] = []
     for (mention, entity_type, genre), values in sorted(
@@ -283,6 +339,23 @@ def build_mention_code_memory(
     return MentionCodeMemory(tuple(records))
 
 
+def write_mention_code_memory(
+    memory: MentionCodeMemory,
+    path: str | Path,
+) -> None:
+    """Write a deterministic JSONL artifact; callers own source fingerprints in a manifest."""
+
+    write_jsonl(path, (record.to_json() for record in memory.records))
+
+
+def load_mention_code_memory(path: str | Path) -> MentionCodeMemory:
+    """Load and validate a prebuilt mention-code memory artifact."""
+
+    return MentionCodeMemory(
+        tuple(MentionCodeMemoryRecord.from_json(row) for row in read_jsonl(path))
+    )
+
+
 def build_cross_fitted_mention_code_memory(
     observations: Iterable[MentionCodeMemoryObservation],
     document_folds: Mapping[str, int],
@@ -313,3 +386,17 @@ def build_cross_fitted_mention_code_memory(
         memories_by_fold=memories,
         document_folds=tuple(sorted(document_folds.items())),
     )
+
+
+def _integer_payload(payload: Mapping[str, object], field: str) -> int:
+    value = payload.get(field)
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"Mention-code memory {field} must be an integer")
+    return value
+
+
+def _float_payload(payload: Mapping[str, object], field: str) -> float:
+    value = payload.get(field)
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"Mention-code memory {field} must be numeric")
+    return float(value)

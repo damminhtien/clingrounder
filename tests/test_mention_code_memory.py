@@ -11,6 +11,8 @@ from medical_kg_nlp.linking.mention_code_memory import (
     MentionCodeMemoryRetrieverAdapter,
     build_cross_fitted_mention_code_memory,
     build_mention_code_memory,
+    load_mention_code_memory,
+    write_mention_code_memory,
 )
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
@@ -97,6 +99,19 @@ def test_cross_fit_excludes_every_observation_from_held_out_document() -> None:
         "I11": 1,
     }
     assert record_for_a.document_support == 2
+
+
+def test_memory_round_trip_and_unknown_genre_fallback(tmp_path) -> None:
+    memory = build_mention_code_memory(
+        (_observation("a", "I10"), _observation("b", "I10"))
+    )
+    path = tmp_path / "memory.jsonl"
+
+    write_mention_code_memory(memory, path)
+    loaded = load_mention_code_memory(path)
+
+    assert loaded == memory
+    assert loaded.lookup("tha", EntityType.DISEASE, "educational") is not None
 
 
 def _observation(document_id: str, code: str) -> MentionCodeMemoryObservation:
