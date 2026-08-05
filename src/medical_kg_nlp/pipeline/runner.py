@@ -8,6 +8,7 @@ from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.pipeline.components import PipelineComponents
 from medical_kg_nlp.pipeline.ports import BatchAssertionClassifierPort
 from medical_kg_nlp.pipeline.tracing import PipelineTrace
+from medical_kg_nlp.pipeline.runtime import RuntimeCapabilities
 from medical_kg_nlp.preprocessing.section_splitter import split_sections
 from medical_kg_nlp.preprocessing.sentence_splitter import split_sentences
 from medical_kg_nlp.schema.annotation import (
@@ -43,6 +44,12 @@ class PipelineRunner:
     def __init__(self, components: PipelineComponents) -> None:
         self.components = components
         self.options = components.options
+
+    @property
+    def runtime_capabilities(self) -> RuntimeCapabilities:
+        """Expose the composed component policy to batch orchestration."""
+
+        return self.components.runtime_capabilities
 
     def process_text(
         self,

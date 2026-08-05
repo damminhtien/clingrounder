@@ -13,6 +13,7 @@ from medical_kg_nlp.pipeline.options import PipelineOptions
 from medical_kg_nlp.pipeline.parallel_batch import (
     ParallelBatchError,
     ParallelBatchOptions,
+    PipelineBatchExecutor,
     run_batch_parallel,
     run_batch_with_trace_parallel,
 )
@@ -22,11 +23,13 @@ from medical_kg_nlp.pipeline.profile import (
     ProfileMaturity,
 )
 from medical_kg_nlp.pipeline.runner import PipelineRunResult, PipelineRunner
+from medical_kg_nlp.pipeline.runtime import RuntimeCapabilities
 from medical_kg_nlp.pipeline.tracing import PipelineTrace, StageMeasurement
 
 __all__ = [
     "ParallelBatchError",
     "ParallelBatchOptions",
+    "PipelineBatchExecutor",
     "PIPELINE_PROFILE_SCHEMA_VERSION",
     "PipelineComponents",
     "PipelineFactory",
@@ -39,6 +42,7 @@ __all__ = [
     "ResolvedPipelineConfig",
     "PipelineRunResult",
     "PipelineRunner",
+    "RuntimeCapabilities",
     "PipelineTrace",
     "StageMeasurement",
     "run_batch_parallel",

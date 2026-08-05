@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from medical_kg_nlp.pipeline.options import PipelineOptions
+from medical_kg_nlp.pipeline.runtime import RuntimeCapabilities
 from medical_kg_nlp.pipeline.ports import (
     AssertionClassifierPort,
     CandidateAssignerPort,
@@ -38,6 +39,7 @@ class PipelineComponents:
     knowledge_validator: KnowledgeValidatorPort | None = None
     terminology_repository: TerminologyRepository | None = None
     options: PipelineOptions = PipelineOptions()
+    runtime_capabilities: RuntimeCapabilities = RuntimeCapabilities()
     normalization_contract: NormalizationContract = DEFAULT_NORMALIZATION_CONTRACT
     pipeline_version: str = "0.2.0"
 
