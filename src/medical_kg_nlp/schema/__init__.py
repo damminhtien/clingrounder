@@ -10,6 +10,7 @@ from medical_kg_nlp.schema.annotation import (
     EntityAnnotation,
     EntityExtractionResult,
     RelationAnnotation,
+    RelationEvidence,
 )
 from medical_kg_nlp.schema.document import ClinicalDocument, Section, Sentence
 from medical_kg_nlp.schema.output import ClinicalPrediction, PredictionMetadata
@@ -36,6 +37,7 @@ __all__ = [
     "PredictionValidationIssue",
     "PredictionValidator",
     "RelationAnnotation",
+    "RelationEvidence",
     "RelationType",
     "Section",
     "Sentence",

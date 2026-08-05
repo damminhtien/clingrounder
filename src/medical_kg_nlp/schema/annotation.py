@@ -283,6 +283,27 @@ class EntityExtractionResult:
     ambiguous_proposals: tuple[AmbiguousEntityProposal, ...] = ()
 
 
+@dataclass(frozen=True)
+class RelationEvidence:
+    """Explain why a relation was emitted.
+
+    ``support_score`` is evidence strength, not a calibrated probability unless a
+    calibrated relation model explicitly supplies it.
+    """
+
+    source: str
+    rule_id: str | None = None
+    evidence_span: tuple[int, int] | None = None
+    support_score: float = 0.0
+    provenance: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.source.strip():
+            raise ValueError("Relation evidence source must be non-empty")
+        if not 0.0 <= self.support_score <= 1.0:
+            raise ValueError("Relation evidence support_score must be between 0 and 1")
+
+
 @dataclass
 class RelationAnnotation:
     id: str
@@ -291,6 +312,7 @@ class RelationAnnotation:
     type: RelationType
     confidence: float
     evidence_span: tuple[int, int] | None = None
+    evidence: RelationEvidence | None = None
 
     def to_json(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -302,4 +324,14 @@ class RelationAnnotation:
         }
         if self.evidence_span is not None:
             payload["evidence_span"] = [self.evidence_span[0], self.evidence_span[1]]
+        if self.evidence is not None:
+            evidence_payload: dict[str, Any] = {
+                "source": self.evidence.source,
+                "rule_id": self.evidence.rule_id,
+                "support_score": round(self.evidence.support_score, 6),
+                "provenance": self.evidence.provenance,
+            }
+            if self.evidence.evidence_span is not None:
+                evidence_payload["evidence_span"] = list(self.evidence.evidence_span)
+            payload["evidence"] = evidence_payload
         return payload

@@ -10,6 +10,7 @@ from medical_kg_nlp.evaluation.records import (
     EvaluationEntity,
     EvaluationRelation,
 )
+from medical_kg_nlp.evaluation.relation_slices import relation_slice_counts
 from medical_kg_nlp.evaluation.sparse_logistic import (
     SparseBinaryExample,
     SparseLogisticModel,
@@ -34,6 +35,7 @@ __all__ = [
     "fit_sparse_logistic",
     "profile_dataset",
     "profile_paths",
+    "relation_slice_counts",
     "render_markdown",
     "write_pipeline_report",
 ]

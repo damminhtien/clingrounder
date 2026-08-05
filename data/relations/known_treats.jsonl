@@ -1,0 +1,8 @@
+{"subject_code_system":"RxNorm","subject_code":"723","relation_type":"TREATS","object_code_system":"ICD-10","object_code":"J18.9","source":"curated_seed","source_version":"2026-08-05","review_status":"reviewed"}
+{"subject_code_system":"RxNorm","subject_code":"1191","relation_type":"TREATS","object_code_system":"ICD-10","object_code":"I21.9","source":"curated_seed","source_version":"2026-08-05","review_status":"reviewed"}
+{"subject_code_system":"RxNorm","subject_code":"83367","relation_type":"TREATS","object_code_system":"ICD-10","object_code":"I25.10","source":"curated_seed","source_version":"2026-08-05","review_status":"reviewed"}
+{"subject_code_system":"RxNorm","subject_code":"29046","relation_type":"TREATS","object_code_system":"ICD-10","object_code":"I10","source":"curated_seed","source_version":"2026-08-05","review_status":"reviewed"}
+{"subject_code_system":"RxNorm","subject_code":"52175","relation_type":"TREATS","object_code_system":"ICD-10","object_code":"I10","source":"curated_seed","source_version":"2026-08-05","review_status":"reviewed"}
+{"subject_code_system":"RxNorm","subject_code":"6809","relation_type":"TREATS","object_code_system":"ICD-10","object_code":"E11","source":"curated_seed","source_version":"2026-08-05","review_status":"reviewed"}
+{"subject_code_system":"RxNorm","subject_code":"7646","relation_type":"TREATS","object_code_system":"ICD-10","object_code":"K21.9","source":"curated_seed","source_version":"2026-08-05","review_status":"reviewed"}
+{"subject_code_system":"RxNorm","subject_code":"435","relation_type":"TREATS","object_code_system":"ICD-10","object_code":"J45","source":"curated_seed","source_version":"2026-08-05","review_status":"reviewed"}

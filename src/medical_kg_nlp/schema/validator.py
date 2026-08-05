@@ -20,6 +20,7 @@ from medical_kg_nlp.schema.annotation import (
     MedicationComponent,
     MedicationMention,
     RelationAnnotation,
+    RelationEvidence,
 )
 from medical_kg_nlp.schema.output import ClinicalPrediction, PredictionMetadata
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType, RelationType
@@ -219,6 +220,18 @@ class PredictionValidator:
                             f"Invalid evidence span {relation.evidence_span}.",
                         )
                     )
+            if source_text is not None and relation.evidence is not None:
+                evidence_span = relation.evidence.evidence_span
+                if evidence_span is not None:
+                    start, end = evidence_span
+                    if start < 0 or end < start or end > len(source_text):
+                        issues.append(
+                            PredictionValidationIssue(
+                                "invalid_evidence_span",
+                                f"{path}.evidence.evidence_span",
+                                f"Invalid evidence span {evidence_span}.",
+                            )
+                        )
 
         return issues
 
@@ -426,6 +439,30 @@ def _relation_from_json(payload: Any, path: str) -> RelationAnnotation:
     evidence_span = None
     if "evidence_span" in row and row["evidence_span"] is not None:
         evidence_span = _span(row, "evidence_span", f"{path}.evidence_span")
+    evidence = None
+    if "evidence" in row and row["evidence"] is not None:
+        evidence_row = _ensure_mapping(row["evidence"], f"{path}.evidence")
+        evidence_span_value = None
+        if evidence_row.get("evidence_span") is not None:
+            evidence_span_value = _span(
+                evidence_row,
+                "evidence_span",
+                f"{path}.evidence.evidence_span",
+            )
+        evidence = RelationEvidence(
+            source=_string(evidence_row, "source", f"{path}.evidence.source"),
+            rule_id=_optional_string(evidence_row.get("rule_id"), f"{path}.evidence.rule_id"),
+            evidence_span=evidence_span_value,
+            support_score=_number(
+                evidence_row,
+                "support_score",
+                f"{path}.evidence.support_score",
+            ),
+            provenance=_optional_string(
+                evidence_row.get("provenance"),
+                f"{path}.evidence.provenance",
+            ),
+        )
     return RelationAnnotation(
         id=_string(row, "id", f"{path}.id"),
         head=_string(row, "head", f"{path}.head"),
@@ -433,6 +470,7 @@ def _relation_from_json(payload: Any, path: str) -> RelationAnnotation:
         type=_enum(RelationType, _string(row, "type", f"{path}.type"), f"{path}.type"),
         confidence=_number(row, "confidence", f"{path}.confidence"),
         evidence_span=evidence_span,
+        evidence=evidence,
     )
 
 

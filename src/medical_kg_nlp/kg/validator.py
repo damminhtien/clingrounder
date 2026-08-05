@@ -49,11 +49,7 @@ class KGValidator:
         valid: list[RelationAnnotation] = []
         issues: list[ValidationIssue] = []
         for relation in relations:
-            if relation_type_valid(relation, by_id) and self._ontology_relation_valid(
-                relation, by_id
-            ):
-                valid.append(relation)
-            else:
+            if not relation_type_valid(relation, by_id):
                 issues.append(
                     ValidationIssue(
                         kind="invalid_relation",
@@ -61,17 +57,40 @@ class KGValidator:
                         message=f"Invalid {relation.type.value} relation between {relation.head} and {relation.tail}",
                     )
                 )
+                continue
+            ontology_status = self._ontology_relation_status(relation, by_id)
+            if ontology_status == "valid":
+                valid.append(relation)
+            else:
+                issues.append(
+                    ValidationIssue(
+                        kind=ontology_status,
+                        target_id=relation.id,
+                        message=(
+                            f"Cannot validate {relation.type.value} between "
+                            f"{relation.head} and {relation.tail}: {ontology_status}"
+                        ),
+                    )
+                )
         return valid, issues
 
-    def _ontology_relation_valid(
+    def _ontology_relation_status(
         self,
         relation: RelationAnnotation,
         entities_by_id: dict[str, EntityAnnotation],
-    ) -> bool:
-        if relation.type != RelationType.IS_A or self.reasoner is None:
-            return True
+    ) -> str:
         child = entities_by_id[relation.head]
         parent = entities_by_id[relation.tail]
+        if self.reasoner is not None:
+            for entity in (child, parent):
+                if entity.code is not None and not self.reasoner.contains(
+                    entity.code_system, entity.code
+                ):
+                    return "unknown_ontology_membership"
+        if relation.type != RelationType.IS_A:
+            return "valid"
+        if self.reasoner is None:
+            return "unknown_ontology_membership"
         if (
             child.code is None
             or parent.code is None
@@ -79,5 +98,7 @@ class KGValidator:
             or not self.reasoner.contains(child.code_system, child.code)
             or not self.reasoner.contains(parent.code_system, parent.code)
         ):
-            return True
-        return self.reasoner.is_a(child.code_system, child.code, parent.code)
+            return "unknown_ontology_membership"
+        if not self.reasoner.is_a(child.code_system, child.code, parent.code):
+            return "invalid_relation"
+        return "valid"
