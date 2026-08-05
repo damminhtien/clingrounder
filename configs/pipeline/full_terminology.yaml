@@ -1,3 +1,15 @@
+schema_version: medical-kg.pipeline-profile.v1
+profile:
+  id: full-terminology
+  title: Full ICD-10 and RxNorm terminology pipeline
+  description: >-
+    Local profile using pinned terminology releases and mined overlays for linking experiments.
+  maturity: experimental
+  portability: local
+  support_status: setup_required
+  required_extras: []
+  tags: [terminology, linking, local]
+
 terminology:
   # Recognition stays compact until a mined lexicon passes precision and startup gates.
   recognition_path: ../../data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl

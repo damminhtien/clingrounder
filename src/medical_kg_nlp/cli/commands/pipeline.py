@@ -13,6 +13,10 @@ from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
 from medical_kg_nlp.pipeline.config_loader import ResolvedPipelineConfig
 from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
 from medical_kg_nlp.pipeline.parallel_batch import ParallelBatchOptions, PipelineBatchExecutor
+from medical_kg_nlp.pipeline.profile_catalog import (
+    inspect_pipeline_profiles,
+    validate_pipeline_profile_catalog,
+)
 from medical_kg_nlp.utils.io import write_jsonl
 from medical_kg_nlp.utils.run_output import (
     collect_git_metadata,
@@ -20,7 +24,7 @@ from medical_kg_nlp.utils.run_output import (
     path_in_run,
 )
 
-__all__ = ["inspect_pipeline_config", "run_pipeline"]
+__all__ = ["inspect_pipeline_config", "list_pipeline_profiles", "run_pipeline"]
 
 
 def inspect_pipeline_config(args: argparse.Namespace) -> int:
@@ -36,6 +40,20 @@ def inspect_pipeline_config(args: argparse.Namespace) -> int:
     ):
         return 1
     return 0
+
+
+def list_pipeline_profiles(args: argparse.Namespace) -> int:
+    """Print the profile catalog and optionally enforce its readiness contract."""
+
+    entries = inspect_pipeline_profiles(args.root)
+    root = Path(args.root).expanduser().resolve()
+    report = {
+        "root": str(root),
+        "profiles": [entry.to_dict(root=root) for entry in entries],
+        "errors": list(validate_pipeline_profile_catalog(entries)),
+    }
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 1 if args.check_resources and report["errors"] else 0
 
 
 def run_pipeline(args: argparse.Namespace) -> int:

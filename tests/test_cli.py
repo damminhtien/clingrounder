@@ -67,6 +67,16 @@ def test_pipeline_config_inspection_exposes_effective_defaults(
     assert all(resource["exists"] for resource in report["resources"])
 
 
+def test_pipeline_list_profiles_reports_support_status(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["pipeline", "list-profiles", "--check-resources"]) == 0
+
+    report = json.loads(capsys.readouterr().out)
+    assert report["errors"] == []
+    profiles = {item["profile"]["id"]: item for item in report["profiles"]}
+    assert profiles["clinical-baseline"]["profile"]["portability"] == "portable"
+    assert profiles["full-terminology"]["profile"]["portability"] == "local"
+
+
 def test_pipeline_run_writes_reproducibility_manifest(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

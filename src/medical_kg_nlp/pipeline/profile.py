@@ -9,7 +9,9 @@ from enum import Enum
 __all__ = [
     "PIPELINE_PROFILE_SCHEMA_VERSION",
     "PipelineProfileMetadata",
+    "ProfilePortability",
     "ProfileMaturity",
+    "ProfileSupportStatus",
     "migrate_pipeline_profile",
 ]
 
@@ -24,6 +26,25 @@ class ProfileMaturity(str, Enum):
     BENCHMARK = "benchmark"
 
 
+class ProfilePortability(str, Enum):
+    """Where a profile is expected to work and what setup it may require."""
+
+    PORTABLE = "portable"
+    TEMPLATE = "template"
+    LOCAL = "local"
+    EXPERIMENTAL = "experimental"
+    ARCHIVED = "archived"
+
+
+class ProfileSupportStatus(str, Enum):
+    """Support promise made by the repository for a profile."""
+
+    SUPPORTED = "supported"
+    SETUP_REQUIRED = "setup_required"
+    EXPERIMENTAL = "experimental"
+    ARCHIVED = "archived"
+
+
 @dataclass(frozen=True, slots=True)
 class PipelineProfileMetadata:
     """Human-facing identity and dependency contract for one pipeline profile."""
@@ -34,12 +55,16 @@ class PipelineProfileMetadata:
     maturity: ProfileMaturity
     required_extras: tuple[str, ...] = ()
     tags: tuple[str, ...] = ()
+    portability: ProfilePortability = ProfilePortability.PORTABLE
+    support_status: ProfileSupportStatus = ProfileSupportStatus.SUPPORTED
+    owner: str = "medical-kg-nlp"
 
     def __post_init__(self) -> None:
         for field_name, value in (
             ("id", self.profile_id),
             ("title", self.title),
             ("description", self.description),
+            ("owner", self.owner),
         ):
             if not value.strip():
                 raise ValueError(f"profile.{field_name} must be non-empty")
@@ -50,7 +75,17 @@ class PipelineProfileMetadata:
     def from_mapping(cls, payload: Mapping[str, object]) -> "PipelineProfileMetadata":
         """Parse metadata and reject misspelled or undocumented profile fields."""
 
-        allowed = {"id", "title", "description", "maturity", "required_extras", "tags"}
+        allowed = {
+            "id",
+            "title",
+            "description",
+            "maturity",
+            "required_extras",
+            "tags",
+            "portability",
+            "support_status",
+            "owner",
+        }
         unknown = sorted(set(payload) - allowed)
         if unknown:
             raise ValueError(f"Unknown pipeline profile keys: {', '.join(unknown)}")
@@ -61,6 +96,17 @@ class PipelineProfileMetadata:
             maturity=ProfileMaturity(_required_string(payload, "maturity")),
             required_extras=_string_tuple(payload, "required_extras"),
             tags=_string_tuple(payload, "tags"),
+            portability=ProfilePortability(
+                str(payload.get("portability", ProfilePortability.PORTABLE.value))
+            ),
+            support_status=ProfileSupportStatus(
+                str(payload.get("support_status", ProfileSupportStatus.SUPPORTED.value))
+            ),
+            owner=(
+                _required_string(payload, "owner")
+                if "owner" in payload
+                else "medical-kg-nlp"
+            ),
         )
 
     def to_dict(self) -> dict[str, object]:
@@ -73,6 +119,9 @@ class PipelineProfileMetadata:
             "maturity": self.maturity.value,
             "required_extras": list(self.required_extras),
             "tags": list(self.tags),
+            "portability": self.portability.value,
+            "support_status": self.support_status.value,
+            "owner": self.owner,
         }
 
 

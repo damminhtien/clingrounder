@@ -1,3 +1,15 @@
+schema_version: medical-kg.pipeline-profile.v1
+profile:
+  id: full-terminology-kg-exact
+  title: Full terminology with exact graph retrieval
+  description: >-
+    Local diagnostic profile combining full terminology with a pinned knowledge graph index.
+  maturity: experimental
+  portability: local
+  support_status: setup_required
+  required_extras: []
+  tags: [terminology, knowledge-graph, local]
+
 terminology:
   # Recognition remains compact; the graph is a constrained normalization retriever only.
   recognition_path: ../../data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl

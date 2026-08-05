@@ -147,6 +147,22 @@ def _pipeline_parser(commands: argparse._SubParsersAction[argparse.ArgumentParse
         help="Exit non-zero when a declared file or index is missing.",
     )
 
+    list_profiles = operations.add_parser(
+        "list-profiles",
+        help="List checked-in runtime profiles and resource readiness.",
+    )
+    list_profiles.set_defaults(handler="pipeline_list_profiles")
+    list_profiles.add_argument(
+        "--root",
+        default="configs/pipeline",
+        help="Profile directory; paths are resolved independently of the working directory.",
+    )
+    list_profiles.add_argument(
+        "--check-resources",
+        action="store_true",
+        help="Exit non-zero when any discovered profile is invalid or missing a resource.",
+    )
+
     run = operations.add_parser("run", help="Run the configured pipeline over JSONL documents.")
     run.set_defaults(handler="pipeline_run")
     run.add_argument("--input", required=True)

@@ -1,3 +1,15 @@
+schema_version: medical-kg.pipeline-profile.v1
+profile:
+  id: mined-vietbioner-silver
+  title: VietBioNER silver recognition profile
+  description: >-
+    Experimental local profile for evaluating mined VietBioNER recognition additions.
+  maturity: experimental
+  portability: experimental
+  support_status: experimental
+  required_extras: []
+  tags: [recognition, vietbioner, experimental]
+
 terminology:
   # This is an opt-in silver profile for recall experiments, not the Phase 1 default.
   recognition_path: ../../data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl

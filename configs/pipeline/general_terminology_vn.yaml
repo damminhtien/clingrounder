@@ -1,3 +1,15 @@
+schema_version: medical-kg.pipeline-profile.v1
+profile:
+  id: general-terminology-vn
+  title: Vietnamese clinical terminology pipeline
+  description: >-
+    Experimental local profile combining the full releases with Vietnamese clinical terminology.
+  maturity: experimental
+  portability: experimental
+  support_status: experimental
+  required_extras: []
+  tags: [terminology, vietnamese, experimental]
+
 terminology:
   # General pipeline profile: compact seed recognition plus reviewed VN clinical terms.
   recognition_path: ../../data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl

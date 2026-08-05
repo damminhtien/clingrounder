@@ -16,6 +16,10 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.pipeline",
         "inspect_pipeline_config",
     ),
+    "pipeline_list_profiles": (
+        "medical_kg_nlp.cli.commands.pipeline",
+        "list_pipeline_profiles",
+    ),
     "terminology_build": ("medical_kg_nlp.cli.commands.terminology", "build_index"),
     "terminology_query_set": (
         "medical_kg_nlp.cli.commands.terminology",

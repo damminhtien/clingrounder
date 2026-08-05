@@ -6,6 +6,8 @@ profile:
     Portable rule, assertion, terminology-linking, relation, and validation workflow over the
     small redistributable dictionaries included with the repository.
   maturity: stable
+  portability: portable
+  support_status: supported
   required_extras: []
   tags: [clinical-nlp, vietnamese, deterministic, quickstart]
 
