@@ -295,6 +295,27 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     plugins = benchmark.add_subparsers(dest="benchmark_name", required=True)
     list_command = plugins.add_parser("list", help="List installed benchmark plugins.")
     list_command.set_defaults(handler="benchmark_list")
+    runtime = plugins.add_parser(
+        "runtime",
+        help="Run the reusable model-free or model-backed promotion benchmark.",
+    )
+    runtime_operations = runtime.add_subparsers(dest="runtime_command", required=True)
+    runtime_run = runtime_operations.add_parser("run", help="Run repeated benchmark passes.")
+    runtime_run.set_defaults(handler="benchmark_runtime_run")
+    runtime_run.add_argument("--input", required=True)
+    runtime_run.add_argument("--config", required=True)
+    runtime_run.add_argument("--output", required=True)
+    runtime_run.add_argument("--repeats", type=int, default=5)
+    runtime_run.add_argument("--warmup", type=int, default=1)
+
+    compare = plugins.add_parser("compare", help="Compare two promotion benchmark artifacts.")
+    compare.set_defaults(handler="benchmark_compare")
+    compare.add_argument("baseline")
+    compare.add_argument("candidate")
+    compare.add_argument("--output")
+    compare.add_argument("--latency-tolerance", type=float, default=0.10)
+    compare.add_argument("--rss-tolerance", type=float, default=0.20)
+    compare.add_argument("--candidate-recall-tolerance", type=float, default=0.0)
     # Plugins own task schemas and handlers. Importing the core CLI does not import
     # their model, scorer, or data modules.
     from medical_kg_nlp.benchmarks.registry import benchmark_plugins

@@ -46,6 +46,14 @@ _HANDLERS = {
         "medical_kg_nlp.cli.commands.benchmark",
         "list_benchmarks",
     ),
+    "benchmark_runtime_run": (
+        "medical_kg_nlp.cli.commands.benchmark",
+        "run_runtime_benchmark",
+    ),
+    "benchmark_compare": (
+        "medical_kg_nlp.cli.commands.benchmark",
+        "compare_runtime_benchmark",
+    ),
     "release_audit": (
         "medical_kg_nlp.cli.commands.release",
         "audit_release",
