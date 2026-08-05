@@ -10,45 +10,25 @@ from pathlib import Path
 from typing import Any
 
 from medical_kg_nlp.adapters.rules import (
-    DictionaryCandidateAdapter,
     KGValidatorAdapter,
     RuleAssertionClassifierAdapter,
-    RuleEntityExtractorAdapter,
     RuleRelationExtractorAdapter,
 )
-from medical_kg_nlp.adapters.generative import (
-    GenerativeListwiseRerankerAdapter,
-    TransformersCausalLMRuntime,
-)
-from medical_kg_nlp.adapters.hybrid import HybridEntityExtractorAdapter
-from medical_kg_nlp.adapters.huggingface import (
-    HuggingFaceCrossEncoderAdapter,
-    HuggingFaceTextEncoderAdapter,
-    HuggingFaceTokenClassifierAdapter,
-)
-from medical_kg_nlp.adapters.medication import MedicationMentionEntityExtractorAdapter
 from medical_kg_nlp.governance import GovernancePolicy, fingerprint_artifact, safe_artifact_path, verify_artifact
 from medical_kg_nlp.governance.audit import AuditEvent, InMemoryAuditSink
 from medical_kg_nlp.context.assertion import AssertionClassifier
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.merge import merge_concept_entries
 from medical_kg_nlp.kg.validator import KGValidator
-from medical_kg_nlp.kg.sqlite_repository import SQLiteKnowledgeGraphRepository
 from medical_kg_nlp.kg.ontology_reasoner import OntologyReasoner
-from medical_kg_nlp.linking.graph_evidence import GraphEvidenceReranker
-from medical_kg_nlp.linking.graph_second_pass import GraphEvidenceSecondPass
-from medical_kg_nlp.linking.linker import EntityLinker
-from medical_kg_nlp.linking.learned_edits import load_learned_edit_model
-from medical_kg_nlp.linking.mention_code_memory import load_mention_code_memory
-from medical_kg_nlp.ner.rule_ner import RuleBasedNER
-from medical_kg_nlp.ner.extractors.contextual_alias import (
-    load_contextual_alias_rules,
-)
 from medical_kg_nlp.pipeline.components import PipelineComponents
+from medical_kg_nlp.pipeline.builders import (
+    build_entity_extractor,
+    build_graph_repository,
+    build_linking,
+    build_terminology,
+)
 from medical_kg_nlp.pipeline.config_schema import validate_pipeline_mapping
 from medical_kg_nlp.pipeline.model_config import PipelineModelConfig
 from medical_kg_nlp.pipeline.options import PipelineOptions
-from medical_kg_nlp.pipeline.ports import CandidateRerankerPort, EntityExtractorPort
 from medical_kg_nlp.pipeline.runner import PipelineRunner
 from medical_kg_nlp.pipeline.runtime import Closable, PipelineRuntime
 from medical_kg_nlp.preprocessing.normalizer import (
@@ -57,18 +37,6 @@ from medical_kg_nlp.preprocessing.normalizer import (
     NormalizationContract,
 )
 from medical_kg_nlp.relations.rule_relations import RuleRelationExtractor
-from medical_kg_nlp.retrieval.rule_factory import build_rule_retrieval_pipeline
-from medical_kg_nlp.retrieval.dense_retriever import DenseRetrieverAdapter
-from medical_kg_nlp.retrieval.synonym_index import FaissSynonymVectorIndex
-from medical_kg_nlp.schema.types import EntityType
-from medical_kg_nlp.terminology import (
-    CachedTerminologyRepository,
-    CompositeTerminologyRepository,
-    InMemoryTerminologyRepository,
-    SQLiteTerminologyRepository,
-    TerminologyRepository,
-    terminology_cache_path,
-)
 
 __all__ = ["PipelineFactory", "PipelineFactoryConfig"]
 
@@ -214,240 +182,19 @@ class PipelineFactory:
                 profile_fingerprint=_configuration_fingerprint(resolved),
             )
         )
-        recognition_entries = DictionaryStore.load_entries_jsonl(
-            resolved.recognition_dictionary_path,
-            alias_overlay_path=resolved.alias_overlay_path,
-        )
-        if resolved.additional_recognition_dictionary_path is not None:
-            recognition_paths = (
-                resolved.additional_recognition_dictionary_path,
-                *resolved.additional_recognition_dictionary_paths,
-            )
-        else:
-            recognition_paths = resolved.additional_recognition_dictionary_paths
-        for recognition_path in recognition_paths:
-            recognition_entries.extend(DictionaryStore.load_entries_jsonl(recognition_path))
-        recognition_store = DictionaryStore(merge_concept_entries(recognition_entries))
-
-        recognition_repository = InMemoryTerminologyRepository(recognition_store)
-        contextual_alias_rules = (
-            load_contextual_alias_rules(resolved.contextual_alias_path)
-            if resolved.contextual_alias_path is not None
-            else ()
-        )
-        terminology_repository: TerminologyRepository = recognition_repository
-        terminology_fingerprint = _terminology_fingerprint(recognition_repository, resolved)
+        terminology = build_terminology(resolved)
         audit_sink.emit(
-            AuditEvent("terminology_load", artifact_sha256=terminology_fingerprint)
+            AuditEvent("terminology_load", artifact_sha256=terminology.fingerprint)
         )
-        uses_sqlite_normalization = bool(resolved.normalization_dictionary_paths)
-        if resolved.normalization_dictionary_paths:
-            # SCALING: canonical releases remain separate immutable files; the composition root
-            # validates one content-addressed SQLite index against the complete ordered source set.
-            source_paths = resolved.normalization_dictionary_paths
-            index_path = resolved.normalization_index_path or str(
-                terminology_cache_path(
-                    resolved.terminology_cache_dir,
-                    source_paths,
-                    alias_overlay_paths=resolved.normalization_alias_overlay_paths,
-                )
-            )
-            sqlite_repository = SQLiteTerminologyRepository(
-                index_path,
-                expected_source_paths=source_paths,
-                expected_alias_overlay_paths=resolved.normalization_alias_overlay_paths,
-                expected_normalization_version=resolved.normalization_contract.version,
-            )
-            terminology_repository = CompositeTerminologyRepository(
-                (recognition_repository, sqlite_repository)
-            )
-        if resolved.terminology_query_cache_size:
-            terminology_repository = CachedTerminologyRepository(
-                terminology_repository,
-                max_size=resolved.terminology_query_cache_size,
-            )
-
         options = resolved.options
-        mention_code_memory = (
-            load_mention_code_memory(resolved.mention_code_memory_path)
-            if "mention_memory" in options.candidate_sources
-            and resolved.mention_code_memory_path is not None
-            else None
-        )
-        learned_edit_model = (
-            load_learned_edit_model(resolved.learned_edit_path)
-            if "learned_edit" in options.candidate_sources
-            and resolved.learned_edit_path is not None
-            else None
-        )
-        dense_retriever = None
-        if "dense" in options.candidate_sources:
-            if (
-                resolved.models.candidate_dense_encoder is None
-                or resolved.synonym_index_path is None
-                or resolved.synonym_index_terminology_fingerprint is None
-            ):
-                raise ValueError(
-                    "Dense retrieval requires models.candidate_dense_encoder plus "
-                    "terminology.synonym_index_path and terminology fingerprint"
-                )
-            dense_model = resolved.models.candidate_dense_encoder
-            dense_retriever = DenseRetrieverAdapter(
-                encoder=HuggingFaceTextEncoderAdapter(dense_model),
-                index=FaissSynonymVectorIndex(
-                    resolved.synonym_index_path,
-                    expected_model_id=dense_model.model_id,
-                    expected_revision=dense_model.revision,
-                    expected_terminology_fingerprint=(
-                        resolved.synonym_index_terminology_fingerprint
-                    ),
-                ),
-                repository=terminology_repository,
-            )
-        knowledge_graph_repository = None
-        needs_knowledge_graph = (
-            "kg_exact" in options.candidate_sources
-            or options.enable_graph_evidence_reranking
-        )
-        if needs_knowledge_graph:
-            if resolved.knowledge_graph_index_path is None:
-                raise ValueError(
-                    "Graph-backed retrieval/reranking requires terminology."
-                    "knowledge_graph_index_path"
-                )
-            knowledge_graph_repository = SQLiteKnowledgeGraphRepository(
-                resolved.knowledge_graph_index_path
-            )
-        entity_extractor: EntityExtractorPort
-        if resolved.models.entity_extractor is not None:
-            model_entity_extractor: EntityExtractorPort = (
-                MedicationMentionEntityExtractorAdapter(
-                    HuggingFaceTokenClassifierAdapter(
-                        resolved.models.entity_extractor,
-                        label_map=dict(resolved.models.entity_label_map),
-                        stride=resolved.models.entity_stride,
-                        confidence_thresholds=dict(
-                            resolved.models.entity_confidence_thresholds
-                        ),
-                        default_confidence_threshold=(
-                            resolved.models.entity_default_confidence_threshold
-                        ),
-                    )
-                )
-            )
-            if resolved.models.entity_combine_with_dictionary:
-                entity_extractor = HybridEntityExtractorAdapter(
-                    model=model_entity_extractor,
-                    dictionary=RuleEntityExtractorAdapter(
-                        RuleBasedNER(
-                            recognition_store,
-                            contextual_alias_rules=contextual_alias_rules,
-                            false_positive_path=resolved.false_positive_path,
-                        )
-                    ),
-                )
-            else:
-                entity_extractor = model_entity_extractor
-        else:
-            entity_extractor = RuleEntityExtractorAdapter(
-                RuleBasedNER(
-                    recognition_store,
-                    contextual_alias_rules=contextual_alias_rules,
-                    false_positive_path=resolved.false_positive_path,
-                )
-            )
+        entity = build_entity_extractor(resolved, terminology)
+        graph = build_graph_repository(resolved)
+        linking = build_linking(resolved, terminology, graph)
         assertion_classifier = (
             RuleAssertionClassifierAdapter(AssertionClassifier())
             if options.enable_context
             else None
         )
-
-        candidate_adapter: DictionaryCandidateAdapter | None = None
-        if options.enable_linking:
-            linker = EntityLinker(
-                build_rule_retrieval_pipeline(
-                    terminology_repository,
-                    approximate_store=recognition_store,
-                    abbreviation_path=resolved.abbreviation_path,
-                    max_candidates=options.max_candidates,
-                    retrieval_sources=options.candidate_sources,
-                    mention_memory_path=resolved.reviewed_mention_path,
-                    use_fts_for_bm25=uses_sqlite_normalization,
-                    knowledge_graph_repository=knowledge_graph_repository,
-                    mention_code_memory=mention_code_memory,
-                    learned_edit_model=learned_edit_model,
-                    dense_retriever=dense_retriever,
-                ),
-                terminology_repository,
-                assignment_threshold=options.link_assignment_threshold,
-                assignment_margin=options.link_assignment_margin,
-                candidate_threshold=options.link_candidate_threshold,
-                candidate_relative_margin=options.link_candidate_relative_margin,
-                max_qualified_candidates=options.link_max_qualified_candidates,
-                candidate_thresholds_by_entity_type={
-                    EntityType(entity_type): threshold
-                    for entity_type, threshold in options.link_candidate_thresholds_by_type
-                },
-                candidate_thresholds_by_source=dict(
-                    options.link_candidate_thresholds_by_source
-                ),
-                emit_probabilities_by_source=dict(
-                    options.link_emit_probabilities_by_source
-                ),
-                enforce_rxnorm_structure=options.link_enforce_rxnorm_structure,
-            )
-            candidate_adapter = DictionaryCandidateAdapter(linker)
-
-        candidate_reranker: CandidateRerankerPort | None = candidate_adapter
-        if options.enable_linking and resolved.models.candidate_reranker is not None:
-            if candidate_adapter is None:
-                raise RuntimeError("Structured candidate reranker is unavailable")
-            candidate_reranker = HuggingFaceCrossEncoderAdapter(
-                resolved.models.candidate_reranker,
-                model_weight=resolved.models.candidate_reranker_weight,
-                positive_label_index=resolved.models.candidate_positive_label_index,
-                base_reranker=candidate_adapter,
-                max_pairs_per_batch=resolved.models.candidate_reranker.max_pairs_per_batch,
-                max_tokens=resolved.models.candidate_reranker.max_tokens,
-            )
-        elif (
-            options.enable_linking
-            and resolved.models.candidate_listwise_reranker is not None
-        ):
-            if candidate_adapter is None:
-                raise RuntimeError("Structured candidate reranker is unavailable")
-            listwise = resolved.models.candidate_listwise_reranker
-            runtime = TransformersCausalLMRuntime(
-                model_id=listwise.model.model_id,
-                revision=listwise.model.revision,
-                device=listwise.model.device,
-                dtype=listwise.dtype,
-                local_files_only=listwise.local_files_only,
-            )
-            candidate_reranker = GenerativeListwiseRerankerAdapter(
-                runtime,
-                terminology_repository,
-                generation=listwise.generation,
-                base_reranker=candidate_adapter,
-                candidate_limit=listwise.candidate_limit,
-                model_weight=listwise.model_weight,
-                shuffle_seed=listwise.shuffle_seed,
-                structured_retries=listwise.structured_retries,
-            )
-
-        document_candidate_reranker = None
-        if options.enable_graph_evidence_reranking:
-            if knowledge_graph_repository is None:
-                raise RuntimeError("Knowledge graph repository was not composed")
-            document_candidate_reranker = GraphEvidenceSecondPass(
-                GraphEvidenceReranker(
-                    knowledge_graph_repository,
-                    relation_types=options.graph_evidence_relation_types,
-                    min_support=options.graph_evidence_min_support,
-                    max_bonus=options.graph_evidence_max_bonus,
-                    cache_size=options.graph_evidence_cache_size,
-                )
-            )
 
         relation_extractor = (
             RuleRelationExtractorAdapter(RuleRelationExtractor())
@@ -457,7 +204,7 @@ class PipelineFactory:
         knowledge_validator = (
             KGValidatorAdapter(
                 KGValidator(
-                    OntologyReasoner(recognition_store)
+                    OntologyReasoner(terminology.recognition_store)
                     if options.enable_entity_kg_validation
                     or options.enable_relation_kg_validation
                     else None
@@ -468,23 +215,20 @@ class PipelineFactory:
             else None
         )
         components = PipelineComponents(
-            entity_extractor=entity_extractor,
+            entity_extractor=entity.extractor,
             assertion_classifier=assertion_classifier,
-            candidate_retriever=candidate_adapter,
-            candidate_reranker=candidate_reranker,
-            document_candidate_reranker=document_candidate_reranker,
-            candidate_assigner=candidate_adapter,
+            candidate_retriever=linking.candidate_adapter,
+            candidate_reranker=linking.candidate_reranker,
+            document_candidate_reranker=graph.document_reranker,
+            candidate_assigner=linking.candidate_adapter,
             relation_extractor=relation_extractor,
             knowledge_validator=knowledge_validator,
-            terminology_repository=terminology_repository,
+            terminology_repository=terminology.repository,
             options=options,
             normalization_contract=resolved.normalization_contract,
             pipeline_version=resolved.pipeline_version,
             configuration_fingerprint=_configuration_fingerprint(resolved),
-            terminology_fingerprint=_terminology_fingerprint(
-                terminology_repository,
-                resolved,
-            ),
+            terminology_fingerprint=terminology.fingerprint,
             model_revision=_model_revisions(resolved),
             backend="local",
             audit_sink=audit_sink,
@@ -504,12 +248,12 @@ class PipelineFactory:
             )
         resources = _unique_closables(
             (
-                terminology_repository,
-                knowledge_graph_repository,
-                entity_extractor,
-                dense_retriever,
-                candidate_reranker,
-                document_candidate_reranker,
+                terminology.repository,
+                graph.repository,
+                entity.extractor,
+                linking.dense_retriever,
+                linking.candidate_reranker,
+                graph.document_reranker,
             )
         )
         runner = PipelineRunner(components)
@@ -549,38 +293,6 @@ def _configuration_fingerprint(config: PipelineFactoryConfig) -> str:
     payload = asdict(config)
     encoded = json.dumps(payload, sort_keys=True, default=str, separators=(",", ":"))
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
-
-
-def _terminology_fingerprint(
-    repository: object,
-    config: PipelineFactoryConfig,
-) -> str:
-    metadata = getattr(repository, "metadata", None)
-    if isinstance(metadata, Mapping):
-        for key in ("input_fingerprint", "source_fingerprint"):
-            value = metadata.get(key)
-            if isinstance(value, str) and value:
-                return value
-    if config.synonym_index_terminology_fingerprint:
-        return config.synonym_index_terminology_fingerprint
-    paths = (
-        config.recognition_dictionary_path,
-        config.abbreviation_path,
-        config.alias_overlay_path,
-        *config.additional_recognition_dictionary_paths,
-        *config.normalization_dictionary_paths,
-    )
-    digests: list[str] = []
-    for path in paths:
-        if path is None:
-            continue
-        try:
-            digests.append(fingerprint_artifact(path))
-        except (OSError, ValueError):
-            return "unknown"
-    if not digests:
-        return "unknown"
-    return hashlib.sha256("\n".join(digests).encode("ascii")).hexdigest()
 
 
 def _model_revisions(config: PipelineFactoryConfig) -> str | None:
