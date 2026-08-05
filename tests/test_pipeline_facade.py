@@ -1,0 +1,143 @@
+"""Public Pipeline facade behavior and lifecycle contracts."""
+
+from __future__ import annotations
+
+import subprocess
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+
+import pytest
+
+from medical_kg_nlp import (
+    ClinicalDocument,
+    Pipeline,
+    PipelineClosedError,
+    PipelineConfigurationError,
+    UnknownProfileError,
+)
+from medical_kg_nlp.pipeline import PipelineComponents, PipelineOptions, RuntimeCapabilities
+from medical_kg_nlp.schema.annotation import EntityAnnotation
+
+
+def test_pipeline_from_profile_predicts_and_closes() -> None:
+    with Pipeline.from_profile("clinical-baseline") as pipeline:
+        prediction = pipeline.predict("Bệnh nhân khó thở.", document_id="note-001")
+
+    assert prediction.document_id == "note-001"
+    with pytest.raises(PipelineClosedError):
+        pipeline.predict("Bệnh nhân ho.", document_id="note-002")
+
+
+def test_pipeline_from_config_and_trace() -> None:
+    with Pipeline.from_config("configs/pipeline/clinical-baseline.yaml") as pipeline:
+        result = pipeline.predict_with_trace("Bệnh nhân khó thở.", document_id="note-001")
+
+    assert result.prediction.document_id == "note-001"
+    assert result.trace.document_id == "note-001"
+
+
+def test_pipeline_from_components_preserves_batch_order() -> None:
+    components = PipelineComponents(
+        entity_extractor=_Extractor(),
+        options=_minimal_options(),
+        runtime_capabilities=RuntimeCapabilities(thread_safe=True),
+    )
+
+    with Pipeline.from_components(components) as pipeline:
+        predictions = pipeline.predict_many(
+            [
+                ClinicalDocument("doc-1", "first"),
+                ClinicalDocument("doc-2", "second"),
+            ],
+            workers=2,
+        )
+
+    assert [prediction.document_id for prediction in predictions] == ["doc-1", "doc-2"]
+
+
+def test_pipeline_close_is_idempotent() -> None:
+    pipeline = Pipeline.from_components(
+        PipelineComponents(entity_extractor=_Extractor(), options=_minimal_options())
+    )
+
+    pipeline.close()
+    pipeline.close()
+    with pytest.raises(PipelineClosedError):
+        pipeline.predict("text", document_id="doc")
+
+
+def test_pipeline_closes_after_prediction_failure() -> None:
+    pipeline = Pipeline.from_components(
+        PipelineComponents(
+            entity_extractor=_Extractor(fail=True),
+            options=_minimal_options(),
+        )
+    )
+
+    with pytest.raises(RuntimeError, match="synthetic failure"):
+        with pipeline:
+            pipeline.predict("FAIL", document_id="doc")
+    with pytest.raises(PipelineClosedError):
+        pipeline.predict("text", document_id="doc")
+
+
+def test_pipeline_profile_errors_are_explicit(tmp_path: Path) -> None:
+    with pytest.raises(UnknownProfileError, match="Unknown pipeline profile"):
+        Pipeline.from_profile("does-not-exist")
+
+    profile = tmp_path / "missing.yaml"
+    profile.write_text(
+        """\
+schema_version: medical-kg.pipeline-profile.v1
+profile:
+  id: missing
+  title: Missing resources
+  description: Test profile
+  maturity: stable
+  portability: template
+  support_status: setup_required
+terminology:
+  recognition_path: missing.jsonl
+pipeline:
+  enable_context: false
+  enable_linking: false
+  enable_candidate_reranking: false
+  enable_entity_kg_validation: false
+  enable_relations: false
+  enable_relation_kg_validation: false
+""",
+        encoding="utf-8",
+    )
+    with pytest.raises(PipelineConfigurationError, match="Unable to compose"):
+        Pipeline.from_config(profile)
+
+
+def test_top_level_import_does_not_load_optional_ml_dependencies() -> None:
+    code = """
+import sys
+import medical_kg_nlp
+assert not any(name in sys.modules for name in ("torch", "transformers", "faiss"))
+"""
+    subprocess.run([sys.executable, "-c", code], check=True)
+
+
+def _minimal_options() -> PipelineOptions:
+    return PipelineOptions(
+        enable_context=False,
+        enable_linking=False,
+        enable_candidate_reranking=False,
+        enable_entity_kg_validation=False,
+        enable_relations=False,
+        enable_relation_kg_validation=False,
+    )
+
+
+@dataclass(frozen=True)
+class _Extractor:
+    fail: bool = False
+
+    def extract(self, source_text: str) -> list[EntityAnnotation]:
+        if self.fail:
+            raise RuntimeError("synthetic failure")
+        return []

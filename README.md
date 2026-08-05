@@ -137,22 +137,38 @@ uv run medical-kg evaluate \
 ### Python API
 
 ```python
-from medical_kg_nlp.pipeline import PipelineFactory, ResolvedPipelineConfig
+from medical_kg_nlp import Pipeline
 
-profile = ResolvedPipelineConfig.load(
-    "configs/pipeline/clinical-baseline.yaml",
-    require_profile=True,
-)
-runner = PipelineFactory.from_config(profile.factory_config)
-prediction = runner.process_text("note-001", "Bệnh nhân khó thở, không sốt.")
+with Pipeline.from_profile("clinical-baseline") as pipeline:
+    prediction = pipeline.predict(
+        "Bệnh nhân khó thở, không sốt.",
+        document_id="note-001",
+    )
 
 for entity in prediction.entities:
     print(entity.text, entity.type.value, entity.assertion.value, entity.code)
 ```
 
-For application code, inject custom implementations through `PipelineComponents`. Public ports
-include `EntityExtractorPort`, `AssertionClassifierPort`, `CandidateRetrieverPort`,
-`CandidateRerankerPort`, `RelationExtractorPort`, and `TerminologyRepository`.
+The facade also provides `predict_document`, `predict_many`, and `predict_with_trace`. It owns
+terminology repositories, model adapters, caches, and worker resources and closes them when the
+context exits. Use `Pipeline.from_config(path)` for a checked-in or application-owned profile.
+
+### Advanced composition
+
+Library and research integrations can compose the lower-level runtime explicitly:
+
+```python
+from medical_kg_nlp.pipeline import PipelineComponents, PipelineFactory, PipelineRunner
+
+components = PipelineComponents(...)  # inject ports and repositories explicitly
+runner = PipelineRunner(components)
+prediction = runner.process_text("note-001", "Bệnh nhân khó thở, không sốt.")
+```
+
+`PipelineFactory` remains the composition root for advanced integrations. Public ports include
+`EntityExtractorPort`, `AssertionClassifierPort`, `CandidateRetrieverPort`,
+`CandidateRerankerPort`, `RelationExtractorPort`, and `TerminologyRepository`; ordinary
+application code should use `Pipeline` instead.
 
 ## Pipeline Profiles
 
