@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
+import hashlib
+import json
 
 from medical_kg_nlp.adapters.rules import (
     DictionaryCandidateAdapter,
@@ -457,6 +459,13 @@ class PipelineFactory:
             options=options,
             normalization_contract=resolved.normalization_contract,
             pipeline_version=resolved.pipeline_version,
+            configuration_fingerprint=_configuration_fingerprint(resolved),
+            terminology_fingerprint=_terminology_fingerprint(
+                terminology_repository,
+                resolved,
+            ),
+            model_revision=_model_revisions(resolved),
+            backend="local",
         )
         resources = _unique_closables(
             (
@@ -499,6 +508,41 @@ def _mapping(value: object, name: str) -> dict[str, object]:
     if not isinstance(value, Mapping):
         raise ValueError(f"{name} must be a mapping")
     return {str(key): item for key, item in value.items()}
+
+
+def _configuration_fingerprint(config: PipelineFactoryConfig) -> str:
+    payload = asdict(config)
+    encoded = json.dumps(payload, sort_keys=True, default=str, separators=(",", ":"))
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _terminology_fingerprint(
+    repository: object,
+    config: PipelineFactoryConfig,
+) -> str:
+    metadata = getattr(repository, "metadata", None)
+    if isinstance(metadata, Mapping):
+        for key in ("input_fingerprint", "source_fingerprint"):
+            value = metadata.get(key)
+            if isinstance(value, str) and value:
+                return value
+    return config.synonym_index_terminology_fingerprint or "unknown"
+
+
+def _model_revisions(config: PipelineFactoryConfig) -> str | None:
+    revisions: list[str] = []
+    for model in (
+        config.models.entity_extractor,
+        config.models.candidate_reranker,
+        config.models.candidate_dense_encoder,
+    ):
+        if model is not None:
+            revisions.append(model.revision)
+    if config.models.candidate_listwise_reranker is not None:
+        revisions.append(config.models.candidate_listwise_reranker.model.revision)
+    return ",".join(revisions) if revisions else None
+
+
 
 
 def _unique_closables(values: tuple[object, ...]) -> tuple[Closable, ...]:

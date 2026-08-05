@@ -1,5 +1,19 @@
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, replace
+
+import pytest
+
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
-from medical_kg_nlp.pipeline import PipelineFactory, PipelineFactoryConfig, PipelineOptions
+from medical_kg_nlp.pipeline import (
+    InMemoryPipelineObserver,
+    NoOpPipelineObserver,
+    PipelineComponents,
+    PipelineFactory,
+    PipelineFactoryConfig,
+    PipelineOptions,
+    PipelineRunner,
+)
+from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.types import AssertionStatus
 
 
@@ -96,3 +110,70 @@ def test_entity_only_runner_does_not_build_linking_indexes() -> None:
     result = runner.process_text_with_trace("entity-only", "Bệnh nhân ho.")
     by_stage = {stage.name: stage for stage in result.trace.stages}
     assert by_stage["candidate_generation"].counters["skipped_entities"] > 0
+
+
+def test_trace_is_phi_safe_and_contains_runtime_metadata() -> None:
+    observer = InMemoryPipelineObserver()
+    base = PipelineFactory.from_config()
+    runner = PipelineRunner(replace(base.components, observer=observer))
+    result = runner.process_text_with_trace("patient-123", "Bệnh nhân ho.")
+
+    payload = result.trace.to_json()
+    assert "patient-123" not in str(payload)
+    assert "Bệnh nhân" not in str(payload)
+    assert result.trace.stages[0].configuration_fingerprint
+    assert result.trace.stages[0].backend == "local"
+    assert observer.snapshot()["documents_processed"] == 1
+
+
+@dataclass(frozen=True)
+class _FailingExtractor:
+    def extract(self, source_text: str) -> list[EntityAnnotation]:
+        raise RuntimeError(f"failure in {source_text}")
+
+
+def test_failed_pipeline_exposes_partial_trace_without_raw_text() -> None:
+    options = PipelineOptions(
+        enable_context=False,
+        enable_linking=False,
+        enable_candidate_reranking=False,
+        enable_entity_kg_validation=False,
+        enable_relations=False,
+        enable_relation_kg_validation=False,
+    )
+    runner = PipelineRunner(
+        PipelineComponents(entity_extractor=_FailingExtractor(), options=options)
+    )
+    with pytest.raises(RuntimeError) as raised:
+        runner.process_text_with_trace("failed-doc", "private clinical note")
+    trace = raised.value.pipeline_trace
+    assert trace.stages[-1].status == "failure"
+    assert trace.stages[-1].error_type == "RuntimeError"
+    assert trace.stages[-1].error_message == "redacted"
+    assert "private clinical note" not in str(trace.to_json())
+
+
+def test_noop_observer_is_default_and_observer_is_thread_safe() -> None:
+    options = PipelineOptions(
+        enable_context=False,
+        enable_linking=False,
+        enable_candidate_reranking=False,
+        enable_entity_kg_validation=False,
+        enable_relations=False,
+        enable_relation_kg_validation=False,
+    )
+    components = PipelineComponents(entity_extractor=_FailingExtractor(), options=options)
+    assert isinstance(components.observer, NoOpPipelineObserver)
+    observer = InMemoryPipelineObserver()
+
+    def record(index: int) -> None:
+        from medical_kg_nlp.pipeline.tracing import PipelineTrace
+
+        trace = PipelineTrace(document_id=f"doc-{index}", observer=observer)
+        with trace.stage("test") as counters:
+            counters["documents"] = 1
+        trace.mark_finished(success=True)
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(record, range(20)))
+    assert observer.snapshot()["documents_processed"] == 20

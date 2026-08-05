@@ -30,7 +30,14 @@ from medical_kg_nlp.pipeline.profile import (
 )
 from medical_kg_nlp.pipeline.runner import PipelineRunResult, PipelineRunner
 from medical_kg_nlp.pipeline.runtime import Closable, PipelineRuntime, RuntimeCapabilities
-from medical_kg_nlp.pipeline.tracing import PipelineTrace, StageMeasurement
+from medical_kg_nlp.pipeline.tracing import (
+    InMemoryPipelineObserver,
+    NoOpPipelineObserver,
+    OpenTelemetryPipelineObserver,
+    PipelineObserverPort,
+    PipelineTrace,
+    StageMeasurement,
+)
 
 __all__ = [
     "ParallelBatchError",
@@ -57,6 +64,10 @@ __all__ = [
     "RuntimeCapabilities",
     "PipelineTrace",
     "StageMeasurement",
+    "PipelineObserverPort",
+    "InMemoryPipelineObserver",
+    "NoOpPipelineObserver",
+    "OpenTelemetryPipelineObserver",
     "run_batch_parallel",
     "run_batch_with_trace_parallel",
 ]

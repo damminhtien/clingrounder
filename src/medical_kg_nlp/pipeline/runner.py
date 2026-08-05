@@ -108,7 +108,29 @@ class PipelineRunner:
         return self.process_document_with_trace(document).prediction
 
     def process_document_with_trace(self, document: ClinicalDocument) -> PipelineRunResult:
-        trace = PipelineTrace(document_id=document.document_id)
+        trace = PipelineTrace(
+            document_id=document.document_id,
+            observer=self.components.observer,
+            document_length=len(document.text),
+            configuration_fingerprint=self.components.configuration_fingerprint,
+            terminology_fingerprint=self.components.terminology_fingerprint,
+            model_revision=self.components.model_revision,
+            backend=self.components.backend,
+            worker=self.components.worker,
+            redact_errors=not self.components.trace_include_error_messages,
+        )
+        try:
+            return self._process_document_with_trace(document, trace)
+        except BaseException as error:
+            trace.mark_finished(success=False)
+            trace.attach_to(error)
+            raise
+
+    def _process_document_with_trace(
+        self,
+        document: ClinicalDocument,
+        trace: PipelineTrace,
+    ) -> PipelineRunResult:
         with trace.stage("document_loader") as counters:
             loaded_document = self._load_document(document)
             counters["documents"] = 1
@@ -254,6 +276,9 @@ class PipelineRunner:
                     generated_candidates[request.entity_id] = candidates
                     generated_total += len(candidates)
                     entities_with_candidates += int(bool(candidates))
+                    bucket = min(len(candidates), 10)
+                    key = f"candidate_count_{bucket}"
+                    counters[key] = counters.get(key, 0) + 1
                     for candidate in candidates:
                         for source in candidate.sources:
                             key = f"source_{source}"
@@ -435,6 +460,9 @@ class PipelineRunner:
             counters["warnings"] = len(profiled_issues) - len(errors)
             counters["validated_entities"] = len(prediction.entities)
             counters["validated_relations"] = len(prediction.relations)
+            for item in profiled_issues:
+                key = f"validation_{item.issue.kind}"
+                counters[key] = counters.get(key, 0) + 1
             if errors:
                 # INVARIANT: component adapters cannot bypass offset, type/code-system,
                 # duplicate-ID, or relation safety by disabling optional KG stages.
@@ -443,6 +471,11 @@ class PipelineRunner:
                     for item in errors
                 )
                 raise ValueError(f"Core prediction validation failed: {detail}")
+        trace.mark_finished(
+            success=True,
+            entities=len(prediction.entities),
+            assigned_codes=sum(entity.code is not None for entity in prediction.entities),
+        )
         return PipelineRunResult(prediction=prediction, trace=trace)
 
     @staticmethod

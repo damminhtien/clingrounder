@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from medical_kg_nlp.pipeline.options import PipelineOptions
 from medical_kg_nlp.pipeline.runtime import RuntimeCapabilities
+from medical_kg_nlp.pipeline.tracing import NoOpPipelineObserver, PipelineObserverPort
 from medical_kg_nlp.pipeline.ports import (
     AssertionClassifierPort,
     CandidateAssignerPort,
@@ -42,6 +43,13 @@ class PipelineComponents:
     runtime_capabilities: RuntimeCapabilities = RuntimeCapabilities()
     normalization_contract: NormalizationContract = DEFAULT_NORMALIZATION_CONTRACT
     pipeline_version: str = "0.2.0"
+    observer: PipelineObserverPort = field(default_factory=NoOpPipelineObserver)
+    configuration_fingerprint: str = "unknown"
+    terminology_fingerprint: str = "unknown"
+    model_revision: str | None = None
+    backend: str = "local"
+    worker: str = "main"
+    trace_include_error_messages: bool = False
 
     def __post_init__(self) -> None:
         if self.options.enable_context and self.assertion_classifier is None:
