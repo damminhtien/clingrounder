@@ -368,6 +368,8 @@ class PipelineFactory:
                 model_weight=resolved.models.candidate_reranker_weight,
                 positive_label_index=resolved.models.candidate_positive_label_index,
                 base_reranker=candidate_adapter,
+                max_pairs_per_batch=resolved.models.candidate_reranker.max_pairs_per_batch,
+                max_tokens=resolved.models.candidate_reranker.max_tokens,
             )
         elif (
             options.enable_linking

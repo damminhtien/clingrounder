@@ -6,7 +6,13 @@ from dataclasses import dataclass
 
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.pipeline.components import PipelineComponents
-from medical_kg_nlp.pipeline.ports import BatchAssertionClassifierPort
+from medical_kg_nlp.pipeline.ports import (
+    BatchAssertionClassifierPort,
+    BatchCandidateRerankerPort,
+    BatchCandidateRetrieverPort,
+    CandidateRerankRequest,
+    CandidateRetrievalRequest,
+)
 from medical_kg_nlp.pipeline.tracing import PipelineTrace
 from medical_kg_nlp.pipeline.runtime import RuntimeCapabilities
 from medical_kg_nlp.preprocessing.section_splitter import split_sections
@@ -80,13 +86,16 @@ class PipelineRunner:
             counters["metadata_fields"] = len(loaded_document.metadata)
 
         with trace.stage("lookup_normalization_diagnostics") as counters:
-            mapped_text = self.components.normalization_contract.prepare(loaded_document.text)
-            counters["original_characters"] = len(mapped_text.original)
-            counters["normalized_characters"] = len(mapped_text.normalized)
-            counters["offset_map_entries"] = len(mapped_text.normalized_to_original)
-            # INVARIANT: every downstream span still addresses the immutable source text.
-            counters["source_coordinate_spans"] = 1
-            counters["normalized_text_used_downstream"] = 0
+            if self.options.enable_lookup_normalization_diagnostics:
+                mapped_text = self.components.normalization_contract.prepare(loaded_document.text)
+                counters["original_characters"] = len(mapped_text.original)
+                counters["normalized_characters"] = len(mapped_text.normalized)
+                counters["offset_map_entries"] = len(mapped_text.normalized_to_original)
+                # INVARIANT: every downstream span still addresses the immutable source text.
+                counters["source_coordinate_spans"] = 1
+                counters["normalized_text_used_downstream"] = 0
+            else:
+                counters["skipped"] = 1
 
         with trace.stage("section_detection") as counters:
             sections = self._sections(loaded_document.text)
@@ -176,6 +185,7 @@ class PipelineRunner:
                 generated_total = 0
                 entities_with_candidates = 0
                 pinned_entities = 0
+                retrieval_requests: list[CandidateRetrievalRequest] = []
                 for entity in entities:
                     if entity.code_system != CodeSystem.NONE:
                         pinned_entities += 1
@@ -185,12 +195,33 @@ class PipelineRunner:
                     contexts_by_entity[entity.id] = context
                     mention = _linking_mention(loaded_document.text, entity)
                     mentions_by_entity[entity.id] = mention
-                    candidates = retriever.retrieve(
-                        entity,
-                        context,
-                        mention,
+                    retrieval_requests.append(
+                        CandidateRetrievalRequest(
+                            entity_id=entity.id,
+                            entity_type=entity.type,
+                            mention=mention,
+                            context_window=context,
+                        )
                     )
-                    generated_candidates[entity.id] = candidates
+                if isinstance(retriever, BatchCandidateRetrieverPort):
+                    retrieved_by_entity = retriever.retrieve_batch(tuple(retrieval_requests))
+                    _validate_batch_keys(
+                        tuple(request.entity_id for request in retrieval_requests),
+                        retrieved_by_entity,
+                        stage="candidate retrieval",
+                    )
+                else:
+                    retrieved_by_entity = {
+                        request.entity_id: retriever.retrieve(
+                            entities[index],
+                            request.context_window,
+                            request.mention,
+                        )
+                        for index, request in enumerate(retrieval_requests)
+                    }
+                for request in retrieval_requests:
+                    candidates = list(retrieved_by_entity.get(request.entity_id, []))
+                    generated_candidates[request.entity_id] = candidates
                     generated_total += len(candidates)
                     entities_with_candidates += int(bool(candidates))
                     for candidate in candidates:
@@ -210,23 +241,47 @@ class PipelineRunner:
         with trace.stage("candidate_reranking") as counters:
             if self.options.enable_linking:
                 reranker = self.components.candidate_reranker
-                for entity_id, candidates in generated_candidates.items():
-                    if self.options.enable_candidate_reranking:
-                        if reranker is None:
-                            raise RuntimeError("Candidate reranker component is unavailable.")
-                        ranked = reranker.rerank(
-                            candidates,
-                            contexts_by_entity.get(entity_id, ""),
-                            mentions_by_entity.get(
-                                entity_id,
-                                _linking_mention(
-                                    loaded_document.text, entities_by_id[entity_id]
-                                ),
-                            ),
+                if self.options.enable_candidate_reranking and reranker is None:
+                    raise RuntimeError("Candidate reranker component is unavailable.")
+                rerank_requests = tuple(
+                    CandidateRerankRequest(
+                        entity_id=entity_id,
+                        mention=mentions_by_entity.get(
+                            entity_id,
+                            _linking_mention(loaded_document.text, entities_by_id[entity_id]),
+                        ),
+                        context_window=contexts_by_entity.get(entity_id, ""),
+                        candidates=tuple(candidates),
+                    )
+                    for entity_id, candidates in generated_candidates.items()
+                )
+                if self.options.enable_candidate_reranking and isinstance(
+                    reranker, BatchCandidateRerankerPort
+                ):
+                    reranked_by_entity = reranker.rerank_batch(rerank_requests)
+                    _validate_batch_keys(
+                        tuple(request.entity_id for request in rerank_requests),
+                        reranked_by_entity,
+                        stage="candidate reranking",
+                    )
+                else:
+                    reranked_by_entity = {
+                        request.entity_id: (
+                            reranker.rerank(
+                                list(request.candidates),
+                                request.context_window,
+                                request.mention,
+                            )
+                            if self.options.enable_candidate_reranking and reranker is not None
+                            else list(request.candidates)
                         )
-                    else:
-                        ranked = candidates
-                    reranked_candidates[entity_id] = ranked
+                        for request in rerank_requests
+                    }
+                for rerank_request in rerank_requests:
+                    ranked = reranked_by_entity.get(rerank_request.entity_id)
+                    reranked_candidates[rerank_request.entity_id] = list(
+                        rerank_request.candidates if ranked is None else ranked
+                    )
                 counters["reranked_entities"] = len(reranked_candidates)
                 counters["reranked_candidates"] = sum(
                     len(candidates) for candidates in reranked_candidates.values()
@@ -407,3 +462,22 @@ def _linking_mention(source_text: str, entity: EntityAnnotation) -> str:
         return entity.text
     start, end = medication.full_span
     return source_text[start:end]
+
+
+def _validate_batch_keys(
+    expected_ids: tuple[str, ...],
+    results: dict[str, list[Candidate]],
+    *,
+    stage: str,
+) -> None:
+    """Reject incomplete batch responses before they can alter entity alignment."""
+
+    expected = set(expected_ids)
+    actual = set(results)
+    if actual != expected:
+        missing = sorted(expected - actual)
+        unexpected = sorted(actual - expected)
+        raise ValueError(
+            f"{stage} batch returned inconsistent entity IDs: "
+            f"missing={missing}, unexpected={unexpected}"
+        )

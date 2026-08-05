@@ -22,6 +22,7 @@ class PipelineOptions:
     link_emit_probabilities_by_source: tuple[tuple[str, float], ...] = ()
     link_enforce_rxnorm_structure: bool = True
     candidate_sources: tuple[str, ...] = DEFAULT_CANDIDATE_SOURCES
+    enable_lookup_normalization_diagnostics: bool = True
     enable_context: bool = True
     enable_linking: bool = True
     enable_candidate_reranking: bool = True
@@ -102,6 +103,11 @@ class PipelineOptions:
                 cls.link_enforce_rxnorm_structure,
             ),
             candidate_sources=tuple(str(source) for source in sources),
+            enable_lookup_normalization_diagnostics=_bool_value(
+                payload,
+                "enable_lookup_normalization_diagnostics",
+                cls.enable_lookup_normalization_diagnostics,
+            ),
             enable_context=_bool_value(payload, "enable_context", cls.enable_context),
             enable_linking=_bool_value(payload, "enable_linking", cls.enable_linking),
             enable_candidate_reranking=_bool_value(

@@ -10,6 +10,12 @@ from medical_kg_nlp.pipeline.model_config import (
     PipelineModelConfig,
 )
 from medical_kg_nlp.pipeline.options import PipelineOptions
+from medical_kg_nlp.pipeline.ports import (
+    BatchCandidateRerankerPort,
+    BatchCandidateRetrieverPort,
+    CandidateRerankRequest,
+    CandidateRetrievalRequest,
+)
 from medical_kg_nlp.pipeline.parallel_batch import (
     ParallelBatchError,
     ParallelBatchOptions,
@@ -37,6 +43,10 @@ __all__ = [
     "ListwiseRerankerModelConfig",
     "PipelineModelConfig",
     "PipelineOptions",
+    "BatchCandidateRerankerPort",
+    "BatchCandidateRetrieverPort",
+    "CandidateRerankRequest",
+    "CandidateRetrievalRequest",
     "PipelineProfileMetadata",
     "ProfileMaturity",
     "ResolvedPipelineConfig",

@@ -18,6 +18,8 @@ class HuggingFaceModelConfig:
     device: str = "cpu"
     batch_size: int = 16
     max_length: int = 512
+    max_pairs_per_batch: int | None = None
+    max_tokens: int | None = None
     subfolder: str | None = None
 
     def __post_init__(self) -> None:
@@ -31,6 +33,10 @@ class HuggingFaceModelConfig:
             raise ValueError("batch_size must be at least 1")
         if self.max_length < 8:
             raise ValueError("max_length must be at least 8")
+        if self.max_pairs_per_batch is not None and self.max_pairs_per_batch < 1:
+            raise ValueError("max_pairs_per_batch must be at least 1")
+        if self.max_tokens is not None and self.max_tokens < 1:
+            raise ValueError("max_tokens must be at least 1")
         if self.subfolder is not None:
             subfolder = PurePosixPath(self.subfolder)
             if (
@@ -61,6 +67,10 @@ class HuggingFaceModelConfig:
             device=_optional_string(payload, "device", "cpu", name),
             batch_size=_optional_int(payload, "batch_size", 16, name),
             max_length=_optional_int(payload, "max_length", 512, name),
+            max_pairs_per_batch=_optional_nullable_int(
+                payload, "max_pairs_per_batch", name
+            ),
+            max_tokens=_optional_nullable_int(payload, "max_tokens", name),
             subfolder=_optional_nullable_string(payload, "subfolder", name),
         )
 
@@ -106,4 +116,17 @@ def _optional_nullable_string(
         return None
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"models.{name}.{key} must be a non-empty string")
+    return value
+
+
+def _optional_nullable_int(
+    payload: Mapping[str, object],
+    key: str,
+    name: str,
+) -> int | None:
+    value = payload.get(key)
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"models.{name}.{key} must be an integer or null")
     return value

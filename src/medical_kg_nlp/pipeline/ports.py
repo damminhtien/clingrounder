@@ -7,6 +7,7 @@ from typing import Protocol, runtime_checkable
 from medical_kg_nlp.context.modifier_graph import AssertionDecision, ContextGraph
 from medical_kg_nlp.kg.validator import ValidationIssue
 from medical_kg_nlp.linking.candidate import Candidate
+from medical_kg_nlp.linking.batch import CandidateRerankRequest, CandidateRetrievalRequest
 from medical_kg_nlp.schema.annotation import (
     AssertionEvidence,
     AssertionFeatures,
@@ -22,6 +23,10 @@ __all__ = [
     "BatchAssertionClassifierPort",
     "CandidateAssignerPort",
     "CandidateRerankerPort",
+    "BatchCandidateRetrieverPort",
+    "BatchCandidateRerankerPort",
+    "CandidateRetrievalRequest",
+    "CandidateRerankRequest",
     "DocumentCandidateRerankerPort",
     "CandidateRetrieverPort",
     "EntityExtractorPort",
@@ -64,6 +69,26 @@ class BatchAssertionClassifierPort(Protocol):
         entities: list[EntityAnnotation],
         sentence: Sentence,
     ) -> tuple[dict[str, AssertionDecision], ContextGraph]: ...
+
+
+@runtime_checkable
+class BatchCandidateRetrieverPort(Protocol):
+    """Retrieve candidates for independent entities without sharing document state."""
+
+    def retrieve_batch(
+        self,
+        requests: tuple[CandidateRetrievalRequest, ...],
+    ) -> dict[str, list[Candidate]]: ...
+
+
+@runtime_checkable
+class BatchCandidateRerankerPort(Protocol):
+    """Rerank independent candidate lists while preserving entity grouping."""
+
+    def rerank_batch(
+        self,
+        requests: tuple[CandidateRerankRequest, ...],
+    ) -> dict[str, list[Candidate]]: ...
 
 
 class CandidateRetrieverPort(Protocol):
