@@ -97,7 +97,7 @@ def test_showcase_profile_is_self_describing_and_portable() -> None:
     assert resolved.profile is not None
     assert resolved.profile.profile_id == "clinical-baseline"
     report = resolved.inspection_report()
-    assert report["schema_version"] == "medical-kg.pipeline-profile.v1"
+    assert report["schema_version"] == "medical-kg.pipeline-profile.v2"
     assert report["profile"]["maturity"] == "stable"
     assert all(resource["exists"] for resource in report["resources"])
     assert report["effective_config"]["pipeline"]["enable_context"] is True
@@ -107,7 +107,7 @@ def test_reusable_profile_rejects_hidden_top_level_config(tmp_path: Path) -> Non
     profile = tmp_path / "profile.yaml"
     profile.write_text(
         """\
-schema_version: medical-kg.pipeline-profile.v1
+schema_version: medical-kg.pipeline-profile.v2
 profile:
   id: typo
   title: Typo profile
@@ -132,6 +132,26 @@ def test_reusable_profile_requires_metadata(tmp_path: Path) -> None:
         ResolvedPipelineConfig.load(profile, require_profile=True)
 
 
+def test_reusable_profile_rejects_legacy_schema_version(tmp_path: Path) -> None:
+    profile = tmp_path / "legacy.yaml"
+    profile.write_text(
+        """\
+schema_version: medical-kg.pipeline-profile.v1
+profile:
+  id: legacy
+  title: Legacy profile
+  description: Must be migrated explicitly
+  maturity: stable
+terminology: {}
+pipeline: {}
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="Unsupported pipeline profile schema_version"):
+        ResolvedPipelineConfig.load(profile, require_profile=True)
+
+
 @pytest.mark.parametrize(
     ("section", "field"),
     [("pipeline", "enable_contex"), ("terminology", "normalization_indx_path")],
@@ -144,7 +164,7 @@ def test_reusable_profile_rejects_unknown_nested_keys(
     profile = tmp_path / "profile.yaml"
     profile.write_text(
         f"""\
-schema_version: medical-kg.pipeline-profile.v1
+schema_version: medical-kg.pipeline-profile.v2
 profile:
   id: strict
   title: Strict profile

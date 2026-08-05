@@ -15,7 +15,7 @@ __all__ = [
     "migrate_pipeline_profile",
 ]
 
-PIPELINE_PROFILE_SCHEMA_VERSION = "medical-kg.pipeline-profile.v1"
+PIPELINE_PROFILE_SCHEMA_VERSION = "medical-kg.pipeline-profile.v2"
 
 
 class ProfileMaturity(str, Enum):
@@ -128,8 +128,8 @@ class PipelineProfileMetadata:
 def migrate_pipeline_profile(payload: Mapping[str, object]) -> dict[str, object]:
     """Return a deterministic current-schema copy or reject unsupported versions.
 
-    There are no historical migrations yet.  Keeping this explicit prevents a future
-    loader from silently accepting a newer profile with incompatible semantics.
+    There are no historical migrations yet. Keeping this explicit prevents a loader from
+    silently accepting a profile with incompatible semantics.
     """
 
     version = payload.get("schema_version")

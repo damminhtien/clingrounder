@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
+from medical_kg_nlp.pipeline.profile import PIPELINE_PROFILE_SCHEMA_VERSION
+
 __all__ = ["validate_pipeline_mapping"]
 
 _TERMINOLOGY_KEYS = {
@@ -126,8 +128,18 @@ _BENCHMARK_KEYS = {
 }
 
 
-def validate_pipeline_mapping(payload: Mapping[str, object]) -> None:
-    """Reject unknown nested keys with their complete configuration path."""
+def validate_pipeline_mapping(
+    payload: Mapping[str, object],
+    *,
+    require_schema_version: bool = False,
+) -> None:
+    """Reject unknown nested keys and, for profiles, require the current schema version."""
+
+    if require_schema_version and payload.get("schema_version") != PIPELINE_PROFILE_SCHEMA_VERSION:
+        raise ValueError(
+            "Unsupported pipeline profile schema_version: "
+            f"{payload.get('schema_version')!r}; expected {PIPELINE_PROFILE_SCHEMA_VERSION!r}"
+        )
 
     _check_keys(
         payload,

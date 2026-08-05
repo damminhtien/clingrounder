@@ -77,12 +77,12 @@ class ResolvedPipelineConfig:
         if not isinstance(raw, Mapping):
             raise ValueError("Pipeline config must be a YAML mapping")
         profile_payload = raw.get("profile")
+        if require_profile and profile_payload is None:
+            raise ValueError("Reusable pipeline config requires a profile block")
         if require_profile or profile_payload is not None:
             _validate_top_level_keys(raw)
-            validate_pipeline_mapping(raw)
+            validate_pipeline_mapping(raw, require_schema_version=require_profile)
         if profile_payload is None:
-            if require_profile:
-                raise ValueError("Reusable pipeline config requires a profile block")
             profile = None
         else:
             migrate_pipeline_profile(raw)

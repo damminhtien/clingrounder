@@ -4,6 +4,10 @@ Version 0.2 is intentionally breaking. It separates reusable clinical NLP infras
 rules, storage backends, experiments, and competition code. No compatibility import shims are
 provided.
 
+Pipeline profiles use the strict `medical-kg.pipeline-profile.v2` envelope. Profiles written for
+v1 must be rewritten explicitly before loading; the runtime does not guess or apply hidden
+defaults for an unsupported profile version.
+
 ## Command Migration
 
 | Removed root script | Replacement |
@@ -59,7 +63,16 @@ runner = PipelineRunner(
 )
 ```
 
-At executable boundaries, prefer the composition root:
+For ordinary application code, use the managed facade:
+
+```python
+from medical_kg_nlp import Pipeline
+
+with Pipeline.from_profile("clinical-baseline") as pipeline:
+    prediction = pipeline.predict("Bệnh nhân khó thở.", document_id="note-001")
+```
+
+At advanced executable boundaries, use the composition root:
 
 ```python
 from medical_kg_nlp.pipeline import PipelineFactory

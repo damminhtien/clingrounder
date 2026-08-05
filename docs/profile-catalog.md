@@ -1,5 +1,8 @@
 # Pipeline Profile Catalog
 
+Reusable profiles use `medical-kg.pipeline-profile.v2`. The loader rejects the older v1 envelope
+instead of silently applying a migration with unknown semantics.
+
 This catalog separates the supported quickstart from profiles that require local mined
 artifacts. Resource readiness is checked by `medical-kg pipeline list-profiles`; it does not
 silently rebuild content-addressed indexes.

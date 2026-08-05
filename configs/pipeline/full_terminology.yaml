@@ -1,4 +1,4 @@
-schema_version: medical-kg.pipeline-profile.v1
+schema_version: medical-kg.pipeline-profile.v2
 profile:
   id: full-terminology
   title: Full ICD-10 and RxNorm terminology pipeline
