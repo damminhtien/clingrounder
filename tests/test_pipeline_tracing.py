@@ -10,6 +10,7 @@ from medical_kg_nlp.pipeline import (
     PipelineComponents,
     PipelineFactory,
     PipelineFactoryConfig,
+    PipelineTrace,
     PipelineOptions,
     PipelineRunner,
 )
@@ -177,3 +178,18 @@ def test_noop_observer_is_default_and_observer_is_thread_safe() -> None:
     with ThreadPoolExecutor(max_workers=4) as pool:
         list(pool.map(record, range(20)))
     assert observer.snapshot()["documents_processed"] == 20
+
+
+def test_observer_snapshot_exposes_validation_and_model_metrics() -> None:
+    observer = InMemoryPipelineObserver()
+    trace = PipelineTrace(document_id="metrics", observer=observer, queue_wait_ms=2.5)
+    with trace.stage("prediction_validation") as counters:
+        counters["validation_invalid_relation"] = 2
+    with trace.stage("candidate_reranking") as counters:
+        counters["model_forward_passes"] = 3
+    trace.mark_finished(success=True, entities=1, assigned_codes=0)
+    snapshot = observer.snapshot()
+    assert snapshot["validation_failures_by_type"] == {"invalid_relation": 2}
+    assert snapshot["model_forward_pass_count"] == 3
+    assert trace.stages[0].queue_wait_ms == 2.5
+    assert trace.to_json()["stages"][0]["queue_wait_ms"] == 2.5

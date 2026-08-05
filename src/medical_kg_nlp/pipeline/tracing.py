@@ -73,6 +73,7 @@ class StageMeasurement:
     model_revision: str | None = None
     backend: str | None = None
     worker: str | None = None
+    queue_wait_ms: float = 0.0
 
     def to_json(self) -> dict[str, Any]:
         return {
@@ -90,6 +91,7 @@ class StageMeasurement:
             "model_revision": self.model_revision,
             "backend": self.backend,
             "worker": self.worker,
+            "queue_wait_ms": round(self.queue_wait_ms, 6),
         }
 
 
@@ -142,12 +144,24 @@ class InMemoryPipelineObserver:
                 for key, value in self.counters.items()
                 if key.startswith("stage.candidate_generation.candidate_count_")
             }
+            validation_failures = {
+                key.removeprefix("stage.prediction_validation.validation_"): value
+                for key, value in self.counters.items()
+                if key.startswith("stage.prediction_validation.validation_")
+            }
+            model_forward_passes = sum(
+                value
+                for key, value in self.counters.items()
+                if key.endswith("model_forward_passes")
+            )
             return {
                 "documents_processed": self.documents_processed,
                 "documents_failed": self.documents_failed,
                 "counters": dict(self.counters),
                 "assigned_code_coverage": assigned_codes / entities if entities else 0.0,
                 "candidate_count_distribution": candidate_histogram,
+                "validation_failures_by_type": validation_failures,
+                "model_forward_pass_count": model_forward_passes,
                 "abstention_rate": (
                     1.0 - assigned_codes / entities if entities else 0.0
                 ),
@@ -200,6 +214,7 @@ class PipelineTrace:
     model_revision: str | None = None
     backend: str | None = None
     worker: str | None = None
+    queue_wait_ms: float = 0.0
     redact_errors: bool = True
     stages: list[StageMeasurement] = field(default_factory=list)
     _observer: PipelineObserverPort = field(init=False, repr=False)
@@ -269,6 +284,7 @@ class PipelineTrace:
             model_revision=self.model_revision,
             backend=self.backend,
             worker=self.worker,
+            queue_wait_ms=self.queue_wait_ms,
         )
 
     def _append(self, measurement: StageMeasurement) -> None:

@@ -9,6 +9,13 @@ are redacted by default; enable `PipelineComponents.trace_include_error_messages
 controlled local debugging run. Configuration, terminology, and model fingerprints are
 recorded as low-cardinality metadata.
 
+Stage records also carry outcome (`success`, `failure`, or `cancelled`), start time,
+elapsed time, queue wait, bounded error type/message, document length, backend and worker.
+The in-memory snapshot exposes document/entity counts, assignment coverage, abstention,
+candidate-count distribution, validation failures by type, and model forward-pass counts.
+Trace retention is bounded; a failed document retains its partial trace on the raised
+exception as `pipeline_trace`.
+
 OpenTelemetry is optional and lazy-loaded:
 
 ```python

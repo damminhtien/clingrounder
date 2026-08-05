@@ -365,6 +365,11 @@ class PipelineRunner:
                 counters["skipped_reranking"] = (
                     0 if self.options.enable_candidate_reranking else len(reranked_candidates)
                 )
+                stats = getattr(reranker, "stats", None)
+                if callable(stats):
+                    for name, value in stats().items():
+                        if isinstance(value, int):
+                            counters[name] = value
             else:
                 counters["skipped_entities"] = len(entities)
 
