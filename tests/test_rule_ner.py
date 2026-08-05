@@ -417,9 +417,7 @@ def test_rule_ner_uses_medication_indication_context_for_dual_typed_concept() ->
     assert next(entity for entity in indication if entity.text == "chóng mặt").type == (
         EntityType.SYMPTOM
     )
-    assert next(entity for entity in outside_list if entity.text == "chóng mặt").type == (
-        EntityType.DISEASE
-    )
+    assert all(entity.text != "chóng mặt" for entity in outside_list)
 
 
 @pytest.mark.benchmark

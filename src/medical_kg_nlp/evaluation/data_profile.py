@@ -20,7 +20,7 @@ from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.document import ClinicalDocument, Section
 from medical_kg_nlp.schema.output import ClinicalPrediction
-from medical_kg_nlp.preprocessing.section_splitter import split_sections
+from medical_kg_nlp.preprocessing.section_rules import split_sections
 from medical_kg_nlp.preprocessing.sentence_splitter import split_sentences
 from medical_kg_nlp.utils.text import normalize_for_match
 

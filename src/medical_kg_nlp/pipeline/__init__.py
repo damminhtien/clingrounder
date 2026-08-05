@@ -20,8 +20,6 @@ from medical_kg_nlp.pipeline.parallel_batch import (
     ParallelBatchError,
     ParallelBatchOptions,
     PipelineBatchExecutor,
-    run_batch_parallel,
-    run_batch_with_trace_parallel,
 )
 from medical_kg_nlp.pipeline.profile import (
     PIPELINE_PROFILE_SCHEMA_VERSION,
@@ -68,6 +66,4 @@ __all__ = [
     "InMemoryPipelineObserver",
     "NoOpPipelineObserver",
     "OpenTelemetryPipelineObserver",
-    "run_batch_parallel",
-    "run_batch_with_trace_parallel",
 ]

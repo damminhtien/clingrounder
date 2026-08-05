@@ -1,6 +1,6 @@
 import pytest
 
-from medical_kg_nlp.preprocessing.section_splitter import split_sections
+from medical_kg_nlp.preprocessing.section_rules import split_sections
 from medical_kg_nlp.preprocessing.section_rules import SectionRule, SectionRuleRegistry
 
 

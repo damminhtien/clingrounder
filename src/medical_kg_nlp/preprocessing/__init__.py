@@ -9,12 +9,12 @@ from medical_kg_nlp.preprocessing.normalizer import (
     NormalizationContract,
 )
 from medical_kg_nlp.preprocessing.sentence_splitter import split_sentences
-from medical_kg_nlp.preprocessing.section_splitter import split_sections
 from medical_kg_nlp.preprocessing.section_rules import (
     DEFAULT_SECTION_RULE_REGISTRY,
     RuleBasedSectionDetector,
     SectionRule,
     SectionRuleRegistry,
+    split_sections,
 )
 
 __all__ = [

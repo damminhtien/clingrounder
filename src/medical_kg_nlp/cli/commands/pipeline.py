@@ -6,15 +6,13 @@ import argparse
 import hashlib
 import json
 from dataclasses import replace
+from functools import partial
 from pathlib import Path
 
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
 from medical_kg_nlp.pipeline.config_loader import ResolvedPipelineConfig
-from medical_kg_nlp.pipeline.factory import PipelineFactoryConfig
-from medical_kg_nlp.pipeline.parallel_batch import (
-    ParallelBatchOptions,
-    run_batch_with_trace_parallel,
-)
+from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
+from medical_kg_nlp.pipeline.parallel_batch import ParallelBatchOptions, PipelineBatchExecutor
 from medical_kg_nlp.utils.io import write_jsonl
 from medical_kg_nlp.utils.run_output import (
     collect_git_metadata,
@@ -46,16 +44,17 @@ def run_pipeline(args: argparse.Namespace) -> int:
     adapter = SyntheticDatasetAdapter()
     documents = adapter.load_documents(args.input)
     factory_config = _factory_config(args)
-    results = run_batch_with_trace_parallel(
-        documents,
-        factory_config=factory_config,
-        parallel_options=ParallelBatchOptions(
+    runner_factory = partial(PipelineFactory.from_config, factory_config)
+    with PipelineBatchExecutor(
+        runner_factory,
+        ParallelBatchOptions(
             backend=args.parallel_backend,
             max_workers=args.workers,
             chunksize=args.chunksize,
             fail_fast=not args.no_fail_fast,
         ),
-    )
+    ) as executor:
+        results = executor.run(documents)
     predictions = [result.prediction.to_json() for result in results]
     run_output = (
         create_hashed_run_dir(

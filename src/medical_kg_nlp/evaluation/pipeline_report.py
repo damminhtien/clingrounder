@@ -16,7 +16,7 @@ from medical_kg_nlp.evaluation.runtime_metrics import (
     flatten_metrics,
 )
 from medical_kg_nlp.pipeline.tracing import PipelineTrace
-from medical_kg_nlp.preprocessing.section_splitter import split_sections
+from medical_kg_nlp.preprocessing.section_rules import split_sections
 from medical_kg_nlp.preprocessing.sentence_splitter import split_sentences
 from medical_kg_nlp.schema.annotation import EntityAnnotation, RelationAnnotation
 from medical_kg_nlp.schema.document import ClinicalDocument, Section, Sentence

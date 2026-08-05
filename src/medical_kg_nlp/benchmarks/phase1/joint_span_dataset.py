@@ -83,7 +83,7 @@ def build_phase1_rule_proposal_rows(
     verifier learns whether either exact type is correct instead of applying a disease fallback.
     """
 
-    ner = RuleBasedNER(dictionary, disease_symptom_fallback="abstain")
+    ner = RuleBasedNER(dictionary)
     rows_by_document: dict[str, tuple[dict[str, Any], ...]] = {}
     source_roles: dict[str, ProposalSourceRole] = {}
     for document_id in sorted(corpus.source_texts, key=phase1_document_sort_key):

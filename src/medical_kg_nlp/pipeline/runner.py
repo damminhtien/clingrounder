@@ -16,7 +16,7 @@ from medical_kg_nlp.pipeline.ports import (
 )
 from medical_kg_nlp.pipeline.tracing import PipelineTrace
 from medical_kg_nlp.pipeline.runtime import Closable, RuntimeCapabilities
-from medical_kg_nlp.preprocessing.section_splitter import split_sections
+from medical_kg_nlp.preprocessing.section_rules import split_sections
 from medical_kg_nlp.preprocessing.sentence_splitter import split_sentences
 from medical_kg_nlp.schema.annotation import (
     AssertionEvidence,

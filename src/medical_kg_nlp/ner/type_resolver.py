@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Literal
 
 from medical_kg_nlp.schema.types import EntityType
 
@@ -80,7 +79,6 @@ class TypeResolution:
 class ContextualEntityTypeResolver:
     """Resolve cross-type aliases from local structure instead of fixed type authority."""
 
-    disease_symptom_fallback: Literal["disease", "abstain"] = "disease"
     context_radius: int = 64
     section_radius: int = 800
 
@@ -134,8 +132,6 @@ class ContextualEntityTypeResolver:
                 return TypeResolution(EntityType.SYMPTOM, "explicit_symptom_context")
             if disease_distance is not None:
                 return TypeResolution(EntityType.DISEASE, "explicit_diagnosis_context")
-            if self.disease_symptom_fallback == "disease":
-                return TypeResolution(EntityType.DISEASE, "legacy_disease_fallback")
             return TypeResolution(None, "disease_symptom_context_missing")
 
         if EntityType.DRUG in candidate_set and _DRUG_LEFT_CUE_RE.search(left):

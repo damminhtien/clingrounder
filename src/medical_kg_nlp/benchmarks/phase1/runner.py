@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from dataclasses import replace
+from functools import partial
 from pathlib import Path
 from typing import Any, Literal
 
@@ -21,11 +22,11 @@ from medical_kg_nlp.benchmarks.phase1.round2 import load_phase1_round2_documents
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.mining.io import load_documents
 from medical_kg_nlp.pipeline.config_loader import ResolvedPipelineConfig
-from medical_kg_nlp.pipeline.factory import PipelineFactoryConfig
+from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
 from medical_kg_nlp.pipeline.parallel_batch import (
     ParallelBatchOptions,
     ParallelBackend,
-    run_batch_with_trace_parallel,
+    PipelineBatchExecutor,
 )
 from medical_kg_nlp.schema.document import ClinicalDocument
 
@@ -65,15 +66,19 @@ def run_phase1_benchmark(config: Phase1BenchmarkConfig) -> dict[str, Any]:
     """Run, release-validate, and deterministically archive a Phase 1 submission."""
 
     documents = _load_benchmark_documents(config)
-    results = run_batch_with_trace_parallel(
-        documents,
-        factory_config=build_phase1_factory_config(config),
-        parallel_options=ParallelBatchOptions(
+    runner_factory = partial(
+        PipelineFactory.from_config,
+        build_phase1_factory_config(config),
+    )
+    with PipelineBatchExecutor(
+        runner_factory,
+        ParallelBatchOptions(
             backend=config.backend,
             max_workers=config.workers,
             chunksize=config.chunksize,
         ),
-    )
+    ) as executor:
+        results = executor.run(documents)
     predictions = [result.prediction for result in results]
     source_text_by_document = {
         document.document_id: document.text for document in documents

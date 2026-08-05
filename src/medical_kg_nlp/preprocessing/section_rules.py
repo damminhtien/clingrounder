@@ -18,6 +18,7 @@ __all__ = [
     "RuleBasedSectionDetector",
     "SectionRule",
     "SectionRuleRegistry",
+    "split_sections",
 ]
 
 _LINE_RE = re.compile(r"^.*$", flags=re.MULTILINE)
@@ -180,6 +181,20 @@ class RuleBasedSectionDetector:
                 )
             )
         return _dedupe_headings(accepted)
+
+
+def split_sections(
+    text: str,
+    registry: SectionRuleRegistry | None = None,
+) -> list[Section]:
+    """Detect sections with the canonical section-rule implementation.
+
+    Keeping this small entry point beside the detector prevents a second
+    preprocessing module from becoming an accidental public implementation.
+    """
+
+    active_registry = registry or DEFAULT_SECTION_RULE_REGISTRY
+    return RuleBasedSectionDetector(active_registry).detect(text)
 
 
 def _nearest_parent(

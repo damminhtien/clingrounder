@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from functools import partial
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -12,11 +13,8 @@ from medical_kg_nlp.benchmarks.phase1.pipeline_report import build_phase1_pipeli
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.evaluation.pipeline_report import write_pipeline_report
-from medical_kg_nlp.pipeline.parallel_batch import (
-    ParallelBatchOptions,
-    run_batch_with_trace_parallel,
-)
-from medical_kg_nlp.pipeline.factory import PipelineFactoryConfig
+from medical_kg_nlp.pipeline.parallel_batch import ParallelBatchOptions, PipelineBatchExecutor
+from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
 from medical_kg_nlp.utils.io import write_jsonl
 from medical_kg_nlp.utils.run_output import create_hashed_run_dir, path_in_run
 
@@ -91,19 +89,20 @@ def main() -> None:
         predictions = adapter.load_gold(args.pred)
         traces = []
     else:
-        run_results = run_batch_with_trace_parallel(
-            documents,
-            factory_config=PipelineFactoryConfig(
-                recognition_dictionary_path=args.dictionary,
-                abbreviation_path=args.abbreviations,
-            ),
-            parallel_options=ParallelBatchOptions(
+        factory_config = PipelineFactoryConfig(
+            recognition_dictionary_path=args.dictionary,
+            abbreviation_path=args.abbreviations,
+        )
+        with PipelineBatchExecutor(
+            partial(PipelineFactory.from_config, factory_config),
+            ParallelBatchOptions(
                 backend=args.parallel_backend,
                 max_workers=args.workers,
                 chunksize=args.chunksize,
                 fail_fast=not args.no_fail_fast,
             ),
-        )
+        ) as executor:
+            run_results = executor.run(documents)
         predictions = [result.prediction for result in run_results]
         traces = [result.trace for result in run_results]
         write_jsonl(

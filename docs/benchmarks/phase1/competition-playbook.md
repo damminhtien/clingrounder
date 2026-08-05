@@ -822,7 +822,7 @@ air-med/
     preprocessing/
       normalize_text.py
       offset_mapper.py
-      section_splitter.py
+      section_rules.py
 
     entity/
       dictionary_matcher.py

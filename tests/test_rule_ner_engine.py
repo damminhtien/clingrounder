@@ -40,7 +40,7 @@ def test_rule_ner_trace_records_cross_source_overlap_decisions() -> None:
 
 def test_contextual_type_resolver_uses_explicit_symptom_and_diagnosis_cues() -> None:
     store = _dual_type_store("chóng mặt")
-    ner = RuleBasedNER(store, disease_symptom_fallback="abstain")
+    ner = RuleBasedNER(store)
     text = "Triệu chứng: chóng mặt. Chẩn đoán: chóng mặt. Không rõ chóng mặt."
 
     result = ner.extract_with_trace(text)
@@ -69,13 +69,15 @@ def test_contextual_type_resolver_uses_sections_for_ambiguous_type_evidence() ->
     assert [(entity.text, entity.type) for entity in result.entities] == [
         ("táo bón", EntityType.DISEASE),
         ("táo bón", EntityType.SYMPTOM),
-        ("táo bón", EntityType.DISEASE),
-        ("táo bón", EntityType.DISEASE),
     ]
     assert any(
         proposal.feature("type_resolution") == "explicit_symptom_section"
         for proposal in result.trace.proposals
     )
+    assert sum(
+        proposal.feature("type_resolution") == "disease_symptom_context_missing"
+        for proposal in result.unresolved_proposals
+    ) == 2
 
 
 def test_contextual_type_resolver_does_not_invent_unproposed_type() -> None:

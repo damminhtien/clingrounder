@@ -6,26 +6,20 @@ import os
 import pickle
 import threading
 import traceback
-from collections.abc import Callable, MutableMapping, Sequence
+from collections.abc import Callable, Sequence
 from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field
-from functools import partial
-from time import perf_counter
 from typing import Literal, TypeAlias
 
-from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
 from medical_kg_nlp.pipeline.runner import PipelineRunResult, PipelineRunner
 from medical_kg_nlp.pipeline.runtime import RuntimeCapabilities
 from medical_kg_nlp.schema.document import ClinicalDocument
-from medical_kg_nlp.schema.output import ClinicalPrediction
 
 __all__ = [
     "ParallelBackend",
     "ParallelBatchError",
     "ParallelBatchOptions",
     "PipelineBatchExecutor",
-    "run_batch_parallel",
-    "run_batch_with_trace_parallel",
 ]
 
 ParallelBackend = Literal["serial", "thread", "process"]
@@ -230,97 +224,6 @@ class PipelineBatchExecutor:
             raise RuntimeError("PipelineBatchExecutor is closed.")
 
 
-def run_batch_with_trace_parallel(
-    documents: Sequence[ClinicalDocument],
-    *,
-    factory_config: PipelineFactoryConfig | None = None,
-    parallel_options: ParallelBatchOptions | None = None,
-    runtime_metrics: MutableMapping[str, object] | None = None,
-) -> list[PipelineRunResult]:
-    """Compatibility wrapper that owns and closes one executor for this call."""
-
-    total_started = perf_counter()
-    options = parallel_options or ParallelBatchOptions()
-    resolved_factory_config = factory_config or PipelineFactoryConfig()
-    runner_factory = partial(PipelineFactory.from_config, resolved_factory_config)
-    if not documents:
-        _record_runtime_metrics(
-            runtime_metrics,
-            backend=options.backend,
-            worker_count=0,
-            document_count=0,
-            initialization_ms=0.0,
-            processing_ms=0.0,
-            total_started=total_started,
-            worker_initialization_in_processing=False,
-        )
-        return []
-    worker_count = _effective_worker_count(options, len(documents))
-    if options.backend == "serial" or worker_count <= 1:
-        serial_options = ParallelBatchOptions(
-            backend="serial",
-            max_workers=1,
-            chunksize=options.chunksize,
-            fail_fast=options.fail_fast,
-            runtime_capabilities=options.runtime_capabilities,
-        )
-        initialization_started = perf_counter()
-        with PipelineBatchExecutor(runner_factory, serial_options) as executor:
-            initialization_ms = (perf_counter() - initialization_started) * 1000.0
-            processing_started = perf_counter()
-            results = executor.run(documents)
-            processing_ms = (perf_counter() - processing_started) * 1000.0
-        _record_runtime_metrics(
-            runtime_metrics,
-            backend="serial",
-            worker_count=1,
-            document_count=len(documents),
-            initialization_ms=initialization_ms,
-            processing_ms=processing_ms,
-            total_started=total_started,
-            worker_initialization_in_processing=False,
-        )
-        return results
-
-    initialization_started = perf_counter()
-    with PipelineBatchExecutor(runner_factory, options) as executor:
-        parallel_initialization_ms: float | None = (
-            (perf_counter() - initialization_started) * 1000.0
-            if options.backend == "thread"
-            else None
-        )
-        processing_started = perf_counter()
-        results = executor.run(documents)
-        processing_ms = (perf_counter() - processing_started) * 1000.0
-    _record_runtime_metrics(
-        runtime_metrics,
-        backend=options.backend,
-        worker_count=worker_count,
-        document_count=len(documents),
-        initialization_ms=parallel_initialization_ms,
-        processing_ms=processing_ms,
-        total_started=total_started,
-        worker_initialization_in_processing=options.backend == "process",
-    )
-    return results
-
-
-def run_batch_parallel(
-    documents: Sequence[ClinicalDocument],
-    *,
-    factory_config: PipelineFactoryConfig | None = None,
-    parallel_options: ParallelBatchOptions | None = None,
-) -> list[ClinicalPrediction]:
-    return [
-        result.prediction
-        for result in run_batch_with_trace_parallel(
-            documents,
-            factory_config=factory_config,
-            parallel_options=parallel_options,
-        )
-    ]
-
-
 def _init_process_worker(runner_factory: RunnerFactory) -> None:
     global _PROCESS_RUNNER
     _PROCESS_RUNNER = runner_factory()
@@ -358,16 +261,6 @@ def _processing_error(
     )
 
 
-def _effective_worker_count(options: ParallelBatchOptions, document_count: int) -> int:
-    if document_count <= 0:
-        return 0
-    if options.max_workers is not None:
-        if options.max_workers < 1:
-            raise ValueError("max_workers must be at least 1.")
-        return min(options.max_workers, document_count)
-    return min(os.cpu_count() or 1, document_count)
-
-
 def _configured_worker_count(options: ParallelBatchOptions) -> int:
     return options.max_workers if options.max_workers is not None else os.cpu_count() or 1
 
@@ -376,33 +269,3 @@ def _require_result(index: int, result: PipelineRunResult | None) -> PipelineRun
     if result is None:
         raise RuntimeError(f"Missing parallel result for document index {index}.")
     return result
-
-
-def _record_runtime_metrics(
-    target: MutableMapping[str, object] | None,
-    *,
-    backend: ParallelBackend,
-    worker_count: int,
-    document_count: int,
-    initialization_ms: float | None,
-    processing_ms: float,
-    total_started: float,
-    worker_initialization_in_processing: bool,
-) -> None:
-    if target is None:
-        return
-    total_ms = (perf_counter() - total_started) * 1000.0
-    target.update(
-        {
-            "backend": backend,
-            "worker_count": worker_count,
-            "document_count": document_count,
-            "initialization_ms": initialization_ms,
-            "processing_ms": processing_ms,
-            "total_ms": total_ms,
-            "documents_per_second": (
-                document_count / (total_ms / 1000.0) if total_ms > 0.0 else 0.0
-            ),
-            "worker_initialization_in_processing": worker_initialization_in_processing,
-        }
-    )

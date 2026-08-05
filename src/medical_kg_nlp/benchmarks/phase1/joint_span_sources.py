@@ -189,7 +189,7 @@ def build_phase1_rule_source_rows(
 
     if not source_name.strip():
         raise ValueError("Rule proposal source name must be non-empty")
-    ner = RuleBasedNER(dictionary, disease_symptom_fallback="abstain")
+    ner = RuleBasedNER(dictionary)
     rows_by_document: dict[str, tuple[dict[str, Any], ...]] = {}
     for document_id in sorted(corpus.source_texts, key=phase1_document_sort_key):
         source_text = corpus.source_texts[document_id]
@@ -239,7 +239,7 @@ def build_phase1_medication_parser_source_rows(
 
     if not source_name.strip():
         raise ValueError("Medication parser source name must be non-empty")
-    ner = RuleBasedNER(dictionary, disease_symptom_fallback="abstain")
+    ner = RuleBasedNER(dictionary)
     mention_parser = MedicationMentionParser()
     list_parser = MedicationListParser()
     rows_by_document: dict[str, tuple[dict[str, Any], ...]] = {}

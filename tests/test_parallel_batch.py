@@ -14,6 +14,8 @@ from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
 from medical_kg_nlp.pipeline import (
     PipelineBatchExecutor,
     PipelineComponents,
+    PipelineFactory,
+    PipelineFactoryConfig,
     PipelineOptions,
     PipelineRunner,
     RuntimeCapabilities,
@@ -21,7 +23,6 @@ from medical_kg_nlp.pipeline import (
 from medical_kg_nlp.pipeline.parallel_batch import (
     ParallelBatchError,
     ParallelBatchOptions,
-    run_batch_with_trace_parallel,
 )
 from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.document import ClinicalDocument
@@ -29,34 +30,29 @@ from medical_kg_nlp.schema.document import ClinicalDocument
 
 def test_parallel_batch_thread_backend_preserves_input_order_and_traces() -> None:
     documents = _two_sample_documents()
-    runtime_metrics: dict[str, object] = {}
-
-    results = run_batch_with_trace_parallel(
-        documents,
-        parallel_options=ParallelBatchOptions(backend="thread", max_workers=2, chunksize=1),
-        runtime_metrics=runtime_metrics,
+    executor = PipelineBatchExecutor(
+        partial(PipelineFactory.from_config, PipelineFactoryConfig()),
+        ParallelBatchOptions(backend="thread", max_workers=2, chunksize=1),
     )
+    try:
+        results = executor.run(documents)
+    finally:
+        executor.close()
 
     assert [result.prediction.document_id for result in results] == ["sample_001", "sample_002"]
     assert all(result.trace.document_id == result.prediction.document_id for result in results)
     assert all(result.trace.bottleneck() is not None for result in results)
-    assert runtime_metrics["backend"] == "thread"
-    assert runtime_metrics["worker_count"] == 2
-    assert runtime_metrics["document_count"] == 2
-    assert float(runtime_metrics["initialization_ms"]) >= 0.0
-    assert float(runtime_metrics["processing_ms"]) > 0.0
-    assert float(runtime_metrics["documents_per_second"]) > 0.0
-    assert runtime_metrics["worker_initialization_in_processing"] is False
 
 
 @pytest.mark.integration
 def test_parallel_batch_process_backend_preserves_input_order() -> None:
     documents = _two_sample_documents()
 
-    results = run_batch_with_trace_parallel(
-        documents,
-        parallel_options=ParallelBatchOptions(backend="process", max_workers=2, chunksize=1),
-    )
+    with PipelineBatchExecutor(
+        partial(PipelineFactory.from_config, PipelineFactoryConfig()),
+        ParallelBatchOptions(backend="process", max_workers=2, chunksize=1),
+    ) as executor:
+        results = executor.run(documents)
 
     assert [result.prediction.document_id for result in results] == ["sample_001", "sample_002"]
     assert [result.trace.document_id for result in results] == ["sample_001", "sample_002"]
