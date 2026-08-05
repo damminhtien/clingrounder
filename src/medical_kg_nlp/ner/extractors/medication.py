@@ -47,7 +47,7 @@ def _anchor_entity(source_text: str, proposal: EntityProposal) -> EntityAnnotati
     start, end = proposal.span
     mention = source_text[start:end]
     return EntityAnnotation(
-        id="",
+        id=f"proposal:{start}:{end}:DRUG",
         span=proposal.span,
         text=mention,
         normalized_text=normalize_for_match(mention),

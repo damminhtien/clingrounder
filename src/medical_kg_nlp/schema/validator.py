@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, overload
+import math
+from typing import Any, cast, overload
 
 from medical_kg_nlp.kg.constraints import (
     code_system_valid_for_entity_type,
@@ -105,6 +106,16 @@ class PredictionValidator:
                     )
                 )
             entity_ids.add(entity.id)
+
+            concept_ids = [candidate.concept_id for candidate in entity.candidates]
+            if len(concept_ids) != len(set(concept_ids)):
+                issues.append(
+                    PredictionValidationIssue(
+                        "duplicate_candidate_concept_id",
+                        f"{path}.candidates",
+                        f"Entity {entity.id!r} contains duplicate candidate concept IDs.",
+                    )
+                )
 
             if source_text is not None:
                 try:
@@ -212,7 +223,7 @@ class PredictionValidator:
 
             if source_text is not None and relation.evidence_span is not None:
                 start, end = relation.evidence_span
-                if start < 0 or end < start or end > len(source_text):
+                if not 0 <= start < end <= len(source_text):
                     issues.append(
                         PredictionValidationIssue(
                             "invalid_evidence_span",
@@ -224,7 +235,7 @@ class PredictionValidator:
                 evidence_span = relation.evidence.evidence_span
                 if evidence_span is not None:
                     start, end = evidence_span
-                    if start < 0 or end < start or end > len(source_text):
+                    if not 0 <= start < end <= len(source_text):
                         issues.append(
                             PredictionValidationIssue(
                                 "invalid_evidence_span",
@@ -305,7 +316,8 @@ def prediction_from_json(payload: Mapping[str, Any]) -> ClinicalPrediction:
 
 def _entity_from_json(payload: Any, path: str) -> EntityAnnotation:
     row = _ensure_mapping(payload, path)
-    return EntityAnnotation(
+    return cast(EntityAnnotation, _untrusted_construct(
+        EntityAnnotation,
         id=_string(row, "id", f"{path}.id"),
         span=_span(row, "span", f"{path}.span"),
         text=_string(row, "text", f"{path}.text"),
@@ -342,12 +354,13 @@ def _entity_from_json(payload: Any, path: str) -> EntityAnnotation:
             row.get("medication_mention"),
             f"{path}.medication_mention",
         ),
-    )
+    ))
 
 
 def _candidate_from_json(payload: Any, path: str) -> CandidateConcept:
     row = _ensure_mapping(payload, path)
-    return CandidateConcept(
+    return cast(CandidateConcept, _untrusted_construct(
+        CandidateConcept,
         code_system=_enum(
             CodeSystem,
             _string(row, "code_system", f"{path}.code_system"),
@@ -370,7 +383,21 @@ def _candidate_from_json(payload: Any, path: str) -> CandidateConcept:
         qualification_reason=_string(
             row, "qualification_reason", f"{path}.qualification_reason"
         ),
-    )
+    ))
+
+
+def _untrusted_construct(cls: type[Any], **values: Any) -> Any:
+    """Parse malformed external payloads without hiding issues from the validator.
+
+    Runtime and model code must use normal constructors. This narrow escape hatch exists only so
+    the validator can report an invalid code pair, span, or candidate list instead of failing
+    before it has produced a structured issue.
+    """
+
+    instance = object.__new__(cls)
+    for name, value in values.items():
+        object.__setattr__(instance, name, value)
+    return instance
 
 
 def _assertion_evidence(payload: Any, path: str) -> AssertionEvidence:
@@ -531,7 +558,7 @@ def _number(payload: Mapping[str, Any], key: str, path: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError(f"Expected number at {path}.")
     score = float(value)
-    if score < 0.0 or score > 1.0:
+    if not math.isfinite(score) or score < 0.0 or score > 1.0:
         raise ValueError(f"Expected value between 0 and 1 at {path}.")
     return score
 

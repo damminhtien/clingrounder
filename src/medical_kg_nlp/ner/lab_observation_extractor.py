@@ -67,7 +67,7 @@ class LabObservationExtractor:
                 mention = text[span[0] : span[1]]
                 results.append(
                     EntityAnnotation(
-                        id="",
+                        id=f"proposal:{span[0]}:{span[1]}:LAB_RESULT",
                         span=span,
                         text=mention,
                         normalized_text=normalize_for_match(mention),

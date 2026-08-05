@@ -289,7 +289,7 @@ def _relation(
     provenance: str,
 ) -> RelationAnnotation:
     return RelationAnnotation(
-        id="",
+        id=f"relation:{head}:{tail}:{relation_type.value}:{evidence_span[0]}:{evidence_span[1]}",
         head=head,
         tail=tail,
         type=relation_type,

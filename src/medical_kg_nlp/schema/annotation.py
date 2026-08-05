@@ -28,6 +28,11 @@ class MedicationComponent:
     kind: str
     span: tuple[int, int]
 
+    def __post_init__(self) -> None:
+        if self.kind not in MEDICATION_COMPONENT_KINDS:
+            raise ValueError(f"Unknown medication component kind {self.kind!r}.")
+        _validate_span(self.span, "medication component")
+
     def to_json(self) -> dict[str, Any]:
         return {"kind": self.kind, "span": [self.span[0], self.span[1]]}
 
@@ -37,6 +42,12 @@ class MedicationMention:
     drug_span: tuple[int, int]
     full_span: tuple[int, int]
     components: tuple[MedicationComponent, ...] = ()
+
+    def __post_init__(self) -> None:
+        _validate_span(self.drug_span, "medication drug")
+        _validate_span(self.full_span, "medication full")
+        if self.full_span[0] != self.drug_span[0] or self.full_span[1] < self.drug_span[1]:
+            raise ValueError("Medication full_span must contain drug_span and share its start")
 
     def validate_offsets(self, source_text: str, entity_span: tuple[int, int]) -> None:
         if self.drug_span != entity_span:
@@ -92,6 +103,11 @@ class CandidateConcept:
             raise ValueError("evidence_sources must contain non-empty source names")
         if self.source not in self.evidence_sources:
             raise ValueError("source must be included in evidence_sources")
+        if self.code_system is CodeSystem.NONE:
+            if self.code is not None:
+                raise ValueError("CodeSystem.NONE requires a null candidate code")
+        elif self.code is None or not self.code.strip():
+            raise ValueError("A non-NONE candidate code system requires a non-empty code")
 
     def to_json(self) -> dict[str, Any]:
         return {
@@ -191,9 +207,22 @@ class EntityAnnotation:
     assertion_evidence: tuple[AssertionEvidence, ...] = ()
     medication_mention: MedicationMention | None = None
 
+    def __post_init__(self) -> None:
+        if not self.id.strip():
+            raise ValueError("Entity id must be non-empty")
+        if not self.text:
+            raise ValueError("Entity text must be non-empty")
+        _validate_span(self.span, "entity")
+        if not math.isfinite(self.confidence) or not 0.0 <= self.confidence <= 1.0:
+            raise ValueError("Entity confidence must be finite and between 0 and 1")
+        _validate_code_assignment(self.code_system, self.code, "entity")
+        concept_ids = [candidate.concept_id for candidate in self.candidates]
+        if len(concept_ids) != len(set(concept_ids)):
+            raise ValueError("Entity candidates must have unique concept IDs")
+
     def validate_offsets(self, source_text: str) -> None:
         start, end = self.span
-        if start < 0 or end < start or end > len(source_text):
+        if not 0 <= start < end <= len(source_text):
             raise ValueError(f"Invalid span {self.span} for entity {self.id}")
         if source_text[start:end] != self.text:
             raise ValueError(
@@ -300,8 +329,10 @@ class RelationEvidence:
     def __post_init__(self) -> None:
         if not self.source.strip():
             raise ValueError("Relation evidence source must be non-empty")
-        if not 0.0 <= self.support_score <= 1.0:
+        if not math.isfinite(self.support_score) or not 0.0 <= self.support_score <= 1.0:
             raise ValueError("Relation evidence support_score must be between 0 and 1")
+        if self.evidence_span is not None:
+            _validate_span(self.evidence_span, "relation evidence")
 
 
 @dataclass
@@ -313,6 +344,16 @@ class RelationAnnotation:
     confidence: float
     evidence_span: tuple[int, int] | None = None
     evidence: RelationEvidence | None = None
+
+    def __post_init__(self) -> None:
+        if not self.id.strip() or not self.head.strip() or not self.tail.strip():
+            raise ValueError("Relation id, head, and tail must be non-empty")
+        if self.head == self.tail:
+            raise ValueError("Relation head and tail must identify different entities")
+        if not math.isfinite(self.confidence) or not 0.0 <= self.confidence <= 1.0:
+            raise ValueError("Relation confidence must be finite and between 0 and 1")
+        if self.evidence_span is not None:
+            _validate_span(self.evidence_span, "relation evidence")
 
     def to_json(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -335,3 +376,17 @@ class RelationAnnotation:
                 evidence_payload["evidence_span"] = list(self.evidence.evidence_span)
             payload["evidence"] = evidence_payload
         return payload
+
+
+def _validate_span(span: tuple[int, int], label: str) -> None:
+    start, end = span
+    if not 0 <= start < end:
+        raise ValueError(f"{label} span must satisfy 0 <= start < end: {span}")
+
+
+def _validate_code_assignment(code_system: CodeSystem, code: str | None, label: str) -> None:
+    if code_system is CodeSystem.NONE:
+        if code is not None:
+            raise ValueError(f"{label} CodeSystem.NONE requires a null code")
+    elif code is None or not code.strip():
+        raise ValueError(f"{label} code system requires a non-empty code")

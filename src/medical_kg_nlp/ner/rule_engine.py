@@ -112,7 +112,7 @@ def _entity_from_proposal(
         else AssertionStatus.UNKNOWN
     )
     return EntityAnnotation(
-        id="",
+        id=f"proposal:{start}:{end}:{entity_type.value}",
         span=proposal.span,
         text=mention,
         normalized_text=normalize_for_match(mention),
