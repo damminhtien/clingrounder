@@ -120,6 +120,13 @@ class PipelineModelConfig:
     def from_mapping(cls, payload: Mapping[str, object]) -> "PipelineModelConfig":
         """Parse configured model stages while requiring pinned revisions."""
 
+        _reject_unknown(payload, {
+            "entity_extractor",
+            "candidate_reranker",
+            "candidate_listwise_reranker",
+            "candidate_dense_encoder",
+        }, "models")
+
         entity_payload = _optional_mapping(payload.get("entity_extractor"), "entity_extractor")
         reranker_payload = _optional_mapping(
             payload.get("candidate_reranker"),
@@ -133,6 +140,43 @@ class PipelineModelConfig:
             payload.get("candidate_dense_encoder"),
             "candidate_dense_encoder",
         )
+        _reject_unknown(
+            entity_payload or {},
+            _HF_KEYS
+            | {
+                "run_spec",
+                "stride",
+                "default_confidence_threshold",
+                "confidence_thresholds",
+                "label_map",
+                "combine_with_dictionary",
+            },
+            "models.entity_extractor",
+        )
+        _reject_unknown(
+            reranker_payload or {},
+            _HF_KEYS | {"model_weight", "positive_label_index"},
+            "models.candidate_reranker",
+        )
+        _reject_unknown(
+            listwise_payload or {},
+            _HF_KEYS
+            | {
+                "dtype",
+                "local_files_only",
+                "candidate_limit",
+                "model_weight",
+                "shuffle_seed",
+                "structured_retries",
+                "max_new_tokens",
+                "temperature",
+                "top_p",
+                "seed",
+                "enable_thinking",
+            },
+            "models.candidate_listwise_reranker",
+        )
+        _reject_unknown(dense_payload or {}, _HF_KEYS, "models.candidate_dense_encoder")
         if reranker_payload is not None and listwise_payload is not None:
             raise ValueError(
                 "Configure only one of candidate_reranker or candidate_listwise_reranker"
@@ -216,6 +260,28 @@ def _optional_mapping(
     if not isinstance(value, Mapping):
         raise ValueError(f"models.{name} must be a mapping")
     return {str(key): item for key, item in value.items()}
+
+
+def _reject_unknown(
+    payload: Mapping[str, object],
+    allowed: set[str],
+    path: str,
+) -> None:
+    unknown = sorted(str(key) for key in payload if str(key) not in allowed)
+    if unknown:
+        raise ValueError(f"Unknown pipeline config keys at {path}: {', '.join(unknown)}")
+
+
+_HF_KEYS = {
+    "model_id",
+    "revision",
+    "device",
+    "batch_size",
+    "max_length",
+    "max_pairs_per_batch",
+    "max_tokens",
+    "subfolder",
+}
 
 
 def _label_map(payload: Mapping[str, object]) -> tuple[tuple[str, EntityType], ...]:

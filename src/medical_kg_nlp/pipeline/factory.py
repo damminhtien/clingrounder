@@ -39,6 +39,7 @@ from medical_kg_nlp.ner.extractors.contextual_alias import (
     load_contextual_alias_rules,
 )
 from medical_kg_nlp.pipeline.components import PipelineComponents
+from medical_kg_nlp.pipeline.config_schema import validate_pipeline_mapping
 from medical_kg_nlp.pipeline.model_config import PipelineModelConfig
 from medical_kg_nlp.pipeline.options import PipelineOptions
 from medical_kg_nlp.pipeline.ports import CandidateRerankerPort, EntityExtractorPort
@@ -46,6 +47,7 @@ from medical_kg_nlp.pipeline.runner import PipelineRunner
 from medical_kg_nlp.pipeline.runtime import Closable, PipelineRuntime
 from medical_kg_nlp.preprocessing.normalizer import (
     DEFAULT_NORMALIZATION_CONTRACT,
+    NORMALIZATION_CONTRACT_VERSION,
     NormalizationContract,
 )
 from medical_kg_nlp.relations.rule_relations import RuleRelationExtractor
@@ -100,9 +102,21 @@ class PipelineFactoryConfig:
 
     @classmethod
     def from_mapping(cls, payload: Mapping[str, object]) -> "PipelineFactoryConfig":
+        validate_pipeline_mapping(payload)
         terminology = _mapping(payload.get("terminology"), "terminology")
         pipeline = _mapping(payload.get("pipeline"), "pipeline")
         models = _mapping(payload.get("models"), "models")
+        normalization = _mapping(payload.get("normalization"), "normalization")
+        normalization_version = _string(
+            normalization,
+            "version",
+            DEFAULT_NORMALIZATION_CONTRACT.version,
+        )
+        if normalization_version != NORMALIZATION_CONTRACT_VERSION:
+            raise ValueError(
+                "Unsupported normalization.version: "
+                f"{normalization_version!r}; expected {NORMALIZATION_CONTRACT_VERSION!r}"
+            )
         return cls(
             recognition_dictionary_path=_string(
                 terminology,
@@ -168,6 +182,7 @@ class PipelineFactoryConfig:
             pipeline_version=_string(pipeline, "version", cls.pipeline_version),
             options=PipelineOptions.from_mapping(pipeline),
             models=PipelineModelConfig.from_mapping(models),
+            normalization_contract=NormalizationContract(version=normalization_version),
         )
 
 

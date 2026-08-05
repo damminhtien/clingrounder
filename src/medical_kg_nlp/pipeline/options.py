@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 from medical_kg_nlp.schema.types import EntityType
 
 
 DEFAULT_CANDIDATE_SOURCES = ("exact", "abbreviation", "fuzzy", "char_ngram", "bm25")
+SUPPORTED_CANDIDATE_SOURCES = frozenset(
+    {*DEFAULT_CANDIDATE_SOURCES, "dense", "kg_exact", "learned_edit", "mention_memory"}
+)
 
 
 @dataclass(frozen=True)
@@ -38,6 +42,15 @@ class PipelineOptions:
     def __post_init__(self) -> None:
         if self.enable_graph_evidence_reranking and not self.enable_linking:
             raise ValueError("Graph evidence reranking requires linking")
+        if self.context_window < 0:
+            raise ValueError("context_window must be non-negative")
+        if not 1 <= self.max_candidates <= 1000:
+            raise ValueError("max_candidates must be between 1 and 1000")
+        if len(self.candidate_sources) != len(set(self.candidate_sources)):
+            raise ValueError("candidate_sources must not contain duplicates")
+        unknown_sources = set(self.candidate_sources) - SUPPORTED_CANDIDATE_SOURCES
+        if unknown_sources:
+            raise ValueError(f"Unknown candidate source(s): {sorted(unknown_sources)}")
         if not 0.0 <= self.graph_evidence_max_bonus <= 1.0:
             raise ValueError("graph_evidence_max_bonus must be between 0 and 1")
         if self.graph_evidence_min_support < 1:
@@ -55,6 +68,8 @@ class PipelineOptions:
         sources = payload.get("candidate_sources", DEFAULT_CANDIDATE_SOURCES)
         if not isinstance(sources, list | tuple):
             raise ValueError("candidate_sources must be a list of retrieval source names")
+        if any(not isinstance(source, str) or not source.strip() for source in sources):
+            raise ValueError("candidate_sources must contain non-empty strings")
         return cls(
             max_candidates=_int_value(payload, "max_candidates", cls.max_candidates),
             context_window=_int_value(payload, "context_window", cls.context_window),
@@ -188,7 +203,7 @@ def _probability_value(payload: dict[str, object], key: str, default: float) -> 
     if isinstance(value, bool) or not isinstance(value, int | float):
         raise ValueError(f"{key} must be a number")
     result = float(value)
-    if not 0.0 <= result <= 1.0:
+    if not math.isfinite(result) or not 0.0 <= result <= 1.0:
         raise ValueError(f"{key} must be between 0 and 1")
     return result
 

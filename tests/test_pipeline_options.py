@@ -37,3 +37,10 @@ def test_pipeline_options_reject_invalid_candidate_qualification_config(
 ) -> None:
     with pytest.raises(ValueError):
         PipelineOptions.from_mapping(payload)
+
+
+def test_pipeline_options_rejects_unknown_source_and_negative_context() -> None:
+    with pytest.raises(ValueError, match="Unknown candidate source"):
+        PipelineOptions.from_mapping({"candidate_sources": ["not_a_source"]})
+    with pytest.raises(ValueError, match="context_window"):
+        PipelineOptions.from_mapping({"context_window": -1})

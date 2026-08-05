@@ -12,9 +12,11 @@ from pathlib import Path
 from typing import Any
 
 from medical_kg_nlp.pipeline.factory import PipelineFactoryConfig
+from medical_kg_nlp.pipeline.config_schema import validate_pipeline_mapping
 from medical_kg_nlp.pipeline.profile import (
     PIPELINE_PROFILE_SCHEMA_VERSION,
     PipelineProfileMetadata,
+    migrate_pipeline_profile,
 )
 from medical_kg_nlp.utils.io import read_yaml
 
@@ -74,20 +76,16 @@ class ResolvedPipelineConfig:
         raw = read_yaml(source_path)
         if not isinstance(raw, Mapping):
             raise ValueError("Pipeline config must be a YAML mapping")
-        schema_version = raw.get("schema_version")
         profile_payload = raw.get("profile")
         if require_profile or profile_payload is not None:
             _validate_top_level_keys(raw)
+            validate_pipeline_mapping(raw)
         if profile_payload is None:
             if require_profile:
                 raise ValueError("Reusable pipeline config requires a profile block")
             profile = None
         else:
-            if schema_version != PIPELINE_PROFILE_SCHEMA_VERSION:
-                raise ValueError(
-                    "Pipeline profile schema_version must be "
-                    f"{PIPELINE_PROFILE_SCHEMA_VERSION!r}"
-                )
+            migrate_pipeline_profile(raw)
             profile = PipelineProfileMetadata.from_mapping(
                 _required_mapping(profile_payload, "profile")
             )
@@ -109,6 +107,7 @@ class ResolvedPipelineConfig:
         config = self.factory_config
         return {
             "schema_version": PIPELINE_PROFILE_SCHEMA_VERSION,
+            "profile_sha256": _file_sha256(self.source_path),
             "source": {
                 "path": str(self.source_path),
                 "sha256": _file_sha256(self.source_path),
@@ -153,6 +152,7 @@ class ResolvedPipelineConfig:
                     "normalization_contract": asdict(config.normalization_contract),
                 }
             ),
+            "origins": _origin_report(self.payload),
         }
 
     def payload_for(self, destination: str | Path) -> dict[str, Any]:
@@ -355,6 +355,7 @@ def _validate_top_level_keys(payload: Mapping[str, object]) -> None:
         "terminology",
         "pipeline",
         "models",
+        "normalization",
         # Historical benchmark profiles retain immutable experiment metadata.
         "provenance",
     }
@@ -385,6 +386,13 @@ def _resource_report(config: PipelineFactoryConfig) -> list[dict[str, object]]:
         (f"terminology.normalization_paths[{index}]", value)
         for index, value in enumerate(config.normalization_dictionary_paths)
     )
+    for field_name, model in (
+        ("models.entity_extractor", config.models.entity_extractor),
+        ("models.candidate_reranker", config.models.candidate_reranker),
+        ("models.candidate_dense_encoder", config.models.candidate_dense_encoder),
+    ):
+        if model is not None and _is_explicit_local_model_reference(model.model_id):
+            values.append((f"{field_name}.model_id", model.model_id))
     values.extend(
         (f"terminology.normalization_alias_overlay_paths[{index}]", value)
         for index, value in enumerate(config.normalization_alias_overlay_paths)
@@ -404,6 +412,7 @@ def _resource_report(config: PipelineFactoryConfig) -> list[dict[str, object]]:
                 "path": str(path),
                 "exists": path.exists(),
                 "kind": "directory" if path.is_dir() else "file",
+                "sha256": _resource_sha256(path),
             }
         )
     return report
@@ -425,3 +434,42 @@ def _file_sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _resource_sha256(path: Path) -> str | None:
+    """Fingerprint files without making directory scans part of profile loading."""
+
+    if not path.is_file():
+        return None
+    return _file_sha256(path)
+
+
+def _origin_report(payload: Mapping[str, object]) -> dict[str, dict[str, str]]:
+    """Expose whether inspectable settings came from YAML or a typed default."""
+
+    sections = {
+        "terminology": tuple(_TERMINOLOGY_SINGLE_PATHS) + tuple(_TERMINOLOGY_PATH_LISTS),
+        "pipeline": (
+            "version",
+            "max_candidates",
+            "context_window",
+            "candidate_sources",
+            "enable_context",
+            "enable_linking",
+            "enable_candidate_reranking",
+            "enable_graph_evidence_reranking",
+            "enable_entity_kg_validation",
+            "enable_relations",
+            "enable_relation_kg_validation",
+        ),
+        "models": tuple(_MODEL_BLOCKS),
+        "normalization": ("version",),
+    }
+    result: dict[str, dict[str, str]] = {}
+    for section, keys in sections.items():
+        raw = payload.get(section)
+        mapping = raw if isinstance(raw, Mapping) else {}
+        result[section] = {
+            key: "explicit" if key in mapping else "default" for key in keys
+        }
+    return result

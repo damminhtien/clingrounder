@@ -55,6 +55,40 @@ class HuggingFaceModelConfig:
     ) -> "HuggingFaceModelConfig":
         """Parse one model block and reject unpinned or malformed configurations."""
 
+        allowed = {
+            "model_id",
+            "revision",
+            "device",
+            "batch_size",
+            "max_length",
+            "max_pairs_per_batch",
+            "max_tokens",
+            "subfolder",
+            "run_spec",
+            "stride",
+            "default_confidence_threshold",
+            "confidence_thresholds",
+            "label_map",
+            "combine_with_dictionary",
+            "model_weight",
+            "positive_label_index",
+            "dtype",
+            "local_files_only",
+            "candidate_limit",
+            "shuffle_seed",
+            "structured_retries",
+            "max_new_tokens",
+            "temperature",
+            "top_p",
+            "seed",
+            "enable_thinking",
+        }
+        unknown = sorted(str(key) for key in payload if str(key) not in allowed)
+        if unknown:
+            raise ValueError(
+                f"Unknown pipeline config keys at models.{name}: {', '.join(unknown)}"
+            )
+
         model_id = payload.get("model_id")
         revision = payload.get("revision")
         if not isinstance(model_id, str) or not model_id:

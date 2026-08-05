@@ -10,6 +10,7 @@ __all__ = [
     "PIPELINE_PROFILE_SCHEMA_VERSION",
     "PipelineProfileMetadata",
     "ProfileMaturity",
+    "migrate_pipeline_profile",
 ]
 
 PIPELINE_PROFILE_SCHEMA_VERSION = "medical-kg.pipeline-profile.v1"
@@ -73,6 +74,22 @@ class PipelineProfileMetadata:
             "required_extras": list(self.required_extras),
             "tags": list(self.tags),
         }
+
+
+def migrate_pipeline_profile(payload: Mapping[str, object]) -> dict[str, object]:
+    """Return a deterministic current-schema copy or reject unsupported versions.
+
+    There are no historical migrations yet.  Keeping this explicit prevents a future
+    loader from silently accepting a newer profile with incompatible semantics.
+    """
+
+    version = payload.get("schema_version")
+    if version != PIPELINE_PROFILE_SCHEMA_VERSION:
+        raise ValueError(
+            "Unsupported pipeline profile schema_version: "
+            f"{version!r}; expected {PIPELINE_PROFILE_SCHEMA_VERSION!r}"
+        )
+    return dict(payload)
 
 
 def _required_string(payload: Mapping[str, object], key: str) -> str:

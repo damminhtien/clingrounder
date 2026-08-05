@@ -132,6 +132,48 @@ def test_reusable_profile_requires_metadata(tmp_path: Path) -> None:
         ResolvedPipelineConfig.load(profile, require_profile=True)
 
 
+@pytest.mark.parametrize(
+    ("section", "field"),
+    [("pipeline", "enable_contex"), ("terminology", "normalization_indx_path")],
+)
+def test_reusable_profile_rejects_unknown_nested_keys(
+    tmp_path: Path,
+    section: str,
+    field: str,
+) -> None:
+    profile = tmp_path / "profile.yaml"
+    profile.write_text(
+        f"""\
+schema_version: medical-kg.pipeline-profile.v1
+profile:
+  id: strict
+  title: Strict profile
+  description: Reject nested typos
+  maturity: stable
+{section}:
+  {field}: true
+""",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match=field):
+        ResolvedPipelineConfig.load(profile, require_profile=True)
+
+
+def test_profile_inspection_reports_hash_and_origins() -> None:
+    resolved = ResolvedPipelineConfig.load(
+        "configs/pipeline/clinical-baseline.yaml", require_profile=True
+    )
+    report = resolved.inspection_report()
+    assert report["profile_sha256"] == report["source"]["sha256"]
+    assert report["origins"]["pipeline"]["enable_context"] == "explicit"
+    assert report["origins"]["pipeline"]["context_window"] == "default"
+
+
+def test_pipeline_factory_rejects_unsupported_normalization_version() -> None:
+    with pytest.raises(ValueError, match="Unsupported normalization.version"):
+        PipelineFactory.from_config({"normalization": {"version": "future-v2"}})
+
+
 def test_rebased_pipeline_profile_round_trips_effective_paths(tmp_path: Path) -> None:
     source_dir = tmp_path / "source"
     source_dir.mkdir()
