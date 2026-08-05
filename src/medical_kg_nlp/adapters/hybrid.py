@@ -89,6 +89,12 @@ class HybridEntityExtractorAdapter:
         # INVARIANT: IDs are regenerated after fusion so downstream relations see unique IDs.
         return [replace(entity, id=f"H{index:04d}") for index, entity in enumerate(selected, 1)]
 
+    def close(self) -> None:
+        """Close model and dictionary children when they own expensive resources."""
+
+        _close_child(self.model)
+        _close_child(self.dictionary)
+
     @staticmethod
     def _validated(
         entities: list[EntityAnnotation],
@@ -309,3 +315,9 @@ def _proposal_end_order(proposal: _Proposal) -> tuple[int, int, str, str]:
 
 def _entity_order(entity: EntityAnnotation) -> tuple[int, int, str, str]:
     return (entity.span[0], entity.span[1], entity.type.value, entity.id)
+
+
+def _close_child(child: object) -> None:
+    close = getattr(child, "close", None)
+    if callable(close):
+        close()

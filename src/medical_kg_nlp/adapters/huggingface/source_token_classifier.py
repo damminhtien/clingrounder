@@ -51,3 +51,8 @@ class HuggingFaceSourceTokenClassifierAdapter:
             if source_text[start:end] == "":
                 raise ValueError("Source token classifier emitted an empty raw span")
         return entities
+
+    def close(self) -> None:
+        """Delegate cleanup to the wrapped token classifier."""
+
+        self._token_classifier.close()

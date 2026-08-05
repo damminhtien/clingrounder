@@ -132,6 +132,16 @@ class GenerativeListwiseRerankerAdapter:
             ),
         )
 
+    def close(self) -> None:
+        """Close the generative runtime and nested reranker when applicable."""
+
+        close = getattr(self.runtime, "close", None)
+        if callable(close):
+            close()
+        nested_close = getattr(self.base_reranker, "close", None)
+        if callable(nested_close):
+            nested_close()
+
     def rank_query(self, query: ListwiseLinkingQuery) -> ListwiseRerankDecision:
         """Run retrieval, reverse, and seeded-shuffle prompts for one query."""
 

@@ -52,6 +52,9 @@ class SQLiteKnowledgeGraphRepository:
         if not self.index_path.is_file():
             raise FileNotFoundError(f"Knowledge graph index does not exist: {self.index_path}")
         self._local = threading.local()
+        self._connections: dict[int, sqlite3.Connection] = {}
+        self._connections_lock = threading.RLock()
+        self._closed = False
         self.metadata = self._load_metadata()
         self._validate_metadata(
             expected_nodes_path,
@@ -232,9 +235,15 @@ class SQLiteKnowledgeGraphRepository:
         return [_evidence_from_row(row) for row in rows]
 
     def close(self) -> None:
-        connection = getattr(self._local, "connection", None)
-        if connection is not None:
+        with self._connections_lock:
+            if self._closed:
+                return
+            self._closed = True
+            connections = tuple(self._connections.values())
+            self._connections.clear()
+        for connection in connections:
             connection.close()
+        if hasattr(self._local, "connection"):
             del self._local.connection
 
     def _neighbors_one_direction(
@@ -276,6 +285,8 @@ class SQLiteKnowledgeGraphRepository:
         ]
 
     def _connection(self) -> sqlite3.Connection:
+        if self._closed:
+            raise RuntimeError("SQLite knowledge graph repository is closed")
         connection = getattr(self._local, "connection", None)
         if connection is None:
             # SCALING: immutable thread-local readers avoid a global connection lock.
@@ -284,6 +295,12 @@ class SQLiteKnowledgeGraphRepository:
             connection.row_factory = sqlite3.Row
             connection.execute("PRAGMA query_only = ON")
             self._local.connection = connection
+            with self._connections_lock:
+                if self._closed:
+                    connection.close()
+                    del self._local.connection
+                    raise RuntimeError("SQLite knowledge graph repository is closed")
+                self._connections[threading.get_ident()] = connection
         return connection
 
     def _load_metadata(self) -> dict[str, str]:

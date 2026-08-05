@@ -109,3 +109,11 @@ class DenseRetrieverAdapter:
             )
         # INVARIANT: a dense hit never bypasses terminology type/code-system constraints.
         return output[:limit]
+
+    def close(self) -> None:
+        """Close the encoder and vector index if either owns external resources."""
+
+        for resource in (self.encoder, self.index):
+            close = getattr(resource, "close", None)
+            if callable(close):
+                close()

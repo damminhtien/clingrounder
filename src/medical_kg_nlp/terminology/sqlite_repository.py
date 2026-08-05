@@ -84,6 +84,9 @@ class SQLiteTerminologyRepository:
                 f"Terminology index does not exist: {self.index_path}. Build it explicitly first."
             )
         self._local = threading.local()
+        self._connections: dict[int, sqlite3.Connection] = {}
+        self._connections_lock = threading.RLock()
+        self._closed = False
         self.metadata = self._load_metadata()
         self._validate_metadata(
             expected_source_paths,
@@ -269,9 +272,15 @@ class SQLiteTerminologyRepository:
         )
 
     def close(self) -> None:
-        connection = getattr(self._local, "connection", None)
-        if connection is not None:
+        with self._connections_lock:
+            if self._closed:
+                return
+            self._closed = True
+            connections = tuple(self._connections.values())
+            self._connections.clear()
+        for connection in connections:
             connection.close()
+        if hasattr(self._local, "connection"):
             del self._local.connection
 
     def _alias_lookup(
@@ -298,6 +307,8 @@ class SQLiteTerminologyRepository:
         return [_entry_from_row(row) for row in rows]
 
     def _connection(self) -> sqlite3.Connection:
+        if self._closed:
+            raise RuntimeError("SQLite terminology repository is closed")
         connection = getattr(self._local, "connection", None)
         if connection is None:
             # SCALING: one immutable read connection per worker avoids a global lock and pool.
@@ -306,6 +317,12 @@ class SQLiteTerminologyRepository:
             connection.row_factory = sqlite3.Row
             connection.execute("PRAGMA query_only = ON")
             self._local.connection = connection
+            with self._connections_lock:
+                if self._closed:
+                    connection.close()
+                    del self._local.connection
+                    raise RuntimeError("SQLite terminology repository is closed")
+                self._connections[threading.get_ident()] = connection
         return connection
 
     def _load_metadata(self) -> dict[str, str]:

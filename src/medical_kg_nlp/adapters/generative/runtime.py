@@ -178,6 +178,15 @@ class TransformersCausalLMRuntime:
             generated = model.generate(**model_inputs, **generation_kwargs)
         return str(tokenizer.decode(generated[0][prompt_length:], skip_special_tokens=True))
 
+    def close(self) -> None:
+        """Release model, tokenizer, and accelerator references deterministically."""
+
+        if self._model is not None and callable(getattr(self._model, "cpu", None)):
+            self._model.cpu()
+        self._model = None
+        self._tokenizer = None
+        self._torch = None
+
     def _load(self) -> tuple[Any, Any, Any]:
         if self._model is not None:
             return self._torch, self._tokenizer, self._model

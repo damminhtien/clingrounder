@@ -201,6 +201,25 @@ source, schema, and normalization fingerprints; runtime connections are read-onl
 Prototype tabular data remains Parquet/DuckDB-compatible. A graph database is deferred until
 interactive graph traversal becomes a real requirement.
 
+## Runtime Lifecycle
+
+`PipelineFactory.runtime_from_config()` is the managed entry point for long-running processes and
+CLI boundaries. It returns a `PipelineRuntime` whose context manager owns the composed
+`PipelineRunner` and expensive child resources. Shutdown is idempotent and runs after worker pools
+have stopped; child repositories, vector indexes, model adapters, and thread-local SQLite
+connections are released in reverse composition order.
+
+```python
+with PipelineFactory.runtime_from_config(config) as runtime:
+    prediction = runtime.runner.process_document(document)
+```
+
+`PipelineFactory.from_config()` remains available for short-lived compatibility code. The returned
+runner is still closeable, but callers that retain it must call `runner.close()`. SQLite
+repositories keep a registry of thread-local read connections so shutdown closes connections
+created by worker threads, not only the connection of the closing thread. Model adapters release
+their lazy model/tokenizer references without relying on interpreter shutdown.
+
 ## Agentic Workflow
 
 Agents should read `AGENTS.md`, then the smallest relevant docs and modules. Work should be split by

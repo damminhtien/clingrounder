@@ -29,7 +29,7 @@ from medical_kg_nlp.pipeline.profile import (
     ProfileMaturity,
 )
 from medical_kg_nlp.pipeline.runner import PipelineRunResult, PipelineRunner
-from medical_kg_nlp.pipeline.runtime import RuntimeCapabilities
+from medical_kg_nlp.pipeline.runtime import Closable, PipelineRuntime, RuntimeCapabilities
 from medical_kg_nlp.pipeline.tracing import PipelineTrace, StageMeasurement
 
 __all__ = [
@@ -43,6 +43,8 @@ __all__ = [
     "ListwiseRerankerModelConfig",
     "PipelineModelConfig",
     "PipelineOptions",
+    "PipelineRuntime",
+    "Closable",
     "BatchCandidateRerankerPort",
     "BatchCandidateRetrieverPort",
     "CandidateRerankRequest",

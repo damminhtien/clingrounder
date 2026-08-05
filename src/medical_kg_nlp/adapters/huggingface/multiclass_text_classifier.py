@@ -59,6 +59,17 @@ class HuggingFaceMulticlassTextClassifierAdapter:
             for row in rows
         )
 
+    def close(self) -> None:
+        """Release the lazy classifier runtime."""
+
+        loaded = self._loaded
+        if loaded is None:
+            return
+        model = loaded[2]
+        if callable(getattr(model, "cpu", None)):
+            model.cpu()
+        self._loaded = None
+
     def _score_texts(self, texts: Sequence[str]) -> list[list[float]]:
         torch, tokenizer, model = self._runtime()
         label_index = _model_label_index(model, self.labels)

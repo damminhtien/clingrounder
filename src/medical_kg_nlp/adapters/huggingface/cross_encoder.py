@@ -112,6 +112,17 @@ class HuggingFaceCrossEncoderAdapter:
             "model_forward_passes": self._model_forward_passes,
         }
 
+    def close(self) -> None:
+        """Release model references and move a loaded model off accelerator memory."""
+
+        loaded = self._loaded
+        if loaded is None:
+            return
+        model = loaded[2]
+        if callable(getattr(model, "cpu", None)):
+            model.cpu()
+        self._loaded = None
+
     def _prepare_candidates(self, request: CandidateRerankRequest) -> list[Candidate]:
         if self.base_reranker is None:
             return list(request.candidates)

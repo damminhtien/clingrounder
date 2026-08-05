@@ -43,6 +43,7 @@ from medical_kg_nlp.pipeline.model_config import PipelineModelConfig
 from medical_kg_nlp.pipeline.options import PipelineOptions
 from medical_kg_nlp.pipeline.ports import CandidateRerankerPort, EntityExtractorPort
 from medical_kg_nlp.pipeline.runner import PipelineRunner
+from medical_kg_nlp.pipeline.runtime import Closable, PipelineRuntime
 from medical_kg_nlp.preprocessing.normalizer import (
     DEFAULT_NORMALIZATION_CONTRACT,
     NormalizationContract,
@@ -442,7 +443,29 @@ class PipelineFactory:
             normalization_contract=resolved.normalization_contract,
             pipeline_version=resolved.pipeline_version,
         )
-        return PipelineRunner(components)
+        resources = _unique_closables(
+            (
+                terminology_repository,
+                knowledge_graph_repository,
+                entity_extractor,
+                dense_retriever,
+                candidate_reranker,
+                document_candidate_reranker,
+            )
+        )
+        runner = PipelineRunner(components)
+        runner.attach_resources(resources)
+        return runner
+
+    @classmethod
+    def runtime_from_config(
+        cls,
+        config: PipelineFactoryConfig | Mapping[str, object] | None = None,
+    ) -> PipelineRuntime:
+        """Build an explicitly owned runtime for long-lived and CLI execution."""
+
+        runner = cls.from_config(config)
+        return PipelineRuntime(runner, runner.resources)
 
     @staticmethod
     def _resolve(
@@ -461,6 +484,20 @@ def _mapping(value: object, name: str) -> dict[str, object]:
     if not isinstance(value, Mapping):
         raise ValueError(f"{name} must be a mapping")
     return {str(key): item for key, item in value.items()}
+
+
+def _unique_closables(values: tuple[object, ...]) -> tuple[Closable, ...]:
+    """Collect closeable composition resources without imposing ownership on pure adapters."""
+
+    output: list[Closable] = []
+    seen: set[int] = set()
+    for value in values:
+        close = getattr(value, "close", None)
+        if not callable(close) or id(value) in seen:
+            continue
+        seen.add(id(value))
+        output.append(value)  # type: ignore[arg-type]
+    return tuple(output)
 
 
 def _string(payload: Mapping[str, object], key: str, default: str) -> str:

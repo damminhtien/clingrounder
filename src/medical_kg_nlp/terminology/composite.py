@@ -44,6 +44,16 @@ class CompositeTerminologyRepository:
 
         return any(repository.contains(code_system, code) for repository in self.repositories)
 
+    def close(self) -> None:
+        """Close child repositories in reverse composition order."""
+
+        seen: set[int] = set()
+        for repository in reversed(self.repositories):
+            close = getattr(repository, "close", None)
+            if callable(close) and id(repository) not in seen:
+                seen.add(id(repository))
+                close()
+
     def exact_lookup(
         self,
         mention: str,

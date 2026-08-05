@@ -46,3 +46,10 @@ class MedicationMentionEntityExtractorAdapter:
                 # the model's original drug span.
                 entity.medication_mention.validate_offsets(source_text, entity.span)
         return entities
+
+    def close(self) -> None:
+        """Close the wrapped extractor when it owns a model runtime."""
+
+        close = getattr(self.extractor, "close", None)
+        if callable(close):
+            close()

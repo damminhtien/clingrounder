@@ -217,6 +217,11 @@ class FaissSynonymVectorIndex:
             )[:limit]
         ]
 
+    def close(self) -> None:
+        """Release loaded FAISS shard objects while retaining manifest metadata."""
+
+        self._loaded.clear()
+
     def _load_shard(
         self,
         shard: dict[str, str],

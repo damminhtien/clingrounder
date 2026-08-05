@@ -14,7 +14,7 @@ from medical_kg_nlp.pipeline.ports import (
     CandidateRetrievalRequest,
 )
 from medical_kg_nlp.pipeline.tracing import PipelineTrace
-from medical_kg_nlp.pipeline.runtime import RuntimeCapabilities
+from medical_kg_nlp.pipeline.runtime import Closable, RuntimeCapabilities
 from medical_kg_nlp.preprocessing.section_splitter import split_sections
 from medical_kg_nlp.preprocessing.sentence_splitter import split_sentences
 from medical_kg_nlp.schema.annotation import (
@@ -50,6 +50,36 @@ class PipelineRunner:
     def __init__(self, components: PipelineComponents) -> None:
         self.components = components
         self.options = components.options
+        self._resources: tuple[Closable, ...] = ()
+        self._closed = False
+
+    def attach_resources(self, resources: tuple[Closable, ...]) -> None:
+        """Attach composition-owned resources without changing the runner contract."""
+
+        if self._closed:
+            raise RuntimeError("Cannot attach resources to a closed PipelineRunner")
+        if self._resources:
+            raise RuntimeError("PipelineRunner resources are already attached")
+        self._resources = resources
+
+    @property
+    def resources(self) -> tuple[Closable, ...]:
+        """Expose immutable composition resources to :class:`PipelineRuntime`."""
+
+        return self._resources
+
+    def close(self) -> None:
+        """Close composed resources in reverse order; repeated calls are harmless."""
+
+        if self._closed:
+            return
+        self._closed = True
+        seen: set[int] = set()
+        for resource in reversed(self._resources):
+            if id(resource) in seen:
+                continue
+            seen.add(id(resource))
+            resource.close()
 
     @property
     def runtime_capabilities(self) -> RuntimeCapabilities:

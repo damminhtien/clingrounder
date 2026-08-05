@@ -176,6 +176,14 @@ class CachedTerminologyRepository:
             self._hits = 0
             self._misses = 0
 
+    def close(self) -> None:
+        """Clear cache state and close the wrapped repository when it owns resources."""
+
+        self.clear()
+        close = getattr(self.repository, "close", None)
+        if callable(close):
+            close()
+
     def _cached_query(
         self,
         operation: str,

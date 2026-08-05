@@ -131,6 +131,17 @@ class HuggingFaceTokenClassifierAdapter:
                     )
         return predictions
 
+    def close(self) -> None:
+        """Release the lazy model/tokenizer runtime if it was loaded."""
+
+        loaded = self._loaded
+        if loaded is None:
+            return
+        model = loaded[2]
+        if callable(getattr(model, "cpu", None)):
+            model.cpu()
+        self._loaded = None
+
     def _runtime(self) -> tuple[Any, Any, Any]:
         if self._loaded is None:
             self._loaded = _load_runtime(
