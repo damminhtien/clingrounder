@@ -1,0 +1,10 @@
+schema_version: medical-kg.model-governance.v1
+model_id: local-or-huggingface/model
+revision: immutable-revision-or-commit
+training_data_description: Describe licensed sources, language, and split policy.
+intended_use: Research and evaluation of clinical NLP extraction and retrieval.
+excluded_use: Not for diagnosis, triage, prescribing, or unsupervised clinical decisions.
+evaluation_summary: Record dataset fingerprints, metrics, and benchmark command.
+known_limitations: Record language, specialty, calibration, and distribution limitations.
+approval_status: unreviewed
+rollback_model: null

@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 
 from medical_kg_nlp.pipeline.options import PipelineOptions
 from medical_kg_nlp.pipeline.runtime import RuntimeCapabilities
+from medical_kg_nlp.governance.audit import AuditSink, NoOpAuditSink
 from medical_kg_nlp.pipeline.tracing import NoOpPipelineObserver, PipelineObserverPort
 from medical_kg_nlp.pipeline.ports import (
     AssertionClassifierPort,
@@ -50,6 +51,7 @@ class PipelineComponents:
     backend: str = "local"
     worker: str = "main"
     trace_include_error_messages: bool = False
+    audit_sink: AuditSink = field(default_factory=NoOpAuditSink)
 
     def __post_init__(self) -> None:
         if self.options.enable_context and self.assertion_classifier is None:

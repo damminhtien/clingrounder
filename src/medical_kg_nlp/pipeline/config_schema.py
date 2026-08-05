@@ -32,6 +32,13 @@ _TERMINOLOGY_KEYS = {
     "false_positive_path",
 }
 
+_GOVERNANCE_KEYS = {
+    "data",
+    "allowed_artifact_roots",
+    "artifact_allowlist",
+    "local_files_only",
+}
+
 _PIPELINE_KEYS = {
     "version",
     "max_candidates",
@@ -132,6 +139,7 @@ def validate_pipeline_mapping(payload: Mapping[str, object]) -> None:
             "models",
             "normalization",
             "provenance",
+            "governance",
             *_BENCHMARK_KEYS,
         },
         "",
@@ -139,11 +147,30 @@ def validate_pipeline_mapping(payload: Mapping[str, object]) -> None:
     for name, allowed in (
         ("terminology", _TERMINOLOGY_KEYS),
         ("pipeline", _PIPELINE_KEYS),
+        ("governance", _GOVERNANCE_KEYS),
     ):
         value = payload.get(name)
         if value is not None:
             mapping = _check_mapping(value, name)
             _check_keys(mapping, allowed, name)
+    governance = payload.get("governance")
+    if governance is not None:
+        governance_mapping = _check_mapping(governance, "governance")
+        data = governance_mapping.get("data")
+        if data is not None:
+            data_mapping = _check_mapping(data, "governance.data")
+            _check_keys(
+                data_mapping,
+                {
+                    "logging_level",
+                    "text_retention",
+                    "trace_retention",
+                    "hash_document_ids",
+                    "metadata_allowlist",
+                    "deletion_behavior",
+                },
+                "governance.data",
+            )
 
     models = payload.get("models")
     if models is not None:

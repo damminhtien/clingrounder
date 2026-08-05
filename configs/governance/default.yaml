@@ -1,0 +1,12 @@
+schema_version: medical-kg.governance.v1
+governance:
+  local_files_only: true
+  allowed_artifact_roots: [./data, ./.cache/models]
+  artifact_allowlist: []
+  data:
+    logging_level: WARNING
+    text_retention: none
+    trace_retention: memory_only
+    hash_document_ids: true
+    metadata_allowlist: [language, source, note_type]
+    deletion_behavior: best_effort_unlink

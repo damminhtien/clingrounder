@@ -1,25 +1,32 @@
-"""Repository governance contracts for safe, reproducible publication."""
+"""Security, provenance, and data-handling controls for local runtimes."""
 
-from medical_kg_nlp.governance.public_release import (
-    LocalArtifactInventory,
-    LocalArtifactRecord,
-    PublicationDisposition,
-    PublicRepositoryPolicy,
-    PublicReleaseReport,
-    audit_public_repository,
-    build_local_artifact_inventory,
-    load_public_repository_policy,
-    report_json,
+from medical_kg_nlp.governance.artifacts import (
+    ArtifactVerificationError,
+    fingerprint_artifact,
+    safe_artifact_path,
+    secure_temporary_path,
+    verify_artifact,
 )
+from medical_kg_nlp.governance.audit import (
+    AuditEvent,
+    AuditSink,
+    InMemoryAuditSink,
+    NoOpAuditSink,
+)
+from medical_kg_nlp.governance.models import ModelGovernanceMetadata
+from medical_kg_nlp.governance.policy import DataPolicy, GovernancePolicy
 
 __all__ = [
-    "LocalArtifactInventory",
-    "LocalArtifactRecord",
-    "PublicationDisposition",
-    "PublicRepositoryPolicy",
-    "PublicReleaseReport",
-    "audit_public_repository",
-    "build_local_artifact_inventory",
-    "load_public_repository_policy",
-    "report_json",
+    "ArtifactVerificationError",
+    "AuditEvent",
+    "AuditSink",
+    "DataPolicy",
+    "GovernancePolicy",
+    "InMemoryAuditSink",
+    "NoOpAuditSink",
+    "ModelGovernanceMetadata",
+    "fingerprint_artifact",
+    "safe_artifact_path",
+    "secure_temporary_path",
+    "verify_artifact",
 ]

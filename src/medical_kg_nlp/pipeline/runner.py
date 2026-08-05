@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from medical_kg_nlp.governance.audit import AuditEvent
 
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.pipeline.components import PipelineComponents
@@ -26,6 +27,7 @@ from medical_kg_nlp.schema.document import ClinicalDocument, Section, Sentence
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.types import CodeSystem
 from medical_kg_nlp.schema.validator import PredictionValidator
+from medical_kg_nlp.utils.hashing import sha256_text
 from medical_kg_nlp.utils.text import text_window
 from medical_kg_nlp.validation.profiles import (
     ValidationProfile,
@@ -108,6 +110,16 @@ class PipelineRunner:
         return self.process_document_with_trace(document).prediction
 
     def process_document_with_trace(self, document: ClinicalDocument) -> PipelineRunResult:
+        self.components.audit_sink.emit(
+            AuditEvent(
+                "prediction",
+                document_id_hash=sha256_text(document.document_id),
+                profile_fingerprint=self.components.configuration_fingerprint,
+                model_revision=self.components.model_revision,
+                terminology_fingerprint=self.components.terminology_fingerprint,
+                details={"document_length": str(len(document.text))},
+            )
+        )
         trace = PipelineTrace(
             document_id=document.document_id,
             observer=self.components.observer,
@@ -122,6 +134,15 @@ class PipelineRunner:
         try:
             return self._process_document_with_trace(document, trace)
         except BaseException as error:
+            self.components.audit_sink.emit(
+                AuditEvent(
+                    "validation_failure",
+                    outcome="failure",
+                    document_id_hash=sha256_text(document.document_id),
+                    profile_fingerprint=self.components.configuration_fingerprint,
+                    details={"error_type": type(error).__name__},
+                )
+            )
             trace.mark_finished(success=False)
             trace.attach_to(error)
             raise

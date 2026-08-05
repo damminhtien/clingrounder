@@ -6,6 +6,8 @@ from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field
 import hashlib
 import json
+from pathlib import Path
+from typing import Any
 
 from medical_kg_nlp.adapters.rules import (
     DictionaryCandidateAdapter,
@@ -25,6 +27,8 @@ from medical_kg_nlp.adapters.huggingface import (
     HuggingFaceTokenClassifierAdapter,
 )
 from medical_kg_nlp.adapters.medication import MedicationMentionEntityExtractorAdapter
+from medical_kg_nlp.governance import GovernancePolicy, fingerprint_artifact, safe_artifact_path, verify_artifact
+from medical_kg_nlp.governance.audit import AuditEvent, InMemoryAuditSink
 from medical_kg_nlp.context.assertion import AssertionClassifier
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.merge import merge_concept_entries
@@ -97,6 +101,7 @@ class PipelineFactoryConfig:
     options: PipelineOptions = field(default_factory=PipelineOptions)
     models: PipelineModelConfig = field(default_factory=PipelineModelConfig)
     normalization_contract: NormalizationContract = DEFAULT_NORMALIZATION_CONTRACT
+    governance: GovernancePolicy = GovernancePolicy()
 
     def __post_init__(self) -> None:
         if self.terminology_query_cache_size < 0:
@@ -109,6 +114,9 @@ class PipelineFactoryConfig:
         pipeline = _mapping(payload.get("pipeline"), "pipeline")
         models = _mapping(payload.get("models"), "models")
         normalization = _mapping(payload.get("normalization"), "normalization")
+        governance_payload = payload.get("governance", {})
+        if not isinstance(governance_payload, Mapping):
+            raise ValueError("governance must be a mapping")
         normalization_version = _string(
             normalization,
             "version",
@@ -185,6 +193,7 @@ class PipelineFactoryConfig:
             options=PipelineOptions.from_mapping(pipeline),
             models=PipelineModelConfig.from_mapping(models),
             normalization_contract=NormalizationContract(version=normalization_version),
+            governance=GovernancePolicy.from_mapping(governance_payload),
         )
 
 
@@ -197,6 +206,14 @@ class PipelineFactory:
         config: PipelineFactoryConfig | Mapping[str, object] | None = None,
     ) -> PipelineRunner:
         resolved = cls._resolve(config)
+        _verify_configured_artifacts(resolved)
+        audit_sink = InMemoryAuditSink()
+        audit_sink.emit(
+            AuditEvent(
+                "profile_load",
+                profile_fingerprint=_configuration_fingerprint(resolved),
+            )
+        )
         recognition_entries = DictionaryStore.load_entries_jsonl(
             resolved.recognition_dictionary_path,
             alias_overlay_path=resolved.alias_overlay_path,
@@ -219,6 +236,10 @@ class PipelineFactory:
             else ()
         )
         terminology_repository: TerminologyRepository = recognition_repository
+        terminology_fingerprint = _terminology_fingerprint(recognition_repository, resolved)
+        audit_sink.emit(
+            AuditEvent("terminology_load", artifact_sha256=terminology_fingerprint)
+        )
         uses_sqlite_normalization = bool(resolved.normalization_dictionary_paths)
         if resolved.normalization_dictionary_paths:
             # SCALING: canonical releases remain separate immutable files; the composition root
@@ -466,7 +487,21 @@ class PipelineFactory:
             ),
             model_revision=_model_revisions(resolved),
             backend="local",
+            audit_sink=audit_sink,
         )
+        for model in _model_configs(resolved):
+            model_fingerprint, fingerprint_kind = _model_fingerprint(model)
+            audit_sink.emit(
+                AuditEvent(
+                    "model_load",
+                    model_revision=model.revision,
+                    details={
+                        "model_id": model.model_id,
+                        "fingerprint": model_fingerprint,
+                        "fingerprint_kind": fingerprint_kind,
+                    },
+                )
+            )
         resources = _unique_closables(
             (
                 terminology_repository,
@@ -526,7 +561,26 @@ def _terminology_fingerprint(
             value = metadata.get(key)
             if isinstance(value, str) and value:
                 return value
-    return config.synonym_index_terminology_fingerprint or "unknown"
+    if config.synonym_index_terminology_fingerprint:
+        return config.synonym_index_terminology_fingerprint
+    paths = (
+        config.recognition_dictionary_path,
+        config.abbreviation_path,
+        config.alias_overlay_path,
+        *config.additional_recognition_dictionary_paths,
+        *config.normalization_dictionary_paths,
+    )
+    digests: list[str] = []
+    for path in paths:
+        if path is None:
+            continue
+        try:
+            digests.append(fingerprint_artifact(path))
+        except (OSError, ValueError):
+            return "unknown"
+    if not digests:
+        return "unknown"
+    return hashlib.sha256("\n".join(digests).encode("ascii")).hexdigest()
 
 
 def _model_revisions(config: PipelineFactoryConfig) -> str | None:
@@ -541,6 +595,46 @@ def _model_revisions(config: PipelineFactoryConfig) -> str | None:
     if config.models.candidate_listwise_reranker is not None:
         revisions.append(config.models.candidate_listwise_reranker.model.revision)
     return ",".join(revisions) if revisions else None
+
+
+def _model_configs(config: PipelineFactoryConfig) -> tuple[Any, ...]:
+    values = [
+        model
+        for model in (
+            config.models.entity_extractor,
+            config.models.candidate_reranker,
+            config.models.candidate_dense_encoder,
+        )
+        if model is not None
+    ]
+    if config.models.candidate_listwise_reranker is not None:
+        values.append(config.models.candidate_listwise_reranker.model)
+    return tuple(values)
+
+
+def _model_fingerprint(model: Any) -> tuple[str, str]:
+    """Fingerprint local model bytes or the pinned remote identity, never model output."""
+
+    path = Path(model.model_id).expanduser()
+    if path.is_file() or path.is_dir():
+        return fingerprint_artifact(path), "local_artifact"
+    identity = f"{model.model_id}@{model.revision}"
+    return hashlib.sha256(identity.encode("utf-8")).hexdigest(), "pinned_identity"
+
+
+def _verify_configured_artifacts(config: PipelineFactoryConfig) -> None:
+    """Apply explicit allowlist checks before any model or terminology load."""
+
+    if not config.governance.artifact_allowlist:
+        return
+    if not config.governance.allowed_artifact_roots:
+        raise ValueError("artifact_allowlist requires governance.allowed_artifact_roots")
+    for raw_path, expected_sha256 in config.governance.artifact_allowlist:
+        path = safe_artifact_path(
+            raw_path,
+            allowed_roots=config.governance.allowed_artifact_roots,
+        )
+        verify_artifact(path, expected_sha256)
 
 
 

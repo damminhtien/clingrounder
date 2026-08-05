@@ -150,6 +150,7 @@ class ResolvedPipelineConfig:
                     },
                     "models": asdict(config.models),
                     "normalization_contract": asdict(config.normalization_contract),
+                    "governance": asdict(config.governance),
                 }
             ),
             "origins": _origin_report(self.payload),
@@ -257,6 +258,33 @@ def _map_declared_paths(
         models[block_name] = block
     if models or "models" in output:
         output["models"] = models
+    governance = _optional_mapping(output.get("governance"), "governance")
+    roots = governance.get("allowed_artifact_roots")
+    if roots is not None:
+        if not isinstance(roots, list | tuple):
+            raise ValueError("governance.allowed_artifact_roots must be an array")
+        governance["allowed_artifact_roots"] = [
+            transform(_path_string(item, "governance.allowed_artifact_roots"))
+            for item in roots
+        ]
+    allowlist = governance.get("artifact_allowlist")
+    if allowlist is not None:
+        if not isinstance(allowlist, list | tuple):
+            raise ValueError("governance.artifact_allowlist must be an array")
+        governance["artifact_allowlist"] = [
+            {
+                **_required_mapping(item, "governance.artifact_allowlist[]"),
+                "path": transform(
+                    _path_string(
+                        _required_mapping(item, "governance.artifact_allowlist[]")["path"],
+                        "governance.artifact_allowlist[].path",
+                    )
+                ),
+            }
+            for item in allowlist
+        ]
+    if governance or "governance" in output:
+        output["governance"] = governance
     return output
 
 
@@ -301,6 +329,17 @@ def _resolve_factory_defaults(
         ),
         abbreviation_path=_resolve_path(base_dir, config.abbreviation_path),
         alias_overlay_path=_resolve_optional(base_dir, config.alias_overlay_path),
+        governance=replace(
+            config.governance,
+            allowed_artifact_roots=tuple(
+                _resolve_path(base_dir, value)
+                for value in config.governance.allowed_artifact_roots
+            ),
+            artifact_allowlist=tuple(
+                (_resolve_path(base_dir, path), digest)
+                for path, digest in config.governance.artifact_allowlist
+            ),
+        ),
     )
 
 
@@ -356,6 +395,7 @@ def _validate_top_level_keys(payload: Mapping[str, object]) -> None:
         "pipeline",
         "models",
         "normalization",
+        "governance",
         # Historical benchmark profiles retain immutable experiment metadata.
         "provenance",
     }

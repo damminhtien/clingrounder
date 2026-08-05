@@ -80,3 +80,42 @@ jobs:
 
       - name: Public repository audit
         run: .venv/bin/medical-kg release audit --root .
+
+  security-artifacts:
+    name: Dependency, secret, and SBOM artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install locked environment and scanners
+        run: |
+          python -m pip install "uv==$UV_VERSION" pip-audit cyclonedx-bom detect-secrets
+          uv sync --frozen --extra dev --extra data --python "$pythonLocation/bin/python"
+
+      - name: Prepare security artifact directory
+        run: mkdir -p artifacts/security
+
+      - name: Export locked dependencies
+        run: uv export --frozen --format requirements-txt --output-file artifacts/security/requirements.txt
+
+      - name: Dependency vulnerability scan
+        run: pip-audit --requirement artifacts/security/requirements.txt --format json --output artifacts/security/pip-audit.json
+
+      - name: Generate SBOM
+        run: cyclonedx-py environment --of JSON --output-file artifacts/security/sbom.json
+
+      - name: Secret scan
+        run: detect-secrets scan --all-files --exclude-files '(^|/)(.git|.venv|.cache|outputs)/' > artifacts/security/secrets.json
+
+      - name: Upload security artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: security-artifacts-${{ github.sha }}
+          path: artifacts/security
