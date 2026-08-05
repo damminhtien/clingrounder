@@ -8,32 +8,26 @@ from medical_kg_nlp.governance.audit import AuditEvent
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.pipeline.components import PipelineComponents
 from medical_kg_nlp.pipeline.ports import (
-    BatchAssertionClassifierPort,
     BatchCandidateRerankerPort,
     BatchCandidateRetrieverPort,
     CandidateRerankRequest,
     CandidateRetrievalRequest,
 )
-from medical_kg_nlp.pipeline.tracing import PipelineTrace
 from medical_kg_nlp.pipeline.runtime import Closable, RuntimeCapabilities
-from medical_kg_nlp.preprocessing.section_rules import split_sections
-from medical_kg_nlp.preprocessing.sentence_splitter import split_sentences
-from medical_kg_nlp.schema.annotation import (
-    AssertionEvidence,
-    AssertionFeatures,
-    EntityAnnotation,
+from medical_kg_nlp.pipeline.stages import (
+    AssertionClassificationStage,
+    DocumentPreparationStage,
+    EntityExtractionStage,
+    PredictionValidationStage,
 )
-from medical_kg_nlp.schema.document import ClinicalDocument, Section, Sentence
+from medical_kg_nlp.pipeline.tracing import PipelineTrace
+from medical_kg_nlp.schema.annotation import EntityAnnotation
+from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.types import CodeSystem
 from medical_kg_nlp.schema.validator import PredictionValidator
 from medical_kg_nlp.utils.hashing import sha256_text
 from medical_kg_nlp.utils.text import text_window
-from medical_kg_nlp.validation.profiles import (
-    ValidationProfile,
-    ValidationSeverity,
-    apply_validation_profile,
-)
 
 __all__ = ["PipelineRunResult", "PipelineRunner"]
 
@@ -54,6 +48,12 @@ class PipelineRunner:
         self.options = components.options
         self._resources: tuple[Closable, ...] = ()
         self._closed = False
+        self._document_stage = DocumentPreparationStage()
+        self._entity_stage = EntityExtractionStage(components.entity_extractor)
+        self._assertion_stage = AssertionClassificationStage(components.assertion_classifier)
+        self._validation_stage = PredictionValidationStage(
+            PredictionValidator(components.terminology_repository)
+        )
 
     def attach_resources(self, resources: tuple[Closable, ...]) -> None:
         """Attach composition-owned resources without changing the runner contract."""
@@ -153,97 +153,38 @@ class PipelineRunner:
         trace: PipelineTrace,
     ) -> PipelineRunResult:
         with trace.stage("document_loader") as counters:
-            loaded_document = self._load_document(document)
+            loaded_document = document
             counters["documents"] = 1
             counters["characters"] = len(loaded_document.text)
             counters["metadata_fields"] = len(loaded_document.metadata)
 
         with trace.stage("lookup_normalization_diagnostics") as counters:
             if self.options.enable_lookup_normalization_diagnostics:
-                mapped_text = self.components.normalization_contract.prepare(loaded_document.text)
-                counters["original_characters"] = len(mapped_text.original)
-                counters["normalized_characters"] = len(mapped_text.normalized)
-                counters["offset_map_entries"] = len(mapped_text.normalized_to_original)
-                # INVARIANT: every downstream span still addresses the immutable source text.
-                counters["source_coordinate_spans"] = 1
-                counters["normalized_text_used_downstream"] = 0
+                counters.update(
+                    self._document_stage.diagnostics(
+                        loaded_document.text,
+                        self.components.normalization_contract,
+                    )
+                )
             else:
                 counters["skipped"] = 1
 
         with trace.stage("section_detection") as counters:
-            sections = self._sections(loaded_document.text)
+            structure = self._document_stage.structure(loaded_document.text)
+            sections = list(structure.sections)
             counters["sections"] = len(sections)
 
         with trace.stage("sentence_splitting") as counters:
-            sentences = self._sentences_from_sections(sections, loaded_document.text)
+            sentences = list(structure.sentences)
             counters["sentences"] = len(sentences)
 
         with trace.stage("entity_extraction") as counters:
-            entities = self.components.entity_extractor.extract(loaded_document.text)
+            entities = self._entity_stage.run(loaded_document.text)
             counters["entities"] = len(entities)
 
         with trace.stage("context_assertion_classification") as counters:
             if self.options.enable_context:
-                classifier = self.components.assertion_classifier
-                if classifier is None:
-                    raise RuntimeError("Assertion classifier component is unavailable.")
-                classified_ids: set[str] = set()
-                if isinstance(classifier, BatchAssertionClassifierPort):
-                    for sentence in sentences:
-                        sentence_entities = [
-                            entity
-                            for entity in entities
-                            if (
-                                sentence.span[0]
-                                <= entity.span[0]
-                                < entity.span[1]
-                                <= sentence.span[1]
-                            )
-                        ]
-                        if not sentence_entities:
-                            continue
-                        decisions, graph = classifier.classify_batch_with_graph(
-                            sentence_entities,
-                            sentence,
-                        )
-                        for entity in sentence_entities:
-                            features, evidence = decisions[entity.id]
-                            self._apply_assertion_decision(
-                                entity,
-                                features,
-                                evidence,
-                                counters,
-                            )
-                            classified_ids.add(entity.id)
-                        counters["context_graph_targets"] = (
-                            counters.get("context_graph_targets", 0)
-                            + len(graph.targets)
-                        )
-                        counters["context_graph_modifiers"] = (
-                            counters.get("context_graph_modifiers", 0)
-                            + len(graph.modifiers)
-                        )
-                        counters["context_graph_edges"] = (
-                            counters.get("context_graph_edges", 0)
-                            + len(graph.edges)
-                        )
-                for entity in entities:
-                    if entity.id in classified_ids:
-                        continue
-                    features, evidence = classifier.classify_features_with_evidence(
-                        entity,
-                        self._find_sentence(entity, sentences),
-                    )
-                    self._apply_assertion_decision(
-                        entity,
-                        features,
-                        evidence,
-                        counters,
-                    )
-                counters["classified_entities"] = len(entities)
-                counters["matched_rule_events"] = sum(
-                    count for key, count in counters.items() if key.startswith("rule_")
-                )
+                self._assertion_stage.run(entities, tuple(sentences), counters)
             else:
                 counters["skipped_entities"] = len(entities)
 
@@ -467,20 +408,12 @@ class PipelineRunner:
             counters["relations"] = len(prediction.relations)
 
         with trace.stage("prediction_validation") as counters:
-            terminology = self.components.terminology_repository
-            issues = PredictionValidator(terminology).validate_prediction(
+            validation = self._validation_stage.run(
                 prediction,
                 source_text=loaded_document.text,
             )
-            profiled_issues = apply_validation_profile(
-                issues,
-                ValidationProfile.CORE,
-            )
-            errors = [
-                item
-                for item in profiled_issues
-                if item.severity is ValidationSeverity.ERROR
-            ]
+            profiled_issues = list(validation.issues)
+            errors = list(validation.errors)
             counters["issues"] = len(profiled_issues)
             counters["errors"] = len(errors)
             counters["warnings"] = len(profiled_issues) - len(errors)
@@ -503,47 +436,6 @@ class PipelineRunner:
             assigned_codes=sum(entity.code is not None for entity in prediction.entities),
         )
         return PipelineRunResult(prediction=prediction, trace=trace)
-
-    @staticmethod
-    def _apply_assertion_decision(
-        entity: EntityAnnotation,
-        features: AssertionFeatures,
-        evidence: tuple[AssertionEvidence, ...],
-        counters: dict[str, int],
-    ) -> None:
-        entity.assertion_features = features
-        entity.assertion = features.primary()
-        entity.assertion_evidence = evidence
-        for item in evidence:
-            key = f"rule_{item.rule_id}"
-            counters[key] = counters.get(key, 0) + 1
-
-    @staticmethod
-    def _load_document(document: ClinicalDocument) -> ClinicalDocument:
-        return document
-
-    @staticmethod
-    def _sections(text: str) -> list[Section]:
-        return split_sections(text)
-
-    @staticmethod
-    def _sentences_from_sections(sections: list[Section], source_text: str) -> list[Sentence]:
-        sentences: list[Sentence] = []
-        for section in sections:
-            sentences.extend(
-                split_sentences(
-                    section.text, section_title=section.title, base_offset=section.span[0]
-                )
-            )
-        return sentences or [Sentence(span=(0, len(source_text)), text=source_text)]
-
-    @staticmethod
-    def _find_sentence(entity: EntityAnnotation, sentences: list[Sentence]) -> Sentence | None:
-        for sentence in sentences:
-            if sentence.span[0] <= entity.span[0] and entity.span[1] <= sentence.span[1]:
-                return sentence
-        return None
-
 
 def _linking_mention(source_text: str, entity: EntityAnnotation) -> str:
     medication = entity.medication_mention

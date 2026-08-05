@@ -33,6 +33,14 @@ from medical_kg_nlp.pipeline.profile import (
 )
 from medical_kg_nlp.pipeline.runner import PipelineRunResult, PipelineRunner
 from medical_kg_nlp.pipeline.runtime import Closable, PipelineRuntime, RuntimeCapabilities
+from medical_kg_nlp.pipeline.stages import (
+    AssertionClassificationStage,
+    DocumentPreparationStage,
+    DocumentStructure,
+    EntityExtractionStage,
+    PredictionValidationResult,
+    PredictionValidationStage,
+)
 from medical_kg_nlp.pipeline.tracing import (
     InMemoryPipelineObserver,
     NoOpPipelineObserver,
@@ -45,9 +53,13 @@ from medical_kg_nlp.pipeline.tracing import (
 __all__ = [
     "BatchCandidateRerankerPort",
     "BatchCandidateRetrieverPort",
+    "AssertionClassificationStage",
     "CandidateRerankRequest",
     "CandidateRetrievalRequest",
     "Closable",
+    "DocumentPreparationStage",
+    "DocumentStructure",
+    "EntityExtractionStage",
     "InMemoryPipelineObserver",
     "ListwiseRerankerModelConfig",
     "NoOpPipelineObserver",
@@ -67,6 +79,8 @@ __all__ = [
     "PipelineRunner",
     "PipelineRuntime",
     "PipelineTrace",
+    "PredictionValidationResult",
+    "PredictionValidationStage",
     "ProfileMaturity",
     "ResolvedPipelineConfig",
     "RuntimeCapabilities",
