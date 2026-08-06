@@ -1,6 +1,6 @@
-# Rule NER V2
+# Rule NER
 
-Rule NER V2 is the deterministic entity-extraction baseline. It is proposal-first:
+Rule NER is the deterministic entity-extraction baseline. It is proposal-first:
 
 ```text
 independent foundation proposals
@@ -82,8 +82,8 @@ uv run python scripts/benchmarks/phase1/mine_phase1_recognition_knowledge.py
 
 uv run medical-kg benchmark phase1 submission \
   --input-dir data/raw/input \
-  --output-dir outputs/phase1/rule_ner_v2_structured_symptom_boundary/output \
-  --zip outputs/phase1/rule_ner_v2_structured_symptom_boundary/output.zip \
+  --output-dir outputs/phase1/rule_ner_structured_symptom_boundary/output \
+  --zip outputs/phase1/rule_ner_structured_symptom_boundary/output.zip \
   --dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl \
   --pipeline-config configs/benchmarks/phase1/pipeline/rule_ner_mined_recognition.yaml \
   --assertion-policy empty \
@@ -92,10 +92,10 @@ uv run medical-kg benchmark phase1 submission \
   --workers 1
 
 uv run python scripts/benchmarks/phase1/analyze_phase1_entity_wer.py \
-  --pred outputs/phase1/rule_ner_v2_structured_symptom_boundary/output.zip \
-  --stage contextual_alias=outputs/phase1/rule_ner_v2_contextual_alias/output.zip \
+  --pred outputs/phase1/rule_ner_structured_symptom_boundary/output.zip \
+  --stage contextual_alias=outputs/phase1/rule_ner_contextual_alias/output.zip \
   --final-source-name structured_symptom_boundary \
-  --output-dir outputs/evaluation/rule_ner_v2_structured_symptom_boundary
+  --output-dir outputs/evaluation/rule_ner_structured_symptom_boundary
 ```
 
 The recognition mining command must reproduce content-addressed run

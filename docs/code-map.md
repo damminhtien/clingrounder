@@ -56,7 +56,7 @@ composition root that turns config into a runnable component graph.
 and boundary extractors emit immutable evidence before one global resolver chooses a non-overlapping
 set. Context may select only among proposed types, and every final span remains in raw coordinates.
 
-Start with [`rule-ner-v2.md`](rule-ner-v2.md). Useful searches:
+Start with [`rule-ner.md`](rule-ner.md). Useful searches:
 
 ```bash
 rg "class .*ProposalExtractor|EntityProposal" src/medical_kg_nlp/ner tests

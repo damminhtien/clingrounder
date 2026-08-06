@@ -227,7 +227,7 @@ The repository includes several independently testable research tracks:
 - **Data mining:** licensed connectors, immutable artifacts, parsers, deduplication, proposal
   labeling, review queues, coverage planning, and leakage-safe snapshots are reproducible stages.
 
-Start with [docs/rule-ner-v2.md](docs/rule-ner-v2.md),
+Start with [docs/rule-ner.md](docs/rule-ner.md),
 [docs/reference-implementations.md](docs/reference-implementations.md),
 [docs/data-mining.md](docs/data-mining.md), and
 [docs/mining-reproducibility.md](docs/mining-reproducibility.md).
