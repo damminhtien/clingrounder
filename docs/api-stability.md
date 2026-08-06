@@ -41,3 +41,34 @@ second implementation. New advanced symbols must be added to `pipeline/advanced.
 When removing an API, delete the implementation and its exports together, then update the migration
 documentation and tests in the same change. Do not keep a compatibility copy of a runner, factory,
 or retrieval path.
+
+## Configuration Ownership
+
+Reusable profiles group runtime policy by subsystem. The factory compiles these blocks into one
+immutable runtime policy before constructing components:
+
+```yaml
+pipeline:
+  context:
+    provider: rules
+    context_window: 80
+  linking:
+    provider: rules
+    candidate_sources: [exact, abbreviation, bm25]
+    reranker:
+      provider: rules
+  graph:
+    provider: disabled
+  relations:
+    provider: disabled
+    validate_with_kg: false
+  validation:
+    entities_with_kg: true
+    relations_with_kg: false
+  runtime:
+    backend: serial
+    workers: 1
+```
+
+Unknown nested keys fail before terminology or model resources are loaded. `compiled_options` in
+config inspection is diagnostic output only; callers should edit the subsystem blocks above.
