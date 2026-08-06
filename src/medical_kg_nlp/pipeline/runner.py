@@ -17,11 +17,14 @@ from medical_kg_nlp.pipeline.stages import (
     GraphEvidenceRerankingStage,
     LinkingContext,
     LinkingStageResult,
+    DocumentStructure,
     NormalizationAssignmentStage,
+    PreparedDocument,
     PredictionValidationStage,
     RelationExtractionStage,
 )
 from medical_kg_nlp.pipeline.tracing import PipelineTrace
+from medical_kg_nlp.schema.annotation import EntityAnnotation, RelationAnnotation
 from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.validator import PredictionValidator
@@ -166,9 +169,29 @@ class PipelineRunner:
         document: ClinicalDocument,
         trace: PipelineTrace,
     ) -> PipelineRunResult:
+        prepared = self._prepare_document(document, trace)
+        entities = self._extract_entities(prepared, trace)
+        self._link_entities(prepared, entities, trace)
+        entities = self._validate_entities(entities, trace)
+        relations = self._extract_relations(entities, prepared, trace)
+        prediction = self._build_prediction(prepared, entities, relations, trace)
+        self._validate_prediction(prediction, prepared, trace)
+        trace.mark_finished(
+            success=True,
+            entities=len(prediction.entities),
+            assigned_codes=sum(entity.code is not None for entity in prediction.entities),
+        )
+        return PipelineRunResult(prediction=prediction, trace=trace)
+
+    def _prepare_document(
+        self,
+        document: ClinicalDocument,
+        trace: PipelineTrace,
+    ) -> PreparedDocument:
+        """Load and segment a document while preserving the existing trace contract."""
+
         with trace.stage("document_loader") as counters:
-            prepared = self._document_stage.prepare(document)
-            loaded_document = prepared.document
+            loaded_document = document
             counters["documents"] = 1
             counters["characters"] = len(loaded_document.text)
             counters["metadata_fields"] = len(loaded_document.metadata)
@@ -185,23 +208,43 @@ class PipelineRunner:
                 counters["skipped"] = 1
 
         with trace.stage("section_detection") as counters:
-            structure = prepared.structure
-            sections = list(prepared.sections)
+            structure = self._document_stage.structure(loaded_document.text)
+            sections = list(structure.sections)
             counters["sections"] = len(sections)
 
         with trace.stage("sentence_splitting") as counters:
             sentences = list(structure.sentences)
             counters["sentences"] = len(sentences)
+        return PreparedDocument(
+            document=loaded_document,
+            structure=DocumentStructure(tuple(sections), tuple(sentences)),
+        )
+
+    def _extract_entities(
+        self,
+        prepared: PreparedDocument,
+        trace: PipelineTrace,
+    ) -> list[EntityAnnotation]:
+        """Extract raw-coordinate entities and apply optional context assertions."""
 
         with trace.stage("entity_extraction") as counters:
-            entities = self._entity_stage.run(loaded_document.text)
+            entities = self._entity_stage.run(prepared.document.text)
             counters["entities"] = len(entities)
 
         with trace.stage("context_assertion_classification") as counters:
             if self.options.enable_context:
-                self._assertion_stage.run(entities, tuple(sentences), counters)
+                self._assertion_stage.run(entities, prepared.sentences, counters)
             else:
                 counters["skipped_entities"] = len(entities)
+        return entities
+
+    def _link_entities(
+        self,
+        prepared: PreparedDocument,
+        entities: list[EntityAnnotation],
+        trace: PipelineTrace,
+    ) -> LinkingStageResult:
+        """Retrieve, rerank, and assign candidates without changing stage order."""
 
         linking = LinkingStageResult(
             context=LinkingContext(mentions_by_entity={}, contexts_by_entity={}),
@@ -210,7 +253,9 @@ class PipelineRunner:
         )
         with trace.stage("candidate_generation") as counters:
             if self.options.enable_linking:
-                generated = self._candidate_generation_stage.run(loaded_document.text, entities)
+                generated = self._candidate_generation_stage.run(
+                    prepared.document.text, entities
+                )
                 linking = LinkingStageResult(
                     context=LinkingContext(
                         mentions_by_entity=generated.mentions_by_entity,
@@ -246,7 +291,7 @@ class PipelineRunner:
                 reranked_candidates, graph_counters = self._graph_evidence_stage.run(
                     entities,
                     linking.reranked_candidates,
-                    sentences,
+                    list(prepared.sentences),
                     linking.context.mentions_by_entity,
                 )
                 linking = LinkingStageResult(
@@ -264,25 +309,41 @@ class PipelineRunner:
             if self.options.enable_linking:
                 counters.update(
                     self._assignment_stage.run(
-                        loaded_document.text,
+                        prepared.document.text,
                         entities,
                         linking.reranked_candidates,
                     )
                 )
             else:
                 counters["skipped_entities"] = len(entities)
+        return linking
+
+    def _validate_entities(
+        self,
+        entities: list[EntityAnnotation],
+        trace: PipelineTrace,
+    ) -> list[EntityAnnotation]:
+        """Run entity/terminology validation and preserve its trace counters."""
 
         with trace.stage("icd_rxnorm_umls_validation") as counters:
             if self.options.enable_entity_kg_validation:
                 entity_validation = self._entity_validation_stage.run(entities)
-                entities = entity_validation.entities
                 counters["issues"] = len(entity_validation.issues)
-            else:
-                counters["skipped_entities"] = len(entities)
+                return entity_validation.entities
+            counters["skipped_entities"] = len(entities)
+        return entities
+
+    def _extract_relations(
+        self,
+        entities: list[EntityAnnotation],
+        prepared: PreparedDocument,
+        trace: PipelineTrace,
+    ) -> list[RelationAnnotation]:
+        """Extract and validate relations after entity validation."""
 
         with trace.stage("relation_extraction") as counters:
             if self.options.enable_relations:
-                extracted = self._relation_stage.run(entities, sentences)
+                extracted = self._relation_stage.run(entities, list(prepared.sentences))
                 relations = extracted.relations
                 counters.update(extracted.counters)
             else:
@@ -299,22 +360,41 @@ class PipelineRunner:
                 counters["relations"] = len(relations)
             else:
                 counters["relations"] = len(relations)
+        return relations
+
+    def _build_prediction(
+        self,
+        prepared: PreparedDocument,
+        entities: list[EntityAnnotation],
+        relations: list[RelationAnnotation],
+        trace: PipelineTrace,
+    ) -> ClinicalPrediction:
+        """Construct the published prediction while retaining output counters."""
 
         with trace.stage("structured_json_output") as counters:
             prediction = ClinicalPrediction.from_text(
-                document_id=loaded_document.document_id,
-                text=loaded_document.text,
+                document_id=prepared.document.document_id,
+                text=prepared.document.text,
                 entities=entities,
                 relations=relations,
                 pipeline_version=self.components.pipeline_version,
             )
             counters["entities"] = len(prediction.entities)
             counters["relations"] = len(prediction.relations)
+        return prediction
+
+    def _validate_prediction(
+        self,
+        prediction: ClinicalPrediction,
+        prepared: PreparedDocument,
+        trace: PipelineTrace,
+    ) -> None:
+        """Apply final core validation and raise without discarding the partial trace."""
 
         with trace.stage("prediction_validation") as counters:
             validation = self._validation_stage.run(
                 prediction,
-                source_text=loaded_document.text,
+                source_text=prepared.document.text,
             )
             profiled_issues = list(validation.issues)
             errors = list(validation.errors)
@@ -327,16 +407,10 @@ class PipelineRunner:
                 key = f"validation_{item.issue.kind}"
                 counters[key] = counters.get(key, 0) + 1
             if errors:
-                # INVARIANT: component adapters cannot bypass offset, type/code-system,
-                # duplicate-ID, or relation safety by disabling optional KG stages.
+                # INVARIANT: adapters cannot bypass offset, type/code-system, duplicate-ID,
+                # or relation safety by disabling optional KG stages.
                 detail = "; ".join(
                     f"{item.issue.kind} at {item.issue.path}: {item.issue.message}"
                     for item in errors
                 )
                 raise ValueError(f"Core prediction validation failed: {detail}")
-        trace.mark_finished(
-            success=True,
-            entities=len(prediction.entities),
-            assigned_codes=sum(entity.code is not None for entity in prediction.entities),
-        )
-        return PipelineRunResult(prediction=prediction, trace=trace)
