@@ -1,15 +1,97 @@
-"""Advanced pipeline APIs.
-
-The implementation and export list live in :mod:`medical_kg_nlp.pipeline.advanced`.  Keeping
-this package initializer as a forwarding module prevents two competing public compositions from
-drifting apart while retaining the conventional ``medical_kg_nlp.pipeline`` import path for
-advanced integrations.
-"""
+"""Stable advanced pipeline imports with one explicit ownership list."""
 
 from __future__ import annotations
 
-from medical_kg_nlp.pipeline.advanced import *  # noqa: F403
-from medical_kg_nlp.pipeline.advanced import __all__ as _ADVANCED_ALL
+from medical_kg_nlp.pipeline.advanced import (
+    AssertionClassificationStage,
+    BatchCandidateRerankerPort,
+    BatchCandidateRetrieverPort,
+    CandidateGenerationResult,
+    CandidateGenerationStage,
+    CandidateRerankRequest,
+    CandidateRerankingResult,
+    CandidateRerankingStage,
+    CandidateRetrievalRequest,
+    Closable,
+    DocumentPreparationStage,
+    DocumentStructure,
+    EntityExtractionStage,
+    EntityKnowledgeValidationResult,
+    EntityKnowledgeValidationStage,
+    GraphEvidenceRerankingStage,
+    InMemoryPipelineObserver,
+    ListwiseRerankerModelConfig,
+    NoOpPipelineObserver,
+    NormalizationAssignmentStage,
+    OpenTelemetryPipelineObserver,
+    PIPELINE_PROFILE_SCHEMA_VERSION,
+    ParallelBatchError,
+    ParallelBatchOptions,
+    PipelineBatchExecutor,
+    PipelineComponents,
+    PipelineFactory,
+    PipelineFactoryConfig,
+    PipelineModelConfig,
+    PipelineObserverPort,
+    PipelineOptions,
+    PipelineProfileMetadata,
+    PipelineRunResult,
+    PipelineRunner,
+    PipelineRuntime,
+    PipelineTrace,
+    PredictionValidationResult,
+    PredictionValidationStage,
+    ProfileMaturity,
+    RelationExtractionResult,
+    RelationExtractionStage,
+    ResolvedPipelineConfig,
+    RuntimeCapabilities,
+    StageMeasurement,
+)
 
-# Keep one export implementation while making this conventional package entrypoint explicit.
-__all__ = _ADVANCED_ALL
+__all__ = [
+    "AssertionClassificationStage",
+    "BatchCandidateRerankerPort",
+    "BatchCandidateRetrieverPort",
+    "CandidateGenerationResult",
+    "CandidateGenerationStage",
+    "CandidateRerankRequest",
+    "CandidateRerankingResult",
+    "CandidateRerankingStage",
+    "CandidateRetrievalRequest",
+    "Closable",
+    "DocumentPreparationStage",
+    "DocumentStructure",
+    "EntityExtractionStage",
+    "EntityKnowledgeValidationResult",
+    "EntityKnowledgeValidationStage",
+    "GraphEvidenceRerankingStage",
+    "InMemoryPipelineObserver",
+    "ListwiseRerankerModelConfig",
+    "NoOpPipelineObserver",
+    "NormalizationAssignmentStage",
+    "OpenTelemetryPipelineObserver",
+    "PIPELINE_PROFILE_SCHEMA_VERSION",
+    "ParallelBatchError",
+    "ParallelBatchOptions",
+    "PipelineBatchExecutor",
+    "PipelineComponents",
+    "PipelineFactory",
+    "PipelineFactoryConfig",
+    "PipelineModelConfig",
+    "PipelineObserverPort",
+    "PipelineOptions",
+    "PipelineProfileMetadata",
+    "PipelineRunResult",
+    "PipelineRunner",
+    "PipelineRuntime",
+    "PipelineTrace",
+    "PredictionValidationResult",
+    "PredictionValidationStage",
+    "ProfileMaturity",
+    "RelationExtractionResult",
+    "RelationExtractionStage",
+    "ResolvedPipelineConfig",
+    "RuntimeCapabilities",
+    "StageMeasurement",
+]
