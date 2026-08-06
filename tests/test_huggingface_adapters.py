@@ -315,6 +315,7 @@ def test_factory_wires_model_extractor_without_loading_weights(tmp_path: Path) -
         options=PipelineOptions(
             enable_context=False,
             enable_linking=False,
+            enable_candidate_reranking=False,
             enable_entity_kg_validation=False,
             enable_relations=False,
             enable_relation_kg_validation=False,
@@ -341,6 +342,7 @@ def test_factory_can_combine_model_with_reviewed_dictionary(tmp_path: Path) -> N
         options=PipelineOptions(
             enable_context=False,
             enable_linking=False,
+            enable_candidate_reranking=False,
             enable_entity_kg_validation=False,
             enable_relations=False,
             enable_relation_kg_validation=False,
