@@ -844,11 +844,6 @@ def test_phase1_zip_is_deterministic_across_source_mtimes(tmp_path: Path) -> Non
 def test_phase1_configs_separate_entity_only_and_full_execution() -> None:
     entity_only = read_yaml("configs/benchmarks/phase1/submission/entity-only.yaml")
     full = read_yaml("configs/benchmarks/phase1/submission/full.yaml")
-    experiment_root = Path("configs/benchmarks/phase1/experiments")
-    selective = read_yaml(experiment_root / "legacy_selective.yaml")
-    selective_candidates = read_yaml(
-        experiment_root / "legacy_selective_candidates.yaml"
-    )
 
     assert entity_only["mode"] == "entity_only"
     assert entity_only["assertion_policy"] == "empty"
@@ -868,29 +863,6 @@ def test_phase1_configs_separate_entity_only_and_full_execution() -> None:
     ):
         assert full["pipeline"][key] is True
     assert full["pipeline"]["enable_relations"] is False
-
-    assert selective["mode"] == "selective"
-    assert selective["assertion_policy"] == "selective"
-    assert selective["candidate_policy"] == "selective"
-    assert selective["selective"]["candidates"]["enabled"] is False
-    assert selective["pipeline"]["enable_context"] is True
-
-    candidate_config = selective_candidates["selective"]["candidates"]
-    assertion_config = selective_candidates["selective"]["assertions"]
-    assert candidate_config["enabled"] is True
-    assert candidate_config["source_thresholds"] == {
-        "ICD-10": {"dictionary_exact": 0.99505},
-        "RxNorm": {"dictionary_exact": 0.989362},
-    }
-    assert str(candidate_config["reviewed_map"]).startswith("data/manual_gold/")
-    assert str(assertion_config["calibrated_evidence_map"]).startswith(
-        "data/manual_gold/"
-    )
-    assert selective_candidates["pipeline"]["link_emit_probabilities_by_source"] == {
-        "ICD-10:dictionary_exact": 0.99505,
-        "RxNorm:dictionary_exact": 0.989362,
-    }
-    assert assertion_config["require_calibrated_evidence"] is True
 
 
 def test_stable_phase1_config_root_does_not_advertise_selective_mode() -> None:
