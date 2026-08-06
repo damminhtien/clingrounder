@@ -23,7 +23,7 @@ from medical_kg_nlp.benchmarks.phase1.model_selection import (
 )
 from medical_kg_nlp.mining.io import write_json
 from medical_kg_nlp.pipeline.config_loader import ResolvedPipelineConfig
-from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
+from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineConfig
 from medical_kg_nlp.training import (
     TokenClassifierRunSpec,
     load_token_classifier_run_spec,
@@ -146,7 +146,7 @@ def run_phase1_model_calibration(
 
 def _verified_factory_config(
     resolved_pipeline: ResolvedPipelineConfig,
-) -> tuple[PipelineFactoryConfig, TokenClassifierRunSpec, dict[str, Any]]:
+) -> tuple[PipelineConfig, TokenClassifierRunSpec, dict[str, Any]]:
     models = _mapping(resolved_pipeline.payload.get("models"), "models")
     entity_model = _mapping(models.get("entity_extractor"), "models.entity_extractor")
     raw_run_spec = entity_model.get("run_spec")

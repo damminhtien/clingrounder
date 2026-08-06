@@ -9,7 +9,7 @@ from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.pipeline import (
     PipelineComponents,
     PipelineFactory,
-    PipelineFactoryConfig,
+    PipelineConfig,
     PipelineOptions,
     PipelineRunner,
 )
@@ -165,7 +165,7 @@ def test_pipeline_factory_mapping_is_the_composition_root() -> None:
 
 
 def test_factory_config_remains_serializable_for_process_workers() -> None:
-    config = PipelineFactoryConfig(
+    config = PipelineConfig(
         options=PipelineOptions(enable_candidate_reranking=False)
     )
 
@@ -173,7 +173,7 @@ def test_factory_config_remains_serializable_for_process_workers() -> None:
 
 
 def test_factory_config_accepts_multiple_canonical_terminology_sources() -> None:
-    config = PipelineFactoryConfig.from_mapping(
+    config = PipelineConfig.from_mapping(
         {
             "terminology": {
                 "normalization_paths": ["icd.jsonl", "rxnorm.jsonl"],
@@ -240,7 +240,7 @@ def test_pipeline_factory_wraps_terminology_with_bounded_cache() -> None:
 
 def test_factory_config_rejects_negative_terminology_cache_size() -> None:
     with pytest.raises(ValueError, match="query_cache_size"):
-        PipelineFactoryConfig.from_mapping(
+        PipelineConfig.from_mapping(
             {"terminology": {"query_cache_size": -1}}
         )
 
@@ -266,7 +266,7 @@ def test_pipeline_options_parse_graph_evidence_second_pass() -> None:
 def test_graph_evidence_second_pass_requires_graph_index() -> None:
     with pytest.raises(ValueError, match="knowledge_graph_index_path"):
         PipelineFactory.from_config(
-            PipelineFactoryConfig(
+            PipelineConfig(
                 options=PipelineOptions(enable_graph_evidence_reranking=True)
             )
         )

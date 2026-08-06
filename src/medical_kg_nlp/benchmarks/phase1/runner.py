@@ -22,7 +22,7 @@ from medical_kg_nlp.benchmarks.phase1.round2 import load_phase1_round2_documents
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.mining.io import load_documents
 from medical_kg_nlp.pipeline.config_loader import ResolvedPipelineConfig
-from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
+from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineConfig
 from medical_kg_nlp.pipeline.parallel_batch import (
     ParallelBatchOptions,
     ParallelBackend,
@@ -154,7 +154,7 @@ def _load_benchmark_documents(config: Phase1BenchmarkConfig) -> list[ClinicalDoc
     )
 
 
-def build_phase1_factory_config(config: Phase1BenchmarkConfig) -> PipelineFactoryConfig:
+def build_phase1_factory_config(config: Phase1BenchmarkConfig) -> PipelineConfig:
     """Compose a Phase 1 runner from a reusable pipeline profile.
 
     A benchmark should exercise the same terminology/search/NER composition as production.
@@ -164,7 +164,7 @@ def build_phase1_factory_config(config: Phase1BenchmarkConfig) -> PipelineFactor
     """
 
     if config.pipeline_config_path is None:
-        factory_config = PipelineFactoryConfig(
+        factory_config = PipelineConfig(
             recognition_dictionary_path=str(config.dictionary_path),
             abbreviation_path=str(config.abbreviation_path),
         )

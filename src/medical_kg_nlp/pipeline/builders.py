@@ -59,7 +59,7 @@ from medical_kg_nlp.terminology import (
 )
 
 if TYPE_CHECKING:
-    from medical_kg_nlp.pipeline.factory import PipelineFactoryConfig
+    from medical_kg_nlp.pipeline.factory import PipelineConfig
 
 __all__ = [
     "EntityBuildResult",
@@ -108,7 +108,7 @@ class LinkingBuildResult:
     dense_retriever: DenseRetrieverAdapter | None
 
 
-def build_terminology(config: PipelineFactoryConfig) -> TerminologyBuildResult:
+def build_terminology(config: PipelineConfig) -> TerminologyBuildResult:
     """Load recognition terminology and optionally compose the full SQLite release."""
 
     recognition_entries = DictionaryStore.load_entries_jsonl(
@@ -168,7 +168,7 @@ def build_terminology(config: PipelineFactoryConfig) -> TerminologyBuildResult:
 
 
 def build_entity_extractor(
-    config: PipelineFactoryConfig,
+    config: PipelineConfig,
     terminology: TerminologyBuildResult,
 ) -> EntityBuildResult:
     """Compose rule, model, and medication structure adapters for entity extraction."""
@@ -198,7 +198,7 @@ def build_entity_extractor(
     return EntityBuildResult(model)
 
 
-def build_graph_repository(config: PipelineFactoryConfig) -> GraphBuildResult:
+def build_graph_repository(config: PipelineConfig) -> GraphBuildResult:
     """Build graph-backed retrieval and evidence only when the profile explicitly enables it."""
 
     options = config.options
@@ -225,7 +225,7 @@ def build_graph_repository(config: PipelineFactoryConfig) -> GraphBuildResult:
 
 
 def build_linking(
-    config: PipelineFactoryConfig,
+    config: PipelineConfig,
     terminology: TerminologyBuildResult,
     graph: GraphBuildResult,
 ) -> LinkingBuildResult:
@@ -309,7 +309,7 @@ def build_linking(
 
 
 def _build_dense_retriever(
-    config: PipelineFactoryConfig,
+    config: PipelineConfig,
     repository: TerminologyRepository,
 ) -> DenseRetrieverAdapter | None:
     if "dense" not in config.options.candidate_sources:
@@ -334,7 +334,7 @@ def _build_dense_retriever(
     )
 
 
-def _terminology_fingerprint(repository: object, config: PipelineFactoryConfig) -> str:
+def _terminology_fingerprint(repository: object, config: PipelineConfig) -> str:
     metadata = getattr(repository, "metadata", None)
     if isinstance(metadata, Mapping):
         for key in ("input_fingerprint", "source_fingerprint"):

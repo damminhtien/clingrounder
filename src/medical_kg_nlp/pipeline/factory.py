@@ -38,11 +38,11 @@ from medical_kg_nlp.preprocessing.normalizer import (
 )
 from medical_kg_nlp.relations.rule_relations import RuleRelationExtractor
 
-__all__ = ["PipelineFactory", "PipelineFactoryConfig"]
+__all__ = ["PipelineFactory", "PipelineConfig"]
 
 
 @dataclass(frozen=True)
-class PipelineFactoryConfig:
+class PipelineConfig:
     """Serializable configuration consumed by the composition root."""
 
     recognition_dictionary_path: str = "data/dictionaries/seed_concepts.jsonl"
@@ -76,7 +76,7 @@ class PipelineFactoryConfig:
             raise ValueError("terminology.query_cache_size must be non-negative")
 
     @classmethod
-    def from_mapping(cls, payload: Mapping[str, object]) -> "PipelineFactoryConfig":
+    def from_mapping(cls, payload: Mapping[str, object]) -> "PipelineConfig":
         validate_pipeline_mapping(payload)
         terminology = _mapping(payload.get("terminology"), "terminology")
         pipeline = _mapping(payload.get("pipeline"), "pipeline")
@@ -171,7 +171,7 @@ class PipelineFactory:
     @classmethod
     def from_config(
         cls,
-        config: PipelineFactoryConfig | Mapping[str, object] | None = None,
+        config: PipelineConfig | Mapping[str, object] | None = None,
     ) -> PipelineRunner:
         resolved = cls._resolve(config)
         _verify_configured_artifacts(resolved)
@@ -263,7 +263,7 @@ class PipelineFactory:
     @classmethod
     def runtime_from_config(
         cls,
-        config: PipelineFactoryConfig | Mapping[str, object] | None = None,
+        config: PipelineConfig | Mapping[str, object] | None = None,
     ) -> PipelineRuntime:
         """Build an explicitly owned runtime for long-lived and CLI execution."""
 
@@ -272,13 +272,13 @@ class PipelineFactory:
 
     @staticmethod
     def _resolve(
-        config: PipelineFactoryConfig | Mapping[str, object] | None,
-    ) -> PipelineFactoryConfig:
+        config: PipelineConfig | Mapping[str, object] | None,
+    ) -> PipelineConfig:
         if config is None:
-            return PipelineFactoryConfig()
-        if isinstance(config, PipelineFactoryConfig):
+            return PipelineConfig()
+        if isinstance(config, PipelineConfig):
             return config
-        return PipelineFactoryConfig.from_mapping(config)
+        return PipelineConfig.from_mapping(config)
 
 
 def _mapping(value: object, name: str) -> dict[str, object]:
@@ -289,13 +289,13 @@ def _mapping(value: object, name: str) -> dict[str, object]:
     return {str(key): item for key, item in value.items()}
 
 
-def _configuration_fingerprint(config: PipelineFactoryConfig) -> str:
+def _configuration_fingerprint(config: PipelineConfig) -> str:
     payload = asdict(config)
     encoded = json.dumps(payload, sort_keys=True, default=str, separators=(",", ":"))
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
-def _model_revisions(config: PipelineFactoryConfig) -> str | None:
+def _model_revisions(config: PipelineConfig) -> str | None:
     revisions: list[str] = []
     for model in (
         config.models.entity_extractor,
@@ -309,7 +309,7 @@ def _model_revisions(config: PipelineFactoryConfig) -> str | None:
     return ",".join(revisions) if revisions else None
 
 
-def _model_configs(config: PipelineFactoryConfig) -> tuple[Any, ...]:
+def _model_configs(config: PipelineConfig) -> tuple[Any, ...]:
     values = [
         model
         for model in (
@@ -334,7 +334,7 @@ def _model_fingerprint(model: Any) -> tuple[str, str]:
     return hashlib.sha256(identity.encode("utf-8")).hexdigest(), "pinned_identity"
 
 
-def _verify_configured_artifacts(config: PipelineFactoryConfig) -> None:
+def _verify_configured_artifacts(config: PipelineConfig) -> None:
     """Apply explicit allowlist checks before any model or terminology load."""
 
     if not config.governance.artifact_allowlist:

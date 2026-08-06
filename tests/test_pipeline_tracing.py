@@ -9,7 +9,7 @@ from medical_kg_nlp.pipeline import (
     NoOpPipelineObserver,
     PipelineComponents,
     PipelineFactory,
-    PipelineFactoryConfig,
+    PipelineConfig,
     PipelineTrace,
     PipelineOptions,
     PipelineRunner,
@@ -61,7 +61,7 @@ def test_pipeline_trace_records_algorithm_stages() -> None:
 def test_pipeline_options_can_disable_context_and_relations() -> None:
     document = SyntheticDatasetAdapter().load_documents("data/samples/sample_notes.jsonl")[0]
     runner = PipelineFactory.from_config(
-        PipelineFactoryConfig(
+        PipelineConfig(
             options=PipelineOptions(enable_context=False, enable_relations=False)
         )
     )
@@ -79,7 +79,7 @@ def test_pipeline_options_can_disable_context_and_relations() -> None:
 def test_pipeline_can_process_raw_text_and_skip_reranking() -> None:
     document = SyntheticDatasetAdapter().load_documents("data/samples/sample_notes.jsonl")[0]
     runner = PipelineFactory.from_config(
-        PipelineFactoryConfig(
+        PipelineConfig(
             options=PipelineOptions(enable_candidate_reranking=False)
         )
     )
@@ -95,7 +95,7 @@ def test_pipeline_can_process_raw_text_and_skip_reranking() -> None:
 
 def test_entity_only_runner_does_not_build_linking_indexes() -> None:
     runner = PipelineFactory.from_config(
-        PipelineFactoryConfig(
+        PipelineConfig(
             options=PipelineOptions(
                 enable_context=False,
                 enable_linking=False,

@@ -5,7 +5,7 @@ import pytest
 from medical_kg_nlp.adapters import HuggingFaceCrossEncoderAdapter, HuggingFaceModelConfig
 from medical_kg_nlp.pipeline import (
     PipelineFactory,
-    PipelineFactoryConfig,
+    PipelineConfig,
     PipelineOptions,
     PipelineRuntime,
 )
@@ -61,7 +61,7 @@ def test_pipeline_runtime_closes_resources_after_one_close_failure() -> None:
 
 def test_pipeline_factory_exposes_managed_runtime() -> None:
     runtime = PipelineFactory.runtime_from_config(
-        PipelineFactoryConfig(
+        PipelineConfig(
             options=PipelineOptions(
                 enable_context=False,
                 enable_linking=False,

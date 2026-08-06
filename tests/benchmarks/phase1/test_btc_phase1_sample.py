@@ -11,7 +11,7 @@ from medical_kg_nlp.benchmarks.phase1.phase1 import (
     validate_phase1_entities,
 )
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
-from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
+from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineConfig
 from medical_kg_nlp.pipeline.stages import DocumentPreparationStage
 from medical_kg_nlp.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
@@ -167,7 +167,7 @@ def test_btc_rxnorm_memory_is_dictionary_constrained() -> None:
 def test_btc_sample_is_reproduced_end_to_end() -> None:
     text = read_source_text(FIXTURE)
     prediction = PipelineFactory.from_config(
-        PipelineFactoryConfig(
+        PipelineConfig(
             recognition_dictionary_path=str(RECOGNITION),
             reviewed_mention_path=str(MEMORY),
         )

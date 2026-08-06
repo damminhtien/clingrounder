@@ -84,7 +84,7 @@ Inject implementations through `PipelineComponents` for tests or custom applicat
 
 ## Configuration Keys
 
-`PipelineFactoryConfig.from_mapping()` accepts three top-level blocks:
+`PipelineConfig.from_mapping()` accepts three top-level blocks:
 
 ```yaml
 terminology:
@@ -235,7 +235,7 @@ local cache and must not download weights.
 
 ```bash
 rg "class .*Port" src/medical_kg_nlp/pipeline src/medical_kg_nlp/terminology
-rg "PipelineFactoryConfig|from_mapping" src tests configs
+rg "PipelineConfig|from_mapping" src tests configs
 rg "INVARIANT:|SCALING:|MODEL:|LICENSE:|PRIVACY:" src tests
 rg "EntityAnnotation|RelationAnnotation" src/medical_kg_nlp/schema tests
 rg "TerminologyRepository|exact_lookup|search" src tests

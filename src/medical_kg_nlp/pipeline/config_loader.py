@@ -11,7 +11,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from medical_kg_nlp.pipeline.factory import PipelineFactoryConfig
+from medical_kg_nlp.pipeline.factory import PipelineConfig
 from medical_kg_nlp.pipeline.config_schema import validate_pipeline_mapping
 from medical_kg_nlp.pipeline.profile import (
     PIPELINE_PROFILE_SCHEMA_VERSION,
@@ -55,7 +55,7 @@ class ResolvedPipelineConfig:
 
     source_path: Path
     payload: dict[str, Any]
-    factory_config: PipelineFactoryConfig
+    factory_config: PipelineConfig
     profile: PipelineProfileMetadata | None = None
 
     @classmethod
@@ -91,7 +91,7 @@ class ResolvedPipelineConfig:
             raw,
             lambda value: _resolve_path(source_path.parent, value),
         )
-        parsed = PipelineFactoryConfig.from_mapping(payload)
+        parsed = PipelineConfig.from_mapping(payload)
         return cls(
             source_path=source_path,
             payload=payload,
@@ -174,7 +174,7 @@ class ResolvedPipelineConfig:
 
 def _materialize_terminology_paths(
     payload: Mapping[str, object],
-    config: PipelineFactoryConfig,
+    config: PipelineConfig,
 ) -> dict[str, Any]:
     """Persist effective defaults before a profile is moved to another directory."""
 
@@ -287,9 +287,9 @@ def _map_declared_paths(
 
 
 def _resolve_factory_defaults(
-    config: PipelineFactoryConfig,
+    config: PipelineConfig,
     base_dir: Path,
-) -> PipelineFactoryConfig:
+) -> PipelineConfig:
     """Resolve dataclass defaults as well as paths explicitly present in YAML."""
 
     return replace(
@@ -402,7 +402,7 @@ def _validate_top_level_keys(payload: Mapping[str, object]) -> None:
         raise ValueError(f"Unknown pipeline config keys: {', '.join(unknown)}")
 
 
-def _resource_report(config: PipelineFactoryConfig) -> list[dict[str, object]]:
+def _resource_report(config: PipelineConfig) -> list[dict[str, object]]:
     values: list[tuple[str, str | None]] = [
         ("terminology.recognition_path", config.recognition_dictionary_path),
         ("terminology.normalization_index_path", config.normalization_index_path),

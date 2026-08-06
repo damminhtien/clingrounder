@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
-from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
+from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineConfig
 from medical_kg_nlp.schema.types import AssertionStatus, EntityType, RelationType
 
 
@@ -42,7 +42,7 @@ def test_pipeline_can_add_reviewed_vietnamese_clinical_lexicon(tmp_path: Path) -
         encoding="utf-8",
     )
     runner = PipelineFactory.from_config(
-        PipelineFactoryConfig(
+        PipelineConfig(
             additional_recognition_dictionary_path=str(additional_dictionary)
         )
     )

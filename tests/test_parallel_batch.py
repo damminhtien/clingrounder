@@ -15,7 +15,7 @@ from medical_kg_nlp.pipeline import (
     PipelineBatchExecutor,
     PipelineComponents,
     PipelineFactory,
-    PipelineFactoryConfig,
+    PipelineConfig,
     PipelineOptions,
     PipelineRunner,
     RuntimeCapabilities,
@@ -31,7 +31,7 @@ from medical_kg_nlp.schema.document import ClinicalDocument
 def test_parallel_batch_thread_backend_preserves_input_order_and_traces() -> None:
     documents = _two_sample_documents()
     executor = PipelineBatchExecutor(
-        partial(PipelineFactory.from_config, PipelineFactoryConfig()),
+        partial(PipelineFactory.from_config, PipelineConfig()),
         ParallelBatchOptions(backend="thread", max_workers=2, chunksize=1),
     )
     try:
@@ -49,7 +49,7 @@ def test_parallel_batch_process_backend_preserves_input_order() -> None:
     documents = _two_sample_documents()
 
     with PipelineBatchExecutor(
-        partial(PipelineFactory.from_config, PipelineFactoryConfig()),
+        partial(PipelineFactory.from_config, PipelineConfig()),
         ParallelBatchOptions(backend="process", max_workers=2, chunksize=1),
     ) as executor:
         results = executor.run(documents)

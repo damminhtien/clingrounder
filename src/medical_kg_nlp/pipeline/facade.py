@@ -9,7 +9,7 @@ from pathlib import Path
 
 from medical_kg_nlp.pipeline.components import PipelineComponents
 from medical_kg_nlp.pipeline.config_loader import ResolvedPipelineConfig
-from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
+from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineConfig
 from medical_kg_nlp.pipeline.parallel_batch import ParallelBatchOptions, PipelineBatchExecutor
 from medical_kg_nlp.pipeline.profile_catalog import inspect_pipeline_profiles
 from medical_kg_nlp.pipeline.runner import PipelineRunResult, PipelineRunner
@@ -25,7 +25,6 @@ __all__ = [
     "UnknownProfileError",
 ]
 
-PipelineConfig = PipelineFactoryConfig
 RunnerFactory = Callable[[], PipelineRunner]
 
 
