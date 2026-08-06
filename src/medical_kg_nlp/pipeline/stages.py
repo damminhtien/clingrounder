@@ -33,7 +33,7 @@ from medical_kg_nlp.schema.annotation import (
     EntityAnnotation,
     RelationAnnotation,
 )
-from medical_kg_nlp.schema.document import Section, Sentence
+from medical_kg_nlp.schema.document import ClinicalDocument, Section, Sentence
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.validator import PredictionValidationIssue, PredictionValidator
 from medical_kg_nlp.schema.types import CodeSystem
@@ -57,6 +57,9 @@ __all__ = [
     "CandidateRerankingStage",
     "DocumentPreparationStage",
     "DocumentStructure",
+    "LinkingContext",
+    "LinkingStageResult",
+    "PreparedDocument",
     "EntityExtractionStage",
     "EntityKnowledgeValidationResult",
     "EntityKnowledgeValidationStage",
@@ -77,8 +80,46 @@ class DocumentStructure:
     sentences: tuple[Sentence, ...]
 
 
+@dataclass(frozen=True)
+class PreparedDocument:
+    """Prepared source document and its source-coordinate structure."""
+
+    document: ClinicalDocument
+    structure: DocumentStructure
+
+    @property
+    def sections(self) -> tuple[Section, ...]:
+        return self.structure.sections
+
+    @property
+    def sentences(self) -> tuple[Sentence, ...]:
+        return self.structure.sentences
+
+
+@dataclass(frozen=True)
+class LinkingContext:
+    """Immutable mention/context projections shared by candidate stages."""
+
+    mentions_by_entity: Mapping[str, str]
+    contexts_by_entity: Mapping[str, str]
+
+
+@dataclass(frozen=True)
+class LinkingStageResult:
+    """All linking intermediates aligned by entity ID and owned by one stage result."""
+
+    context: LinkingContext
+    generated_candidates: Mapping[str, list[Candidate]]
+    reranked_candidates: Mapping[str, list[Candidate]]
+
+
 class DocumentPreparationStage:
     """Prepare source structure without changing the document text or offsets."""
+
+    def prepare(self, document: ClinicalDocument) -> PreparedDocument:
+        """Create one typed preparation value for all downstream document stages."""
+
+        return PreparedDocument(document=document, structure=self.structure(document.text))
 
     def diagnostics(
         self,
@@ -234,9 +275,9 @@ class CandidateRerankingStage:
     def run(
         self,
         entities: list[EntityAnnotation],
-        candidates_by_entity: dict[str, list[Candidate]],
-        contexts_by_entity: dict[str, str],
-        mentions_by_entity: dict[str, str],
+        candidates_by_entity: Mapping[str, list[Candidate]],
+        contexts_by_entity: Mapping[str, str],
+        mentions_by_entity: Mapping[str, str],
     ) -> CandidateRerankingResult:
         if self.enabled and self.reranker is None:
             raise RuntimeError("Candidate reranker component is unavailable.")
@@ -294,9 +335,9 @@ class GraphEvidenceRerankingStage:
     def run(
         self,
         entities: list[EntityAnnotation],
-        candidates_by_entity: dict[str, list[Candidate]],
+        candidates_by_entity: Mapping[str, list[Candidate]],
         sentences: list[Sentence],
-        mentions_by_entity: dict[str, str],
+        mentions_by_entity: Mapping[str, str],
     ) -> tuple[dict[str, list[Candidate]], dict[str, int]]:
         if self.reranker is None:
             raise RuntimeError("Document candidate reranker component is unavailable.")

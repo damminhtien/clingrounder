@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from medical_kg_nlp.governance.audit import AuditEvent
 
-from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.pipeline.components import PipelineComponents
 from medical_kg_nlp.pipeline.runtime import Closable, RuntimeCapabilities
 from medical_kg_nlp.pipeline.stages import (
@@ -16,6 +15,8 @@ from medical_kg_nlp.pipeline.stages import (
     EntityKnowledgeValidationStage,
     EntityExtractionStage,
     GraphEvidenceRerankingStage,
+    LinkingContext,
+    LinkingStageResult,
     NormalizationAssignmentStage,
     PredictionValidationStage,
     RelationExtractionStage,
@@ -166,7 +167,8 @@ class PipelineRunner:
         trace: PipelineTrace,
     ) -> PipelineRunResult:
         with trace.stage("document_loader") as counters:
-            loaded_document = document
+            prepared = self._document_stage.prepare(document)
+            loaded_document = prepared.document
             counters["documents"] = 1
             counters["characters"] = len(loaded_document.text)
             counters["metadata_fields"] = len(loaded_document.metadata)
@@ -183,8 +185,8 @@ class PipelineRunner:
                 counters["skipped"] = 1
 
         with trace.stage("section_detection") as counters:
-            structure = self._document_stage.structure(loaded_document.text)
-            sections = list(structure.sections)
+            structure = prepared.structure
+            sections = list(prepared.sections)
             counters["sections"] = len(sections)
 
         with trace.stage("sentence_splitting") as counters:
@@ -201,30 +203,40 @@ class PipelineRunner:
             else:
                 counters["skipped_entities"] = len(entities)
 
-        contexts_by_entity: dict[str, str] = {}
-        mentions_by_entity: dict[str, str] = {}
-        generated_candidates: dict[str, list[Candidate]] = {}
+        linking = LinkingStageResult(
+            context=LinkingContext(mentions_by_entity={}, contexts_by_entity={}),
+            generated_candidates={},
+            reranked_candidates={},
+        )
         with trace.stage("candidate_generation") as counters:
             if self.options.enable_linking:
                 generated = self._candidate_generation_stage.run(loaded_document.text, entities)
-                contexts_by_entity = generated.contexts_by_entity
-                mentions_by_entity = generated.mentions_by_entity
-                generated_candidates = generated.candidates_by_entity
+                linking = LinkingStageResult(
+                    context=LinkingContext(
+                        mentions_by_entity=generated.mentions_by_entity,
+                        contexts_by_entity=generated.contexts_by_entity,
+                    ),
+                    generated_candidates=generated.candidates_by_entity,
+                    reranked_candidates={},
+                )
                 counters.update(generated.counters)
                 counters["candidate_sources"] = len(self.options.candidate_sources)
             else:
                 counters["skipped_entities"] = len(entities)
 
-        reranked_candidates: dict[str, list[Candidate]] = {}
         with trace.stage("candidate_reranking") as counters:
             if self.options.enable_linking:
                 reranked = self._candidate_reranking_stage.run(
                     entities,
-                    generated_candidates,
-                    contexts_by_entity,
-                    mentions_by_entity,
+                    linking.generated_candidates,
+                    linking.context.contexts_by_entity,
+                    linking.context.mentions_by_entity,
                 )
-                reranked_candidates = reranked.candidates_by_entity
+                linking = LinkingStageResult(
+                    context=linking.context,
+                    generated_candidates=linking.generated_candidates,
+                    reranked_candidates=reranked.candidates_by_entity,
+                )
                 counters.update(reranked.counters)
             else:
                 counters["skipped_entities"] = len(entities)
@@ -233,13 +245,18 @@ class PipelineRunner:
             if self.options.enable_linking and self.options.enable_graph_evidence_reranking:
                 reranked_candidates, graph_counters = self._graph_evidence_stage.run(
                     entities,
-                    reranked_candidates,
+                    linking.reranked_candidates,
                     sentences,
-                    mentions_by_entity,
+                    linking.context.mentions_by_entity,
+                )
+                linking = LinkingStageResult(
+                    context=linking.context,
+                    generated_candidates=linking.generated_candidates,
+                    reranked_candidates=reranked_candidates,
                 )
                 counters.update(graph_counters)
             elif self.options.enable_linking:
-                counters["skipped_entities"] = len(reranked_candidates)
+                counters["skipped_entities"] = len(linking.reranked_candidates)
             else:
                 counters["skipped_entities"] = len(entities)
 
@@ -249,7 +266,7 @@ class PipelineRunner:
                     self._assignment_stage.run(
                         loaded_document.text,
                         entities,
-                        reranked_candidates,
+                        linking.reranked_candidates,
                     )
                 )
             else:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Protocol, runtime_checkable
 
 from medical_kg_nlp.context.modifier_graph import AssertionDecision, ContextGraph
@@ -119,9 +120,9 @@ class DocumentCandidateRerankerPort(Protocol):
     def rerank_document(
         self,
         entities: list[EntityAnnotation],
-        candidates_by_entity: dict[str, list[Candidate]],
+        candidates_by_entity: Mapping[str, list[Candidate]],
         sentences: list[Sentence],
-        mentions_by_entity: dict[str, str],
+        mentions_by_entity: Mapping[str, str],
     ) -> tuple[dict[str, list[Candidate]], dict[str, int]]: ...
 
 

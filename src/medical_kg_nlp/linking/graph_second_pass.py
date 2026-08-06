@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 from medical_kg_nlp.linking.candidate import Candidate
@@ -29,9 +30,9 @@ class GraphEvidenceSecondPass:
     def rerank_document(
         self,
         entities: list[EntityAnnotation],
-        candidates_by_entity: dict[str, list[Candidate]],
+        candidates_by_entity: Mapping[str, list[Candidate]],
         sentences: list[Sentence],
-        mentions_by_entity: dict[str, str],
+        mentions_by_entity: Mapping[str, str],
     ) -> tuple[dict[str, list[Candidate]], dict[str, int]]:
         """Return new rankings plus integer counters suitable for PipelineTrace."""
 
@@ -86,7 +87,7 @@ class GraphEvidenceSecondPass:
 
     @staticmethod
     def _anchors(
-        candidates_by_entity: dict[str, list[Candidate]],
+        candidates_by_entity: Mapping[str, list[Candidate]],
         sentence_by_entity: dict[str, int],
     ) -> tuple[_Anchor, ...]:
         anchors: list[_Anchor] = []
