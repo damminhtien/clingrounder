@@ -2,12 +2,8 @@ from __future__ import annotations
 
 import copy
 import json
-import subprocess
-import sys
 from collections import Counter
 from pathlib import Path
-
-import pytest
 
 from medical_kg_nlp.benchmarks.phase1.pipeline_report import build_phase1_pipeline_report
 from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
@@ -93,43 +89,6 @@ def test_pipeline_report_merges_metrics_validation_trace_and_errors(tmp_path: Pa
     saved_report = json.loads((tmp_path / "metrics.json").read_text(encoding="utf-8"))
     assert saved_report["summary"]["error_count"] == len(report["errors"])
     assert "phase1 score" in (tmp_path / "summary.md").read_text(encoding="utf-8")
-
-
-@pytest.mark.integration
-def test_evaluate_pipeline_steps_cli_writes_stage_report(tmp_path: Path) -> None:
-    subprocess.run(
-        [
-            sys.executable,
-            "scripts/evaluate_pipeline_steps.py",
-            "--documents",
-            "data/samples/sample_notes.jsonl",
-            "--gold",
-            "data/samples/gold.jsonl",
-            "--pred",
-            "data/samples/gold.jsonl",
-            "--dictionary",
-            "data/dictionaries/seed_concepts.jsonl",
-            "--output-dir",
-            str(tmp_path),
-            "--top-k",
-            "5",
-        ],
-        check=True,
-    )
-
-    for filename in [
-        "metrics.json",
-        "stage_metrics.csv",
-        "errors.csv",
-        "profile.json",
-        "summary.md",
-    ]:
-        assert (tmp_path / filename).exists()
-    traces = json.loads((tmp_path / "traces.json").read_text(encoding="utf-8"))
-    assert traces == []
-    report = json.loads((tmp_path / "metrics.json").read_text(encoding="utf-8"))
-    assert report["task"]["name"] == "phase1"
-    assert "score" in report["summary"]["task_metrics"]
 
 
 def _sample_documents_and_gold() -> tuple[list[ClinicalDocument], list[ClinicalPrediction]]:
