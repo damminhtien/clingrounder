@@ -63,7 +63,7 @@ def test_pipeline_config_inspection_exposes_effective_defaults(
 
     report = json.loads(capsys.readouterr().out)
     assert report["profile"]["id"] == "clinical-baseline"
-    assert report["effective_config"]["pipeline"]["max_candidates"] == 20
+    assert report["effective_config"]["pipeline"]["compiled_options"]["max_candidates"] == 20
     assert all(resource["exists"] for resource in report["resources"])
 
 
