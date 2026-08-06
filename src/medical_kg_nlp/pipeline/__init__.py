@@ -9,4 +9,7 @@ advanced integrations.
 from __future__ import annotations
 
 from medical_kg_nlp.pipeline.advanced import *  # noqa: F403
-from medical_kg_nlp.pipeline.advanced import __all__ as __all__
+from medical_kg_nlp.pipeline.advanced import __all__ as _ADVANCED_ALL
+
+# Keep one export implementation while making this conventional package entrypoint explicit.
+__all__ = _ADVANCED_ALL
