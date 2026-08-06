@@ -89,7 +89,7 @@ def test_pipeline_profile_errors_are_explicit(tmp_path: Path) -> None:
     profile = tmp_path / "missing.yaml"
     profile.write_text(
         """\
-schema_version: medical-kg.pipeline-profile.v2
+schema_version: medical-kg.pipeline-profile
 profile:
   id: missing
   title: Missing resources

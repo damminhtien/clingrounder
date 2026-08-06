@@ -31,7 +31,7 @@ def test_catalog_reports_invalid_profile_without_hiding_other_profiles(tmp_path:
     root = tmp_path / "profiles"
     root.mkdir()
     (root / "invalid.yaml").write_text(
-        "schema_version: medical-kg.pipeline-profile.v2\nprofile: []\n",
+        "schema_version: medical-kg.pipeline-profile\nprofile: []\n",
         encoding="utf-8",
     )
 

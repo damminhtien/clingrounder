@@ -1,6 +1,6 @@
 # Pipeline Profile Catalog
 
-Reusable profiles use `medical-kg.pipeline-profile.v2`. The loader rejects the older v1 envelope
+Reusable profiles use the single `medical-kg.pipeline-profile` envelope. The loader rejects any
 instead of silently applying a migration with unknown semantics.
 
 This catalog separates the supported quickstart from profiles that require local mined

@@ -97,7 +97,7 @@ def test_showcase_profile_is_self_describing_and_portable() -> None:
     assert resolved.profile is not None
     assert resolved.profile.profile_id == "clinical-baseline"
     report = resolved.inspection_report()
-    assert report["schema_version"] == "medical-kg.pipeline-profile.v2"
+    assert report["schema_version"] == "medical-kg.pipeline-profile"
     assert report["profile"]["maturity"] == "stable"
     assert all(resource["exists"] for resource in report["resources"])
     assert report["effective_config"]["pipeline"]["enable_context"] is True
@@ -107,7 +107,7 @@ def test_reusable_profile_rejects_hidden_top_level_config(tmp_path: Path) -> Non
     profile = tmp_path / "profile.yaml"
     profile.write_text(
         """\
-schema_version: medical-kg.pipeline-profile.v2
+schema_version: medical-kg.pipeline-profile
 profile:
   id: typo
   title: Typo profile
@@ -164,7 +164,7 @@ def test_reusable_profile_rejects_unknown_nested_keys(
     profile = tmp_path / "profile.yaml"
     profile.write_text(
         f"""\
-schema_version: medical-kg.pipeline-profile.v2
+schema_version: medical-kg.pipeline-profile
 profile:
   id: strict
   title: Strict profile

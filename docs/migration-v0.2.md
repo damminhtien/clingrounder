@@ -4,7 +4,7 @@ Version 0.2 is intentionally breaking. It separates reusable clinical NLP infras
 rules, storage backends, experiments, and competition code. No compatibility import shims are
 provided.
 
-Pipeline profiles use the strict `medical-kg.pipeline-profile.v2` envelope. Profiles written for
+Pipeline profiles use the strict `medical-kg.pipeline-profile` envelope. Profiles written for
 v1 must be rewritten explicitly before loading; the runtime does not guess or apply hidden
 defaults for an unsupported profile version.
 

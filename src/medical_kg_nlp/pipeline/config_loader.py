@@ -16,7 +16,6 @@ from medical_kg_nlp.pipeline.config_schema import validate_pipeline_mapping
 from medical_kg_nlp.pipeline.profile import (
     PIPELINE_PROFILE_SCHEMA_VERSION,
     PipelineProfileMetadata,
-    migrate_pipeline_profile,
 )
 from medical_kg_nlp.utils.io import read_yaml
 
@@ -85,7 +84,6 @@ class ResolvedPipelineConfig:
         if profile_payload is None:
             profile = None
         else:
-            migrate_pipeline_profile(raw)
             profile = PipelineProfileMetadata.from_mapping(
                 _required_mapping(profile_payload, "profile")
             )

@@ -12,10 +12,9 @@ __all__ = [
     "ProfilePortability",
     "ProfileMaturity",
     "ProfileSupportStatus",
-    "migrate_pipeline_profile",
 ]
 
-PIPELINE_PROFILE_SCHEMA_VERSION = "medical-kg.pipeline-profile.v2"
+PIPELINE_PROFILE_SCHEMA_VERSION = "medical-kg.pipeline-profile"
 
 
 class ProfileMaturity(str, Enum):
@@ -123,22 +122,6 @@ class PipelineProfileMetadata:
             "support_status": self.support_status.value,
             "owner": self.owner,
         }
-
-
-def migrate_pipeline_profile(payload: Mapping[str, object]) -> dict[str, object]:
-    """Return a deterministic current-schema copy or reject unsupported versions.
-
-    There are no historical migrations yet. Keeping this explicit prevents a loader from
-    silently accepting a profile with incompatible semantics.
-    """
-
-    version = payload.get("schema_version")
-    if version != PIPELINE_PROFILE_SCHEMA_VERSION:
-        raise ValueError(
-            "Unsupported pipeline profile schema_version: "
-            f"{version!r}; expected {PIPELINE_PROFILE_SCHEMA_VERSION!r}"
-        )
-    return dict(payload)
 
 
 def _required_string(payload: Mapping[str, object], key: str) -> str:
