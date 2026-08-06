@@ -62,7 +62,11 @@ def test_pipeline_options_can_disable_context_and_relations() -> None:
     document = SyntheticDatasetAdapter().load_documents("data/samples/sample_notes.jsonl")[0]
     runner = PipelineFactory.from_config(
         PipelineConfig(
-            options=PipelineOptions(enable_context=False, enable_relations=False)
+            options=PipelineOptions(
+                enable_context=False,
+                enable_relations=False,
+                enable_relation_kg_validation=False,
+            )
         )
     )
     result = runner.process_document_with_trace(document)

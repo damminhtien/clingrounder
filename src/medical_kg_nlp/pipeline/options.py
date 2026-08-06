@@ -40,8 +40,12 @@ class PipelineOptions:
     enable_relation_kg_validation: bool = True
 
     def __post_init__(self) -> None:
+        if not self.enable_linking and self.enable_candidate_reranking:
+            raise ValueError("Candidate reranking requires linking")
         if self.enable_graph_evidence_reranking and not self.enable_linking:
             raise ValueError("Graph evidence reranking requires linking")
+        if not self.enable_relations and self.enable_relation_kg_validation:
+            raise ValueError("Relation KG validation requires relations")
         if self.context_window < 0:
             raise ValueError("context_window must be non-negative")
         if not 1 <= self.max_candidates <= 1000:

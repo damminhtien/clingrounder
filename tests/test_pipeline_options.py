@@ -44,3 +44,25 @@ def test_pipeline_options_rejects_unknown_source_and_negative_context() -> None:
         PipelineOptions.from_mapping({"candidate_sources": ["not_a_source"]})
     with pytest.raises(ValueError, match="context_window"):
         PipelineOptions.from_mapping({"context_window": -1})
+
+
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        ({"enable_linking": False, "enable_candidate_reranking": True}, "reranking"),
+        (
+            {
+                "enable_linking": False,
+                "enable_candidate_reranking": False,
+                "enable_graph_evidence_reranking": True,
+            },
+            "Graph evidence",
+        ),
+        ({"enable_relations": False, "enable_relation_kg_validation": True}, "relations"),
+    ],
+)
+def test_pipeline_options_reject_incompatible_subsystems(
+    payload: dict[str, object], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        PipelineOptions.from_mapping(payload)
