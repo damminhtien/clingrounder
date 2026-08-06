@@ -145,7 +145,16 @@ class ResolvedPipelineConfig:
                     },
                     "pipeline": {
                         "version": config.pipeline_version,
-                        **asdict(config.options),
+                        "context": asdict(config.context),
+                        "linking": asdict(config.linking),
+                        "graph": asdict(config.graph),
+                        "relations": asdict(config.relations),
+                        "validation": asdict(config.validation),
+                        "runtime": asdict(config.runtime),
+                        # Keep the compiled policy visible for debugging, but do not make it
+                        # another configuration source.  The subsystem blocks above are the
+                        # only values consumed by composition.
+                        "compiled_options": asdict(config.compiled_options),
                     },
                     "models": asdict(config.models),
                     "normalization_contract": asdict(config.normalization_contract),

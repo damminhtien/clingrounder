@@ -100,7 +100,7 @@ def test_showcase_profile_is_self_describing_and_portable() -> None:
     assert report["schema_version"] == "medical-kg.pipeline-profile"
     assert report["profile"]["maturity"] == "stable"
     assert all(resource["exists"] for resource in report["resources"])
-    assert report["effective_config"]["pipeline"]["enable_context"] is True
+    assert report["effective_config"]["pipeline"]["compiled_options"]["enable_context"] is True
 
 
 def test_reusable_profile_rejects_hidden_top_level_config(tmp_path: Path) -> None:
@@ -187,6 +187,8 @@ def test_profile_inspection_reports_hash_and_origins() -> None:
     assert report["profile_sha256"] == report["source"]["sha256"]
     assert report["origins"]["pipeline"]["enable_context"] == "explicit"
     assert report["origins"]["pipeline"]["context_window"] == "default"
+    assert report["effective_config"]["pipeline"]["context"]["provider"] == "rules"
+    assert report["effective_config"]["pipeline"]["linking"]["max_candidates"] == 20
 
 
 def test_pipeline_factory_rejects_unsupported_normalization_version() -> None:

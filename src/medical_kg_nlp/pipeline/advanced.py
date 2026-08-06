@@ -32,6 +32,14 @@ from medical_kg_nlp.pipeline.profile import (
     ProfileMaturity,
 )
 from medical_kg_nlp.pipeline.runner import PipelineRunResult, PipelineRunner
+from medical_kg_nlp.pipeline.subsystems import (
+    ContextConfig,
+    GraphEvidenceConfig,
+    LinkingConfig,
+    RelationsConfig,
+    RuntimeConfig,
+    ValidationConfig,
+)
 from medical_kg_nlp.pipeline.runtime import Closable, PipelineRuntime, RuntimeCapabilities
 from medical_kg_nlp.pipeline.stages import (
     AssertionClassificationStage,
@@ -74,15 +82,18 @@ __all__ = [
     "CandidateRerankRequest",
     "CandidateRetrievalRequest",
     "Closable",
+    "ContextConfig",
     "DocumentPreparationStage",
     "DocumentStructure",
     "EntityKnowledgeValidationResult",
     "EntityKnowledgeValidationStage",
     "EntityExtractionStage",
     "GraphEvidenceRerankingStage",
+    "GraphEvidenceConfig",
     "InMemoryPipelineObserver",
     "ListwiseRerankerModelConfig",
     "LinkingContext",
+    "LinkingConfig",
     "LinkingStageResult",
     "NoOpPipelineObserver",
     "NormalizationAssignmentStage",
@@ -110,6 +121,9 @@ __all__ = [
     "ResolvedPipelineConfig",
     "RelationExtractionResult",
     "RelationExtractionStage",
+    "RelationsConfig",
     "RuntimeCapabilities",
+    "RuntimeConfig",
     "StageMeasurement",
+    "ValidationConfig",
 ]

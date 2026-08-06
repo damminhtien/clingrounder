@@ -43,6 +43,12 @@ _GOVERNANCE_KEYS = {
 
 _PIPELINE_KEYS = {
     "version",
+    "context",
+    "linking",
+    "graph",
+    "relations",
+    "validation",
+    "runtime",
     "max_candidates",
     "context_window",
     "link_assignment_threshold",
@@ -68,6 +74,31 @@ _PIPELINE_KEYS = {
     "enable_relations",
     "enable_relation_kg_validation",
 }
+
+_CONTEXT_KEYS = {
+    "provider",
+    "context_window",
+    "lookup_normalization_diagnostics",
+}
+_LINKING_KEYS = {
+    "provider",
+    "max_candidates",
+    "candidate_sources",
+    "assignment_threshold",
+    "assignment_margin",
+    "candidate_threshold",
+    "candidate_relative_margin",
+    "max_qualified_candidates",
+    "candidate_thresholds_by_type",
+    "candidate_thresholds_by_source",
+    "emit_probabilities_by_source",
+    "enforce_rxnorm_structure",
+    "reranker",
+}
+_GRAPH_KEYS = {"provider", "max_bonus", "min_support", "relation_types", "cache_size"}
+_RELATIONS_KEYS = {"provider", "validate_with_kg"}
+_VALIDATION_KEYS = {"entities_with_kg", "relations_with_kg"}
+_RUNTIME_KEYS = {"backend", "workers", "chunksize", "fail_fast"}
 
 _MODEL_BLOCK_KEYS = {
     "model_id",
@@ -165,6 +196,28 @@ def validate_pipeline_mapping(
         if value is not None:
             mapping = _check_mapping(value, name)
             _check_keys(mapping, allowed, name)
+    pipeline = payload.get("pipeline")
+    if pipeline is not None:
+        pipeline_mapping = _check_mapping(pipeline, "pipeline")
+        for name, allowed in (
+            ("context", _CONTEXT_KEYS),
+            ("linking", _LINKING_KEYS),
+            ("graph", _GRAPH_KEYS),
+            ("relations", _RELATIONS_KEYS),
+            ("validation", _VALIDATION_KEYS),
+            ("runtime", _RUNTIME_KEYS),
+        ):
+            block = pipeline_mapping.get(name)
+            if block is not None:
+                block_mapping = _check_mapping(block, f"pipeline.{name}")
+                _check_keys(block_mapping, allowed, f"pipeline.{name}")
+        linking = pipeline_mapping.get("linking")
+        if linking is not None:
+            linking_mapping = _check_mapping(linking, "pipeline.linking")
+            reranker = linking_mapping.get("reranker")
+            if reranker is not None:
+                reranker_mapping = _check_mapping(reranker, "pipeline.linking.reranker")
+                _check_keys(reranker_mapping, {"provider"}, "pipeline.linking.reranker")
     governance = payload.get("governance")
     if governance is not None:
         governance_mapping = _check_mapping(governance, "governance")
@@ -209,5 +262,8 @@ def _check_mapping(value: object, path: str) -> Mapping[str, object]:
 def _check_keys(value: Mapping[str, object], allowed: set[str], path: str) -> None:
     unknown = sorted(str(key) for key in value if str(key) not in allowed)
     if unknown:
-        prefix = f"{path}." if path else ""
-        raise ValueError(f"Unknown pipeline config keys at {prefix}: {', '.join(unknown)}")
+        qualified = ", ".join(
+            f"{path}.{key}" if path else key
+            for key in unknown
+        )
+        raise ValueError(f"Unknown pipeline config keys: {qualified}")

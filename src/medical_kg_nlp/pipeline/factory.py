@@ -31,6 +31,16 @@ from medical_kg_nlp.pipeline.model_config import PipelineModelConfig
 from medical_kg_nlp.pipeline.options import PipelineOptions
 from medical_kg_nlp.pipeline.runner import PipelineRunner
 from medical_kg_nlp.pipeline.runtime import Closable, PipelineRuntime
+from medical_kg_nlp.pipeline.subsystems import (
+    ContextConfig,
+    GraphEvidenceConfig,
+    LinkingConfig,
+    RelationsConfig,
+    RuntimeConfig,
+    ValidationConfig,
+    compile_pipeline_options,
+    parse_subsystem_configs,
+)
 from medical_kg_nlp.preprocessing.normalizer import (
     DEFAULT_NORMALIZATION_CONTRACT,
     NORMALIZATION_CONTRACT_VERSION,
@@ -77,10 +87,48 @@ class PipelineConfig:
 
     terminology: TerminologyConfig = field(default_factory=TerminologyConfig)
     pipeline_version: str = "0.2.0"
+    context: ContextConfig = field(default_factory=ContextConfig)
+    linking: LinkingConfig = field(default_factory=LinkingConfig)
+    graph: GraphEvidenceConfig = field(default_factory=GraphEvidenceConfig)
+    relations: RelationsConfig = field(default_factory=RelationsConfig)
+    validation: ValidationConfig = field(default_factory=ValidationConfig)
+    runtime: RuntimeConfig = field(default_factory=RuntimeConfig)
     options: PipelineOptions = field(default_factory=PipelineOptions)
     models: PipelineModelConfig = field(default_factory=PipelineModelConfig)
     normalization_contract: NormalizationContract = DEFAULT_NORMALIZATION_CONTRACT
     governance: GovernancePolicy = GovernancePolicy()
+
+    def __post_init__(self) -> None:
+        # Advanced callers may still construct the compiled options record directly.  Treat it
+        # as input only when no subsystem block was supplied, then materialize one canonical
+        # subsystem view so inspection and composition never disagree.
+        if (
+            self.context == ContextConfig()
+            and self.linking == LinkingConfig()
+            and self.graph == GraphEvidenceConfig()
+            and self.relations == RelationsConfig()
+            and self.validation == ValidationConfig()
+        ):
+            context, linking, graph, relations, validation, _ = parse_subsystem_configs(
+                asdict(self.options)
+            )
+            object.__setattr__(self, "context", context)
+            object.__setattr__(self, "linking", linking)
+            object.__setattr__(self, "graph", graph)
+            object.__setattr__(self, "relations", relations)
+            object.__setattr__(self, "validation", validation)
+
+    @property
+    def compiled_options(self) -> PipelineOptions:
+        """Return the single runtime options record used by the runner."""
+
+        return compile_pipeline_options(
+            self.context,
+            self.linking,
+            self.graph,
+            self.relations,
+            self.validation,
+        )
 
     @classmethod
     def from_mapping(cls, payload: Mapping[str, object]) -> "PipelineConfig":
@@ -102,6 +150,9 @@ class PipelineConfig:
                 "Unsupported normalization.version: "
                 f"{normalization_version!r}; expected {NORMALIZATION_CONTRACT_VERSION!r}"
             )
+        context, linking, graph, relations, validation, runtime = parse_subsystem_configs(
+            pipeline
+        )
         return cls(
             terminology=TerminologyConfig(
                 recognition_dictionary_path=_string(
@@ -156,7 +207,19 @@ class PipelineConfig:
                 false_positive_path=_optional_string(terminology.get("false_positive_path")),
             ),
             pipeline_version=_string(pipeline, "version", cls.pipeline_version),
-            options=PipelineOptions.from_mapping(pipeline),
+            context=context,
+            linking=linking,
+            graph=graph,
+            relations=relations,
+            validation=validation,
+            runtime=runtime,
+            options=compile_pipeline_options(
+                context,
+                linking,
+                graph,
+                relations,
+                validation,
+            ),
             models=PipelineModelConfig.from_mapping(models),
             normalization_contract=NormalizationContract(version=normalization_version),
             governance=GovernancePolicy.from_mapping(governance_payload),
