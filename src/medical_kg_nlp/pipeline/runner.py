@@ -7,27 +7,24 @@ from medical_kg_nlp.governance.audit import AuditEvent
 
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.pipeline.components import PipelineComponents
-from medical_kg_nlp.pipeline.ports import (
-    BatchCandidateRerankerPort,
-    BatchCandidateRetrieverPort,
-    CandidateRerankRequest,
-    CandidateRetrievalRequest,
-)
 from medical_kg_nlp.pipeline.runtime import Closable, RuntimeCapabilities
 from medical_kg_nlp.pipeline.stages import (
     AssertionClassificationStage,
+    CandidateGenerationStage,
+    CandidateRerankingStage,
     DocumentPreparationStage,
+    EntityKnowledgeValidationStage,
     EntityExtractionStage,
+    GraphEvidenceRerankingStage,
+    NormalizationAssignmentStage,
     PredictionValidationStage,
+    RelationExtractionStage,
 )
 from medical_kg_nlp.pipeline.tracing import PipelineTrace
-from medical_kg_nlp.schema.annotation import EntityAnnotation
 from medical_kg_nlp.schema.document import ClinicalDocument
 from medical_kg_nlp.schema.output import ClinicalPrediction
-from medical_kg_nlp.schema.types import CodeSystem
 from medical_kg_nlp.schema.validator import PredictionValidator
 from medical_kg_nlp.utils.hashing import sha256_text
-from medical_kg_nlp.utils.text import text_window
 
 __all__ = ["PipelineRunResult", "PipelineRunner"]
 
@@ -51,6 +48,22 @@ class PipelineRunner:
         self._document_stage = DocumentPreparationStage()
         self._entity_stage = EntityExtractionStage(components.entity_extractor)
         self._assertion_stage = AssertionClassificationStage(components.assertion_classifier)
+        self._candidate_generation_stage = CandidateGenerationStage(
+            components.candidate_retriever,
+            self.options.context_window,
+        )
+        self._candidate_reranking_stage = CandidateRerankingStage(
+            components.candidate_reranker,
+            self.options.enable_candidate_reranking,
+        )
+        self._graph_evidence_stage = GraphEvidenceRerankingStage(
+            components.document_candidate_reranker
+        )
+        self._assignment_stage = NormalizationAssignmentStage(components.candidate_assigner)
+        self._entity_validation_stage = EntityKnowledgeValidationStage(
+            components.knowledge_validator
+        )
+        self._relation_stage = RelationExtractionStage(components.relation_extractor)
         self._validation_stage = PredictionValidationStage(
             PredictionValidator(components.terminology_repository)
         )
@@ -193,133 +206,32 @@ class PipelineRunner:
         generated_candidates: dict[str, list[Candidate]] = {}
         with trace.stage("candidate_generation") as counters:
             if self.options.enable_linking:
-                retriever = self.components.candidate_retriever
-                if retriever is None:
-                    raise RuntimeError("Candidate retriever component is unavailable.")
-                generated_total = 0
-                entities_with_candidates = 0
-                pinned_entities = 0
-                retrieval_requests: list[CandidateRetrievalRequest] = []
-                for entity in entities:
-                    if entity.code_system != CodeSystem.NONE:
-                        pinned_entities += 1
-                    context = text_window(
-                        loaded_document.text, entity.span, radius=self.options.context_window
-                    )
-                    contexts_by_entity[entity.id] = context
-                    mention = _linking_mention(loaded_document.text, entity)
-                    mentions_by_entity[entity.id] = mention
-                    retrieval_requests.append(
-                        CandidateRetrievalRequest(
-                            entity_id=entity.id,
-                            entity_type=entity.type,
-                            mention=mention,
-                            context_window=context,
-                        )
-                    )
-                if isinstance(retriever, BatchCandidateRetrieverPort):
-                    retrieved_by_entity = retriever.retrieve_batch(tuple(retrieval_requests))
-                    _validate_batch_keys(
-                        tuple(request.entity_id for request in retrieval_requests),
-                        retrieved_by_entity,
-                        stage="candidate retrieval",
-                    )
-                else:
-                    retrieved_by_entity = {
-                        request.entity_id: retriever.retrieve(
-                            entities[index],
-                            request.context_window,
-                            request.mention,
-                        )
-                        for index, request in enumerate(retrieval_requests)
-                    }
-                for request in retrieval_requests:
-                    candidates = list(retrieved_by_entity.get(request.entity_id, []))
-                    generated_candidates[request.entity_id] = candidates
-                    generated_total += len(candidates)
-                    entities_with_candidates += int(bool(candidates))
-                    bucket = min(len(candidates), 10)
-                    key = f"candidate_count_{bucket}"
-                    counters[key] = counters.get(key, 0) + 1
-                    for candidate in candidates:
-                        for source in candidate.sources:
-                            key = f"source_{source}"
-                            counters[key] = counters.get(key, 0) + 1
-                counters["candidate_entities"] = len(generated_candidates)
-                counters["pinned_entities"] = pinned_entities
-                counters["entities_with_candidates"] = entities_with_candidates
-                counters["generated_candidates"] = generated_total
+                generated = self._candidate_generation_stage.run(loaded_document.text, entities)
+                contexts_by_entity = generated.contexts_by_entity
+                mentions_by_entity = generated.mentions_by_entity
+                generated_candidates = generated.candidates_by_entity
+                counters.update(generated.counters)
                 counters["candidate_sources"] = len(self.options.candidate_sources)
             else:
                 counters["skipped_entities"] = len(entities)
 
         reranked_candidates: dict[str, list[Candidate]] = {}
-        entities_by_id = {entity.id: entity for entity in entities}
         with trace.stage("candidate_reranking") as counters:
             if self.options.enable_linking:
-                reranker = self.components.candidate_reranker
-                if self.options.enable_candidate_reranking and reranker is None:
-                    raise RuntimeError("Candidate reranker component is unavailable.")
-                rerank_requests = tuple(
-                    CandidateRerankRequest(
-                        entity_id=entity_id,
-                        mention=mentions_by_entity.get(
-                            entity_id,
-                            _linking_mention(loaded_document.text, entities_by_id[entity_id]),
-                        ),
-                        context_window=contexts_by_entity.get(entity_id, ""),
-                        candidates=tuple(candidates),
-                    )
-                    for entity_id, candidates in generated_candidates.items()
+                reranked = self._candidate_reranking_stage.run(
+                    entities,
+                    generated_candidates,
+                    contexts_by_entity,
+                    mentions_by_entity,
                 )
-                if self.options.enable_candidate_reranking and isinstance(
-                    reranker, BatchCandidateRerankerPort
-                ):
-                    reranked_by_entity = reranker.rerank_batch(rerank_requests)
-                    _validate_batch_keys(
-                        tuple(request.entity_id for request in rerank_requests),
-                        reranked_by_entity,
-                        stage="candidate reranking",
-                    )
-                else:
-                    reranked_by_entity = {
-                        request.entity_id: (
-                            reranker.rerank(
-                                list(request.candidates),
-                                request.context_window,
-                                request.mention,
-                            )
-                            if self.options.enable_candidate_reranking and reranker is not None
-                            else list(request.candidates)
-                        )
-                        for request in rerank_requests
-                    }
-                for rerank_request in rerank_requests:
-                    ranked = reranked_by_entity.get(rerank_request.entity_id)
-                    reranked_candidates[rerank_request.entity_id] = list(
-                        rerank_request.candidates if ranked is None else ranked
-                    )
-                counters["reranked_entities"] = len(reranked_candidates)
-                counters["reranked_candidates"] = sum(
-                    len(candidates) for candidates in reranked_candidates.values()
-                )
-                counters["skipped_reranking"] = (
-                    0 if self.options.enable_candidate_reranking else len(reranked_candidates)
-                )
-                stats = getattr(reranker, "stats", None)
-                if callable(stats):
-                    for name, value in stats().items():
-                        if isinstance(value, int):
-                            counters[name] = value
+                reranked_candidates = reranked.candidates_by_entity
+                counters.update(reranked.counters)
             else:
                 counters["skipped_entities"] = len(entities)
 
         with trace.stage("graph_evidence_reranking") as counters:
             if self.options.enable_linking and self.options.enable_graph_evidence_reranking:
-                document_reranker = self.components.document_candidate_reranker
-                if document_reranker is None:
-                    raise RuntimeError("Document candidate reranker component is unavailable.")
-                reranked_candidates, graph_counters = document_reranker.rerank_document(
+                reranked_candidates, graph_counters = self._graph_evidence_stage.run(
                     entities,
                     reranked_candidates,
                     sentences,
@@ -333,54 +245,29 @@ class PipelineRunner:
 
         with trace.stage("normalization_assignment") as counters:
             if self.options.enable_linking:
-                assigner = self.components.candidate_assigner
-                if assigner is None:
-                    raise RuntimeError("Candidate assigner component is unavailable.")
-                for entity in entities:
-                    assigned_candidates = reranked_candidates.get(entity.id)
-                    if assigned_candidates is None:
-                        continue
-                    assigner.assign(
-                        entity,
-                        assigned_candidates,
-                        mention=_linking_mention(loaded_document.text, entity),
+                counters.update(
+                    self._assignment_stage.run(
+                        loaded_document.text,
+                        entities,
+                        reranked_candidates,
                     )
-                counters["assigned_codes"] = sum(entity.code is not None for entity in entities)
-                counters["unlinked_entities"] = sum(entity.code is None for entity in entities)
-                counters["qualified_candidates"] = sum(
-                    candidate.qualified
-                    for entity in entities
-                    for candidate in entity.candidates
                 )
-                counters["entities_with_qualified_candidates"] = sum(
-                    any(candidate.qualified for candidate in entity.candidates)
-                    for entity in entities
-                )
-                for entity in entities:
-                    for schema_candidate in entity.candidates:
-                        reason = schema_candidate.qualification_reason or "unspecified"
-                        key = f"qualification_{reason}"
-                        counters[key] = counters.get(key, 0) + 1
             else:
                 counters["skipped_entities"] = len(entities)
 
         with trace.stage("icd_rxnorm_umls_validation") as counters:
             if self.options.enable_entity_kg_validation:
-                validator = self.components.knowledge_validator
-                if validator is None:
-                    raise RuntimeError("Knowledge validator component is unavailable.")
-                entities, entity_issues = validator.validate_entities(entities)
-                counters["issues"] = len(entity_issues)
+                entity_validation = self._entity_validation_stage.run(entities)
+                entities = entity_validation.entities
+                counters["issues"] = len(entity_validation.issues)
             else:
                 counters["skipped_entities"] = len(entities)
 
         with trace.stage("relation_extraction") as counters:
             if self.options.enable_relations:
-                extractor = self.components.relation_extractor
-                if extractor is None:
-                    raise RuntimeError("Relation extractor component is unavailable.")
-                relations = extractor.extract(entities, sentences)
-                counters["relations"] = len(relations)
+                extracted = self._relation_stage.run(entities, sentences)
+                relations = extracted.relations
+                counters.update(extracted.counters)
             else:
                 relations = []
                 counters["skipped_entities"] = len(entities)
@@ -436,29 +323,3 @@ class PipelineRunner:
             assigned_codes=sum(entity.code is not None for entity in prediction.entities),
         )
         return PipelineRunResult(prediction=prediction, trace=trace)
-
-def _linking_mention(source_text: str, entity: EntityAnnotation) -> str:
-    medication = entity.medication_mention
-    if medication is None:
-        return entity.text
-    start, end = medication.full_span
-    return source_text[start:end]
-
-
-def _validate_batch_keys(
-    expected_ids: tuple[str, ...],
-    results: dict[str, list[Candidate]],
-    *,
-    stage: str,
-) -> None:
-    """Reject incomplete batch responses before they can alter entity alignment."""
-
-    expected = set(expected_ids)
-    actual = set(results)
-    if actual != expected:
-        missing = sorted(expected - actual)
-        unexpected = sorted(actual - expected)
-        raise ValueError(
-            f"{stage} batch returned inconsistent entity IDs: "
-            f"missing={missing}, unexpected={unexpected}"
-        )
