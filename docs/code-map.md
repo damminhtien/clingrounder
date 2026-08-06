@@ -174,24 +174,18 @@ read-only, query-only, thread-local connections and never rebuilds a stale index
 ```text
 medical-kg pipeline run
 medical-kg terminology build|inspect|query-set|benchmark
-medical-kg evaluate
 medical-kg validate
-medical-kg benchmark list
-medical-kg benchmark phase1 --help
-medical-kg data registry validate
-medical-kg data source sync
-medical-kg data dataset build
-medical-kg data dataset export-spans
-medical-kg data label propose
-medical-kg data relation propose|mine-cooccurrence
-medical-kg data lexicon build|crosswalk|attach-exact-links|propose-linked-aliases
-medical-kg data knowledge compile-graph
-medical-kg data review export|import
-medical-kg data coverage report
-medical-kg data snapshot freeze
-medical-kg data run
-medical-kg kg build|inspect|benchmark-aliases|benchmark-relations|benchmark-reranker
+medical-kg release audit
+medical-kg-research evaluate
+medical-kg-research model ...
+medical-kg-research data ...
+medical-kg-benchmark list
+medical-kg-benchmark phase1 ...
 ```
+
+`python -m medical_kg_nlp.cli` is the same operational entrypoint as `medical-kg`. Research and
+benchmark commands must use their scoped entrypoints; the dispatcher no longer exposes one
+all-purpose installed command.
 
 Terminology mining deliberately has separate stages. `mining/crosswalk.py` emits exact, ambiguous,
 lexical, and unmatched lookup evidence. `mining/crosswalk_links.py` can attach only policy-pinned,
