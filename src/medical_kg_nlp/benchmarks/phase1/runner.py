@@ -22,7 +22,7 @@ from medical_kg_nlp.benchmarks.phase1.round2 import load_phase1_round2_documents
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.mining.io import load_documents
 from medical_kg_nlp.pipeline.config_loader import ResolvedPipelineConfig
-from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineConfig
+from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineConfig, TerminologyConfig
 from medical_kg_nlp.pipeline.parallel_batch import (
     ParallelBatchOptions,
     ParallelBackend,
@@ -165,8 +165,10 @@ def build_phase1_factory_config(config: Phase1BenchmarkConfig) -> PipelineConfig
 
     if config.pipeline_config_path is None:
         factory_config = PipelineConfig(
-            recognition_dictionary_path=str(config.dictionary_path),
-            abbreviation_path=str(config.abbreviation_path),
+            terminology=TerminologyConfig(
+                recognition_dictionary_path=str(config.dictionary_path),
+                abbreviation_path=str(config.abbreviation_path),
+            )
         )
     else:
         factory_config = ResolvedPipelineConfig.load(
@@ -177,8 +179,11 @@ def build_phase1_factory_config(config: Phase1BenchmarkConfig) -> PipelineConfig
     # avoiding needless relation extraction/validation work during submission generation.
     return replace(
         factory_config,
-        recognition_dictionary_path=str(config.dictionary_path),
-        abbreviation_path=str(config.abbreviation_path),
+        terminology=replace(
+            factory_config.terminology,
+            recognition_dictionary_path=str(config.dictionary_path),
+            abbreviation_path=str(config.abbreviation_path),
+        ),
         options=replace(
             factory_config.options,
             enable_relations=False,

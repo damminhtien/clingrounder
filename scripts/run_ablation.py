@@ -20,7 +20,7 @@ from medical_kg_nlp.experiments.ablation import (
 )
 from medical_kg_nlp.evaluation.end_to_end_metrics import evaluate_predictions
 from medical_kg_nlp.pipeline import PipelineOptions
-from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineConfig
+from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineConfig, TerminologyConfig
 from medical_kg_nlp.schema.output import ClinicalPrediction
 from medical_kg_nlp.schema.validator import PredictionValidator
 from medical_kg_nlp.utils.io import read_yaml, write_jsonl
@@ -99,8 +99,10 @@ def run_ablation(
         options = PipelineOptions.from_mapping(cast(dict[str, object], options_payload))
         runner = PipelineFactory.from_config(
             PipelineConfig(
-                recognition_dictionary_path=dictionary_path,
-                abbreviation_path=abbreviation_path,
+                terminology=TerminologyConfig(
+                    recognition_dictionary_path=dictionary_path,
+                    abbreviation_path=abbreviation_path,
+                ),
                 pipeline_version=f"ablation:{name}",
                 options=options,
             )

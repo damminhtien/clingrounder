@@ -38,12 +38,12 @@ from medical_kg_nlp.preprocessing.normalizer import (
 )
 from medical_kg_nlp.relations.rule_relations import RuleRelationExtractor
 
-__all__ = ["PipelineFactory", "PipelineConfig"]
+__all__ = ["PipelineFactory", "PipelineConfig", "TerminologyConfig"]
 
 
 @dataclass(frozen=True)
-class PipelineConfig:
-    """Serializable configuration consumed by the composition root."""
+class TerminologyConfig:
+    """Paths and bounded lookup settings owned by the terminology subsystem."""
 
     recognition_dictionary_path: str = "data/dictionaries/seed_concepts.jsonl"
     normalization_dictionary_paths: tuple[str, ...] = ()
@@ -65,15 +65,22 @@ class PipelineConfig:
     alias_overlay_path: str | None = "data/dictionaries/vietnamese_medical_alias.jsonl"
     contextual_alias_path: str | None = None
     false_positive_path: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.terminology_query_cache_size < 0:
+            raise ValueError("terminology.query_cache_size must be non-negative")
+
+
+@dataclass(frozen=True)
+class PipelineConfig:
+    """Immutable composition configuration grouped by subsystem ownership."""
+
+    terminology: TerminologyConfig = field(default_factory=TerminologyConfig)
     pipeline_version: str = "0.2.0"
     options: PipelineOptions = field(default_factory=PipelineOptions)
     models: PipelineModelConfig = field(default_factory=PipelineModelConfig)
     normalization_contract: NormalizationContract = DEFAULT_NORMALIZATION_CONTRACT
     governance: GovernancePolicy = GovernancePolicy()
-
-    def __post_init__(self) -> None:
-        if self.terminology_query_cache_size < 0:
-            raise ValueError("terminology.query_cache_size must be non-negative")
 
     @classmethod
     def from_mapping(cls, payload: Mapping[str, object]) -> "PipelineConfig":
@@ -96,66 +103,57 @@ class PipelineConfig:
                 f"{normalization_version!r}; expected {NORMALIZATION_CONTRACT_VERSION!r}"
             )
         return cls(
-            recognition_dictionary_path=_string(
-                terminology,
-                "recognition_path",
-                cls.recognition_dictionary_path,
-            ),
-            normalization_dictionary_paths=_string_tuple(
-                terminology.get("normalization_paths"),
-                "normalization_paths",
-            ),
-            normalization_index_path=_optional_string(
-                terminology.get("normalization_index_path")
-            ),
-            normalization_alias_overlay_paths=_string_tuple(
-                terminology.get("normalization_alias_overlay_paths"),
-                "normalization_alias_overlay_paths",
-            ),
-            knowledge_graph_index_path=_optional_string(
-                terminology.get("knowledge_graph_index_path")
-            ),
-            terminology_cache_dir=_string(
-                terminology,
-                "cache_dir",
-                cls.terminology_cache_dir,
-            ),
-            terminology_query_cache_size=_nonnegative_int(
-                terminology,
-                "query_cache_size",
-                cls.terminology_query_cache_size,
-            ),
-            reviewed_mention_path=_optional_string(
-                terminology.get("reviewed_mention_path", cls.reviewed_mention_path)
-            ),
-            mention_code_memory_path=_optional_string(
-                terminology.get("mention_code_memory_path")
-            ),
-            learned_edit_path=_optional_string(terminology.get("learned_edit_path")),
-            synonym_index_path=_optional_string(terminology.get("synonym_index_path")),
-            synonym_index_terminology_fingerprint=_optional_string(
-                terminology.get("synonym_index_terminology_fingerprint")
-            ),
-            additional_recognition_dictionary_path=_optional_string(
-                terminology.get("additional_recognition_path")
-            ),
-            additional_recognition_dictionary_paths=_string_tuple(
-                terminology.get("additional_recognition_paths"),
-                "additional_recognition_paths",
-            ),
-            abbreviation_path=_string(
-                terminology,
-                "abbreviation_path",
-                cls.abbreviation_path,
-            ),
-            alias_overlay_path=_optional_string(
-                terminology.get("alias_overlay_path", cls.alias_overlay_path)
-            ),
-            contextual_alias_path=_optional_string(
-                terminology.get("contextual_alias_path")
-            ),
-            false_positive_path=_optional_string(
-                terminology.get("false_positive_path")
+            terminology=TerminologyConfig(
+                recognition_dictionary_path=_string(
+                    terminology,
+                    "recognition_path",
+                    TerminologyConfig.recognition_dictionary_path,
+                ),
+                normalization_dictionary_paths=_string_tuple(
+                    terminology.get("normalization_paths"), "normalization_paths"
+                ),
+                normalization_index_path=_optional_string(
+                    terminology.get("normalization_index_path")
+                ),
+                normalization_alias_overlay_paths=_string_tuple(
+                    terminology.get("normalization_alias_overlay_paths"),
+                    "normalization_alias_overlay_paths",
+                ),
+                knowledge_graph_index_path=_optional_string(
+                    terminology.get("knowledge_graph_index_path")
+                ),
+                terminology_cache_dir=_string(
+                    terminology,
+                    "cache_dir",
+                    TerminologyConfig.terminology_cache_dir,
+                ),
+                terminology_query_cache_size=_nonnegative_int(
+                    terminology,
+                    "query_cache_size",
+                    TerminologyConfig.terminology_query_cache_size,
+                ),
+                reviewed_mention_path=_optional_string(terminology.get("reviewed_mention_path")),
+                mention_code_memory_path=_optional_string(terminology.get("mention_code_memory_path")),
+                learned_edit_path=_optional_string(terminology.get("learned_edit_path")),
+                synonym_index_path=_optional_string(terminology.get("synonym_index_path")),
+                synonym_index_terminology_fingerprint=_optional_string(
+                    terminology.get("synonym_index_terminology_fingerprint")
+                ),
+                additional_recognition_dictionary_path=_optional_string(
+                    terminology.get("additional_recognition_path")
+                ),
+                additional_recognition_dictionary_paths=_string_tuple(
+                    terminology.get("additional_recognition_paths"),
+                    "additional_recognition_paths",
+                ),
+                abbreviation_path=_string(
+                    terminology,
+                    "abbreviation_path",
+                    TerminologyConfig.abbreviation_path,
+                ),
+                alias_overlay_path=_optional_string(terminology.get("alias_overlay_path")),
+                contextual_alias_path=_optional_string(terminology.get("contextual_alias_path")),
+                false_positive_path=_optional_string(terminology.get("false_positive_path")),
             ),
             pipeline_version=_string(pipeline, "version", cls.pipeline_version),
             options=PipelineOptions.from_mapping(pipeline),

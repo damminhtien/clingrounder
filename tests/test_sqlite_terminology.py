@@ -8,7 +8,12 @@ from pathlib import Path
 import pytest
 
 from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.pipeline import PipelineFactory, PipelineConfig, PipelineOptions
+from medical_kg_nlp.pipeline import (
+    PipelineFactory,
+    PipelineConfig,
+    PipelineOptions,
+    TerminologyConfig,
+)
 from medical_kg_nlp.retrieval.adapters import FTSRetrieverAdapter
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.terminology import (
@@ -476,9 +481,11 @@ def test_pipeline_factory_requires_and_uses_prebuilt_normalization_index(
         enable_relation_kg_validation=False,
     )
     config = PipelineConfig(
-        recognition_dictionary_path=str(source),
-        normalization_dictionary_paths=(str(source),),
-        normalization_index_path=str(missing_index),
+        terminology=TerminologyConfig(
+            recognition_dictionary_path=str(source),
+            normalization_dictionary_paths=(str(source),),
+            normalization_index_path=str(missing_index),
+        ),
         options=options,
     )
 

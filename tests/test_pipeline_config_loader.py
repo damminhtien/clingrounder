@@ -64,10 +64,10 @@ models:
 
     resolved = ResolvedPipelineConfig.load(profile)
 
-    assert resolved.factory_config.recognition_dictionary_path == str(
+    assert resolved.factory_config.terminology.recognition_dictionary_path == str(
         tmp_path / "project" / "data" / "recognition.jsonl"
     )
-    assert resolved.factory_config.normalization_dictionary_paths == (
+    assert resolved.factory_config.terminology.normalization_dictionary_paths == (
         str(tmp_path / "project" / "data" / "icd.jsonl"),
         str(tmp_path / "project" / "data" / "rxnorm.jsonl"),
     )
@@ -80,10 +80,10 @@ models:
         resolved.factory_config.models.candidate_reranker.model_id
         == "medical-org/reranker"
     )
-    assert resolved.factory_config.contextual_alias_path == str(
+    assert resolved.factory_config.terminology.contextual_alias_path == str(
         tmp_path / "project" / "data" / "contextual_aliases.yaml"
     )
-    assert resolved.factory_config.false_positive_path == str(
+    assert resolved.factory_config.terminology.false_positive_path == str(
         tmp_path / "project" / "data" / "false_positive_rules.jsonl"
     )
 
@@ -329,14 +329,16 @@ pipeline:
 
 def test_checked_in_full_profile_composes_tt06_and_rxnorm_without_btc_memory() -> None:
     resolved = ResolvedPipelineConfig.load("configs/benchmarks/phase1/submission/full.yaml")
-    sources = tuple(Path(path) for path in resolved.factory_config.normalization_dictionary_paths)
+    sources = tuple(
+        Path(path) for path in resolved.factory_config.terminology.normalization_dictionary_paths
+    )
 
     assert [path.name for path in sources] == [
         "tt06_icd10_concepts.jsonl",
         "rxnorm_full_07062026_concepts.jsonl",
     ]
-    assert resolved.factory_config.reviewed_mention_path is None
-    assert Path(resolved.factory_config.recognition_dictionary_path).name == (
+    assert resolved.factory_config.terminology.reviewed_mention_path is None
+    assert Path(resolved.factory_config.terminology.recognition_dictionary_path).name == (
         "phase1_seed_tt06_rxnorm_controlled_concepts.jsonl"
     )
 
@@ -346,9 +348,9 @@ def test_round2_full_profile_adds_reviewed_recognition_sources() -> None:
     factory = resolved.factory_config
 
     assert [
-        Path(path).name for path in factory.additional_recognition_dictionary_paths
+        Path(path).name for path in factory.terminology.additional_recognition_dictionary_paths
     ] == ["vn_clinical_lexicon_concepts.jsonl", "recognition_concepts.jsonl"]
-    assert factory.reviewed_mention_path is None
+    assert factory.terminology.reviewed_mention_path is None
     assert factory.options.candidate_sources == ("exact",)
     assert factory.options.link_max_qualified_candidates == 1
 
@@ -359,11 +361,13 @@ def test_rule_ner_mined_recognition_profile_does_not_compose_linking() -> None:
     )
     factory = resolved.factory_config
 
-    assert [Path(path).name for path in factory.additional_recognition_dictionary_paths] == [
+    assert [
+        Path(path).name for path in factory.terminology.additional_recognition_dictionary_paths
+    ] == [
         "recognition_concepts.jsonl"
     ]
-    assert factory.normalization_dictionary_paths == ()
-    assert factory.reviewed_mention_path is None
+    assert factory.terminology.normalization_dictionary_paths == ()
+    assert factory.terminology.reviewed_mention_path is None
     assert factory.options.enable_context is False
     assert factory.options.enable_linking is False
     assert factory.options.enable_relations is False

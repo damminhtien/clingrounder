@@ -130,9 +130,12 @@ def _factory_config(args: argparse.Namespace) -> PipelineConfig:
     ).factory_config
     return replace(
         config,
-        recognition_dictionary_path=args.dictionary
-        or config.recognition_dictionary_path,
-        abbreviation_path=args.abbreviations or config.abbreviation_path,
+        terminology=replace(
+            config.terminology,
+            recognition_dictionary_path=args.dictionary
+            or config.terminology.recognition_dictionary_path,
+            abbreviation_path=args.abbreviations or config.terminology.abbreviation_path,
+        ),
     )
 
 

@@ -33,7 +33,12 @@ from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
 from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.linking.rxnorm_reranker import StructuredRxNormReranker
-from medical_kg_nlp.pipeline import PipelineFactory, PipelineConfig, PipelineModelConfig
+from medical_kg_nlp.pipeline import (
+    PipelineFactory,
+    PipelineConfig,
+    PipelineModelConfig,
+    TerminologyConfig,
+)
 from medical_kg_nlp.pipeline.options import PipelineOptions
 from medical_kg_nlp.retrieval import DenseHit, DenseRetrieverAdapter
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
@@ -311,7 +316,7 @@ def test_factory_wires_model_extractor_without_loading_weights(tmp_path: Path) -
         encoding="utf-8",
     )
     config = PipelineConfig(
-        recognition_dictionary_path=str(dictionary),
+        terminology=TerminologyConfig(recognition_dictionary_path=str(dictionary)),
         options=PipelineOptions(
             enable_context=False,
             enable_linking=False,
@@ -338,7 +343,7 @@ def test_factory_can_combine_model_with_reviewed_dictionary(tmp_path: Path) -> N
         encoding="utf-8",
     )
     config = PipelineConfig(
-        recognition_dictionary_path=str(dictionary),
+        terminology=TerminologyConfig(recognition_dictionary_path=str(dictionary)),
         options=PipelineOptions(
             enable_context=False,
             enable_linking=False,
@@ -369,7 +374,7 @@ def test_factory_wires_cross_encoder_without_loading_weights(tmp_path: Path) -> 
         encoding="utf-8",
     )
     config = PipelineConfig(
-        recognition_dictionary_path=str(dictionary),
+        terminology=TerminologyConfig(recognition_dictionary_path=str(dictionary)),
         options=PipelineOptions(
             candidate_sources=("exact",),
             enable_context=False,

@@ -198,20 +198,23 @@ def test_factory_config_accepts_multiple_canonical_terminology_sources() -> None
         }
     )
 
-    assert config.normalization_dictionary_paths == ("icd.jsonl", "rxnorm.jsonl")
-    assert config.normalization_alias_overlay_paths == (
+    assert config.terminology.normalization_dictionary_paths == ("icd.jsonl", "rxnorm.jsonl")
+    assert config.terminology.normalization_alias_overlay_paths == (
         "mined-drug-aliases.jsonl",
         "mined-disease-aliases.jsonl",
     )
-    assert config.terminology_query_cache_size == 128
-    assert config.reviewed_mention_path == "reviewed-memory.jsonl"
-    assert config.mention_code_memory_path == "mention-code-memory.jsonl"
-    assert config.learned_edit_path == "learned-edits.jsonl"
-    assert config.synonym_index_path == "synonym-index"
-    assert config.synonym_index_terminology_fingerprint == "a" * 64
+    assert config.terminology.terminology_query_cache_size == 128
+    assert config.terminology.reviewed_mention_path == "reviewed-memory.jsonl"
+    assert config.terminology.mention_code_memory_path == "mention-code-memory.jsonl"
+    assert config.terminology.learned_edit_path == "learned-edits.jsonl"
+    assert config.terminology.synonym_index_path == "synonym-index"
+    assert config.terminology.synonym_index_terminology_fingerprint == "a" * 64
     assert config.models.candidate_dense_encoder is not None
     assert config.models.candidate_dense_encoder.revision == "abc123"
-    assert config.additional_recognition_dictionary_paths == ("vn.jsonl", "mined.jsonl")
+    assert config.terminology.additional_recognition_dictionary_paths == (
+        "vn.jsonl",
+        "mined.jsonl",
+    )
 
 
 def test_pipeline_factory_wraps_terminology_with_bounded_cache() -> None:

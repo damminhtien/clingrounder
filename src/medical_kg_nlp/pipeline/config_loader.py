@@ -103,6 +103,7 @@ class ResolvedPipelineConfig:
         """Describe effective settings and filesystem dependencies without running NLP."""
 
         config = self.factory_config
+        terminology = config.terminology
         return {
             "schema_version": PIPELINE_PROFILE_SCHEMA_VERSION,
             "profile_sha256": _file_sha256(self.source_path),
@@ -115,32 +116,32 @@ class ResolvedPipelineConfig:
             "effective_config": _json_ready(
                 {
                     "terminology": {
-                        "recognition_path": config.recognition_dictionary_path,
-                        "normalization_paths": config.normalization_dictionary_paths,
-                        "normalization_index_path": config.normalization_index_path,
+                        "recognition_path": terminology.recognition_dictionary_path,
+                        "normalization_paths": terminology.normalization_dictionary_paths,
+                        "normalization_index_path": terminology.normalization_index_path,
                         "normalization_alias_overlay_paths": (
-                            config.normalization_alias_overlay_paths
+                            terminology.normalization_alias_overlay_paths
                         ),
-                        "knowledge_graph_index_path": config.knowledge_graph_index_path,
-                        "cache_dir": config.terminology_cache_dir,
-                        "query_cache_size": config.terminology_query_cache_size,
-                        "reviewed_mention_path": config.reviewed_mention_path,
-                        "mention_code_memory_path": config.mention_code_memory_path,
-                        "learned_edit_path": config.learned_edit_path,
-                        "synonym_index_path": config.synonym_index_path,
+                        "knowledge_graph_index_path": terminology.knowledge_graph_index_path,
+                        "cache_dir": terminology.terminology_cache_dir,
+                        "query_cache_size": terminology.terminology_query_cache_size,
+                        "reviewed_mention_path": terminology.reviewed_mention_path,
+                        "mention_code_memory_path": terminology.mention_code_memory_path,
+                        "learned_edit_path": terminology.learned_edit_path,
+                        "synonym_index_path": terminology.synonym_index_path,
                         "synonym_index_terminology_fingerprint": (
-                            config.synonym_index_terminology_fingerprint
+                            terminology.synonym_index_terminology_fingerprint
                         ),
                         "additional_recognition_path": (
-                            config.additional_recognition_dictionary_path
+                            terminology.additional_recognition_dictionary_path
                         ),
                         "additional_recognition_paths": (
-                            config.additional_recognition_dictionary_paths
+                            terminology.additional_recognition_dictionary_paths
                         ),
-                        "abbreviation_path": config.abbreviation_path,
-                        "alias_overlay_path": config.alias_overlay_path,
-                        "contextual_alias_path": config.contextual_alias_path,
-                        "false_positive_path": config.false_positive_path,
+                        "abbreviation_path": terminology.abbreviation_path,
+                        "alias_overlay_path": terminology.alias_overlay_path,
+                        "contextual_alias_path": terminology.contextual_alias_path,
+                        "false_positive_path": terminology.false_positive_path,
                     },
                     "pipeline": {
                         "version": config.pipeline_version,
@@ -180,33 +181,34 @@ def _materialize_terminology_paths(
 
     output = copy.deepcopy(dict(payload))
     terminology = _optional_mapping(output.get("terminology"), "terminology")
+    terminology_config = config.terminology
     terminology.update(
         {
-            "recognition_path": config.recognition_dictionary_path,
-            "normalization_paths": list(config.normalization_dictionary_paths),
-            "normalization_index_path": config.normalization_index_path,
+            "recognition_path": terminology_config.recognition_dictionary_path,
+            "normalization_paths": list(terminology_config.normalization_dictionary_paths),
+            "normalization_index_path": terminology_config.normalization_index_path,
             "normalization_alias_overlay_paths": list(
-                config.normalization_alias_overlay_paths
+                terminology_config.normalization_alias_overlay_paths
             ),
-            "knowledge_graph_index_path": config.knowledge_graph_index_path,
-            "cache_dir": config.terminology_cache_dir,
-            "reviewed_mention_path": config.reviewed_mention_path,
-            "mention_code_memory_path": config.mention_code_memory_path,
-            "learned_edit_path": config.learned_edit_path,
-            "synonym_index_path": config.synonym_index_path,
+            "knowledge_graph_index_path": terminology_config.knowledge_graph_index_path,
+            "cache_dir": terminology_config.terminology_cache_dir,
+            "reviewed_mention_path": terminology_config.reviewed_mention_path,
+            "mention_code_memory_path": terminology_config.mention_code_memory_path,
+            "learned_edit_path": terminology_config.learned_edit_path,
+            "synonym_index_path": terminology_config.synonym_index_path,
             "synonym_index_terminology_fingerprint": (
-                config.synonym_index_terminology_fingerprint
+                terminology_config.synonym_index_terminology_fingerprint
             ),
             "additional_recognition_path": (
-                config.additional_recognition_dictionary_path
+                terminology_config.additional_recognition_dictionary_path
             ),
             "additional_recognition_paths": list(
-                config.additional_recognition_dictionary_paths
+                terminology_config.additional_recognition_dictionary_paths
             ),
-            "abbreviation_path": config.abbreviation_path,
-            "alias_overlay_path": config.alias_overlay_path,
-            "contextual_alias_path": config.contextual_alias_path,
-            "false_positive_path": config.false_positive_path,
+            "abbreviation_path": terminology_config.abbreviation_path,
+            "alias_overlay_path": terminology_config.alias_overlay_path,
+            "contextual_alias_path": terminology_config.contextual_alias_path,
+            "false_positive_path": terminology_config.false_positive_path,
         }
     )
     output["terminology"] = terminology
@@ -292,52 +294,56 @@ def _resolve_factory_defaults(
 ) -> PipelineConfig:
     """Resolve dataclass defaults as well as paths explicitly present in YAML."""
 
-    return replace(
-        config,
-        recognition_dictionary_path=_resolve_path(
-            base_dir, config.recognition_dictionary_path
-        ),
+    terminology = config.terminology
+    resolved_terminology = replace(
+        terminology,
+        recognition_dictionary_path=_resolve_path(base_dir, terminology.recognition_dictionary_path),
         normalization_dictionary_paths=tuple(
             _resolve_path(base_dir, value)
-            for value in config.normalization_dictionary_paths
+            for value in terminology.normalization_dictionary_paths
         ),
         normalization_index_path=_resolve_optional(
-            base_dir, config.normalization_index_path
+            base_dir, terminology.normalization_index_path
         ),
         normalization_alias_overlay_paths=tuple(
             _resolve_path(base_dir, value)
-            for value in config.normalization_alias_overlay_paths
+            for value in terminology.normalization_alias_overlay_paths
         ),
         knowledge_graph_index_path=_resolve_optional(
-            base_dir, config.knowledge_graph_index_path
+            base_dir, terminology.knowledge_graph_index_path
         ),
-        terminology_cache_dir=_resolve_path(base_dir, config.terminology_cache_dir),
-        reviewed_mention_path=_resolve_optional(base_dir, config.reviewed_mention_path),
+        terminology_cache_dir=_resolve_path(base_dir, terminology.terminology_cache_dir),
+        reviewed_mention_path=_resolve_optional(base_dir, terminology.reviewed_mention_path),
         mention_code_memory_path=_resolve_optional(
-            base_dir, config.mention_code_memory_path
+            base_dir, terminology.mention_code_memory_path
         ),
-        learned_edit_path=_resolve_optional(base_dir, config.learned_edit_path),
-        synonym_index_path=_resolve_optional(base_dir, config.synonym_index_path),
+        learned_edit_path=_resolve_optional(base_dir, terminology.learned_edit_path),
+        synonym_index_path=_resolve_optional(base_dir, terminology.synonym_index_path),
         additional_recognition_dictionary_path=_resolve_optional(
-            base_dir, config.additional_recognition_dictionary_path
+            base_dir, terminology.additional_recognition_dictionary_path
         ),
         additional_recognition_dictionary_paths=tuple(
             _resolve_path(base_dir, value)
-            for value in config.additional_recognition_dictionary_paths
+            for value in terminology.additional_recognition_dictionary_paths
         ),
-        abbreviation_path=_resolve_path(base_dir, config.abbreviation_path),
-        alias_overlay_path=_resolve_optional(base_dir, config.alias_overlay_path),
-        governance=replace(
-            config.governance,
-            allowed_artifact_roots=tuple(
-                _resolve_path(base_dir, value)
-                for value in config.governance.allowed_artifact_roots
-            ),
-            artifact_allowlist=tuple(
-                (_resolve_path(base_dir, path), digest)
-                for path, digest in config.governance.artifact_allowlist
-            ),
+        abbreviation_path=_resolve_path(base_dir, terminology.abbreviation_path),
+        alias_overlay_path=_resolve_optional(base_dir, terminology.alias_overlay_path),
+    )
+    resolved_governance = replace(
+        config.governance,
+        allowed_artifact_roots=tuple(
+            _resolve_path(base_dir, value)
+            for value in config.governance.allowed_artifact_roots
         ),
+        artifact_allowlist=tuple(
+            (_resolve_path(base_dir, path), digest)
+            for path, digest in config.governance.artifact_allowlist
+        ),
+    )
+    return replace(
+        config,
+        terminology=resolved_terminology,
+        governance=resolved_governance,
     )
 
 
@@ -404,25 +410,25 @@ def _validate_top_level_keys(payload: Mapping[str, object]) -> None:
 
 def _resource_report(config: PipelineConfig) -> list[dict[str, object]]:
     values: list[tuple[str, str | None]] = [
-        ("terminology.recognition_path", config.recognition_dictionary_path),
-        ("terminology.normalization_index_path", config.normalization_index_path),
-        ("terminology.knowledge_graph_index_path", config.knowledge_graph_index_path),
-        ("terminology.reviewed_mention_path", config.reviewed_mention_path),
-        ("terminology.mention_code_memory_path", config.mention_code_memory_path),
-        ("terminology.learned_edit_path", config.learned_edit_path),
-        ("terminology.synonym_index_path", config.synonym_index_path),
+        ("terminology.recognition_path", config.terminology.recognition_dictionary_path),
+        ("terminology.normalization_index_path", config.terminology.normalization_index_path),
+        ("terminology.knowledge_graph_index_path", config.terminology.knowledge_graph_index_path),
+        ("terminology.reviewed_mention_path", config.terminology.reviewed_mention_path),
+        ("terminology.mention_code_memory_path", config.terminology.mention_code_memory_path),
+        ("terminology.learned_edit_path", config.terminology.learned_edit_path),
+        ("terminology.synonym_index_path", config.terminology.synonym_index_path),
         (
             "terminology.additional_recognition_path",
-            config.additional_recognition_dictionary_path,
+            config.terminology.additional_recognition_dictionary_path,
         ),
-        ("terminology.abbreviation_path", config.abbreviation_path),
-        ("terminology.alias_overlay_path", config.alias_overlay_path),
-        ("terminology.contextual_alias_path", config.contextual_alias_path),
-        ("terminology.false_positive_path", config.false_positive_path),
+        ("terminology.abbreviation_path", config.terminology.abbreviation_path),
+        ("terminology.alias_overlay_path", config.terminology.alias_overlay_path),
+        ("terminology.contextual_alias_path", config.terminology.contextual_alias_path),
+        ("terminology.false_positive_path", config.terminology.false_positive_path),
     ]
     values.extend(
         (f"terminology.normalization_paths[{index}]", value)
-        for index, value in enumerate(config.normalization_dictionary_paths)
+        for index, value in enumerate(config.terminology.normalization_dictionary_paths)
     )
     for field_name, model in (
         ("models.entity_extractor", config.models.entity_extractor),
@@ -433,11 +439,11 @@ def _resource_report(config: PipelineConfig) -> list[dict[str, object]]:
             values.append((f"{field_name}.model_id", model.model_id))
     values.extend(
         (f"terminology.normalization_alias_overlay_paths[{index}]", value)
-        for index, value in enumerate(config.normalization_alias_overlay_paths)
+        for index, value in enumerate(config.terminology.normalization_alias_overlay_paths)
     )
     values.extend(
         (f"terminology.additional_recognition_paths[{index}]", value)
-        for index, value in enumerate(config.additional_recognition_dictionary_paths)
+        for index, value in enumerate(config.terminology.additional_recognition_dictionary_paths)
     )
     report: list[dict[str, object]] = []
     for field_name, raw_path in values:

@@ -112,50 +112,50 @@ def build_terminology(config: PipelineConfig) -> TerminologyBuildResult:
     """Load recognition terminology and optionally compose the full SQLite release."""
 
     recognition_entries = DictionaryStore.load_entries_jsonl(
-        config.recognition_dictionary_path,
-        alias_overlay_path=config.alias_overlay_path,
+        config.terminology.recognition_dictionary_path,
+        alias_overlay_path=config.terminology.alias_overlay_path,
     )
-    if config.additional_recognition_dictionary_path is not None:
+    if config.terminology.additional_recognition_dictionary_path is not None:
         recognition_paths = (
-            config.additional_recognition_dictionary_path,
-            *config.additional_recognition_dictionary_paths,
+            config.terminology.additional_recognition_dictionary_path,
+            *config.terminology.additional_recognition_dictionary_paths,
         )
     else:
-        recognition_paths = config.additional_recognition_dictionary_paths
+        recognition_paths = config.terminology.additional_recognition_dictionary_paths
     for recognition_path in recognition_paths:
         recognition_entries.extend(DictionaryStore.load_entries_jsonl(recognition_path))
     recognition_store = DictionaryStore(merge_concept_entries(recognition_entries))
     recognition_repository = InMemoryTerminologyRepository(recognition_store)
     contextual_alias_rules = (
-        load_contextual_alias_rules(config.contextual_alias_path)
-        if config.contextual_alias_path is not None
+        load_contextual_alias_rules(config.terminology.contextual_alias_path)
+        if config.terminology.contextual_alias_path is not None
         else ()
     )
 
     terminology_repository: TerminologyRepository = recognition_repository
-    uses_sqlite_normalization = bool(config.normalization_dictionary_paths)
-    if config.normalization_dictionary_paths:
-        source_paths = config.normalization_dictionary_paths
-        index_path = config.normalization_index_path or str(
+    uses_sqlite_normalization = bool(config.terminology.normalization_dictionary_paths)
+    if config.terminology.normalization_dictionary_paths:
+        source_paths = config.terminology.normalization_dictionary_paths
+        index_path = config.terminology.normalization_index_path or str(
             terminology_cache_path(
-                config.terminology_cache_dir,
+                config.terminology.terminology_cache_dir,
                 source_paths,
-                alias_overlay_paths=config.normalization_alias_overlay_paths,
+                alias_overlay_paths=config.terminology.normalization_alias_overlay_paths,
             )
         )
         sqlite_repository = SQLiteTerminologyRepository(
             index_path,
             expected_source_paths=source_paths,
-            expected_alias_overlay_paths=config.normalization_alias_overlay_paths,
+            expected_alias_overlay_paths=config.terminology.normalization_alias_overlay_paths,
             expected_normalization_version=config.normalization_contract.version,
         )
         terminology_repository = CompositeTerminologyRepository(
             (recognition_repository, sqlite_repository)
         )
-    if config.terminology_query_cache_size:
+    if config.terminology.terminology_query_cache_size:
         terminology_repository = CachedTerminologyRepository(
             terminology_repository,
-            max_size=config.terminology_query_cache_size,
+            max_size=config.terminology.terminology_query_cache_size,
         )
 
     return TerminologyBuildResult(
@@ -178,7 +178,7 @@ def build_entity_extractor(
         RuleBasedNER(
             terminology.recognition_store,
             contextual_alias_rules=terminology.contextual_alias_rules,
-            false_positive_path=config.false_positive_path,
+            false_positive_path=config.terminology.false_positive_path,
         )
     )
     if model_config.entity_extractor is None:
@@ -205,11 +205,11 @@ def build_graph_repository(config: PipelineConfig) -> GraphBuildResult:
     needs_graph = "kg_exact" in options.candidate_sources or options.enable_graph_evidence_reranking
     if not needs_graph:
         return GraphBuildResult(None, None)
-    if config.knowledge_graph_index_path is None:
+    if config.terminology.knowledge_graph_index_path is None:
         raise ValueError(
             "Graph-backed retrieval/reranking requires terminology.knowledge_graph_index_path"
         )
-    repository = SQLiteKnowledgeGraphRepository(config.knowledge_graph_index_path)
+    repository = SQLiteKnowledgeGraphRepository(config.terminology.knowledge_graph_index_path)
     if not options.enable_graph_evidence_reranking:
         return GraphBuildResult(repository, None)
     reranker = GraphEvidenceSecondPass(
@@ -236,14 +236,14 @@ def build_linking(
         return LinkingBuildResult(None, None, None)
 
     mention_code_memory = (
-        load_mention_code_memory(config.mention_code_memory_path)
+        load_mention_code_memory(config.terminology.mention_code_memory_path)
         if "mention_memory" in options.candidate_sources
-        and config.mention_code_memory_path is not None
+        and config.terminology.mention_code_memory_path is not None
         else None
     )
     learned_edit_model = (
-        load_learned_edit_model(config.learned_edit_path)
-        if "learned_edit" in options.candidate_sources and config.learned_edit_path is not None
+        load_learned_edit_model(config.terminology.learned_edit_path)
+        if "learned_edit" in options.candidate_sources and config.terminology.learned_edit_path is not None
         else None
     )
     dense_retriever = _build_dense_retriever(config, terminology.repository)
@@ -251,10 +251,10 @@ def build_linking(
         build_rule_retrieval_pipeline(
             terminology.repository,
             approximate_store=terminology.recognition_store,
-            abbreviation_path=config.abbreviation_path,
+            abbreviation_path=config.terminology.abbreviation_path,
             max_candidates=options.max_candidates,
             retrieval_sources=options.candidate_sources,
-            mention_memory_path=config.reviewed_mention_path,
+            mention_memory_path=config.terminology.reviewed_mention_path,
             use_fts_for_bm25=terminology.uses_sqlite_normalization,
             knowledge_graph_repository=graph.repository,
             mention_code_memory=mention_code_memory,
@@ -315,20 +315,20 @@ def _build_dense_retriever(
     if "dense" not in config.options.candidate_sources:
         return None
     model = config.models.candidate_dense_encoder
-    if model is None or config.synonym_index_path is None:
+    if model is None or config.terminology.synonym_index_path is None:
         raise ValueError(
             "Dense retrieval requires models.candidate_dense_encoder and "
             "terminology.synonym_index_path"
         )
-    if config.synonym_index_terminology_fingerprint is None:
+    if config.terminology.synonym_index_terminology_fingerprint is None:
         raise ValueError("Dense retrieval requires a terminology fingerprint")
     return DenseRetrieverAdapter(
         encoder=HuggingFaceTextEncoderAdapter(model),
         index=FaissSynonymVectorIndex(
-            config.synonym_index_path,
+            config.terminology.synonym_index_path,
             expected_model_id=model.model_id,
             expected_revision=model.revision,
-            expected_terminology_fingerprint=config.synonym_index_terminology_fingerprint,
+            expected_terminology_fingerprint=config.terminology.synonym_index_terminology_fingerprint,
         ),
         repository=repository,
     )
@@ -341,14 +341,14 @@ def _terminology_fingerprint(repository: object, config: PipelineConfig) -> str:
             value = metadata.get(key)
             if isinstance(value, str) and value:
                 return value
-    if config.synonym_index_terminology_fingerprint:
-        return config.synonym_index_terminology_fingerprint
+    if config.terminology.synonym_index_terminology_fingerprint:
+        return config.terminology.synonym_index_terminology_fingerprint
     paths = (
-        config.recognition_dictionary_path,
-        config.abbreviation_path,
-        config.alias_overlay_path,
-        *config.additional_recognition_dictionary_paths,
-        *config.normalization_dictionary_paths,
+        config.terminology.recognition_dictionary_path,
+        config.terminology.abbreviation_path,
+        config.terminology.alias_overlay_path,
+        *config.terminology.additional_recognition_dictionary_paths,
+        *config.terminology.normalization_dictionary_paths,
     )
     digests: list[str] = []
     for path in paths:
