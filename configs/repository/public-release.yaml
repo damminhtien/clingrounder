@@ -32,6 +32,18 @@ rules:
     disposition: redistributable
     rationale: Small project-authored fixtures and bootstrap resources support the public quickstart.
 
+  - id: public-relation-resources
+    patterns:
+      - data/relations/**
+    disposition: redistributable
+    rationale: Reviewed relation rules are project-owned, versioned runtime resources.
+
+  - id: public-benchmark-fixtures
+    patterns:
+      - data/benchmarks/**
+    disposition: redistributable
+    rationale: Small synthetic fixtures make correctness and performance claims reproducible.
+
   - id: private-benchmark-supervision
     patterns:
       - data/manual_gold/**

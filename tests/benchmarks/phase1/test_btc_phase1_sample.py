@@ -12,6 +12,7 @@ from medical_kg_nlp.benchmarks.phase1.phase1 import (
 )
 from medical_kg_nlp.ner.rule_ner import RuleBasedNER
 from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineFactoryConfig
+from medical_kg_nlp.pipeline.stages import DocumentPreparationStage
 from medical_kg_nlp.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
 from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
 from medical_kg_nlp.utils.io import read_source_text
@@ -66,16 +67,25 @@ def test_btc_medication_list_boundaries_indications_and_assertions() -> None:
     dictionary = _btc_recognition_store()
     entities = RuleBasedNER(dictionary).extract(text)
     runner = PipelineFactory.from_config()
-    sections = runner._sections(text)
-    sentences = runner._sentences_from_sections(sections, text)
-    for entity in entities:
-        sentence = runner._find_sentence(entity, sentences)
+    try:
+        sentences = list(DocumentPreparationStage().structure(text).sentences)
         classifier = runner.components.assertion_classifier
         assert classifier is not None
-        entity.assertion_features, _ = classifier.classify_features_with_evidence(
-            entity,
-            sentence,
-        )
+        for entity in entities:
+            sentence = next(
+                (
+                    item
+                    for item in sentences
+                    if item.span[0] <= entity.span[0] and entity.span[1] <= item.span[1]
+                ),
+                None,
+            )
+            entity.assertion_features, _ = classifier.classify_features_with_evidence(
+                entity,
+                sentence,
+            )
+    finally:
+        runner.close()
 
     drugs = [entity for entity in entities if entity.type == EntityType.DRUG]
     symptoms = [entity for entity in entities if entity.type == EntityType.SYMPTOM]
