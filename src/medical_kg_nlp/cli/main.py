@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import importlib
 from collections.abc import Callable, Sequence
+import sys
 from typing import Any
 
-from medical_kg_nlp.cli.parser import build_parser
+from medical_kg_nlp.cli.parser import CliScope, build_parser
 
-__all__ = ["main"]
+__all__ = ["benchmark_main", "main", "operational_main", "research_main"]
 
 _HANDLERS = {
     "pipeline_run": ("medical_kg_nlp.cli.commands.pipeline", "run_pipeline"),
@@ -237,10 +238,15 @@ _HANDLERS = {
 }
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(
+    argv: Sequence[str] | None = None,
+    *,
+    scope: CliScope | None = None,
+    prog: str = "medical-kg",
+) -> int:
     """Run one command and return a process exit status."""
 
-    parser = build_parser()
+    parser = build_parser(scope, prog=prog)
     args = parser.parse_args(argv)
     handler_name = getattr(args, "handler", None)
     if not isinstance(handler_name, str):
@@ -259,6 +265,30 @@ def main(argv: Sequence[str] | None = None) -> int:
     module = importlib.import_module(module_name)
     handler = getattr(module, function_name)
     return int(_typed_handler(handler)(args))
+
+
+def operational_main() -> int:
+    """Run the stable operational command set installed as ``medical-kg``."""
+
+    return main(scope="operational", prog="medical-kg")
+
+
+def research_main() -> int:
+    """Run data-mining and local-model research commands."""
+
+    return main(scope="research", prog="medical-kg-research")
+
+
+def benchmark_main() -> int:
+    """Run optional benchmark plugins without loading them in operational CLI startup."""
+
+    # The shared benchmark parser retains the explicit ``benchmark`` namespace when used from
+    # Python. The installed entrypoint hides that implementation detail for a short command.
+    return main(
+        ["benchmark", *sys.argv[1:]],
+        scope="benchmark",
+        prog="medical-kg-benchmark",
+    )
 
 
 def _typed_handler(value: object) -> Callable[[Any], int]:

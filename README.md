@@ -134,6 +134,11 @@ uv run medical-kg evaluate \
   --error-analysis outputs/sample-errors.json
 ```
 
+The installed CLI is split by responsibility: `medical-kg` exposes operational commands,
+`medical-kg-research` exposes mining/model commands, and `medical-kg-benchmark` loads optional
+benchmark plugins. They share one dispatcher and handler registry; no command implementation is
+duplicated. See [docs/cli-scopes.md](docs/cli-scopes.md).
+
 ### Python API
 
 ```python

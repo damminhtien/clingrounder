@@ -3,27 +3,40 @@
 from __future__ import annotations
 
 import argparse
+from typing import Literal
 
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
 from medical_kg_nlp.validation.profiles import ValidationProfile
 
-__all__ = ["build_parser"]
+__all__ = ["CliScope", "build_parser"]
+
+CliScope = Literal["operational", "research", "benchmark"]
 
 
-def build_parser() -> argparse.ArgumentParser:
-    """Build the stable `medical-kg` command hierarchy."""
+def build_parser(
+    scope: CliScope | None = None,
+    *,
+    prog: str = "medical-kg",
+) -> argparse.ArgumentParser:
+    """Build one scoped CLI or the complete parser used by tests and library callers."""
 
-    parser = argparse.ArgumentParser(prog="medical-kg", description="Medical KG NLP tools.")
+    if scope not in {None, "operational", "research", "benchmark"}:
+        raise ValueError(f"Unsupported CLI scope: {scope!r}")
+
+    parser = argparse.ArgumentParser(prog=prog, description="Medical KG NLP tools.")
     commands = parser.add_subparsers(dest="command", required=True)
-    _pipeline_parser(commands)
-    _terminology_parser(commands)
-    _kg_parser(commands)
-    _evaluate_parser(commands)
-    _validate_parser(commands)
-    _release_parser(commands)
-    _benchmark_parser(commands)
-    _model_parser(commands)
-    _data_parser(commands)
+    if scope in {None, "operational"}:
+        _pipeline_parser(commands)
+        _terminology_parser(commands)
+        _kg_parser(commands)
+        _validate_parser(commands)
+        _release_parser(commands)
+    if scope in {None, "research"}:
+        _evaluate_parser(commands)
+        _model_parser(commands)
+        _data_parser(commands)
+    if scope in {None, "benchmark"}:
+        _benchmark_parser(commands)
     return parser
 
 

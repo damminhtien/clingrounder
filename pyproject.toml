@@ -38,7 +38,9 @@ dependencies = [
 ]
 
 [project.scripts]
-medical-kg = "medical_kg_nlp.cli:main"
+medical-kg = "medical_kg_nlp.cli:operational_main"
+medical-kg-research = "medical_kg_nlp.cli:research_main"
+medical-kg-benchmark = "medical_kg_nlp.cli:benchmark_main"
 
 [project.optional-dependencies]
 dev = [
