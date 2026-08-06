@@ -17,7 +17,6 @@ __all__ = [
     "parse_medication_structure",
     "parse_rxnorm_entry_structure",
     "rxnorm_compatibility",
-    "rxnorm_structure_conflict",
 ]
 
 _STRENGTH_RE = re.compile(
@@ -178,12 +177,6 @@ def parse_rxnorm_entry_structure(entry: ConceptEntry) -> MedicationStructure:
         if value
     )
     return parse_medication_structure(candidate_text, strength_role="product")
-
-
-def rxnorm_structure_conflict(mention: str, entry: ConceptEntry) -> str | None:
-    """Return the first hard structural conflict for the legacy linker gate."""
-
-    return rxnorm_compatibility(mention, entry).hard_conflict
 
 
 def rxnorm_compatibility(

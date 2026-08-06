@@ -5,7 +5,6 @@ from medical_kg_nlp.linking.linker import EntityLinker
 from medical_kg_nlp.linking.structured_rxnorm import (
     parse_medication_structure,
     rxnorm_compatibility,
-    rxnorm_structure_conflict,
 )
 from medical_kg_nlp.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
 from medical_kg_nlp.schema.annotation import EntityAnnotation
@@ -16,16 +15,16 @@ from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
 def test_rxnorm_structure_detects_strength_release_and_form_conflicts() -> None:
     entry = _entry()
 
-    assert rxnorm_structure_conflict("metoprolol 25 mg oral tablet", entry) is None
-    assert rxnorm_structure_conflict("metoprolol 50 mg oral tablet", entry) == (
+    assert rxnorm_compatibility("metoprolol 25 mg oral tablet", entry).hard_conflict is None
+    assert rxnorm_compatibility("metoprolol 50 mg oral tablet", entry).hard_conflict == (
         "rxnorm_product_strength_mismatch"
     )
-    assert rxnorm_structure_conflict("metoprolol 25 mg IR tablet", entry) == (
+    assert rxnorm_compatibility("metoprolol 25 mg IR tablet", entry).hard_conflict == (
         "rxnorm_release_mismatch"
     )
     # Route and dosage form are separate concepts; IV alone does not prove an injection form.
-    assert rxnorm_structure_conflict("metoprolol 25 mg IV", entry) is None
-    assert rxnorm_structure_conflict("metoprolol 25 mg XR tablet", entry) is None
+    assert rxnorm_compatibility("metoprolol 25 mg IV", entry).hard_conflict is None
+    assert rxnorm_compatibility("metoprolol 25 mg XR tablet", entry).hard_conflict is None
 
 
 def test_rxnorm_strength_normalization_handles_decimal_variants() -> None:
@@ -39,8 +38,8 @@ def test_rxnorm_strength_normalization_handles_decimal_variants() -> None:
 def test_administered_or_ambiguous_dose_does_not_hard_reject_product_strength() -> None:
     entry = _entry()
 
-    assert rxnorm_structure_conflict("received metoprolol 50 mg IV", entry) is None
-    assert rxnorm_structure_conflict("metoprolol 1.5 mg po qhs", entry) is None
+    assert rxnorm_compatibility("received metoprolol 50 mg IV", entry).hard_conflict is None
+    assert rxnorm_compatibility("metoprolol 1.5 mg po qhs", entry).hard_conflict is None
 
 
 def test_linker_does_not_treat_administered_dose_as_product_strength() -> None:

@@ -3,7 +3,7 @@ from collections.abc import Mapping
 
 from medical_kg_nlp.linking.candidate import Candidate
 from medical_kg_nlp.linking.rxnorm_reranker import StructuredRxNormReranker
-from medical_kg_nlp.linking.structured_rxnorm import rxnorm_structure_conflict
+from medical_kg_nlp.linking.structured_rxnorm import rxnorm_compatibility
 from medical_kg_nlp.retrieval.pipeline import RetrievalPipeline
 from medical_kg_nlp.schema.annotation import CandidateConcept, EntityAnnotation
 from medical_kg_nlp.schema.types import CodeSystem, EntityType
@@ -191,7 +191,7 @@ class EntityLinker:
         ):
             entry = self.repository.get_by_concept_id(candidate.concept_id)
             if entry is not None:
-                conflict = rxnorm_structure_conflict(mention, entry)
+                conflict = rxnorm_compatibility(mention, entry).hard_conflict
                 if conflict is not None:
                     return False, conflict
         threshold = self.candidate_thresholds_by_source.get(
