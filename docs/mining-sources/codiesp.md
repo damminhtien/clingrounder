@@ -76,16 +76,16 @@ is under `outputs/mining/knowledge/codiesp-icd10-split-2026-07-18/` and
 ## Reproduce
 
 ```bash
-uv run medical-kg data run --plan configs/mining/codiesp.yaml
+uv run medical-kg-research data run --plan configs/mining/codiesp.yaml
 
-uv run medical-kg data dataset curate-annotations \
+uv run medical-kg-research data dataset curate-annotations \
   --annotations outputs/mining/codiesp-zenodo-3837305/source_annotations.jsonl \
   --policy configs/mining/curation/codiesp-contiguous-ner.yaml \
   --accepted-output outputs/mining/codiesp-zenodo-3837305/contiguous_training_annotations.jsonl \
   --rejected-output outputs/mining/codiesp-zenodo-3837305/noncontiguous_review_annotations.jsonl \
   --report-output outputs/mining/codiesp-zenodo-3837305/curation_report.json
 
-uv run medical-kg data relation mine-cooccurrence \
+uv run medical-kg-research data relation mine-cooccurrence \
   --documents outputs/mining/codiesp-zenodo-3837305/documents.jsonl \
   --annotations outputs/mining/codiesp-zenodo-3837305/source_annotations.jsonl \
   --policy configs/mining/relations/codiesp-train-cooccurrence.yaml \

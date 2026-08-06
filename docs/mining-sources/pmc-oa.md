@@ -192,30 +192,30 @@ SHA-256: `98224d74d7097f225632e97c9119f80d601c20cd982a5d9a67aafd1e8725a224`.
 
 ```bash
 export MEDICAL_KG_ARTIFACT_STORE=/Volumes/medical-kg-mining
-uv run medical-kg data run \
+uv run medical-kg-research data run \
   --plan configs/mining/pmc-rare-cases-ccby-2026-07-19.yaml
 
-uv run medical-kg data label propose \
+uv run medical-kg-research data label propose \
   --documents outputs/mining/pmc-rare-cases-ccby-2026-07-19/documents_v2.jsonl \
   --adapter medical_kg_nlp.mining.labelers.pipeline:create_local_pipeline_labeler \
   --adapter-config configs/mining/labelers/local_pipeline_full_terminology.yaml \
   --output outputs/mining/pmc-rare-cases-ccby-2026-07-19/pipeline_proposals_v2.jsonl
 
-uv run medical-kg data dataset attach-block-evidence \
+uv run medical-kg-research data dataset attach-block-evidence \
   --documents outputs/mining/pmc-rare-cases-ccby-2026-07-19/documents_v2.jsonl \
   --annotations outputs/mining/pmc-rare-cases-ccby-2026-07-19/pipeline_proposals_v2.jsonl \
   --policy configs/mining/sections/pmc-case-evidence.yaml \
   --output outputs/mining/pmc-rare-cases-ccby-2026-07-19/pipeline_proposals_v2_sections.jsonl \
   --report-output outputs/mining/pmc-rare-cases-ccby-2026-07-19/section_evidence_report.json
 
-uv run medical-kg data dataset curate-annotations \
+uv run medical-kg-research data dataset curate-annotations \
   --annotations outputs/mining/pmc-rare-cases-ccby-2026-07-19/pipeline_proposals_v2_sections.jsonl \
   --policy configs/mining/curation/pmc-case-specific-pipeline.yaml \
   --accepted-output outputs/mining/pmc-rare-cases-ccby-2026-07-19/case_specific_proposals.jsonl \
   --rejected-output outputs/mining/pmc-rare-cases-ccby-2026-07-19/non_case_proposals.jsonl \
   --report-output outputs/mining/pmc-rare-cases-ccby-2026-07-19/case_specific_curation_report.json
 
-uv run medical-kg data lexicon build \
+uv run medical-kg-research data lexicon build \
   --documents outputs/mining/pmc-rare-cases-ccby-2026-07-19/documents_v2.jsonl \
   --annotations outputs/mining/pmc-rare-cases-ccby-2026-07-19/case_specific_proposals.jsonl \
   --output outputs/mining/pmc-rare-cases-ccby-2026-07-19/case_specific_mention_inventory.jsonl \
@@ -227,7 +227,7 @@ uv run medical-kg terminology build \
   --source outputs/mining/knowledge/hpo-2026-06-23/ontology/terminology.jsonl \
   --output outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_terminology.sqlite3
 
-uv run medical-kg data lexicon crosswalk \
+uv run medical-kg-research data lexicon crosswalk \
   --inventory outputs/mining/pmc-rare-cases-ccby-2026-07-19/case_specific_mention_inventory.jsonl \
   --index outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_terminology.sqlite3 \
   --source outputs/mining/knowledge/mondo-2026-07-06/terminology.jsonl \
@@ -236,21 +236,21 @@ uv run medical-kg data lexicon crosswalk \
   --output outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_crosswalk.jsonl \
   --report-output outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_crosswalk_report.json
 
-uv run medical-kg data lexicon attach-exact-links \
+uv run medical-kg-research data lexicon attach-exact-links \
   --annotations outputs/mining/pmc-rare-cases-ccby-2026-07-19/case_specific_proposals.jsonl \
   --crosswalk outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_crosswalk.jsonl \
   --policy configs/mining/linking/pmc-case-mondo-hpo.yaml \
   --output outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_linked_case_proposals.jsonl \
   --report-output outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_link_materialization_report.json
 
-uv run medical-kg data relation mine-cooccurrence \
+uv run medical-kg-research data relation mine-cooccurrence \
   --documents outputs/mining/pmc-rare-cases-ccby-2026-07-19/documents_v2.jsonl \
   --annotations outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_linked_case_proposals.jsonl \
   --policy configs/mining/relations/pmc-case-mondo-hpo-cooccurrence.yaml \
   --output outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_case_cooccurrence_relations.jsonl \
   --report-output outputs/mining/pmc-rare-cases-ccby-2026-07-19/mondo_hpo_case_cooccurrence_report.json
 
-uv run medical-kg data knowledge compile-graph \
+uv run medical-kg-research data knowledge compile-graph \
   --terminology-source outputs/mining/knowledge/mondo-2026-07-06/terminology.jsonl \
   --terminology-source outputs/mining/knowledge/hpo-2026-06-23/ontology/terminology.jsonl \
   --documents outputs/mining/pmc-rare-cases-ccby-2026-07-19/documents_v2.jsonl \
@@ -278,10 +278,10 @@ uv run medical-kg kg benchmark-relations \
   --relation-type CO_OCCURS_WITH --workers 8 --repeats 20 \
   --output outputs/mining/knowledge/pmc-mondo-hpo-2026-07-20/cooccurrence_benchmark.json
 
-uv run medical-kg data dataset fuse \
+uv run medical-kg-research data dataset fuse \
   --plan configs/mining/fusion/pmc-rare-cases-ccby-2026-07-19.yaml
 
-uv run medical-kg data knowledge compile-recognition \
+uv run medical-kg-research data knowledge compile-recognition \
   --inventory outputs/mining/pmc-rare-cases-ccby-2026-07-19/train_mention_inventory.jsonl \
   --policy configs/mining/recognition/pmc-rare-cases-ccby-2026-07-19.yaml \
   --baseline-dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl \

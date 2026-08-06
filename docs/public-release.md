@@ -13,7 +13,7 @@ local/CAS storage    raw corpora + licensed terminology + annotations + checkpoi
 
 ## Two Complementary Contracts
 
-`medical-kg data release lock` fingerprints every input needed to reproduce one mining or model
+`medical-kg-research data release lock` fingerprints every input needed to reproduce one mining or model
 release. It can reference external content-addressed objects that are restored on another machine.
 
 `medical-kg release audit` inspects the Git index before publication. It fails when:

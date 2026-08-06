@@ -56,7 +56,7 @@ uv sync --extra dev --extra data
 Validate policy before downloading anything:
 
 ```bash
-uv run medical-kg data registry validate \
+uv run medical-kg-research data registry validate \
   --registry data/sources/mining_registry.yaml
 ```
 
@@ -64,7 +64,7 @@ Synchronize one explicit request. The parameter file contains connector inputs s
 `set_ids`, `nct_ids`, local `paths`, or explicit `artifacts` with checksums:
 
 ```bash
-uv run medical-kg data source sync \
+uv run medical-kg-research data source sync \
   --source-id pmc_oa \
   --source-version 2026-07-18 \
   --parameters configs/mining/requests/pmc-cases.yaml \
@@ -75,36 +75,36 @@ uv run medical-kg data source sync \
 Parse, label, review, and inspect coverage independently:
 
 ```bash
-uv run medical-kg data dataset build \
+uv run medical-kg-research data dataset build \
   --source-id pmc_oa \
   --artifacts outputs/mining/pmc/artifacts.jsonl \
   --store "$MEDICAL_KG_ARTIFACT_STORE" \
   --output outputs/mining/pmc/documents.jsonl
 
-uv run medical-kg data dataset inspect \
+uv run medical-kg-research data dataset inspect \
   --documents outputs/mining/pmc/documents.jsonl \
   --annotations outputs/mining/pmc/proposals.jsonl \
   --output outputs/mining/pmc/source-profile.json \
   --strict
 
-uv run medical-kg data label propose \
+uv run medical-kg-research data label propose \
   --documents outputs/mining/pmc/documents.jsonl \
   --adapter my_local_plugin:create_labeler \
   --adapter-config configs/models/mining-labeler.yaml \
   --output outputs/mining/pmc/proposals.jsonl
 
-uv run medical-kg data review export \
+uv run medical-kg-research data review export \
   --documents outputs/mining/pmc/documents.jsonl \
   --proposals outputs/mining/pmc/proposals.jsonl \
   --output outputs/mining/pmc/review.jsonl
 
-uv run medical-kg data review quality \
+uv run medical-kg-research data review quality \
   --documents outputs/mining/pmc/documents.jsonl \
   --proposals outputs/mining/pmc/reviewed.jsonl \
   --relations outputs/mining/pmc/relations.jsonl \
   --output outputs/mining/pmc/review-quality.json
 
-uv run medical-kg data coverage report \
+uv run medical-kg-research data coverage report \
   --documents outputs/mining/pmc/documents.jsonl \
   --proposals outputs/mining/pmc/proposals.jsonl \
   --targets configs/mining/coverage_phase2.yaml \
@@ -119,7 +119,7 @@ rule and Hugging Face adapters omit this flag.
 Run a resumable campaign:
 
 ```bash
-uv run medical-kg data run --plan configs/mining/phase2.yaml
+uv run medical-kg-research data run --plan configs/mining/phase2.yaml
 ```
 
 Each source stage is keyed by source config, request config, connector revision, and parser revision.
@@ -180,21 +180,21 @@ into a competition label. See
 The current VietBioNER snapshot can be reproduced without an implicit download or parser choice:
 
 ```bash
-uv run medical-kg data run --plan configs/mining/vietbioner.yaml
+uv run medical-kg-research data run --plan configs/mining/vietbioner.yaml
 
-uv run medical-kg data label propose \
+uv run medical-kg-research data label propose \
   --documents outputs/mining/vietbioner-19ba70a/documents.jsonl \
   --adapter medical_kg_nlp.mining.labelers.brat:create_brat_archive_labeler \
   --adapter-config configs/mining/labelers/vietbioner.yaml \
   --output outputs/mining/vietbioner-19ba70a/source_annotations.jsonl
 
-uv run medical-kg data dataset inspect \
+uv run medical-kg-research data dataset inspect \
   --documents outputs/mining/vietbioner-19ba70a/documents.jsonl \
   --annotations outputs/mining/vietbioner-19ba70a/source_annotations.jsonl \
   --output outputs/mining/vietbioner-19ba70a/source_profile.json \
   --strict
 
-uv run medical-kg data dataset reconcile-duplicates \
+uv run medical-kg-research data dataset reconcile-duplicates \
   --documents outputs/mining/vietbioner-19ba70a/documents.jsonl \
   --annotations outputs/mining/vietbioner-19ba70a/source_annotations.jsonl \
   --documents-output outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
@@ -204,19 +204,19 @@ uv run medical-kg data dataset reconcile-duplicates \
   --report-output outputs/mining/vietbioner-19ba70a/reconciled/agreement_report.json \
   --labeler-id vietbioner-exact-duplicate-consensus:v1
 
-uv run medical-kg data review export \
+uv run medical-kg-research data review export \
   --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
   --proposals outputs/mining/vietbioner-19ba70a/reconciled/review_annotations.jsonl \
   --output outputs/mining/vietbioner-19ba70a/reconciled/review_queue.jsonl
 
-uv run medical-kg data lexicon build \
+uv run medical-kg-research data lexicon build \
   --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
   --annotations outputs/mining/vietbioner-19ba70a/reconciled/training_annotations.jsonl \
   --output outputs/mining/vietbioner-19ba70a/reconciled/mention_inventory.jsonl \
   --conflicts-output outputs/mining/vietbioner-19ba70a/reconciled/mention_conflicts.jsonl \
   --report-output outputs/mining/vietbioner-19ba70a/reconciled/mention_inventory_report.json
 
-uv run medical-kg data lexicon crosswalk \
+uv run medical-kg-research data lexicon crosswalk \
   --inventory outputs/mining/vietbioner-19ba70a/reconciled/mention_inventory.jsonl \
   --index .cache/medical-kg/terminology/terminology-0598a6a288ef81ea932f.sqlite3 \
   --source data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
@@ -226,7 +226,7 @@ uv run medical-kg data lexicon crosswalk \
   --report-output outputs/mining/vietbioner-19ba70a/reconciled/terminology_crosswalk_report.json \
   --workers 4
 
-uv run medical-kg data snapshot freeze \
+uv run medical-kg-research data snapshot freeze \
   --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
   --annotations outputs/mining/vietbioner-19ba70a/reconciled/training_annotations.jsonl \
   --artifacts outputs/mining/vietbioner-19ba70a/artifacts.jsonl \
@@ -265,29 +265,29 @@ Spanish `text_files` members; machine-translated `text_files_en` members are del
 Run acquisition and source-label import with:
 
 ```bash
-uv run medical-kg data run --plan configs/mining/codiesp.yaml
+uv run medical-kg-research data run --plan configs/mining/codiesp.yaml
 
-uv run medical-kg data label propose \
+uv run medical-kg-research data label propose \
   --documents outputs/mining/codiesp-zenodo-3837305/documents.jsonl \
   --adapter medical_kg_nlp.mining.labelers.codiesp:create_codiesp_archive_labeler \
   --adapter-config configs/mining/labelers/codiesp.yaml \
   --output outputs/mining/codiesp-zenodo-3837305/source_annotations.jsonl \
   --batch-size 256
 
-uv run medical-kg data dataset inspect \
+uv run medical-kg-research data dataset inspect \
   --documents outputs/mining/codiesp-zenodo-3837305/documents.jsonl \
   --annotations outputs/mining/codiesp-zenodo-3837305/source_annotations.jsonl \
   --output outputs/mining/codiesp-zenodo-3837305/source_profile.json \
   --strict
 
-uv run medical-kg data dataset curate-annotations \
+uv run medical-kg-research data dataset curate-annotations \
   --annotations outputs/mining/codiesp-zenodo-3837305/source_annotations.jsonl \
   --policy configs/mining/curation/codiesp-contiguous-ner.yaml \
   --accepted-output outputs/mining/codiesp-zenodo-3837305/contiguous_training_annotations.jsonl \
   --rejected-output outputs/mining/codiesp-zenodo-3837305/noncontiguous_review_annotations.jsonl \
   --report-output outputs/mining/codiesp-zenodo-3837305/curation_report.json
 
-uv run medical-kg data snapshot freeze \
+uv run medical-kg-research data snapshot freeze \
   --documents outputs/mining/codiesp-zenodo-3837305/documents.jsonl \
   --annotations outputs/mining/codiesp-zenodo-3837305/contiguous_training_annotations.jsonl \
   --artifacts outputs/mining/codiesp-zenodo-3837305/artifacts.jsonl \
@@ -326,9 +326,9 @@ FTP package links as a reproducible transport and preserves BioC absolute passag
 
 ```bash
 export MEDICAL_KG_ARTIFACT_STORE=/Volumes/medical-kg-mining
-uv run medical-kg data run --plan configs/mining/pmc-rare-cases-2026-07-18.yaml
+uv run medical-kg-research data run --plan configs/mining/pmc-rare-cases-2026-07-18.yaml
 
-uv run medical-kg data dataset inspect \
+uv run medical-kg-research data dataset inspect \
   --documents outputs/mining/pmc-rare-cases-2026-07-18/documents.jsonl \
   --output outputs/mining/pmc-rare-cases-2026-07-18/source_profile.json \
   --strict
@@ -350,22 +350,22 @@ the full human-label releases are too large for the repository workspace.
 
 ```bash
 export MEDICAL_KG_ARTIFACT_STORE=/Volumes/medical-kg-mining
-uv run medical-kg data run --plan configs/mining/dailymed-daily-2026-07-17.yaml
+uv run medical-kg-research data run --plan configs/mining/dailymed-daily-2026-07-17.yaml
 
-uv run medical-kg data label propose \
+uv run medical-kg-research data label propose \
   --documents outputs/mining/dailymed-daily-2026-07-17/documents.jsonl \
   --adapter medical_kg_nlp.mining.labelers.dailymed:create_dailymed_structured_labeler \
   --adapter-config configs/mining/labelers/dailymed-structured.yaml \
   --output outputs/mining/dailymed-daily-2026-07-17/structured_annotations.jsonl
 
-uv run medical-kg data relation propose \
+uv run medical-kg-research data relation propose \
   --documents outputs/mining/dailymed-daily-2026-07-17/documents.jsonl \
   --annotations outputs/mining/dailymed-daily-2026-07-17/structured_annotations.jsonl \
   --adapter medical_kg_nlp.mining.labelers.dailymed:create_dailymed_structured_relation_labeler \
   --adapter-config configs/mining/labelers/dailymed-relations.yaml \
   --output outputs/mining/dailymed-daily-2026-07-17/structured_relations.jsonl
 
-uv run medical-kg data snapshot freeze \
+uv run medical-kg-research data snapshot freeze \
   --documents outputs/mining/dailymed-daily-2026-07-17/documents.jsonl \
   --annotations outputs/mining/dailymed-daily-2026-07-17/structured_annotations.jsonl \
   --relations outputs/mining/dailymed-daily-2026-07-17/structured_relations.jsonl \
@@ -392,16 +392,16 @@ DailyMed's official SPL-to-RxNorm mapping is acquired separately because it is a
 crosswalk, not inferred text matching. Compile and audit the checksum-pinned release with:
 
 ```bash
-uv run medical-kg data run --plan configs/mining/dailymed-rxnorm-2026-07-17.yaml
+uv run medical-kg-research data run --plan configs/mining/dailymed-rxnorm-2026-07-17.yaml
 
-uv run medical-kg data mapping compile-dailymed-rxnorm \
+uv run medical-kg-research data mapping compile-dailymed-rxnorm \
   --artifacts outputs/mining/dailymed-rxnorm-2026-07-17/artifacts.jsonl \
   --store "$MEDICAL_KG_ARTIFACT_STORE" \
   --output outputs/mining/dailymed-rxnorm-2026-07-17/compiled_mappings.jsonl \
   --index-output outputs/mining/dailymed-rxnorm-2026-07-17/dailymed_rxnorm.sqlite3 \
   --report-output outputs/mining/dailymed-rxnorm-2026-07-17/compilation_report.json
 
-uv run medical-kg data mapping audit-dailymed-rxnorm \
+uv run medical-kg-research data mapping audit-dailymed-rxnorm \
   --index outputs/mining/dailymed-rxnorm-2026-07-17/dailymed_rxnorm.sqlite3 \
   --terminology-index .cache/medical-kg/terminology/terminology-0598a6a288ef81ea932f.sqlite3 \
   --source data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
@@ -538,7 +538,7 @@ For model NER, export the reconciled raw spans without changing offsets or leaki
 split:
 
 ```bash
-uv run medical-kg data dataset export-spans \
+uv run medical-kg-research data dataset export-spans \
   --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
   --annotations outputs/mining/vietbioner-19ba70a/reconciled/model_ner_annotations.jsonl \
   --split-manifest outputs/mining/snapshots/vietbioner-19ba70a-reconciled-silver-v4/manifest.json \
@@ -560,7 +560,7 @@ The two artifacts are separate by design:
 Rebuild the snapshot and span artifact deterministically with:
 
 ```bash
-medical-kg data snapshot freeze \
+medical-kg-research data snapshot freeze \
   --documents outputs/mining/fused/open-corpus-v1-39106c1cc9d0/documents.jsonl \
   --annotations outputs/mining/fused/open-corpus-v1-39106c1cc9d0/annotations.jsonl \
   --relations outputs/mining/fused/open-corpus-v1-39106c1cc9d0/relations.jsonl \
@@ -595,7 +595,7 @@ span dataset:      aa6cafa2efd1f4f68f927067d41348b16e22da19f5f57f7375b2c5e62ab8a
 Validate it before a model run:
 
 ```bash
-medical-kg model validate-token-dataset \
+medical-kg-research model validate-token-dataset \
   --dataset outputs/mining/model-datasets/open-corpus-v1-balanced-2026-07-18/spans.jsonl \
   --dataset-manifest outputs/mining/model-datasets/open-corpus-v1-balanced-2026-07-18/manifest.json
 ```
@@ -604,7 +604,7 @@ Training requires the local `ml` extra and a cached fast tokenizer/model. The co
 construction (`local_files_only=true`) and writes a model fingerprint plus metrics manifest:
 
 ```bash
-medical-kg model train-token-classifier \
+medical-kg-research model train-token-classifier \
   --dataset outputs/mining/model-datasets/open-corpus-v1-balanced-2026-07-18/spans.jsonl \
   --dataset-manifest outputs/mining/model-datasets/open-corpus-v1-balanced-2026-07-18/manifest.json \
   --model-id "$LOCAL_MODEL_ID" \
@@ -647,7 +647,7 @@ Official `corpus_split=train` filtering is part of the policy, independent of la
 splits.
 
 ```bash
-uv run medical-kg data relation mine-cooccurrence \
+uv run medical-kg-research data relation mine-cooccurrence \
   --documents outputs/mining/fused/open-corpus-v1-39106c1cc9d0/documents.jsonl \
   --annotations outputs/mining/fused/open-corpus-v1-39106c1cc9d0/harmonized_annotations.jsonl \
   --policy configs/mining/relations/codiesp-train-cooccurrence.yaml \
@@ -691,7 +691,7 @@ concept. Unresolved or ambiguous fields are counted and skipped; they are never 
 guessed code or edge.
 
 ```bash
-uv run medical-kg data knowledge compile-graph \
+uv run medical-kg-research data knowledge compile-graph \
   --terminology-source data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
   --terminology-source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl \
   --alias-overlay data/dictionaries/vietnamese_medical_alias.jsonl \
@@ -750,7 +750,7 @@ Round 2 documents. Duplicate groups are assigned together using SHA-256 buckets,
 fraction `0.2`, and salt `42`.
 
 ```bash
-uv run medical-kg benchmark phase1 model-data build \
+uv run medical-kg-benchmark phase1 model-data build \
   --input-dir data/raw/input \
   --gold-dir data/manual_gold \
   --frozen-split-manifest data/manual_gold/holdout_manifest.json \
@@ -789,7 +789,7 @@ Inspecting the spec validates dataset offsets, manifest identity, split label co
 checkpoint identity, and the exact Linux/CUDA requirements without importing Torch:
 
 ```bash
-uv run medical-kg model inspect-token-classifier-run \
+uv run medical-kg-research model inspect-token-classifier-run \
   --config configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml
 ```
 
@@ -801,7 +801,7 @@ uv sync --extra ml
 uv run hf download FacebookAI/xlm-roberta-base \
   --revision e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
 
-CUDA_VISIBLE_DEVICES=0 uv run medical-kg model train-token-classifier-run \
+CUDA_VISIBLE_DEVICES=0 uv run medical-kg-research model train-token-classifier-run \
   --config configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml
 ```
 

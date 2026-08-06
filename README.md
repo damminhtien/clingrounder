@@ -235,11 +235,11 @@ Start with [docs/rule-ner.md](docs/rule-ner.md),
 ## Data Mining And Provenance
 
 ```bash
-uv run medical-kg data registry validate \
+uv run medical-kg-research data registry validate \
   --registry data/sources/mining_registry.yaml
-uv run medical-kg data run --plan configs/mining/open_corpus_v1.yaml
-uv run medical-kg data coverage report --help
-uv run medical-kg data snapshot freeze --help
+uv run medical-kg-research data run --plan configs/mining/open_corpus_v1.yaml
+uv run medical-kg-research data coverage report --help
+uv run medical-kg-research data snapshot freeze --help
 ```
 
 The public Git tree contains code, redistributable fixtures, policies, source dossiers, checksums,
@@ -263,8 +263,8 @@ The archived Vietnamese extraction challenge is retained for reproducibility and
 research. It is isolated from reusable pipeline defaults:
 
 ```bash
-uv run medical-kg benchmark list
-uv run medical-kg benchmark phase1 --help
+uv run medical-kg-benchmark list
+uv run medical-kg-benchmark phase1 --help
 uv run pytest -o addopts='' -m "benchmark and not private and not model" \
   tests/benchmarks/phase1
 ```

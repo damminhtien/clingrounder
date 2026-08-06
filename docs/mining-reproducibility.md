@@ -30,7 +30,7 @@ The current NER/retrieval release specification is
 Create the lock after materializing the release:
 
 ```bash
-uv run medical-kg data release lock \
+uv run medical-kg-research data release lock \
   --spec configs/mining/releases/open-ner-retrieval-v1.yaml \
   --output data/releases/open-ner-retrieval-v1.lock.json
 ```
@@ -38,7 +38,7 @@ uv run medical-kg data release lock \
 Verify it locally:
 
 ```bash
-uv run medical-kg data release verify \
+uv run medical-kg-research data release verify \
   --manifest data/releases/open-ner-retrieval-v1.lock.json \
   --root . \
   --store "$MEDICAL_KG_ARTIFACT_STORE" \
@@ -82,7 +82,7 @@ bucket URI. Standard verification checks repository artifacts and external objec
    If a parser requires a seekable archive, hydrate it to a disposable local path:
 
    ```bash
-   uv run medical-kg data artifact materialize \
+   uv run medical-kg-research data artifact materialize \
      --store "$MEDICAL_KG_ARTIFACT_STORE" \
      --sha256 <locked-sha256> \
      --expected-byte-size <locked-size> \
@@ -92,7 +92,7 @@ bucket URI. Standard verification checks repository artifacts and external objec
 3. Validate source governance before processing any bytes:
 
    ```bash
-   uv run medical-kg data registry validate \
+   uv run medical-kg-research data registry validate \
      --registry data/sources/mining_registry.yaml \
      --processing-index data/sources/processing_status.yaml \
      --repository-root .
@@ -180,7 +180,7 @@ status to processed, curated, or promoted, all of the following must hold:
 5. The source dossier records exact commands, observed counts, output SHA-256 values, validation
    results, promotion boundary and work that has not been completed.
 6. A second run from cache produces the same canonical hashes. A separate machine verifies the
-   copied artifacts with `medical-kg data release verify` before model training or benchmarking.
+   copied artifacts with `medical-kg-research data release verify` before model training or benchmarking.
 
 These checks deliberately separate three claims: a source may be *registered*, a source plan may be
 *pinned*, and a particular source tranche may be *processed*. Documentation must never use these

@@ -149,15 +149,15 @@ outputs/mining/knowledge/vietbioner-recognition-v4/
 Acquire, import and reconcile the source:
 
 ```bash
-uv run medical-kg data run --plan configs/mining/vietbioner.yaml
+uv run medical-kg-research data run --plan configs/mining/vietbioner.yaml
 
-uv run medical-kg data label propose \
+uv run medical-kg-research data label propose \
   --documents outputs/mining/vietbioner-19ba70a/documents.jsonl \
   --adapter medical_kg_nlp.mining.labelers.brat:create_brat_archive_labeler \
   --adapter-config configs/mining/labelers/vietbioner.yaml \
   --output outputs/mining/vietbioner-19ba70a/source_annotations.jsonl
 
-uv run medical-kg data dataset reconcile-duplicates \
+uv run medical-kg-research data dataset reconcile-duplicates \
   --documents outputs/mining/vietbioner-19ba70a/documents.jsonl \
   --annotations outputs/mining/vietbioner-19ba70a/source_annotations.jsonl \
   --documents-output outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
@@ -171,7 +171,7 @@ uv run medical-kg data dataset reconcile-duplicates \
 Freeze the materialized split and create the model view:
 
 ```bash
-uv run medical-kg data snapshot freeze \
+uv run medical-kg-research data snapshot freeze \
   --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
   --annotations outputs/mining/vietbioner-19ba70a/reconciled/training_annotations.jsonl \
   --artifacts outputs/mining/vietbioner-19ba70a/artifacts.jsonl \
@@ -183,14 +183,14 @@ uv run medical-kg data snapshot freeze \
   --output-dir outputs/mining/snapshots/vietbioner-19ba70a-reconciled-silver-v4 \
   --skip-agreement-gate
 
-uv run medical-kg data dataset curate-annotations \
+uv run medical-kg-research data dataset curate-annotations \
   --annotations outputs/mining/vietbioner-19ba70a/reconciled/training_annotations.jsonl \
   --policy configs/mining/curation/vietbioner-ner.yaml \
   --accepted-output outputs/mining/vietbioner-19ba70a/reconciled/model_ner_annotations.jsonl \
   --rejected-output outputs/mining/vietbioner-19ba70a/reconciled/model_ner_rejected_annotations.jsonl \
   --report-output outputs/mining/vietbioner-19ba70a/reconciled/model_ner_curation_report.json
 
-uv run medical-kg data dataset export-spans \
+uv run medical-kg-research data dataset export-spans \
   --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
   --annotations outputs/mining/vietbioner-19ba70a/reconciled/model_ner_annotations.jsonl \
   --split-manifest outputs/mining/snapshots/vietbioner-19ba70a-reconciled-silver-v4/manifest.json \
@@ -202,7 +202,7 @@ uv run medical-kg data dataset export-spans \
 Build and benchmark recognition knowledge without reading development labels during compilation:
 
 ```bash
-uv run medical-kg data lexicon build \
+uv run medical-kg-research data lexicon build \
   --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
   --annotations outputs/mining/vietbioner-19ba70a/reconciled/training_annotations.jsonl \
   --split-manifest outputs/mining/snapshots/vietbioner-19ba70a-reconciled-silver-v4/manifest.json \
@@ -211,7 +211,7 @@ uv run medical-kg data lexicon build \
   --conflicts-output outputs/mining/knowledge/vietbioner-recognition-v4/train_conflicts.jsonl \
   --report-output outputs/mining/knowledge/vietbioner-recognition-v4/train_inventory_report.json
 
-uv run medical-kg data knowledge compile-recognition \
+uv run medical-kg-research data knowledge compile-recognition \
   --inventory outputs/mining/knowledge/vietbioner-recognition-v4/train_inventory.jsonl \
   --policy configs/mining/knowledge/vietbioner-recognition-v4.yaml \
   --baseline-dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl \
@@ -219,7 +219,7 @@ uv run medical-kg data knowledge compile-recognition \
   --decisions-output outputs/mining/knowledge/vietbioner-recognition-v4/decisions.jsonl \
   --report-output outputs/mining/knowledge/vietbioner-recognition-v4/compilation_report.json
 
-uv run medical-kg data knowledge benchmark-recognition \
+uv run medical-kg-research data knowledge benchmark-recognition \
   --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
   --annotations outputs/mining/vietbioner-19ba70a/reconciled/training_annotations.jsonl \
   --baseline-dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl \

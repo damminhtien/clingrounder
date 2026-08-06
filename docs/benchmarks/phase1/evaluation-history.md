@@ -23,7 +23,7 @@ quarantine, and Friend31 provenance are rejected. Recreate the ignored training 
 than copying it between machines:
 
 ```bash
-uv run medical-kg benchmark phase1 model-data build-final-fit-bundle \
+uv run medical-kg-benchmark phase1 model-data build-final-fit-bundle \
   --output-dir outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1
 ```
 
@@ -47,7 +47,7 @@ immutable child document and groups all chunks plus renderer children of the sam
 one OOF fold. It validates the token bundle manifest and rejects Round 2 and Friend31 provenance:
 
 ```bash
-uv run medical-kg benchmark phase1 joint-span prepare-token-bundle \
+uv run medical-kg-benchmark phase1 joint-span prepare-token-bundle \
   --dataset outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1/spans.jsonl \
   --dataset-manifest outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1/manifest.json \
   --bundle-build-manifest outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1/build_manifest.json \
@@ -67,13 +67,13 @@ Materialize those sources with the same bundle paths. This avoids mixing spans e
 notes with chunk-local training coordinates:
 
 ```bash
-uv run medical-kg benchmark phase1 qwen propose-token-bundle \
+uv run medical-kg-benchmark phase1 qwen propose-token-bundle \
   --config configs/benchmarks/phase1/models/phase1-qwen3-8b-qlora-portable-inference-2026-07-31.yaml \
   --dataset outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1/spans.jsonl \
   --dataset-manifest outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1/manifest.json \
   --output-dir outputs/models/phase1-qwen3-final-token-bundle-source
 
-uv run medical-kg benchmark phase1 joint-span materialize-token-bundle-source \
+uv run medical-kg-benchmark phase1 joint-span materialize-token-bundle-source \
   --dataset outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1/spans.jsonl \
   --dataset-manifest outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1/manifest.json \
   --model-path outputs/models/phase1-xlmr-dapt/final-model \
@@ -103,7 +103,7 @@ Then materialize the final cross encoder with the identical training family and 
 calibration from the OOF observations only:
 
 ```bash
-uv run medical-kg benchmark phase1 joint-span calibrate \
+uv run medical-kg-benchmark phase1 joint-span calibrate \
   --observations outputs/models/phase1-joint-span-xlmr-dapt-oof-2026-08-01/oof_observations.jsonl \
   --training-family-fingerprint <manifest-training-family-sha256> \
   --fold-assignment-sha256 <fold-assignments-json-sha256> \
@@ -119,7 +119,7 @@ artifact, not a candidate submission. The command uses raw `[start, end)` projec
 separate recall/targeted pass evidence for the learned fusion stage:
 
 ```bash
-uv run medical-kg benchmark phase1 qwen propose-final-supervision \
+uv run medical-kg-benchmark phase1 qwen propose-final-supervision \
   --config configs/benchmarks/phase1/models/phase1-qwen3-8b-qlora-portable-inference-2026-07-31.yaml \
   --output-dir outputs/models/phase1-qwen3-final-supervision-source
 ```
@@ -194,7 +194,7 @@ python scripts/evaluate_pipeline_steps.py \
   --run-root outputs/runs \
   --output-dir evaluation/sample
 
-uv run medical-kg benchmark phase1 submission \
+uv run medical-kg-benchmark phase1 submission \
   --input-dir data/raw/input \
   --output-dir outputs/phase1/current/output \
   --zip outputs/phase1/current/output.zip \
@@ -268,14 +268,14 @@ serialized feature rows. A positive label means exact raw span and exact Phase 1
 type, boundary+type, and spurious proposals are explicit negatives.
 
 ```bash
-uv run medical-kg benchmark phase1 proposal-matrix \
+uv run medical-kg-benchmark phase1 proposal-matrix \
   --target-source rule=outputs/phase1/<rule>/output.zip \
   --internal-source xlmr=outputs/models/<xlmr>/predictions.jsonl \
   --target-source qwen=outputs/phase1/<qwen>/output.zip \
   --compatible-source vietmed=outputs/models/<vietmed>/support \
   --output-dir outputs/phase1/proposal-fusion/matrix
 
-uv run medical-kg benchmark phase1 proposal-calibrate \
+uv run medical-kg-benchmark phase1 proposal-calibrate \
   --matrix outputs/phase1/proposal-fusion/matrix/proposal_matrix.jsonl \
   --source-role rule=rule \
   --source-role xlmr=token_model \
@@ -284,7 +284,7 @@ uv run medical-kg benchmark phase1 proposal-calibrate \
   --minimum-development-precision 0.90 \
   --output-dir outputs/phase1/proposal-fusion/calibrated
 
-uv run medical-kg benchmark phase1 proposal-resolve \
+uv run medical-kg-benchmark phase1 proposal-resolve \
   --matrix outputs/phase1/proposal-fusion/matrix/proposal_matrix.jsonl \
   --verifier outputs/phase1/proposal-fusion/calibrated/verifier.json \
   --source-role rule=rule \
@@ -297,7 +297,7 @@ uv run medical-kg benchmark phase1 proposal-resolve \
 The final-fit public-probe variant is explicit:
 
 ```bash
-uv run medical-kg benchmark phase1 proposal-calibrate \
+uv run medical-kg-benchmark phase1 proposal-calibrate \
   --matrix outputs/phase1/proposal-fusion/matrix/proposal_matrix.jsonl \
   --source-role rule=rule \
   --source-role xlmr=token_model \
@@ -339,7 +339,7 @@ edits normalized text back into raw offsets. Each candidate is labeled `CORRECT`
 `TOO_LONG`, or `WRONG_ENTITY`; the binary rank target is exact span plus exact type.
 
 ```bash
-uv run medical-kg benchmark phase1 boundary-calibrate \
+uv run medical-kg-benchmark phase1 boundary-calibrate \
   --matrix outputs/phase1/proposal-fusion/matrix/proposal_matrix.jsonl \
   --proposal-verifier outputs/phase1/proposal-fusion/calibrated/verifier.json \
   --dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl \
@@ -349,7 +349,7 @@ uv run medical-kg benchmark phase1 boundary-calibrate \
   --source-role vietmed=verifier \
   --output-dir outputs/phase1/proposal-fusion/boundary
 
-uv run medical-kg benchmark phase1 boundary-resolve \
+uv run medical-kg-benchmark phase1 boundary-resolve \
   --matrix outputs/phase1/proposal-fusion/matrix/proposal_matrix.jsonl \
   --proposal-verifier outputs/phase1/proposal-fusion/calibrated/verifier.json \
   --boundary-verifier outputs/phase1/proposal-fusion/boundary/verifier.json \
@@ -388,7 +388,7 @@ Interrupted training can resume from the fingerprinted materialized dataset with
 trie, grammar, medication, token-window, and coordination alternatives:
 
 ```bash
-uv run medical-kg benchmark phase1 boundary-calibrate \
+uv run medical-kg-benchmark phase1 boundary-calibrate \
   --dataset-dir outputs/phase1/proposal-fusion/boundary/dataset \
   --output-dir outputs/phase1/proposal-fusion/boundary-resumed
 ```
@@ -406,7 +406,7 @@ bonuses or tie-breaks.
 Apply a frozen verifier to an unlabeled Round 2 proposal source with:
 
 ```bash
-uv run medical-kg benchmark phase1 round2 proposal-verifier \
+uv run medical-kg-benchmark phase1 round2 proposal-verifier \
   --documents outputs/mining/phase1-round2-<run>/documents.jsonl \
   --source-archive-sha256 <source-sha256> \
   --base outputs/phase1/round2/<baseline>/output.zip \
@@ -426,7 +426,7 @@ directory plus deterministic ZIP pass strict validation before the artifact is r
 Score rule, token-model, LLM, and source-task support proposals on the same frozen 60/16 split:
 
 ```bash
-uv run medical-kg benchmark phase1 proposal-score \
+uv run medical-kg-benchmark phase1 proposal-score \
   --target-source rule=outputs/phase1/<rule>/output.zip \
   --internal-source xlmr=outputs/models/<run>/development_predictions.jsonl \
   --target-source qwen=outputs/phase1/<qwen>/output.zip \
@@ -445,7 +445,7 @@ overlap metrics. Compatible source-task labels are scored separately:
 Train the dedicated target-task type verifier with:
 
 ```bash
-uv run medical-kg benchmark phase1 type-verifier \
+uv run medical-kg-benchmark phase1 type-verifier \
   --matrix outputs/phase1/<run>/proposals/proposal_matrix.jsonl \
   --representation-source outputs/models/<vietmed>/support \
   --output-dir outputs/models/phase1-disease-symptom-verifier

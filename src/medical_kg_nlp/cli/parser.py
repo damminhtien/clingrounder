@@ -29,10 +29,10 @@ def build_parser(
         _pipeline_parser(commands)
         _terminology_parser(commands)
         _kg_parser(commands)
+        _evaluate_parser(commands)
         _validate_parser(commands)
         _release_parser(commands)
     if scope in {None, "research"}:
-        _evaluate_parser(commands)
         _model_parser(commands)
         _data_parser(commands)
     if scope in {None, "benchmark"}:

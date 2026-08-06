@@ -22,7 +22,7 @@ acquisition manifest only; ontology-derived artifacts live under
 
 ## Processing
 
-`medical-kg data ontology compile-obo` streams the OBO Graph JSON with `ijson`. It scans the target
+`medical-kg-research data ontology compile-obo` streams the OBO Graph JSON with `ijson`. It scans the target
 namespace separately from imported classes, then materializes:
 
 | Artifact | Purpose | Rows |
@@ -118,9 +118,9 @@ not runtime defaults. Promotion requires:
 ```bash
 export MEDICAL_KG_ARTIFACT_STORE=/Volumes/medical-kg-mining
 
-uv run medical-kg data run --plan configs/mining/mondo-2026-07-06.yaml
+uv run medical-kg-research data run --plan configs/mining/mondo-2026-07-06.yaml
 
-uv run medical-kg data ontology compile-obo \
+uv run medical-kg-research data ontology compile-obo \
   --input "$MONDO_JSON_OBJECT" \
   --output-dir outputs/mining/knowledge/mondo-2026-07-06 \
   --source-id mondo --source-version 2026-07-06 \

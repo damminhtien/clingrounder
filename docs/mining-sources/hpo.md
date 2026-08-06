@@ -44,7 +44,7 @@ covered all edges at 3,163 queries/second with p95 4.31 ms.
 
 ## Disease-Phenotype Processing
 
-`medical-kg data ontology compile-hpo-associations` parses every HPOA field:
+`medical-kg-research data ontology compile-hpo-associations` parses every HPOA field:
 
 ```text
 database_id, disease_name, qualifier, hpo_id, reference, evidence,
@@ -148,15 +148,15 @@ HPO is `curated / training_only`. It is blocked from runtime defaults because:
 
 ```bash
 export MEDICAL_KG_ARTIFACT_STORE=/Volumes/medical-kg-mining
-uv run medical-kg data run --plan configs/mining/hpo-2026-06-23.yaml
+uv run medical-kg-research data run --plan configs/mining/hpo-2026-06-23.yaml
 
-uv run medical-kg data ontology compile-obo \
+uv run medical-kg-research data ontology compile-obo \
   --input "$HPO_JSON_OBJECT" \
   --output-dir outputs/mining/knowledge/hpo-2026-06-23/ontology \
   --source-id hpo --source-version 2026-06-23 \
   --iri-prefix HP --code-system HPO --entity-type FINDING
 
-uv run medical-kg data ontology compile-hpo-associations \
+uv run medical-kg-research data ontology compile-hpo-associations \
   --hpoa "$HPOA_OBJECT" --genes "$HPO_GENE_OBJECT" \
   --hpo-concepts outputs/mining/knowledge/hpo-2026-06-23/ontology/concepts.jsonl \
   --source-version 2026-06-23 \

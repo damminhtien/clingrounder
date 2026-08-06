@@ -165,9 +165,9 @@ submission by itself.
 Acquire and parse the exact source release:
 
 ```bash
-uv run medical-kg data run --plan configs/mining/vietmed_ner.yaml
+uv run medical-kg-research data run --plan configs/mining/vietmed_ner.yaml
 
-uv run medical-kg data label propose \
+uv run medical-kg-research data label propose \
   --documents outputs/mining/vietmed-ner-e3d0393c/documents.jsonl \
   --adapter medical_kg_nlp.mining.labelers.vietmed_ner:create_vietmed_ner_source_labeler \
   --adapter-config configs/mining/labelers/vietmed_ner.yaml \
@@ -177,12 +177,12 @@ uv run medical-kg data label propose \
 Freeze the source partition and export the full source-task span dataset:
 
 ```bash
-uv run medical-kg data dataset freeze-source-splits \
+uv run medical-kg-research data dataset freeze-source-splits \
   --documents outputs/mining/vietmed-ner-e3d0393c/documents.jsonl \
   --map train=train --map validation=development --map test=test \
   --output outputs/mining/vietmed-ner-e3d0393c/source_split_manifest.json
 
-uv run medical-kg data dataset export-spans \
+uv run medical-kg-research data dataset export-spans \
   --documents outputs/mining/vietmed-ner-e3d0393c/documents.jsonl \
   --annotations outputs/mining/vietmed-ner-e3d0393c/source_annotations.jsonl \
   --split-manifest outputs/mining/vietmed-ner-e3d0393c/source_split_manifest.json \
@@ -202,7 +202,7 @@ hf download leduckhai/VietMed-NER \
   --revision cccffb7de14423114f7d4bafc9f736b9d866e446 \
   --include 'xlm-roberta-base-VietMed-NER/*'
 
-uv run medical-kg benchmark phase1 qwen build-vietnamese-support \
+uv run medical-kg-benchmark phase1 qwen build-vietnamese-support \
   --config configs/benchmarks/phase1/models/phase1-vietmed-ner-verifier-2026-07-27.yaml \
   --documents outputs/mining/phase1-round2-hosted-2026-07-27/documents.jsonl \
   --source-archive-sha256 989d82404a9c1f3739e15d68a1e69d0f1f90d35c93c04ab0988e071fc1525545 \
@@ -212,7 +212,7 @@ uv run medical-kg benchmark phase1 qwen build-vietnamese-support \
 Then pass the generated `support/` directory to Qwen:
 
 ```bash
-uv run medical-kg benchmark phase1 qwen propose \
+uv run medical-kg-benchmark phase1 qwen propose \
   --config configs/benchmarks/phase1/models/phase1-qwen3-8b-vietmed-verifier-2026-07-27.yaml \
   --documents outputs/mining/phase1-round2-hosted-2026-07-27/documents.jsonl \
   --source-archive-sha256 989d82404a9c1f3739e15d68a1e69d0f1f90d35c93c04ab0988e071fc1525545 \

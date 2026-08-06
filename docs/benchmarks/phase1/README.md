@@ -19,8 +19,8 @@ Architecture tests enforce that boundary.
 ## Run
 
 ```bash
-uv run medical-kg benchmark list
-uv run medical-kg benchmark phase1 --help
+uv run medical-kg-benchmark list
+uv run medical-kg-benchmark phase1 --help
 uv run pytest -o addopts='' -m "benchmark and not private and not model" \
   tests/benchmarks/phase1
 ```

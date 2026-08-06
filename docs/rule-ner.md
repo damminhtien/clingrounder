@@ -80,7 +80,7 @@ uv sync --frozen --extra dev
 
 uv run python scripts/benchmarks/phase1/mine_phase1_recognition_knowledge.py
 
-uv run medical-kg benchmark phase1 submission \
+uv run medical-kg-benchmark phase1 submission \
   --input-dir data/raw/input \
   --output-dir outputs/phase1/rule_ner_structured_symptom_boundary/output \
   --zip outputs/phase1/rule_ner_structured_symptom_boundary/output.zip \
