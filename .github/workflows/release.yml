@@ -4,12 +4,19 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Existing version tag to release"
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 env:
   UV_VERSION: "0.11.31"
+  RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
 
 jobs:
   verify:
@@ -40,7 +47,7 @@ jobs:
               print(tomllib.load(handle)["project"]["version"])
           PY
           )
-          test "$GITHUB_REF_NAME" = "v${PROJECT_VERSION}"
+          test "$RELEASE_TAG" = "v${PROJECT_VERSION}"
 
       - name: Ruff
         run: .venv/bin/ruff check .
@@ -62,7 +69,7 @@ jobs:
 
       - name: Extract release notes
         env:
-          RELEASE_VERSION: ${{ github.ref_name }}
+          RELEASE_VERSION: ${{ env.RELEASE_TAG }}
         run: |
           VERSION="${RELEASE_VERSION#v}"
           python - "$VERSION" <<'PY'
@@ -137,7 +144,7 @@ jobs:
           if [[ "$VERSION" =~ (a|b|rc)[0-9]+$ ]]; then
             PRERELEASE_ARGS+=(--prerelease)
           fi
-          gh release create "$GITHUB_REF_NAME" dist/* \
+          gh release create "$RELEASE_TAG" dist/* \
             --title "ClingRounder $VERSION" \
             --notes-file release-notes.md \
             "${PRERELEASE_ARGS[@]}"

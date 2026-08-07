@@ -42,6 +42,9 @@ versioned source and wheel artifacts on GitHub.
    git push origin v0.1.0a1
    ```
 
+For an existing tag whose first run failed before publishing, use the GitHub Actions
+`workflow_dispatch` input `release_tag` instead of recreating the tag.
+
 The workflow rejects a tag that does not equal `v<project.version>`. It also fails if the matching
 changelog section is missing, if release validation fails, or if package metadata is invalid.
 
