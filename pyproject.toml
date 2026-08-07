@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "clingrounder"
-version = "0.1.0a1"
+version = "0.1.0a2"
 description = "Offset-safe clinical text grounding to terminology-linked knowledge graphs"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -45,6 +45,7 @@ clingrounder-research = "clingrounder.cli:research_main"
 clingrounder-benchmark = "clingrounder.cli:benchmark_main"
 
 [project.optional-dependencies]
+vi = []
 dev = [
   "pre-commit>=4.6.0",
   "pytest>=9.1.1",
@@ -111,6 +112,7 @@ where = ["src"]
 [tool.setuptools.package-data]
 clingrounder = [
   "resources/*.jsonl",
+  "artifacts/packs/vi-clinical-small/*",
   "benchmarks/phase1/resources/*.jsonl",
 ]
 

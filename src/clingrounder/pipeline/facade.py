@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
+import hashlib
 from pathlib import Path
 
 from clingrounder.pipeline.components import PipelineComponents
@@ -16,6 +17,7 @@ from clingrounder.pipeline.runner import PipelineRunResult, PipelineRunner
 from clingrounder.pipeline.runtime import PipelineRuntime
 from clingrounder.schema.document import ClinicalDocument
 from clingrounder.schema.output import ClinicalPrediction
+from clingrounder.artifacts.registry import BuiltinArtifact, get_builtin_artifact
 
 __all__ = [
     "Pipeline",
@@ -23,6 +25,7 @@ __all__ = [
     "PipelineConfig",
     "PipelineConfigurationError",
     "UnknownProfileError",
+    "load_pipeline",
 ]
 
 RunnerFactory = Callable[[], PipelineRunner]
@@ -97,6 +100,47 @@ class Pipeline:
         runner = PipelineRunner(components)
         return cls(PipelineRuntime(runner, runner.resources))
 
+    @classmethod
+    def from_pretrained(
+        cls,
+        name: str,
+        *,
+        revision: str | None = None,
+        offline: bool = False,
+    ) -> "Pipeline":
+        """Load a pinned package-bundled resource pack without network fallback.
+
+        External model and terminology releases can be composed through ``from_config``.  The
+        built-in pack is intentionally small so a clean installation has one deterministic,
+        offline smoke path.
+        """
+
+        del offline  # Bundled artifacts are always local; no network fallback is permitted.
+        artifact = get_builtin_artifact(name, revision)
+        config = _builtin_artifact_config(artifact)
+        runtime = PipelineFactory.runtime_from_config(config)
+        return cls(runtime, partial(PipelineFactory.from_config, config))
+
+    @classmethod
+    def download(
+        cls,
+        name: str,
+        *,
+        revision: str | None = None,
+        cache_dir: str | Path | None = None,
+        offline: bool = False,
+    ) -> Path:
+        """Materialize a pinned built-in pack into a caller-owned cache.
+
+        This method does not contact a remote registry.  A future remote registry must be
+        implemented as a separately reviewed artifact provider with checksum verification.
+        """
+
+        del offline
+        artifact = get_builtin_artifact(name, revision)
+        destination = Path(cache_dir or Path.home() / ".cache" / "clingrounder" / "artifacts")
+        return artifact.install(destination)
+
     def predict(
         self,
         text: str,
@@ -112,6 +156,18 @@ class Pipeline:
             text,
             dict(metadata) if metadata is not None else None,
         )
+
+    def __call__(
+        self,
+        text: str,
+        *,
+        document_id: str | None = None,
+        metadata: Mapping[str, str] | None = None,
+    ) -> ClinicalPrediction:
+        """Predict with a deterministic content-derived ID for short examples."""
+
+        resolved_id = document_id or f"text-{hashlib.sha256(text.encode('utf-8')).hexdigest()[:12]}"
+        return self.predict(text, document_id=resolved_id, metadata=metadata)
 
     def predict_document(self, document: ClinicalDocument) -> ClinicalPrediction:
         """Predict from an already validated clinical document."""
@@ -194,3 +250,46 @@ def _repository_profile_root() -> Path:
     """Locate checked-in profiles from the installed source tree, never from cwd."""
 
     return Path(__file__).resolve().parents[3] / "configs" / "pipeline"
+
+
+def _builtin_artifact_config(artifact: BuiltinArtifact) -> PipelineConfig:
+    """Build a minimal config from package resources without writing into site-packages."""
+
+    root = artifact.root
+    cache_dir = Path.home() / ".cache" / "clingrounder" / "terminology"
+    return PipelineConfig.from_mapping(
+        {
+            "terminology": {
+                "recognition_path": str(root / "seed_concepts.jsonl"),
+                "abbreviation_path": str(root / "abbreviations.jsonl"),
+                "alias_overlay_path": str(root / "vietnamese_medical_alias.jsonl"),
+                "cache_dir": str(cache_dir),
+            },
+            "pipeline": {
+                "version": f"{artifact.artifact_id}-{artifact.revision}",
+                "enable_context": True,
+                "enable_linking": True,
+                "enable_candidate_reranking": False,
+                "enable_graph_evidence_reranking": False,
+                "enable_entity_kg_validation": False,
+                "enable_relations": False,
+                "enable_relation_kg_validation": False,
+                "max_candidates": 5,
+                "candidate_sources": ["exact", "abbreviation"],
+            },
+        }
+    )
+
+
+def load_pipeline(
+    name_or_path: str | Path,
+    *,
+    revision: str | None = None,
+    offline: bool = False,
+) -> Pipeline:
+    """Load a repository profile or a pinned built-in artifact."""
+
+    path = Path(name_or_path).expanduser()
+    if path.exists():
+        return Pipeline.from_config(path)
+    return Pipeline.from_pretrained(str(name_or_path), revision=revision, offline=offline)

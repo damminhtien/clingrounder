@@ -12,12 +12,46 @@ it is not part of the default runtime or evaluation path.
 The PyPI distribution is named `clingrounder`; the Python import namespace remains
 `clingrounder`.
 
-Current release: [`0.1.0a1`](https://pypi.org/project/clingrounder/0.1.0a1/). The project is in
+Current release: [`0.1.0a2`](https://pypi.org/project/clingrounder/0.1.0a2/). The project is in
 alpha: the public contracts and validation invariants are useful, but APIs may still change
 between minor releases.
 
 > Research software only. It is not a medical device and must not be used as the sole basis for
 > clinical decisions.
+
+## 30-Second Quickstart
+
+Install the small, offline Vietnamese resource pack:
+
+```bash
+python -m pip install "clingrounder[vi]"
+```
+
+Run the deterministic pipeline without a repository checkout or network access:
+
+```python
+from clingrounder import load_pipeline
+
+with load_pipeline("vi-clinical-small", offline=True) as pipeline:
+    result = pipeline(
+        "Bệnh nhân không sốt. Tiền sử tăng huyết áp. Đang dùng metformin."
+    )
+
+for entity in result.entities:
+    print(entity.text, entity.type.value, entity.assertion.value, entity.code)
+```
+
+The bundled pack is intentionally small and is a runnable smoke baseline, not a complete ICD-10
+or RxNorm release. Larger terminology and model artifacts are loaded explicitly through pinned
+profiles. See [the v1 product scope](docs/product-scope-v1.md).
+
+## Product Scope
+
+ClinGrounder is for clinical NLP researchers and application developers who need inspectable raw
+spans, assertion context, and terminology-linked candidates for Vietnamese or mixed
+Vietnamese-English text. Stable v1 behavior is local deterministic execution, offset-safe
+annotations, explicit terminology membership, and reproducible fingerprints. Dense retrieval,
+transformer adapters, graph reasoning, relations, and mining are experimental extensions.
 
 ## What It Does
 
@@ -89,7 +123,7 @@ generic evaluation ← task adapter ← optional benchmark plugin
 See [docs/architecture.md](docs/architecture.md) and
 [docs/code-map.md](docs/code-map.md) for ownership and extension points.
 
-## Quickstart
+## Source Checkout Quickstart
 
 Python 3.11 through 3.14 is supported.
 
@@ -229,6 +263,7 @@ manifest.
 | Extra | Use |
 | --- | --- |
 | `dev` | Ruff, mypy, pytest, and pre-commit |
+| `vi` | Bundled offline Vietnamese quickstart pack |
 | `data` | Parquet/DuckDB/S3-backed mining workflows |
 | `retrieval` | BM25, character retrieval, and FAISS support |
 | `ml` | Local Hugging Face training and inference |
@@ -315,6 +350,21 @@ uv run clingrounder release audit \
 ```
 
 See [docs/public-release.md](docs/public-release.md) for restore and publication rules.
+
+## Public Product Benchmark
+
+The product benchmark is independent from the archived competition plugin:
+
+```bash
+clingrounder-benchmark run \
+  --benchmark benchmarks/vi_clinical_grounding_v1 \
+  --config configs/benchmarks/vi_clinical_grounding_v1/full.yaml \
+  --output artifacts/benchmarks/vi-clinical-grounding-v1/full
+```
+
+It writes `summary.json`, `predictions.jsonl`, `errors.json`, `runtime.json`, a confusion matrix,
+and a Markdown report. The checked-in dataset is a synthetic pilot; measured values must not be
+described as clinical validation. See [benchmark methodology](docs/benchmarks/vi_clinical_grounding_v1/methodology.md).
 
 ## Optional Benchmark Plugin
 

@@ -8,6 +8,7 @@ from clingrounder.pipeline.facade import (
     PipelineConfig,
     PipelineConfigurationError,
     UnknownProfileError,
+    load_pipeline,
 )
 from clingrounder.schema.annotation import EntityAnnotation, RelationAnnotation
 from clingrounder.schema.document import ClinicalDocument
@@ -23,7 +24,8 @@ __all__ = [
     "PipelineConfigurationError",
     "RelationAnnotation",
     "UnknownProfileError",
+    "load_pipeline",
     "__version__",
 ]
 
-__version__ = "0.1.0a1"
+__version__ = "0.1.0a2"

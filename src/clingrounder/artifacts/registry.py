@@ -1,0 +1,125 @@
+"""Registry for small, offline-safe artifacts shipped in the Python package.
+
+Large terminology and model releases remain external artifacts.  This registry deliberately
+contains only the small pack required by the public quickstart and never performs an implicit
+network request.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+import hashlib
+from pathlib import Path
+import shutil
+from typing import Final
+
+__all__ = [
+    "ArtifactNotFoundError",
+    "BuiltinArtifact",
+    "get_builtin_artifact",
+    "list_builtin_artifacts",
+]
+
+
+class ArtifactNotFoundError(LookupError):
+    """Raised when a built-in artifact name or revision is not available."""
+
+
+@dataclass(frozen=True, slots=True)
+class BuiltinArtifact:
+    """Metadata and safe operations for one package-bundled resource pack."""
+
+    artifact_id: str
+    revision: str
+    root: Path
+    license: str = "MIT"
+
+    @property
+    def fingerprint(self) -> str:
+        """Return a deterministic digest over all pack files and their relative names."""
+
+        return _fingerprint_root(self.root)
+
+    @property
+    def profile_path(self) -> Path:
+        return self.root / "profile.yaml"
+
+    def manifest(self) -> dict[str, object]:
+        """Return metadata suitable for an experiment or prediction manifest."""
+
+        return {
+            "schema_version": "clingrounder.artifact-manifest.v1",
+            "artifact": {
+                "id": self.artifact_id,
+                "version": self.revision,
+                "type": "pipeline-pack",
+                "license": self.license,
+                "sha256": self.fingerprint,
+            },
+            "contents": sorted(path.name for path in self.root.iterdir() if path.is_file()),
+        }
+
+    def install(self, cache_dir: str | Path) -> Path:
+        """Copy the pack atomically into a caller-owned cache and return its root.
+
+        The operation is intentionally explicit.  ``from_pretrained`` can use the bundled pack
+        directly, while callers that need a stable external path may call ``Pipeline.download``.
+        """
+
+        destination = Path(cache_dir).expanduser() / self.artifact_id / self.revision
+        temporary = destination.with_name(f".{destination.name}.tmp")
+        if destination.exists():
+            if _fingerprint_root(destination) == self.fingerprint:
+                return destination
+            shutil.rmtree(destination)
+        temporary.parent.mkdir(parents=True, exist_ok=True)
+        if temporary.exists():
+            shutil.rmtree(temporary)
+        shutil.copytree(self.root, temporary)
+        temporary.replace(destination)
+        return destination
+
+
+_PACKAGE_ROOT: Final[Path] = Path(__file__).resolve().parent
+_ARTIFACTS: Final[dict[str, BuiltinArtifact]] = {
+    "vi-clinical-small": BuiltinArtifact(
+        artifact_id="vi-clinical-small",
+        revision="2026.08",
+        root=_PACKAGE_ROOT / "packs" / "vi-clinical-small",
+    )
+}
+
+
+def list_builtin_artifacts() -> tuple[BuiltinArtifact, ...]:
+    """List bundled artifacts in deterministic ID order."""
+
+    return tuple(_ARTIFACTS[name] for name in sorted(_ARTIFACTS))
+
+
+def get_builtin_artifact(name: str, revision: str | None = None) -> BuiltinArtifact:
+    """Resolve one bundled artifact without network fallback."""
+
+    try:
+        artifact = _ARTIFACTS[name]
+    except KeyError as error:
+        available = ", ".join(sorted(_ARTIFACTS))
+        raise ArtifactNotFoundError(
+            f"Unknown artifact {name!r}; available bundled artifacts: {available}"
+        ) from error
+    if revision is not None and revision != artifact.revision:
+        raise ArtifactNotFoundError(
+            f"Artifact {name!r} has revision {artifact.revision!r}, not {revision!r}"
+        )
+    if not artifact.root.is_dir():
+        raise ArtifactNotFoundError(f"Bundled artifact files are missing: {artifact.root}")
+    return artifact
+
+
+def _fingerprint_root(root: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(item for item in root.iterdir() if item.is_file()):
+        digest.update(path.name.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()

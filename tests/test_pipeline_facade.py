@@ -15,6 +15,7 @@ from clingrounder import (
     PipelineClosedError,
     PipelineConfigurationError,
     UnknownProfileError,
+    load_pipeline,
 )
 from clingrounder.pipeline import PipelineComponents, PipelineOptions, RuntimeCapabilities
 from clingrounder.schema.annotation import EntityAnnotation
@@ -35,6 +36,22 @@ def test_pipeline_from_config_and_trace() -> None:
 
     assert result.prediction.document_id == "note-001"
     assert result.trace.document_id == "note-001"
+
+
+def test_bundled_vietnamese_artifact_is_offline_and_callable(tmp_path: Path) -> None:
+    with load_pipeline("vi-clinical-small", offline=True) as pipeline:
+        prediction = pipeline(
+            "Bệnh nhân không sốt. Tiền sử tăng huyết áp. Đang dùng metformin."
+        )
+
+    by_text = {entity.text: entity for entity in prediction.entities}
+    assert prediction.document_id.startswith("text-")
+    assert by_text["sốt"].assertion.value == "NEGATED"
+    assert by_text["tăng huyết áp"].assertion.value == "HISTORICAL"
+    assert by_text["metformin"].code == "6809"
+
+    cached = Pipeline.download("vi-clinical-small", cache_dir=tmp_path)
+    assert (cached / "seed_concepts.jsonl").is_file()
 
 
 def test_pipeline_from_components_preserves_batch_order() -> None:
