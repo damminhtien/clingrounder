@@ -390,6 +390,21 @@ correctness scores are an expected limitation of this tiny smoke fixture, not ev
 systems are equivalent on clinical data. Re-run the command above to regenerate fingerprints and
 machine-specific runtime values.
 
+## Optional Demo
+
+An inspectable local UI is available as an example, without adding a web framework to the core
+package:
+
+```bash
+python -m venv .venv-demo
+.venv-demo/bin/pip install -e "[vi]"
+.venv-demo/bin/pip install -r examples/demo/requirements.txt
+.venv-demo/bin/streamlit run examples/demo/app.py
+```
+
+See [the demo README](examples/demo/README.md). The demo is for research inspection only and does
+not provide clinical decision support, PHI controls, or regulatory compliance.
+
 ## Optional Benchmark Plugin
 
 The archived Vietnamese extraction challenge is retained for reproducibility and regression
