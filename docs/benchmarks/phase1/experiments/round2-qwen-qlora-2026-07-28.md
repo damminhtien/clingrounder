@@ -59,7 +59,7 @@ outputs/models/vast-backups/
 
 The final adapter and resumable `checkpoint-123` are also stored in the
 private Hugging Face repository
-`damminhtien/medical-kg-qwen3-8b-phase1-qlora-20260728`. Upload completed
+`damminhtien/clingrounder-qwen3-8b-phase1-qlora-20260728`. Upload completed
 without exposing the access token to the repository or command logs.
 
 Curriculum:

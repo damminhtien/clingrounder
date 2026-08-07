@@ -3,10 +3,10 @@ from __future__ import annotations
 import copy
 from typing import Any
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.schema.validator import PredictionValidator
-from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
-from medical_kg_nlp.utils.io import read_jsonl
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.schema.validator import PredictionValidator
+from clingrounder.terminology.memory import InMemoryTerminologyRepository
+from clingrounder.utils.io import read_jsonl
 
 
 def test_prediction_validator_accepts_sample_gold() -> None:

@@ -3,29 +3,29 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.benchmarks.phase1.phase1 import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.benchmarks.phase1.phase1 import (
     load_phase1_text_documents,
     prediction_to_phase1_entities,
     validate_phase1_entities,
 )
-from medical_kg_nlp.ner.rule_ner import RuleBasedNER
-from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineConfig, TerminologyConfig
-from medical_kg_nlp.pipeline.stages import DocumentPreparationStage
-from medical_kg_nlp.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
-from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
-from medical_kg_nlp.utils.io import read_source_text
+from clingrounder.ner.rule_ner import RuleBasedNER
+from clingrounder.pipeline.factory import PipelineFactory, PipelineConfig, TerminologyConfig
+from clingrounder.pipeline.stages import DocumentPreparationStage
+from clingrounder.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
+from clingrounder.schema.types import AssertionStatus, CodeSystem, EntityType
+from clingrounder.utils.io import read_source_text
 
 
 FIXTURE = Path("tests/fixtures/phase1/btc_medication_list_crlf.txt")
 EXPECTED = Path("tests/fixtures/phase1/btc_medication_list_expected.json")
 RECOGNITION = Path(
-    "src/medical_kg_nlp/benchmarks/phase1/resources/"
+    "src/clingrounder/benchmarks/phase1/resources/"
     "btc_medication_recognition.jsonl"
 )
 MEMORY = Path(
-    "src/medical_kg_nlp/benchmarks/phase1/resources/btc_rxnorm_memory.jsonl"
+    "src/clingrounder/benchmarks/phase1/resources/btc_rxnorm_memory.jsonl"
 )
 
 

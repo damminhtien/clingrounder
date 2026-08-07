@@ -8,11 +8,11 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.benchmarks.phase1.phase1 import zip_phase1_output_dir
-from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import (
+from clingrounder.benchmarks.phase1.phase1 import zip_phase1_output_dir
+from clingrounder.benchmarks.phase1.phase1_ensemble import (
     load_phase1_output_source,
 )
-from medical_kg_nlp.benchmarks.phase1.round2_probes import (
+from clingrounder.benchmarks.phase1.round2_probes import (
     Phase1Round2ProbeConfig,
     RegionProposalPolicy,
     apply_reviewed_rxnorm_fill_empty,
@@ -25,17 +25,17 @@ from medical_kg_nlp.benchmarks.phase1.round2_probes import (
     run_phase1_round2_probes,
     segment_phase1_text_regions,
 )
-from medical_kg_nlp.cli.parser import build_parser
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.mining.io import write_jsonl
-from medical_kg_nlp.mining.records import (
+from clingrounder.cli.parser import build_parser
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.mining.io import write_jsonl
+from clingrounder.mining.records import (
     AccessClass,
     MinedDocument,
     RedistributionPolicy,
 )
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.utils.hashing import sha256_file
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.utils.hashing import sha256_file
 
 
 def test_round2_region_segmentation_preserves_raw_offsets() -> None:

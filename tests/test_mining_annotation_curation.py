@@ -8,13 +8,13 @@ from pathlib import Path
 
 import yaml
 
-from medical_kg_nlp.cli.main import main
-from medical_kg_nlp.mining.curation import (
+from clingrounder.cli.main import main
+from clingrounder.mining.curation import (
     AnnotationCurationPolicy,
     curate_annotations,
 )
-from medical_kg_nlp.mining.io import write_jsonl
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.io import write_jsonl
+from clingrounder.mining.records import (
     AnnotationLayer,
     AnnotationProposal,
     ReviewStatus,

@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=../../../vast/template_runtime.sh
 source "${SCRIPT_DIR}/../../../vast/template_runtime.sh"
 
-REPO_ROOT="${REPO_ROOT:-/workspace/medical-kg}"
+REPO_ROOT="${REPO_ROOT:-/workspace/clingrounder}"
 TEMPLATE_PYTHON="${TEMPLATE_PYTHON:-/venv/main/bin/python}"
 TEMPLATE_BIN="$(dirname "${TEMPLATE_PYTHON}")"
 HF_HOME="${HF_HOME:-/workspace/hf}"
@@ -32,8 +32,8 @@ export HF_HOME PIP_CACHE_DIR
 # virtual environment or redownload a cached checkpoint on every resumable proposal run.
 # MODEL: this pinned inference config declares a local LoRA adapter, so PEFT is a required runtime
 # dependency rather than an optional training-only extra.
-medical_kg_vast_verify_pytorch_template "${TEMPLATE_PYTHON}"
-medical_kg_vast_install_project_runtime \
+clingrounder_vast_verify_pytorch_template "${TEMPLATE_PYTHON}"
+clingrounder_vast_install_project_runtime \
   "${TEMPLATE_PYTHON}" \
   "${REPO_ROOT}" \
   "${PIP_CACHE_DIR}" \
@@ -47,7 +47,7 @@ medical_kg_vast_install_project_runtime \
 "${TEMPLATE_BIN}/hf" download "${MODEL_ID}" --revision "${MODEL_REVISION}"
 
 command=(
-  "${TEMPLATE_PYTHON}" -m medical_kg_nlp.cli
+  "${TEMPLATE_PYTHON}" -m clingrounder.cli
   benchmark phase1 qwen propose-final-supervision
   --config "${CONFIG}"
   --output-dir "${OUTPUT_DIR}"

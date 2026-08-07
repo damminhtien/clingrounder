@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.records import (
     AccessClass,
     AnnotationLayer,
     AnnotationProposal,
     MinedDocument,
     RedistributionPolicy,
 )
-from medical_kg_nlp.mining.splits import (
+from clingrounder.mining.splits import (
     load_split_document_ids,
     select_mined_records,
     select_mined_records_with_metadata,

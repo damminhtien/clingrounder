@@ -70,7 +70,7 @@ confused with corpus changes.
 ## CLI
 
 ```bash
-uv run medical-kg evaluate \
+uv run clingrounder evaluate \
   --gold data/samples/gold.jsonl \
   --pred outputs/sample-predictions.jsonl \
   --error-analysis outputs/sample-errors.json
@@ -79,7 +79,7 @@ uv run medical-kg evaluate \
 Validate first when evaluating externally produced predictions:
 
 ```bash
-uv run medical-kg validate \
+uv run clingrounder validate \
   --profile development \
   --pred outputs/sample-predictions.jsonl \
   --documents data/samples/sample_notes.jsonl \
@@ -124,7 +124,7 @@ archived Phase 1 material is under
 ## Implementation Map
 
 ```text
-src/medical_kg_nlp/evaluation/
+src/clingrounder/evaluation/
   records.py          neutral records and adapter protocol
   matching.py         exact and overlap alignment
   metrics.py          entity, linking, and relation metrics
@@ -135,6 +135,6 @@ src/medical_kg_nlp/evaluation/
 Useful searches:
 
 ```bash
-rg "EvaluationAdapter|EvaluationDocument" src/medical_kg_nlp/evaluation tests
-rg "exact_span|boundary|candidate_recall|relation" src/medical_kg_nlp/evaluation tests
+rg "EvaluationAdapter|EvaluationDocument" src/clingrounder/evaluation tests
+rg "exact_span|boundary|candidate_recall|relation" src/clingrounder/evaluation tests
 ```

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.benchmarks.phase1.manual_gold import (
+from clingrounder.benchmarks.phase1.manual_gold import (
     build_manual_gold_split_manifest,
     verify_manual_gold_split_manifest,
 )

@@ -8,11 +8,11 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.benchmarks.phase1.proposal_dataset import (
+from clingrounder.benchmarks.phase1.proposal_dataset import (
     build_phase1_proposal_dataset,
     write_phase1_proposal_dataset,
 )
-from medical_kg_nlp.benchmarks.phase1.proposal_features import (
+from clingrounder.benchmarks.phase1.proposal_features import (
     ProposalSourceRole,
     extract_phase1_proposal_context,
     extract_phase1_proposal_features,

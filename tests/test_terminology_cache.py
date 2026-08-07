@@ -5,9 +5,9 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.terminology import CachedTerminologyRepository
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.terminology import CachedTerminologyRepository
 
 
 def _concept() -> ConceptEntry:

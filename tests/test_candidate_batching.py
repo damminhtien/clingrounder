@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from medical_kg_nlp.adapters import HuggingFaceCrossEncoderAdapter, HuggingFaceModelConfig
-from medical_kg_nlp.linking.candidate import Candidate
-from medical_kg_nlp.pipeline import (
+from clingrounder.adapters import HuggingFaceCrossEncoderAdapter, HuggingFaceModelConfig
+from clingrounder.linking.candidate import Candidate
+from clingrounder.pipeline import (
     CandidateRerankRequest,
     PipelineComponents,
     PipelineOptions,
     PipelineRunner,
 )
-from medical_kg_nlp.schema.annotation import EntityAnnotation
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 def test_cross_encoder_batch_output_matches_scalar_output(monkeypatch) -> None:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from medical_kg_nlp.linking.expected_jaccard import expected_jaccard_prefix
+from clingrounder.linking.expected_jaccard import expected_jaccard_prefix
 
 
 def test_expected_jaccard_selects_dynamic_ranked_prefix() -> None:

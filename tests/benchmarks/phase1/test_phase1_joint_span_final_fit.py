@@ -5,17 +5,17 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from medical_kg_nlp.benchmarks.phase1.final_supervision import (
+from clingrounder.benchmarks.phase1.final_supervision import (
     Phase1FinalSupervisionCorpus,
 )
-from medical_kg_nlp.benchmarks.phase1.joint_span_final_fit import (
+from clingrounder.benchmarks.phase1.joint_span_final_fit import (
     prepare_phase1_joint_span_final_fit,
 )
-from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRole
-from medical_kg_nlp.benchmarks.phase1.reviewed_corpus import Phase1ReviewedCorpus
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.benchmarks.phase1.proposal_features import ProposalSourceRole
+from clingrounder.benchmarks.phase1.reviewed_corpus import Phase1ReviewedCorpus
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 def test_final_fit_preparation_aligns_rule_and_qwen_with_provenance(tmp_path: Path) -> None:

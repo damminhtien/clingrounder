@@ -1,14 +1,14 @@
-from medical_kg_nlp.kg.constraints import (
+from clingrounder.kg.constraints import (
     code_system_valid_for_entity_type,
     entity_code_system_valid,
     relation_type_valid,
 )
-from medical_kg_nlp.retrieval.constraints import allowed_code_systems
-from medical_kg_nlp.kg.reasoning import is_confirmed_patient_condition
-from medical_kg_nlp.kg.validator import KGValidator
-from medical_kg_nlp.schema.annotation import CandidateConcept
-from medical_kg_nlp.schema.annotation import EntityAnnotation, RelationAnnotation
-from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType, RelationType
+from clingrounder.retrieval.constraints import allowed_code_systems
+from clingrounder.kg.reasoning import is_confirmed_patient_condition
+from clingrounder.kg.validator import KGValidator
+from clingrounder.schema.annotation import CandidateConcept
+from clingrounder.schema.annotation import EntityAnnotation, RelationAnnotation
+from clingrounder.schema.types import AssertionStatus, CodeSystem, EntityType, RelationType
 
 
 def test_drug_cannot_map_to_icd10() -> None:

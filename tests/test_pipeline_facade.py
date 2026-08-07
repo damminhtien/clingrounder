@@ -9,15 +9,15 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp import (
+from clingrounder import (
     ClinicalDocument,
     Pipeline,
     PipelineClosedError,
     PipelineConfigurationError,
     UnknownProfileError,
 )
-from medical_kg_nlp.pipeline import PipelineComponents, PipelineOptions, RuntimeCapabilities
-from medical_kg_nlp.schema.annotation import EntityAnnotation
+from clingrounder.pipeline import PipelineComponents, PipelineOptions, RuntimeCapabilities
+from clingrounder.schema.annotation import EntityAnnotation
 
 
 def test_pipeline_from_profile_predicts_and_closes() -> None:
@@ -89,7 +89,7 @@ def test_pipeline_profile_errors_are_explicit(tmp_path: Path) -> None:
     profile = tmp_path / "missing.yaml"
     profile.write_text(
         """\
-schema_version: medical-kg.pipeline-profile
+schema_version: clingrounder.pipeline-profile
 profile:
   id: missing
   title: Missing resources
@@ -116,7 +116,7 @@ pipeline:
 def test_top_level_import_does_not_load_optional_ml_dependencies() -> None:
     code = """
 import sys
-import medical_kg_nlp
+import clingrounder
 assert not any(name in sys.modules for name in ("torch", "transformers", "faiss"))
 """
     subprocess.run([sys.executable, "-c", code], check=True)

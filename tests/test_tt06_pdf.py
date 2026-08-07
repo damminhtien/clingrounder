@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from medical_kg_nlp.dictionaries.tt06_pdf import extract_tt06_rows_from_tsv
+from clingrounder.dictionaries.tt06_pdf import extract_tt06_rows_from_tsv
 
 
 def test_extract_tt06_rows_from_tsv_uses_table_columns_and_excludes_guidance(tmp_path: Path) -> None:

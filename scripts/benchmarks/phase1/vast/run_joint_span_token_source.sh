@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=../../../vast/template_runtime.sh
 source "${SCRIPT_DIR}/../../../vast/template_runtime.sh"
 
-REPO_ROOT="${REPO_ROOT:-/workspace/medical-kg}"
+REPO_ROOT="${REPO_ROOT:-/workspace/clingrounder}"
 TEMPLATE_PYTHON="${TEMPLATE_PYTHON:-/venv/main/bin/python}"
 HF_HOME="${HF_HOME:-/workspace/hf}"
 PIP_CACHE_DIR="${PIP_CACHE_DIR:-/workspace/pip-cache}"
@@ -29,8 +29,8 @@ export HF_HOME PIP_CACHE_DIR
 
 # SCALING: preserve the template CUDA runtime and install only application-level dependencies.
 # The checkpoint is already local and loading is restricted to its immutable directory.
-medical_kg_vast_verify_pytorch_template "${TEMPLATE_PYTHON}"
-medical_kg_vast_install_project_runtime \
+clingrounder_vast_verify_pytorch_template "${TEMPLATE_PYTHON}"
+clingrounder_vast_install_project_runtime \
   "${TEMPLATE_PYTHON}" \
   "${REPO_ROOT}" \
   "${PIP_CACHE_DIR}" \
@@ -41,7 +41,7 @@ medical_kg_vast_install_project_runtime \
 
 # MODEL: the source has no outcome policy. It writes only raw span/type proposals plus manifest
 # provenance for later learned joint verification.
-timeout --signal=TERM "${MAX_RUNTIME_SECONDS}" "${TEMPLATE_PYTHON}" -m medical_kg_nlp.cli \
+timeout --signal=TERM "${MAX_RUNTIME_SECONDS}" "${TEMPLATE_PYTHON}" -m clingrounder.cli \
   benchmark phase1 joint-span materialize-token-source \
   --model-path "${MODEL_PATH}" \
   --model-fingerprint "${MODEL_FINGERPRINT}" \

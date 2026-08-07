@@ -1,5 +1,5 @@
 {
-  "schema_version": "medical-kg.local-artifact-inventory.v1",
+  "schema_version": "clingrounder.local-artifact-inventory.v1",
   "policy_path": "configs/repository/public-release.yaml",
   "policy_sha256": "359a419bdf295df57f1c7c3794d431ef00519d45d07efd4a51c1bba2ffa9b27a",
   "artifact_count": 149,

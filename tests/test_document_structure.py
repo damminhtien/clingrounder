@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from medical_kg_nlp.ner.document_structure import (
+from clingrounder.ner.document_structure import (
     DocumentGenre,
     DocumentStructureAnalyzer,
     SectionKind,

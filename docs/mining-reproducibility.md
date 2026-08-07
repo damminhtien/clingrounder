@@ -16,7 +16,7 @@ home directory or storage mount.
 The current NER/retrieval release specification is
 `configs/mining/releases/open-ner-retrieval-v1.yaml`. It binds:
 
-- `pyproject.toml`, `uv.lock`, and the implementation under `src/medical_kg_nlp`;
+- `pyproject.toml`, `uv.lock`, and the implementation under `src/clingrounder`;
 - source registry, processing status, source dossiers, and relevant mining policies;
 - fused documents, immutable split manifests, and raw-offset NER datasets;
 - VietBioNER source-held-out recognition evidence;
@@ -30,7 +30,7 @@ The current NER/retrieval release specification is
 Create the lock after materializing the release:
 
 ```bash
-uv run medical-kg-research data release lock \
+uv run clingrounder-research data release lock \
   --spec configs/mining/releases/open-ner-retrieval-v1.yaml \
   --output data/releases/open-ner-retrieval-v1.lock.json
 ```
@@ -38,10 +38,10 @@ uv run medical-kg-research data release lock \
 Verify it locally:
 
 ```bash
-uv run medical-kg-research data release verify \
+uv run clingrounder-research data release verify \
   --manifest data/releases/open-ner-retrieval-v1.lock.json \
   --root . \
-  --store "$MEDICAL_KG_ARTIFACT_STORE" \
+  --store "$CLINGROUNDER_ARTIFACT_STORE" \
   --require-cas-objects
 ```
 
@@ -68,31 +68,31 @@ bucket URI. Standard verification checks repository artifacts and external objec
    for mining plans that permit an environment override:
 
    ```bash
-   export MEDICAL_KG_ARTIFACT_STORE=file:///mnt/medical-kg/mining-artifacts
+   export CLINGROUNDER_ARTIFACT_STORE=file:///mnt/clingrounder/mining-artifacts
    ```
 
    Use an absolute local path or a `file://`/object-store URI. Relative paths in environment
    variables are resolved from the mining plan directory, not from the invoking shell directory.
    This rule makes the same plan deterministic when launched by CI, cron, or another checkout.
 
-   Persisted source manifests use `medical-kg-cas://sha256/<digest>` rather than this backend URI.
+   Persisted source manifests use `clingrounder-cas://sha256/<digest>` rather than this backend URI.
    A local directory, external volume, or object-store bucket can therefore provide the same bytes
    without changing artifact identity or leaking a workstation path.
 
    If a parser requires a seekable archive, hydrate it to a disposable local path:
 
    ```bash
-   uv run medical-kg-research data artifact materialize \
-     --store "$MEDICAL_KG_ARTIFACT_STORE" \
+   uv run clingrounder-research data artifact materialize \
+     --store "$CLINGROUNDER_ARTIFACT_STORE" \
      --sha256 <locked-sha256> \
      --expected-byte-size <locked-size> \
-     --output .cache/medical-kg/release-inputs/source.zip
+     --output .cache/clingrounder/release-inputs/source.zip
    ```
 
 3. Validate source governance before processing any bytes:
 
    ```bash
-   uv run medical-kg-research data registry validate \
+   uv run clingrounder-research data registry validate \
      --registry data/sources/mining_registry.yaml \
      --processing-index data/sources/processing_status.yaml \
      --repository-root .
@@ -180,7 +180,7 @@ status to processed, curated, or promoted, all of the following must hold:
 5. The source dossier records exact commands, observed counts, output SHA-256 values, validation
    results, promotion boundary and work that has not been completed.
 6. A second run from cache produces the same canonical hashes. A separate machine verifies the
-   copied artifacts with `medical-kg-research data release verify` before model training or benchmarking.
+   copied artifacts with `clingrounder-research data release verify` before model training or benchmarking.
 
 These checks deliberately separate three claims: a source may be *registered*, a source plan may be
 *pinned*, and a particular source tranche may be *processed*. Documentation must never use these

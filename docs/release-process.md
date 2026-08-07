@@ -29,7 +29,7 @@ versioned source and wheel artifacts on GitHub.
    uv run ruff check .
    uv run mypy src
    uv run pytest -o addopts='' -m "not private and not model and not benchmark" tests
-   uv run medical-kg release audit --root .
+   uv run clingrounder release audit --root .
    uv build --wheel --sdist --out-dir dist
    uv run --with twine twine check dist/*
    ```

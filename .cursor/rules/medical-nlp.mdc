@@ -1,7 +1,7 @@
 ---
 description: Medical NLP invariants
 globs:
-  - "src/medical_kg_nlp/**/*.py"
+  - "src/clingrounder/**/*.py"
   - "tests/**/*.py"
 alwaysApply: true
 ---

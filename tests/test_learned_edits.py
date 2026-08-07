@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.linking.learned_edits import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.linking.learned_edits import (
     LearnedEditObservation,
     LearnedEditRetrieverAdapter,
     learn_edit_transformations,
     load_learned_edit_model,
     write_learned_edit_model,
 )
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.terminology.memory import InMemoryTerminologyRepository
 
 
 def test_whole_abbreviation_activates_after_three_correct_observations() -> None:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from medical_kg_nlp.cli.parser import build_parser
+from clingrounder.cli.parser import build_parser
 
 
 def test_operational_parser_excludes_research_and_benchmark_commands() -> None:

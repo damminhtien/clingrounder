@@ -58,7 +58,7 @@ terminology:
   normalization_paths:
     - /authorized/icd10/concepts.jsonl
     - /authorized/rxnorm/concepts.jsonl
-  normalization_index_path: .cache/medical-kg/terminology/full.sqlite3
+  normalization_index_path: .cache/clingrounder/terminology/full.sqlite3
   alias_overlay_path: data/dictionaries/vietnamese_medical_alias.jsonl
 ```
 
@@ -123,13 +123,13 @@ aliases are retained as non-exportable proposals until another source resolves t
 ## Build And Query SQLite
 
 ```bash
-uv run medical-kg terminology build \
+uv run clingrounder terminology build \
   --source /work/icd10_concepts.jsonl \
   --source /work/rxnorm_prescribable_concepts.jsonl \
-  --cache-dir .cache/medical-kg/terminology
+  --cache-dir .cache/clingrounder/terminology
 
-uv run medical-kg terminology inspect \
-  --index .cache/medical-kg/terminology/<fingerprint>.sqlite3 \
+uv run clingrounder terminology inspect \
+  --index .cache/clingrounder/terminology/<fingerprint>.sqlite3 \
   --query "metformin" \
   --entity-type DRUG \
   --code-system RxNorm

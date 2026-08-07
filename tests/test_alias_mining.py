@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from medical_kg_nlp.dictionaries.alias_mining import mine_vietnamese_alias_candidates, write_alias_mining_outputs
+from clingrounder.dictionaries.alias_mining import mine_vietnamese_alias_candidates, write_alias_mining_outputs
 
 
 def test_mine_vietnamese_alias_candidates_proposes_standard_alias_missing_runtime(tmp_path: Path) -> None:

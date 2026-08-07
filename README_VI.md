@@ -1,4 +1,4 @@
-# Medical KG NLP
+# ClinGrounder
 
 Bộ công cụ Clinical NLP bảo toàn offset để trích xuất khái niệm y khoa, phân tích ngữ cảnh,
 chuẩn hóa thuật ngữ và kiểm tra đồ thị quan hệ. Repo ưu tiên tiếng Việt và văn bản trộn
@@ -75,7 +75,7 @@ git clone https://github.com/damminhtien/clingrounder.git
 cd ontological-reasoning-in-medical-knowledge-retrieval
 uv sync --extra dev
 
-uv run medical-kg pipeline run \
+uv run clingrounder pipeline run \
   --config configs/pipeline/clinical-baseline.yaml \
   --input data/samples/sample_notes.jsonl \
   --output outputs/sample-predictions.jsonl
@@ -97,13 +97,13 @@ Output có dạng:
 Validate và evaluate:
 
 ```bash
-uv run medical-kg validate \
+uv run clingrounder validate \
   --profile development \
   --pred outputs/sample-predictions.jsonl \
   --documents data/samples/sample_notes.jsonl \
   --dictionary data/dictionaries/seed_concepts.jsonl
 
-uv run medical-kg evaluate \
+uv run clingrounder evaluate \
   --gold data/samples/gold.jsonl \
   --pred outputs/sample-predictions.jsonl \
   --error-analysis outputs/sample-errors.json
@@ -136,12 +136,12 @@ JSONL là source of truth. SQLite FTS5 là index derived, content-addressed, rea
 thread-local connection.
 
 ```bash
-uv run medical-kg terminology build \
+uv run clingrounder terminology build \
   --source data/processed/full_concepts.jsonl \
-  --cache-dir .cache/medical-kg/terminology
+  --cache-dir .cache/clingrounder/terminology
 
-uv run medical-kg terminology inspect \
-  --index .cache/medical-kg/terminology/<fingerprint>.sqlite3 \
+uv run clingrounder terminology inspect \
+  --index .cache/clingrounder/terminology/<fingerprint>.sqlite3 \
   --query metformin \
   --entity-type DRUG \
   --code-system RxNorm
@@ -173,7 +173,7 @@ Clinical text hạn chế, terminology có license, manual labels, checkpoint v�
 giữ ở local/object storage. Danh tính artifact nằm trong `data/provenance/local-artifacts.json`.
 
 ```bash
-uv run medical-kg release audit \
+uv run clingrounder release audit \
   --policy configs/repository/public-release.yaml \
   --root .
 ```
@@ -185,8 +185,8 @@ Xem [public release policy](docs/public-release.md).
 Benchmark tiếng Việt cũ được giữ để tái lập nghiên cứu:
 
 ```bash
-uv run medical-kg benchmark list
-uv run medical-kg benchmark phase1 --help
+uv run clingrounder benchmark list
+uv run clingrounder benchmark phase1 --help
 uv run pytest -o addopts='' -m "benchmark and not private and not model" \
   tests/benchmarks/phase1
 ```

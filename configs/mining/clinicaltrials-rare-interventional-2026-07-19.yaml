@@ -3,7 +3,7 @@ registry: ../../data/sources/mining_registry.yaml
 work_dir: ../../outputs/mining/clinicaltrials-rare-interventional-2026-07-19
 artifact_store:
   # SCALING: move this URI to mounted storage or S3 for a larger API tranche.
-  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  uri: ${CLINGROUNDER_ARTIFACT_STORE}
   storage_options: {}
   encrypted_at_rest: false
 

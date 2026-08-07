@@ -19,7 +19,7 @@ body:
       label: Reproduction
       description: Commands, input shape, and minimal synthetic example.
       placeholder: |
-        medical-kg pipeline run --input ... --output ...
+        clingrounder pipeline run --input ... --output ...
     validations:
       required: true
   - type: textarea

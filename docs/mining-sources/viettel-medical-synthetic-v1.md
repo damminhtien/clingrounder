@@ -58,7 +58,7 @@ Candidate and assertion fields are audited but removed from the NER span view. O
 five-type labels, and exact source offsets enter supervision.
 
 ```bash
-uv run medical-kg-benchmark phase1 model-data augment-user-synthetic \
+uv run clingrounder-benchmark phase1 model-data augment-user-synthetic \
   --archive /path/to/viettel_medical_synthetic_v1.zip \
   --archive-sha256 \
     ad5baa1d4c4ef41265124518ca59def4744511f96c9a254a3b051c43a757500b \
@@ -93,7 +93,7 @@ occurrence in the immutable source. This avoids the first-occurrence error cause
 `str.index()`-style projection.
 
 ```bash
-uv run medical-kg-benchmark phase1 model-data build-qwen \
+uv run clingrounder-benchmark phase1 model-data build-qwen \
   --source-dataset \
     outputs/mining/model-datasets/phase1-manual-user-synthetic-v1/spans.jsonl \
   --source-manifest \

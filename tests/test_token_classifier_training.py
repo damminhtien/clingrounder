@@ -10,8 +10,8 @@ from typing import Any
 
 import pytest
 
-from medical_kg_nlp.cli.parser import build_parser
-from medical_kg_nlp.training import (
+from clingrounder.cli.parser import build_parser
+from clingrounder.training import (
     SpanTrainingEntity,
     SpanTrainingRecord,
     TokenClassifierTrainingConfig,
@@ -24,11 +24,11 @@ from medical_kg_nlp.training import (
     validate_span_dataset_manifest,
     verify_saved_token_classifier,
 )
-from medical_kg_nlp.training import huggingface_token_classifier as training_runtime
-from medical_kg_nlp.schema.annotation import EntityAnnotation
-from medical_kg_nlp.schema.types import EntityType
-from medical_kg_nlp.utils.text import normalize_for_match
-from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
+from clingrounder.training import huggingface_token_classifier as training_runtime
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.types import EntityType
+from clingrounder.utils.text import normalize_for_match
+from clingrounder.utils.hashing import sha256_file, sha256_text
 
 
 def test_span_dataset_manifest_and_train_vocabulary_are_pinned(tmp_path: Path) -> None:
@@ -247,7 +247,7 @@ def test_training_import_does_not_import_model_frameworks() -> None:
             sys.executable,
             "-c",
             (
-                "import sys; import medical_kg_nlp.training; "
+                "import sys; import clingrounder.training; "
                 "assert 'torch' not in sys.modules; "
                 "assert 'transformers' not in sys.modules; "
                 "assert 'datasets' not in sys.modules"

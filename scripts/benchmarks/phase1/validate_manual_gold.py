@@ -9,10 +9,10 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.benchmarks.phase1.manual_gold_manifest import validate_manual_gold_manifest
-from medical_kg_nlp.benchmarks.phase1.phase1 import validate_phase1_entities
-from medical_kg_nlp.utils.io import read_source_text
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.benchmarks.phase1.manual_gold_manifest import validate_manual_gold_manifest
+from clingrounder.benchmarks.phase1.phase1 import validate_phase1_entities
+from clingrounder.utils.io import read_source_text
 
 
 def main() -> None:

@@ -1,14 +1,14 @@
 # Re-materialize the pinned Round 2 input after owner authorization for Vast.ai inference.
 #
 # export PHASE1_ROUND2_ARCHIVE=/secure/path/input_turn2_vong1.zip
-# export MEDICAL_KG_ARTIFACT_STORE=file:///secure/medical-kg/mining-artifacts
-# uv run medical-kg data run --plan configs/benchmarks/phase1/mining/phase1-round2-hosted-2026-07-27.yaml
+# export CLINGROUNDER_ARTIFACT_STORE=file:///secure/clingrounder/mining-artifacts
+# uv run clingrounder data run --plan configs/benchmarks/phase1/mining/phase1-round2-hosted-2026-07-27.yaml
 schema_version: medical-mining-plan.v1
 registry: ../../../../data/sources/mining_registry.yaml
 work_dir: ../../../../outputs/mining/phase1-round2-hosted-2026-07-27
 artifact_store:
   # PRIVACY: canonical raw objects stay local. Vast receives only an ephemeral inference copy.
-  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  uri: ${CLINGROUNDER_ARTIFACT_STORE}
   storage_options: {}
   encrypted_at_rest: true
 sources:

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.mining.io import write_jsonl
+from clingrounder.mining.io import write_jsonl
 
 
 def test_write_jsonl_streams_with_the_same_deterministic_fingerprint(tmp_path: Path) -> None:

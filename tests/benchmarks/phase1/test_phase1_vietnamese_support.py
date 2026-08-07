@@ -4,19 +4,19 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from medical_kg_nlp.adapters.model_spans import ProjectedSourceEntity
-from medical_kg_nlp.benchmarks.phase1.qwen_proposals import (
+from clingrounder.adapters.model_spans import ProjectedSourceEntity
+from clingrounder.benchmarks.phase1.qwen_proposals import (
     select_qwen_confirmed_proposals,
 )
-from medical_kg_nlp.benchmarks.phase1.qwen_run_spec import (
+from clingrounder.benchmarks.phase1.qwen_run_spec import (
     load_phase1_qwen_run_spec,
 )
-from medical_kg_nlp.benchmarks.phase1.vietnamese_support import (
+from clingrounder.benchmarks.phase1.vietnamese_support import (
     load_phase1_vietnamese_support_spec,
     project_vietnamese_support_rows,
 )
-from medical_kg_nlp.ner.proposal import EntityProposal
-from medical_kg_nlp.schema.types import EntityType
+from clingrounder.ner.proposal import EntityProposal
+from clingrounder.schema.types import EntityType
 
 ROOT = Path(__file__).resolve().parents[3]
 

@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.dictionaries.vn_clinical_lexicon import (
+from clingrounder.dictionaries.vn_clinical_lexicon import (
     VN_CLINICAL_LEXICON_SOURCE_ID,
     parse_vn_clinical_lexicon,
     write_vn_clinical_lexicon_manifest,

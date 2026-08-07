@@ -15,7 +15,7 @@ run the documented importer, then compare the generated artifact against
 Rebuild the local inventory with:
 
 ```bash
-uv run medical-kg release inventory \
+uv run clingrounder release inventory \
   --policy configs/repository/public-release.yaml \
   --root . \
   --output data/provenance/local-artifacts.json

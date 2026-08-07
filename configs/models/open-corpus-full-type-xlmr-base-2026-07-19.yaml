@@ -25,7 +25,7 @@ model:
 # an effective train batch of 16 sequences. Arrow preprocessing remains process-safe.
 training:
   output_dir: outputs/models/open-corpus-full-type-xlmr-base-2026-07-19
-  cache_dir: .cache/medical-kg/model-training
+  cache_dir: .cache/clingrounder/model-training
   max_length: 512
   stride: 64
   train_batch_size: 4

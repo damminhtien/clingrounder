@@ -3,7 +3,7 @@ registry: ../../data/sources/mining_registry.yaml
 work_dir: ../../outputs/mining/dailymed-daily-2026-07-17
 artifact_store:
   # SCALING: point this at the external mining volume for large/full releases.
-  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  uri: ${CLINGROUNDER_ARTIFACT_STORE}
   storage_options: {}
   encrypted_at_rest: false
 sources:

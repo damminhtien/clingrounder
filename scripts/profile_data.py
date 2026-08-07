@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.evaluation.data_profile import profile_paths, render_markdown
+from clingrounder.evaluation.data_profile import profile_paths, render_markdown
 
 
 def main() -> None:

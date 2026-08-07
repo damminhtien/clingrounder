@@ -9,7 +9,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.dictionaries.source_audit import build_source_audit_report, write_source_audit_report
+from clingrounder.dictionaries.source_audit import build_source_audit_report, write_source_audit_report
 
 _DEFAULT_LOCAL_FILES: tuple[dict[str, Any], ...] = (
     {

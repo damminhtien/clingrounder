@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import json
 from pathlib import Path
 
-from medical_kg_nlp.benchmarks.phase1.joint_span_sources import (
+from clingrounder.benchmarks.phase1.joint_span_sources import (
     build_phase1_dictionary_trie_source_rows,
     build_phase1_medication_parser_source_rows,
     build_phase1_joint_span_proposal_matrix,
@@ -15,18 +15,18 @@ from medical_kg_nlp.benchmarks.phase1.joint_span_sources import (
     load_phase1_joint_span_source_rows,
     verify_phase1_joint_span_source_artifact,
 )
-from medical_kg_nlp.benchmarks.phase1.joint_span_token_source import (
+from clingrounder.benchmarks.phase1.joint_span_token_source import (
     Phase1TokenSourceConfig,
     materialize_phase1_token_model_source,
 )
-from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRole
-from medical_kg_nlp.benchmarks.phase1.reviewed_corpus import Phase1ReviewedCorpus
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.schema.annotation import EntityAnnotation
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.utils.text import normalize_for_match
-from medical_kg_nlp.utils.hashing import sha256_directory
+from clingrounder.benchmarks.phase1.proposal_features import ProposalSourceRole
+from clingrounder.benchmarks.phase1.reviewed_corpus import Phase1ReviewedCorpus
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.utils.text import normalize_for_match
+from clingrounder.utils.hashing import sha256_directory
 
 
 def test_token_model_rows_preserve_raw_offsets_and_matrix_source_evidence() -> None:

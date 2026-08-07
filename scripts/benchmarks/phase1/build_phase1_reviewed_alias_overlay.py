@@ -10,12 +10,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
-from medical_kg_nlp.benchmarks.phase1.reviewed_alias_overlay import (
+from clingrounder.benchmarks.phase1.reviewed_alias_overlay import (
     compile_reviewed_candidate_aliases,
     reviewed_alias_memory_rows,
 )
-from medical_kg_nlp.mining.io import write_json, write_jsonl
-from medical_kg_nlp.terminology import SQLiteTerminologyRepository
+from clingrounder.mining.io import write_json, write_jsonl
+from clingrounder.terminology import SQLiteTerminologyRepository
 
 
 def main() -> None:

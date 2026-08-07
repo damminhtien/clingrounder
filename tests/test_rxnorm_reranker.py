@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.linking.candidate import Candidate
-from medical_kg_nlp.linking.rxnorm_reranker import StructuredRxNormReranker
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.linking.candidate import Candidate
+from clingrounder.linking.rxnorm_reranker import StructuredRxNormReranker
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.terminology.memory import InMemoryTerminologyRepository
 
 
 def test_clonazepam_product_strength_rejects_nonmatching_candidate() -> None:

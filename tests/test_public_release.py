@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from medical_kg_nlp.cli.parser import build_parser
-from medical_kg_nlp.governance.public_release import (
+from clingrounder.cli.parser import build_parser
+from clingrounder.governance.public_release import (
     audit_public_repository,
     build_local_artifact_inventory,
     load_public_repository_policy,
@@ -195,7 +195,7 @@ def _write_policy(
 
 def _policy_payload(*, rules: list[dict[str, object]]) -> dict[str, object]:
     return {
-        "schema_version": "medical-kg.public-repository-policy.v1",
+        "schema_version": "clingrounder.public-repository-policy.v1",
         "protected_roots": ["data", "outputs", "models", "checkpoints"],
         "max_tracked_file_bytes": 1024,
         "source_registry_path": "source-registry.yaml",

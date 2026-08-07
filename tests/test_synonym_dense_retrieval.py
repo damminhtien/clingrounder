@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.retrieval.synonym_index import (
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.retrieval.synonym_index import (
     InMemorySynonymVectorIndex,
     build_synonym_vector_records,
     fingerprint_terminology_entries,
 )
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.training.synonym_retrieval import build_synonym_retrieval_examples
-from medical_kg_nlp.training.terminology_pairs import build_terminology_synonym_pairs
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.training.synonym_retrieval import build_synonym_retrieval_examples
+from clingrounder.training.terminology_pairs import build_terminology_synonym_pairs
 
 
 def test_synonym_vectors_deduplicate_concepts_after_type_filtered_search() -> None:

@@ -18,7 +18,7 @@ The raw ZIP is not committed and its workstation path is not provenance. Its por
 | Filename | `RxNorm_full_07062026.zip` |
 | SHA-256 | `53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c` |
 | Byte size | 259,313,098 |
-| CAS URI | `medical-kg-cas://sha256/53523ee9...e784c` |
+| CAS URI | `clingrounder-cas://sha256/53523ee9...e784c` |
 
 The filename is used only as a convenience and cannot select a release. The connector rejects any
 different bytes before a downstream parser or index sees them.
@@ -30,8 +30,8 @@ different bytes before a downstream parser or index sees them.
 
 ```bash
 export RXNORM_FULL_ARCHIVE=/secure/licensed/RxNorm_full_07062026.zip
-export MEDICAL_KG_ARTIFACT_STORE=file:///mnt/medical-kg/mining-artifacts
-uv run medical-kg-research data run --plan configs/mining/rxnorm-full-2026-07-06.yaml
+export CLINGROUNDER_ARTIFACT_STORE=file:///mnt/clingrounder/mining-artifacts
+uv run clingrounder-research data run --plan configs/mining/rxnorm-full-2026-07-06.yaml
 ```
 
 Both runtime values must be absolute paths or explicit URIs. Relative values are resolved from the
@@ -47,11 +47,11 @@ a local disk, copied external volume or S3-compatible store.
 When a downstream ZIP/RRF reader needs seekable bytes, hydrate the object atomically:
 
 ```bash
-uv run medical-kg-research data artifact materialize \
-  --store "$MEDICAL_KG_ARTIFACT_STORE" \
+uv run clingrounder-research data artifact materialize \
+  --store "$CLINGROUNDER_ARTIFACT_STORE" \
   --sha256 53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c \
   --expected-byte-size 259313098 \
-  --output .cache/medical-kg/release-inputs/RxNorm_full_07062026.zip
+  --output .cache/clingrounder/release-inputs/RxNorm_full_07062026.zip
 ```
 
 Hydration streams in bounded chunks, hashes while writing and atomically publishes only matching
@@ -134,10 +134,10 @@ commands for CAS import, hydration, NDC extraction, DailyMed product linking, al
 held-out retrieval benchmarks. After materialization:
 
 ```bash
-uv run medical-kg-research data release verify \
+uv run clingrounder-research data release verify \
   --manifest data/releases/open-ner-retrieval-v1.lock.json \
   --root . \
-  --store "$MEDICAL_KG_ARTIFACT_STORE" \
+  --store "$CLINGROUNDER_ARTIFACT_STORE" \
   --require-cas-objects
 ```
 

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from medical_kg_nlp.mining.dedup import DuplicateGroupKind, StableTextDeduplicator
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.dedup import DuplicateGroupKind, StableTextDeduplicator
+from clingrounder.mining.records import (
     AccessClass,
     MinedDocument,
     RedistributionPolicy,

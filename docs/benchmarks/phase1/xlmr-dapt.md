@@ -22,7 +22,7 @@ First reproduce the source outputs documented in:
 Build the provenance-separated MLM lanes:
 
 ```bash
-uv run medical-kg-research model build-dapt-corpus \
+uv run clingrounder-research model build-dapt-corpus \
   --config configs/benchmarks/phase1/models/xlmr-dapt-corpus-2026-07-29.yaml
 ```
 
@@ -50,7 +50,7 @@ fails before model loading.
 Validate all bytes and print the exact remote commands:
 
 ```bash
-uv run medical-kg-research model inspect-xlmr-dapt-run \
+uv run clingrounder-research model inspect-xlmr-dapt-run \
   --config configs/benchmarks/phase1/models/xlmr-joint-dapt-2026-07-29.yaml
 ```
 
@@ -62,7 +62,7 @@ can dominate this run. Prefetch the immutable model revision before enabling
 ```bash
 hf download FacebookAI/xlm-roberta-base \
   --revision e73636d4f797dec63c3081bb6ed5c7b0bb3f2089 \
-  --cache-dir .cache/medical-kg/model-training
+  --cache-dir .cache/clingrounder/model-training
 ```
 
 The repository commit must be clean. Run from the repository root with the
@@ -73,7 +73,7 @@ same `uv.lock` recorded by the run spec.
 Run the one-update forward/backward smoke test first:
 
 ```bash
-uv run medical-kg-research model train-xlmr-dapt-run \
+uv run clingrounder-research model train-xlmr-dapt-run \
   --config configs/benchmarks/phase1/models/xlmr-joint-dapt-2026-07-29.yaml \
   --max-steps 1 \
   --output-dir outputs/smoke/xlmr-dapt
@@ -83,7 +83,7 @@ The smoke artifact is explicitly non-promotable. After it passes on Linux,
 CUDA, and BF16, start the full resumable run inside `tmux`:
 
 ```bash
-uv run medical-kg-research model train-xlmr-dapt-run \
+uv run clingrounder-research model train-xlmr-dapt-run \
   --config configs/benchmarks/phase1/models/xlmr-joint-dapt-2026-07-29.yaml
 ```
 
@@ -96,7 +96,7 @@ outputs/models/xlmr-joint-dapt-2026-07-29/checkpoints/
 Resume only from a checkpoint produced by the same immutable run:
 
 ```bash
-uv run medical-kg-research model train-xlmr-dapt-run \
+uv run clingrounder-research model train-xlmr-dapt-run \
   --config configs/benchmarks/phase1/models/xlmr-joint-dapt-2026-07-29.yaml \
   --resume-from-checkpoint \
   outputs/models/xlmr-joint-dapt-2026-07-29/checkpoints/step-00001000

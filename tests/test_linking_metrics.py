@@ -1,6 +1,6 @@
-from medical_kg_nlp.evaluation.linking_metrics import coverage_accuracy_curve
-from medical_kg_nlp.schema.annotation import CandidateConcept, EntityAnnotation
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.evaluation.linking_metrics import coverage_accuracy_curve
+from clingrounder.schema.annotation import CandidateConcept, EntityAnnotation
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 def test_linking_coverage_accuracy_curve_tracks_selective_prediction() -> None:

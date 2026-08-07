@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from medical_kg_nlp.pipeline.factory import PipelineConfig
-from medical_kg_nlp.pipeline.options import PipelineOptions
+from clingrounder.pipeline.factory import PipelineConfig
+from clingrounder.pipeline.options import PipelineOptions
 
 
 def test_pipeline_options_parse_candidate_calibration_thresholds() -> None:

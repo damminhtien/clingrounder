@@ -44,14 +44,14 @@ Recommended checks:
 ruff check .
 mypy src
 pytest tests
-uv run medical-kg validate \
+uv run clingrounder validate \
   --profile development \
   --pred outputs/predictions.jsonl \
   --documents data/samples/sample_notes.jsonl \
   --dictionary data/dictionaries/seed_concepts.jsonl
 ```
 
-Use `python -m medical_kg_nlp.cli ...` if the console script is not installed in the active venv.
+Use `python -m clingrounder.cli ...` if the console script is not installed in the active venv.
 
 ## Pull Requests
 

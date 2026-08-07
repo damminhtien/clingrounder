@@ -1,4 +1,4 @@
-from medical_kg_nlp.benchmarks.phase1.disease_symptom_verifier import (
+from clingrounder.benchmarks.phase1.disease_symptom_verifier import (
     DiseaseSymptomLabel,
     DiseaseSymptomVerifier,
     DiseaseSymptomVerifierDataset,
@@ -6,7 +6,7 @@ from medical_kg_nlp.benchmarks.phase1.disease_symptom_verifier import (
     extract_disease_symptom_features,
     fit_disease_symptom_verifier,
 )
-from medical_kg_nlp.evaluation.sparse_logistic import SparseLogisticModel
+from clingrounder.evaluation.sparse_logistic import SparseLogisticModel
 
 
 def _constant_model(bias: float) -> SparseLogisticModel:

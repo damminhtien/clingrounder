@@ -8,9 +8,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
-from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
-from medical_kg_nlp.benchmarks.phase1.manual_gold import load_phase1_directory, manual_gold_split
-from medical_kg_nlp.benchmarks.phase1.phase1_selective_calibration import (
+from clingrounder.datasets.synthetic_adapter import SyntheticDatasetAdapter
+from clingrounder.benchmarks.phase1.manual_gold import load_phase1_directory, manual_gold_split
+from clingrounder.benchmarks.phase1.phase1_selective_calibration import (
     CandidateCalibrationOptions,
     build_assertion_calibration_report,
     write_assertion_calibration_report,

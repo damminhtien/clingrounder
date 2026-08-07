@@ -5,14 +5,14 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from medical_kg_nlp.mining.io import write_jsonl
-from medical_kg_nlp.mining.knowledge import (
+from clingrounder.mining.io import write_jsonl
+from clingrounder.mining.knowledge import (
     MinedAliasPromotionPolicy,
     compile_mined_aliases,
     load_alias_promotion_policy,
 )
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.terminology import SQLiteTerminologyRepository, build_terminology_index
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.terminology import SQLiteTerminologyRepository, build_terminology_index
 
 _SOURCE_SHA = "a" * 64
 

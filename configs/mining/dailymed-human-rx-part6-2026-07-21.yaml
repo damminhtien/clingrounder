@@ -9,7 +9,7 @@ work_dir: ../../outputs/mining/dailymed-human-rx-part6-2026-07-21
 artifact_store:
   # SCALING: callers choose a local, external-volume, or S3-compatible CAS root.
   # The source and derived manifests contain only content identities, never this mount path.
-  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  uri: ${CLINGROUNDER_ARTIFACT_STORE}
   storage_options: {}
   encrypted_at_rest: false
 sources:

@@ -10,7 +10,7 @@ Source-specific processing evidence is indexed in
 registered connector, an executed snapshot, model proposals, curated labels, and runtime-promoted
 knowledge. This document remains the end-to-end command runbook.
 
-`medical_kg_nlp.mining` builds reusable clinical NLP datasets without depending on a competition
+`clingrounder.mining` builds reusable clinical NLP datasets without depending on a competition
 schema. The lifecycle is:
 
 ```text
@@ -40,8 +40,8 @@ grant permission to redistribute its content.
 Set an external local volume or S3-compatible URI:
 
 ```bash
-export MEDICAL_KG_ARTIFACT_STORE=/Volumes/medical-kg-mining
-# or: export MEDICAL_KG_ARTIFACT_STORE=s3://bucket/medical-kg-mining
+export CLINGROUNDER_ARTIFACT_STORE=/Volumes/clingrounder-mining
+# or: export CLINGROUNDER_ARTIFACT_STORE=s3://bucket/clingrounder-mining
 ```
 
 JSONL remains the checkpoint and review exchange format. Frozen dataset tables use sharded Parquet;
@@ -56,7 +56,7 @@ uv sync --extra dev --extra data
 Validate policy before downloading anything:
 
 ```bash
-uv run medical-kg-research data registry validate \
+uv run clingrounder-research data registry validate \
   --registry data/sources/mining_registry.yaml
 ```
 
@@ -64,47 +64,47 @@ Synchronize one explicit request. The parameter file contains connector inputs s
 `set_ids`, `nct_ids`, local `paths`, or explicit `artifacts` with checksums:
 
 ```bash
-uv run medical-kg-research data source sync \
+uv run clingrounder-research data source sync \
   --source-id pmc_oa \
   --source-version 2026-07-18 \
   --parameters configs/mining/requests/pmc-cases.yaml \
-  --store "$MEDICAL_KG_ARTIFACT_STORE" \
+  --store "$CLINGROUNDER_ARTIFACT_STORE" \
   --output outputs/mining/pmc/artifacts.jsonl
 ```
 
 Parse, label, review, and inspect coverage independently:
 
 ```bash
-uv run medical-kg-research data dataset build \
+uv run clingrounder-research data dataset build \
   --source-id pmc_oa \
   --artifacts outputs/mining/pmc/artifacts.jsonl \
-  --store "$MEDICAL_KG_ARTIFACT_STORE" \
+  --store "$CLINGROUNDER_ARTIFACT_STORE" \
   --output outputs/mining/pmc/documents.jsonl
 
-uv run medical-kg-research data dataset inspect \
+uv run clingrounder-research data dataset inspect \
   --documents outputs/mining/pmc/documents.jsonl \
   --annotations outputs/mining/pmc/proposals.jsonl \
   --output outputs/mining/pmc/source-profile.json \
   --strict
 
-uv run medical-kg-research data label propose \
+uv run clingrounder-research data label propose \
   --documents outputs/mining/pmc/documents.jsonl \
   --adapter my_local_plugin:create_labeler \
   --adapter-config configs/models/mining-labeler.yaml \
   --output outputs/mining/pmc/proposals.jsonl
 
-uv run medical-kg-research data review export \
+uv run clingrounder-research data review export \
   --documents outputs/mining/pmc/documents.jsonl \
   --proposals outputs/mining/pmc/proposals.jsonl \
   --output outputs/mining/pmc/review.jsonl
 
-uv run medical-kg-research data review quality \
+uv run clingrounder-research data review quality \
   --documents outputs/mining/pmc/documents.jsonl \
   --proposals outputs/mining/pmc/reviewed.jsonl \
   --relations outputs/mining/pmc/relations.jsonl \
   --output outputs/mining/pmc/review-quality.json
 
-uv run medical-kg-research data coverage report \
+uv run clingrounder-research data coverage report \
   --documents outputs/mining/pmc/documents.jsonl \
   --proposals outputs/mining/pmc/proposals.jsonl \
   --targets configs/mining/coverage_phase2.yaml \
@@ -119,7 +119,7 @@ rule and Hugging Face adapters omit this flag.
 Run a resumable campaign:
 
 ```bash
-uv run medical-kg-research data run --plan configs/mining/phase2.yaml
+uv run clingrounder-research data run --plan configs/mining/phase2.yaml
 ```
 
 Each source stage is keyed by source config, request config, connector revision, and parser revision.
@@ -166,7 +166,7 @@ authority for processing state is `data/sources/processing_status.yaml`.
 VietBioNER is pinned at Git commit `19ba70a5947d1be72906d407c860b1666b9337e9` under CC BY 4.0.
 `configs/mining/vietbioner.yaml` acquires the checksum-pinned archive, preserves each annotator as a
 separate document, groups exact duplicate text into one split, and imports source labels as silver
-proposals through `medical_kg_nlp.mining.labelers.brat`. The broad internal label mapping is an
+proposals through `clingrounder.mining.labelers.brat`. The broad internal label mapping is an
 import convention, not adjudicated clinical gold.
 
 VietMed-NER use for training and inference was confirmed by the data owner on 2026-07-27. The
@@ -180,21 +180,21 @@ into a competition label. See
 The current VietBioNER snapshot can be reproduced without an implicit download or parser choice:
 
 ```bash
-uv run medical-kg-research data run --plan configs/mining/vietbioner.yaml
+uv run clingrounder-research data run --plan configs/mining/vietbioner.yaml
 
-uv run medical-kg-research data label propose \
+uv run clingrounder-research data label propose \
   --documents outputs/mining/vietbioner-19ba70a/documents.jsonl \
-  --adapter medical_kg_nlp.mining.labelers.brat:create_brat_archive_labeler \
+  --adapter clingrounder.mining.labelers.brat:create_brat_archive_labeler \
   --adapter-config configs/mining/labelers/vietbioner.yaml \
   --output outputs/mining/vietbioner-19ba70a/source_annotations.jsonl
 
-uv run medical-kg-research data dataset inspect \
+uv run clingrounder-research data dataset inspect \
   --documents outputs/mining/vietbioner-19ba70a/documents.jsonl \
   --annotations outputs/mining/vietbioner-19ba70a/source_annotations.jsonl \
   --output outputs/mining/vietbioner-19ba70a/source_profile.json \
   --strict
 
-uv run medical-kg-research data dataset reconcile-duplicates \
+uv run clingrounder-research data dataset reconcile-duplicates \
   --documents outputs/mining/vietbioner-19ba70a/documents.jsonl \
   --annotations outputs/mining/vietbioner-19ba70a/source_annotations.jsonl \
   --documents-output outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
@@ -204,21 +204,21 @@ uv run medical-kg-research data dataset reconcile-duplicates \
   --report-output outputs/mining/vietbioner-19ba70a/reconciled/agreement_report.json \
   --labeler-id vietbioner-exact-duplicate-consensus:v1
 
-uv run medical-kg-research data review export \
+uv run clingrounder-research data review export \
   --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
   --proposals outputs/mining/vietbioner-19ba70a/reconciled/review_annotations.jsonl \
   --output outputs/mining/vietbioner-19ba70a/reconciled/review_queue.jsonl
 
-uv run medical-kg-research data lexicon build \
+uv run clingrounder-research data lexicon build \
   --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
   --annotations outputs/mining/vietbioner-19ba70a/reconciled/training_annotations.jsonl \
   --output outputs/mining/vietbioner-19ba70a/reconciled/mention_inventory.jsonl \
   --conflicts-output outputs/mining/vietbioner-19ba70a/reconciled/mention_conflicts.jsonl \
   --report-output outputs/mining/vietbioner-19ba70a/reconciled/mention_inventory_report.json
 
-uv run medical-kg-research data lexicon crosswalk \
+uv run clingrounder-research data lexicon crosswalk \
   --inventory outputs/mining/vietbioner-19ba70a/reconciled/mention_inventory.jsonl \
-  --index .cache/medical-kg/terminology/terminology-0598a6a288ef81ea932f.sqlite3 \
+  --index .cache/clingrounder/terminology/terminology-0598a6a288ef81ea932f.sqlite3 \
   --source data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
   --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl \
   --policy configs/mining/crosswalk/vietbioner.yaml \
@@ -226,7 +226,7 @@ uv run medical-kg-research data lexicon crosswalk \
   --report-output outputs/mining/vietbioner-19ba70a/reconciled/terminology_crosswalk_report.json \
   --workers 4
 
-uv run medical-kg-research data snapshot freeze \
+uv run clingrounder-research data snapshot freeze \
   --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
   --annotations outputs/mining/vietbioner-19ba70a/reconciled/training_annotations.jsonl \
   --artifacts outputs/mining/vietbioner-19ba70a/artifacts.jsonl \
@@ -265,29 +265,29 @@ Spanish `text_files` members; machine-translated `text_files_en` members are del
 Run acquisition and source-label import with:
 
 ```bash
-uv run medical-kg-research data run --plan configs/mining/codiesp.yaml
+uv run clingrounder-research data run --plan configs/mining/codiesp.yaml
 
-uv run medical-kg-research data label propose \
+uv run clingrounder-research data label propose \
   --documents outputs/mining/codiesp-zenodo-3837305/documents.jsonl \
-  --adapter medical_kg_nlp.mining.labelers.codiesp:create_codiesp_archive_labeler \
+  --adapter clingrounder.mining.labelers.codiesp:create_codiesp_archive_labeler \
   --adapter-config configs/mining/labelers/codiesp.yaml \
   --output outputs/mining/codiesp-zenodo-3837305/source_annotations.jsonl \
   --batch-size 256
 
-uv run medical-kg-research data dataset inspect \
+uv run clingrounder-research data dataset inspect \
   --documents outputs/mining/codiesp-zenodo-3837305/documents.jsonl \
   --annotations outputs/mining/codiesp-zenodo-3837305/source_annotations.jsonl \
   --output outputs/mining/codiesp-zenodo-3837305/source_profile.json \
   --strict
 
-uv run medical-kg-research data dataset curate-annotations \
+uv run clingrounder-research data dataset curate-annotations \
   --annotations outputs/mining/codiesp-zenodo-3837305/source_annotations.jsonl \
   --policy configs/mining/curation/codiesp-contiguous-ner.yaml \
   --accepted-output outputs/mining/codiesp-zenodo-3837305/contiguous_training_annotations.jsonl \
   --rejected-output outputs/mining/codiesp-zenodo-3837305/noncontiguous_review_annotations.jsonl \
   --report-output outputs/mining/codiesp-zenodo-3837305/curation_report.json
 
-uv run medical-kg-research data snapshot freeze \
+uv run clingrounder-research data snapshot freeze \
   --documents outputs/mining/codiesp-zenodo-3837305/documents.jsonl \
   --annotations outputs/mining/codiesp-zenodo-3837305/contiguous_training_annotations.jsonl \
   --artifacts outputs/mining/codiesp-zenodo-3837305/artifacts.jsonl \
@@ -325,10 +325,10 @@ article text is checkpointed from the official BioC JSON endpoint. This avoids t
 FTP package links as a reproducible transport and preserves BioC absolute passage offsets.
 
 ```bash
-export MEDICAL_KG_ARTIFACT_STORE=/Volumes/medical-kg-mining
-uv run medical-kg-research data run --plan configs/mining/pmc-rare-cases-2026-07-18.yaml
+export CLINGROUNDER_ARTIFACT_STORE=/Volumes/clingrounder-mining
+uv run clingrounder-research data run --plan configs/mining/pmc-rare-cases-2026-07-18.yaml
 
-uv run medical-kg-research data dataset inspect \
+uv run clingrounder-research data dataset inspect \
   --documents outputs/mining/pmc-rare-cases-2026-07-18/documents.jsonl \
   --output outputs/mining/pmc-rare-cases-2026-07-18/source_profile.json \
   --strict
@@ -345,27 +345,27 @@ licenses. Keep raw articles separate from model proposals and derived knowledge 
 
 DailyMed catalog mining uses a fail-closed database publication date and a bounded page range. The
 first real slice is the 105 SPL records published on 17 July 2026 from catalog database snapshot
-`Jul 17, 2026 07:50:58PM EST`. Set `MEDICAL_KG_ARTIFACT_STORE` to an external volume or S3 prefix;
+`Jul 17, 2026 07:50:58PM EST`. Set `CLINGROUNDER_ARTIFACT_STORE` to an external volume or S3 prefix;
 the full human-label releases are too large for the repository workspace.
 
 ```bash
-export MEDICAL_KG_ARTIFACT_STORE=/Volumes/medical-kg-mining
-uv run medical-kg-research data run --plan configs/mining/dailymed-daily-2026-07-17.yaml
+export CLINGROUNDER_ARTIFACT_STORE=/Volumes/clingrounder-mining
+uv run clingrounder-research data run --plan configs/mining/dailymed-daily-2026-07-17.yaml
 
-uv run medical-kg-research data label propose \
+uv run clingrounder-research data label propose \
   --documents outputs/mining/dailymed-daily-2026-07-17/documents.jsonl \
-  --adapter medical_kg_nlp.mining.labelers.dailymed:create_dailymed_structured_labeler \
+  --adapter clingrounder.mining.labelers.dailymed:create_dailymed_structured_labeler \
   --adapter-config configs/mining/labelers/dailymed-structured.yaml \
   --output outputs/mining/dailymed-daily-2026-07-17/structured_annotations.jsonl
 
-uv run medical-kg-research data relation propose \
+uv run clingrounder-research data relation propose \
   --documents outputs/mining/dailymed-daily-2026-07-17/documents.jsonl \
   --annotations outputs/mining/dailymed-daily-2026-07-17/structured_annotations.jsonl \
-  --adapter medical_kg_nlp.mining.labelers.dailymed:create_dailymed_structured_relation_labeler \
+  --adapter clingrounder.mining.labelers.dailymed:create_dailymed_structured_relation_labeler \
   --adapter-config configs/mining/labelers/dailymed-relations.yaml \
   --output outputs/mining/dailymed-daily-2026-07-17/structured_relations.jsonl
 
-uv run medical-kg-research data snapshot freeze \
+uv run clingrounder-research data snapshot freeze \
   --documents outputs/mining/dailymed-daily-2026-07-17/documents.jsonl \
   --annotations outputs/mining/dailymed-daily-2026-07-17/structured_annotations.jsonl \
   --relations outputs/mining/dailymed-daily-2026-07-17/structured_relations.jsonl \
@@ -392,18 +392,18 @@ DailyMed's official SPL-to-RxNorm mapping is acquired separately because it is a
 crosswalk, not inferred text matching. Compile and audit the checksum-pinned release with:
 
 ```bash
-uv run medical-kg-research data run --plan configs/mining/dailymed-rxnorm-2026-07-17.yaml
+uv run clingrounder-research data run --plan configs/mining/dailymed-rxnorm-2026-07-17.yaml
 
-uv run medical-kg-research data mapping compile-dailymed-rxnorm \
+uv run clingrounder-research data mapping compile-dailymed-rxnorm \
   --artifacts outputs/mining/dailymed-rxnorm-2026-07-17/artifacts.jsonl \
-  --store "$MEDICAL_KG_ARTIFACT_STORE" \
+  --store "$CLINGROUNDER_ARTIFACT_STORE" \
   --output outputs/mining/dailymed-rxnorm-2026-07-17/compiled_mappings.jsonl \
   --index-output outputs/mining/dailymed-rxnorm-2026-07-17/dailymed_rxnorm.sqlite3 \
   --report-output outputs/mining/dailymed-rxnorm-2026-07-17/compilation_report.json
 
-uv run medical-kg-research data mapping audit-dailymed-rxnorm \
+uv run clingrounder-research data mapping audit-dailymed-rxnorm \
   --index outputs/mining/dailymed-rxnorm-2026-07-17/dailymed_rxnorm.sqlite3 \
-  --terminology-index .cache/medical-kg/terminology/terminology-0598a6a288ef81ea932f.sqlite3 \
+  --terminology-index .cache/clingrounder/terminology/terminology-0598a6a288ef81ea932f.sqlite3 \
   --source data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
   --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl \
   --proposals-output outputs/mining/dailymed-rxnorm-2026-07-17/review_alias_proposals.jsonl \
@@ -436,12 +436,12 @@ CodiEsp, which verifies type/code-system isolation.
 Reproduce the CodiEsp gate with:
 
 ```bash
-uv run medical-kg terminology query-set \
+uv run clingrounder terminology query-set \
   --alias-overlay outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl \
   --output outputs/mining/knowledge/codiesp-icd10-2026-07-18/benchmark/codiesp_tt06_queries.jsonl \
   --manifest-output outputs/mining/knowledge/codiesp-icd10-2026-07-18/benchmark/query_manifest.json
 
-uv run medical-kg terminology build \
+uv run clingrounder terminology build \
   --source data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
   --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl \
   --alias-overlay outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl \
@@ -450,7 +450,7 @@ uv run medical-kg terminology build \
 ```
 
 The resulting index contains 88,837 concepts and 188,488 aliases. Its content-addressed local path
-is `.cache/medical-kg/terminology/terminology-a2d5a19e83fbc9e1a305.sqlite3`; runtime composition is
+is `.cache/clingrounder/terminology/terminology-a2d5a19e83fbc9e1a305.sqlite3`; runtime composition is
 recorded in `configs/pipeline/full_terminology.yaml`. The cache path is derived output, not a source
 artifact, and must be rebuilt from the pinned manifests on another machine.
 
@@ -478,12 +478,12 @@ The 400 dev and 376 test expected codes absent from TT06 stay in the report as i
 They are not imported from ICD-10-CM by code shape and are not silently converted to parent codes.
 The full released-source CodiEsp overlay remains available for production terminology coverage,
 while model/search evaluation must use the train-only index
-`.cache/medical-kg/terminology/terminology-codiesp-train-2026-07-18.sqlite3`.
+`.cache/clingrounder/terminology/terminology-codiesp-train-2026-07-18.sqlite3`.
 
 Build a held-out query set with:
 
 ```bash
-uv run medical-kg terminology query-set \
+uv run clingrounder terminology query-set \
   --linked-proposal outputs/mining/knowledge/codiesp-icd10-split-2026-07-18/dev/proposals.jsonl \
   --reference-alias-overlay outputs/mining/knowledge/codiesp-icd10-split-2026-07-18/train/alias_overlay.jsonl \
   --output outputs/mining/knowledge/codiesp-icd10-split-2026-07-18/dev/queries.jsonl \
@@ -538,7 +538,7 @@ For model NER, export the reconciled raw spans without changing offsets or leaki
 split:
 
 ```bash
-uv run medical-kg-research data dataset export-spans \
+uv run clingrounder-research data dataset export-spans \
   --documents outputs/mining/vietbioner-19ba70a/reconciled/documents.jsonl \
   --annotations outputs/mining/vietbioner-19ba70a/reconciled/model_ner_annotations.jsonl \
   --split-manifest outputs/mining/snapshots/vietbioner-19ba70a-reconciled-silver-v4/manifest.json \
@@ -560,7 +560,7 @@ The two artifacts are separate by design:
 Rebuild the snapshot and span artifact deterministically with:
 
 ```bash
-medical-kg-research data snapshot freeze \
+clingrounder-research data snapshot freeze \
   --documents outputs/mining/fused/open-corpus-v1-39106c1cc9d0/documents.jsonl \
   --annotations outputs/mining/fused/open-corpus-v1-39106c1cc9d0/annotations.jsonl \
   --relations outputs/mining/fused/open-corpus-v1-39106c1cc9d0/relations.jsonl \
@@ -595,7 +595,7 @@ span dataset:      aa6cafa2efd1f4f68f927067d41348b16e22da19f5f57f7375b2c5e62ab8a
 Validate it before a model run:
 
 ```bash
-medical-kg-research model validate-token-dataset \
+clingrounder-research model validate-token-dataset \
   --dataset outputs/mining/model-datasets/open-corpus-v1-balanced-2026-07-18/spans.jsonl \
   --dataset-manifest outputs/mining/model-datasets/open-corpus-v1-balanced-2026-07-18/manifest.json
 ```
@@ -604,7 +604,7 @@ Training requires the local `ml` extra and a cached fast tokenizer/model. The co
 construction (`local_files_only=true`) and writes a model fingerprint plus metrics manifest:
 
 ```bash
-medical-kg-research model train-token-classifier \
+clingrounder-research model train-token-classifier \
   --dataset outputs/mining/model-datasets/open-corpus-v1-balanced-2026-07-18/spans.jsonl \
   --dataset-manifest outputs/mining/model-datasets/open-corpus-v1-balanced-2026-07-18/manifest.json \
   --model-id "$LOCAL_MODEL_ID" \
@@ -647,7 +647,7 @@ Official `corpus_split=train` filtering is part of the policy, independent of la
 splits.
 
 ```bash
-uv run medical-kg-research data relation mine-cooccurrence \
+uv run clingrounder-research data relation mine-cooccurrence \
   --documents outputs/mining/fused/open-corpus-v1-39106c1cc9d0/documents.jsonl \
   --annotations outputs/mining/fused/open-corpus-v1-39106c1cc9d0/harmonized_annotations.jsonl \
   --policy configs/mining/relations/codiesp-train-cooccurrence.yaml \
@@ -668,8 +668,8 @@ ICD-10-PCS procedures, were rejected because no pinned PCS terminology was loade
 reintroduced by code shape.
 
 ```bash
-uv run medical-kg kg benchmark-relations \
-  --index .cache/medical-kg/knowledge-graph/knowledge-graph-d2b7d076728655e78e13.sqlite3 \
+uv run clingrounder kg benchmark-relations \
+  --index .cache/clingrounder/knowledge-graph/knowledge-graph-d2b7d076728655e78e13.sqlite3 \
   --edges outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19/edges.jsonl \
   --relation-type CO_OCCURS_WITH \
   --workers 8 \
@@ -691,7 +691,7 @@ concept. Unresolved or ambiguous fields are counted and skipped; they are never 
 guessed code or edge.
 
 ```bash
-uv run medical-kg-research data knowledge compile-graph \
+uv run clingrounder-research data knowledge compile-graph \
   --terminology-source data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
   --terminology-source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl \
   --alias-overlay data/dictionaries/vietnamese_medical_alias.jsonl \
@@ -705,7 +705,7 @@ uv run medical-kg-research data knowledge compile-graph \
   --evidence-output outputs/mining/knowledge/full-graph-rxnorm-2026-07-18/evidence.jsonl \
   --report-output outputs/mining/knowledge/full-graph-rxnorm-2026-07-18/compilation_report.json
 
-uv run medical-kg kg build \
+uv run clingrounder kg build \
   --nodes outputs/mining/knowledge/full-graph-rxnorm-2026-07-18/nodes.jsonl \
   --edges outputs/mining/knowledge/full-graph-rxnorm-2026-07-18/edges.jsonl \
   --evidence outputs/mining/knowledge/full-graph-rxnorm-2026-07-18/evidence.jsonl \
@@ -717,13 +717,13 @@ Its 89,112 coded nodes come from TT06 and RxNorm; the remaining term nodes repre
 dosage forms, strengths, and uncoded mined mentions. The graph adds 14,602 unique ingredient
 links, 46,804 dosage-form links, 22,630 strength links, 12,919 ICD hierarchy links, and the
 707 DailyMed relation observations. The read-only SQLite artifact is
-`.cache/medical-kg/knowledge-graph/knowledge-graph-668ddc869e58db0583c0.sqlite3`.
+`.cache/clingrounder/knowledge-graph/knowledge-graph-668ddc869e58db0583c0.sqlite3`.
 
 Alias coverage is checked independently before enabling `kg_exact` retrieval:
 
 ```bash
-uv run medical-kg kg benchmark-aliases \
-  --index .cache/medical-kg/knowledge-graph/knowledge-graph-668ddc869e58db0583c0.sqlite3 \
+uv run clingrounder kg benchmark-aliases \
+  --index .cache/clingrounder/knowledge-graph/knowledge-graph-668ddc869e58db0583c0.sqlite3 \
   --alias-overlay data/dictionaries/vietnamese_medical_alias.jsonl \
   --alias-overlay outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl \
   --alias-overlay outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl \
@@ -750,7 +750,7 @@ Round 2 documents. Duplicate groups are assigned together using SHA-256 buckets,
 fraction `0.2`, and salt `42`.
 
 ```bash
-uv run medical-kg-benchmark phase1 model-data build \
+uv run clingrounder-benchmark phase1 model-data build \
   --input-dir data/raw/input \
   --gold-dir data/manual_gold \
   --frozen-split-manifest data/manual_gold/holdout_manifest.json \
@@ -789,7 +789,7 @@ Inspecting the spec validates dataset offsets, manifest identity, split label co
 checkpoint identity, and the exact Linux/CUDA requirements without importing Torch:
 
 ```bash
-uv run medical-kg-research model inspect-token-classifier-run \
+uv run clingrounder-research model inspect-token-classifier-run \
   --config configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml
 ```
 
@@ -801,7 +801,7 @@ uv sync --extra ml
 uv run hf download FacebookAI/xlm-roberta-base \
   --revision e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
 
-CUDA_VISIBLE_DEVICES=0 uv run medical-kg-research model train-token-classifier-run \
+CUDA_VISIBLE_DEVICES=0 uv run clingrounder-research model train-token-classifier-run \
   --config configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml
 ```
 
@@ -838,7 +838,7 @@ models:
 ```
 
 ```bash
-uv run medical-kg pipeline run \
+uv run clingrounder pipeline run \
   --input outputs/mining/fused/open-corpus-v1-39106c1cc9d0/documents.jsonl \
   --config /path/to/full-type-inference.yaml \
   --output outputs/models/open-corpus-full-type-xlmr-base-2026-07-19/predictions.jsonl \
@@ -857,12 +857,12 @@ calibrates the bonus on official dev, and evaluates the selected bonus once on o
 document-backed graph evidence row is checked to belong to `corpus_split=train`.
 
 ```bash
-uv run medical-kg kg benchmark-reranker \
-  --index .cache/medical-kg/knowledge-graph/knowledge-graph-d2b7d076728655e78e13.sqlite3 \
+uv run clingrounder kg benchmark-reranker \
+  --index .cache/clingrounder/knowledge-graph/knowledge-graph-d2b7d076728655e78e13.sqlite3 \
   --nodes outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19/nodes.jsonl \
   --edges outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19/edges.jsonl \
   --evidence outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19/evidence.jsonl \
-  --terminology-index .cache/medical-kg/terminology/terminology-codiesp-train-2026-07-18.sqlite3 \
+  --terminology-index .cache/clingrounder/terminology/terminology-codiesp-train-2026-07-18.sqlite3 \
   --terminology-source data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
   --terminology-source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl \
   --terminology-alias-overlay outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl \
@@ -893,7 +893,7 @@ The reusable pipeline second pass is configured independently of `kg_exact` retr
 
 ```yaml
 terminology:
-  knowledge_graph_index_path: .cache/medical-kg/knowledge-graph/<fingerprint>.sqlite3
+  knowledge_graph_index_path: .cache/clingrounder/knowledge-graph/<fingerprint>.sqlite3
 
 pipeline:
   enable_linking: true
@@ -916,12 +916,12 @@ To remove the remaining gold-span assumption, rerun the held-out benchmark with 
 predictions created above:
 
 ```bash
-uv run medical-kg kg benchmark-reranker \
-  --index .cache/medical-kg/knowledge-graph/knowledge-graph-d2b7d076728655e78e13.sqlite3 \
+uv run clingrounder kg benchmark-reranker \
+  --index .cache/clingrounder/knowledge-graph/knowledge-graph-d2b7d076728655e78e13.sqlite3 \
   --nodes outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19/nodes.jsonl \
   --edges outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19/edges.jsonl \
   --evidence outputs/mining/knowledge/codiesp-train-cooccurrence-2026-07-19/evidence.jsonl \
-  --terminology-index .cache/medical-kg/terminology/terminology-codiesp-train-2026-07-18.sqlite3 \
+  --terminology-index .cache/clingrounder/terminology/terminology-codiesp-train-2026-07-18.sqlite3 \
   --terminology-source data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl \
   --terminology-source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl \
   --terminology-alias-overlay outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl \

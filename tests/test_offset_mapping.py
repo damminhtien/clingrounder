@@ -1,5 +1,5 @@
-from medical_kg_nlp.preprocessing.offset_mapping import collapse_whitespace_preserve_offsets
-from medical_kg_nlp.preprocessing.normalizer import NormalizationContract
+from clingrounder.preprocessing.offset_mapping import collapse_whitespace_preserve_offsets
+from clingrounder.preprocessing.normalizer import NormalizationContract
 
 
 def test_offset_mapping_preserves_original_span() -> None:

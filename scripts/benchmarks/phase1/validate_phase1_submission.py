@@ -8,8 +8,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.benchmarks.phase1.phase1 import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.benchmarks.phase1.phase1 import (
     validate_phase1_submission_dir,
     validate_phase1_submission_zip,
 )

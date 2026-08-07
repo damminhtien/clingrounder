@@ -25,7 +25,7 @@ model:
 # development chunks are never augmented, so model selection remains comparable with the base run.
 training:
   output_dir: outputs/models/phase1-five-type-xlmr-qa-edu-2026-07-26
-  cache_dir: .cache/medical-kg/model-training
+  cache_dir: .cache/clingrounder/model-training
   max_length: 512
   stride: 64
   train_batch_size: 4

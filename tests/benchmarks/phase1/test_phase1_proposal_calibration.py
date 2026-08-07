@@ -2,22 +2,22 @@
 
 from __future__ import annotations
 
-from medical_kg_nlp.benchmarks.phase1.proposal_calibration import (
+from clingrounder.benchmarks.phase1.proposal_calibration import (
     Phase1ProposalFitMode,
     Phase1ProposalVerifier,
     fit_phase1_proposal_verifier,
     resolve_phase1_proposal_rows,
     score_phase1_proposal_rows,
 )
-from medical_kg_nlp.benchmarks.phase1.proposal_dataset import (
+from clingrounder.benchmarks.phase1.proposal_dataset import (
     Phase1ProposalDataset,
     Phase1ProposalExample,
 )
-from medical_kg_nlp.benchmarks.phase1.proposal_features import (
+from clingrounder.benchmarks.phase1.proposal_features import (
     PHASE1_PROPOSAL_FEATURE_CONTRACT,
     ProposalSourceRole,
 )
-from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_ALLOWED_TYPES
+from clingrounder.benchmarks.phase1.ontology import PHASE1_ALLOWED_TYPES
 
 
 def test_proposal_verifier_learns_calibrates_and_round_trips() -> None:

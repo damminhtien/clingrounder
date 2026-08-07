@@ -7,7 +7,7 @@ import copy
 import pytest
 from pydantic import ValidationError
 
-from medical_kg_nlp.benchmarks.phase1.training_governance import (
+from clingrounder.benchmarks.phase1.training_governance import (
     Phase1TrainingGovernance,
     load_phase1_training_governance,
 )

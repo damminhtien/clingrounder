@@ -8,13 +8,13 @@ from datetime import date
 import pytest
 from pydantic import ValidationError
 
-from medical_kg_nlp.cli.main import main
-from medical_kg_nlp.mining.curation import load_annotation_curation_policy
-from medical_kg_nlp.mining.registry import SourceRegistry, load_source_registry
-from medical_kg_nlp.mining.recognition_knowledge import (
+from clingrounder.cli.main import main
+from clingrounder.mining.curation import load_annotation_curation_policy
+from clingrounder.mining.registry import SourceRegistry, load_source_registry
+from clingrounder.mining.recognition_knowledge import (
     load_recognition_knowledge_policy,
 )
-from medical_kg_nlp.mining.source_status import (
+from clingrounder.mining.source_status import (
     SourceProcessingIndex,
     load_source_processing_index,
     validate_source_processing_paths,

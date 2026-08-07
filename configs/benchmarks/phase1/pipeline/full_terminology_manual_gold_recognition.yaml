@@ -16,10 +16,10 @@ terminology:
     - ../../../../outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl
     - ../../../../outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl
     - ../../../../outputs/mining/knowledge/phase1-reviewed-candidate-aliases-2026-07-18/alias_overlay.jsonl
-  normalization_index_path: ../../../../.cache/medical-kg/terminology/terminology-22107a23c578611e2514.sqlite3
+  normalization_index_path: ../../../../.cache/clingrounder/terminology/terminology-22107a23c578611e2514.sqlite3
   reviewed_mention_path: ../../../../outputs/mining/knowledge/phase1-reviewed-candidate-aliases-2026-07-18/reviewed_memory.jsonl
-  knowledge_graph_index_path: ../../../../.cache/medical-kg/knowledge-graph/knowledge-graph-668ddc869e58db0583c0.sqlite3
-  cache_dir: ../../../../.cache/medical-kg/terminology
+  knowledge_graph_index_path: ../../../../.cache/clingrounder/knowledge-graph/knowledge-graph-668ddc869e58db0583c0.sqlite3
+  cache_dir: ../../../../.cache/clingrounder/terminology
   query_cache_size: 4096
 
 pipeline:

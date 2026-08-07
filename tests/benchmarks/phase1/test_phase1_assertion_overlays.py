@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.benchmarks.phase1.assertion_overlays import (
+from clingrounder.benchmarks.phase1.assertion_overlays import (
     load_phase1_assertion_overlays,
 )
 

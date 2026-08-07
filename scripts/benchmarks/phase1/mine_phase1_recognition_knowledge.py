@@ -7,7 +7,7 @@ import argparse
 import json
 from pathlib import Path
 
-from medical_kg_nlp.benchmarks.phase1.recognition_mining import (
+from clingrounder.benchmarks.phase1.recognition_mining import (
     Phase1RecognitionMiningConfig,
     run_phase1_recognition_mining,
 )

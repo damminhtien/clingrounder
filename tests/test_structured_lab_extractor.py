@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from medical_kg_nlp.ner.contracts import RuleNerContext
-from medical_kg_nlp.ner.extractors.structured_lab import (
+from clingrounder.ner.contracts import RuleNerContext
+from clingrounder.ner.extractors.structured_lab import (
     StructuredLabProposalExtractor,
 )
-from medical_kg_nlp.ner.proposal import EntityProposal
-from medical_kg_nlp.schema.types import EntityType
+from clingrounder.ner.proposal import EntityProposal
+from clingrounder.schema.types import EntityType
 
 
 def test_structured_lab_extracts_unknown_name_and_value_inside_lab_section() -> None:

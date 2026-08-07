@@ -8,16 +8,16 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.cli.parser import build_parser
-from medical_kg_nlp.cli.commands import model as model_commands
-from medical_kg_nlp.pipeline import ResolvedPipelineConfig
-from medical_kg_nlp.training.run_spec import (
+from clingrounder.cli.parser import build_parser
+from clingrounder.cli.commands import model as model_commands
+from clingrounder.pipeline import ResolvedPipelineConfig
+from clingrounder.training.run_spec import (
     assert_local_gpu_runtime,
     load_token_classifier_run_spec,
     verify_token_classifier_run_artifact,
 )
-from medical_kg_nlp.training import fingerprint_model_directory
-from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
+from clingrounder.training import fingerprint_model_directory
+from clingrounder.utils.hashing import sha256_file, sha256_text
 
 _FIXTURE_LOCK = "version = 1\n"
 

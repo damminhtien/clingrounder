@@ -8,16 +8,16 @@ from pathlib import Path
 
 import yaml
 
-from medical_kg_nlp.cli.main import main
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.mining.io import write_jsonl
-from medical_kg_nlp.mining.lexicon import MentionInventoryEntry
-from medical_kg_nlp.mining.recognition_knowledge import (
+from clingrounder.cli.main import main
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.mining.io import write_jsonl
+from clingrounder.mining.lexicon import MentionInventoryEntry
+from clingrounder.mining.recognition_knowledge import (
     RecognitionKnowledgePolicy,
     compile_recognition_knowledge,
 )
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.utils.hashing import sha256_file
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.utils.hashing import sha256_file
 
 _INVENTORY_SHA256 = "a" * 64
 

@@ -9,18 +9,18 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.mining.mappings.dailymed_rxnorm import (
+from clingrounder.mining.mappings.dailymed_rxnorm import (
     DailyMedRxNormMappingRepository,
     audit_dailymed_rxnorm_mapping,
     compile_dailymed_rxnorm_mapping,
 )
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.records import (
     AccessClass,
     RedistributionPolicy,
     SourceArtifact,
 )
-from medical_kg_nlp.mining.storage import LocalArtifactStore
-from medical_kg_nlp.terminology import build_terminology_index
+from clingrounder.mining.storage import LocalArtifactStore
+from clingrounder.terminology import build_terminology_index
 
 
 def test_dailymed_mapping_compiler_deduplicates_and_builds_read_only_index(

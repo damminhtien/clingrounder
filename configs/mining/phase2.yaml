@@ -3,7 +3,7 @@ registry: ../../data/sources/mining_registry.yaml
 work_dir: ../../outputs/mining/phase2-open-v1
 artifact_store:
   # Use a mounted encrypted volume or an s3:// URI. The variable is required intentionally.
-  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  uri: ${CLINGROUNDER_ARTIFACT_STORE}
   storage_options: {}
   # Set true only after verifying encryption on the mounted DUA/private volume.
   encrypted_at_rest: false
@@ -71,7 +71,7 @@ snapshot:
   development_fraction: 0.10
   challenge_sources: []
   challenge_templates: []
-  hash_salt: medical-kg-phase2-open-v1
+  hash_salt: clingrounder-phase2-open-v1
   max_synthetic_train_fraction: 0.40
   write_parquet: true
   enforce_agreement: true

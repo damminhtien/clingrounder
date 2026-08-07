@@ -9,12 +9,12 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.cli.commands import data as data_commands
-from medical_kg_nlp.mining.annotation_manifest import (
+from clingrounder.cli.commands import data as data_commands
+from clingrounder.mining.annotation_manifest import (
     materialize_annotation_manifest,
 )
-from medical_kg_nlp.mining.io import load_annotations, write_jsonl
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.io import load_annotations, write_jsonl
+from clingrounder.mining.records import (
     AccessClass,
     AnnotationLayer,
     AnnotationProposal,

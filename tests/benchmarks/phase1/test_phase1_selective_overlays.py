@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from medical_kg_nlp.benchmarks.phase1.phase1_selective_overlays import (
+from clingrounder.benchmarks.phase1.phase1_selective_overlays import (
     apply_selective_assertions,
     apply_selective_candidates,
     compile_reviewed_candidate_registry,

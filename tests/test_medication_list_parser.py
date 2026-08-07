@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from medical_kg_nlp.ner.medication_list_parser import MedicationListParser
-from medical_kg_nlp.schema.annotation import EntityAnnotation
-from medical_kg_nlp.schema.types import EntityType
+from clingrounder.ner.medication_list_parser import MedicationListParser
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.types import EntityType
 
 
 def test_medication_list_parser_supports_numbered_bulleted_and_inline_items() -> None:

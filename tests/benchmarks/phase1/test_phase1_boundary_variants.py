@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from medical_kg_nlp.benchmarks.phase1.boundary_variants import (
+from clingrounder.benchmarks.phase1.boundary_variants import (
     BoundaryErrorLabel,
     boundary_cross_encoder_text,
     extract_phase1_boundary_features,
     generate_phase1_boundary_variants,
     label_phase1_boundary_variant,
 )
-from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRole
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatcher
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.benchmarks.phase1.proposal_features import ProposalSourceRole
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.ner.dictionary_matcher import DictionaryMatcher
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 def test_boundary_variants_include_model_dictionary_and_clinical_options() -> None:

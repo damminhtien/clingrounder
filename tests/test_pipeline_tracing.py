@@ -3,8 +3,8 @@ from dataclasses import dataclass, replace
 
 import pytest
 
-from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
-from medical_kg_nlp.pipeline import (
+from clingrounder.datasets.synthetic_adapter import SyntheticDatasetAdapter
+from clingrounder.pipeline import (
     InMemoryPipelineObserver,
     NoOpPipelineObserver,
     PipelineComponents,
@@ -14,8 +14,8 @@ from medical_kg_nlp.pipeline import (
     PipelineOptions,
     PipelineRunner,
 )
-from medical_kg_nlp.schema.annotation import EntityAnnotation
-from medical_kg_nlp.schema.types import AssertionStatus
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.types import AssertionStatus
 
 
 def test_pipeline_trace_records_algorithm_stages() -> None:
@@ -172,7 +172,7 @@ def test_noop_observer_is_default_and_observer_is_thread_safe() -> None:
     observer = InMemoryPipelineObserver()
 
     def record(index: int) -> None:
-        from medical_kg_nlp.pipeline.tracing import PipelineTrace
+        from clingrounder.pipeline.tracing import PipelineTrace
 
         trace = PipelineTrace(document_id=f"doc-{index}", observer=observer)
         with trace.stage("test") as counters:

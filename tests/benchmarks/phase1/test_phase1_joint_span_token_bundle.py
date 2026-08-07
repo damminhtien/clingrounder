@@ -4,15 +4,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from medical_kg_nlp.benchmarks.phase1.joint_span_token_bundle import (
+from clingrounder.benchmarks.phase1.joint_span_token_bundle import (
     load_phase1_joint_span_token_bundle,
     prepare_phase1_joint_span_token_bundle,
 )
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.mining.io import write_json, write_jsonl
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.mining.io import write_json, write_jsonl
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.utils.hashing import sha256_file, sha256_text
 
 
 def test_joint_span_token_bundle_keeps_child_offsets_and_parent_group(tmp_path: Path) -> None:

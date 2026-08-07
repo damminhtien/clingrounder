@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.evaluation.runtime_benchmark import (
+from clingrounder.evaluation.runtime_benchmark import (
     analyze_runtime_run,
     compare_runtime_runs,
     write_runtime_benchmark,

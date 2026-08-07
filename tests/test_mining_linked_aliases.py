@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from medical_kg_nlp.mining.linked_aliases import (
+from clingrounder.mining.linked_aliases import (
     LinkedAliasProposalPolicy,
     build_linked_alias_proposals,
 )
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.records import (
     AccessClass,
     AnnotationLayer,
     AnnotationProposal,
@@ -19,7 +19,7 @@ from medical_kg_nlp.mining.records import (
     SourceArtifact,
     StoredObject,
 )
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.schema.types import CodeSystem, EntityType
 
 _SOURCE_SHA256 = "b" * 64
 

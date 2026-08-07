@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.experiments import loop_analysis, loop_artifacts
-from medical_kg_nlp.experiments import loop_engineer as loop_engineer_module
-from medical_kg_nlp.experiments.loop_engineer import (
+from clingrounder.experiments import loop_analysis, loop_artifacts
+from clingrounder.experiments import loop_engineer as loop_engineer_module
+from clingrounder.experiments.loop_engineer import (
     build_loop_engineering_report,
     metric_snapshot,
     write_loop_engineering_report,
 )
-from medical_kg_nlp.experiments.loop_policy import AGENT_PLAYBOOKS
+from clingrounder.experiments.loop_policy import AGENT_PLAYBOOKS
 
 
 def test_loop_engineer_keeps_improved_valid_experiment(tmp_path: Path) -> None:
@@ -95,12 +95,12 @@ def test_loop_engineer_reexports_split_modules() -> None:
         "write_loop_engineering_report",
     }
     assert set(AGENT_PLAYBOOKS["evaluation"].focus_files) >= {
-        "src/medical_kg_nlp/experiments/loop_engineer.py",
-        "src/medical_kg_nlp/experiments/loop_analysis.py",
-        "src/medical_kg_nlp/experiments/loop_artifacts.py",
-        "src/medical_kg_nlp/experiments/loop_agent.py",
-        "src/medical_kg_nlp/experiments/loop_journal.py",
-        "src/medical_kg_nlp/experiments/loop_policy.py",
+        "src/clingrounder/experiments/loop_engineer.py",
+        "src/clingrounder/experiments/loop_analysis.py",
+        "src/clingrounder/experiments/loop_artifacts.py",
+        "src/clingrounder/experiments/loop_agent.py",
+        "src/clingrounder/experiments/loop_journal.py",
+        "src/clingrounder/experiments/loop_policy.py",
     }
 
 
@@ -117,14 +117,14 @@ def test_loop_engineer_evaluation_path_uses_split_module_playbook() -> None:
     assert loop_report["next_experiment"]["module"] == "evaluation"
     assert loop_report["top_error_cases"] == []
     assert set(action["recommended_files"]) >= {
-        "src/medical_kg_nlp/experiments/loop_engineer.py",
-        "src/medical_kg_nlp/experiments/loop_analysis.py",
-        "src/medical_kg_nlp/experiments/loop_artifacts.py",
-        "src/medical_kg_nlp/experiments/loop_agent.py",
-        "src/medical_kg_nlp/experiments/loop_journal.py",
-        "src/medical_kg_nlp/experiments/loop_policy.py",
+        "src/clingrounder/experiments/loop_engineer.py",
+        "src/clingrounder/experiments/loop_analysis.py",
+        "src/clingrounder/experiments/loop_artifacts.py",
+        "src/clingrounder/experiments/loop_agent.py",
+        "src/clingrounder/experiments/loop_journal.py",
+        "src/clingrounder/experiments/loop_policy.py",
     }
-    assert "src/medical_kg_nlp/experiments/loop_analysis.py" in loop_report["agent"]["brief"]
+    assert "src/clingrounder/experiments/loop_analysis.py" in loop_report["agent"]["brief"]
     command = (
         "uv run pytest -o addopts='' tests/benchmarks/phase1/test_phase1.py "
         "tests/benchmarks/phase1/test_pipeline_report.py tests/test_loop_engineer.py -q"

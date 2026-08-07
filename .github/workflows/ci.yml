@@ -46,11 +46,11 @@ jobs:
 
       - name: Pipeline smoke
         run: |
-          .venv/bin/medical-kg pipeline run \
+          .venv/bin/clingrounder pipeline run \
             --config configs/pipeline/clinical-baseline.yaml \
             --input data/samples/sample_notes.jsonl \
             --output outputs/predictions.jsonl
-          .venv/bin/medical-kg validate \
+          .venv/bin/clingrounder validate \
             --profile development \
             --pred outputs/predictions.jsonl \
             --documents data/samples/sample_notes.jsonl \
@@ -79,7 +79,7 @@ jobs:
         run: .venv/bin/pytest -o addopts='' -m "(integration or release) and not private and not model" tests
 
       - name: Public repository audit
-        run: .venv/bin/medical-kg release audit --root .
+        run: .venv/bin/clingrounder release audit --root .
 
   security-artifacts:
     name: Dependency, secret, and SBOM artifacts

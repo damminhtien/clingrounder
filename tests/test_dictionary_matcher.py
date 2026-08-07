@@ -1,6 +1,6 @@
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.ner.dictionary_matcher import DictionaryMatcher
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.ner.dictionary_matcher import DictionaryMatcher
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 def test_dictionary_matcher_uses_toneless_matching_and_original_offsets() -> None:

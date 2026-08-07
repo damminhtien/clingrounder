@@ -6,18 +6,18 @@ import hashlib
 import json
 from pathlib import Path
 
-from medical_kg_nlp.benchmarks.phase1.manual_gold import (
+from clingrounder.benchmarks.phase1.manual_gold import (
     build_manual_gold_split_manifest,
     write_manual_gold_split_manifest,
 )
-from medical_kg_nlp.benchmarks.phase1.model_dataset import (
+from clingrounder.benchmarks.phase1.model_dataset import (
     PHASE1_FIVE_TYPE_LABELS,
     Phase1ModelDatasetConfig,
     build_phase1_model_dataset,
     build_phase1_model_splits,
 )
-from medical_kg_nlp.cli.main import main
-from medical_kg_nlp.mining.records import (
+from clingrounder.cli.main import main
+from clingrounder.mining.records import (
     AccessClass,
     MinedDocument,
     RedistributionPolicy,

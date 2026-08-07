@@ -6,14 +6,14 @@ import hashlib
 import json
 from pathlib import Path
 
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.records import (
     AccessClass,
     AnnotationLayer,
     AnnotationProposal,
     MinedDocument,
     RedistributionPolicy,
 )
-from medical_kg_nlp.mining.section_evidence import (
+from clingrounder.mining.section_evidence import (
     attach_block_evidence,
     load_block_evidence_policy,
 )

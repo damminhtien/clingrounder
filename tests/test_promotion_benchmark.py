@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from medical_kg_nlp.cli.parser import build_parser
-from medical_kg_nlp.evaluation.promotion_benchmark import (
+from clingrounder.cli.parser import build_parser
+from clingrounder.evaluation.promotion_benchmark import (
     _load_inputs,
     compare_promotion_benchmarks,
 )

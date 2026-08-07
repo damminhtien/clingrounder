@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from medical_kg_nlp.benchmarks.phase1.proposal_calibration import (
+from clingrounder.benchmarks.phase1.proposal_calibration import (
     ScoredPhase1Proposal,
 )
-from medical_kg_nlp.benchmarks.phase1.round2_proposal_verifier import (
+from clingrounder.benchmarks.phase1.round2_proposal_verifier import (
     apply_verified_proposal_additions,
 )
 

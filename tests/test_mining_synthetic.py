@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from medical_kg_nlp.mining.policy import MiningQualityGate
-from medical_kg_nlp.mining.synthetic import (
+from clingrounder.mining.policy import MiningQualityGate
+from clingrounder.mining.synthetic import (
     MinimalPairGenerator,
     ScenarioEntity,
     ScenarioGraph,

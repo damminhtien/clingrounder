@@ -40,7 +40,7 @@
       "file_count": 268,
       "id": "mining-implementation",
       "kind": "directory",
-      "path": "src/medical_kg_nlp",
+      "path": "src/clingrounder",
       "present": true,
       "rebuild_step_id": null,
       "required": true,
@@ -930,127 +930,127 @@
       "id": "install-environment"
     },
     {
-      "command": "uv run medical-kg data registry validate --registry data/sources/mining_registry.yaml --processing-index data/sources/processing_status.yaml --repository-root .",
+      "command": "uv run clingrounder data registry validate --registry data/sources/mining_registry.yaml --processing-index data/sources/processing_status.yaml --repository-root .",
       "description": "Validate source licenses, processing dossiers, and checked-in run configs.",
       "id": "validate-source-policy"
     },
     {
-      "command": "uv run medical-kg data run --plan configs/mining/vietbioner.yaml",
+      "command": "uv run clingrounder data run --plan configs/mining/vietbioner.yaml",
       "description": "Restore the immutable Vietnamese source archive and parsed documents.",
       "id": "acquire-vietbioner"
     },
     {
-      "command": "uv run medical-kg data run --plan configs/mining/codiesp.yaml",
+      "command": "uv run clingrounder data run --plan configs/mining/codiesp.yaml",
       "description": "Restore the immutable CodiEsp source archive and parsed documents.",
       "id": "acquire-codiesp"
     },
     {
-      "command": "uv run medical-kg data run --plan configs/mining/dailymed-rxnorm-2026-07-17.yaml",
+      "command": "uv run clingrounder data run --plan configs/mining/dailymed-rxnorm-2026-07-17.yaml",
       "description": "Restore the official SPL-to-RxNorm crosswalk.",
       "id": "acquire-dailymed-rxnorm"
     },
     {
-      "command": "uv run medical-kg data mapping compile-dailymed-rxnorm --artifacts outputs/mining/dailymed-rxnorm-2026-07-17/artifacts.jsonl --store \"$MEDICAL_KG_ARTIFACT_STORE\" --output outputs/mining/dailymed-rxnorm-2026-07-17/compiled_mappings.jsonl --index-output outputs/mining/dailymed-rxnorm-2026-07-17/dailymed_rxnorm.sqlite3 --report-output outputs/mining/dailymed-rxnorm-2026-07-17/compilation_report.json",
+      "command": "uv run clingrounder data mapping compile-dailymed-rxnorm --artifacts outputs/mining/dailymed-rxnorm-2026-07-17/artifacts.jsonl --store \"$CLINGROUNDER_ARTIFACT_STORE\" --output outputs/mining/dailymed-rxnorm-2026-07-17/compiled_mappings.jsonl --index-output outputs/mining/dailymed-rxnorm-2026-07-17/dailymed_rxnorm.sqlite3 --report-output outputs/mining/dailymed-rxnorm-2026-07-17/compilation_report.json",
       "description": "Rebuild the official versioned SPL-to-RxNorm mapping and derived query index.",
       "id": "compile-dailymed-rxnorm"
     },
     {
-      "command": "uv run medical-kg data run --plan configs/mining/dailymed-human-rx-part6-2026-07-21.yaml",
+      "command": "uv run clingrounder data run --plan configs/mining/dailymed-human-rx-part6-2026-07-21.yaml",
       "description": "Restore and parse the executed full-release prescription tranche.",
       "id": "acquire-dailymed-rx-part6"
     },
     {
-      "command": "uv run medical-kg data run --plan configs/mining/rxnorm-full-2026-07-06.yaml",
+      "command": "uv run clingrounder data run --plan configs/mining/rxnorm-full-2026-07-06.yaml",
       "description": "Import the caller-supplied licensed July RxNorm ZIP into the selected CAS.",
       "id": "acquire-rxnorm-full"
     },
     {
-      "command": "uv run medical-kg data artifact materialize --store \"$MEDICAL_KG_ARTIFACT_STORE\" --sha256 53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c --expected-byte-size 259313098 --output .cache/medical-kg/release-inputs/RxNorm_full_07062026.zip",
+      "command": "uv run clingrounder data artifact materialize --store \"$CLINGROUNDER_ARTIFACT_STORE\" --sha256 53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c --expected-byte-size 259313098 --output .cache/clingrounder/release-inputs/RxNorm_full_07062026.zip",
       "description": "Restore the pinned RxNorm CAS object to a local seekable archive for RRF readers.",
       "id": "hydrate-rxnorm-full"
     },
     {
-      "command": "uv run medical-kg data label propose --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl --adapter medical_kg_nlp.mining.labelers.dailymed:create_dailymed_structured_labeler --adapter-config configs/mining/labelers/dailymed-structured.yaml --output outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl --batch-size 256",
+      "command": "uv run clingrounder data label propose --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl --adapter clingrounder.mining.labelers.dailymed:create_dailymed_structured_labeler --adapter-config configs/mining/labelers/dailymed-structured.yaml --output outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl --batch-size 256",
       "description": "Rebuild bounded-memory exact structured annotation supervision.",
       "id": "label-dailymed-rx-part6"
     },
     {
-      "command": "uv run medical-kg data snapshot freeze --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl --annotations outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl --artifacts outputs/mining/dailymed-human-rx-part6-2026-07-21/artifacts.jsonl --source-fingerprint 3c72512e43c1e298c53874bb1d0884dcd8a695c9234890fc769c5054f58bdeb6 --version dailymed-human-rx-part6-2026-07-21-structured-silver-v1 --created-at 2026-07-22T00:00:00Z --output-dir outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1 --development-fraction 0.2 --hash-salt dailymed-rx-part6-structured-v1 --dedup-mode exact --manifest-only --skip-agreement-gate",
+      "command": "uv run clingrounder data snapshot freeze --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl --annotations outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl --artifacts outputs/mining/dailymed-human-rx-part6-2026-07-21/artifacts.jsonl --source-fingerprint 3c72512e43c1e298c53874bb1d0884dcd8a695c9234890fc769c5054f58bdeb6 --version dailymed-human-rx-part6-2026-07-21-structured-silver-v1 --created-at 2026-07-22T00:00:00Z --output-dir outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1 --development-fraction 0.2 --hash-salt dailymed-rx-part6-structured-v1 --dedup-mode exact --manifest-only --skip-agreement-gate",
       "description": "Recreate the exact-dedup train/development split used by every downstream probe.",
       "id": "freeze-dailymed-rx-part6"
     },
     {
-      "command": "uv run medical-kg data mapping compile-rxnorm-ndc --source .cache/medical-kg/release-inputs/RxNorm_full_07062026.zip --source-version rxnorm-full-2026-07-06 --expected-source-sha256 53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc_rows.jsonl --index-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc.sqlite3 --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc_report.json",
+      "command": "uv run clingrounder data mapping compile-rxnorm-ndc --source .cache/clingrounder/release-inputs/RxNorm_full_07062026.zip --source-version rxnorm-full-2026-07-06 --expected-source-sha256 53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc_rows.jsonl --index-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc.sqlite3 --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc_report.json",
       "description": "Stream active package NDC attributes from the pinned full RxNorm archive.",
       "id": "compile-rxnorm-full-ndc"
     },
     {
-      "command": "uv run medical-kg data mapping link-dailymed-products --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl --dailymed-mapping-index outputs/mining/dailymed-rxnorm-2026-07-17/dailymed_rxnorm.sqlite3 --rxnorm-ndc-index outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc.sqlite3 --links-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_links.jsonl --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_link_decisions.jsonl --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_link_report.json",
+      "command": "uv run clingrounder data mapping link-dailymed-products --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl --dailymed-mapping-index outputs/mining/dailymed-rxnorm-2026-07-17/dailymed_rxnorm.sqlite3 --rxnorm-ndc-index outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc.sqlite3 --links-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_links.jsonl --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_link_decisions.jsonl --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_link_report.json",
       "description": "Link products only when exact SPL/version and normalized NDC evidence intersect.",
       "id": "link-dailymed-rx-part6-products"
     },
     {
-      "command": "uv run medical-kg data lexicon build --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl --annotations outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json --split train --min-occurrences 1 --min-documents 1 --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_inventory_all.jsonl --conflicts-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_conflicts_all.jsonl --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_report_all.json",
+      "command": "uv run clingrounder data lexicon build --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl --annotations outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json --split train --min-occurrences 1 --min-documents 1 --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_inventory_all.jsonl --conflicts-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_conflicts_all.jsonl --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_report_all.json",
       "description": "Aggregate only the frozen train split into a source-label-aware mention inventory.",
       "id": "build-dailymed-rx-part6-inventory"
     },
     {
-      "command": "uv run medical-kg data knowledge compile-recognition --inventory outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_inventory_all.jsonl --policy configs/mining/knowledge/dailymed-rx-part6-recognition-singletons-2026-07-22.yaml --baseline-dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_concepts.jsonl --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_decisions.jsonl --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_report.json",
+      "command": "uv run clingrounder data knowledge compile-recognition --inventory outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_inventory_all.jsonl --policy configs/mining/knowledge/dailymed-rx-part6-recognition-singletons-2026-07-22.yaml --baseline-dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_concepts.jsonl --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_decisions.jsonl --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_report.json",
       "description": "Compile code-free DailyMed drug terms from the pinned train inventory.",
       "id": "compile-dailymed-rx-part6-recognition"
     },
     {
-      "command": "uv run medical-kg data knowledge benchmark-recognition --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl --annotations outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl --baseline-dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl --additional-dictionary outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_concepts.jsonl --entity-type DRUG --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json --split development --require-document-metadata spl_fields --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_benchmark_development.json",
+      "command": "uv run clingrounder data knowledge benchmark-recognition --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl --annotations outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl --baseline-dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl --additional-dictionary outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_concepts.jsonl --entity-type DRUG --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json --split development --require-document-metadata spl_fields --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/recognition_singletons_benchmark_development.json",
       "description": "Evaluate the train-only dictionary on held-out structured product documents.",
       "id": "benchmark-dailymed-rx-part6-recognition"
     },
     {
-      "command": "uv run medical-kg data lexicon propose-dailymed-product-aliases --links outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_links.jsonl --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json --split train --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_proposals.jsonl --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_decisions.jsonl --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_report.json",
+      "command": "uv run clingrounder data lexicon propose-dailymed-product-aliases --links outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_links.jsonl --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json --split train --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_proposals.jsonl --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_decisions.jsonl --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_report.json",
       "description": "Build exact product alias hypotheses from linked products in the frozen train split.",
       "id": "propose-dailymed-rx-part6-aliases"
     },
     {
-      "command": "uv run medical-kg data lexicon propose-dailymed-product-aliases --links outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_links.jsonl --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json --split development --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_proposals.jsonl --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_decisions.jsonl --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_report.json",
+      "command": "uv run clingrounder data lexicon propose-dailymed-product-aliases --links outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_links.jsonl --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json --split development --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_proposals.jsonl --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_decisions.jsonl --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_report.json",
       "description": "Build held-out linked aliases for retrieval evaluation without training leakage.",
       "id": "propose-dailymed-rx-part6-development-aliases"
     },
     {
-      "command": "uv run medical-kg terminology build --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl --output .cache/medical-kg/terminology/terminology-0000a0a5bf3f1286c3f2.sqlite3 --manifest-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/base_terminology_manifest.json",
+      "command": "uv run clingrounder terminology build --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl --output .cache/clingrounder/terminology/terminology-0000a0a5bf3f1286c3f2.sqlite3 --manifest-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/base_terminology_manifest.json",
       "description": "Build the derived full-RxNorm lexical index from canonical JSONL.",
       "id": "build-rxnorm-base-index"
     },
     {
-      "command": "uv run medical-kg data knowledge compile-aliases --proposals outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_proposals.jsonl --index .cache/medical-kg/terminology/terminology-0000a0a5bf3f1286c3f2.sqlite3 --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl --policy configs/mining/knowledge/dailymed-rx-part6-product-aliases-2026-07-22.yaml --overlay-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl --recognition-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_recognition.jsonl --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_compilation_decisions.jsonl --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_compilation_report.json",
+      "command": "uv run clingrounder data knowledge compile-aliases --proposals outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_proposals.jsonl --index .cache/clingrounder/terminology/terminology-0000a0a5bf3f1286c3f2.sqlite3 --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl --policy configs/mining/knowledge/dailymed-rx-part6-product-aliases-2026-07-22.yaml --overlay-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl --recognition-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_recognition.jsonl --decisions-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_compilation_decisions.jsonl --report-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_compilation_report.json",
       "description": "Promote only globally unique product aliases against the pinned base index.",
       "id": "compile-dailymed-rx-part6-aliases"
     },
     {
-      "command": "uv run medical-kg terminology build --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl --alias-overlay outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl --output .cache/medical-kg/terminology/terminology-c750ca7121eda394a91f.sqlite3 --manifest-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/enriched_terminology_manifest.json",
+      "command": "uv run clingrounder terminology build --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl --alias-overlay outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl --output .cache/clingrounder/terminology/terminology-c750ca7121eda394a91f.sqlite3 --manifest-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/enriched_terminology_manifest.json",
       "description": "Build a derived lexical index with the train-only DailyMed overlay.",
       "id": "build-rxnorm-enriched-index"
     },
     {
-      "command": "uv run medical-kg terminology query-set --linked-proposal outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_proposals.jsonl --reference-alias-overlay outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries.jsonl --manifest-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries_manifest.json",
+      "command": "uv run clingrounder terminology query-set --linked-proposal outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_proposals.jsonl --reference-alias-overlay outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries.jsonl --manifest-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries_manifest.json",
       "description": "Freeze linked held-out aliases as neutral retrieval queries and seen/unseen slices.",
       "id": "build-dailymed-rx-part6-retrieval-queries"
     },
     {
-      "command": "uv run medical-kg terminology benchmark --index .cache/medical-kg/terminology/terminology-0000a0a5bf3f1286c3f2.sqlite3 --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl --queries outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries.jsonl --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/base_product_retrieval_benchmark.json --limit 20",
+      "command": "uv run clingrounder terminology benchmark --index .cache/clingrounder/terminology/terminology-0000a0a5bf3f1286c3f2.sqlite3 --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl --queries outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries.jsonl --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/base_product_retrieval_benchmark.json --limit 20",
       "description": "Benchmark canonical full-RxNorm lexical retrieval on held-out product aliases.",
       "id": "benchmark-dailymed-rx-part6-base-retrieval"
     },
     {
-      "command": "uv run medical-kg terminology benchmark --index .cache/medical-kg/terminology/terminology-c750ca7121eda394a91f.sqlite3 --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl --alias-overlay outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl --queries outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries.jsonl --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/enriched_product_retrieval_benchmark.json --limit 20",
+      "command": "uv run clingrounder terminology benchmark --index .cache/clingrounder/terminology/terminology-c750ca7121eda394a91f.sqlite3 --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl --alias-overlay outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl --queries outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries.jsonl --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/enriched_product_retrieval_benchmark.json --limit 20",
       "description": "Benchmark the train-only overlay on the same held-out retrieval queries.",
       "id": "benchmark-dailymed-rx-part6-enriched-retrieval"
     },
     {
-      "command": "uv run medical-kg data dataset fuse --plan configs/mining/open_corpus_v1.yaml",
+      "command": "uv run clingrounder data dataset fuse --plan configs/mining/open_corpus_v1.yaml",
       "description": "Fuse the source-specific curated outputs after following their dossiers.",
       "id": "fuse-open-corpus"
     },
     {
-      "command": "uv run medical-kg model inspect-token-classifier-run --config configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml",
+      "command": "uv run clingrounder model inspect-token-classifier-run --config configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml",
       "description": "Validate pinned model inputs and print the immutable checkpoint prefetch command.",
       "id": "inspect-full-type-model-run"
     },
@@ -1060,12 +1060,12 @@
       "id": "prefetch-full-type-model"
     },
     {
-      "command": "uv run medical-kg model train-token-classifier-run --config configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml",
+      "command": "uv run clingrounder model train-token-classifier-run --config configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml",
       "description": "Optionally reproduce the local checkpoint on a compatible Linux/CUDA worker.",
       "id": "train-full-type-model"
     },
     {
-      "command": "uv run medical-kg data release verify --manifest data/releases/open-ner-retrieval-v1.lock.json --root . --store \"$MEDICAL_KG_ARTIFACT_STORE\" --require-cas-objects",
+      "command": "uv run clingrounder data release verify --manifest data/releases/open-ner-retrieval-v1.lock.json --root . --store \"$CLINGROUNDER_ARTIFACT_STORE\" --require-cas-objects",
       "description": "Verify all restored or rebuilt release bytes without machine-local paths.",
       "id": "verify-release"
     }

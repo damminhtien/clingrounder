@@ -59,14 +59,14 @@ set. Context may select only among proposed types, and every final span remains 
 Start with [`rule-ner.md`](rule-ner.md). Useful searches:
 
 ```bash
-rg "class .*ProposalExtractor|EntityProposal" src/medical_kg_nlp/ner tests
-rg "type_resolution|boundary_rules|rule_id" src/medical_kg_nlp/ner tests
-rg "medication_mention|structured_lab" src/medical_kg_nlp/ner tests
+rg "class .*ProposalExtractor|EntityProposal" src/clingrounder/ner tests
+rg "type_resolution|boundary_rules|rule_id" src/clingrounder/ner tests
+rg "medication_mention|structured_lab" src/clingrounder/ner tests
 ```
 
 ## Public Ports
 
-The replaceable contracts live in [`pipeline/ports.py`](../src/medical_kg_nlp/pipeline/ports.py):
+The replaceable contracts live in [`pipeline/ports.py`](../src/clingrounder/pipeline/ports.py):
 
 - `EntityExtractorPort`
 - `AssertionClassifierPort`
@@ -92,11 +92,11 @@ terminology:
   normalization_paths:
     - data/standards/icd10_vn/processed/tt06_icd10_concepts.jsonl
     - data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
-  normalization_index_path: .cache/medical-kg/terminology/full.sqlite3
+  normalization_index_path: .cache/clingrounder/terminology/full.sqlite3
   normalization_alias_overlay_paths:
     - outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl
     - outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl
-  cache_dir: .cache/medical-kg/terminology
+  cache_dir: .cache/clingrounder/terminology
   additional_recognition_path: null
   abbreviation_path: data/dictionaries/abbreviations.jsonl
   alias_overlay_path: data/dictionaries/vietnamese_medical_alias.jsonl
@@ -150,17 +150,17 @@ imports do not import PyTorch or Transformers.
 JSONL remains the source of truth. SQLite is a derived, immutable runtime index:
 
 ```bash
-uv run medical-kg terminology build \
+uv run clingrounder terminology build \
   --source data/processed/full_concepts.jsonl \
-  --cache-dir .cache/medical-kg/terminology
+  --cache-dir .cache/clingrounder/terminology
 
-uv run medical-kg terminology inspect \
-  --index .cache/medical-kg/terminology/<fingerprint>.sqlite3 \
+uv run clingrounder terminology inspect \
+  --index .cache/clingrounder/terminology/<fingerprint>.sqlite3 \
   --query metformin \
   --entity-type DRUG \
   --code-system RxNorm
 
-uv run medical-kg terminology query-set \
+uv run clingrounder terminology query-set \
   --alias-overlay outputs/mining/knowledge/reviewed-aliases.jsonl \
   --output outputs/mining/benchmark/queries.jsonl \
   --manifest-output outputs/mining/benchmark/query-manifest.json
@@ -172,18 +172,18 @@ read-only, query-only, thread-local connections and never rebuilds a stale index
 ## CLI And Validation
 
 ```text
-medical-kg pipeline run
-medical-kg terminology build|inspect|query-set|benchmark
-medical-kg validate
-medical-kg release audit
-medical-kg evaluate
-medical-kg-research model ...
-medical-kg-research data ...
-medical-kg-benchmark list
-medical-kg-benchmark phase1 ...
+clingrounder pipeline run
+clingrounder terminology build|inspect|query-set|benchmark
+clingrounder validate
+clingrounder release audit
+clingrounder evaluate
+clingrounder-research model ...
+clingrounder-research data ...
+clingrounder-benchmark list
+clingrounder-benchmark phase1 ...
 ```
 
-`python -m medical_kg_nlp.cli` is the same operational entrypoint as `medical-kg`. Research and
+`python -m clingrounder.cli` is the same operational entrypoint as `clingrounder`. Research and
 benchmark commands must use their scoped entrypoints; the dispatcher no longer exposes one
 all-purpose installed command.
 
@@ -194,7 +194,7 @@ Alias promotion remains a later reviewed operation. Search these boundaries with
 
 ```bash
 rg "crosswalk_mentions|materialize_exact_crosswalk_links|propose_linked_aliases" \
-  src/medical_kg_nlp/mining src/medical_kg_nlp/cli tests
+  src/clingrounder/mining src/clingrounder/cli tests
 ```
 
 `mining/cooccurrence.py` can aggregate neutral evidence within a sentence or a hash-validated
@@ -204,7 +204,7 @@ compilation and rejects selected codes absent from loaded canonical terminology.
 
 ```bash
 rg "preferred_code_systems_by_entity_type|context_scope|canonical-concepts-only" \
-  src/medical_kg_nlp/mining src/medical_kg_nlp/cli tests
+  src/clingrounder/mining src/clingrounder/cli tests
 ```
 
 Validation profiles:
@@ -234,12 +234,12 @@ local cache and must not download weights.
 ## Search Recipes
 
 ```bash
-rg "class .*Port" src/medical_kg_nlp/pipeline src/medical_kg_nlp/terminology
+rg "class .*Port" src/clingrounder/pipeline src/clingrounder/terminology
 rg "PipelineConfig|from_mapping" src tests configs
 rg "INVARIANT:|SCALING:|MODEL:|LICENSE:|PRIVACY:" src tests
-rg "EntityAnnotation|RelationAnnotation" src/medical_kg_nlp/schema tests
+rg "EntityAnnotation|RelationAnnotation" src/clingrounder/schema tests
 rg "TerminologyRepository|exact_lookup|search" src tests
-rg "EvaluationAdapter" src/medical_kg_nlp/evaluation src/medical_kg_nlp/benchmarks tests
+rg "EvaluationAdapter" src/clingrounder/evaluation src/clingrounder/benchmarks tests
 rg "ValidationProfile" src tests
 ```
 

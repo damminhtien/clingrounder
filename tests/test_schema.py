@@ -2,12 +2,12 @@ import math
 
 import pytest
 
-from medical_kg_nlp.linking.candidate import Candidate
-from medical_kg_nlp.schema.annotation import EntityAnnotation
-from medical_kg_nlp.schema.annotation import RelationAnnotation
-from medical_kg_nlp.schema.document import ClinicalDocument
-from medical_kg_nlp.schema.output import ClinicalPrediction
-from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType, RelationType
+from clingrounder.linking.candidate import Candidate
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.annotation import RelationAnnotation
+from clingrounder.schema.document import ClinicalDocument
+from clingrounder.schema.output import ClinicalPrediction
+from clingrounder.schema.types import AssertionStatus, CodeSystem, EntityType, RelationType
 
 
 def test_prediction_validates_exact_offsets() -> None:

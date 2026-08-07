@@ -6,17 +6,17 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.benchmarks.phase1.final_token_training_bundle import (
+from clingrounder.benchmarks.phase1.final_token_training_bundle import (
     Phase1FinalTokenTrainingBundleConfig,
     build_phase1_final_token_training_bundle,
 )
-from medical_kg_nlp.cli.parser import build_parser
-from medical_kg_nlp.mining.io import write_json, write_jsonl
-from medical_kg_nlp.training.span_dataset import (
+from clingrounder.cli.parser import build_parser
+from clingrounder.mining.io import write_json, write_jsonl
+from clingrounder.training.span_dataset import (
     scan_span_dataset,
     validate_span_dataset_manifest,
 )
-from medical_kg_nlp.utils.hashing import sha256_text
+from clingrounder.utils.hashing import sha256_text
 
 
 def test_final_bundle_keeps_authorized_rows_and_bounded_qa_augmentation(tmp_path: Path) -> None:

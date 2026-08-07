@@ -126,7 +126,7 @@ Development records are copied unchanged. The builder rejects source artifact ID
 `label_generation: copy_reviewed_parent_spans_only`.
 
 ```bash
-uv run medical-kg-benchmark phase1 model-data augment-regions \
+uv run clingrounder-benchmark phase1 model-data augment-regions \
   --source-dataset outputs/mining/model-datasets/phase1-manual-five-type-v1/spans.jsonl \
   --source-manifest outputs/mining/model-datasets/phase1-manual-five-type-v1/manifest.json \
   --source-build-manifest outputs/mining/model-datasets/phase1-manual-five-type-v1/build_manifest.json \
@@ -413,7 +413,7 @@ WER, and must preserve both entity and assertion projections when testing candid
 The source is passed explicitly:
 
 ```bash
-uv run medical-kg-benchmark phase1 round2 probes \
+uv run clingrounder-benchmark phase1 round2 probes \
   ... \
   --source qwen=/Users/macbook/Downloads/output_new_27.zip \
   --build-full-source qwen
@@ -553,9 +553,9 @@ tar -xzf /secure/phase1-five-type-xlmr-qa-edu-training-inputs.tar.gz \
 uv sync --frozen --extra ml
 uv run hf download FacebookAI/xlm-roberta-base \
   --revision e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
-uv run medical-kg-research model inspect-token-classifier-run \
+uv run clingrounder-research model inspect-token-classifier-run \
   --config configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
-CUDA_VISIBLE_DEVICES=0 uv run medical-kg-research model train-token-classifier-run \
+CUDA_VISIBLE_DEVICES=0 uv run clingrounder-research model train-token-classifier-run \
   --config configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
 ```
 
@@ -573,7 +573,7 @@ Round 2 inference.
 Run verified development inference and per-type calibration as one bounded command:
 
 ```bash
-uv run medical-kg-benchmark phase1 model-data calibrate \
+uv run clingrounder-benchmark phase1 model-data calibrate \
   --pipeline-config configs/benchmarks/phase1/pipeline/phase1-five-type-qa-edu-model-only.yaml \
   --output-dir outputs/models/phase1-five-type-qa-edu-calibration
 ```
@@ -614,20 +614,20 @@ local content-addressed store:
 ```bash
 uv sync --frozen --extra dev --extra data
 export PHASE1_ROUND2_ARCHIVE=/secure/input_turn2_vong1.zip
-export MEDICAL_KG_ARTIFACT_STORE=file:///secure/medical-kg/mining-artifacts
+export CLINGROUNDER_ARTIFACT_STORE=file:///secure/clingrounder/mining-artifacts
 
-uv run medical-kg-research data registry validate \
+uv run clingrounder-research data registry validate \
   --registry data/sources/mining_registry.yaml \
   --processing-index data/sources/processing_status.yaml
 
-uv run medical-kg-research data run \
+uv run clingrounder-research data run \
   --plan configs/benchmarks/phase1/mining/phase1-round2-2026-07-22.yaml
 ```
 
 Write the deterministic audit reports through the benchmark-owned CLI:
 
 ```bash
-uv run medical-kg-benchmark phase1 round2 audit \
+uv run clingrounder-benchmark phase1 round2 audit \
   --documents outputs/mining/phase1-round2-2026-07-22/documents.jsonl \
   --reference-input-dir data/raw/input \
   --reference-gold-dir data/manual_gold \

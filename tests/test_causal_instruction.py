@@ -8,14 +8,14 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.training.causal_instruction import (
+from clingrounder.training.causal_instruction import (
     CausalInstructionRecord,
     CausalInstructionSource,
     InstructionTooLongError,
     load_causal_instruction_records,
     tokenize_causal_instruction,
 )
-from medical_kg_nlp.utils.hashing import sha256_file
+from clingrounder.utils.hashing import sha256_file
 
 
 class _CharacterTokenizer:

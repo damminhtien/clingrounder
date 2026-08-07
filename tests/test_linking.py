@@ -2,21 +2,21 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.linking.candidate import Candidate
-from medical_kg_nlp.linking.linker import EntityLinker
-from medical_kg_nlp.linking.reranker import HeuristicReranker
-from medical_kg_nlp.retrieval.adapters import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.linking.candidate import Candidate
+from clingrounder.linking.linker import EntityLinker
+from clingrounder.linking.reranker import HeuristicReranker
+from clingrounder.retrieval.adapters import (
     ExactRetrieverAdapter,
     ReviewedMentionRetrieverAdapter,
 )
-from medical_kg_nlp.retrieval.bm25_retriever import BM25Retriever
-from medical_kg_nlp.retrieval.pipeline import RetrievalPipeline
-from medical_kg_nlp.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
-from medical_kg_nlp.schema.annotation import EntityAnnotation
-from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
-from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
+from clingrounder.retrieval.bm25_retriever import BM25Retriever
+from clingrounder.retrieval.pipeline import RetrievalPipeline
+from clingrounder.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.types import AssertionStatus, CodeSystem, EntityType
+from clingrounder.terminology.memory import InMemoryTerminologyRepository
 
 
 def test_bm25_uses_fixed_calibration_instead_of_query_maximum() -> None:

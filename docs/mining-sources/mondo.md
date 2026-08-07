@@ -22,7 +22,7 @@ acquisition manifest only; ontology-derived artifacts live under
 
 ## Processing
 
-`medical-kg-research data ontology compile-obo` streams the OBO Graph JSON with `ijson`. It scans the target
+`clingrounder-research data ontology compile-obo` streams the OBO Graph JSON with `ijson`. It scans the target
 namespace separately from imported classes, then materializes:
 
 | Artifact | Purpose | Rows |
@@ -116,22 +116,22 @@ not runtime defaults. Promotion requires:
 ## Reproduce
 
 ```bash
-export MEDICAL_KG_ARTIFACT_STORE=/Volumes/medical-kg-mining
+export CLINGROUNDER_ARTIFACT_STORE=/Volumes/clingrounder-mining
 
-uv run medical-kg-research data run --plan configs/mining/mondo-2026-07-06.yaml
+uv run clingrounder-research data run --plan configs/mining/mondo-2026-07-06.yaml
 
-uv run medical-kg-research data ontology compile-obo \
+uv run clingrounder-research data ontology compile-obo \
   --input "$MONDO_JSON_OBJECT" \
   --output-dir outputs/mining/knowledge/mondo-2026-07-06 \
   --source-id mondo --source-version 2026-07-06 \
   --iri-prefix MONDO --code-system MONDO --entity-type DISEASE
 
-uv run medical-kg terminology build \
+uv run clingrounder terminology build \
   --source outputs/mining/knowledge/mondo-2026-07-06/terminology.jsonl \
   --output outputs/mining/knowledge/mondo-2026-07-06/terminology.sqlite3 \
   --manifest-output outputs/mining/knowledge/mondo-2026-07-06/terminology_manifest.json
 
-uv run medical-kg kg build \
+uv run clingrounder kg build \
   --nodes outputs/mining/knowledge/mondo-2026-07-06/nodes.jsonl \
   --edges outputs/mining/knowledge/mondo-2026-07-06/edges.jsonl \
   --evidence outputs/mining/knowledge/mondo-2026-07-06/evidence.jsonl \

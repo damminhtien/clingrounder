@@ -5,13 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.mining.ontologies import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.mining.ontologies import (
     OBOGraphCompilationConfig,
     compile_hpo_associations,
     compile_obo_graph_release,
 )
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 def test_compile_obo_graph_preserves_metadata_and_filters_hierarchy(tmp_path: Path) -> None:

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from medical_kg_nlp.adapters.medication import MedicationMentionEntityExtractorAdapter
-from medical_kg_nlp.schema.annotation import EntityAnnotation
-from medical_kg_nlp.schema.types import EntityType
-from medical_kg_nlp.utils.text import normalize_for_match
+from clingrounder.adapters.medication import MedicationMentionEntityExtractorAdapter
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.types import EntityType
+from clingrounder.utils.text import normalize_for_match
 
 
 @dataclass(frozen=True)

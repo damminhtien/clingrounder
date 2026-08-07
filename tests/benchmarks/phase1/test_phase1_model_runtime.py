@@ -8,21 +8,21 @@ from pathlib import Path
 import pytest
 import yaml
 
-from medical_kg_nlp.benchmarks.phase1 import model_runtime
-from medical_kg_nlp.benchmarks.phase1.model_runtime import (
+from clingrounder.benchmarks.phase1 import model_runtime
+from clingrounder.benchmarks.phase1.model_runtime import (
     run_phase1_model_calibration,
 )
-from medical_kg_nlp.benchmarks.phase1.model_selection import (
+from clingrounder.benchmarks.phase1.model_selection import (
     Phase1ModelSelectionConfig,
 )
-from medical_kg_nlp.cli.parser import build_parser
-from medical_kg_nlp.pipeline import ResolvedPipelineConfig
-from medical_kg_nlp.schema.annotation import EntityAnnotation
-from medical_kg_nlp.schema.output import ClinicalPrediction
-from medical_kg_nlp.schema.types import EntityType
-from medical_kg_nlp.training import fingerprint_model_directory
-from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
-from medical_kg_nlp.utils.text import normalize_for_match
+from clingrounder.cli.parser import build_parser
+from clingrounder.pipeline import ResolvedPipelineConfig
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.output import ClinicalPrediction
+from clingrounder.schema.types import EntityType
+from clingrounder.training import fingerprint_model_directory
+from clingrounder.utils.hashing import sha256_file, sha256_text
+from clingrounder.utils.text import normalize_for_match
 
 _LOCK_TEXT = "version = 1\n"
 _REVISION = "a" * 40

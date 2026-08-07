@@ -8,13 +8,13 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.adapters.generative import (
+from clingrounder.adapters.generative import (
     load_inference_budget_spec,
     safetensors_parameter_count,
     verify_inference_budget_spec,
 )
-from medical_kg_nlp.cli.main import main
-from medical_kg_nlp.utils.hashing import sha256_file
+from clingrounder.cli.main import main
+from clingrounder.utils.hashing import sha256_file
 
 
 def test_inference_budget_verifies_manifest_and_safetensors_counts(

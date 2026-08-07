@@ -7,18 +7,18 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.benchmarks.phase1.model_region_augmentation import (
+from clingrounder.benchmarks.phase1.model_region_augmentation import (
     Phase1RegionAugmentationConfig,
     build_phase1_region_augmented_dataset,
 )
-from medical_kg_nlp.cli.main import main
-from medical_kg_nlp.mining.io import write_json, write_jsonl
-from medical_kg_nlp.training.span_dataset import (
+from clingrounder.cli.main import main
+from clingrounder.mining.io import write_json, write_jsonl
+from clingrounder.training.span_dataset import (
     SpanTrainingRecord,
     scan_span_dataset,
     validate_span_dataset_manifest,
 )
-from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
+from clingrounder.utils.hashing import sha256_file, sha256_text
 
 
 def test_region_augmentation_is_deterministic_bounded_and_train_only(

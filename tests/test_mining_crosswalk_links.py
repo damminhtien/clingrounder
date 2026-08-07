@@ -4,18 +4,18 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from medical_kg_nlp.mining.crosswalk_links import (
+from clingrounder.mining.crosswalk_links import (
     CrosswalkLinkMaterializationPolicy,
     load_crosswalk_link_policy,
     materialize_exact_crosswalk_links,
 )
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.records import (
     AnnotationLayer,
     AnnotationProposal,
     ConceptLink,
     ReviewStatus,
 )
-from medical_kg_nlp.schema.types import CodeSystem
+from clingrounder.schema.types import CodeSystem
 
 
 def _annotation(*, concepts: tuple[ConceptLink, ...] = ()) -> AnnotationProposal:

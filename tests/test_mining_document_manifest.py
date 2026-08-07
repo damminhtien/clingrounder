@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.mining.document_manifest import materialize_document_manifest
-from medical_kg_nlp.mining.io import iter_documents
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.document_manifest import materialize_document_manifest
+from clingrounder.mining.io import iter_documents
+from clingrounder.mining.records import (
     AccessClass,
     MinedDocument,
     RedistributionPolicy,

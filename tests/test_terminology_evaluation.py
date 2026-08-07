@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.terminology import (
+from clingrounder.terminology import (
     SQLiteTerminologyRepository,
     build_terminology_index,
     evaluate_terminology_queries,

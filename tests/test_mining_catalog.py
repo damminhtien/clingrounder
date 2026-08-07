@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.mining.catalog import DuckDBMiningCatalog
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.catalog import DuckDBMiningCatalog
+from clingrounder.mining.records import (
     AccessClass,
     AnnotationLayer,
     AnnotationProposal,
@@ -17,7 +17,7 @@ from medical_kg_nlp.mining.records import (
     RelationProposal,
     ReviewStatus,
 )
-from medical_kg_nlp.mining.snapshot import SnapshotBuilder, SnapshotSplitConfig
+from clingrounder.mining.snapshot import SnapshotBuilder, SnapshotSplitConfig
 
 pytestmark = pytest.mark.integration
 

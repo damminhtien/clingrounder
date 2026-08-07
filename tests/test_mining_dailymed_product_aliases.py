@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from medical_kg_nlp.mining.dailymed_product_aliases import (
+from clingrounder.mining.dailymed_product_aliases import (
     DAILYMED_PRODUCT_ALIAS_SOURCE,
     build_dailymed_product_alias_proposals,
 )

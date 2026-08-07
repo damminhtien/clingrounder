@@ -20,9 +20,9 @@ artifacts stay outside Git. Their checksums and source ownership are recorded in
 Run the plugin through the task-neutral CLI:
 
 ```bash
-medical-kg benchmark phase1 --help
+clingrounder benchmark phase1 --help
 ```
 
 Exact historical reproduction requires restoring the local artifacts named by
-the selected config. The core `medical-kg pipeline` commands never load these
+the selected config. The core `clingrounder pipeline` commands never load these
 resources implicitly.

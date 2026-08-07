@@ -8,13 +8,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.dictionaries.tt06_pdf import (
+from clingrounder.dictionaries.tt06_pdf import (
     build_tt06_manifest,
     extract_tt06_rows_from_pdf,
     extract_tt06_rows_from_tsv,
     run_pdftotext_tsv,
 )
-from medical_kg_nlp.utils.io import write_jsonl
+from clingrounder.utils.io import write_jsonl
 
 
 def main() -> None:

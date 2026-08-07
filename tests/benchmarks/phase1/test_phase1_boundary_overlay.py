@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
-from medical_kg_nlp.benchmarks.phase1.boundary_overlay import (
+from clingrounder.benchmarks.phase1.boundary_overlay import (
     BoundaryPolicy,
     apply_conservative_boundary_overlay,
 )
-from medical_kg_nlp.benchmarks.phase1.boundary_variants import (
+from clingrounder.benchmarks.phase1.boundary_variants import (
     Phase1BoundaryVariant,
 )
-from medical_kg_nlp.benchmarks.phase1.boundary_verifier import (
+from clingrounder.benchmarks.phase1.boundary_verifier import (
     Phase1BoundaryVerifier,
     ScoredPhase1BoundaryVariant,
 )
-from medical_kg_nlp.evaluation.sparse_logistic import SparseLogisticModel
-from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_ALLOWED_TYPES
+from clingrounder.evaluation.sparse_logistic import SparseLogisticModel
+from clingrounder.benchmarks.phase1.ontology import PHASE1_ALLOWED_TYPES
 
 
 def test_exact_boundary_is_not_replaced() -> None:

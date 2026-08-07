@@ -3,7 +3,7 @@ registry: ../../data/sources/mining_registry.yaml
 work_dir: ../../outputs/mining/vietbioner-19ba70a
 artifact_store:
   # This corpus is small and open; production campaigns should override this with
-  # MEDICAL_KG_ARTIFACT_STORE on external storage.
+  # CLINGROUNDER_ARTIFACT_STORE on external storage.
   uri: ../../outputs/mining/artifact-store
   storage_options: {}
   encrypted_at_rest: false

@@ -1,7 +1,7 @@
 # Phase 1 Reproduction Scripts
 
 These thin wrappers preserve historical benchmark commands and artifact workflows. New reusable
-functionality belongs in `src/medical_kg_nlp`; prefer `medical-kg benchmark phase1` when command
+functionality belongs in `src/clingrounder`; prefer `clingrounder benchmark phase1` when command
 parity exists.
 
 `vast/` contains pinned benchmark training and inference jobs. Each job reuses the shared

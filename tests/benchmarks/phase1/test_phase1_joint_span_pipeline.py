@@ -4,18 +4,18 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from medical_kg_nlp.benchmarks.phase1.joint_span import (
+from clingrounder.benchmarks.phase1.joint_span import (
     Phase1JointSpanCandidate,
     Phase1JointSpanLabel,
     Phase1JointSpanPrediction,
     Phase1JointSpanSelectionPolicy,
 )
-from medical_kg_nlp.benchmarks.phase1.joint_span_pipeline import Phase1JointSpanPipeline
-from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRole
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.schema.document import ClinicalDocument
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.benchmarks.phase1.joint_span_pipeline import Phase1JointSpanPipeline
+from clingrounder.benchmarks.phase1.proposal_features import ProposalSourceRole
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.schema.document import ClinicalDocument
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 def test_joint_pipeline_selects_generated_full_medication_span_and_relinks_it() -> None:

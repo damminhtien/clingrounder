@@ -7,7 +7,7 @@ import json
 from collections import Counter
 from dataclasses import replace
 
-from medical_kg_nlp.benchmarks.phase1.boundary_variants import (
+from clingrounder.benchmarks.phase1.boundary_variants import (
     PHASE1_BOUNDARY_FEATURE_CONTRACT,
     BoundaryErrorLabel,
     boundary_cross_encoder_text,
@@ -15,7 +15,7 @@ from medical_kg_nlp.benchmarks.phase1.boundary_variants import (
     generate_phase1_boundary_variants,
     label_phase1_boundary_variant,
 )
-from medical_kg_nlp.benchmarks.phase1.boundary_verifier import (
+from clingrounder.benchmarks.phase1.boundary_verifier import (
     Phase1BoundaryDataset,
     Phase1BoundaryExample,
     Phase1BoundaryFitMode,
@@ -25,14 +25,14 @@ from medical_kg_nlp.benchmarks.phase1.boundary_verifier import (
     resolve_phase1_boundary_rows,
     write_phase1_boundary_dataset,
 )
-from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRole
-from medical_kg_nlp.benchmarks.phase1.proposal_calibration import (
+from clingrounder.benchmarks.phase1.proposal_features import ProposalSourceRole
+from clingrounder.benchmarks.phase1.proposal_calibration import (
     Phase1ProbabilityCalibrator,
     Phase1ProposalVerifier,
 )
-from medical_kg_nlp.evaluation.sparse_logistic import SparseLogisticModel
-from medical_kg_nlp.ner.document_structure import DocumentStructureAnalyzer
-from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_ALLOWED_TYPES
+from clingrounder.evaluation.sparse_logistic import SparseLogisticModel
+from clingrounder.ner.document_structure import DocumentStructureAnalyzer
+from clingrounder.benchmarks.phase1.ontology import PHASE1_ALLOWED_TYPES
 
 
 def test_boundary_verifier_ranks_full_span_and_round_trips() -> None:

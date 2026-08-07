@@ -8,18 +8,18 @@ from pathlib import Path
 import pytest
 import yaml
 
-from medical_kg_nlp.cli.main import main
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.mining.crosswalk import (
+from clingrounder.cli.main import main
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.mining.crosswalk import (
     MentionCrosswalkPolicy,
     crosswalk_mentions,
     load_crosswalk_policies,
 )
-from medical_kg_nlp.mining.io import write_jsonl
-from medical_kg_nlp.mining.lexicon import MentionInventoryEntry, load_mention_inventory
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.terminology import (
+from clingrounder.mining.io import write_jsonl
+from clingrounder.mining.lexicon import MentionInventoryEntry, load_mention_inventory
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.terminology import (
     InMemoryTerminologyRepository,
     SQLiteTerminologyRepository,
     build_terminology_index,

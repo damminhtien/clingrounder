@@ -8,16 +8,16 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.cli.parser import build_parser
-from medical_kg_nlp.training.dapt_run_spec import (
+from clingrounder.cli.parser import build_parser
+from clingrounder.training.dapt_run_spec import (
     inspect_xlmr_dapt_inputs,
     load_xlmr_dapt_run_spec,
     verify_xlmr_dapt_run_artifact,
 )
-from medical_kg_nlp.training.huggingface_token_classifier import (
+from clingrounder.training.huggingface_token_classifier import (
     fingerprint_model_directory,
 )
-from medical_kg_nlp.training.xlmr_dapt import (
+from clingrounder.training.xlmr_dapt import (
     xlmr_dapt_input_provenance,
 )
 

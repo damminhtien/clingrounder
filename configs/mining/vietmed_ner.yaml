@@ -2,7 +2,7 @@ schema_version: medical-mining-plan.v1
 registry: ../../data/sources/mining_registry.yaml
 work_dir: ../../outputs/mining/vietmed-ner-e3d0393c
 artifact_store:
-  # SCALING: override with MEDICAL_KG_ARTIFACT_STORE to keep the 0.9 GB Parquet source external.
+  # SCALING: override with CLINGROUNDER_ARTIFACT_STORE to keep the 0.9 GB Parquet source external.
   uri: ../../outputs/mining/artifact-store
   storage_options: {}
   encrypted_at_rest: false

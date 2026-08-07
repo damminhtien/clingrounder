@@ -6,7 +6,7 @@ parameters once. Quantization changes memory usage, not this budget.
 Verify the pinned plan with:
 
 ```bash
-uv run medical-kg-research model inspect-inference-budget \
+uv run clingrounder-research model inspect-inference-budget \
   --config configs/benchmarks/phase1/models/phase1-under9b-max.yaml \
   --output outputs/models/under9b-budget.json
 ```

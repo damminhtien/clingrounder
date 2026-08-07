@@ -9,23 +9,23 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.kg.knowledge_schema import (
+from clingrounder.kg.knowledge_schema import (
     KnowledgeEdge,
     KnowledgeEvidence,
     KnowledgeNode,
     KnowledgeNodeKind,
 )
-from medical_kg_nlp.kg.benchmark import (
+from clingrounder.kg.benchmark import (
     benchmark_graph_aliases,
     benchmark_graph_relations,
 )
-from medical_kg_nlp.kg.sqlite_builder import build_knowledge_graph_index
-from medical_kg_nlp.kg.sqlite_repository import SQLiteKnowledgeGraphRepository
-from medical_kg_nlp.cli import main
-from medical_kg_nlp.mining.io import write_jsonl
-from medical_kg_nlp.retrieval.adapters import KnowledgeGraphExactRetrieverAdapter
-from medical_kg_nlp.schema.types import EntityType
-from medical_kg_nlp.utils.text import normalize_for_match
+from clingrounder.kg.sqlite_builder import build_knowledge_graph_index
+from clingrounder.kg.sqlite_repository import SQLiteKnowledgeGraphRepository
+from clingrounder.cli import main
+from clingrounder.mining.io import write_jsonl
+from clingrounder.retrieval.adapters import KnowledgeGraphExactRetrieverAdapter
+from clingrounder.schema.types import EntityType
+from clingrounder.utils.text import normalize_for_match
 
 
 def _node(

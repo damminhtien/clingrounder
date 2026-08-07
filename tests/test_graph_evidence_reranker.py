@@ -5,17 +5,17 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from medical_kg_nlp.kg.knowledge_schema import KnowledgeEdge, KnowledgeNode, KnowledgeNodeKind
-from medical_kg_nlp.kg.sqlite_builder import build_knowledge_graph_index
-from medical_kg_nlp.kg.sqlite_repository import SQLiteKnowledgeGraphRepository
-from medical_kg_nlp.linking.candidate import Candidate
-from medical_kg_nlp.linking.graph_evidence import GraphContextConcept, GraphEvidenceReranker
-from medical_kg_nlp.linking.graph_second_pass import GraphEvidenceSecondPass
-from medical_kg_nlp.mining.io import write_jsonl
-from medical_kg_nlp.schema.annotation import EntityAnnotation
-from medical_kg_nlp.schema.document import Sentence
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.utils.text import normalize_for_match
+from clingrounder.kg.knowledge_schema import KnowledgeEdge, KnowledgeNode, KnowledgeNodeKind
+from clingrounder.kg.sqlite_builder import build_knowledge_graph_index
+from clingrounder.kg.sqlite_repository import SQLiteKnowledgeGraphRepository
+from clingrounder.linking.candidate import Candidate
+from clingrounder.linking.graph_evidence import GraphContextConcept, GraphEvidenceReranker
+from clingrounder.linking.graph_second_pass import GraphEvidenceSecondPass
+from clingrounder.mining.io import write_jsonl
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.document import Sentence
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.utils.text import normalize_for_match
 
 
 def test_graph_evidence_promotes_only_an_existing_candidate(tmp_path: Path) -> None:

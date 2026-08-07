@@ -1,9 +1,9 @@
 cff-version: 1.2.0
-title: "Medical KG NLP"
+title: "ClinGrounder"
 message: "If you use this clinical NLP toolkit in research, please cite it using this metadata."
 type: software
 authors:
-  - name: "medical-kg-nlp contributors"
+  - name: "clingrounder contributors"
 license: MIT
 version: 0.2.0
 date-released: 2026-06-29

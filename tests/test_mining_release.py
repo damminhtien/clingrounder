@@ -10,14 +10,14 @@ from pathlib import Path
 import pytest
 import yaml
 
-from medical_kg_nlp.cli.main import main
-from medical_kg_nlp.mining.release import (
+from clingrounder.cli.main import main
+from clingrounder.mining.release import (
     MiningReleaseLock,
     build_mining_release_lock,
     load_mining_release_spec,
     verify_mining_release_lock,
 )
-from medical_kg_nlp.mining.storage import LocalArtifactStore
+from clingrounder.mining.storage import LocalArtifactStore
 
 _REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
@@ -288,7 +288,7 @@ def _release_fixture(
             {
                 "id": "build-dataset",
                 "description": "Rebuild the immutable dataset.",
-                "command": "uv run medical-kg data dataset build --output data/documents.jsonl",
+                "command": "uv run clingrounder data dataset build --output data/documents.jsonl",
             }
         ],
     }

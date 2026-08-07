@@ -7,7 +7,7 @@ import hashlib
 import pytest
 from pydantic import ValidationError
 
-from medical_kg_nlp.mining import (
+from clingrounder.mining import (
     AccessClass,
     AnnotationLayer,
     AnnotationProposal,
@@ -18,8 +18,8 @@ from medical_kg_nlp.mining import (
     SourceArtifact,
     StoredObject,
 )
-from medical_kg_nlp.mining.policy import MiningQualityGate, SourcePolicyGate
-from medical_kg_nlp.mining.registry import SourceRegistry, load_source_registry
+from clingrounder.mining.policy import MiningQualityGate, SourcePolicyGate
+from clingrounder.mining.registry import SourceRegistry, load_source_registry
 
 
 def test_checked_in_mining_registry_is_strict_and_unique() -> None:

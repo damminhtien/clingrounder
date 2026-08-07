@@ -4,7 +4,7 @@ work_dir: ../../outputs/mining/dailymed-full-human-2026-07-21
 artifact_store:
   # SCALING: the 17 compressed parts are about 49 GB. Use the external >=250 GB data volume;
   # document manifests and later structured annotation layers are intentionally kept off the Mac.
-  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  uri: ${CLINGROUNDER_ARTIFACT_STORE}
   storage_options: {}
   encrypted_at_rest: false
 sources:

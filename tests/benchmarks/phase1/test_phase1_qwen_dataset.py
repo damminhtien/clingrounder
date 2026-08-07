@@ -7,11 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.benchmarks.phase1.qwen_dataset import (
+from clingrounder.benchmarks.phase1.qwen_dataset import (
     Phase1QwenDatasetConfig,
     build_phase1_qwen_instruction_dataset,
 )
-from medical_kg_nlp.mining.io import write_json, write_jsonl
+from clingrounder.mining.io import write_json, write_jsonl
 
 
 def test_qwen_dataset_builds_train_and_development_without_offsets_in_target(

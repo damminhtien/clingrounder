@@ -6,14 +6,14 @@ import ast
 import json
 from pathlib import Path
 
-import medical_kg_nlp.cli.parser as core_parser
-from medical_kg_nlp.benchmarks.registry import (
+import clingrounder.cli.parser as core_parser
+from clingrounder.benchmarks.registry import (
     benchmark_plugins,
     resolve_benchmark_handler,
 )
-from medical_kg_nlp.cli import main
-from medical_kg_nlp.cli.main import _HANDLERS
-from medical_kg_nlp.cli.parser import build_parser
+from clingrounder.cli import main
+from clingrounder.cli.main import _HANDLERS
+from clingrounder.cli.parser import build_parser
 
 
 def test_phase1_is_an_optional_benchmark_plugin() -> None:
@@ -23,7 +23,7 @@ def test_phase1_is_an_optional_benchmark_plugin() -> None:
     assert "benchmark_phase1_submission" not in _HANDLERS
     target = resolve_benchmark_handler("benchmark_phase1_submission")
     assert target is not None
-    assert target.module == "medical_kg_nlp.benchmarks.phase1.commands"
+    assert target.module == "clingrounder.benchmarks.phase1.commands"
     assert target.function == "run_phase1_submission"
     assert not hasattr(core_parser, "_register_phase1_benchmark_parser")
 
@@ -31,7 +31,7 @@ def test_phase1_is_an_optional_benchmark_plugin() -> None:
 def test_core_packages_do_not_import_phase1_plugin() -> None:
     """Keep archived task policy outside reusable clinical NLP modules."""
 
-    package_root = Path("src/medical_kg_nlp")
+    package_root = Path("src/clingrounder")
     core_packages = (
         "adapters",
         "context",
@@ -65,7 +65,7 @@ def test_core_packages_do_not_import_phase1_plugin() -> None:
                 violations.extend(
                     (str(path), module)
                     for module in modules
-                    if module.startswith("medical_kg_nlp.benchmarks.phase1")
+                    if module.startswith("clingrounder.benchmarks.phase1")
                 )
 
     assert violations == []

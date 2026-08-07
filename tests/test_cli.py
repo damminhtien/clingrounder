@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.cli import main
-from medical_kg_nlp.cli.parser import build_parser
-from medical_kg_nlp.utils.io import read_jsonl, write_jsonl
+from clingrounder.cli import main
+from clingrounder.cli.parser import build_parser
+from clingrounder.utils.io import read_jsonl, write_jsonl
 
 
 def test_qwen_final_supervision_command_has_governed_defaults() -> None:
@@ -102,7 +102,7 @@ def test_pipeline_run_writes_reproducibility_manifest(
 
     command_report = json.loads(capsys.readouterr().out)
     manifest = json.loads(Path(command_report["manifest"]).read_text(encoding="utf-8"))
-    assert manifest["schema_version"] == "medical-kg.pipeline-run.v1"
+    assert manifest["schema_version"] == "clingrounder.pipeline-run.v1"
     assert manifest["profile"]["profile"]["id"] == "clinical-baseline"
     assert manifest["input"]["sha256"]
     assert manifest["output"]["sha256"]

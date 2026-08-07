@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from medical_kg_nlp.pipeline.profile_catalog import (
+from clingrounder.pipeline.profile_catalog import (
     discover_pipeline_profiles,
     inspect_pipeline_profiles,
     validate_pipeline_profile_catalog,
@@ -31,7 +31,7 @@ def test_catalog_reports_invalid_profile_without_hiding_other_profiles(tmp_path:
     root = tmp_path / "profiles"
     root.mkdir()
     (root / "invalid.yaml").write_text(
-        "schema_version: medical-kg.pipeline-profile\nprofile: []\n",
+        "schema_version: clingrounder.pipeline-profile\nprofile: []\n",
         encoding="utf-8",
     )
 

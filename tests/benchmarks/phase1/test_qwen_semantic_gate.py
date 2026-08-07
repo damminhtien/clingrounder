@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.benchmarks.phase1.qwen_semantic_gate import (
+from clingrounder.benchmarks.phase1.qwen_semantic_gate import (
     filter_high_precision_qwen_proposals,
 )
 

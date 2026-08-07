@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from medical_kg_nlp.benchmarks.phase1.phase1_candidate_overlay import (
+from clingrounder.benchmarks.phase1.phase1_candidate_overlay import (
     Phase1CandidateIndex,
     Phase1CandidateOverlayConfig,
     apply_phase1_candidate_overlay,

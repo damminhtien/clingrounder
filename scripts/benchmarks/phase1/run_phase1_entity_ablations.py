@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
-from medical_kg_nlp.benchmarks.phase1.phase1_entity_ablation import (
+from clingrounder.benchmarks.phase1.phase1_entity_ablation import (
     Phase1EntityAblationConfig,
     run_phase1_entity_ablations,
 )

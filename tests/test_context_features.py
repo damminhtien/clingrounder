@@ -1,9 +1,9 @@
 """Assertion model features remain independent from assertion decoding."""
 
-from medical_kg_nlp.context import AssertionClassifier, AssertionModelFeatureExtractor
-from medical_kg_nlp.schema.annotation import EntityAnnotation
-from medical_kg_nlp.schema.document import Sentence
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.context import AssertionClassifier, AssertionModelFeatureExtractor
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.document import Sentence
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 def test_assertion_features_include_section_rule_and_independent_attribute() -> None:

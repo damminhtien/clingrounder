@@ -3,22 +3,22 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from medical_kg_nlp.benchmarks.phase1.phase1_selective_calibration import (
+from clingrounder.benchmarks.phase1.phase1_selective_calibration import (
     CandidateCalibrationOptions,
     build_assertion_calibration_report,
     build_candidate_calibration_report,
     write_candidate_calibration_report,
     write_calibrated_assertion_map,
 )
-from medical_kg_nlp.benchmarks.phase1.phase1 import load_calibrated_assertion_map
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.schema.annotation import (
+from clingrounder.benchmarks.phase1.phase1 import load_calibrated_assertion_map
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.schema.annotation import (
     AssertionEvidence,
     CandidateConcept,
     EntityAnnotation,
 )
-from medical_kg_nlp.schema.output import ClinicalPrediction
-from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
+from clingrounder.schema.output import ClinicalPrediction
+from clingrounder.schema.types import AssertionStatus, CodeSystem, EntityType
 
 
 def test_candidate_calibration_promotes_exact_and_rejects_harmful_fuzzy() -> None:

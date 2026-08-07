@@ -7,10 +7,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.context.cue_loader import load_assertion_cues
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.schema.types import EntityType
-from medical_kg_nlp.utils.io import read_jsonl, read_yaml
+from clingrounder.context.cue_loader import load_assertion_cues
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.schema.types import EntityType
+from clingrounder.utils.io import read_jsonl, read_yaml
 
 
 def main() -> None:

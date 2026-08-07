@@ -1,6 +1,6 @@
 # Phase 1 Benchmark Tests
 
-This directory mirrors `medical_kg_nlp.benchmarks.phase1`. Tests collected here
+This directory mirrors `clingrounder.benchmarks.phase1`. Tests collected here
 receive the `benchmark` marker automatically and run in the nightly/full suite:
 
 ```bash

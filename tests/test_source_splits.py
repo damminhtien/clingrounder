@@ -7,13 +7,13 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.mining.io import write_jsonl
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.io import write_jsonl
+from clingrounder.mining.records import (
     AccessClass,
     MinedDocument,
     RedistributionPolicy,
 )
-from medical_kg_nlp.mining.source_splits import freeze_source_splits
+from clingrounder.mining.source_splits import freeze_source_splits
 
 
 def test_freeze_source_splits_preserves_declared_assignments(tmp_path: Path) -> None:

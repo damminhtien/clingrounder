@@ -89,7 +89,7 @@ medical corpora into git:
 - `data/dictionaries/seed_concepts.jsonl` may include `source_ids` on rows. The runtime loader is
   backward-compatible and ignores this extra provenance field.
 - `data/heuristics/assertion_cues.jsonl` stores assertion/context cues with language, scope, and
-  source ids. `medical_kg_nlp.context.rules` loads this file when present and falls back to the
+  source ids. `clingrounder.context.rules` loads this file when present and falls back to the
   built-in cue tuples if the data file is unavailable.
 - `scripts/build_dictionaries.py` validates source ids in the dictionary and cue table against the
   registry, then validates Vietnamese alias targets.

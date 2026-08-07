@@ -7,7 +7,7 @@ decisions, and reproduction metadata without defining reusable toolkit defaults.
 ## Ownership
 
 ```text
-src/medical_kg_nlp/benchmarks/phase1/   task code, adapters, export, scoring
+src/clingrounder/benchmarks/phase1/   task code, adapters, export, scoring
 configs/benchmarks/phase1/              pipeline, model, submission, experiment specs
 tests/benchmarks/phase1/                opt-in public benchmark tests
 docs/benchmarks/phase1/                 historical analysis and decisions
@@ -19,8 +19,8 @@ Architecture tests enforce that boundary.
 ## Run
 
 ```bash
-uv run medical-kg-benchmark list
-uv run medical-kg-benchmark phase1 --help
+uv run clingrounder-benchmark list
+uv run clingrounder-benchmark phase1 --help
 uv run pytest -o addopts='' -m "benchmark and not private and not model" \
   tests/benchmarks/phase1
 ```

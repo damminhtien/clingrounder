@@ -2,10 +2,10 @@
 
 import pytest
 
-from medical_kg_nlp.context import AssertionClassifier
-from medical_kg_nlp.schema.annotation import EntityAnnotation
-from medical_kg_nlp.schema.document import Sentence
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.context import AssertionClassifier
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.document import Sentence
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 def test_context_graph_reuses_one_modifier_for_coordinated_targets() -> None:

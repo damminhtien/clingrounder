@@ -1,9 +1,9 @@
 import json
 from pathlib import Path
 
-from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
-from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineConfig, TerminologyConfig
-from medical_kg_nlp.schema.types import AssertionStatus, EntityType, RelationType
+from clingrounder.datasets.synthetic_adapter import SyntheticDatasetAdapter
+from clingrounder.pipeline.factory import PipelineFactory, PipelineConfig, TerminologyConfig
+from clingrounder.schema.types import AssertionStatus, EntityType, RelationType
 
 
 def test_pipeline_smoke_sample_note() -> None:

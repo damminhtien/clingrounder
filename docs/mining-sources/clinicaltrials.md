@@ -211,34 +211,34 @@ The source is therefore recorded as `curated / training_only`, not `promoted`.
 ## Reproduce
 
 ```bash
-export MEDICAL_KG_ARTIFACT_STORE=/Volumes/medical-kg-mining
+export CLINGROUNDER_ARTIFACT_STORE=/Volumes/clingrounder-mining
 
-uv run medical-kg-research data run \
+uv run clingrounder-research data run \
   --plan configs/mining/clinicaltrials-rare-interventional-2026-07-19.yaml
 
-uv run medical-kg-research data label propose \
+uv run clingrounder-research data label propose \
   --documents outputs/mining/clinicaltrials-rare-interventional-2026-07-19/documents.jsonl \
-  --adapter medical_kg_nlp.mining.labelers.clinicaltrials:create_clinicaltrials_structured_labeler \
+  --adapter clingrounder.mining.labelers.clinicaltrials:create_clinicaltrials_structured_labeler \
   --adapter-config configs/mining/labelers/clinicaltrials-structured.yaml \
   --output outputs/mining/clinicaltrials-rare-interventional-2026-07-19/structured_annotations.jsonl
 
-uv run medical-kg-research data relation propose \
+uv run clingrounder-research data relation propose \
   --documents outputs/mining/clinicaltrials-rare-interventional-2026-07-19/documents.jsonl \
   --annotations outputs/mining/clinicaltrials-rare-interventional-2026-07-19/structured_annotations.jsonl \
-  --adapter medical_kg_nlp.mining.labelers.clinicaltrials:create_clinicaltrials_structured_relation_labeler \
+  --adapter clingrounder.mining.labelers.clinicaltrials:create_clinicaltrials_structured_relation_labeler \
   --adapter-config configs/mining/labelers/clinicaltrials-relations.yaml \
   --output outputs/mining/clinicaltrials-rare-interventional-2026-07-19/structured_relations.jsonl
 
-uv run medical-kg-research data dataset inspect \
+uv run clingrounder-research data dataset inspect \
   --documents outputs/mining/clinicaltrials-rare-interventional-2026-07-19/documents.jsonl \
   --annotations outputs/mining/clinicaltrials-rare-interventional-2026-07-19/structured_annotations.jsonl \
   --output outputs/mining/clinicaltrials-rare-interventional-2026-07-19/source_profile.json \
   --strict
 
-uv run medical-kg-research data dataset fuse \
+uv run clingrounder-research data dataset fuse \
   --plan configs/mining/fusion/clinicaltrials-rare-interventional-2026-07-19.yaml
 
-uv run medical-kg-research data lexicon crosswalk \
+uv run clingrounder-research data lexicon crosswalk \
   --inventory outputs/mining/clinicaltrials-rare-interventional-2026-07-19/mention_inventory.jsonl \
   --index outputs/mining/knowledge/mondo-2026-07-06/terminology.sqlite3 \
   --source outputs/mining/knowledge/mondo-2026-07-06/terminology.jsonl \
@@ -247,14 +247,14 @@ uv run medical-kg-research data lexicon crosswalk \
   --report-output outputs/mining/clinicaltrials-rare-interventional-2026-07-19/terminology_crosswalk_mondo_report.json \
   --workers 4
 
-uv run medical-kg-research data lexicon attach-exact-links \
+uv run clingrounder-research data lexicon attach-exact-links \
   --annotations outputs/mining/clinicaltrials-rare-interventional-2026-07-19/structured_annotations.jsonl \
   --crosswalk outputs/mining/clinicaltrials-rare-interventional-2026-07-19/terminology_crosswalk_mondo.jsonl \
   --policy configs/mining/linking/clinicaltrials-mondo.yaml \
   --output outputs/mining/clinicaltrials-rare-interventional-2026-07-19/mondo_linked_annotations.jsonl \
   --report-output outputs/mining/clinicaltrials-rare-interventional-2026-07-19/mondo_link_materialization_report.json
 
-uv run medical-kg-research data knowledge compile-graph \
+uv run clingrounder-research data knowledge compile-graph \
   --terminology-source outputs/mining/knowledge/mondo-2026-07-06/terminology.jsonl \
   --documents outputs/mining/clinicaltrials-rare-interventional-2026-07-19/documents.jsonl \
   --annotations outputs/mining/clinicaltrials-rare-interventional-2026-07-19/mondo_linked_annotations.jsonl \
@@ -268,14 +268,14 @@ uv run medical-kg-research data knowledge compile-graph \
   --evidence-output outputs/mining/knowledge/clinicaltrials-mondo-2026-07-19/evidence.jsonl \
   --report-output outputs/mining/knowledge/clinicaltrials-mondo-2026-07-19/report.json
 
-uv run medical-kg kg build \
+uv run clingrounder kg build \
   --nodes outputs/mining/knowledge/clinicaltrials-mondo-2026-07-19/nodes.jsonl \
   --edges outputs/mining/knowledge/clinicaltrials-mondo-2026-07-19/edges.jsonl \
   --evidence outputs/mining/knowledge/clinicaltrials-mondo-2026-07-19/evidence.jsonl \
   --output outputs/mining/knowledge/clinicaltrials-mondo-2026-07-19/graph.sqlite3 \
   --manifest-output outputs/mining/knowledge/clinicaltrials-mondo-2026-07-19/graph_manifest.json
 
-uv run medical-kg kg benchmark-relations \
+uv run clingrounder kg benchmark-relations \
   --index outputs/mining/knowledge/clinicaltrials-mondo-2026-07-19/graph.sqlite3 \
   --edges outputs/mining/knowledge/clinicaltrials-mondo-2026-07-19/edges.jsonl \
   --relation-type STUDIES_INTERVENTION \
@@ -286,7 +286,7 @@ uv run medical-kg kg benchmark-relations \
 
 The separate TT06/RxNorm review queue still uses `configs/mining/crosswalk/clinicaltrials.yaml`.
 Run the same relation benchmark with `--relation-type IS_A --repeats 3` to reproduce the hierarchy
-measurement. First use `medical-kg kg inspect --query "Wilson disease"` to obtain the exact result's
+measurement. First use `clingrounder kg inspect --query "Wilson disease"` to obtain the exact result's
 `node_id`. Re-run `kg inspect` with that `--node-id` plus `--ancestors`, then with
 `--relation-type STUDIES_INTERVENTION --direction outgoing`; traversal is node-ID based so similarly
 named non-human Mondo concepts cannot become the query root accidentally.

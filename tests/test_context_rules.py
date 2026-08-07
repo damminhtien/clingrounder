@@ -1,16 +1,16 @@
 import json
 from pathlib import Path
 
-from medical_kg_nlp.context.assertion import AssertionClassifier
-from medical_kg_nlp.context.cue_loader import (
+from clingrounder.context.assertion import AssertionClassifier
+from clingrounder.context.cue_loader import (
     AssertionCue,
     AssertionRuleRegistry,
     load_assertion_cues,
 )
-from medical_kg_nlp.context.rules import PLANNED_LEFT_CUES, POSSIBLE_LEFT_CUES, POSSIBLE_RIGHT_CUES
-from medical_kg_nlp.schema.annotation import EntityAnnotation
-from medical_kg_nlp.schema.document import Sentence
-from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
+from clingrounder.context.rules import PLANNED_LEFT_CUES, POSSIBLE_LEFT_CUES, POSSIBLE_RIGHT_CUES
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.document import Sentence
+from clingrounder.schema.types import AssertionStatus, CodeSystem, EntityType
 
 
 def _entity(text: str, mention: str) -> tuple[EntityAnnotation, Sentence]:

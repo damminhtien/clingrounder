@@ -6,12 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.mining.model_dataset import (
+from clingrounder.mining.model_dataset import (
     SpanDatasetConfig,
     export_span_dataset,
     iter_span_training_records,
 )
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.records import (
     AccessClass,
     AnnotationLayer,
     AnnotationProposal,

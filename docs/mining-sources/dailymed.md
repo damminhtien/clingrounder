@@ -71,7 +71,7 @@ This makes acquisition and parsing resumable on the external volume. Snapshot fr
 the selected document manifest for split/agreement logic, so the full release should first be
 materialized, profiled and filtered; only the curated subset should be frozen.
 
-Artifact manifests identify objects as `medical-kg-cas://sha256/<digest>`. The configured local,
+Artifact manifests identify objects as `clingrounder-cas://sha256/<digest>`. The configured local,
 external-volume or object-store URI is deliberately absent from persisted records. Consequently,
 the same manifest resolves against a different CAS root on another machine without exposing or
 depending on the original workstation path.
@@ -152,7 +152,7 @@ These identifiers provide source identity and structured supervision; they are n
 codes.
 
 Source fields are projected by
-`medical_kg_nlp.mining.labelers.dailymed:create_dailymed_structured_labeler`. Relation endpoints are
+`clingrounder.mining.labelers.dailymed:create_dailymed_structured_labeler`. Relation endpoints are
 then built from shared product indexes by `create_dailymed_structured_relation_labeler`:
 
 | SPL relation | Observations | Meaning |
@@ -340,32 +340,32 @@ The complete ordered command list is machine-readable under `rebuild_steps` in
 shows the storage setup and the main source stages.
 
 ```bash
-export MEDICAL_KG_ARTIFACT_STORE=/mnt/medical-kg/mining-artifacts
+export CLINGROUNDER_ARTIFACT_STORE=/mnt/clingrounder/mining-artifacts
 export RXNORM_FULL_ARCHIVE=/secure/licensed/RxNorm_full_07062026.zip
 
 uv sync --frozen --extra dev --extra data --extra retrieval --extra ml
-uv run medical-kg-research data registry validate \
+uv run clingrounder-research data registry validate \
   --registry data/sources/mining_registry.yaml \
   --processing-index data/sources/processing_status.yaml \
   --repository-root .
 
 # Source acquisition is checksum-gated before parsing.
-uv run medical-kg-research data run \
+uv run clingrounder-research data run \
   --plan configs/mining/dailymed-human-rx-part6-2026-07-21.yaml
-uv run medical-kg-research data run --plan configs/mining/dailymed-rxnorm-2026-07-17.yaml
-uv run medical-kg-research data run --plan configs/mining/rxnorm-full-2026-07-06.yaml
+uv run clingrounder-research data run --plan configs/mining/dailymed-rxnorm-2026-07-17.yaml
+uv run clingrounder-research data run --plan configs/mining/rxnorm-full-2026-07-06.yaml
 
 # A copied CAS can be mounted anywhere. Hydrate the licensed RxNorm ZIP only for
 # seek-based RRF readers; downstream manifests never retain this output path.
-uv run medical-kg-research data artifact materialize \
-  --store "$MEDICAL_KG_ARTIFACT_STORE" \
+uv run clingrounder-research data artifact materialize \
+  --store "$CLINGROUNDER_ARTIFACT_STORE" \
   --sha256 53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c \
   --expected-byte-size 259313098 \
-  --output .cache/medical-kg/release-inputs/RxNorm_full_07062026.zip
+  --output .cache/clingrounder/release-inputs/RxNorm_full_07062026.zip
 
-uv run medical-kg-research data label propose \
+uv run clingrounder-research data label propose \
   --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl \
-  --adapter medical_kg_nlp.mining.labelers.dailymed:create_dailymed_structured_labeler \
+  --adapter clingrounder.mining.labelers.dailymed:create_dailymed_structured_labeler \
   --adapter-config configs/mining/labelers/dailymed-structured.yaml \
   --output outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl \
   --batch-size 256
@@ -373,14 +373,14 @@ uv run medical-kg-research data label propose \
 # After running the remaining ordered steps from the release spec, verify repository
 # artifacts and both external source objects. Add --verify-cas-content for a full
 # streaming hash audit (about 1.85 GB for these two objects).
-uv run medical-kg-research data release verify \
+uv run clingrounder-research data release verify \
   --manifest data/releases/open-ner-retrieval-v1.lock.json \
-  --root . --store "$MEDICAL_KG_ARTIFACT_STORE" --require-cas-objects
+  --root . --store "$CLINGROUNDER_ARTIFACT_STORE" --require-cas-objects
 ```
 
 The full 17-part command remains prepared but unexecuted and requires the external `>=250 GB` data
 plane:
 
 ```bash
-uv run medical-kg-research data run --plan configs/mining/dailymed-full-human-2026-07-21.yaml
+uv run clingrounder-research data run --plan configs/mining/dailymed-full-human-2026-07-21.yaml
 ```

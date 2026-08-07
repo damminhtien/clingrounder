@@ -2,8 +2,8 @@
 #
 # Reproduction on another machine:
 #   export RXNORM_FULL_ARCHIVE=/secure/path/RxNorm_full_07062026.zip
-#   export MEDICAL_KG_ARTIFACT_STORE=file:///mnt/medical-kg/mining-artifacts
-#   uv run medical-kg data run --plan configs/mining/rxnorm-full-2026-07-06.yaml
+#   export CLINGROUNDER_ARTIFACT_STORE=file:///mnt/clingrounder/mining-artifacts
+#   uv run clingrounder data run --plan configs/mining/rxnorm-full-2026-07-06.yaml
 #
 # SCALING: use absolute paths or file:// URIs. Relative runtime paths are resolved from this
 # plan's directory so invocation from another working directory remains deterministic.
@@ -12,7 +12,7 @@ registry: ../../data/sources/mining_registry.yaml
 work_dir: ../../outputs/mining/rxnorm-full-2026-07-06
 artifact_store:
   # PRIVACY: the backend path is runtime state and is never persisted in source manifests.
-  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  uri: ${CLINGROUNDER_ARTIFACT_STORE}
   storage_options: {}
   encrypted_at_rest: false
 sources:

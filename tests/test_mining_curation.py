@@ -7,13 +7,13 @@ from typing import Iterable, Sequence
 
 import pytest
 
-from medical_kg_nlp.mining.coverage import CoverageCubePlanner, CoverageTarget
-from medical_kg_nlp.mining.dedup import StableTextDeduplicator
-from medical_kg_nlp.mining.labeling import (
+from clingrounder.mining.coverage import CoverageCubePlanner, CoverageTarget
+from clingrounder.mining.dedup import StableTextDeduplicator
+from clingrounder.mining.labeling import (
     ConsensusProposalLabeler,
     PolicyAwareProposalLabelerAdapter,
 )
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.records import (
     AccessClass,
     AnnotationLayer,
     AnnotationProposal,
@@ -21,7 +21,7 @@ from medical_kg_nlp.mining.records import (
     RedistributionPolicy,
     ReviewStatus,
 )
-from medical_kg_nlp.mining.review import JsonlReviewBackend
+from clingrounder.mining.review import JsonlReviewBackend
 
 
 def _document(document_id: str, text: str, **metadata: str) -> MinedDocument:

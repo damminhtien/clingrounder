@@ -27,8 +27,8 @@ terminology:
   normalization_alias_overlay_paths:
     - ../../../../outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl
     - ../../../../outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl
-  normalization_index_path: ../../../../.cache/medical-kg/terminology/terminology-a2d5a19e83fbc9e1a305.sqlite3
-  cache_dir: ../../../../.cache/medical-kg/terminology
+  normalization_index_path: ../../../../.cache/clingrounder/terminology/terminology-a2d5a19e83fbc9e1a305.sqlite3
+  cache_dir: ../../../../.cache/clingrounder/terminology
   # BTC examples are executable benchmark fixtures, not reusable runtime memory.
   reviewed_mention_path: null
   query_cache_size: 4096

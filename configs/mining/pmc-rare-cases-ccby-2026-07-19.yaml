@@ -4,7 +4,7 @@ registry: ../../data/sources/mining_registry.yaml
 work_dir: ../../outputs/mining/pmc-rare-cases-ccby-2026-07-19
 artifact_store:
   # SCALING: callers should override this with a mounted object store for larger tranches.
-  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  uri: ${CLINGROUNDER_ARTIFACT_STORE}
   storage_options: {}
   encrypted_at_rest: false
 

@@ -7,7 +7,7 @@ import pytest
 
 import yaml
 
-from medical_kg_nlp.benchmarks.phase1.annotation_knowledge import (
+from clingrounder.benchmarks.phase1.annotation_knowledge import (
     compile_annotation_knowledge,
     write_annotation_knowledge,
 )

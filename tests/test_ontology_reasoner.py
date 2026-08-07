@@ -1,9 +1,9 @@
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.kg.ontology_reasoner import OntologyReasoner
-from medical_kg_nlp.kg.validator import KGValidator
-from medical_kg_nlp.schema.annotation import EntityAnnotation, RelationAnnotation
-from medical_kg_nlp.schema.types import CodeSystem, EntityType, RelationType
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.kg.ontology_reasoner import OntologyReasoner
+from clingrounder.kg.validator import KGValidator
+from clingrounder.schema.annotation import EntityAnnotation, RelationAnnotation
+from clingrounder.schema.types import CodeSystem, EntityType, RelationType
 
 
 def test_ontology_reasoner_computes_transitive_is_a_path() -> None:

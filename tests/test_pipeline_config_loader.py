@@ -8,13 +8,13 @@ from pathlib import Path
 import pytest
 import yaml
 
-from medical_kg_nlp.benchmarks.phase1.runner import (
+from clingrounder.benchmarks.phase1.runner import (
     Phase1BenchmarkConfig,
     run_phase1_benchmark,
 )
-from medical_kg_nlp.pipeline import PipelineFactory, ResolvedPipelineConfig
-from medical_kg_nlp.schema.types import CodeSystem
-from medical_kg_nlp.terminology import build_terminology_index
+from clingrounder.pipeline import PipelineFactory, ResolvedPipelineConfig
+from clingrounder.schema.types import CodeSystem
+from clingrounder.terminology import build_terminology_index
 
 
 def test_pipeline_profile_paths_do_not_depend_on_working_directory(
@@ -97,7 +97,7 @@ def test_showcase_profile_is_self_describing_and_portable() -> None:
     assert resolved.profile is not None
     assert resolved.profile.profile_id == "clinical-baseline"
     report = resolved.inspection_report()
-    assert report["schema_version"] == "medical-kg.pipeline-profile"
+    assert report["schema_version"] == "clingrounder.pipeline-profile"
     assert report["profile"]["maturity"] == "stable"
     assert all(resource["exists"] for resource in report["resources"])
     assert report["effective_config"]["pipeline"]["compiled_options"]["enable_context"] is True
@@ -107,7 +107,7 @@ def test_reusable_profile_rejects_hidden_top_level_config(tmp_path: Path) -> Non
     profile = tmp_path / "profile.yaml"
     profile.write_text(
         """\
-schema_version: medical-kg.pipeline-profile
+schema_version: clingrounder.pipeline-profile
 profile:
   id: typo
   title: Typo profile
@@ -136,7 +136,7 @@ def test_reusable_profile_rejects_legacy_schema_version(tmp_path: Path) -> None:
     profile = tmp_path / "legacy.yaml"
     profile.write_text(
         """\
-schema_version: medical-kg.pipeline-profile.v1
+schema_version: clingrounder.pipeline-profile.v1
 profile:
   id: legacy
   title: Legacy profile
@@ -164,7 +164,7 @@ def test_reusable_profile_rejects_unknown_nested_keys(
     profile = tmp_path / "profile.yaml"
     profile.write_text(
         f"""\
-schema_version: medical-kg.pipeline-profile
+schema_version: clingrounder.pipeline-profile
 profile:
   id: strict
   title: Strict profile

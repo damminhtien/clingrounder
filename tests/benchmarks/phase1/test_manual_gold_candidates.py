@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from medical_kg_nlp.benchmarks.phase1.manual_gold_candidates import (
+from clingrounder.benchmarks.phase1.manual_gold_candidates import (
     build_manual_gold_candidate_dictionary,
     write_manual_gold_candidate_dictionary,
 )

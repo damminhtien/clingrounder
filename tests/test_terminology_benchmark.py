@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.terminology.benchmark import benchmark_terminology_repositories
-from medical_kg_nlp.terminology.index_builder import build_terminology_index
+from clingrounder.terminology.benchmark import benchmark_terminology_repositories
+from clingrounder.terminology.index_builder import build_terminology_index
 
 
 @pytest.mark.benchmark

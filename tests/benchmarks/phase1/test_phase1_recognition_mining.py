@@ -7,18 +7,18 @@ from pathlib import Path
 
 import yaml
 
-from medical_kg_nlp.benchmarks.phase1.manual_gold import (
+from clingrounder.benchmarks.phase1.manual_gold import (
     build_manual_gold_split_manifest,
     write_manual_gold_split_manifest,
 )
-from medical_kg_nlp.benchmarks.phase1.manual_gold_mining import (
+from clingrounder.benchmarks.phase1.manual_gold_mining import (
     load_phase1_manual_gold_mining_corpus,
 )
-from medical_kg_nlp.benchmarks.phase1.recognition_mining import (
+from clingrounder.benchmarks.phase1.recognition_mining import (
     Phase1RecognitionMiningConfig,
     run_phase1_recognition_mining,
 )
-from medical_kg_nlp.mining.io import load_documents
+from clingrounder.mining.io import load_documents
 
 
 def test_manual_gold_adapter_preserves_offsets_and_split(tmp_path: Path) -> None:

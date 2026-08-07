@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.benchmarks.phase1.joint_span_run import load_phase1_joint_span_run_spec
-from medical_kg_nlp.utils.hashing import sha256_directory, sha256_file
+from clingrounder.benchmarks.phase1.joint_span_run import load_phase1_joint_span_run_spec
+from clingrounder.utils.hashing import sha256_directory, sha256_file
 
 
 def test_joint_span_run_spec_requires_generated_model_source_and_calibration(tmp_path: Path) -> None:

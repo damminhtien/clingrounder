@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from medical_kg_nlp.benchmarks.phase1.proposal_conflict_graph import (
+from clingrounder.benchmarks.phase1.proposal_conflict_graph import (
     Phase1ConflictKind,
     Phase1ConflictNode,
     build_phase1_conflict_graph,

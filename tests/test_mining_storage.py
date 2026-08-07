@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from io import BytesIO
 
-from medical_kg_nlp.cli.main import main
-from medical_kg_nlp.mining.storage import LocalArtifactStore, materialize_stored_object
+from clingrounder.cli.main import main
+from clingrounder.mining.storage import LocalArtifactStore, materialize_stored_object
 
 
 def test_materialize_stored_object_is_verified_and_idempotent(tmp_path) -> None:

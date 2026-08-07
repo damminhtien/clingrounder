@@ -1,12 +1,12 @@
 import pytest
 
-from medical_kg_nlp.evaluation.context_metrics import (
+from clingrounder.evaluation.context_metrics import (
     assertion_attribute_metrics,
     context_macro_f1,
     confusion_matrix,
 )
-from medical_kg_nlp.schema.annotation import AssertionFeatures, EntityAnnotation
-from medical_kg_nlp.schema.types import AssertionStatus, EntityType
+from clingrounder.schema.annotation import AssertionFeatures, EntityAnnotation
+from clingrounder.schema.types import AssertionStatus, EntityType
 
 
 def test_context_macro_f1_penalizes_severe_context_error() -> None:

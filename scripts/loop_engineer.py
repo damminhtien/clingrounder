@@ -8,11 +8,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.experiments.loop_engineer import (
+from clingrounder.experiments.loop_engineer import (
     build_loop_engineering_report,
     write_loop_engineering_report,
 )
-from medical_kg_nlp.utils.run_output import create_hashed_run_dir, path_in_run
+from clingrounder.utils.run_output import create_hashed_run_dir, path_in_run
 
 
 def main() -> None:

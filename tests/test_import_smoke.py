@@ -8,12 +8,12 @@ from pathlib import Path
 import pytest
 
 _PUBLIC_MODULES = (
-    "medical_kg_nlp.kg.validator",
-    "medical_kg_nlp.kg.constraints",
-    "medical_kg_nlp.kg.ontology_reasoner",
-    "medical_kg_nlp.ner.medication_attribute_extractor",
-    "medical_kg_nlp.schema.validator",
-    "medical_kg_nlp.evaluation",
+    "clingrounder.kg.validator",
+    "clingrounder.kg.constraints",
+    "clingrounder.kg.ontology_reasoner",
+    "clingrounder.ner.medication_attribute_extractor",
+    "clingrounder.schema.validator",
+    "clingrounder.evaluation",
 )
 
 

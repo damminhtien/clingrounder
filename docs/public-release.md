@@ -17,10 +17,10 @@ tracked source files, manifests, terminology metadata, and research artifacts.
 
 ## Two Complementary Contracts
 
-`medical-kg-research data release lock` fingerprints every input needed to reproduce one mining or model
+`clingrounder-research data release lock` fingerprints every input needed to reproduce one mining or model
 release. It can reference external content-addressed objects that are restored on another machine.
 
-`medical-kg release audit` inspects the Git index before publication. It fails when:
+`clingrounder release audit` inspects the Git index before publication. It fails when:
 
 - a protected path has no explicit policy rule;
 - `local_only` or `manifest_only` bytes are tracked;
@@ -33,7 +33,7 @@ The audit never prints credential contents. Rules are evaluated in YAML order an
 in shell scripts.
 
 ```bash
-uv run medical-kg release audit \
+uv run clingrounder release audit \
   --policy configs/repository/public-release.yaml \
   --root .
 ```
@@ -42,7 +42,7 @@ Before removing restricted bytes from the Git index, or after refreshing an auth
 snapshot, rebuild its deterministic inventory:
 
 ```bash
-uv run medical-kg release inventory \
+uv run clingrounder release inventory \
   --policy configs/repository/public-release.yaml \
   --root . \
   --output data/provenance/local-artifacts.json

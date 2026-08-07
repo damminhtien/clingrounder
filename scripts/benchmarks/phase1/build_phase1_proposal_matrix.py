@@ -8,12 +8,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
-from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import load_phase1_output_source
-from medical_kg_nlp.benchmarks.phase1.phase1_proposals import (
+from clingrounder.benchmarks.phase1.phase1_ensemble import load_phase1_output_source
+from clingrounder.benchmarks.phase1.phase1_proposals import (
     build_phase1_proposal_matrix,
     write_phase1_proposal_matrix,
 )
-from medical_kg_nlp.utils.io import read_source_text
+from clingrounder.utils.io import read_source_text
 
 
 def main() -> None:

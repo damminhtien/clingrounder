@@ -9,22 +9,22 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.mining.io import write_jsonl
-from medical_kg_nlp.mining.mappings.dailymed_product_rxnorm import (
+from clingrounder.mining.io import write_jsonl
+from clingrounder.mining.mappings.dailymed_product_rxnorm import (
     link_dailymed_products_to_rxnorm,
 )
-from medical_kg_nlp.mining.mappings.rxnorm_ndc import (
+from clingrounder.mining.mappings.rxnorm_ndc import (
     RxNormNdcRepository,
     compile_rxnorm_ndc_index,
     normalize_ndc11,
     normalize_ndc_product_prefix,
 )
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.records import (
     AccessClass,
     MinedDocument,
     RedistributionPolicy,
 )
-from medical_kg_nlp.utils.hashing import sha256_file
+from clingrounder.utils.hashing import sha256_file
 
 
 def test_ndc_normalization_preserves_product_identity() -> None:

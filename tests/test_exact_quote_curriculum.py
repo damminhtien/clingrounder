@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.mining.exact_quote_curriculum import (
+from clingrounder.mining.exact_quote_curriculum import (
     ExactQuoteCurriculumConfig,
     build_exact_quote_curriculum,
 )

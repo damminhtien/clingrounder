@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.benchmarks.phase1.qwen_runner import _build_qwen_runtime
-from medical_kg_nlp.benchmarks.phase1.qwen_run_spec import (
+from clingrounder.benchmarks.phase1.qwen_runner import _build_qwen_runtime
+from clingrounder.benchmarks.phase1.qwen_run_spec import (
     load_phase1_qwen_run_spec,
 )
-from medical_kg_nlp.cli.parser import build_parser
-from medical_kg_nlp.utils.hashing import (
+from clingrounder.cli.parser import build_parser
+from clingrounder.utils.hashing import (
     sha256_directory,
     sha256_file,
 )

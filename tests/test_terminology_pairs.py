@@ -4,9 +4,9 @@ import hashlib
 import json
 from pathlib import Path
 
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.training.terminology_pairs import (
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.training.terminology_pairs import (
     SynonymPairMode,
     TerminologyPairConfig,
     build_terminology_synonym_pairs,

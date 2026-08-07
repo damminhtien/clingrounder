@@ -8,19 +8,19 @@ from typing import cast
 
 import pytest
 
-from medical_kg_nlp.benchmarks.phase1.model_selection import (
+from clingrounder.benchmarks.phase1.model_selection import (
     Phase1ModelSelectionConfig,
     calibrate_phase1_model_thresholds,
     compare_phase1_ner_variants,
     infer_phase1_development_predictions,
     load_phase1_development_documents,
 )
-from medical_kg_nlp.pipeline.runner import PipelineRunner
-from medical_kg_nlp.schema.annotation import EntityAnnotation
-from medical_kg_nlp.schema.output import ClinicalPrediction
-from medical_kg_nlp.schema.types import EntityType
-from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
-from medical_kg_nlp.utils.text import normalize_for_match
+from clingrounder.pipeline.runner import PipelineRunner
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.output import ClinicalPrediction
+from clingrounder.schema.types import EntityType
+from clingrounder.utils.hashing import sha256_file, sha256_text
+from clingrounder.utils.text import normalize_for_match
 
 
 def test_threshold_calibration_uses_only_development_and_removes_spurious(

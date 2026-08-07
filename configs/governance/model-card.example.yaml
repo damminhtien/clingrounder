@@ -1,4 +1,4 @@
-schema_version: medical-kg.model-governance.v1
+schema_version: clingrounder.model-governance.v1
 model_id: local-or-huggingface/model
 revision: immutable-revision-or-commit
 training_data_description: Describe licensed sources, language, and split policy.

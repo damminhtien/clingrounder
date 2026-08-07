@@ -189,7 +189,7 @@ parameters. Quantization does not reduce this count. Before loading Torch, execu
 - the training manifest's base model, revision, parameter count, and Git commit.
 
 After PEFT loading, the runtime sums the adapter state-dict tensor sizes and rejects a mismatch
-with `parameter_count`. `medical-kg-benchmark phase1 qwen inspect --config ...` performs the
+with `parameter_count`. `clingrounder-benchmark phase1 qwen inspect --config ...` performs the
 artifact/provenance checks without loading model weights. Exact quotes are still projected by the
 existing raw-text projector; PEFT output is never trusted to provide offsets.
 
@@ -214,13 +214,13 @@ From the local repository:
 git status --short
 git rev-parse HEAD
 
-uv run medical-kg-benchmark phase1 model-data build \
+uv run clingrounder-benchmark phase1 model-data build \
   --output-dir outputs/mining/model-datasets/phase1-manual-five-type-v1
 
-uv run medical-kg-benchmark phase1 model-data augment-regions \
+uv run clingrounder-benchmark phase1 model-data augment-regions \
   --output-dir outputs/mining/model-datasets/phase1-manual-five-type-qa-edu-v1
 
-uv run medical-kg-research model inspect-token-classifier-run \
+uv run clingrounder-research model inspect-token-classifier-run \
   --config configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
 
 tar -czf outputs/models/phase1-five-type-xlmr-qa-edu-training-inputs.tar.gz \
@@ -249,15 +249,15 @@ The user should:
 2. Select a maintained PyTorch/CUDA image and record its immutable image digest.
 3. Attach persistent storage at `/workspace`.
 4. Install a temporary public SSH key.
-5. Create a local SSH alias named `vast-medical-kg`.
-6. Verify `ssh vast-medical-kg nvidia-smi`.
+5. Create a local SSH alias named `vast-clingrounder`.
+6. Verify `ssh vast-clingrounder nvidia-smi`.
 
 Before transferring any data, the following remote checks must succeed:
 
 ```bash
-ssh vast-medical-kg 'uname -s && uname -m'
-ssh vast-medical-kg 'nvidia-smi --query-gpu=name,memory.total,compute_cap --format=csv,noheader'
-ssh vast-medical-kg 'df -h /workspace'
+ssh vast-clingrounder 'uname -s && uname -m'
+ssh vast-clingrounder 'nvidia-smi --query-gpu=name,memory.total,compute_cap --format=csv,noheader'
+ssh vast-clingrounder 'df -h /workspace'
 ```
 
 Expected: Linux `x86_64`, one supported GPU with at least 16 GiB VRAM and compute capability 8.0,
@@ -271,7 +271,7 @@ Transfer the exact Git revision and training archive:
 ```bash
 rsync -av --progress \
   outputs/models/phase1-five-type-xlmr-qa-edu-training-inputs.tar.gz \
-  vast-medical-kg:/workspace/
+  vast-clingrounder:/workspace/
 ```
 
 Clone the repository on the instance and checkout the recorded commit. If the repository is
@@ -293,7 +293,7 @@ PY
 For pinned VietMed support inference on `vastai/pytorch`, reuse the template's CUDA-enabled Torch:
 
 ```bash
-REPO_ROOT=/workspace/medical-kg \
+REPO_ROOT=/workspace/clingrounder \
   scripts/benchmarks/phase1/vast/run_vietmed_support.sh \
   2>&1 | tee /workspace/run_vietmed_template.log
 ```
@@ -340,10 +340,10 @@ sha256sum \
 uv run hf download FacebookAI/xlm-roberta-base \
   --revision e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
 
-uv run medical-kg-research model inspect-token-classifier-run \
+uv run clingrounder-research model inspect-token-classifier-run \
   --config configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
 
-CUDA_VISIBLE_DEVICES=0 uv run medical-kg-research model train-token-classifier-run \
+CUDA_VISIBLE_DEVICES=0 uv run clingrounder-research model train-token-classifier-run \
   --config configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml \
   2>&1 | tee outputs/models/phase1-five-type-xlmr-qa-edu-2026-07-26/train.log
 ```
@@ -378,10 +378,10 @@ sha256sum /workspace/phase1-five-type-xlmr-qa-edu-result.tar.gz
 Copy the archive back, extract it to the same repository-relative output path, then run locally:
 
 ```bash
-uv run medical-kg-research model inspect-token-classifier-run \
+uv run clingrounder-research model inspect-token-classifier-run \
   --config configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-2026-07-26.yaml
 
-uv run medical-kg-benchmark phase1 model-data calibrate \
+uv run clingrounder-benchmark phase1 model-data calibrate \
   --pipeline-config configs/benchmarks/phase1/pipeline/phase1-five-type-qa-edu-model-only.yaml \
   --output-dir outputs/models/phase1-five-type-qa-edu-calibration
 ```
@@ -392,10 +392,10 @@ Round 2 labels.
 For the selected recovery run, use:
 
 ```bash
-uv run medical-kg-research model inspect-token-classifier-run \
+uv run clingrounder-research model inspect-token-classifier-run \
   --config configs/benchmarks/phase1/models/phase1-five-type-xlmr-qa-edu-e12-lr5e5-2026-07-27.yaml
 
-uv run medical-kg-benchmark phase1 model-data calibrate \
+uv run clingrounder-benchmark phase1 model-data calibrate \
   --pipeline-config configs/benchmarks/phase1/pipeline/phase1-five-type-qa-edu-e12-lr5e5-model-only.yaml \
   --output-dir outputs/models/calibration-e12-lr5e5-2026-07-27
 ```

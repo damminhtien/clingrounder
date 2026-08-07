@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.benchmarks.phase1.phase1_proposals import (
+from clingrounder.benchmarks.phase1.phase1_proposals import (
     build_phase1_proposal_matrix,
     proposal_consensus_keys,
     write_phase1_proposal_matrix,

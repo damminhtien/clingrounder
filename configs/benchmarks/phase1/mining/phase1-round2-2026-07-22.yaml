@@ -1,15 +1,15 @@
 # Reproducible import for the caller-supplied Phase 1 Round 2 input archive.
 #
 # export PHASE1_ROUND2_ARCHIVE=/secure/path/input_turn2_vong1.zip
-# export MEDICAL_KG_ARTIFACT_STORE=file:///secure/medical-kg/mining-artifacts
-# uv run medical-kg data run --plan configs/benchmarks/phase1/mining/phase1-round2-2026-07-22.yaml
+# export CLINGROUNDER_ARTIFACT_STORE=file:///secure/clingrounder/mining-artifacts
+# uv run clingrounder data run --plan configs/benchmarks/phase1/mining/phase1-round2-2026-07-22.yaml
 schema_version: medical-mining-plan.v1
 registry: ../../../../data/sources/mining_registry.yaml
 work_dir: ../../../../outputs/mining/phase1-round2-2026-07-22
 artifact_store:
   # PRIVACY: canonical raw objects stay in this encrypted local store. The source policy permits
   # a temporary inference copy on owner-authorized Vast.ai compute, not remote artifact retention.
-  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  uri: ${CLINGROUNDER_ARTIFACT_STORE}
   storage_options: {}
   encrypted_at_rest: true
 sources:

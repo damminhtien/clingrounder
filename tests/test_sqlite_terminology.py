@@ -7,16 +7,16 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.pipeline import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.pipeline import (
     PipelineFactory,
     PipelineConfig,
     PipelineOptions,
     TerminologyConfig,
 )
-from medical_kg_nlp.retrieval.adapters import FTSRetrieverAdapter
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.terminology import (
+from clingrounder.retrieval.adapters import FTSRetrieverAdapter
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.terminology import (
     SQLiteTerminologyRepository,
     build_terminology_index,
     terminology_cache_path,

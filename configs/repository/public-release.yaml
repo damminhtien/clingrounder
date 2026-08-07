@@ -1,4 +1,4 @@
-schema_version: medical-kg.public-repository-policy.v1
+schema_version: clingrounder.public-repository-policy.v1
 
 # Data and generated artifacts fail closed. Source code, docs, configs, and tests remain
 # subject to credential scanning even though they do not need path-by-path classification.

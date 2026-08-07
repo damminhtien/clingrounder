@@ -2,24 +2,24 @@
 
 from __future__ import annotations
 
-from medical_kg_nlp.benchmarks.phase1.max_score_pipeline import (
+from clingrounder.benchmarks.phase1.max_score_pipeline import (
     BoundaryPolicy,
     Phase1MaxScorePipeline,
 )
-from medical_kg_nlp.benchmarks.phase1.boundary_verifier import (
+from clingrounder.benchmarks.phase1.boundary_verifier import (
     Phase1BoundaryVerifier,
 )
-from medical_kg_nlp.benchmarks.phase1.proposal_calibration import (
+from clingrounder.benchmarks.phase1.proposal_calibration import (
     Phase1ProbabilityCalibrator,
     Phase1ProposalVerifier,
 )
-from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRole
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.evaluation.sparse_logistic import SparseLogisticModel
-from medical_kg_nlp.benchmarks.phase1.ontology import PHASE1_ALLOWED_TYPES
-from medical_kg_nlp.schema.document import ClinicalDocument
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.benchmarks.phase1.proposal_features import ProposalSourceRole
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.evaluation.sparse_logistic import SparseLogisticModel
+from clingrounder.benchmarks.phase1.ontology import PHASE1_ALLOWED_TYPES
+from clingrounder.schema.document import ClinicalDocument
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 def test_max_score_pipeline_resolves_metadata_and_preserves_offsets() -> None:

@@ -1,7 +1,7 @@
 import pytest
 
-from medical_kg_nlp.preprocessing.section_rules import split_sections
-from medical_kg_nlp.preprocessing.section_rules import SectionRule, SectionRuleRegistry
+from clingrounder.preprocessing.section_rules import split_sections
+from clingrounder.preprocessing.section_rules import SectionRule, SectionRuleRegistry
 
 
 def test_split_sections_recognizes_numbered_headings_and_subheadings() -> None:

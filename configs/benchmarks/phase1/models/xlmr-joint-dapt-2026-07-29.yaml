@@ -31,7 +31,7 @@ synonym_pairs:
 
 training:
   output_dir: outputs/models/xlmr-joint-dapt-2026-07-29
-  cache_dir: .cache/medical-kg/model-training
+  cache_dir: .cache/clingrounder/model-training
   max_length: 256
   mlm_probability: 0.15
   mlm_batch_size: 8

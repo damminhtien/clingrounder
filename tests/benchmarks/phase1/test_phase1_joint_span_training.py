@@ -7,13 +7,13 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.benchmarks.phase1.joint_span import Phase1JointSpanLabel
-from medical_kg_nlp.benchmarks.phase1.joint_span_training import (
+from clingrounder.benchmarks.phase1.joint_span import Phase1JointSpanLabel
+from clingrounder.benchmarks.phase1.joint_span_training import (
     Phase1JointSpanTrainingConfig,
     inspect_phase1_joint_span_training_inputs,
     phase1_joint_span_training_family_fingerprint,
 )
-from medical_kg_nlp.utils.hashing import sha256_file
+from clingrounder.utils.hashing import sha256_file
 
 
 def test_inspect_joint_span_training_inputs_accepts_all_label_contracts(tmp_path: Path) -> None:

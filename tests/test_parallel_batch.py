@@ -10,8 +10,8 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
-from medical_kg_nlp.pipeline import (
+from clingrounder.datasets.synthetic_adapter import SyntheticDatasetAdapter
+from clingrounder.pipeline import (
     PipelineBatchExecutor,
     PipelineComponents,
     PipelineFactory,
@@ -20,12 +20,12 @@ from medical_kg_nlp.pipeline import (
     PipelineRunner,
     RuntimeCapabilities,
 )
-from medical_kg_nlp.pipeline.parallel_batch import (
+from clingrounder.pipeline.parallel_batch import (
     ParallelBatchError,
     ParallelBatchOptions,
 )
-from medical_kg_nlp.schema.annotation import EntityAnnotation
-from medical_kg_nlp.schema.document import ClinicalDocument
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.document import ClinicalDocument
 
 
 def test_parallel_batch_thread_backend_preserves_input_order_and_traces() -> None:
@@ -66,7 +66,7 @@ def test_run_pipeline_cli_accepts_parallel_workers(tmp_path: Path) -> None:
         [
             sys.executable,
             "-m",
-            "medical_kg_nlp.cli",
+            "clingrounder.cli",
             "pipeline",
             "run",
             "--config",

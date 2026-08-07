@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from medical_kg_nlp.evaluation.sparse_logistic import (
+from clingrounder.evaluation.sparse_logistic import (
     SparseBinaryExample,
     SparseLogisticModel,
     binary_probability_metrics,

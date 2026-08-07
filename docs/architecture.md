@@ -30,7 +30,7 @@ retrieval, and experiment-analysis ecosystem is stronger in Python for this proj
 - Retrieval: built-in exact/fuzzy/char-ngram/BM25 baseline, with optional bm25s, RapidFuzz,
   FAISS CPU, and Qdrant client.
 - Graph: lightweight in-memory graph first, with optional NetworkX and DuckDB/SQLite-ready tables.
-- CLI: installed `medical-kg` command using standard-library `argparse`; FastAPI/Uvicorn only when
+- CLI: installed `clingrounder` command using standard-library `argparse`; FastAPI/Uvicorn only when
   serving is needed.
 - Experiments: Hydra/OmegaConf and MLflow optional; W&B separate.
 
@@ -173,7 +173,7 @@ candidate types; the proposal can never become a final entity by itself.
 
 `data/heuristics/assertion_cues.jsonl` is the source of truth for cue text, direction, section priors,
 provenance, priority, and scope distance. Every loaded cue receives a stable `rule_id` and the same
-resource is packaged under `src/medical_kg_nlp/resources/`. The classifier returns rule evidence and
+resource is packaged under `src/clingrounder/resources/`. The classifier returns rule evidence and
 `PipelineTrace` counts matched rule IDs, while Python owns only generic scope execution and explicit
 false-positive mechanics. Cue inventories must not be duplicated as fallback lists in Python.
 Within a direction, executable cue matches are ordered by descending rule `priority`, then nearest

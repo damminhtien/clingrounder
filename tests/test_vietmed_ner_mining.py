@@ -9,20 +9,20 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from medical_kg_nlp.mining.labelers.vietmed_ner import (
+from clingrounder.mining.labelers.vietmed_ner import (
     VietMedNerSourceLabelerAdapter,
     decode_vietmed_bio_spans,
 )
-from medical_kg_nlp.mining.parsers.vietmed_ner import (
+from clingrounder.mining.parsers.vietmed_ner import (
     VietMedNerParquetParser,
     align_vietmed_tokens,
 )
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.records import (
     AccessClass,
     RedistributionPolicy,
     SourceArtifact,
 )
-from medical_kg_nlp.mining.storage import LocalArtifactStore
+from clingrounder.mining.storage import LocalArtifactStore
 
 
 def test_vietmed_parquet_parser_projects_text_columns_without_audio(

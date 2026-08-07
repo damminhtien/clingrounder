@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.mining.recognition_benchmark import benchmark_recognition_dictionary
-from medical_kg_nlp.mining.records import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.mining.recognition_benchmark import benchmark_recognition_dictionary
+from clingrounder.mining.records import (
     AccessClass,
     AnnotationLayer,
     AnnotationProposal,
@@ -13,7 +13,7 @@ from medical_kg_nlp.mining.records import (
     RedistributionPolicy,
     ReviewStatus,
 )
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 def test_mined_recognition_dictionary_improves_exact_drug_recall() -> None:

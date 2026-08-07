@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from medical_kg_nlp.dictionaries.merge import merge_concept_entries
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.dictionaries.merge import merge_concept_entries
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 def test_merge_concepts_preserves_primary_and_collects_lexical_variants() -> None:

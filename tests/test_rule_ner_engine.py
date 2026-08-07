@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.ner.rule_ner import RuleBasedNER
-from medical_kg_nlp.ner.extractors.contextual_alias import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.ner.rule_ner import RuleBasedNER
+from clingrounder.ner.extractors.contextual_alias import (
     ContextGate,
     ContextualAliasRule,
 )
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 def test_rule_ner_trace_records_cross_source_overlap_decisions() -> None:

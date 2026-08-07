@@ -6,16 +6,16 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.cli.parser import build_parser
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.kg.knowledge_schema import KnowledgeEdge, KnowledgeNode, KnowledgeNodeKind
-from medical_kg_nlp.kg.reranker_benchmark import benchmark_graph_candidate_reranking
-from medical_kg_nlp.kg.sqlite_builder import build_knowledge_graph_index
-from medical_kg_nlp.kg.sqlite_repository import SQLiteKnowledgeGraphRepository
-from medical_kg_nlp.mining.io import write_jsonl
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.terminology import TerminologySearchHit
-from medical_kg_nlp.utils.text import normalize_for_match
+from clingrounder.cli.parser import build_parser
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.kg.knowledge_schema import KnowledgeEdge, KnowledgeNode, KnowledgeNodeKind
+from clingrounder.kg.reranker_benchmark import benchmark_graph_candidate_reranking
+from clingrounder.kg.sqlite_builder import build_knowledge_graph_index
+from clingrounder.kg.sqlite_repository import SQLiteKnowledgeGraphRepository
+from clingrounder.mining.io import write_jsonl
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.terminology import TerminologySearchHit
+from clingrounder.utils.text import normalize_for_match
 
 
 def test_graph_reranker_benchmark_cli_is_discoverable() -> None:

@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.evaluation.relation_slices import relation_slice_counts
-from medical_kg_nlp.kg.ontology_reasoner import OntologyReasoner
-from medical_kg_nlp.kg.validator import KGValidator
-from medical_kg_nlp.relations.knowledge import KnownRelationRepository
-from medical_kg_nlp.relations.rule_relations import RuleRelationExtractor
-from medical_kg_nlp.schema.annotation import EntityAnnotation, RelationAnnotation
-from medical_kg_nlp.schema.document import Sentence
-from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType, RelationType
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.evaluation.relation_slices import relation_slice_counts
+from clingrounder.kg.ontology_reasoner import OntologyReasoner
+from clingrounder.kg.validator import KGValidator
+from clingrounder.relations.knowledge import KnownRelationRepository
+from clingrounder.relations.rule_relations import RuleRelationExtractor
+from clingrounder.schema.annotation import EntityAnnotation, RelationAnnotation
+from clingrounder.schema.document import Sentence
+from clingrounder.schema.types import AssertionStatus, CodeSystem, EntityType, RelationType
 
 
 def test_known_treatment_resource_is_code_based_and_versioned() -> None:

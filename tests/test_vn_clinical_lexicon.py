@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.dictionaries.vn_clinical_lexicon import (
+from clingrounder.dictionaries.vn_clinical_lexicon import (
     VN_CLINICAL_LEXICON_SOURCE_ID,
     build_vn_clinical_lexicon_manifest,
     parse_vn_clinical_lexicon,

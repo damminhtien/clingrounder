@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.governance import (
+from clingrounder.governance import (
     ArtifactVerificationError,
     AuditEvent,
     DataPolicy,
@@ -19,7 +19,7 @@ from medical_kg_nlp.governance import (
     secure_temporary_path,
     verify_artifact,
 )
-from medical_kg_nlp.pipeline.factory import PipelineFactory
+from clingrounder.pipeline.factory import PipelineFactory
 
 
 def test_artifact_hash_and_allowed_root_are_enforced(tmp_path: Path) -> None:

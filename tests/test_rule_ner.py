@@ -3,10 +3,10 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.ner.rule_ner import RuleBasedNER
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.ner.rule_ner import RuleBasedNER
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 def test_rule_ner_keeps_unique_exact_dictionary_match_unassigned() -> None:

@@ -4,7 +4,7 @@ Version 0.2 is intentionally breaking. It separates reusable clinical NLP infras
 rules, storage backends, experiments, and competition code. No compatibility import shims are
 provided.
 
-Pipeline profiles use the strict `medical-kg.pipeline-profile` envelope. Profiles written for
+Pipeline profiles use the strict `clingrounder.pipeline-profile` envelope. Profiles written for
 v1 must be rewritten explicitly before loading; the runtime does not guess or apply hidden
 defaults for an unsupported profile version.
 
@@ -12,20 +12,20 @@ defaults for an unsupported profile version.
 
 | Removed root script | Replacement |
 | --- | --- |
-| `scripts/run_pipeline.py` | `medical-kg pipeline run` |
-| `scripts/build_terminology_index.py` | `medical-kg terminology build` |
-| `scripts/evaluate.py` | `medical-kg evaluate` |
-| `scripts/validate_predictions.py` | `medical-kg validate` |
-| `scripts/build_phase1_submission.py` | `medical-kg-benchmark phase1 submission` |
+| `scripts/run_pipeline.py` | `clingrounder pipeline run` |
+| `scripts/build_terminology_index.py` | `clingrounder terminology build` |
+| `scripts/evaluate.py` | `clingrounder evaluate` |
+| `scripts/validate_predictions.py` | `clingrounder validate` |
+| `scripts/build_phase1_submission.py` | `clingrounder-benchmark phase1 submission` |
 
 Run installed commands through `uv run`, for example:
 
 ```bash
-uv run medical-kg pipeline run \
+uv run clingrounder pipeline run \
   --input data/samples/sample_notes.jsonl \
   --output outputs/predictions.jsonl
 
-uv run medical-kg validate \
+uv run clingrounder validate \
   --profile development \
   --pred outputs/predictions.jsonl \
   --documents data/samples/sample_notes.jsonl \
@@ -37,7 +37,7 @@ such as selective calibration, proposal sources, and run manifests stay in dedic
 experiment scripts or package APIs instead of the stable CLI:
 
 ```bash
-uv run medical-kg-benchmark phase1 submission \
+uv run clingrounder-benchmark phase1 submission \
   --input-dir data/raw/input \
   --output-dir outputs/phase1/current/output \
   --zip outputs/phase1/current/output.zip \
@@ -52,7 +52,7 @@ Before 0.2, callers could construct `PipelineRunner` with dictionaries, flags, o
 The runner now accepts exactly one `PipelineComponents` object:
 
 ```python
-from medical_kg_nlp.pipeline import PipelineComponents, PipelineRunner
+from clingrounder.pipeline import PipelineComponents, PipelineRunner
 
 runner = PipelineRunner(
     PipelineComponents(
@@ -66,7 +66,7 @@ runner = PipelineRunner(
 For ordinary application code, use the managed facade:
 
 ```python
-from medical_kg_nlp import Pipeline
+from clingrounder import Pipeline
 
 with Pipeline.from_profile("clinical-baseline") as pipeline:
     prediction = pipeline.predict("Bệnh nhân khó thở.", document_id="note-001")
@@ -75,7 +75,7 @@ with Pipeline.from_profile("clinical-baseline") as pipeline:
 At advanced executable boundaries, use the composition root:
 
 ```python
-from medical_kg_nlp.pipeline import PipelineFactory
+from clingrounder.pipeline import PipelineFactory
 
 runner = PipelineFactory.from_config(config_mapping)
 ```
@@ -94,9 +94,9 @@ Every enabled option must have a corresponding injected port.
 Build the derived index before configuring `terminology.normalization_index_path`:
 
 ```bash
-uv run medical-kg terminology build \
+uv run clingrounder terminology build \
   --source data/processed/full_concepts.jsonl \
-  --output .cache/medical-kg/terminology/full.sqlite3
+  --output .cache/clingrounder/terminology/full.sqlite3
 ```
 
 ## Model Adapters
@@ -113,20 +113,20 @@ not satisfy `source[start:end] == entity.text`.
 
 ## Evaluation Imports
 
-Generic code stays under `medical_kg_nlp.evaluation`:
+Generic code stays under `clingrounder.evaluation`:
 
 ```python
-from medical_kg_nlp.evaluation import EvaluationAdapter, evaluate_predictions
+from clingrounder.evaluation import EvaluationAdapter, evaluate_predictions
 ```
 
 Move task and experiment imports as follows:
 
 | Old ownership | 0.2 ownership |
 | --- | --- |
-| Phase 1 schemas, scoring, export, manual gold | `medical_kg_nlp.benchmarks.phase1` |
-| Phase 1 pipeline report enrichment | `medical_kg_nlp.benchmarks.phase1.pipeline_report` |
-| Ablations and trace aggregation | `medical_kg_nlp.experiments.ablation` |
-| Loop engineer, journal, policy, artifacts | `medical_kg_nlp.experiments` |
+| Phase 1 schemas, scoring, export, manual gold | `clingrounder.benchmarks.phase1` |
+| Phase 1 pipeline report enrichment | `clingrounder.benchmarks.phase1.pipeline_report` |
+| Ablations and trace aggregation | `clingrounder.experiments.ablation` |
+| Loop engineer, journal, policy, artifacts | `clingrounder.experiments` |
 
 Generic evaluation must not import `benchmarks` or `experiments`. Adapt task records through an
 `EvaluationAdapter` before computing neutral metrics.

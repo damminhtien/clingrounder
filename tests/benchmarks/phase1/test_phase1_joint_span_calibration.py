@@ -6,19 +6,19 @@ from dataclasses import dataclass
 
 import pytest
 
-from medical_kg_nlp.benchmarks.phase1.joint_span import (
+from clingrounder.benchmarks.phase1.joint_span import (
     Phase1JointSpanCandidate,
     Phase1JointSpanLabel,
     Phase1JointSpanPrediction,
     generate_phase1_joint_span_lattice,
 )
-from medical_kg_nlp.benchmarks.phase1.joint_span_calibration import (
+from clingrounder.benchmarks.phase1.joint_span_calibration import (
     CalibratedPhase1JointSpanVerifier,
     Phase1JointSpanCalibration,
     Phase1JointSpanCalibrationObservation,
     fit_phase1_joint_span_calibration,
 )
-from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRole
+from clingrounder.benchmarks.phase1.proposal_features import ProposalSourceRole
 
 
 def test_joint_span_calibration_fits_every_explicit_genre_type_pair() -> None:

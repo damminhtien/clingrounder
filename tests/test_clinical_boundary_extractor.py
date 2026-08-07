@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from medical_kg_nlp.ner.contracts import RuleNerContext
-from medical_kg_nlp.ner.document_structure import DocumentStructureAnalyzer
-from medical_kg_nlp.ner.extractors.boundary import ClinicalBoundaryProposalExtractor
-from medical_kg_nlp.ner.medication_list_parser import MedicationListParser
-from medical_kg_nlp.ner.proposal import EntityProposal
-from medical_kg_nlp.schema.types import EntityType
+from clingrounder.ner.contracts import RuleNerContext
+from clingrounder.ner.document_structure import DocumentStructureAnalyzer
+from clingrounder.ner.extractors.boundary import ClinicalBoundaryProposalExtractor
+from clingrounder.ner.medication_list_parser import MedicationListParser
+from clingrounder.ner.proposal import EntityProposal
+from clingrounder.schema.types import EntityType
 
 
 def test_boundary_extractor_composes_symptom_prefix_compound_and_severity() -> None:

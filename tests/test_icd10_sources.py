@@ -4,8 +4,8 @@ import sys
 import zipfile
 from pathlib import Path
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.icd10_sources import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.icd10_sources import (
     ICD10_VN_TT06_2026_SOURCE_ID,
     build_icd10_concept_rows,
     icd10_chapter_for_code,
@@ -17,7 +17,7 @@ from medical_kg_nlp.dictionaries.icd10_sources import (
     parse_who_icd10_claml,
     write_icd10_concept_rows,
 )
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 WHO_CLAML_FIXTURE = """<?xml version="1.0" encoding="UTF-8"?>

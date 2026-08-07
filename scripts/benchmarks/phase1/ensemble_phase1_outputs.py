@@ -9,13 +9,13 @@ from typing import Any, cast
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
-from medical_kg_nlp.benchmarks.phase1.manual_gold import evaluate_manual_gold, load_phase1_directory
-from medical_kg_nlp.benchmarks.phase1.phase1 import (
+from clingrounder.benchmarks.phase1.manual_gold import evaluate_manual_gold, load_phase1_directory
+from clingrounder.benchmarks.phase1.phase1 import (
     validate_phase1_submission_dir,
     validate_phase1_submission_zip,
     zip_phase1_output_dir,
 )
-from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import (
+from clingrounder.benchmarks.phase1.phase1_ensemble import (
     PHASE1_ENTITY_TYPE_ORDER,
     Phase1EnsembleSource,
     expand_repeated_phase1_mentions,
@@ -23,7 +23,7 @@ from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import (
     merge_phase1_outputs,
     rank_phase1_source_strategies,
 )
-from medical_kg_nlp.utils.io import read_source_text
+from clingrounder.utils.io import read_source_text
 
 
 def main() -> None:

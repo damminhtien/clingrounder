@@ -1,4 +1,4 @@
-from medical_kg_nlp.benchmarks.phase1.ontology import (
+from clingrounder.benchmarks.phase1.ontology import (
     PHASE1_ALLOWED_ASSERTIONS,
     PHASE1_ALLOWED_TYPES,
     PHASE1_REQUIRED_KEYS,
@@ -9,7 +9,7 @@ from medical_kg_nlp.benchmarks.phase1.ontology import (
     resolve_overlap,
     section_rule_for_heading,
 )
-from medical_kg_nlp.schema.types import CodeSystem, RelationType
+from clingrounder.schema.types import CodeSystem, RelationType
 
 
 def test_phase1_operational_ontology_code_system_constraints() -> None:

@@ -1,6 +1,6 @@
 # Schema
 
-Internal schemas live under `src/medical_kg_nlp/schema/` and use typed dataclasses plus enums.
+Internal schemas live under `src/clingrounder/schema/` and use typed dataclasses plus enums.
 
 ## Core Types
 
@@ -53,7 +53,7 @@ issues instead of silently accepting invalid output. It checks:
 Command:
 
 ```bash
-uv run medical-kg validate \
+uv run clingrounder validate \
   --profile development \
   --pred outputs/predictions.jsonl \
   --documents data/samples/sample_notes.jsonl \

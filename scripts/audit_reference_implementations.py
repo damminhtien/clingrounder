@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.experiments.reference_implementations import (
+from clingrounder.experiments.reference_implementations import (
     load_reference_registry,
     sync_reference_checkouts,
     verify_reference_checkouts,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
+from clingrounder.ner.medication_mention_parser import MedicationMentionParser
 
 
 @pytest.mark.parametrize(

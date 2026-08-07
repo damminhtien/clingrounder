@@ -1,4 +1,4 @@
-schema_version: medical-kg.pipeline-profile
+schema_version: clingrounder.pipeline-profile
 profile:
   id: mined-vietbioner-silver
   title: VietBioNER silver recognition profile
@@ -28,8 +28,8 @@ terminology:
   normalization_alias_overlay_paths:
     - ../../outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl
     - ../../outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl
-  normalization_index_path: ../../.cache/medical-kg/terminology/terminology-vietbioner-silver-2026-07-18.sqlite3
-  cache_dir: ../../.cache/medical-kg/terminology
+  normalization_index_path: ../../.cache/clingrounder/terminology/terminology-vietbioner-silver-2026-07-18.sqlite3
+  cache_dir: ../../.cache/clingrounder/terminology
   query_cache_size: 4096
 
 pipeline:

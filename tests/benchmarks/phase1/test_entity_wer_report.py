@@ -7,7 +7,7 @@ import pytest
 
 import yaml
 
-from medical_kg_nlp.benchmarks.phase1.entity_wer_report import (
+from clingrounder.benchmarks.phase1.entity_wer_report import (
     build_entity_wer_report,
     write_entity_wer_report,
 )

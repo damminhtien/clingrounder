@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from medical_kg_nlp.ner.proposal import EntityProposal
-from medical_kg_nlp.ner.span_resolver import EvidenceWeightedSpanResolver
-from medical_kg_nlp.schema.types import EntityType
+from clingrounder.ner.proposal import EntityProposal
+from clingrounder.ner.span_resolver import EvidenceWeightedSpanResolver
+from clingrounder.schema.types import EntityType
 
 
 def test_entity_proposal_requires_sorted_unique_candidate_types() -> None:

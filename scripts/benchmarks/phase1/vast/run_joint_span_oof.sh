@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=../../../vast/template_runtime.sh
 source "${SCRIPT_DIR}/../../../vast/template_runtime.sh"
 
-REPO_ROOT="${REPO_ROOT:-/workspace/medical-kg}"
+REPO_ROOT="${REPO_ROOT:-/workspace/clingrounder}"
 TEMPLATE_PYTHON="${TEMPLATE_PYTHON:-/venv/main/bin/python}"
 HF_HOME="${HF_HOME:-/workspace/hf}"
 PIP_CACHE_DIR="${PIP_CACHE_DIR:-/workspace/pip-cache}"
@@ -25,8 +25,8 @@ export HF_HOME PIP_CACHE_DIR
 
 # SCALING: the supplied CUDA template and its persistent cache avoid rebuilding Torch or
 # re-downloading a base checkpoint. Only repository code and compact governed artifacts change.
-medical_kg_vast_verify_pytorch_template "${TEMPLATE_PYTHON}"
-medical_kg_vast_install_project_runtime \
+clingrounder_vast_verify_pytorch_template "${TEMPLATE_PYTHON}"
+clingrounder_vast_install_project_runtime \
   "${TEMPLATE_PYTHON}" \
   "${REPO_ROOT}" \
   "${PIP_CACHE_DIR}" \
@@ -60,7 +60,7 @@ PY
 
 # INVARIANT: OOF observations are candidate identities and probabilities only. Each fold trains
 # without its validation documents; calibration may consume this output, final training may not.
-timeout --signal=TERM "${MAX_RUNTIME_SECONDS}" "${TEMPLATE_PYTHON}" -m medical_kg_nlp.cli \
+timeout --signal=TERM "${MAX_RUNTIME_SECONDS}" "${TEMPLATE_PYTHON}" -m clingrounder.cli \
   benchmark phase1 joint-span train-oof \
   --dataset "${DATASET_DIR}/examples.jsonl" \
   --dataset-manifest "${DATASET_DIR}/manifest.json" \

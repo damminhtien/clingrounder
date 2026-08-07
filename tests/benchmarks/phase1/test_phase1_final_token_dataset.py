@@ -5,14 +5,14 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from medical_kg_nlp.benchmarks.phase1.final_supervision import (
+from clingrounder.benchmarks.phase1.final_supervision import (
     Phase1FinalSupervisionCorpus,
 )
-from medical_kg_nlp.benchmarks.phase1.final_token_dataset import (
+from clingrounder.benchmarks.phase1.final_token_dataset import (
     Phase1FinalTokenDatasetConfig,
     build_phase1_final_token_dataset,
 )
-from medical_kg_nlp.benchmarks.phase1.reviewed_corpus import Phase1ReviewedCorpus
+from clingrounder.benchmarks.phase1.reviewed_corpus import Phase1ReviewedCorpus
 
 
 def test_final_token_dataset_exports_all_authorized_rows_with_exact_offsets(tmp_path: Path) -> None:

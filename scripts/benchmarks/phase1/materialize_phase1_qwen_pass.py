@@ -10,11 +10,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
-from medical_kg_nlp.benchmarks.phase1.qwen_runner import (
+from clingrounder.benchmarks.phase1.qwen_runner import (
     materialize_phase1_qwen_pass_source,
 )
-from medical_kg_nlp.benchmarks.phase1.round2 import load_phase1_round2_documents
-from medical_kg_nlp.mining.io import load_documents
+from clingrounder.benchmarks.phase1.round2 import load_phase1_round2_documents
+from clingrounder.mining.io import load_documents
 
 
 def main() -> None:

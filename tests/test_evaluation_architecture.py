@@ -9,12 +9,12 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp import __version__
-from medical_kg_nlp.benchmarks.phase1.adapter import (
+from clingrounder import __version__
+from clingrounder.benchmarks.phase1.adapter import (
     Phase1EvaluationAdapter,
     Phase1Record,
 )
-from medical_kg_nlp.evaluation import (
+from clingrounder.evaluation import (
     EvaluationDocument,
     EvaluationEntity,
     adapt_evaluation_records,
@@ -22,7 +22,7 @@ from medical_kg_nlp.evaluation import (
 
 
 def test_generic_evaluation_does_not_import_benchmarks_or_experiments() -> None:
-    evaluation_root = Path("src/medical_kg_nlp/evaluation")
+    evaluation_root = Path("src/clingrounder/evaluation")
     forbidden: list[tuple[str, str]] = []
     for path in evaluation_root.glob("*.py"):
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
@@ -34,7 +34,7 @@ def test_generic_evaluation_does_not_import_benchmarks_or_experiments() -> None:
                 modules.append(node.module)
             for module in modules:
                 if module.startswith(
-                    ("medical_kg_nlp.benchmarks", "medical_kg_nlp.experiments")
+                    ("clingrounder.benchmarks", "clingrounder.experiments")
                 ):
                     forbidden.append((str(path), module))
 
@@ -42,7 +42,7 @@ def test_generic_evaluation_does_not_import_benchmarks_or_experiments() -> None:
 
 
 def test_public_packages_declare_docs_and_exports() -> None:
-    package_root = Path("src/medical_kg_nlp")
+    package_root = Path("src/clingrounder")
     violations: list[str] = []
     for path in sorted(package_root.rglob("__init__.py")):
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))

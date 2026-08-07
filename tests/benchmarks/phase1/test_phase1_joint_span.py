@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 
-from medical_kg_nlp.benchmarks.phase1.joint_span import (
+from clingrounder.benchmarks.phase1.joint_span import (
     Phase1JointSpanCandidate,
     Phase1JointSpanLabel,
     Phase1JointSpanPrediction,
@@ -14,7 +14,7 @@ from medical_kg_nlp.benchmarks.phase1.joint_span import (
     label_phase1_joint_span_candidate,
     resolve_phase1_joint_span_lattice,
 )
-from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRole
+from clingrounder.benchmarks.phase1.proposal_features import ProposalSourceRole
 
 
 def test_joint_lattice_selects_exact_longer_span_and_preserves_raw_offsets() -> None:

@@ -19,7 +19,7 @@ exception as `pipeline_trace`.
 OpenTelemetry is optional and lazy-loaded:
 
 ```python
-from medical_kg_nlp.pipeline import OpenTelemetryPipelineObserver, PipelineComponents
+from clingrounder.pipeline import OpenTelemetryPipelineObserver, PipelineComponents
 
 observer = OpenTelemetryPipelineObserver()
 components = PipelineComponents(..., observer=observer)

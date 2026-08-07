@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import pytest
 
-from medical_kg_nlp.linking.candidate import Candidate
-from medical_kg_nlp.linking.listwise import (
+from clingrounder.linking.candidate import Candidate
+from clingrounder.linking.listwise import (
     ListwiseLinkingQuery,
     ListwiseOrderRanking,
     aggregate_listwise_rankings,
     build_listwise_candidate_orders,
 )
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.training.listwise_linking import (
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.training.listwise_linking import (
     CandidateRecallError,
     build_pairwise_linking_examples,
     build_listwise_linking_record,

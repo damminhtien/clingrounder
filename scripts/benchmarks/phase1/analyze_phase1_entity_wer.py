@@ -8,13 +8,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
-from medical_kg_nlp.benchmarks.phase1.entity_wer_report import (
+from clingrounder.benchmarks.phase1.entity_wer_report import (
     build_entity_wer_report,
     write_entity_wer_report,
 )
-from medical_kg_nlp.benchmarks.phase1.manual_gold import load_phase1_directory
-from medical_kg_nlp.benchmarks.phase1.phase1_ensemble import load_phase1_output_source
-from medical_kg_nlp.utils.io import read_source_text, read_yaml
+from clingrounder.benchmarks.phase1.manual_gold import load_phase1_directory
+from clingrounder.benchmarks.phase1.phase1_ensemble import load_phase1_output_source
+from clingrounder.utils.io import read_source_text, read_yaml
 
 
 def main() -> None:

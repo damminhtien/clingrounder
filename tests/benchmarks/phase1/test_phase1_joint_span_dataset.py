@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from medical_kg_nlp.benchmarks.phase1.joint_span_dataset import (
+from clingrounder.benchmarks.phase1.joint_span_dataset import (
     build_phase1_joint_span_dataset,
 )
-from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRole
-from medical_kg_nlp.benchmarks.phase1.reviewed_corpus import Phase1ReviewedCorpus
+from clingrounder.benchmarks.phase1.proposal_features import ProposalSourceRole
+from clingrounder.benchmarks.phase1.reviewed_corpus import Phase1ReviewedCorpus
 
 
 def test_joint_span_dataset_reports_missing_gold_without_gold_seeding() -> None:

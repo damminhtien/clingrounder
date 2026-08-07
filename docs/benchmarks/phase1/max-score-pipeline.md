@@ -22,7 +22,7 @@ checkpoint again when only a threshold, assertion rule, or candidate policy chan
 Run:
 
 ```bash
-uv run medical-kg-benchmark phase1 round2 max-score \
+uv run clingrounder-benchmark phase1 round2 max-score \
   --config configs/benchmarks/phase1/models/phase1-round2-max-score.yaml
 ```
 

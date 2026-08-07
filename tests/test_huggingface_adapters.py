@@ -11,7 +11,7 @@ from typing import Any
 
 import pytest
 
-from medical_kg_nlp.adapters import (
+from clingrounder.adapters import (
     DictionaryCandidateAdapter,
     HuggingFaceCrossEncoderAdapter,
     HuggingFaceModelConfig,
@@ -23,26 +23,26 @@ from medical_kg_nlp.adapters import (
     MedicationMentionEntityExtractorAdapter,
     OptionalModelDependencyError,
 )
-from medical_kg_nlp.adapters.huggingface import runtime as huggingface_runtime
-from medical_kg_nlp.adapters.model_spans import (
+from clingrounder.adapters.huggingface import runtime as huggingface_runtime
+from clingrounder.adapters.model_spans import (
     TokenPrediction,
     project_bio_predictions,
     project_source_bio_predictions,
 )
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.linking.candidate import Candidate
-from medical_kg_nlp.linking.rxnorm_reranker import StructuredRxNormReranker
-from medical_kg_nlp.pipeline import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.linking.candidate import Candidate
+from clingrounder.linking.rxnorm_reranker import StructuredRxNormReranker
+from clingrounder.pipeline import (
     PipelineFactory,
     PipelineConfig,
     PipelineModelConfig,
     TerminologyConfig,
 )
-from medical_kg_nlp.pipeline.options import PipelineOptions
-from medical_kg_nlp.retrieval import DenseHit, DenseRetrieverAdapter
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
+from clingrounder.pipeline.options import PipelineOptions
+from clingrounder.retrieval import DenseHit, DenseRetrieverAdapter
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.terminology.memory import InMemoryTerminologyRepository
 
 
 def test_model_config_requires_pinned_identity() -> None:
@@ -136,7 +136,7 @@ def test_core_pipeline_import_does_not_import_model_frameworks() -> None:
             sys.executable,
             "-c",
             (
-                "import sys; import medical_kg_nlp.pipeline; "
+                "import sys; import clingrounder.pipeline; "
                 "assert 'torch' not in sys.modules; "
                 "assert 'transformers' not in sys.modules"
             ),

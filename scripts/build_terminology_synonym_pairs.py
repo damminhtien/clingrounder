@@ -11,8 +11,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.training.terminology_pairs import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.training.terminology_pairs import (
     SynonymPairMode,
     TerminologyPairConfig,
     build_terminology_synonym_pairs,

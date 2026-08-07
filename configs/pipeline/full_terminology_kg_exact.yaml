@@ -1,4 +1,4 @@
-schema_version: medical-kg.pipeline-profile
+schema_version: clingrounder.pipeline-profile
 profile:
   id: full-terminology-kg-exact
   title: Full terminology with exact graph retrieval
@@ -21,8 +21,8 @@ terminology:
   normalization_alias_overlay_paths:
     - ../../outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl
     - ../../outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl
-  normalization_index_path: ../../.cache/medical-kg/terminology/terminology-a2d5a19e83fbc9e1a305.sqlite3
-  knowledge_graph_index_path: ../../.cache/medical-kg/knowledge-graph/knowledge-graph-668ddc869e58db0583c0.sqlite3
+  normalization_index_path: ../../.cache/clingrounder/terminology/terminology-a2d5a19e83fbc9e1a305.sqlite3
+  knowledge_graph_index_path: ../../.cache/clingrounder/knowledge-graph/knowledge-graph-668ddc869e58db0583c0.sqlite3
 
 pipeline:
   version: "0.2.0-full-terminology-kg-exact"

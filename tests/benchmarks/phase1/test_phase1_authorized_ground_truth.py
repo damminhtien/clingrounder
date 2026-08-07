@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
-from medical_kg_nlp.benchmarks.phase1.authorized_ground_truth import (
+from clingrounder.benchmarks.phase1.authorized_ground_truth import (
     load_phase1_authorized_ground_truth,
     materialize_phase1_authorized_ground_truth,
 )

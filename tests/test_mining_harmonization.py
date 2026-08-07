@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import json
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.mining.harmonization import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.mining.harmonization import (
     AnnotationHarmonizationPolicy,
     AnnotationHarmonizationRule,
     harmonize_annotations,
 )
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.records import (
     AccessClass,
     AnnotationLayer,
     AnnotationProposal,
@@ -20,8 +20,8 @@ from medical_kg_nlp.mining.records import (
     RedistributionPolicy,
     ReviewStatus,
 )
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.terminology.memory import InMemoryTerminologyRepository
 
 
 def _document() -> MinedDocument:

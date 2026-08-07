@@ -1,8 +1,8 @@
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.ner.rule_ner import RuleBasedNER
-from medical_kg_nlp.preprocessing.sentence_splitter import split_sentences
-from medical_kg_nlp.relations.rule_relations import RuleRelationExtractor
-from medical_kg_nlp.schema.types import EntityType, RelationType
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.ner.rule_ner import RuleBasedNER
+from clingrounder.preprocessing.sentence_splitter import split_sentences
+from clingrounder.relations.rule_relations import RuleRelationExtractor
+from clingrounder.schema.types import EntityType, RelationType
 
 
 def test_medication_attributes_use_dedicated_entity_types_and_relations() -> None:

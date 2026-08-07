@@ -5,12 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.benchmarks.phase1.reviewed_alias_overlay import (
+from clingrounder.benchmarks.phase1.reviewed_alias_overlay import (
     compile_reviewed_candidate_aliases,
     load_reviewed_candidate_proposals,
     reviewed_alias_memory_rows,
 )
-from medical_kg_nlp.terminology import SQLiteTerminologyRepository, build_terminology_index
+from clingrounder.terminology import SQLiteTerminologyRepository, build_terminology_index
 
 
 def test_reviewed_map_compiles_to_typed_normalization_overlay(tmp_path: Path) -> None:

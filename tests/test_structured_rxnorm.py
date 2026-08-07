@@ -1,15 +1,15 @@
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.linking.candidate import Candidate
-from medical_kg_nlp.linking.linker import EntityLinker
-from medical_kg_nlp.linking.structured_rxnorm import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.linking.candidate import Candidate
+from clingrounder.linking.linker import EntityLinker
+from clingrounder.linking.structured_rxnorm import (
     parse_medication_structure,
     rxnorm_compatibility,
 )
-from medical_kg_nlp.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
-from medical_kg_nlp.schema.annotation import EntityAnnotation
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
+from clingrounder.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.terminology.memory import InMemoryTerminologyRepository
 
 
 def test_rxnorm_structure_detects_strength_release_and_form_conflicts() -> None:

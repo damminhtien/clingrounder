@@ -10,8 +10,8 @@ from typing import Literal
 
 import pytest
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.benchmarks.phase1.phase1 import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.benchmarks.phase1.phase1 import (
     Phase1SelectiveExportConfig,
     _maximum_weight_assignment,
     build_phase1_report,
@@ -25,19 +25,19 @@ from medical_kg_nlp.benchmarks.phase1.phase1 import (
     write_phase1_output_dir,
     zip_phase1_output_dir,
 )
-from medical_kg_nlp.benchmarks.phase1.assertion_overlays import Phase1AssertionOverlay
-from medical_kg_nlp.benchmarks.phase1.phase1_submission_analysis import build_phase1_submission_analysis
-from medical_kg_nlp.ner.medication_mention_parser import MedicationMentionParser
-from medical_kg_nlp.schema.annotation import (
+from clingrounder.benchmarks.phase1.assertion_overlays import Phase1AssertionOverlay
+from clingrounder.benchmarks.phase1.phase1_submission_analysis import build_phase1_submission_analysis
+from clingrounder.ner.medication_mention_parser import MedicationMentionParser
+from clingrounder.schema.annotation import (
     AssertionEvidence,
     AssertionFeatures,
     CandidateConcept,
     EntityAnnotation,
 )
-from medical_kg_nlp.schema.document import ClinicalDocument
-from medical_kg_nlp.schema.output import ClinicalPrediction
-from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
-from medical_kg_nlp.utils.io import read_yaml
+from clingrounder.schema.document import ClinicalDocument
+from clingrounder.schema.output import ClinicalPrediction
+from clingrounder.schema.types import AssertionStatus, CodeSystem, EntityType
+from clingrounder.utils.io import read_yaml
 
 
 def test_prediction_to_phase1_entities_exports_flat_official_schema() -> None:

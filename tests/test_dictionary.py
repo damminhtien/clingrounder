@@ -4,9 +4,9 @@ import sys
 
 import pytest
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 def test_dictionary_can_load_entries_before_building_merged_indexes() -> None:

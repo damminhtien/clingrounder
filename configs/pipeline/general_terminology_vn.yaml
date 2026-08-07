@@ -1,4 +1,4 @@
-schema_version: medical-kg.pipeline-profile
+schema_version: clingrounder.pipeline-profile
 profile:
   id: general-terminology-vn
   title: Vietnamese clinical terminology pipeline
@@ -24,9 +24,9 @@ terminology:
   normalization_alias_overlay_paths:
     - ../../outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl
     - ../../outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl
-  normalization_index_path: ../../.cache/medical-kg/terminology/terminology-715f8d77659ea043358d.sqlite3
-  knowledge_graph_index_path: ../../.cache/medical-kg/knowledge-graph/knowledge-graph-687a122fb72f9925f7ef.sqlite3
-  cache_dir: ../../.cache/medical-kg/terminology
+  normalization_index_path: ../../.cache/clingrounder/terminology/terminology-715f8d77659ea043358d.sqlite3
+  knowledge_graph_index_path: ../../.cache/clingrounder/knowledge-graph/knowledge-graph-687a122fb72f9925f7ef.sqlite3
+  cache_dir: ../../.cache/clingrounder/terminology
   # SCALING: cache is bounded and local to each worker process.
   query_cache_size: 4096
 

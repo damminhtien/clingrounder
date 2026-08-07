@@ -4,7 +4,7 @@
 # This file is sourced by task-specific runners. Do not enable shell options here because the
 # caller owns its execution policy.
 
-medical_kg_vast_verify_pytorch_template() {
+clingrounder_vast_verify_pytorch_template() {
   local template_python="$1"
 
   if [[ ! -x "${template_python}" ]]; then
@@ -29,7 +29,7 @@ print(
 PY
 }
 
-medical_kg_vast_install_project_runtime() {
+clingrounder_vast_install_project_runtime() {
   local template_python="$1"
   local repo_root="$2"
   local pip_cache_dir="$3"

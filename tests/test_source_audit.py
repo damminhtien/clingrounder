@@ -2,7 +2,7 @@ import json
 import zipfile
 from pathlib import Path
 
-from medical_kg_nlp.dictionaries.source_audit import (
+from clingrounder.dictionaries.source_audit import (
     build_source_audit_report,
     false_positive_blocklist_candidates,
     file_fingerprints,

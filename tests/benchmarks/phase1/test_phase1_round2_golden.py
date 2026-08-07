@@ -3,15 +3,15 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from medical_kg_nlp.benchmarks.phase1.round2_golden import (
+from clingrounder.benchmarks.phase1.round2_golden import (
     build_phase1_round2_golden,
     write_phase1_round2_golden,
 )
-from medical_kg_nlp.cli.parser import build_parser
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.schema.document import ClinicalDocument
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.cli.parser import build_parser
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.schema.document import ClinicalDocument
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 def test_round2_golden_separates_consensus_from_review_and_expands_medication(

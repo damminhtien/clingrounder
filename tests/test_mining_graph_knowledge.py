@@ -8,11 +8,11 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.mining.graph_knowledge import (
+from clingrounder.mining.graph_knowledge import (
     GraphCompilationConfig,
     compile_knowledge_graph,
 )
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.records import (
     AccessClass,
     AnnotationLayer,
     AnnotationProposal,
@@ -22,7 +22,7 @@ from medical_kg_nlp.mining.records import (
     RelationProposal,
     ReviewStatus,
 )
-from medical_kg_nlp.utils.io import read_jsonl, write_jsonl
+from clingrounder.utils.io import read_jsonl, write_jsonl
 
 
 def _document(document_id: str, text: str) -> MinedDocument:

@@ -1,18 +1,18 @@
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.linking.learned_edits import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.linking.learned_edits import (
     LearnedEditObservation,
     learn_edit_transformations,
 )
-from medical_kg_nlp.linking.mention_code_memory import (
+from clingrounder.linking.mention_code_memory import (
     MentionCodeMemoryObservation,
     build_mention_code_memory,
 )
-from medical_kg_nlp.retrieval.dense_retriever import DenseHit, DenseRetrieverAdapter
-from medical_kg_nlp.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
-from medical_kg_nlp.retrieval.ngram_retriever import CharNgramRetriever
-from medical_kg_nlp.schema.types import EntityType
-from medical_kg_nlp.schema.types import CodeSystem
-from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
+from clingrounder.retrieval.dense_retriever import DenseHit, DenseRetrieverAdapter
+from clingrounder.retrieval.rule_factory import build_in_memory_retrieval_pipeline as _retrieval
+from clingrounder.retrieval.ngram_retriever import CharNgramRetriever
+from clingrounder.schema.types import EntityType
+from clingrounder.schema.types import CodeSystem
+from clingrounder.terminology.memory import InMemoryTerminologyRepository
 
 
 def test_candidate_generation_handles_vietnamese_alias() -> None:

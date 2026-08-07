@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from medical_kg_nlp.utils.run_output import (
+from clingrounder.utils.run_output import (
     collect_git_metadata,
     create_hashed_run_dir,
     path_in_run,

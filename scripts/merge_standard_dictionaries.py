@@ -10,10 +10,10 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.dictionaries.icd10_sources import icd10_chapter_for_code
-from medical_kg_nlp.utils.io import read_jsonl, write_jsonl
-from medical_kg_nlp.utils.text import normalize_for_match
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.dictionaries.icd10_sources import icd10_chapter_for_code
+from clingrounder.utils.io import read_jsonl, write_jsonl
+from clingrounder.utils.text import normalize_for_match
 
 
 _BLOCKED_NEW_PHASE1_ICD_PREFIXES = frozenset({"R", "S", "T", "V", "W", "X", "Y", "Z", "U"})

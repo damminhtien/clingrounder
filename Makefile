@@ -33,19 +33,19 @@ test-targeted:
 	$(PYTHON) -m pytest tests/test_schema.py tests/test_offset_mapping.py tests/test_kg_constraints.py -q
 
 pipeline:
-	$(PYTHON) -m medical_kg_nlp.cli pipeline run --config configs/pipeline/clinical-baseline.yaml --input data/samples/sample_notes.jsonl --output outputs/predictions.jsonl
+	$(PYTHON) -m clingrounder.cli pipeline run --config configs/pipeline/clinical-baseline.yaml --input data/samples/sample_notes.jsonl --output outputs/predictions.jsonl
 
 validate:
-	$(PYTHON) -m medical_kg_nlp.cli validate --pred outputs/predictions.jsonl --documents data/samples/sample_notes.jsonl --dictionary data/dictionaries/seed_concepts.jsonl
+	$(PYTHON) -m clingrounder.cli validate --pred outputs/predictions.jsonl --documents data/samples/sample_notes.jsonl --dictionary data/dictionaries/seed_concepts.jsonl
 
 evaluate:
-	$(PYTHON) -m medical_kg_nlp.cli evaluate --gold data/samples/gold.jsonl --pred outputs/predictions.jsonl
+	$(PYTHON) -m clingrounder.cli evaluate --gold data/samples/gold.jsonl --pred outputs/predictions.jsonl
 
 profile:
 	$(PYTHON) scripts/profile_data.py --documents data/samples/sample_notes.jsonl --gold data/samples/gold.jsonl --output outputs/profiles/sample_profile.json --markdown outputs/profiles/sample_profile.md
 
 benchmark-phase1-submit:
-	$(PYTHON) -m medical_kg_nlp.cli benchmark phase1 submission --input-dir data/raw/input --output-dir outputs/phase1/output --zip outputs/phase1/output.zip
+	$(PYTHON) -m clingrounder.cli benchmark phase1 submission --input-dir data/raw/input --output-dir outputs/phase1/output --zip outputs/phase1/output.zip
 
 benchmark-phase1-validate:
 	$(PYTHON) scripts/benchmarks/phase1/validate_phase1_submission.py --input-dir data/raw/input --output-dir outputs/phase1/output --zip outputs/phase1/output.zip --expected-count 100

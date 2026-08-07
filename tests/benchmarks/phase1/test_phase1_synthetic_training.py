@@ -8,13 +8,13 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 import pytest
 
-from medical_kg_nlp.benchmarks.phase1.synthetic_training import (
+from clingrounder.benchmarks.phase1.synthetic_training import (
     Phase1SyntheticTrainingConfig,
     build_phase1_synthetic_training_dataset,
 )
-from medical_kg_nlp.mining.io import write_json, write_jsonl
-from medical_kg_nlp.training.span_dataset import iter_span_training_records
-from medical_kg_nlp.utils.hashing import sha256_file, sha256_text
+from clingrounder.mining.io import write_json, write_jsonl
+from clingrounder.training.span_dataset import iter_span_training_records
+from clingrounder.utils.hashing import sha256_file, sha256_text
 
 
 def test_synthetic_builder_exports_train_only_and_caps_fraction(

@@ -1,5 +1,5 @@
-from medical_kg_nlp.experiments.ablation import aggregate_traces, flatten_metrics
-from medical_kg_nlp.pipeline.tracing import PipelineTrace, StageMeasurement
+from clingrounder.experiments.ablation import aggregate_traces, flatten_metrics
+from clingrounder.pipeline.tracing import PipelineTrace, StageMeasurement
 
 
 def test_aggregate_traces_sums_stage_timings_and_counters() -> None:

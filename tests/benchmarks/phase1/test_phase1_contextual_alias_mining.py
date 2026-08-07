@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from medical_kg_nlp.benchmarks.phase1.contextual_alias_mining import (
+from clingrounder.benchmarks.phase1.contextual_alias_mining import (
     compile_phase1_contextual_alias_rules,
 )
-from medical_kg_nlp.mining.lexicon import MentionInventoryEntry
+from clingrounder.mining.lexicon import MentionInventoryEntry
 
 
 def test_contextual_alias_compiler_requires_train_inventory_support() -> None:

@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.dictionaries.alias_mining import (
+from clingrounder.dictionaries.alias_mining import (
     mine_vietnamese_alias_candidates,
     write_alias_mining_outputs,
 )

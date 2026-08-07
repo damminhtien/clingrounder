@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from medical_kg_nlp.adapters.generative import (
+from clingrounder.adapters.generative import (
     InferenceBudgetManifest,
     LocalPeftAdapterConfig,
     ModelBudgetEntry,
@@ -16,8 +16,8 @@ from medical_kg_nlp.adapters.generative import (
     TransformersCausalLMRuntime,
     parse_structured_response,
 )
-from medical_kg_nlp.adapters.generative import runtime as generative_runtime
-from medical_kg_nlp.utils.hashing import sha256_directory
+from clingrounder.adapters.generative import runtime as generative_runtime
+from clingrounder.utils.hashing import sha256_directory
 
 _REVISION = "1" * 40
 

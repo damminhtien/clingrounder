@@ -5,17 +5,17 @@ from __future__ import annotations
 import json
 from typing import Sequence
 
-from medical_kg_nlp.adapters.generative import (
+from clingrounder.adapters.generative import (
     ChatMessage,
     GenerationConfig,
     GenerativeModelPort,
     GenerativeListwiseRerankerAdapter,
 )
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.linking.candidate import Candidate
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.linking.candidate import Candidate
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.terminology.memory import InMemoryTerminologyRepository
 
 
 def test_listwise_adapter_aggregates_target_identity_across_three_orders() -> None:

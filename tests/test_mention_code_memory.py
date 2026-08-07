@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import math
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.linking.mention_code_memory import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.linking.mention_code_memory import (
     MentionCodeMemoryObservation,
     MentionCodeMemoryRetrieverAdapter,
     build_cross_fitted_mention_code_memory,
@@ -14,8 +14,8 @@ from medical_kg_nlp.linking.mention_code_memory import (
     load_mention_code_memory,
     write_mention_code_memory,
 )
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.terminology.memory import InMemoryTerminologyRepository
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.terminology.memory import InMemoryTerminologyRepository
 
 
 def test_memory_profiles_support_probability_and_entropy() -> None:

@@ -32,14 +32,14 @@ def test_vast_template_helper_preserves_template_dependencies(tmp_path: Path) ->
             "-c",
             (
                 'source "$1"\n'
-                'medical_kg_vast_verify_pytorch_template "$2"\n'
-                'medical_kg_vast_install_project_runtime "$2" "$3" "$4" '
+                'clingrounder_vast_verify_pytorch_template "$2"\n'
+                'clingrounder_vast_install_project_runtime "$2" "$3" "$4" '
                 '"transformers==5.13.0"'
             ),
             "bash",
             str(helper),
             str(fake_python),
-            "/workspace/medical-kg",
+            "/workspace/clingrounder",
             "/workspace/pip-cache",
         ],
         check=True,
@@ -52,7 +52,7 @@ def test_vast_template_helper_preserves_template_dependencies(tmp_path: Path) ->
         "-m pip install --cache-dir /workspace/pip-cache transformers==5.13.0",
         (
             "-m pip install --cache-dir /workspace/pip-cache --no-deps "
-            "--editable /workspace/medical-kg"
+            "--editable /workspace/clingrounder"
         ),
     ]
 

@@ -11,15 +11,15 @@ from typing import BinaryIO
 
 import pytest
 
-from medical_kg_nlp.mining.connectors import (
+from clingrounder.mining.connectors import (
     DailyMedConnector,
     LocalArchiveConnector,
     PmcOaConnector,
     StaticHttpConnector,
 )
-from medical_kg_nlp.mining.records import RedistributionPolicy, SourceRequest
-from medical_kg_nlp.mining.registry import load_source_registry
-from medical_kg_nlp.mining.storage import LocalArtifactStore
+from clingrounder.mining.records import RedistributionPolicy, SourceRequest
+from clingrounder.mining.registry import load_source_registry
+from clingrounder.mining.storage import LocalArtifactStore
 
 
 class MemoryTransport:

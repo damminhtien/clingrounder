@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from medical_kg_nlp.cli.parser import build_parser
-from medical_kg_nlp.benchmarks.phase1.runner import (
+from clingrounder.cli.parser import build_parser
+from clingrounder.benchmarks.phase1.runner import (
     Phase1BenchmarkConfig,
     build_phase1_factory_config,
     _validation_paths,

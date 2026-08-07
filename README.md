@@ -10,7 +10,7 @@ share typed interfaces. Historical competition code is retained as an optional b
 it is not part of the default runtime or evaluation path.
 
 The PyPI distribution is named `clingrounder`; the Python import namespace remains
-`medical_kg_nlp`.
+`clingrounder`.
 
 > Research software only. It is not a medical device and must not be used as the sole basis for
 > clinical decisions.
@@ -42,7 +42,7 @@ The PyPI distribution is named `clingrounder`; the Python import namespace remai
 5. **Data and experiments are reproducible.** Sources, configs, model revisions, fingerprints,
    prompts, and derived artifacts have explicit provenance.
 6. **Benchmarks do not define the core.** Task schemas, heuristics, exporters, and campaign records
-   live below `medical_kg_nlp.benchmarks`.
+   live below `clingrounder.benchmarks`.
 
 ## Architecture
 
@@ -94,7 +94,7 @@ git clone https://github.com/damminhtien/clingrounder.git
 cd ontological-reasoning-in-medical-knowledge-retrieval
 
 uv sync --extra dev
-uv run medical-kg pipeline run \
+uv run clingrounder pipeline run \
   --config configs/pipeline/clinical-baseline.yaml \
   --input data/samples/sample_notes.jsonl \
   --output outputs/sample-predictions.jsonl
@@ -107,7 +107,7 @@ python -m venv .venv
 source .venv/bin/activate
 python -m pip install clingrounder
 python -m pip install -e ".[dev]"
-medical-kg pipeline run \
+clingrounder pipeline run \
   --config configs/pipeline/clinical-baseline.yaml \
   --input data/samples/sample_notes.jsonl \
   --output outputs/sample-predictions.jsonl
@@ -129,27 +129,27 @@ The sample emits source-backed entities such as:
 Validate and evaluate the result:
 
 ```bash
-uv run medical-kg validate \
+uv run clingrounder validate \
   --profile development \
   --pred outputs/sample-predictions.jsonl \
   --documents data/samples/sample_notes.jsonl \
   --dictionary data/dictionaries/seed_concepts.jsonl
 
-uv run medical-kg evaluate \
+uv run clingrounder evaluate \
   --gold data/samples/gold.jsonl \
   --pred outputs/sample-predictions.jsonl \
   --error-analysis outputs/sample-errors.json
 ```
 
-The installed CLI is split by responsibility: `medical-kg` exposes operational commands,
-`medical-kg-research` exposes mining/model commands, and `medical-kg-benchmark` loads optional
+The installed CLI is split by responsibility: `clingrounder` exposes operational commands,
+`clingrounder-research` exposes mining/model commands, and `clingrounder-benchmark` loads optional
 benchmark plugins. They share one dispatcher and handler registry; no command implementation is
 duplicated. See [docs/cli-scopes.md](docs/cli-scopes.md).
 
 ### Python API
 
 ```python
-from medical_kg_nlp import Pipeline
+from clingrounder import Pipeline
 
 with Pipeline.from_profile("clinical-baseline") as pipeline:
     prediction = pipeline.predict(
@@ -170,7 +170,7 @@ context exits. Use `Pipeline.from_config(path)` for a checked-in or application-
 Library and research integrations can compose the lower-level runtime explicitly:
 
 ```python
-from medical_kg_nlp.pipeline import PipelineComponents, PipelineFactory, PipelineRunner
+from clingrounder.pipeline import PipelineComponents, PipelineFactory, PipelineRunner
 
 components = PipelineComponents(...)  # inject ports and repositories explicitly
 runner = PipelineRunner(components)
@@ -194,7 +194,7 @@ Reusable profiles are explicit, path-stable YAML contracts:
 | `configs/pipeline/general_terminology_vn.yaml` | Experimental Vietnamese terminology profile |
 | `configs/pipeline/mined_vietbioner_silver.yaml` | Reviewed mined Vietnamese recognition overlay |
 
-`medical-kg pipeline run` has no hidden default profile. Model profiles must pin `model_id` and
+`clingrounder pipeline run` has no hidden default profile. Model profiles must pin `model_id` and
 `revision`; model adapters are lazy and local-only by default. Install the `ml` extra only when
 using model-backed profiles.
 
@@ -204,12 +204,12 @@ Canonical terminology remains JSONL. Runtime lookup uses a derived, content-addr
 index with read-only, query-only, thread-local connections.
 
 ```bash
-uv run medical-kg terminology build \
+uv run clingrounder terminology build \
   --source data/processed/full_concepts.jsonl \
-  --cache-dir .cache/medical-kg/terminology
+  --cache-dir .cache/clingrounder/terminology
 
-uv run medical-kg terminology inspect \
-  --index .cache/medical-kg/terminology/<fingerprint>.sqlite3 \
+uv run clingrounder terminology inspect \
+  --index .cache/clingrounder/terminology/<fingerprint>.sqlite3 \
   --query metformin \
   --entity-type DRUG \
   --code-system RxNorm
@@ -247,11 +247,11 @@ Start with [docs/rule-ner.md](docs/rule-ner.md),
 ## Data Mining And Provenance
 
 ```bash
-uv run medical-kg-research data registry validate \
+uv run clingrounder-research data registry validate \
   --registry data/sources/mining_registry.yaml
-uv run medical-kg-research data run --plan configs/mining/open_corpus_v1.yaml
-uv run medical-kg-research data coverage report --help
-uv run medical-kg-research data snapshot freeze --help
+uv run clingrounder-research data run --plan configs/mining/open_corpus_v1.yaml
+uv run clingrounder-research data coverage report --help
+uv run clingrounder-research data snapshot freeze --help
 ```
 
 The public Git tree contains code, redistributable fixtures, policies, source dossiers, checksums,
@@ -262,7 +262,7 @@ in `data/provenance/local-artifacts.json` and source-specific manifests.
 Audit the publication boundary before release:
 
 ```bash
-uv run medical-kg release audit \
+uv run clingrounder release audit \
   --policy configs/repository/public-release.yaml \
   --root .
 ```
@@ -275,8 +275,8 @@ The archived Vietnamese extraction challenge is retained for reproducibility and
 research. It is isolated from reusable pipeline defaults and has no stability guarantee:
 
 ```bash
-uv run medical-kg-benchmark list
-uv run medical-kg-benchmark phase1 --help
+uv run clingrounder-benchmark list
+uv run clingrounder-benchmark phase1 --help
 uv run pytest -o addopts='' -m "benchmark and not private and not model" \
   tests/benchmarks/phase1
 ```
@@ -288,7 +288,7 @@ quickstart.
 ## Repository Map
 
 ```text
-src/medical_kg_nlp/
+src/clingrounder/
   pipeline/       ports, composition, runner, tracing, parallel batches
   ner/            proposal-first rules and structured span extractors
   adapters/       rule, hybrid, Hugging Face, and generative adapters

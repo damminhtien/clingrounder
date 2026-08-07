@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from medical_kg_nlp.ner.lab_observation_extractor import LabObservationExtractor
-from medical_kg_nlp.schema.annotation import EntityAnnotation
-from medical_kg_nlp.schema.types import EntityType
+from clingrounder.ner.lab_observation_extractor import LabObservationExtractor
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.types import EntityType
 
 
 def test_lab_observation_extracts_adjacent_qualitative_result_before_test() -> None:

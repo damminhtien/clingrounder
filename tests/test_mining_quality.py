@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from medical_kg_nlp.mining.quality import (
+from clingrounder.mining.quality import (
     GoldAgreementGate,
     ReviewAgreementEvaluator,
 )
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.records import (
     AccessClass,
     AnnotationLayer,
     AnnotationProposal,

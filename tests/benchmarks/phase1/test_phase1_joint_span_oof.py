@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import pytest
 
-from medical_kg_nlp.benchmarks.phase1.boundary_variants import Phase1BoundaryVariant
-from medical_kg_nlp.benchmarks.phase1.joint_span import (
+from clingrounder.benchmarks.phase1.boundary_variants import Phase1BoundaryVariant
+from clingrounder.benchmarks.phase1.joint_span import (
     Phase1JointSpanCandidate,
     Phase1JointSpanLabel,
 )
-from medical_kg_nlp.benchmarks.phase1.joint_span_calibration import (
+from clingrounder.benchmarks.phase1.joint_span_calibration import (
     Phase1JointSpanCalibrationObservation,
 )
-from medical_kg_nlp.benchmarks.phase1.joint_span_oof import (
+from clingrounder.benchmarks.phase1.joint_span_oof import (
     _OofExample,
     _validate_oof_coverage,
     assign_phase1_joint_span_oof_folds,

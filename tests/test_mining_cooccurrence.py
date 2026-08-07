@@ -7,13 +7,13 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.cli.parser import build_parser
-from medical_kg_nlp.mining.cooccurrence import (
+from clingrounder.cli.parser import build_parser
+from clingrounder.mining.cooccurrence import (
     CooccurrenceMiningPolicy,
     load_cooccurrence_policy,
     mine_cooccurrence_relations,
 )
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.records import (
     AccessClass,
     AnnotationLayer,
     AnnotationProposal,

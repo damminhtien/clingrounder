@@ -5,10 +5,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from medical_kg_nlp.cli.main import main
-from medical_kg_nlp.mining.io import write_jsonl
-from medical_kg_nlp.mining.reconciliation import reconcile_exact_duplicates
-from medical_kg_nlp.mining.records import (
+from clingrounder.cli.main import main
+from clingrounder.mining.io import write_jsonl
+from clingrounder.mining.reconciliation import reconcile_exact_duplicates
+from clingrounder.mining.records import (
     AccessClass,
     AnnotationLayer,
     AnnotationProposal,

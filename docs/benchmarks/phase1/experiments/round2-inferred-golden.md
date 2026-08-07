@@ -53,7 +53,7 @@ It is not training eligible until reviewed.
 Run after every proposal source covers all 100 documents:
 
 ```bash
-uv run medical-kg-benchmark phase1 round2 golden \
+uv run clingrounder-benchmark phase1 round2 golden \
   --documents outputs/mining/phase1-round2-hosted-2026-07-27/documents.jsonl \
   --source-archive-sha256 \
     989d82404a9c1f3739e15d68a1e69d0f1f90d35c93c04ab0988e071fc1525545 \

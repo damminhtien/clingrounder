@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.benchmarks.phase1.max_score_run import (
+from clingrounder.benchmarks.phase1.max_score_run import (
     PinnedPhase1Artifact,
     load_phase1_max_score_run_spec,
 )
-from medical_kg_nlp.cli.parser import build_parser
-from medical_kg_nlp.benchmarks.phase1.proposal_features import ProposalSourceRole
+from clingrounder.cli.parser import build_parser
+from clingrounder.benchmarks.phase1.proposal_features import ProposalSourceRole
 
 
 def test_max_score_run_spec_resolves_every_path_below_run_root(

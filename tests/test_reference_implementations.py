@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.experiments.reference_implementations import (
+from clingrounder.experiments.reference_implementations import (
     load_reference_registry,
     verify_reference_checkouts,
 )

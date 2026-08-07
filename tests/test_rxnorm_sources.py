@@ -4,8 +4,8 @@ import sys
 import zipfile
 from pathlib import Path
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.rxnorm_sources import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.rxnorm_sources import (
     RXNORM_CURRENT_FULL_SOURCE_ID,
     RXNORM_CURRENT_PRESCRIBABLE_SOURCE_ID,
     RXNORM_CURRENT_RELEASE_DATE,
@@ -19,7 +19,7 @@ from medical_kg_nlp.dictionaries.rxnorm_sources import (
     resolve_rxnorm_archive_member_root,
     rxnorm_source_policy,
 )
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 def test_parse_rxnorm_rxnconso_filters_and_builds_dictionary_rows(tmp_path: Path) -> None:

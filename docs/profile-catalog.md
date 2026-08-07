@@ -1,10 +1,10 @@
 # Pipeline Profile Catalog
 
-Reusable profiles use the single `medical-kg.pipeline-profile` envelope. The loader rejects any
+Reusable profiles use the single `clingrounder.pipeline-profile` envelope. The loader rejects any
 instead of silently applying a migration with unknown semantics.
 
 This catalog separates the supported quickstart from profiles that require local mined
-artifacts. Resource readiness is checked by `medical-kg pipeline list-profiles`; it does not
+artifacts. Resource readiness is checked by `clingrounder pipeline list-profiles`; it does not
 silently rebuild content-addressed indexes.
 
 | ID | File | Maturity | Portability | Support | Resources | Intended use |
@@ -18,9 +18,9 @@ silently rebuild content-addressed indexes.
 ## Commands
 
 ```bash
-medical-kg pipeline list-profiles
-medical-kg pipeline list-profiles --check-resources
-medical-kg pipeline inspect-config \
+clingrounder pipeline list-profiles
+clingrounder pipeline list-profiles --check-resources
+clingrounder pipeline inspect-config \
   --config configs/pipeline/clinical-baseline.yaml \
   --check-resources
 ```

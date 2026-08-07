@@ -5,17 +5,17 @@ from dataclasses import dataclass
 
 import pytest
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.pipeline import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.pipeline import (
     PipelineComponents,
     PipelineFactory,
     PipelineConfig,
     PipelineOptions,
     PipelineRunner,
 )
-from medical_kg_nlp.schema.annotation import EntityAnnotation
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.terminology import (
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.terminology import (
     CachedTerminologyRepository,
     InMemoryTerminologyRepository,
 )

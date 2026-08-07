@@ -8,17 +8,17 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.mining.labelers.dailymed import (
+from clingrounder.mining.labelers.dailymed import (
     DailyMedStructuredLabelerAdapter,
     DailyMedStructuredRelationLabelerAdapter,
 )
-from medical_kg_nlp.mining.parsers.xml import SplXmlParser
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.parsers.xml import SplXmlParser
+from clingrounder.mining.records import (
     AccessClass,
     RedistributionPolicy,
     SourceArtifact,
 )
-from medical_kg_nlp.mining.storage import LocalArtifactStore
+from clingrounder.mining.storage import LocalArtifactStore
 
 
 def test_spl_parser_and_labeler_project_structured_medication_fields(

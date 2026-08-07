@@ -4,15 +4,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from medical_kg_nlp.mining.labelers.pipeline import LocalPipelineProposalLabeler
-from medical_kg_nlp.mining.records import AccessClass, MinedDocument, RedistributionPolicy
-from medical_kg_nlp.schema.annotation import (
+from clingrounder.mining.labelers.pipeline import LocalPipelineProposalLabeler
+from clingrounder.mining.records import AccessClass, MinedDocument, RedistributionPolicy
+from clingrounder.schema.annotation import (
     AssertionFeatures,
     CandidateConcept,
     EntityAnnotation,
 )
-from medical_kg_nlp.schema.output import ClinicalPrediction
-from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem, EntityType
+from clingrounder.schema.output import ClinicalPrediction
+from clingrounder.schema.types import AssertionStatus, CodeSystem, EntityType
 
 
 @dataclass

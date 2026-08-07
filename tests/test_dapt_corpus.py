@@ -5,17 +5,17 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from medical_kg_nlp.mining.io import write_json, write_jsonl
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.io import write_json, write_jsonl
+from clingrounder.mining.records import (
     AccessClass,
     MinedDocument,
     RedistributionPolicy,
 )
-from medical_kg_nlp.training.dapt_corpus import (
+from clingrounder.training.dapt_corpus import (
     build_dapt_corpus,
     load_dapt_corpus_build_spec,
 )
-from medical_kg_nlp.cli.parser import build_parser
+from clingrounder.cli.parser import build_parser
 
 
 def test_dapt_corpus_keeps_round2_unlabeled_lane_physically_separate(

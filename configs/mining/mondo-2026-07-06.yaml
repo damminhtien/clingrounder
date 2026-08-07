@@ -2,7 +2,7 @@ schema_version: medical-mining-plan.v1
 registry: ../../data/sources/mining_registry.yaml
 work_dir: ../../outputs/mining/mondo-2026-07-06
 artifact_store:
-  uri: ${MEDICAL_KG_ARTIFACT_STORE}
+  uri: ${CLINGROUNDER_ARTIFACT_STORE}
   storage_options: {}
   encrypted_at_rest: false
 

@@ -5,15 +5,15 @@ import json
 from collections import Counter
 from pathlib import Path
 
-from medical_kg_nlp.benchmarks.phase1.pipeline_report import build_phase1_pipeline_report
-from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.evaluation.pipeline_report import write_pipeline_report
-from medical_kg_nlp.pipeline.tracing import PipelineTrace, StageMeasurement
-from medical_kg_nlp.schema.annotation import CandidateConcept
-from medical_kg_nlp.schema.document import ClinicalDocument
-from medical_kg_nlp.schema.output import ClinicalPrediction
-from medical_kg_nlp.schema.types import AssertionStatus, CodeSystem
+from clingrounder.benchmarks.phase1.pipeline_report import build_phase1_pipeline_report
+from clingrounder.datasets.synthetic_adapter import SyntheticDatasetAdapter
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.evaluation.pipeline_report import write_pipeline_report
+from clingrounder.pipeline.tracing import PipelineTrace, StageMeasurement
+from clingrounder.schema.annotation import CandidateConcept
+from clingrounder.schema.document import ClinicalDocument
+from clingrounder.schema.output import ClinicalPrediction
+from clingrounder.schema.types import AssertionStatus, CodeSystem
 
 
 def test_pipeline_report_merges_metrics_validation_trace_and_errors(tmp_path: Path) -> None:

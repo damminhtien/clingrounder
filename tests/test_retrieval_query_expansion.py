@@ -3,10 +3,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from medical_kg_nlp.retrieval.adapters import FTSRetrieverAdapter
-from medical_kg_nlp.retrieval.query_expansion import build_retrieval_query_variants
-from medical_kg_nlp.schema.types import EntityType
-from medical_kg_nlp.terminology import SQLiteTerminologyRepository, build_terminology_index
+from clingrounder.retrieval.adapters import FTSRetrieverAdapter
+from clingrounder.retrieval.query_expansion import build_retrieval_query_variants
+from clingrounder.schema.types import EntityType
+from clingrounder.terminology import SQLiteTerminologyRepository, build_terminology_index
 
 
 def test_medication_query_expansion_is_bounded_and_type_specific() -> None:

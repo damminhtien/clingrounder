@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
-from medical_kg_nlp.evaluation.runtime_benchmark import (
+from clingrounder.evaluation.runtime_benchmark import (
     analyze_runtime_run,
     compare_runtime_runs,
     write_runtime_benchmark,

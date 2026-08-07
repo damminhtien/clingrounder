@@ -9,9 +9,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from medical_kg_nlp.adapters.generative import GenerationConfig
-from medical_kg_nlp.benchmarks.phase1.qwen_proposals import Phase1QwenPassResult
-from medical_kg_nlp.benchmarks.phase1.qwen_runner import (
+from clingrounder.adapters.generative import GenerationConfig
+from clingrounder.benchmarks.phase1.qwen_proposals import Phase1QwenPassResult
+from clingrounder.benchmarks.phase1.qwen_runner import (
     Phase1QwenProposalRunConfig,
     _adjudication_candidates,
     _has_document_outputs,
@@ -26,9 +26,9 @@ from medical_kg_nlp.benchmarks.phase1.qwen_runner import (
     _write_document_rows,
     materialize_phase1_qwen_pass_source,
 )
-from medical_kg_nlp.ner.proposal import EntityProposal
-from medical_kg_nlp.schema.document import ClinicalDocument
-from medical_kg_nlp.schema.types import EntityType
+from clingrounder.ner.proposal import EntityProposal
+from clingrounder.schema.document import ClinicalDocument
+from clingrounder.schema.types import EntityType
 
 
 def test_runner_round_trips_support_rows_without_assertion_or_candidates() -> None:

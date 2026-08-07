@@ -75,7 +75,7 @@ not be combined into a single "records" count.
 Validate registry policy and dossier discoverability together:
 
 ```bash
-uv run medical-kg-research data registry validate \
+uv run clingrounder-research data registry validate \
   --registry data/sources/mining_registry.yaml \
   --processing-index data/sources/processing_status.yaml
 ```

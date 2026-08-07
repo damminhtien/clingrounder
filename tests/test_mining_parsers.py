@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.mining.parsers import (
+from clingrounder.mining.parsers import (
     BiocJsonParser,
     ClinicalTrialsJsonParser,
     CodiEspArchiveParser,
@@ -19,16 +19,16 @@ from medical_kg_nlp.mining.parsers import (
     PmcOaParser,
     SplXmlParser,
 )
-from medical_kg_nlp.mining.labelers import (
+from clingrounder.mining.labelers import (
     ClinicalTrialsStructuredLabelerAdapter,
     ClinicalTrialsStructuredRelationLabelerAdapter,
 )
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.records import (
     AccessClass,
     RedistributionPolicy,
     SourceArtifact,
 )
-from medical_kg_nlp.mining.storage import LocalArtifactStore
+from clingrounder.mining.storage import LocalArtifactStore
 
 
 def _artifact(

@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.dictionaries.icd10_sources import (
+from clingrounder.dictionaries.icd10_sources import (
     build_icd10_concept_rows,
     icd10_source_policy,
     load_icd10_vietnamese_overlays,

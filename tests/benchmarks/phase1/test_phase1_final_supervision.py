@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from medical_kg_nlp.benchmarks.phase1.final_supervision import (
+from clingrounder.benchmarks.phase1.final_supervision import (
     Phase1FinalSupervisionCorpus,
 )
-from medical_kg_nlp.benchmarks.phase1.reviewed_corpus import Phase1ReviewedCorpus
+from clingrounder.benchmarks.phase1.reviewed_corpus import Phase1ReviewedCorpus
 
 
 def test_final_supervision_requires_final_train_and_complete_provenance() -> None:

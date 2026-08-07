@@ -25,7 +25,7 @@ model:
 # 16 GiB Ampere-or-newer GPU. Development remains the only model-selection split.
 training:
   output_dir: outputs/models/phase1-five-type-xlmr-base-2026-07-22
-  cache_dir: .cache/medical-kg/model-training
+  cache_dir: .cache/clingrounder/model-training
   max_length: 512
   stride: 64
   train_batch_size: 4

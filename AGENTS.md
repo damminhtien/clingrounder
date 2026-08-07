@@ -69,7 +69,7 @@ uv run pytest tests
 Run the sample pipeline:
 
 ```bash
-uv run medical-kg pipeline run \
+uv run clingrounder pipeline run \
   --input data/samples/sample_notes.jsonl \
   --output outputs/predictions.jsonl
 ```
@@ -77,14 +77,14 @@ uv run medical-kg pipeline run \
 Validate predictions:
 
 ```bash
-uv run medical-kg validate \
+uv run clingrounder validate \
   --profile development \
   --pred outputs/predictions.jsonl \
   --documents data/samples/sample_notes.jsonl \
   --dictionary data/dictionaries/seed_concepts.jsonl
 ```
 
-If `uv` is not installed, use `python -m medical_kg_nlp.cli` after installing the project and dev
+If `uv` is not installed, use `python -m clingrounder.cli` after installing the project and dev
 dependencies.
 
 ## Command Output Hygiene

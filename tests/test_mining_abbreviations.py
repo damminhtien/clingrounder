@@ -5,23 +5,23 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 
-from medical_kg_nlp.cli.parser import build_parser
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.mining.abbreviations import (
+from clingrounder.cli.parser import build_parser
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.mining.abbreviations import (
     AbbreviationMiningPolicy,
     benchmark_abbreviation_knowledge,
     build_runtime_abbreviation_table,
     load_abbreviation_mining_policy,
     mine_abbreviations,
 )
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.records import (
     AccessClass,
     MinedDocument,
     RedistributionPolicy,
     SourceArtifact,
     StoredObject,
 )
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.schema.types import CodeSystem, EntityType
 
 _SOURCE_SHA256 = "a" * 64
 _SOURCE_VERSION = "fixture-2026-07-22"
@@ -317,7 +317,7 @@ def _artifact() -> SourceArtifact:
         source_uri="https://example.test/fixture.jsonl",
         object=StoredObject(
             sha256=_SOURCE_SHA256,
-            uri=f"medical-kg-cas://sha256/{_SOURCE_SHA256}",
+            uri=f"clingrounder-cas://sha256/{_SOURCE_SHA256}",
             byte_size=1,
         ),
         media_type="application/jsonl",

@@ -4,17 +4,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from medical_kg_nlp.adapters.hybrid import (
+from clingrounder.adapters.hybrid import (
     HybridArbitrationPolicy,
     HybridEntityExtractorAdapter,
 )
-from medical_kg_nlp.schema.annotation import (
+from clingrounder.schema.annotation import (
     AmbiguousEntityProposal,
     EntityAnnotation,
     EntityExtractionResult,
 )
-from medical_kg_nlp.schema.types import EntityType
-from medical_kg_nlp.utils.text import normalize_for_match
+from clingrounder.schema.types import EntityType
+from clingrounder.utils.text import normalize_for_match
 
 
 @dataclass(frozen=True)

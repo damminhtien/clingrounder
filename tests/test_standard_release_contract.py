@@ -8,10 +8,10 @@ from pathlib import Path
 import pytest
 import yaml
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.dictionaries.synonym_table import ConceptEntry
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
-from medical_kg_nlp.terminology import (
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.dictionaries.synonym_table import ConceptEntry
+from clingrounder.schema.types import CodeSystem, EntityType
+from clingrounder.terminology import (
     CompositeTerminologyRepository,
     InMemoryTerminologyRepository,
 )

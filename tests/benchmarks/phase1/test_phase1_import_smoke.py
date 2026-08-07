@@ -17,7 +17,7 @@ def test_phase1_plugin_imports_in_fresh_process() -> None:
         [
             sys.executable,
             "-c",
-            "import medical_kg_nlp.benchmarks.phase1.phase1",
+            "import clingrounder.benchmarks.phase1.phase1",
         ],
         check=True,
         cwd=repo_root,

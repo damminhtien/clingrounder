@@ -7,7 +7,7 @@ This guide is the shortest path from a clean clone to a reviewable change.
 ```bash
 uv sync --extra dev
 uv run pre-commit install
-uv run medical-kg pipeline run \
+uv run clingrounder pipeline run \
   --config configs/pipeline/clinical-baseline.yaml \
   --input data/samples/sample_notes.jsonl \
   --output outputs/sample-predictions.jsonl
@@ -21,13 +21,13 @@ Without `uv`, create a virtual environment and install `.[dev]`.
 2. Read [invariants.md](invariants.md) and [schema.md](schema.md).
 3. Use [code-map.md](code-map.md) to identify the owning package and public port.
 4. Search for the contract and nearby tests with `rg`.
-5. Keep benchmark policy below `medical_kg_nlp.benchmarks`.
+5. Keep benchmark policy below `clingrounder.benchmarks`.
 
 Useful searches:
 
 ```bash
-rg "class .*Port" src/medical_kg_nlp/pipeline src/medical_kg_nlp/terminology
-rg "EntityAnnotation|RelationAnnotation" src/medical_kg_nlp/schema tests
+rg "class .*Port" src/clingrounder/pipeline src/clingrounder/terminology
+rg "EntityAnnotation|RelationAnnotation" src/clingrounder/schema tests
 rg "INVARIANT:|SCALING:|MODEL:|LICENSE:|PRIVACY:" src tests
 ```
 
@@ -42,7 +42,7 @@ rg "INVARIANT:|SCALING:|MODEL:|LICENSE:|PRIVACY:" src tests
 
 ```bash
 uv run pytest tests/test_context_rules.py -q
-uv run ruff check src/medical_kg_nlp/context tests/test_context_rules.py
+uv run ruff check src/clingrounder/context tests/test_context_rules.py
 uv run mypy src
 uv run pytest tests
 ```
@@ -115,7 +115,7 @@ endpoint/evidence validity are hard gates in every tier.
 ## Public Release Check
 
 ```bash
-uv run medical-kg release audit \
+uv run clingrounder release audit \
   --policy configs/repository/public-release.yaml \
   --root .
 ```

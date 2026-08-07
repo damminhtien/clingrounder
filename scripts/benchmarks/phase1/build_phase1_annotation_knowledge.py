@@ -8,12 +8,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
-from medical_kg_nlp.benchmarks.phase1.annotation_knowledge import (
+from clingrounder.benchmarks.phase1.annotation_knowledge import (
     compile_annotation_knowledge,
     write_annotation_knowledge,
 )
-from medical_kg_nlp.benchmarks.phase1.manual_gold import manual_gold_split
-from medical_kg_nlp.utils.io import read_jsonl
+from clingrounder.benchmarks.phase1.manual_gold import manual_gold_split
+from clingrounder.utils.io import read_jsonl
 
 
 def main() -> None:

@@ -8,8 +8,8 @@ from pathlib import Path
 
 import yaml
 
-from medical_kg_nlp.cli.main import main
-from medical_kg_nlp.mining.runner import (
+from clingrounder.cli.main import main
+from clingrounder.mining.runner import (
     artifact_store_from_uri,
     load_mining_plan,
     run_mining_plan,
@@ -158,7 +158,7 @@ def test_full_dailymed_plan_pins_every_human_release_part(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    monkeypatch.setenv("MEDICAL_KG_ARTIFACT_STORE", str(tmp_path / "external-store"))
+    monkeypatch.setenv("CLINGROUNDER_ARTIFACT_STORE", str(tmp_path / "external-store"))
 
     plan = load_mining_plan("configs/mining/dailymed-full-human-2026-07-21.yaml")
     artifacts = plan.sources[0].parameters["artifacts"]
@@ -187,7 +187,7 @@ def test_rxnorm_plan_resolves_runtime_paths_but_pins_source_identity(
 ) -> None:
     archive = tmp_path / "licensed" / "RxNorm_full_07062026.zip"
     monkeypatch.setenv("RXNORM_FULL_ARCHIVE", str(archive))
-    monkeypatch.setenv("MEDICAL_KG_ARTIFACT_STORE", str(tmp_path / "external-store"))
+    monkeypatch.setenv("CLINGROUNDER_ARTIFACT_STORE", str(tmp_path / "external-store"))
 
     plan = load_mining_plan("configs/mining/rxnorm-full-2026-07-06.yaml")
     source = plan.sources[0]
@@ -207,7 +207,7 @@ def test_phase1_round2_plan_requires_runtime_archive_and_pins_sha256(
     archive = tmp_path / "private" / "input_turn2_vong1.zip"
     monkeypatch.setenv("PHASE1_ROUND2_ARCHIVE", str(archive))
     monkeypatch.setenv(
-        "MEDICAL_KG_ARTIFACT_STORE",
+        "CLINGROUNDER_ARTIFACT_STORE",
         f"file://{tmp_path / 'encrypted-artifact-store'}",
     )
 

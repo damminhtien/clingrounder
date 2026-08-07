@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.dictionaries.rxnorm_sources import (
+from clingrounder.dictionaries.rxnorm_sources import (
     RXNORM_CURRENT_ARCHIVE_FILE,
     RXNORM_CURRENT_FULL_SOURCE_ID,
     RXNORM_CURRENT_PRESCRIBABLE_SOURCE_ID,

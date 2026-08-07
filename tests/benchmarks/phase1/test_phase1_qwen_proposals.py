@@ -7,8 +7,8 @@ from collections.abc import Sequence
 
 import pytest
 
-from medical_kg_nlp.adapters.generative import ChatMessage, GenerationConfig
-from medical_kg_nlp.benchmarks.phase1.qwen_proposals import (
+from clingrounder.adapters.generative import ChatMessage, GenerationConfig
+from clingrounder.benchmarks.phase1.qwen_proposals import (
     Phase1AdjudicationCandidate,
     Phase1AdjudicationDecision,
     Phase1QwenAdapter,
@@ -20,8 +20,8 @@ from medical_kg_nlp.benchmarks.phase1.qwen_proposals import (
     select_qwen_confirmed_proposals,
     split_raw_text_windows,
 )
-from medical_kg_nlp.ner.proposal import EntityProposal
-from medical_kg_nlp.schema.types import EntityType
+from clingrounder.ner.proposal import EntityProposal
+from clingrounder.schema.types import EntityType
 
 
 class _FakeRuntime:

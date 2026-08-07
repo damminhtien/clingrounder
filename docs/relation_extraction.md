@@ -30,6 +30,6 @@ treated as evidence that a relation is valid.
 
 ## Evaluation slices
 
-Use `medical_kg_nlp.evaluation.relation_slice_counts` to profile relation type, token distance,
+Use `clingrounder.evaluation.relation_slice_counts` to profile relation type, token distance,
 same-clause versus same-sentence scope, assertion status, evidence source, terminology-backed
 versus heuristic evidence, and medication/lab structural slices.

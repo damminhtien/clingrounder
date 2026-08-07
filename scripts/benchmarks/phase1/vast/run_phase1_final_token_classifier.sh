@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=../../../vast/template_runtime.sh
 source "${SCRIPT_DIR}/../../../vast/template_runtime.sh"
 
-REPO_ROOT="${REPO_ROOT:-/workspace/medical-kg}"
+REPO_ROOT="${REPO_ROOT:-/workspace/clingrounder}"
 TEMPLATE_PYTHON="${TEMPLATE_PYTHON:-/venv/main/bin/python}"
 HF_HOME="${HF_HOME:-/workspace/hf}"
 PIP_CACHE_DIR="${PIP_CACHE_DIR:-/workspace/pip-cache}"
@@ -27,8 +27,8 @@ export HF_HOME PIP_CACHE_DIR
 
 # SCALING: preserve the template's CUDA runtime and populate its local cache once. This avoids
 # transferring a large checkpoint through the slower workstation-to-host path.
-medical_kg_vast_verify_pytorch_template "${TEMPLATE_PYTHON}"
-medical_kg_vast_install_project_runtime \
+clingrounder_vast_verify_pytorch_template "${TEMPLATE_PYTHON}"
+clingrounder_vast_install_project_runtime \
   "${TEMPLATE_PYTHON}" \
   "${REPO_ROOT}" \
   "${PIP_CACHE_DIR}" \
@@ -81,19 +81,19 @@ PY
 
 # INVARIANT: the dataset loader verifies the authorization manifest and LF child-document offsets
 # before writing token windows. Round 2 and Friend31 cannot enter this final-fit source.
-"${TEMPLATE_PYTHON}" -m medical_kg_nlp.cli \
+"${TEMPLATE_PYTHON}" -m clingrounder.cli \
   benchmark phase1 model-data build-final-fit \
   --output-dir outputs/mining/model-datasets/phase1-final-supervision-five-type-v1
 
 # MODEL: this dataset adds renderer-derived Vietnamese Q&A/educational examples only. It is
 # bounded below 40% and cannot pull Round 2, Friend31, or a cached prediction into final fitting.
-"${TEMPLATE_PYTHON}" -m medical_kg_nlp.cli \
+"${TEMPLATE_PYTHON}" -m clingrounder.cli \
   benchmark phase1 model-data build-final-fit-bundle \
   --output-dir outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1
 
 # MODEL: this source feeds the learned joint lattice; it is not independently promoted by local
 # metrics. The official BTC artifact remains the only quality decision point.
-timeout --signal=TERM "${MAX_RUNTIME_SECONDS}" "${TEMPLATE_PYTHON}" -m medical_kg_nlp.cli \
+timeout --signal=TERM "${MAX_RUNTIME_SECONDS}" "${TEMPLATE_PYTHON}" -m clingrounder.cli \
   model train-token-classifier-run \
   --config "${RUN_CONFIG}"
 

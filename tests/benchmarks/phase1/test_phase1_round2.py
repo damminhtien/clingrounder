@@ -6,13 +6,13 @@ import hashlib
 import json
 from pathlib import Path
 
-from medical_kg_nlp.benchmarks.phase1.round2 import (
+from clingrounder.benchmarks.phase1.round2 import (
     build_phase1_round2_audit,
     load_phase1_round2_documents,
     write_phase1_round2_audit,
 )
-from medical_kg_nlp.mining.io import write_jsonl
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.io import write_jsonl
+from clingrounder.mining.records import (
     AccessClass,
     MinedDocument,
     RedistributionPolicy,

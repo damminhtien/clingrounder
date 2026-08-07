@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from medical_kg_nlp.adapters import HuggingFaceCrossEncoderAdapter, HuggingFaceModelConfig
-from medical_kg_nlp.pipeline import (
+from clingrounder.adapters import HuggingFaceCrossEncoderAdapter, HuggingFaceModelConfig
+from clingrounder.pipeline import (
     PipelineFactory,
     PipelineConfig,
     PipelineOptions,

@@ -34,7 +34,7 @@ reranking, context, validation, or relation extraction.
 
 ## Schema
 
-Internal schemas live under `src/medical_kg_nlp/schema/`:
+Internal schemas live under `src/clingrounder/schema/`:
 
 - `EntityType`: disease, symptom, drug, lab test, lab result, procedure, patient info, anatomy, finding, other.
 - `AssertionStatus`: present, negated, historical, family, possible, conditional, planned, resolved, unknown.

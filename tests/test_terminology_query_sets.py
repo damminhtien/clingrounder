@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.terminology import (
+from clingrounder.terminology import (
     build_alias_overlay_queries,
     build_linked_proposal_queries,
     load_terminology_queries,

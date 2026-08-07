@@ -32,7 +32,7 @@ pre-release semantic versioning while the public API is still maturing.
 ### Changed
 
 - Renamed the PyPI distribution to `clingrounder`.
-- Kept the Python import namespace as `medical_kg_nlp` to reflect the package layout.
+- Kept the Python import namespace as `clingrounder` to reflect the package layout.
 - Added strict validation for spans, terminology membership, candidates, relations, configuration,
   runtime lifecycle, and release artifacts.
 

@@ -6,16 +6,16 @@ import io
 import zipfile
 from pathlib import Path
 
-from medical_kg_nlp.mining.labelers import BratArchiveLabelerAdapter
-from medical_kg_nlp.mining.parsers import BratArchiveParser
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.labelers import BratArchiveLabelerAdapter
+from clingrounder.mining.parsers import BratArchiveParser
+from clingrounder.mining.records import (
     AccessClass,
     AnnotationLayer,
     RedistributionPolicy,
     ReviewStatus,
     SourceArtifact,
 )
-from medical_kg_nlp.mining.storage import LocalArtifactStore
+from clingrounder.mining.storage import LocalArtifactStore
 
 
 def _brat_fixture(tmp_path: Path) -> tuple[SourceArtifact, LocalArtifactStore]:

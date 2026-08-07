@@ -1,4 +1,4 @@
-schema_version: medical-kg.pipeline-profile
+schema_version: clingrounder.pipeline-profile
 profile:
   id: full-terminology
   title: Full ICD-10 and RxNorm terminology pipeline
@@ -25,10 +25,10 @@ terminology:
     - ../../outputs/mining/knowledge/dailymed-rxnorm-2026-07-17/alias_overlay.jsonl
     # Full released-source overlay. Held-out metrics use a separate train-only artifact.
     - ../../outputs/mining/knowledge/codiesp-icd10-2026-07-18/alias_overlay.jsonl
-  normalization_index_path: ../../.cache/medical-kg/terminology/terminology-a2d5a19e83fbc9e1a305.sqlite3
+  normalization_index_path: ../../.cache/clingrounder/terminology/terminology-a2d5a19e83fbc9e1a305.sqlite3
   # Optional mined KG exact retrieval. Keep disabled unless its graph fingerprint is pinned.
-  knowledge_graph_index_path: ../../.cache/medical-kg/knowledge-graph/knowledge-graph-668ddc869e58db0583c0.sqlite3
-  cache_dir: ../../.cache/medical-kg/terminology
+  knowledge_graph_index_path: ../../.cache/clingrounder/knowledge-graph/knowledge-graph-668ddc869e58db0583c0.sqlite3
+  cache_dir: ../../.cache/clingrounder/terminology
   # SCALING: bounded per-process cache removes repeated SQLite work for recurring mentions.
   query_cache_size: 4096
 

@@ -6,18 +6,18 @@ import io
 import zipfile
 from pathlib import Path
 
-from medical_kg_nlp.mining.labelers import (
+from clingrounder.mining.labelers import (
     CodiEspArchiveLabelerAdapter,
     CodiEspLabelMapping,
 )
-from medical_kg_nlp.mining.parsers import CodiEspArchiveParser
-from medical_kg_nlp.mining.records import (
+from clingrounder.mining.parsers import CodiEspArchiveParser
+from clingrounder.mining.records import (
     AccessClass,
     RedistributionPolicy,
     ReviewStatus,
     SourceArtifact,
 )
-from medical_kg_nlp.mining.storage import LocalArtifactStore
+from clingrounder.mining.storage import LocalArtifactStore
 
 
 def _fixture(tmp_path: Path) -> tuple[SourceArtifact, LocalArtifactStore]:

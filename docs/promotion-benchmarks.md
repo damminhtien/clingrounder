@@ -8,7 +8,7 @@ mentions, and candidate ambiguity.
 Run it with a pinned profile:
 
 ```bash
-medical-kg-benchmark runtime run \
+clingrounder-benchmark runtime run \
   --input data/benchmarks/promotion/runtime_documents.jsonl \
   --config configs/pipeline/clinical-baseline.yaml \
   --output artifacts/benchmarks/runtime.json \
@@ -18,7 +18,7 @@ medical-kg-benchmark runtime run \
 Compare two JSON artifacts in CI:
 
 ```bash
-medical-kg-benchmark compare baseline.json candidate.json \
+clingrounder-benchmark compare baseline.json candidate.json \
   --output artifacts/benchmarks/comparison.json
 ```
 

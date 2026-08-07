@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import pytest
 
-from medical_kg_nlp.ner.contracts import RuleNerContext
-from medical_kg_nlp.ner.document_structure import DocumentStructureAnalyzer
-from medical_kg_nlp.ner.extractors.contextual_alias import (
+from clingrounder.ner.contracts import RuleNerContext
+from clingrounder.ner.document_structure import DocumentStructureAnalyzer
+from clingrounder.ner.extractors.contextual_alias import (
     ContextGate,
     ContextualAliasProposalExtractor,
     ContextualAliasRule,
     load_contextual_alias_rules,
 )
-from medical_kg_nlp.ner.medication_list_parser import MedicationListItem
-from medical_kg_nlp.schema.types import EntityType
+from clingrounder.ner.medication_list_parser import MedicationListItem
+from clingrounder.schema.types import EntityType
 
 
 def test_contextual_alias_requires_reviewed_symptom_structure() -> None:

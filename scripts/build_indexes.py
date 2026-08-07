@@ -7,9 +7,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.utils.io import read_yaml
-from medical_kg_nlp.utils.text import normalize_for_match
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.utils.io import read_yaml
+from clingrounder.utils.text import normalize_for_match
 
 
 def main() -> None:

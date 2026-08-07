@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from medical_kg_nlp.linking.candidate_emission import (
+from clingrounder.linking.candidate_emission import (
     CandidateEmissionCandidate,
     CandidateEmissionContext,
     CandidateEmissionPolicy,
@@ -11,7 +11,7 @@ from medical_kg_nlp.linking.candidate_emission import (
     expected_jaccard_for_subset,
     select_candidate_emission,
 )
-from medical_kg_nlp.schema.types import CodeSystem, EntityType
+from clingrounder.schema.types import CodeSystem, EntityType
 
 
 def test_icd_preserves_existing_multicode_without_compression() -> None:

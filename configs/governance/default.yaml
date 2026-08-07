@@ -1,4 +1,4 @@
-schema_version: medical-kg.governance.v1
+schema_version: clingrounder.governance.v1
 governance:
   local_files_only: true
   allowed_artifact_roots: [./data, ./.cache/models]

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.evaluation.data_profile import profile_paths
+from clingrounder.evaluation.data_profile import profile_paths
 
 
 def test_profile_paths_reports_core_distributions() -> None:

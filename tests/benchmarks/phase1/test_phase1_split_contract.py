@@ -2,10 +2,10 @@ import hashlib
 import json
 from pathlib import Path
 
-from medical_kg_nlp.benchmarks.phase1.split_contract import (
+from clingrounder.benchmarks.phase1.split_contract import (
     load_phase1_split_contract,
 )
-from medical_kg_nlp.utils.hashing import sha256_file
+from clingrounder.utils.hashing import sha256_file
 
 
 def _ids_sha256(values: list[str]) -> str:

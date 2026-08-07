@@ -7,11 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from medical_kg_nlp.cli.parser import build_parser
-from medical_kg_nlp.training.causal_artifact import finalize_causal_qlora_artifact
-from medical_kg_nlp.training.causal_qlora import inspect_causal_qlora_inputs
-from medical_kg_nlp.training.causal_run_spec import load_causal_qlora_run_spec
-from medical_kg_nlp.utils.hashing import sha256_file
+from clingrounder.cli.parser import build_parser
+from clingrounder.training.causal_artifact import finalize_causal_qlora_artifact
+from clingrounder.training.causal_qlora import inspect_causal_qlora_inputs
+from clingrounder.training.causal_run_spec import load_causal_qlora_run_spec
+from clingrounder.utils.hashing import sha256_file
 
 
 def test_checked_in_qwen_stages_pin_model_data_and_adapter_handoff() -> None:

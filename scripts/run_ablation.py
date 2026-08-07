@@ -10,21 +10,21 @@ from typing import Any, cast
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from medical_kg_nlp.datasets.synthetic_adapter import SyntheticDatasetAdapter
-from medical_kg_nlp.dictionaries.dictionary_store import DictionaryStore
-from medical_kg_nlp.experiments.ablation import (
+from clingrounder.datasets.synthetic_adapter import SyntheticDatasetAdapter
+from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.experiments.ablation import (
     AblationVariantResult,
     aggregate_traces,
     write_stage_timings_csv,
     write_summary_csv,
 )
-from medical_kg_nlp.evaluation.end_to_end_metrics import evaluate_predictions
-from medical_kg_nlp.pipeline import PipelineOptions
-from medical_kg_nlp.pipeline.factory import PipelineFactory, PipelineConfig, TerminologyConfig
-from medical_kg_nlp.schema.output import ClinicalPrediction
-from medical_kg_nlp.schema.validator import PredictionValidator
-from medical_kg_nlp.utils.io import read_yaml, write_jsonl
-from medical_kg_nlp.utils.run_output import create_hashed_run_dir, path_in_run
+from clingrounder.evaluation.end_to_end_metrics import evaluate_predictions
+from clingrounder.pipeline import PipelineOptions
+from clingrounder.pipeline.factory import PipelineFactory, PipelineConfig, TerminologyConfig
+from clingrounder.schema.output import ClinicalPrediction
+from clingrounder.schema.validator import PredictionValidator
+from clingrounder.utils.io import read_yaml, write_jsonl
+from clingrounder.utils.run_output import create_hashed_run_dir, path_in_run
 
 
 def main() -> None:

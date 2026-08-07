@@ -5,8 +5,8 @@ from __future__ import annotations
 import zipfile
 from pathlib import Path
 
-from medical_kg_nlp.schema.validator import PredictionValidationIssue
-from medical_kg_nlp.validation import (
+from clingrounder.schema.validator import PredictionValidationIssue
+from clingrounder.validation import (
     ValidationProfile,
     ValidationSeverity,
     apply_validation_profile,

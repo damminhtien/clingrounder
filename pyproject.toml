@@ -40,9 +40,9 @@ dependencies = [
 ]
 
 [project.scripts]
-medical-kg = "medical_kg_nlp.cli:operational_main"
-medical-kg-research = "medical_kg_nlp.cli:research_main"
-medical-kg-benchmark = "medical_kg_nlp.cli:benchmark_main"
+clingrounder = "clingrounder.cli:operational_main"
+clingrounder-research = "clingrounder.cli:research_main"
+clingrounder-benchmark = "clingrounder.cli:benchmark_main"
 
 [project.optional-dependencies]
 dev = [
@@ -109,7 +109,7 @@ Changelog = "https://github.com/damminhtien/clingrounder/blob/main/CHANGELOG.md"
 where = ["src"]
 
 [tool.setuptools.package-data]
-medical_kg_nlp = [
+clingrounder = [
   "resources/*.jsonl",
   "benchmarks/phase1/resources/*.jsonl",
 ]

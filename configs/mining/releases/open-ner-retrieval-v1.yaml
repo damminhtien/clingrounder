@@ -18,7 +18,7 @@ artifacts:
     description: Exact transitive Python dependency resolution.
   - id: mining-implementation
     role: implementation
-    path: src/medical_kg_nlp
+    path: src/clingrounder
     description: Pipeline, mining, NER, retrieval, and evaluation implementation.
     # Runtime bytecode is Python/platform-specific and is never source provenance.
     exclude:
@@ -321,55 +321,55 @@ rebuild_steps:
   - id: validate-source-policy
     description: Validate source licenses, processing dossiers, and checked-in run configs.
     command: >-
-      uv run medical-kg data registry validate --registry data/sources/mining_registry.yaml
+      uv run clingrounder data registry validate --registry data/sources/mining_registry.yaml
       --processing-index data/sources/processing_status.yaml --repository-root .
   - id: acquire-vietbioner
     description: Restore the immutable Vietnamese source archive and parsed documents.
-    command: uv run medical-kg data run --plan configs/mining/vietbioner.yaml
+    command: uv run clingrounder data run --plan configs/mining/vietbioner.yaml
   - id: acquire-codiesp
     description: Restore the immutable CodiEsp source archive and parsed documents.
-    command: uv run medical-kg data run --plan configs/mining/codiesp.yaml
+    command: uv run clingrounder data run --plan configs/mining/codiesp.yaml
   - id: acquire-dailymed-rxnorm
     description: Restore the official SPL-to-RxNorm crosswalk.
-    command: uv run medical-kg data run --plan configs/mining/dailymed-rxnorm-2026-07-17.yaml
+    command: uv run clingrounder data run --plan configs/mining/dailymed-rxnorm-2026-07-17.yaml
   - id: compile-dailymed-rxnorm
     description: Rebuild the official versioned SPL-to-RxNorm mapping and derived query index.
     command: >-
-      uv run medical-kg data mapping compile-dailymed-rxnorm
+      uv run clingrounder data mapping compile-dailymed-rxnorm
       --artifacts outputs/mining/dailymed-rxnorm-2026-07-17/artifacts.jsonl
-      --store "$MEDICAL_KG_ARTIFACT_STORE"
+      --store "$CLINGROUNDER_ARTIFACT_STORE"
       --output outputs/mining/dailymed-rxnorm-2026-07-17/compiled_mappings.jsonl
       --index-output outputs/mining/dailymed-rxnorm-2026-07-17/dailymed_rxnorm.sqlite3
       --report-output outputs/mining/dailymed-rxnorm-2026-07-17/compilation_report.json
   - id: acquire-dailymed-rx-part6
     description: Restore and parse the executed full-release prescription tranche.
     command: >-
-      uv run medical-kg data run
+      uv run clingrounder data run
       --plan configs/mining/dailymed-human-rx-part6-2026-07-21.yaml
   - id: acquire-rxnorm-full
     description: Import the caller-supplied licensed July RxNorm ZIP into the selected CAS.
-    command: uv run medical-kg data run --plan configs/mining/rxnorm-full-2026-07-06.yaml
+    command: uv run clingrounder data run --plan configs/mining/rxnorm-full-2026-07-06.yaml
   - id: hydrate-rxnorm-full
     description: Restore the pinned RxNorm CAS object to a local seekable archive for RRF readers.
     command: >-
-      uv run medical-kg data artifact materialize
-      --store "$MEDICAL_KG_ARTIFACT_STORE"
+      uv run clingrounder data artifact materialize
+      --store "$CLINGROUNDER_ARTIFACT_STORE"
       --sha256 53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c
       --expected-byte-size 259313098
-      --output .cache/medical-kg/release-inputs/RxNorm_full_07062026.zip
+      --output .cache/clingrounder/release-inputs/RxNorm_full_07062026.zip
   - id: label-dailymed-rx-part6
     description: Rebuild bounded-memory exact structured annotation supervision.
     command: >-
-      uv run medical-kg data label propose
+      uv run clingrounder data label propose
       --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl
-      --adapter medical_kg_nlp.mining.labelers.dailymed:create_dailymed_structured_labeler
+      --adapter clingrounder.mining.labelers.dailymed:create_dailymed_structured_labeler
       --adapter-config configs/mining/labelers/dailymed-structured.yaml
       --output outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl
       --batch-size 256
   - id: freeze-dailymed-rx-part6
     description: Recreate the exact-dedup train/development split used by every downstream probe.
     command: >-
-      uv run medical-kg data snapshot freeze
+      uv run clingrounder data snapshot freeze
       --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl
       --annotations outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl
       --artifacts outputs/mining/dailymed-human-rx-part6-2026-07-21/artifacts.jsonl
@@ -382,8 +382,8 @@ rebuild_steps:
   - id: compile-rxnorm-full-ndc
     description: Stream active package NDC attributes from the pinned full RxNorm archive.
     command: >-
-      uv run medical-kg data mapping compile-rxnorm-ndc
-      --source .cache/medical-kg/release-inputs/RxNorm_full_07062026.zip
+      uv run clingrounder data mapping compile-rxnorm-ndc
+      --source .cache/clingrounder/release-inputs/RxNorm_full_07062026.zip
       --source-version rxnorm-full-2026-07-06
       --expected-source-sha256 53523ee9f1fcd7ee426698edf566aedebe548a6ec8cc372c41271fc5b28e784c
       --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc_rows.jsonl
@@ -392,7 +392,7 @@ rebuild_steps:
   - id: link-dailymed-rx-part6-products
     description: Link products only when exact SPL/version and normalized NDC evidence intersect.
     command: >-
-      uv run medical-kg data mapping link-dailymed-products
+      uv run clingrounder data mapping link-dailymed-products
       --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl
       --dailymed-mapping-index outputs/mining/dailymed-rxnorm-2026-07-17/dailymed_rxnorm.sqlite3
       --rxnorm-ndc-index outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/rxnorm_ndc.sqlite3
@@ -402,7 +402,7 @@ rebuild_steps:
   - id: build-dailymed-rx-part6-inventory
     description: Aggregate only the frozen train split into a source-label-aware mention inventory.
     command: >-
-      uv run medical-kg data lexicon build
+      uv run clingrounder data lexicon build
       --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl
       --annotations outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl
       --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json
@@ -413,7 +413,7 @@ rebuild_steps:
   - id: compile-dailymed-rx-part6-recognition
     description: Compile code-free DailyMed drug terms from the pinned train inventory.
     command: >-
-      uv run medical-kg data knowledge compile-recognition
+      uv run clingrounder data knowledge compile-recognition
       --inventory outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_mention_inventory_all.jsonl
       --policy configs/mining/knowledge/dailymed-rx-part6-recognition-singletons-2026-07-22.yaml
       --baseline-dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
@@ -423,7 +423,7 @@ rebuild_steps:
   - id: benchmark-dailymed-rx-part6-recognition
     description: Evaluate the train-only dictionary on held-out structured product documents.
     command: >-
-      uv run medical-kg data knowledge benchmark-recognition
+      uv run clingrounder data knowledge benchmark-recognition
       --documents outputs/mining/dailymed-human-rx-part6-2026-07-21/documents.jsonl
       --annotations outputs/mining/dailymed-human-rx-part6-2026-07-21/structured_annotations.jsonl
       --baseline-dictionary data/standards/phase1_seed_tt06_rxnorm_controlled_concepts.jsonl
@@ -435,7 +435,7 @@ rebuild_steps:
   - id: propose-dailymed-rx-part6-aliases
     description: Build exact product alias hypotheses from linked products in the frozen train split.
     command: >-
-      uv run medical-kg data lexicon propose-dailymed-product-aliases
+      uv run clingrounder data lexicon propose-dailymed-product-aliases
       --links outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_links.jsonl
       --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json
       --split train
@@ -445,7 +445,7 @@ rebuild_steps:
   - id: propose-dailymed-rx-part6-development-aliases
     description: Build held-out linked aliases for retrieval evaluation without training leakage.
     command: >-
-      uv run medical-kg data lexicon propose-dailymed-product-aliases
+      uv run clingrounder data lexicon propose-dailymed-product-aliases
       --links outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/product_links.jsonl
       --split-manifest outputs/mining/snapshots/dailymed-human-rx-part6-2026-07-21-structured-silver-v1/manifest.json
       --split development
@@ -455,16 +455,16 @@ rebuild_steps:
   - id: build-rxnorm-base-index
     description: Build the derived full-RxNorm lexical index from canonical JSONL.
     command: >-
-      uv run medical-kg terminology build
+      uv run clingrounder terminology build
       --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
-      --output .cache/medical-kg/terminology/terminology-0000a0a5bf3f1286c3f2.sqlite3
+      --output .cache/clingrounder/terminology/terminology-0000a0a5bf3f1286c3f2.sqlite3
       --manifest-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/base_terminology_manifest.json
   - id: compile-dailymed-rx-part6-aliases
     description: Promote only globally unique product aliases against the pinned base index.
     command: >-
-      uv run medical-kg data knowledge compile-aliases
+      uv run clingrounder data knowledge compile-aliases
       --proposals outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_proposals.jsonl
-      --index .cache/medical-kg/terminology/terminology-0000a0a5bf3f1286c3f2.sqlite3
+      --index .cache/clingrounder/terminology/terminology-0000a0a5bf3f1286c3f2.sqlite3
       --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
       --policy configs/mining/knowledge/dailymed-rx-part6-product-aliases-2026-07-22.yaml
       --overlay-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl
@@ -474,15 +474,15 @@ rebuild_steps:
   - id: build-rxnorm-enriched-index
     description: Build a derived lexical index with the train-only DailyMed overlay.
     command: >-
-      uv run medical-kg terminology build
+      uv run clingrounder terminology build
       --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
       --alias-overlay outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl
-      --output .cache/medical-kg/terminology/terminology-c750ca7121eda394a91f.sqlite3
+      --output .cache/clingrounder/terminology/terminology-c750ca7121eda394a91f.sqlite3
       --manifest-output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/enriched_terminology_manifest.json
   - id: build-dailymed-rx-part6-retrieval-queries
     description: Freeze linked held-out aliases as neutral retrieval queries and seen/unseen slices.
     command: >-
-      uv run medical-kg terminology query-set
+      uv run clingrounder terminology query-set
       --linked-proposal outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_alias_proposals.jsonl
       --reference-alias-overlay outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl
       --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries.jsonl
@@ -490,8 +490,8 @@ rebuild_steps:
   - id: benchmark-dailymed-rx-part6-base-retrieval
     description: Benchmark canonical full-RxNorm lexical retrieval on held-out product aliases.
     command: >-
-      uv run medical-kg terminology benchmark
-      --index .cache/medical-kg/terminology/terminology-0000a0a5bf3f1286c3f2.sqlite3
+      uv run clingrounder terminology benchmark
+      --index .cache/clingrounder/terminology/terminology-0000a0a5bf3f1286c3f2.sqlite3
       --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
       --queries outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries.jsonl
       --output outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/base_product_retrieval_benchmark.json
@@ -499,8 +499,8 @@ rebuild_steps:
   - id: benchmark-dailymed-rx-part6-enriched-retrieval
     description: Benchmark the train-only overlay on the same held-out retrieval queries.
     command: >-
-      uv run medical-kg terminology benchmark
-      --index .cache/medical-kg/terminology/terminology-c750ca7121eda394a91f.sqlite3
+      uv run clingrounder terminology benchmark
+      --index .cache/clingrounder/terminology/terminology-c750ca7121eda394a91f.sqlite3
       --source data/standards/rxnorm/processed/rxnorm_full_07062026_concepts.jsonl
       --alias-overlay outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/train_product_alias_overlay.jsonl
       --queries outputs/mining/knowledge/dailymed-rx-part6-rxnorm-2026-07-22/development_product_queries.jsonl
@@ -508,11 +508,11 @@ rebuild_steps:
       --limit 20
   - id: fuse-open-corpus
     description: Fuse the source-specific curated outputs after following their dossiers.
-    command: uv run medical-kg data dataset fuse --plan configs/mining/open_corpus_v1.yaml
+    command: uv run clingrounder data dataset fuse --plan configs/mining/open_corpus_v1.yaml
   - id: inspect-full-type-model-run
     description: Validate pinned model inputs and print the immutable checkpoint prefetch command.
     command: >-
-      uv run medical-kg model inspect-token-classifier-run
+      uv run clingrounder model inspect-token-classifier-run
       --config configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml
   - id: prefetch-full-type-model
     description: Cache the immutable upstream checkpoint before the offline training stage.
@@ -522,11 +522,11 @@ rebuild_steps:
   - id: train-full-type-model
     description: Optionally reproduce the local checkpoint on a compatible Linux/CUDA worker.
     command: >-
-      uv run medical-kg model train-token-classifier-run
+      uv run clingrounder model train-token-classifier-run
       --config configs/models/open-corpus-full-type-xlmr-base-2026-07-19.yaml
   - id: verify-release
     description: Verify all restored or rebuilt release bytes without machine-local paths.
     command: >-
-      uv run medical-kg data release verify
+      uv run clingrounder data release verify
       --manifest data/releases/open-ner-retrieval-v1.lock.json --root .
-      --store "$MEDICAL_KG_ARTIFACT_STORE" --require-cas-objects
+      --store "$CLINGROUNDER_ARTIFACT_STORE" --require-cas-objects

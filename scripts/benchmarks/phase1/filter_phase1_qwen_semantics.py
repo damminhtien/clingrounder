@@ -7,10 +7,10 @@ import argparse
 import json
 from pathlib import Path
 
-from medical_kg_nlp.benchmarks.phase1.qwen_semantic_gate import (
+from clingrounder.benchmarks.phase1.qwen_semantic_gate import (
     filter_high_precision_qwen_proposals,
 )
-from medical_kg_nlp.mining.io import load_documents
+from clingrounder.mining.io import load_documents
 
 
 def main() -> int:
