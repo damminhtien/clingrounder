@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/damminhtien/clingrounder/benchmarks/vi-clinical-grounding-v1/schema.json",
+  "type": "object",
+  "required": ["document_id", "text", "entities", "relations"],
+  "properties": {
+    "document_id": {"type": "string", "minLength": 1},
+    "text": {"type": "string", "minLength": 1},
+    "metadata": {"type": "object", "additionalProperties": {"type": "string"}},
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "span", "text", "type", "assertion", "code_system", "code"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "span": {"type": "array", "prefixItems": [{"type": "integer"}, {"type": "integer"}, "items": false, "minItems": 2, "maxItems": 2},
+          "text": {"type": "string", "minLength": 1},
+          "type": {"enum": ["DISEASE", "SYMPTOM", "DRUG", "LAB_TEST", "LAB_RESULT"]},
+          "assertion": {"enum": ["PRESENT", "NEGATED", "HISTORICAL", "FAMILY", "POSSIBLE"]},
+          "code_system": {"enum": ["ICD-10", "RxNorm", "LOCAL", "NONE"]},
+          "code": {"type": ["string", "null"]}
+        },
+        "additionalProperties": true
+      }
+    },
+    "relations": {"type": "array", "items": {"type": "object"}}
+  },
+  "additionalProperties": false
+}

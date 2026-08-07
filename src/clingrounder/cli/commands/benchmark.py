@@ -11,11 +11,13 @@ from clingrounder.evaluation.promotion_benchmark import (
     compare_promotion_benchmarks,
     run_promotion_benchmark,
 )
+from clingrounder.evaluation.dataset_benchmark import run_dataset_benchmark
 
 __all__ = [
     "compare_runtime_benchmark",
     "list_benchmarks",
     "run_runtime_benchmark",
+    "run_dataset_benchmark_command",
 ]
 
 
@@ -41,6 +43,19 @@ def run_runtime_benchmark(args: argparse.Namespace) -> int:
         warmup=args.warmup,
     )
     _write_report(args.output, report)
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def run_dataset_benchmark_command(args: argparse.Namespace) -> int:
+    """Run a benchmark contract directory and print its measured summary."""
+
+    report = run_dataset_benchmark(
+        args.benchmark,
+        args.config,
+        args.output,
+        split=args.split,
+    )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 

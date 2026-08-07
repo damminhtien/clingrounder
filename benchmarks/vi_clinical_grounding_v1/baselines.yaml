@@ -1,0 +1,15 @@
+schema_version: clingrounder.benchmark-baselines.v1
+benchmark: vi-clinical-grounding-v1
+variants:
+  exact:
+    config: configs/benchmarks/vi_clinical_grounding_v1/exact.yaml
+    purpose: Dictionary-only exact recognition and linking.
+  lexical:
+    config: configs/benchmarks/vi_clinical_grounding_v1/lexical.yaml
+    purpose: Exact and abbreviation retrieval without model or graph evidence.
+  hybrid:
+    config: configs/benchmarks/vi_clinical_grounding_v1/hybrid.yaml
+    purpose: Lexical retrieval with candidate reranking enabled.
+  full:
+    config: configs/benchmarks/vi_clinical_grounding_v1/full.yaml
+    purpose: Product default pilot configuration.

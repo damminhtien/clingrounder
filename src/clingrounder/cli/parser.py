@@ -337,6 +337,16 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     runtime_run.add_argument("--repeats", type=int, default=5)
     runtime_run.add_argument("--warmup", type=int, default=1)
 
+    dataset_run = plugins.add_parser(
+        "run",
+        help="Run a neutral benchmark directory and write its artifact bundle.",
+    )
+    dataset_run.set_defaults(handler="benchmark_dataset_run")
+    dataset_run.add_argument("--benchmark", required=True)
+    dataset_run.add_argument("--config", required=True)
+    dataset_run.add_argument("--output", required=True)
+    dataset_run.add_argument("--split", default="test")
+
     compare = plugins.add_parser("compare", help="Compare two promotion benchmark artifacts.")
     compare.set_defaults(handler="benchmark_compare")
     compare.add_argument("baseline")

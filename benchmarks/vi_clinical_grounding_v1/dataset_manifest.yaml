@@ -1,0 +1,27 @@
+schema_version: clingrounder.dataset-manifest.v1
+
+dataset:
+  id: vi-clinical-grounding-v1
+  version: "0.1.0"
+  status: synthetic_pilot
+  language: [vi, vi-en]
+  license: MIT
+  license_url: https://opensource.org/license/mit
+  human_reviewed: false
+
+splits:
+  validation:
+    path: data/validation.jsonl
+    documents: 2
+  test:
+    path: data/test.jsonl
+    documents: 3
+
+entities: [DISEASE, SYMPTOM, DRUG, LAB_TEST, LAB_RESULT]
+assertions: [PRESENT, NEGATED, HISTORICAL, FAMILY, POSSIBLE]
+code_systems: [ICD-10, RxNorm, LOCAL, NONE]
+
+policy:
+  template_grouping_required: true
+  test_used_for_development: false
+  private_data: false

@@ -1,0 +1,15 @@
+schema_version: clingrounder.benchmark-results.v1
+benchmark: vi-clinical-grounding-v1
+status: pending_measurement
+policy:
+  primary:
+    metric: entity_exact_micro_f1
+    minimum_improvement: 0.005
+  protected:
+    linking_recall_at_5:
+      maximum_regression: 0.003
+    assertion_positive_macro_f1:
+      maximum_regression: 0.003
+    p95_ms:
+      maximum_regression_ratio: 0.10
+results: []
