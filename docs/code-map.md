@@ -176,7 +176,7 @@ medical-kg pipeline run
 medical-kg terminology build|inspect|query-set|benchmark
 medical-kg validate
 medical-kg release audit
-medical-kg-research evaluate
+medical-kg evaluate
 medical-kg-research model ...
 medical-kg-research data ...
 medical-kg-benchmark list

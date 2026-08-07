@@ -6,7 +6,7 @@ responsibilities:
 | Command | Scope | Contents |
 | --- | --- | --- |
 | `medical-kg` | operational | pipeline execution, terminology, graph operations, validation, release checks |
-| `medical-kg-research` | research | data mining, local model training, neutral evaluation |
+| `medical-kg-research` | research | data mining and local model training |
 | `medical-kg-benchmark` | benchmark | optional benchmark plugins and promotion comparisons |
 
 No handler is copied between entrypoints. The scope only controls parser registration, so an

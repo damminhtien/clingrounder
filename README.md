@@ -1,25 +1,28 @@
 # Medical KG NLP
 
-An offset-safe clinical NLP toolkit for extracting medical concepts, resolving context,
-linking terminology, and validating relation graphs. The repository focuses on Vietnamese
-and mixed Vietnamese-English text while keeping the core contracts language-neutral.
+An offset-safe clinical NLP toolkit for extracting medical concepts, resolving clinical context,
+linking terminology, and validating relation graphs. It is designed for Vietnamese and mixed
+Vietnamese-English text while keeping the reusable contracts language-neutral.
 
-The project is both a reusable Python package and a research portfolio. Deterministic rules,
-local transformer adapters, terminology repositories, evaluation, and data-mining workflows
-share stable interfaces. Historical competition code is preserved as an optional benchmark
-plugin and is never loaded by the default pipeline.
+The project is a reusable Python package and research portfolio. Deterministic rules, optional
+local model adapters, terminology repositories, neutral evaluation, and data-mining workflows
+share typed interfaces. Historical competition code is retained as an optional benchmark plugin;
+it is not part of the default runtime or evaluation path.
 
 > Research software only. It is not a medical device and must not be used as the sole basis for
 > clinical decisions.
 
 ## What It Does
 
-- Extracts diseases, symptoms, drugs, tests, results, medication attributes, and procedures.
+- Extracts diseases, symptoms, drugs, laboratory tests/results, procedures, findings, anatomy,
+  and structured medication attributes such as strength, route, frequency, and duration.
 - Preserves exact raw-text spans through normalization, model tokenization, and export.
-- Classifies negated, historical, family, possible, planned, conditional, and resolved context.
+- Classifies present, negated, historical, family, possible, planned, conditional, and resolved
+  context when the configured context provider has evidence for the label.
 - Retrieves and links type-compatible ICD-10, RxNorm, and local terminology concepts.
 - Extracts typed relations and rejects invalid medical graph edges.
-- Builds immutable SQLite FTS5 terminology and knowledge-graph indexes from canonical JSONL.
+- Builds derived SQLite FTS5 terminology and knowledge-graph indexes from canonical JSONL; JSONL
+  remains the source of truth and stale derived indexes are rejected.
 - Evaluates spans, assertions, linking, relations, runtime, and error slices independently of a task.
 - Mines licensed data into provenance-rich bronze, silver, gold, and challenge snapshots.
 
@@ -184,10 +187,12 @@ Reusable profiles are explicit, path-stable YAML contracts:
 | `configs/pipeline/clinical-baseline.yaml` | Small deterministic quickstart |
 | `configs/pipeline/full_terminology.yaml` | Full ICD-10/RxNorm normalization through SQLite |
 | `configs/pipeline/full_terminology_kg_exact.yaml` | Full terminology plus exact graph evidence |
+| `configs/pipeline/general_terminology_vn.yaml` | Experimental Vietnamese terminology profile |
 | `configs/pipeline/mined_vietbioner_silver.yaml` | Reviewed mined Vietnamese recognition overlay |
 
 `medical-kg pipeline run` has no hidden default profile. Model profiles must pin `model_id` and
-`revision`; local adapters use `local_files_only=true` and lazy-load the `ml` extra.
+`revision`; model adapters are lazy and local-only by default. Install the `ml` extra only when
+using model-backed profiles.
 
 ## Terminology At Scale
 
@@ -212,7 +217,9 @@ type and code-system filtering remains mandatory before assignment.
 
 ## Research Portfolio
 
-The repository includes several independently testable research tracks:
+The repository includes several independently testable research tracks. Some are stable runtime
+components; model training, dense retrieval, graph evidence, and mining remain optional research
+workflows:
 
 - **Proposal-first NER:** dictionary, medication, lab, boundary, transformer, and generative
   adapters produce immutable evidence before global overlap resolution.
@@ -224,8 +231,9 @@ The repository includes several independently testable research tracks:
   qualification, reranking, and final assignment.
 - **Graph evidence:** exact linked concepts can provide bounded second-pass evidence without
   introducing new candidates.
-- **Data mining:** licensed connectors, immutable artifacts, parsers, deduplication, proposal
-  labeling, review queues, coverage planning, and leakage-safe snapshots are reproducible stages.
+- **Data mining:** source connectors, immutable artifacts, parsers, deduplication, proposal
+  labeling, review queues, coverage planning, and provenance-aware snapshots are reproducible
+  stages. Access and license policy is checked before acquisition.
 
 Start with [docs/rule-ner.md](docs/rule-ner.md),
 [docs/reference-implementations.md](docs/reference-implementations.md),
@@ -260,7 +268,7 @@ See [docs/public-release.md](docs/public-release.md) for restore and publication
 ## Optional Benchmark Plugin
 
 The archived Vietnamese extraction challenge is retained for reproducibility and regression
-research. It is isolated from reusable pipeline defaults:
+research. It is isolated from reusable pipeline defaults and has no stability guarantee:
 
 ```bash
 uv run medical-kg-benchmark list
@@ -303,8 +311,8 @@ tests/
 # Fast unit and contract suite, normally under 15 seconds on the reference machine
 uv run pytest tests
 
-# All redistributable tests
-uv run pytest -o addopts='' tests
+# All redistributable tests, including opt-in integration/release checks
+uv run pytest -o addopts='' -m "not private and not model" tests
 
 # Static checks
 uv run ruff check .
@@ -318,6 +326,8 @@ schema, offsets, code systems, relation endpoints, or evidence spans remain hard
 
 - [Architecture](docs/architecture.md)
 - [Code map and search recipes](docs/code-map.md)
+- [API stability](docs/api-stability.md)
+- [CLI scopes](docs/cli-scopes.md)
 - [Schema](docs/schema.md)
 - [Invariants](docs/invariants.md)
 - [Evaluation](docs/evaluation.md)
