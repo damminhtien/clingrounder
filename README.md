@@ -90,7 +90,7 @@ See [docs/architecture.md](docs/architecture.md) and
 Python 3.11 through 3.14 is supported.
 
 ```bash
-git clone https://github.com/damminhtien/ontological-reasoning-in-medical-knowledge-retrieval.git
+git clone https://github.com/damminhtien/clingrounder.git
 cd ontological-reasoning-in-medical-knowledge-retrieval
 
 uv sync --extra dev

@@ -100,10 +100,10 @@ wandb = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/damminhtien/ontological-reasoning-in-medical-knowledge-retrieval"
-Repository = "https://github.com/damminhtien/ontological-reasoning-in-medical-knowledge-retrieval"
-Issues = "https://github.com/damminhtien/ontological-reasoning-in-medical-knowledge-retrieval/issues"
-Changelog = "https://github.com/damminhtien/ontological-reasoning-in-medical-knowledge-retrieval/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/damminhtien/clingrounder"
+Repository = "https://github.com/damminhtien/clingrounder"
+Issues = "https://github.com/damminhtien/clingrounder/issues"
+Changelog = "https://github.com/damminhtien/clingrounder/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -9,7 +9,7 @@ GitHub Release with the matching section from `CHANGELOG.md`.
 Configure a PyPI Trusted Publisher for:
 
 - PyPI project: `clingrounder`
-- GitHub owner/repository: `damminhtien/ontological-reasoning-in-medical-knowledge-retrieval`
+- GitHub owner/repository: `damminhtien/clingrounder`
 - Workflow: `release.yml`
 - Environment: `pypi`
 

@@ -41,5 +41,5 @@ pre-release semantic versioning while the public API is still maturing.
 - Added architecture, code-map, reproducibility, public-release, security, and API-stability docs.
 - Documented the boundary between reusable toolkit code and optional competition benchmarks.
 
-[Unreleased]: https://github.com/damminhtien/ontological-reasoning-in-medical-knowledge-retrieval/compare/v0.1.0a1...HEAD
-[0.1.0a1]: https://github.com/damminhtien/ontological-reasoning-in-medical-knowledge-retrieval/releases/tag/v0.1.0a1
+[Unreleased]: https://github.com/damminhtien/clingrounder/compare/v0.1.0a1...HEAD
+[0.1.0a1]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a1

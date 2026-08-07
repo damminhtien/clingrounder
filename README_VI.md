@@ -71,7 +71,7 @@ Xem [architecture](docs/architecture.md) và [code map](docs/code-map.md) để 
 Hỗ trợ Python 3.11 đến 3.14.
 
 ```bash
-git clone https://github.com/damminhtien/ontological-reasoning-in-medical-knowledge-retrieval.git
+git clone https://github.com/damminhtien/clingrounder.git
 cd ontological-reasoning-in-medical-knowledge-retrieval
 uv sync --extra dev
 
