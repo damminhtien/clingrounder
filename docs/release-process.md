@@ -14,7 +14,9 @@ Configure a PyPI Trusted Publisher for:
 - Environment: `pypi`
 
 The workflow uses GitHub's OIDC token. No `PYPI_TOKEN`, long-lived secret, or token in the repository
-is required. The `pypi` environment should require an approval for production releases.
+is required. The `pypi` environment should require an approval for production releases. The GitHub
+Release is created independently of the PyPI job, so a PyPI configuration problem cannot hide the
+versioned source and wheel artifacts on GitHub.
 
 ## Release Checklist
 

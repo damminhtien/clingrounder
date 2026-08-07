@@ -92,8 +92,8 @@ jobs:
             release-notes.md
           if-no-files-found: error
 
-  publish:
-    name: Publish to PyPI and GitHub Releases
+  publish-pypi:
+    name: Publish to PyPI
     needs: verify
     runs-on: ubuntu-latest
     environment:
@@ -113,11 +113,28 @@ jobs:
         with:
           packages-dir: dist/
 
+  github-release:
+    name: Create GitHub Release
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: release-assets
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
+          PRERELEASE_ARGS=()
+          if [[ "$VERSION" =~ (a|b|rc)[0-9]+$ ]]; then
+            PRERELEASE_ARGS+=(--prerelease)
+          fi
           gh release create "$GITHUB_REF_NAME" dist/* \
             --title "ClingRounder $VERSION" \
-            --notes-file release-notes.md
+            --notes-file release-notes.md \
+            "${PRERELEASE_ARGS[@]}"
