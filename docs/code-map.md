@@ -1,6 +1,6 @@
 # Code Map
 
-This map describes ownership and stable extension points in ClinGrounder 0.1.0a2. Start here before
+This map describes ownership and stable extension points in ClinGrounder 0.1.0a3. Start here before
 searching implementation details.
 
 ## Dependency Direction

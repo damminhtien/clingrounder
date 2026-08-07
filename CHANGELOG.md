@@ -16,6 +16,14 @@ pre-release semantic versioning while the public API is still maturing.
 
 - None.
 
+## [0.1.0a3] - 2026-08-07
+
+### Added
+
+- Published measured product-benchmark metrics, reproducibility checks, and protected metric gates.
+- Added a checksum-pinned manifest for the bundled Vietnamese resource pack.
+- Added an optional Streamlit inspection demo outside the core runtime.
+
 ## [0.1.0a2] - 2026-08-07
 
 ### Fixed
@@ -49,6 +57,7 @@ pre-release semantic versioning while the public API is still maturing.
 - Added architecture, code-map, reproducibility, public-release, security, and API-stability docs.
 - Documented the boundary between reusable toolkit code and optional competition benchmarks.
 
-[Unreleased]: https://github.com/damminhtien/clingrounder/compare/v0.1.0a2...HEAD
+[Unreleased]: https://github.com/damminhtien/clingrounder/compare/v0.1.0a3...HEAD
+[0.1.0a3]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a3
 [0.1.0a2]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a2
 [0.1.0a1]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a1
