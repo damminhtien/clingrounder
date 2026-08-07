@@ -3,8 +3,8 @@ title: "ClinGrounder"
 message: "If you use this clinical NLP toolkit in research, please cite it using this metadata."
 type: software
 authors:
-  - name: "clingrounder contributors"
+  - name: "ClinGrounder contributors"
 license: MIT
-version: 0.2.0
-date-released: 2026-06-29
+version: 0.1.0a1
+date-released: 2026-08-07
 abstract: "Offset-safe clinical NLP toolkit for entity extraction, terminology-constrained linking, context reasoning, relation extraction, data mining, and medical knowledge graph validation."

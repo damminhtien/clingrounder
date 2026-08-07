@@ -149,7 +149,7 @@ jobs:
             gh release upload "$RELEASE_TAG" dist/* --clobber
           else
             gh release create "$RELEASE_TAG" dist/* \
-              --title "ClingRounder $VERSION" \
+              --title "ClinGrounder $VERSION" \
               --notes-file release-notes.md \
               "${PRERELEASE_ARGS[@]}"
           fi

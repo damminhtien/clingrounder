@@ -23,7 +23,7 @@ def build_parser(
     if scope not in {None, "operational", "research", "benchmark"}:
         raise ValueError(f"Unsupported CLI scope: {scope!r}")
 
-    parser = argparse.ArgumentParser(prog=prog, description="ClingRounder clinical NLP tools.")
+    parser = argparse.ArgumentParser(prog=prog, description="ClinGrounder clinical NLP tools.")
     commands = parser.add_subparsers(dest="command", required=True)
     if scope in {None, "operational"}:
         _pipeline_parser(commands)

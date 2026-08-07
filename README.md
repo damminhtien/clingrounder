@@ -1,10 +1,10 @@
-# ClingRounder
+# ClinGrounder
 
 An offset-safe clinical text grounding toolkit for extracting medical concepts, resolving clinical context,
 linking terminology, and validating relation graphs. It is designed for Vietnamese and mixed
 Vietnamese-English text while keeping the reusable contracts language-neutral.
 
-ClingRounder is a reusable Python package and research portfolio. Deterministic rules, optional
+ClinGrounder is a reusable Python package and research portfolio. Deterministic rules, optional
 local model adapters, terminology repositories, neutral evaluation, and data-mining workflows
 share typed interfaces. Historical competition code is retained as an optional benchmark plugin;
 it is not part of the default runtime or evaluation path.

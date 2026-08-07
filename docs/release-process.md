@@ -1,6 +1,6 @@
 # Release And Deployment
 
-ClingRounder uses GitHub Actions as the release boundary. A release tag is the single deployment
+ClinGrounder uses GitHub Actions as the release boundary. A release tag is the single deployment
 input: it runs the verification suite, builds the Python artifacts, publishes to PyPI, and creates a
 GitHub Release with the matching section from `CHANGELOG.md`.
 
@@ -38,7 +38,7 @@ versioned source and wheel artifacts on GitHub.
 5. Create and push an annotated tag matching the package version:
 
    ```bash
-   git tag -a v0.1.0a1 -m "Release ClingRounder 0.1.0a1"
+   git tag -a v0.1.0a1 -m "Release ClinGrounder 0.1.0a1"
    git push origin v0.1.0a1
    ```
 
