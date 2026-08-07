@@ -13,6 +13,7 @@ license-files = ["LICENSE"]
 authors = [
   {name = "ClingRounder contributors"},
 ]
+
 keywords = [
   "clinical-nlp",
   "entity-linking",
@@ -32,6 +33,7 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
   "Typing :: Typed",
 ]
+
 dependencies = [
   "pydantic>=2.13.4",
   "PyYAML>=6.0.3",
@@ -96,6 +98,12 @@ experiment = [
 wandb = [
   "wandb>=0.28.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/damminhtien/ontological-reasoning-in-medical-knowledge-retrieval"
+Repository = "https://github.com/damminhtien/ontological-reasoning-in-medical-knowledge-retrieval"
+Issues = "https://github.com/damminhtien/ontological-reasoning-in-medical-knowledge-retrieval/issues"
+Changelog = "https://github.com/damminhtien/ontological-reasoning-in-medical-knowledge-retrieval/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]

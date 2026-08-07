@@ -2,15 +2,44 @@
 
 All notable changes to this project will be documented here.
 
-The format is inspired by Keep a Changelog, and this project uses semantic versioning once releases
-begin.
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use
+pre-release semantic versioning while the public API is still maturing.
 
 ## [Unreleased]
 
 ### Added
 
-- Open-source repository hygiene files and GitHub templates.
+- Automated GitHub release and PyPI publishing workflow using OIDC Trusted Publishing.
+- CI package build checks and release documentation.
 
 ### Changed
 
-- Documented optional dependency stacks and contribution workflow.
+- None.
+
+## [0.1.0a1] - 2026-08-07
+
+### Added
+
+- Offset-safe clinical text grounding with exact raw-text span ownership.
+- Typed pipeline contracts for entity extraction, context, terminology retrieval, linking,
+  reranking, relations, and validation.
+- Rule-based and optional local model adapters for Vietnamese and mixed Vietnamese-English text.
+- Full terminology repository interfaces with in-memory and SQLite FTS5 implementations.
+- Neutral evaluation, data-mining, provenance, governance, and optional benchmark plugin layers.
+- Deterministic CLI entry points for pipeline execution, terminology, evaluation, validation, mining,
+  and benchmark workflows.
+
+### Changed
+
+- Renamed the PyPI distribution to `clingrounder`.
+- Kept the Python import namespace as `medical_kg_nlp` to reflect the package layout.
+- Added strict validation for spans, terminology membership, candidates, relations, configuration,
+  runtime lifecycle, and release artifacts.
+
+### Documentation
+
+- Added architecture, code-map, reproducibility, public-release, security, and API-stability docs.
+- Documented the boundary between reusable toolkit code and optional competition benchmarks.
+
+[Unreleased]: https://github.com/damminhtien/ontological-reasoning-in-medical-knowledge-retrieval/compare/v0.1.0a1...HEAD
+[0.1.0a1]: https://github.com/damminhtien/ontological-reasoning-in-medical-knowledge-retrieval/releases/tag/v0.1.0a1

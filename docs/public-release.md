@@ -11,6 +11,10 @@ Git repository       code + configs + fixtures + provenance + checksums
 local/CAS storage    raw corpora + licensed terminology + annotations + checkpoints + runs
 ```
 
+Python package releases are handled separately by the tag-driven workflow documented in
+[`docs/release-process.md`](release-process.md). This data-publication policy remains the gate for
+tracked source files, manifests, terminology metadata, and research artifacts.
+
 ## Two Complementary Contracts
 
 `medical-kg-research data release lock` fingerprints every input needed to reproduce one mining or model

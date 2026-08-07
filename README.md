@@ -328,6 +328,7 @@ schema, offsets, code systems, relation endpoints, or evidence spans remain hard
 
 ## Documentation
 
+- [Changelog](CHANGELOG.md)
 - [Architecture](docs/architecture.md)
 - [Code map and search recipes](docs/code-map.md)
 - [API stability](docs/api-stability.md)
@@ -338,6 +339,7 @@ schema, offsets, code systems, relation endpoints, or evidence spans remain hard
 - [Dictionary and terminology lifecycle](docs/dictionaries.md)
 - [Data mining](docs/data-mining.md)
 - [Public release policy](docs/public-release.md)
+- [Release and deployment](docs/release-process.md)
 - [Contributor workflow](docs/hacking.md)
 
 Licensed under the [MIT License](LICENSE).
