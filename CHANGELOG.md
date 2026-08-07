@@ -16,6 +16,14 @@ pre-release semantic versioning while the public API is still maturing.
 
 - None.
 
+## [0.1.0a2] - 2026-08-07
+
+### Fixed
+
+- Rebuilt public package metadata and README from the `ClinGrounder` source tree.
+- Added the offline Vietnamese quickstart artifact and the independent product benchmark pilot.
+- Removed duplicated benchmark section wording from the README.
+
 ## [0.1.0a1] - 2026-08-07
 
 ### Added
@@ -41,5 +49,6 @@ pre-release semantic versioning while the public API is still maturing.
 - Added architecture, code-map, reproducibility, public-release, security, and API-stability docs.
 - Documented the boundary between reusable toolkit code and optional competition benchmarks.
 
-[Unreleased]: https://github.com/damminhtien/clingrounder/compare/v0.1.0a1...HEAD
+[Unreleased]: https://github.com/damminhtien/clingrounder/compare/v0.1.0a2...HEAD
+[0.1.0a2]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a2
 [0.1.0a1]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a1
