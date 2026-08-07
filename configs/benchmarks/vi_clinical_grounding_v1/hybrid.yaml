@@ -22,4 +22,4 @@ pipeline:
   enable_relations: false
   enable_relation_kg_validation: false
   max_candidates: 5
-  candidate_sources: [exact, abbreviation]
+  candidate_sources: [exact, abbreviation, fuzzy, char_ngram, bm25]

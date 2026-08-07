@@ -15,6 +15,11 @@ def test_public_benchmark_writes_complete_artifact_bundle(tmp_path: Path) -> Non
     assert summary["schema_version"] == "clingrounder.benchmark-summary.v1"
     assert summary["benchmark"]["status"] == "synthetic_pilot"
     assert summary["metrics"]["offset_validity"] == 1.0
+    assert summary["metrics"]["entity_overlap_micro_f1"] == 1.0
+    assert summary["metrics"]["assertion_accuracy"] == 1.0
+    assert summary["metrics"]["linking_mrr"] == 1.0
+    assert summary["git_commit"]
+    assert summary["performance"]["peak_rss_mb"] >= 0
     assert summary["error_count"] == 0
     expected = {
         "manifest.json",

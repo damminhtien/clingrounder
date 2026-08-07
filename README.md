@@ -41,6 +41,14 @@ for entity in result.entities:
     print(entity.text, entity.type.value, entity.assertion.value, entity.code)
 ```
 
+Example output from the bundled pack:
+
+```text
+sốt SYMPTOM NEGATED None
+tăng huyết áp DISEASE HISTORICAL I10
+metformin DRUG PRESENT 6809
+```
+
 The bundled pack is intentionally small and is a runnable smoke baseline, not a complete ICD-10
 or RxNorm release. Larger terminology and model artifacts are loaded explicitly through pinned
 profiles. See [the v1 product scope](docs/product-scope-v1.md).
@@ -55,13 +63,14 @@ transformer adapters, graph reasoning, relations, and mining are experimental ex
 
 ## What It Does
 
-- Extracts diseases, symptoms, drugs, laboratory tests/results, procedures, findings, anatomy,
-  and structured medication attributes such as strength, route, frequency, and duration.
+- Extracts diseases, symptoms, drugs, and laboratory tests/results as the stable v1 entity surface.
+- Supports additional procedure, finding, anatomy, and medication-attribute annotations through
+  experimental/configured components; these are not part of the small-pack promise.
 - Preserves exact raw-text spans through normalization, model tokenization, and export.
 - Classifies present, negated, historical, family, possible, planned, conditional, and resolved
   context when the configured context provider has evidence for the label.
 - Retrieves and links type-compatible ICD-10, RxNorm, and local terminology concepts.
-- Extracts typed relations and rejects invalid medical graph edges.
+- Validates typed relations when the optional relation subsystem is enabled.
 - Builds derived SQLite FTS5 terminology and knowledge-graph indexes from canonical JSONL; JSONL
   remains the source of truth and stale derived indexes are rejected.
 - Evaluates spans, assertions, linking, relations, runtime, and error slices independently of a task.
@@ -365,6 +374,21 @@ clingrounder-benchmark run \
 It writes `summary.json`, `predictions.jsonl`, `errors.json`, `runtime.json`, a confusion matrix,
 and a Markdown report. The checked-in dataset is a synthetic pilot; measured values must not be
 described as clinical validation. See [benchmark methodology](docs/benchmarks/vi_clinical_grounding_v1/methodology.md).
+
+Measured pilot snapshot (3 synthetic test documents, one macOS run; latency is not a hardware
+benchmark):
+
+| System | Entity exact F1 | Assertion macro-F1 | Recall@5 | Top-1 | Relation F1 | p95 ms |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Exact dictionary | 1.0000 | 1.0000 | 1.0000 | 1.0000 | N/A* | 17.97 |
+| Lexical | 1.0000 | 1.0000 | 1.0000 | 1.0000 | N/A* | 15.52 |
+| Hybrid | 1.0000 | 1.0000 | 1.0000 | 1.0000 | N/A* | 14.78 |
+| Full deterministic | 1.0000 | 1.0000 | 1.0000 | 1.0000 | N/A* | 16.12 |
+
+\* The pilot contains no gold relations, so relation F1 is not estimable. The identical
+correctness scores are an expected limitation of this tiny smoke fixture, not evidence that the
+systems are equivalent on clinical data. Re-run the command above to regenerate fingerprints and
+machine-specific runtime values.
 
 ## Optional Benchmark Plugin
 

@@ -1,6 +1,6 @@
 schema_version: clingrounder.benchmark-results.v1
 benchmark: vi-clinical-grounding-v1
-status: pending_measurement
+status: synthetic_pilot_measured
 policy:
   primary:
     metric: entity_exact_micro_f1
@@ -12,4 +12,36 @@ policy:
       maximum_regression: 0.003
     p95_ms:
       maximum_regression_ratio: 0.10
-results: []
+results:
+  - variant: exact
+    split: test
+    entity_exact_micro_f1: 1.0
+    assertion_macro_f1: 1.0
+    linking_recall_at_5: 1.0
+    linking_top1_accuracy: 1.0
+    relation_micro_f1: null
+    p95_ms: 17.97
+  - variant: lexical
+    split: test
+    entity_exact_micro_f1: 1.0
+    assertion_macro_f1: 1.0
+    linking_recall_at_5: 1.0
+    linking_top1_accuracy: 1.0
+    relation_micro_f1: null
+    p95_ms: 15.52
+  - variant: hybrid
+    split: test
+    entity_exact_micro_f1: 1.0
+    assertion_macro_f1: 1.0
+    linking_recall_at_5: 1.0
+    linking_top1_accuracy: 1.0
+    relation_micro_f1: null
+    p95_ms: 14.78
+  - variant: full
+    split: test
+    entity_exact_micro_f1: 1.0
+    assertion_macro_f1: 1.0
+    linking_recall_at_5: 1.0
+    linking_top1_accuracy: 1.0
+    relation_micro_f1: null
+    p95_ms: 16.12

@@ -90,6 +90,8 @@ def run_dataset_benchmark(
 
     prediction_by_id = {prediction.document_id: prediction for prediction in predictions}
     correctness, confusion = _score(examples, prediction_by_id)
+    git_commit = _git_commit()
+    peak_rss_bytes = _peak_rss_bytes()
     performance = {
         "initialization_ms": round(initialization_ms, 6),
         "documents_per_second": round(
@@ -103,7 +105,8 @@ def run_dataset_benchmark(
         if predictions and sum(latencies_ms)
         else 0.0,
         "document_latency_ms": _percentiles(latencies_ms),
-        "peak_rss_bytes": _peak_rss_bytes(),
+        "peak_rss_bytes": peak_rss_bytes,
+        "peak_rss_mb": round(peak_rss_bytes / (1024 * 1024), 3),
         "model_forward_pass_count": 0,
     }
     summary = {
@@ -113,10 +116,11 @@ def run_dataset_benchmark(
         "config_fingerprint": configuration_fingerprint,
         "profile_sha256": resolved.inspection_report()["profile_sha256"],
         "terminology_fingerprint": terminology_fingerprint,
+        "git_commit": git_commit,
         "environment": {
             "python": sys.version.split()[0],
             "platform": platform.platform(),
-            "commit": _git_commit(),
+            "commit": git_commit,
         },
         "metrics": correctness,
         "performance": performance,
@@ -199,8 +203,8 @@ def _score(
     linking_total = 0
     linking_hits: Counter[int] = Counter()
     top1_hits = 0
-    gold_relation_keys: set[tuple[str, str, str]] = set()
-    pred_relation_keys: set[tuple[str, str, str]] = set()
+    gold_relation_keys: set[tuple[str, str, str, str]] = set()
+    pred_relation_keys: set[tuple[str, str, str, str]] = set()
     errors_by_document: list[dict[str, Any]] = []
 
     for example in examples:
@@ -231,12 +235,33 @@ def _score(
         for entity in predicted_entities:
             pred_by_type[entity.type.value] += 1
         if prediction is not None:
+            # Relation IDs in neutral gold are independent from pipeline IDs. Map gold entity
+            # IDs through exact span/type matches before comparing relation endpoints.
+            gold_to_prediction_id = {
+                str(item["id"]): matched.id
+                for item in example.entities
+                if (matched := next(
+                    (
+                        entity
+                        for entity in predicted_entities
+                        if (entity.span, entity.type.value)
+                        == (tuple(item["span"]), str(item["type"]))
+                    ),
+                    None,
+                ))
+                is not None
+            }
             gold_relation_keys.update(
-                (str(item["head"]), str(item["tail"]), str(item["type"]))
+                (
+                    example.document_id,
+                    gold_to_prediction_id.get(str(item["head"]), str(item["head"])),
+                    gold_to_prediction_id.get(str(item["tail"]), str(item["tail"])),
+                    str(item["type"]),
+                )
                 for item in example.relations
             )
             pred_relation_keys.update(
-                (relation.head, relation.tail, relation.type.value)
+                (example.document_id, relation.head, relation.tail, relation.type.value)
                 for relation in prediction.relations
             )
         if len(gold_keys - pred_keys) or len(pred_keys - gold_keys):
@@ -250,6 +275,9 @@ def _score(
 
     precision = _ratio(true_positive, pred_total)
     recall = _ratio(true_positive, gold_total)
+    overlap_true_positive = _overlap_matches(examples, predictions)
+    overlap_precision = _ratio(overlap_true_positive, pred_total)
+    overlap_recall = _ratio(overlap_true_positive, gold_total)
     type_rows = {}
     for entity_type in sorted(set(gold_by_type) | set(pred_by_type)):
         type_precision = _ratio(tp_by_type[entity_type], pred_by_type[entity_type])
@@ -263,22 +291,59 @@ def _score(
         }
     assertion_labels = sorted({key[0] for key in assertion_counts})
     assertion_f1 = _assertion_macro_f1(assertion_counts, assertion_labels)
+    positive_labels = [label for label in assertion_labels if label not in {"PRESENT", "UNKNOWN"}]
+    positive_assertion_f1 = _assertion_macro_f1(assertion_counts, positive_labels)
+    assertion_accuracy = _ratio(
+        sum(count for (gold, predicted), count in assertion_counts.items() if gold == predicted),
+        sum(assertion_counts.values()),
+    )
     relation_tp = len(gold_relation_keys & pred_relation_keys)
     relation_precision = _ratio(relation_tp, len(pred_relation_keys))
     relation_recall = _ratio(relation_tp, len(gold_relation_keys))
+    reciprocal_rank_total = 0.0
+    for example in examples:
+        prediction = predictions.get(example.document_id)
+        if prediction is None:
+            continue
+        for item in example.entities:
+            expected_code = item.get("code")
+            if not expected_code:
+                continue
+            matched = next(
+                (
+                    entity
+                    for entity in prediction.entities
+                    if (entity.span, entity.type.value)
+                    == (tuple(item["span"]), str(item["type"]))
+                ),
+                None,
+            )
+            if matched is None:
+                continue
+            codes = [candidate.code for candidate in matched.candidates]
+            if matched.code:
+                codes.insert(0, matched.code)
+            try:
+                reciprocal_rank_total += 1.0 / (codes.index(expected_code) + 1)
+            except ValueError:
+                pass
+
     return (
         {
             "entity_exact_micro_f1": _f1(precision, recall),
             "entity_exact_precision": precision,
             "entity_exact_recall": recall,
+            "entity_overlap_micro_f1": _f1(overlap_precision, overlap_recall),
             "entity_count": pred_total,
             "entity_by_type": type_rows,
+            "assertion_accuracy": assertion_accuracy,
             "assertion_macro_f1": assertion_f1,
-            "assertion_positive_macro_f1": assertion_f1,
+            "assertion_positive_macro_f1": positive_assertion_f1,
             "linking_recall_at_1": _ratio(linking_hits[1], linking_total),
             "linking_recall_at_5": _ratio(linking_hits[5], linking_total),
             "linking_recall_at_10": _ratio(linking_hits[10], linking_total),
             "linking_top1_accuracy": _ratio(top1_hits, linking_total),
+            "linking_mrr": _ratio(reciprocal_rank_total, linking_total),
             "relation_micro_f1": _f1(relation_precision, relation_recall),
             "assignment_coverage": _ratio(linking_total, gold_total),
             "offset_validity": 1.0,
@@ -326,8 +391,11 @@ def _render_report(summary: Mapping[str, Any]) -> str:
             "| Metric | Value |",
             "| --- | ---: |",
             f"| Entity exact micro-F1 | {metrics['entity_exact_micro_f1']:.4f} |",
+            f"| Entity overlap micro-F1 | {metrics['entity_overlap_micro_f1']:.4f} |",
+            f"| Assertion accuracy | {metrics['assertion_accuracy']:.4f} |",
             f"| Assertion macro-F1 | {metrics['assertion_macro_f1']:.4f} |",
             f"| Linking Recall@5 | {metrics['linking_recall_at_5']:.4f} |",
+            f"| Linking MRR | {metrics['linking_mrr']:.4f} |",
             f"| Linking Top-1 | {metrics['linking_top1_accuracy']:.4f} |",
             f"| Relation micro-F1 | {metrics['relation_micro_f1']:.4f} |",
             "",
@@ -351,10 +419,16 @@ def _write_json(path: Path, payload: object) -> None:
 
 
 def _write_jsonl(path: Path, predictions: list[ClinicalPrediction]) -> None:
-    path.write_text(
-        "".join(json.dumps(prediction.to_json(), ensure_ascii=False, sort_keys=True) + "\n" for prediction in predictions),
-        encoding="utf-8",
-    )
+    rows: list[str] = []
+    for prediction in predictions:
+        payload = prediction.to_json()
+        # INVARIANT: benchmark artifacts must be byte-stable; wall-clock creation time belongs
+        # in runtime traces, not in canonical prediction records.
+        metadata = payload.get("metadata")
+        if isinstance(metadata, dict):
+            metadata.pop("created_at", None)
+        rows.append(json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n")
+    path.write_text("".join(rows), encoding="utf-8")
 
 
 def _mapping(value: object, name: str) -> Mapping[str, Any]:
@@ -363,7 +437,43 @@ def _mapping(value: object, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _ratio(numerator: int, denominator: int) -> float:
+def _overlap_matches(
+    examples: list[BenchmarkExample],
+    predictions: Mapping[str, ClinicalPrediction],
+) -> int:
+    """Count deterministic one-to-one same-type span overlaps for diagnostic reporting."""
+
+    matched_total = 0
+    for example in examples:
+        prediction = predictions.get(example.document_id)
+        if prediction is None:
+            continue
+        available = set(range(len(prediction.entities)))
+        for gold in example.entities:
+            gold_start, gold_end = gold["span"]
+            candidates = []
+            for index in available:
+                entity = prediction.entities[index]
+                if entity.type.value != str(gold["type"]):
+                    continue
+                overlap = min(gold_end, entity.span[1]) - max(gold_start, entity.span[0])
+                if overlap > 0:
+                    candidates.append(
+                        (
+                            -overlap,
+                            abs((gold_end - gold_start) - (entity.span[1] - entity.span[0])),
+                            entity.span,
+                            index,
+                        )
+                    )
+            if candidates:
+                _, _, _, selected = min(candidates)
+                available.remove(selected)
+                matched_total += 1
+    return matched_total
+
+
+def _ratio(numerator: float, denominator: float) -> float:
     return numerator / denominator if denominator else 0.0
 
 
