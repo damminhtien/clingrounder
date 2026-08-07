@@ -17,6 +17,7 @@ from clingrounder import (
     UnknownProfileError,
     load_pipeline,
 )
+from clingrounder.artifacts import ArtifactNotFoundError, BuiltinArtifact, get_builtin_artifact
 from clingrounder.pipeline import PipelineComponents, PipelineOptions, RuntimeCapabilities
 from clingrounder.schema.annotation import EntityAnnotation
 
@@ -52,6 +53,19 @@ def test_bundled_vietnamese_artifact_is_offline_and_callable(tmp_path: Path) -> 
 
     cached = Pipeline.download("vi-clinical-small", cache_dir=tmp_path)
     assert (cached / "seed_concepts.jsonl").is_file()
+    assert (cached / "manifest.json").is_file()
+
+
+def test_artifact_manifest_rejects_payload_tampering(tmp_path: Path) -> None:
+    source = get_builtin_artifact("vi-clinical-small")
+    source.install(tmp_path)
+    copied_root = tmp_path / "vi-clinical-small" / source.revision
+    payload = copied_root / "seed_concepts.jsonl"
+    payload.write_text(payload.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    tampered = BuiltinArtifact(source.artifact_id, source.revision, copied_root)
+
+    with pytest.raises(ArtifactNotFoundError, match="checksum/size"):
+        tampered.verify_manifest()
 
 
 def test_pipeline_from_components_preserves_batch_order() -> None:

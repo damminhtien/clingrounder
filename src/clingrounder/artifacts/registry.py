@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import json
 from pathlib import Path
 import shutil
 from typing import Final
@@ -44,6 +45,10 @@ class BuiltinArtifact:
     def profile_path(self) -> Path:
         return self.root / "profile.yaml"
 
+    @property
+    def manifest_path(self) -> Path:
+        return self.root / "manifest.json"
+
     def manifest(self) -> dict[str, object]:
         """Return metadata suitable for an experiment or prediction manifest."""
 
@@ -55,9 +60,43 @@ class BuiltinArtifact:
                 "type": "pipeline-pack",
                 "license": self.license,
                 "sha256": self.fingerprint,
+                "size_bytes": self.payload_size_bytes,
             },
             "contents": sorted(path.name for path in self.root.iterdir() if path.is_file()),
         }
+
+    @property
+    def payload_size_bytes(self) -> int:
+        """Return the size covered by the pinned payload fingerprint."""
+
+        return sum(
+            path.stat().st_size
+            for path in self.root.iterdir()
+            if path.is_file() and path.name != "manifest.json"
+        )
+
+    def verify_manifest(self) -> None:
+        """Fail closed when a bundled or cached pack differs from its declared manifest."""
+
+        try:
+            payload = json.loads(self.manifest_path.read_text(encoding="utf-8"))
+            artifact = payload["artifact"]
+            expected_id = artifact["id"]
+            expected_revision = artifact["version"]
+            expected_sha = artifact["sha256"]
+            expected_size = artifact["size_bytes"]
+        except (OSError, KeyError, TypeError, ValueError) as error:
+            raise ArtifactNotFoundError(
+                f"Invalid artifact manifest: {self.manifest_path}"
+            ) from error
+        if expected_id != self.artifact_id or expected_revision != self.revision:
+            raise ArtifactNotFoundError(
+                f"Artifact manifest identity mismatch: {self.manifest_path}"
+            )
+        if expected_sha != self.fingerprint or expected_size != self.payload_size_bytes:
+            raise ArtifactNotFoundError(
+                f"Artifact checksum/size mismatch: {self.manifest_path}"
+            )
 
     def install(self, cache_dir: str | Path) -> Path:
         """Copy the pack atomically into a caller-owned cache and return its root.
@@ -112,12 +151,15 @@ def get_builtin_artifact(name: str, revision: str | None = None) -> BuiltinArtif
         )
     if not artifact.root.is_dir():
         raise ArtifactNotFoundError(f"Bundled artifact files are missing: {artifact.root}")
+    artifact.verify_manifest()
     return artifact
 
 
 def _fingerprint_root(root: Path) -> str:
     digest = hashlib.sha256()
-    for path in sorted(item for item in root.iterdir() if item.is_file()):
+    for path in sorted(
+        item for item in root.iterdir() if item.is_file() and item.name != "manifest.json"
+    ):
         digest.update(path.name.encode("utf-8"))
         digest.update(b"\0")
         digest.update(path.read_bytes())

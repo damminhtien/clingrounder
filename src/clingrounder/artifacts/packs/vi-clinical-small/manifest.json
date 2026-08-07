@@ -1,0 +1,17 @@
+{
+  "schema_version": "clingrounder.artifact-manifest.v1",
+  "artifact": {
+    "id": "vi-clinical-small",
+    "version": "2026.08",
+    "type": "pipeline-pack",
+    "license": "MIT",
+    "sha256": "69e402d4b0856da8275b3b3fd70f589426154d73ee76709c83d2a2beb767e21f",
+    "size_bytes": 2663
+  },
+  "contents": [
+    "abbreviations.jsonl",
+    "profile.yaml",
+    "seed_concepts.jsonl",
+    "vietnamese_medical_alias.jsonl"
+  ]
+}
