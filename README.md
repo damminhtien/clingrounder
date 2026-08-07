@@ -12,6 +12,10 @@ it is not part of the default runtime or evaluation path.
 The PyPI distribution is named `clingrounder`; the Python import namespace remains
 `clingrounder`.
 
+Current release: [`0.1.0a1`](https://pypi.org/project/clingrounder/0.1.0a1/). The project is in
+alpha: the public contracts and validation invariants are useful, but APIs may still change
+between minor releases.
+
 > Research software only. It is not a medical device and must not be used as the sole basis for
 > clinical decisions.
 
@@ -91,7 +95,7 @@ Python 3.11 through 3.14 is supported.
 
 ```bash
 git clone https://github.com/damminhtien/clingrounder.git
-cd ontological-reasoning-in-medical-knowledge-retrieval
+cd clingrounder
 
 uv sync --extra dev
 uv run clingrounder pipeline run \
@@ -105,7 +109,6 @@ Without `uv`:
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install clingrounder
 python -m pip install -e ".[dev]"
 clingrounder pipeline run \
   --config configs/pipeline/clinical-baseline.yaml \
@@ -113,18 +116,34 @@ clingrounder pipeline run \
   --output outputs/sample-predictions.jsonl
 ```
 
+To install the published library without the repository's checked-in profiles and sample data:
+
+```bash
+python -m pip install clingrounder
+```
+
+Applications should pass an explicit, application-owned profile with
+`Pipeline.from_config(...)` when running from the installed wheel.
+
 The sample emits source-backed entities such as:
 
 ```json
 {
+  "id": "E6",
   "text": "viêm phổi",
   "span": [102, 111],
   "type": "DISEASE",
   "assertion": "POSSIBLE",
   "code_system": "ICD-10",
-  "code": "J18.9"
+  "code": "J18.9",
+  "candidates": [{"concept_id": "ICD10:J18.9", "qualified": true}]
 }
 ```
+
+Predictions are JSONL records with document metadata, entities, candidates, relations, and
+validation-oriented evidence. The exact internal schema is defined in
+[`src/clingrounder/schema`](src/clingrounder/schema) and may be stricter than this abbreviated
+example.
 
 Validate and evaluate the result:
 
@@ -151,7 +170,7 @@ duplicated. See [docs/cli-scopes.md](docs/cli-scopes.md).
 ```python
 from clingrounder import Pipeline
 
-with Pipeline.from_profile("clinical-baseline") as pipeline:
+with Pipeline.from_config("configs/pipeline/clinical-baseline.yaml") as pipeline:
     prediction = pipeline.predict(
         "Bệnh nhân khó thở, không sốt.",
         document_id="note-001",
@@ -163,7 +182,9 @@ for entity in prediction.entities:
 
 The facade also provides `predict_document`, `predict_many`, and `predict_with_trace`. It owns
 terminology repositories, model adapters, caches, and worker resources and closes them when the
-context exits. Use `Pipeline.from_config(path)` for a checked-in or application-owned profile.
+context exits. `Pipeline.from_profile("clinical-baseline")` is a repository convenience for
+checked-in profiles; use `Pipeline.from_config(path)` for installed-package or application-owned
+profiles.
 
 ### Advanced composition
 
@@ -198,6 +219,30 @@ Reusable profiles are explicit, path-stable YAML contracts:
 `revision`; model adapters are lazy and local-only by default. Install the `ml` extra only when
 using model-backed profiles.
 
+The default quickstart uses only the small dictionaries committed to this repository. Full ICD-10,
+RxNorm, ontology, graph, and model artifacts are not bundled in the wheel; acquire them through a
+documented, license-aware workflow and record their fingerprints in the profile or release
+manifest.
+
+### Optional extras
+
+| Extra | Use |
+| --- | --- |
+| `dev` | Ruff, mypy, pytest, and pre-commit |
+| `data` | Parquet/DuckDB/S3-backed mining workflows |
+| `retrieval` | BM25, character retrieval, and FAISS support |
+| `ml` | Local Hugging Face training and inference |
+| `graph` | NetworkX graph utilities |
+| `cli` | Richer terminal output and CLI integrations |
+| `api` | Optional FastAPI/ASGI integration |
+| `experiment` | Optional experiment tracking/configuration tools |
+
+Install only the capabilities needed by an application, for example:
+
+```bash
+uv pip install "clingrounder[retrieval,ml]"
+```
+
 ## Terminology At Scale
 
 Canonical terminology remains JSONL. Runtime lookup uses a derived, content-addressed SQLite FTS5
@@ -205,7 +250,8 @@ index with read-only, query-only, thread-local connections.
 
 ```bash
 uv run clingrounder terminology build \
-  --source data/processed/full_concepts.jsonl \
+  --source data/dictionaries/seed_concepts.jsonl \
+  --alias-overlay data/dictionaries/vietnamese_medical_alias.jsonl \
   --cache-dir .cache/clingrounder/terminology
 
 uv run clingrounder terminology inspect \
@@ -217,7 +263,8 @@ uv run clingrounder terminology inspect \
 
 The index rejects stale source, schema, normalization, or alias fingerprints. Exact, abbreviation,
 lexical, BM25, optional dense, and graph-backed retrievers merge behind one retrieval pipeline;
-type and code-system filtering remains mandatory before assignment.
+type and code-system filtering remains mandatory before assignment. The seed dictionary is a
+portable example, not a complete medical terminology release.
 
 ## Research Portfolio
 
@@ -285,6 +332,25 @@ Task configs are under [`configs/benchmarks/phase1`](configs/benchmarks/phase1/R
 corpora and historical artifacts are restored by fingerprint and are not required for the toolkit
 quickstart.
 
+The benchmark plugin is intentionally not part of the reusable API contract. It is retained for
+research reproducibility and may depend on private inputs or task-specific schemas.
+
+## Scope And Limitations
+
+- The core package is a research toolkit, not a clinical decision-support product or a regulatory
+  compliance implementation.
+- Rules are deterministic baselines; local model adapters are optional and require pinned weights.
+  Hosted model APIs are not required by the core runtime.
+- Terminology linking is only as complete as the configured release. Unknown, stale, or
+  type-incompatible codes are rejected by the appropriate validation profile.
+- Licensed or private clinical text is never assumed to be redistributable. Only manifests,
+  fingerprints, policies, and reproducible acquisition instructions belong in the public tree.
+- Default traces and logs are text-free, but deployment owners remain responsible for access
+  control, retention, encryption, and organizational privacy requirements.
+
+See [the security threat model](docs/security-threat-model.md) and
+[the public release policy](docs/public-release.md) before using non-public data.
+
 ## Repository Map
 
 ```text
@@ -312,7 +378,7 @@ tests/
 ## Development
 
 ```bash
-# Fast unit and contract suite, normally under 15 seconds on the reference machine
+# Default unit and contract suite; slow tiers are excluded by pytest configuration
 uv run pytest tests
 
 # All redistributable tests, including opt-in integration/release checks
@@ -323,8 +389,9 @@ uv run ruff check .
 uv run mypy src
 ```
 
-Optional markers are `integration`, `release`, `benchmark`, `private`, and `model`. Tests touching
-schema, offsets, code systems, relation endpoints, or evidence spans remain hard gates.
+Optional markers are `integration`, `release`, `benchmark`, `private`, and `model`. Runtime varies
+with the machine and installed extras. Tests touching schema, offsets, code systems, relation
+endpoints, or evidence spans remain hard gates.
 
 ## Documentation
 
