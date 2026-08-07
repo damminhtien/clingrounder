@@ -120,6 +120,9 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Checkout release repository
+        uses: actions/checkout@v7
+
       - name: Download release artifacts
         uses: actions/download-artifact@v7
         with:
