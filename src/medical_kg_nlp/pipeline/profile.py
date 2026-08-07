@@ -56,7 +56,7 @@ class PipelineProfileMetadata:
     tags: tuple[str, ...] = ()
     portability: ProfilePortability = ProfilePortability.PORTABLE
     support_status: ProfileSupportStatus = ProfileSupportStatus.SUPPORTED
-    owner: str = "medical-kg-nlp"
+    owner: str = "clingrounder"
 
     def __post_init__(self) -> None:
         for field_name, value in (
@@ -104,7 +104,7 @@ class PipelineProfileMetadata:
             owner=(
                 _required_string(payload, "owner")
                 if "owner" in payload
-                else "medical-kg-nlp"
+                else "clingrounder"
             ),
         )
 

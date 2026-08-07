@@ -106,7 +106,7 @@ class FsspecArtifactStore:
         try:
             fsspec = importlib.import_module("fsspec")
         except ImportError as error:  # pragma: no cover - environment dependent
-            raise RuntimeError("Install medical-kg-nlp[data] to use object storage") from error
+            raise RuntimeError("Install clingrounder[data] to use object storage") from error
         filesystem, root = fsspec.core.url_to_fs(root_uri, **dict(storage_options or {}))
         self._filesystem = filesystem
         self._root = str(root).rstrip("/")

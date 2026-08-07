@@ -1,6 +1,6 @@
 # Code Map
 
-This map describes ownership and stable extension points in `medical-kg-nlp` 0.2. Start here before
+This map describes ownership and stable extension points in ClingRounder 0.1.0a1. Start here before
 searching implementation details.
 
 ## Dependency Direction

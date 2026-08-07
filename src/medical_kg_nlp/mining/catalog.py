@@ -34,7 +34,7 @@ class ParquetSnapshotWriter:
             pa = importlib.import_module("pyarrow")
             parquet = importlib.import_module("pyarrow.parquet")
         except ImportError as error:  # pragma: no cover - environment dependent
-            raise RuntimeError("Install medical-kg-nlp[data] to write Parquet snapshots") from error
+            raise RuntimeError("Install clingrounder[data] to write Parquet snapshots") from error
         self.root.mkdir(parents=True, exist_ok=True)
         split_map = dict(splits or {})
         rows = {
@@ -87,7 +87,7 @@ class DuckDBMiningCatalog:
         try:
             duckdb = importlib.import_module("duckdb")
         except ImportError as error:  # pragma: no cover - environment dependent
-            raise RuntimeError("Install medical-kg-nlp[data] to build a DuckDB catalog") from error
+            raise RuntimeError("Install clingrounder[data] to build a DuckDB catalog") from error
         root = Path(snapshot_root).resolve()
         self.path.parent.mkdir(parents=True, exist_ok=True)
         connection = duckdb.connect(str(self.path))

@@ -1,13 +1,16 @@
-# Medical KG NLP
+# ClingRounder
 
-An offset-safe clinical NLP toolkit for extracting medical concepts, resolving clinical context,
+An offset-safe clinical text grounding toolkit for extracting medical concepts, resolving clinical context,
 linking terminology, and validating relation graphs. It is designed for Vietnamese and mixed
 Vietnamese-English text while keeping the reusable contracts language-neutral.
 
-The project is a reusable Python package and research portfolio. Deterministic rules, optional
+ClingRounder is a reusable Python package and research portfolio. Deterministic rules, optional
 local model adapters, terminology repositories, neutral evaluation, and data-mining workflows
 share typed interfaces. Historical competition code is retained as an optional benchmark plugin;
 it is not part of the default runtime or evaluation path.
+
+The PyPI distribution is named `clingrounder`; the Python import namespace remains
+`medical_kg_nlp`.
 
 > Research software only. It is not a medical device and must not be used as the sole basis for
 > clinical decisions.
@@ -102,6 +105,7 @@ Without `uv`:
 ```bash
 python -m venv .venv
 source .venv/bin/activate
+python -m pip install clingrounder
 python -m pip install -e ".[dev]"
 medical-kg pipeline run \
   --config configs/pipeline/clinical-baseline.yaml \

@@ -411,7 +411,7 @@ def _faiss_dependencies() -> tuple[Any, Any]:
     except ModuleNotFoundError as exc:
         raise RuntimeError(
             "FAISS synonym indexes require the 'retrieval' extra: "
-            "pip install 'medical-kg-nlp[retrieval]'"
+            "pip install 'clingrounder[retrieval]'"
         ) from exc
     return faiss, numpy
 
