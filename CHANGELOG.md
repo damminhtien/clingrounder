@@ -32,6 +32,19 @@ pre-release semantic versioning while the public API is still maturing.
 
 - None.
 
+## [0.1.0a7] - 2026-08-09
+
+### Added
+
+- Added a task-neutral benchmark publication audit with split, fingerprint, leakage, license,
+  and human-review gates.
+- Strengthened the public Vietnamese model training contract with checksummed data manifests and
+  an eligible dataset-audit requirement for `ready` runs.
+
+### Fixed
+
+- Refreshed archived GPU and QLoRA run specifications to match the current dependency lock.
+
 ## [0.1.0a6] - 2026-08-08
 
 ### Fixed
@@ -106,7 +119,8 @@ pre-release semantic versioning while the public API is still maturing.
 - Added architecture, code-map, reproducibility, public-release, security, and API-stability docs.
 - Documented the boundary between reusable toolkit code and optional competition benchmarks.
 
-[Unreleased]: https://github.com/damminhtien/clingrounder/compare/v0.1.0a6...HEAD
+[Unreleased]: https://github.com/damminhtien/clingrounder/compare/v0.1.0a7...HEAD
+[0.1.0a7]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a7
 [0.1.0a6]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a6
 [0.1.0a5]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a5
 [0.1.0a4]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a4
