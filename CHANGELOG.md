@@ -44,6 +44,7 @@ pre-release semantic versioning while the public API is still maturing.
 ### Fixed
 
 - Refreshed archived GPU and QLoRA run specifications to match the current dependency lock.
+- Re-pinned those run specifications after the final `0.1.0a7` lockfile refresh.
 
 ## [0.1.0a6] - 2026-08-08
 

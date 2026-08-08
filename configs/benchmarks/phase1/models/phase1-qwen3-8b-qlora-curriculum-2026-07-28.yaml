@@ -54,7 +54,7 @@ runtime:
 
 environment:
   lock_path: uv.lock
-  lock_sha256: f75e2a1e9cc5e8a9821882c3ada38182553d98ea1bb83d8c610076be72d749af
+  lock_sha256: 6859c8b1aae41b98b7d5aeea9c11d174ae535927a8eb798846fd77a9f6f865b0
 
 remote:
   maximum_vast_cost_usd: 6.0
