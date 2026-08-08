@@ -9,14 +9,18 @@ reproducibility workflow. It is not a clinical validation study and must not be 
 From a source checkout:
 
 ```bash
-clingrounder-benchmark run \
+clingrounder-benchmark suite \
   --benchmark benchmarks/vi_clinical_grounding_v1 \
-  --config configs/benchmarks/vi_clinical_grounding_v1/full.yaml \
-  --output artifacts/benchmarks/vi-clinical-grounding-v1/full
+  --config exact=configs/benchmarks/vi_clinical_grounding_v1/exact.yaml \
+  --config lexical=configs/benchmarks/vi_clinical_grounding_v1/lexical.yaml \
+  --config hybrid=configs/benchmarks/vi_clinical_grounding_v1/hybrid.yaml \
+  --config full=configs/benchmarks/vi_clinical_grounding_v1/full.yaml \
+  --output artifacts/benchmarks/vi-clinical-grounding-v1/suite
 ```
 
-The command writes deterministic JSON/Markdown artifacts. A later human-reviewed release can
-replace the pilot data without changing the output contract.
+The command writes deterministic JSON/Markdown artifacts for each profile and one suite-level
+ablation table. A later human-reviewed release can replace the pilot data without changing the
+output contract. Use `clingrounder-benchmark run` when you need only one profile.
 
 Audit the dataset before treating its results as public evidence:
 

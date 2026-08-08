@@ -1,6 +1,11 @@
 schema_version: clingrounder.benchmark-results.v1
 benchmark: vi-clinical-grounding-v1
 status: synthetic_pilot_measured
+measurement:
+  commit: f7a70f7ac9e7c52d4249503b1e44904a331655b5
+  python: "3.14"
+  platform: macOS
+  note: Runtime values are a reference run, not a portable performance guarantee.
 policy:
   primary:
     metric: entity_exact_micro_f1
@@ -20,7 +25,7 @@ results:
     linking_recall_at_5: 1.0
     linking_top1_accuracy: 1.0
     relation_micro_f1: null
-    p95_ms: 8.65
+    p95_ms: 9.70
   - variant: lexical
     split: test
     entity_exact_micro_f1: 1.0
@@ -28,7 +33,7 @@ results:
     linking_recall_at_5: 1.0
     linking_top1_accuracy: 1.0
     relation_micro_f1: null
-    p95_ms: 9.01
+    p95_ms: 5.43
   - variant: hybrid
     split: test
     entity_exact_micro_f1: 1.0
@@ -36,7 +41,7 @@ results:
     linking_recall_at_5: 1.0
     linking_top1_accuracy: 1.0
     relation_micro_f1: null
-    p95_ms: 9.09
+    p95_ms: 8.95
   - variant: full
     split: test
     entity_exact_micro_f1: 1.0
@@ -44,4 +49,4 @@ results:
     linking_recall_at_5: 1.0
     linking_top1_accuracy: 1.0
     relation_micro_f1: null
-    p95_ms: 12.31
+    p95_ms: 9.55

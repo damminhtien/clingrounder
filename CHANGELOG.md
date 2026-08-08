@@ -22,11 +22,15 @@ pre-release semantic versioning while the public API is still maturing.
   `0.1.0a6` release.
 - Strengthened the public Vietnamese model contract: ready runs now require checksummed data
   manifests and an eligible dataset-audit report.
+- Added `clingrounder-benchmark suite` to run named product profiles and write a deterministic
+  ablation index alongside each complete benchmark artifact bundle.
 
 ### Fixed
 
 - Synchronized checked-in research run specifications with the current `uv.lock` fingerprint so
   reproducibility validation does not fail on a clean checkout.
+- Updated the Vietnamese benchmark reproduction script and pilot table from a current measured
+  suite run; runtime values remain explicitly machine-dependent.
 
 ### Changed
 

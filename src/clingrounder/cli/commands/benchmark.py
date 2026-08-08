@@ -12,6 +12,7 @@ from clingrounder.evaluation.promotion_benchmark import (
     run_promotion_benchmark,
 )
 from clingrounder.evaluation.dataset_benchmark import run_dataset_benchmark
+from clingrounder.evaluation.dataset_benchmark import run_dataset_benchmark_suite
 from clingrounder.evaluation.dataset_audit import audit_dataset
 
 __all__ = [
@@ -19,6 +20,7 @@ __all__ = [
     "list_benchmarks",
     "run_runtime_benchmark",
     "run_dataset_benchmark_command",
+    "run_dataset_benchmark_suite_command",
     "audit_dataset_command",
 ]
 
@@ -55,6 +57,27 @@ def run_dataset_benchmark_command(args: argparse.Namespace) -> int:
     report = run_dataset_benchmark(
         args.benchmark,
         args.config,
+        args.output,
+        split=args.split,
+    )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def run_dataset_benchmark_suite_command(args: argparse.Namespace) -> int:
+    """Run named product profiles and write one reproducible ablation index."""
+
+    configs: dict[str, str] = {}
+    for value in args.config:
+        name, separator, path = value.partition("=")
+        if not separator or not name or not path:
+            raise ValueError("--config must use NAME=PATH")
+        if name in configs:
+            raise ValueError(f"Duplicate benchmark suite config name: {name!r}")
+        configs[name] = path
+    report = run_dataset_benchmark_suite(
+        args.benchmark,
+        configs,
         args.output,
         split=args.split,
     )

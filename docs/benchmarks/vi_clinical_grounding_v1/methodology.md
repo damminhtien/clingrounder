@@ -14,8 +14,10 @@ set that is not used to tune rules.
 ## Output contract
 
 Each run records the profile and input fingerprints, Git commit, exact predictions, per-document
-errors, assertion confusion counts, runtime percentiles, and a Markdown summary. Runtime numbers
-are machine-dependent and must be compared with repeated runs and tolerances.
+errors, assertion confusion counts, runtime percentiles, and a Markdown summary. The `suite`
+command runs named profiles independently and adds a deterministic ablation index; it does not
+merge predictions or hide profile provenance. Runtime numbers are machine-dependent and must be
+compared with repeated runs and tolerances.
 
 ## Promotion policy
 

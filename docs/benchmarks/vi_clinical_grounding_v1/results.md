@@ -6,17 +6,17 @@ human-reviewed public clinical test set.
 
 ## Checked-In Pilot
 
-The checked-in `0.1.0` fixture contains three synthetic test documents. The current runner was
-executed on commit `44c0aa3` on macOS with Python 3.14. All four deterministic profiles produce
+The checked-in `0.1.0` fixture contains three synthetic test documents. The suite runner was
+executed on commit `f7a70f7` on macOS with Python 3.14. All four deterministic profiles produce
 the same result because the fixture only exercises concepts covered by the bundled exact
 dictionary.
 
 | System | Entity exact F1 | Assertion macro-F1 | Recall@5 | Top-1 | Relation F1 | p95 ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Exact dictionary | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 8.65 |
-| Lexical | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 9.01 |
-| Hybrid | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 9.09 |
-| Full deterministic | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 12.31 |
+| Exact dictionary | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 9.70 |
+| Lexical | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 5.43 |
+| Hybrid | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 8.95 |
+| Full deterministic | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 9.55 |
 
 Relation F1 is zero because the pilot contains no gold relations. These values verify the output
 contract and are not useful for ranking extraction systems.
@@ -67,11 +67,11 @@ commands below instead of comparing numbers across machines.
 
 ## Reproduce
 
-Checked-in pilot:
+Checked-in pilot suite:
 
 ```bash
 bash scripts/reproduce_vi_clinical_grounding_v1.sh \
-  artifacts/benchmarks/vi-clinical-grounding-v1/full
+  artifacts/benchmarks/vi-clinical-grounding-v1/suite
 ```
 
 Generated diagnostic expansion:

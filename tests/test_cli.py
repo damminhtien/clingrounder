@@ -45,6 +45,29 @@ def test_pipeline_run_requires_an_explicit_profile() -> None:
         )
 
 
+def test_public_benchmark_suite_parser_accepts_named_configs() -> None:
+    args = build_parser("benchmark").parse_args(
+        [
+            "benchmark",
+            "suite",
+            "--benchmark",
+            "benchmarks/vi_clinical_grounding_v1",
+            "--config",
+            "exact=configs/benchmarks/vi_clinical_grounding_v1/exact.yaml",
+            "--config",
+            "full=configs/benchmarks/vi_clinical_grounding_v1/full.yaml",
+            "--output",
+            "/tmp/benchmark-suite",
+        ]
+    )
+
+    assert args.handler == "benchmark_dataset_suite"
+    assert args.config == [
+        "exact=configs/benchmarks/vi_clinical_grounding_v1/exact.yaml",
+        "full=configs/benchmarks/vi_clinical_grounding_v1/full.yaml",
+    ]
+
+
 def test_pipeline_config_inspection_exposes_effective_defaults(
     capsys: pytest.CaptureFixture[str],
 ) -> None:

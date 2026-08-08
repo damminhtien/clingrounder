@@ -347,6 +347,22 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     dataset_run.add_argument("--output", required=True)
     dataset_run.add_argument("--split", default="test")
 
+    dataset_suite = plugins.add_parser(
+        "suite",
+        help="Run named profiles and write a reproducible ablation table.",
+    )
+    dataset_suite.set_defaults(handler="benchmark_dataset_suite")
+    dataset_suite.add_argument("--benchmark", required=True)
+    dataset_suite.add_argument(
+        "--config",
+        action="append",
+        required=True,
+        metavar="NAME=PATH",
+        help="Named profile config; repeat for each ablation variant.",
+    )
+    dataset_suite.add_argument("--output", required=True)
+    dataset_suite.add_argument("--split", default="test")
+
     audit = plugins.add_parser(
         "audit",
         help="Audit a neutral benchmark dataset before treating it as public evidence.",

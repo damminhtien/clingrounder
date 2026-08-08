@@ -375,10 +375,13 @@ See [docs/public-release.md](docs/public-release.md) for restore and publication
 The product benchmark is independent from the archived competition plugin:
 
 ```bash
-clingrounder-benchmark run \
+clingrounder-benchmark suite \
   --benchmark benchmarks/vi_clinical_grounding_v1 \
-  --config configs/benchmarks/vi_clinical_grounding_v1/full.yaml \
-  --output artifacts/benchmarks/vi-clinical-grounding-v1/full
+  --config exact=configs/benchmarks/vi_clinical_grounding_v1/exact.yaml \
+  --config lexical=configs/benchmarks/vi_clinical_grounding_v1/lexical.yaml \
+  --config hybrid=configs/benchmarks/vi_clinical_grounding_v1/hybrid.yaml \
+  --config full=configs/benchmarks/vi_clinical_grounding_v1/full.yaml \
+  --output artifacts/benchmarks/vi-clinical-grounding-v1/suite
 ```
 
 Audit split leakage and review provenance before publishing results:
@@ -392,9 +395,9 @@ clingrounder-benchmark audit \
 Use `--strict` as a release gate. The checked-in synthetic pilot is intentionally reported as
 not eligible for a clinical claim until a human-reviewed, licensed snapshot replaces it.
 
-It writes `summary.json`, `predictions.jsonl`, `errors.json`, `runtime.json`, a confusion matrix,
-and a Markdown report. The checked-in dataset is a synthetic pilot; measured values must not be
-described as clinical validation. See [benchmark methodology](docs/benchmarks/vi_clinical_grounding_v1/methodology.md).
+It writes one complete artifact bundle per named profile plus `suite.json` and an ablation
+`report.md`. The checked-in dataset is a synthetic pilot; measured values must not be described as
+clinical validation. See [benchmark methodology](docs/benchmarks/vi_clinical_grounding_v1/methodology.md).
 
 Measured pilot snapshot (3 synthetic test documents, one macOS run; latency is not a hardware
 benchmark). The full generated diagnostic table and fingerprints are in the

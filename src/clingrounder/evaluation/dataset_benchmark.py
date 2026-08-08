@@ -26,7 +26,7 @@ from clingrounder.pipeline.config_loader import ResolvedPipelineConfig
 from clingrounder.schema.output import ClinicalPrediction
 from clingrounder.schema.types import AssertionStatus, CodeSystem, EntityType, RelationType
 
-__all__ = ["run_dataset_benchmark"]
+__all__ = ["run_dataset_benchmark", "run_dataset_benchmark_suite"]
 
 _PUBLIC_ENTITY_TYPES = frozenset(
     {EntityType.DISEASE.value, EntityType.SYMPTOM.value, EntityType.DRUG.value,
@@ -151,6 +151,59 @@ def run_dataset_benchmark(
     return summary
 
 
+def run_dataset_benchmark_suite(
+    benchmark_dir: str | Path,
+    configs: Mapping[str, str | Path],
+    output_dir: str | Path,
+    *,
+    split: str = "test",
+) -> dict[str, Any]:
+    """Run named benchmark profiles and write one deterministic ablation report.
+
+    Each profile still gets the complete single-run artifact bundle.  The suite only adds a
+    small index over those bundles, which keeps profile-specific metrics and provenance intact.
+    """
+
+    if not configs:
+        raise ValueError("Benchmark suite requires at least one named config")
+    normalized_configs = {
+        _validate_suite_name(name): Path(path).expanduser().resolve()
+        for name, path in configs.items()
+    }
+    if len(normalized_configs) != len(configs):
+        raise ValueError("Benchmark suite config names must be unique")
+
+    root = Path(output_dir).expanduser().resolve()
+    runs: dict[str, dict[str, Any]] = {}
+    for name in sorted(normalized_configs):
+        summary = run_dataset_benchmark(
+            benchmark_dir,
+            normalized_configs[name],
+            root / name,
+            split=split,
+        )
+        runs[name] = {
+            "config": str(normalized_configs[name]),
+            "output": name,
+            "metrics": summary["metrics"],
+            "performance": summary["performance"],
+            "config_fingerprint": summary["config_fingerprint"],
+        }
+
+    benchmark_root = Path(benchmark_dir).expanduser().resolve()
+    manifest = _load_manifest(benchmark_root / "dataset_manifest.yaml")
+    payload: dict[str, Any] = {
+        "schema_version": "clingrounder.benchmark-suite.v1",
+        "benchmark": manifest["dataset"],
+        "split": split,
+        "git_commit": _git_commit(),
+        "runs": runs,
+    }
+    _write_json(root / "suite.json", payload)
+    (root / "report.md").write_text(_render_suite_report(payload), encoding="utf-8")
+    return payload
+
+
 def _load_manifest(path: Path) -> dict[str, Any]:
     if not path.is_file():
         raise FileNotFoundError(f"Missing benchmark manifest: {path}")
@@ -160,6 +213,14 @@ def _load_manifest(path: Path) -> dict[str, Any]:
     if not isinstance(payload.get("dataset"), Mapping):
         raise ValueError("Benchmark manifest requires a dataset mapping")
     return payload
+
+
+def _validate_suite_name(name: str) -> str:
+    """Keep suite output paths portable and prevent config-name path traversal."""
+
+    if not name or name in {".", ".."} or any(character not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_" for character in name):
+        raise ValueError(f"Invalid benchmark suite config name: {name!r}")
+    return name
 
 
 def _load_examples(path: Path) -> list[BenchmarkExample]:
@@ -429,6 +490,8 @@ def _score(
             "linking_top1_accuracy": _ratio(top1_hits, linking_total),
             "linking_mrr": _ratio(reciprocal_rank_total, linking_total),
             "relation_micro_f1": _f1(relation_precision, relation_recall),
+            "relation_gold_count": len(gold_relation_keys),
+            "relation_predicted_count": len(pred_relation_keys),
             "assignment_coverage": _ratio(linking_total, gold_total),
             "offset_validity": 1.0,
             "validation_error_count": 0,
@@ -493,6 +556,46 @@ def _render_report(summary: Mapping[str, Any]) -> str:
             "",
         ]
     )
+
+
+def _render_suite_report(payload: Mapping[str, Any]) -> str:
+    """Render a compact ablation table without hiding per-run provenance."""
+
+    lines = [
+        f"# {payload['benchmark']['id']} suite",
+        "",
+        f"Split: `{payload['split']}`",
+        "",
+        "| Variant | Entity exact F1 | Assertion macro-F1 | Recall@5 | Top-1 | Relation F1 | p95 ms |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ]
+    for name, run in sorted(payload["runs"].items()):
+        metrics = run["metrics"]
+        performance = run["performance"]
+        relation = metrics["relation_micro_f1"]
+        relation_value = "N/A" if metrics["relation_gold_count"] == 0 else f"{relation:.4f}"
+        lines.append(
+            "| {name} | {entity:.4f} | {assertion:.4f} | {recall:.4f} | {top1:.4f} | "
+            "{relation} | {p95:.2f} |".format(
+                name=name,
+                entity=metrics["entity_exact_micro_f1"],
+                assertion=metrics["assertion_macro_f1"],
+                recall=metrics["linking_recall_at_5"],
+                top1=metrics["linking_top1_accuracy"],
+                relation=relation_value,
+                p95=performance["document_latency_ms"]["p95"],
+            )
+        )
+    lines.extend(
+        [
+            "",
+            "Each row is backed by the complete artifact bundle in the matching subdirectory.",
+            "Runtime values are machine-dependent; correctness values on a synthetic pilot are "
+            "not clinical validation evidence.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
 
 
 def _write_json(path: Path, payload: object) -> None:
