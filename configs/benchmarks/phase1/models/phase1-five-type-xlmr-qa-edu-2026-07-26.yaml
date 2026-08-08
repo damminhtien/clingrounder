@@ -7,7 +7,7 @@ run_root: ../../../..
 environment:
   # INVARIANT: the remote GPU job must use the exact dependency graph reviewed locally.
   lock_path: uv.lock
-  lock_sha256: 2d9351bce244e17644d84701151f153d3c5324d7933b3d5331be79932c967ed6
+  lock_sha256: 38d2d86bf29cb16d64d28f9c201b65b32be54386c242ac869c3525616a74d7eb
 
 dataset:
   path: outputs/mining/model-datasets/phase1-manual-five-type-qa-edu-v1/spans.jsonl

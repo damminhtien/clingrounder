@@ -5,6 +5,6 @@ type: software
 authors:
   - name: "ClinGrounder contributors"
 license: MIT
-version: 0.1.0a3
-date-released: 2026-08-07
+version: 0.1.0a4
+date-released: 2026-08-08
 abstract: "Offset-safe clinical NLP toolkit for entity extraction, terminology-constrained linking, context reasoning, relation extraction, data mining, and medical knowledge graph validation."
