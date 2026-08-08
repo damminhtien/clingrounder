@@ -24,9 +24,21 @@ import yaml
 from clingrounder.pipeline.factory import PipelineFactory
 from clingrounder.pipeline.config_loader import ResolvedPipelineConfig
 from clingrounder.schema.output import ClinicalPrediction
-from clingrounder.schema.types import RelationType
+from clingrounder.schema.types import AssertionStatus, CodeSystem, EntityType, RelationType
 
 __all__ = ["run_dataset_benchmark"]
+
+_PUBLIC_ENTITY_TYPES = frozenset(
+    {EntityType.DISEASE.value, EntityType.SYMPTOM.value, EntityType.DRUG.value,
+     EntityType.LAB_TEST.value, EntityType.LAB_RESULT.value}
+)
+_PUBLIC_ASSERTIONS = frozenset(
+    {AssertionStatus.PRESENT.value, AssertionStatus.NEGATED.value,
+     AssertionStatus.HISTORICAL.value, AssertionStatus.FAMILY.value, AssertionStatus.POSSIBLE.value}
+)
+_PUBLIC_CODE_SYSTEMS = frozenset(
+    {CodeSystem.ICD10.value, CodeSystem.RXNORM.value, CodeSystem.LOCAL.value, CodeSystem.NONE.value}
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -201,6 +213,22 @@ def _validate_gold_entity(entity: object, text: str, path: Path, line_number: in
     entity_id = str(entity.get("id", "")).strip()
     if not entity_id:
         raise ValueError(f"{path}:{line_number}: entity id is required")
+    entity_type = entity.get("type")
+    assertion = entity.get("assertion")
+    code_system = entity.get("code_system")
+    code = entity.get("code")
+    if entity_type not in _PUBLIC_ENTITY_TYPES:
+        raise ValueError(f"{path}:{line_number}: unsupported entity type {entity_type!r}")
+    if assertion not in _PUBLIC_ASSERTIONS:
+        raise ValueError(f"{path}:{line_number}: unsupported assertion {assertion!r}")
+    if code_system not in _PUBLIC_CODE_SYSTEMS:
+        raise ValueError(f"{path}:{line_number}: unsupported code system {code_system!r}")
+    if code is not None and (not isinstance(code, str) or not code.strip()):
+        raise ValueError(f"{path}:{line_number}: code must be null or a non-empty string")
+    if code_system == CodeSystem.NONE.value and code is not None:
+        raise ValueError(f"{path}:{line_number}: NONE code system requires null code")
+    if code_system != CodeSystem.NONE.value and code is None:
+        raise ValueError(f"{path}:{line_number}: assigned code system requires a code")
     span = entity.get("span")
     if not isinstance(span, list | tuple) or len(span) != 2:
         raise ValueError(f"{path}:{line_number}: entity span must contain two offsets")

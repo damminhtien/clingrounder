@@ -14,7 +14,7 @@
         "required": ["id", "span", "text", "type", "assertion", "code_system", "code"],
         "properties": {
           "id": {"type": "string", "minLength": 1},
-          "span": {"type": "array", "prefixItems": [{"type": "integer"}, {"type": "integer"}, "items": false, "minItems": 2, "maxItems": 2},
+          "span": {"type": "array", "prefixItems": [{"type": "integer"}, {"type": "integer"}], "items": false, "minItems": 2, "maxItems": 2},
           "text": {"type": "string", "minLength": 1},
           "type": {"enum": ["DISEASE", "SYMPTOM", "DRUG", "LAB_TEST", "LAB_RESULT"]},
           "assertion": {"enum": ["PRESENT", "NEGATED", "HISTORICAL", "FAMILY", "POSSIBLE"]},

@@ -20,6 +20,14 @@ def test_manifest_and_split_paths_are_self_contained() -> None:
         assert (ROOT / split["path"]).is_file()
 
 
+def test_schema_is_valid_json_and_declares_fixed_span_contract() -> None:
+    schema = json.loads((ROOT / "schema.json").read_text())
+    span = schema["properties"]["entities"]["items"]["properties"]["span"]
+    assert span["items"] is False
+    assert span["minItems"] == span["maxItems"] == 2
+    assert len(span["prefixItems"]) == 2
+
+
 def test_fixture_offsets_and_ids_are_valid() -> None:
     seen_ids: set[str] = set()
     for line in (ROOT / "data" / "test.jsonl").read_text().splitlines():
@@ -108,4 +116,28 @@ def test_relation_contract_rejects_duplicate_relation_ids(tmp_path: Path) -> Non
     path.write_text(json.dumps(row) + "\n")
 
     with pytest.raises(ValueError, match="duplicate relation id"):
+        _load_examples(path)
+
+
+def test_entity_contract_rejects_inconsistent_code_system(tmp_path: Path) -> None:
+    row = {
+        "document_id": "doc-1",
+        "text": "Sốt.",
+        "entities": [
+            {
+                "id": "e1",
+                "span": [0, 3],
+                "text": "Sốt",
+                "type": "SYMPTOM",
+                "assertion": "PRESENT",
+                "code_system": "NONE",
+                "code": "fabricated",
+            }
+        ],
+        "relations": [],
+    }
+    path = tmp_path / "invalid-code.jsonl"
+    path.write_text(json.dumps(row) + "\n")
+
+    with pytest.raises(ValueError, match="NONE code system"):
         _load_examples(path)
