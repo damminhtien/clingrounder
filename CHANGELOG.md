@@ -14,6 +14,11 @@ pre-release semantic versioning while the public API is still maturing.
 - Framework-neutral model artifact manifests with SHA-256 and governance verification.
 - Public benchmark expansion and model-training/release contracts.
 
+### Fixed
+
+- Synchronized checked-in research run specifications with the current `uv.lock` fingerprint so
+  reproducibility validation does not fail on a clean checkout.
+
 ### Changed
 
 - None.

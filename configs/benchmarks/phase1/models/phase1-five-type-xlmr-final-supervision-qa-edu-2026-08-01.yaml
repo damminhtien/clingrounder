@@ -5,7 +5,7 @@ run_root: ../../../..
 
 environment:
   lock_path: uv.lock
-  lock_sha256: 62157f70cc08379283c40d5be0ec046e3d51b4453734ad5493efe403cfd94fa0
+  lock_sha256: 2d9351bce244e17644d84701151f153d3c5324d7933b3d5331be79932c967ed6
 
 dataset:
   path: outputs/mining/model-datasets/phase1-final-supervision-qa-edu-v1/spans.jsonl
