@@ -15,6 +15,12 @@ are inspectable without importing a model framework.
 5. Write a `clingrounder.model-artifact.v1` manifest next to the model directory and verify its
    SHA-256 before inference or publication.
 
+The public training contract adds one more release gate: a `ready` contract must pin SHA-256
+values for the train and validation manifests and reference a dataset-audit JSON report whose
+`eligible_for_clinical_claim` value is `true`. A contract can remain
+`pending_public_snapshot` while those inputs are being curated, but it cannot silently start a
+public model release.
+
 The manifest records:
 
 - model ID and immutable revision;

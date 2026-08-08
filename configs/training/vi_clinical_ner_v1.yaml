@@ -13,6 +13,10 @@ model:
 data:
   train_manifest: null
   validation_manifest: null
+  train_manifest_sha256: null
+  validation_manifest_sha256: null
+  dataset_audit_report: null
+  dataset_audit_report_sha256: null
 
 training:
   seed: 42

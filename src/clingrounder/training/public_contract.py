@@ -8,6 +8,8 @@ unfinished data release from being mistaken for a trainable public model.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import json
 import math
 from pathlib import Path
 import re
@@ -22,6 +24,7 @@ __all__ = [
 
 _SCHEMA = "clingrounder.public-training-contract.v1"
 _SHA = re.compile(r"[0-9a-f]{40}")
+_SHA256 = re.compile(r"[0-9a-f]{64}")
 _STATUS = Literal["pending_public_snapshot", "ready"]
 
 
@@ -38,6 +41,10 @@ class PublicTrainingContract:
     model_revision: str
     train_manifest: Path | None
     validation_manifest: Path | None
+    train_manifest_sha256: str | None
+    validation_manifest_sha256: str | None
+    dataset_audit_report: Path | None
+    dataset_audit_report_sha256: str | None
     seed: int
     epochs: float
     batch_size: int
@@ -68,12 +75,38 @@ class PublicTrainingContract:
         if not 0.0 <= self.minimum_primary_metric <= 1.0:
             raise ValueError("minimum_primary_metric must be between 0 and 1")
         if self.status == "ready" and (
-            self.train_manifest is None or self.validation_manifest is None
+            self.train_manifest is None
+            or self.validation_manifest is None
+            or self.train_manifest_sha256 is None
+            or self.validation_manifest_sha256 is None
+            or self.dataset_audit_report is None
+            or self.dataset_audit_report_sha256 is None
         ):
-            raise ValueError("ready training contracts require train and validation manifests")
+            raise ValueError(
+                "ready training contracts require manifests, SHA-256 values, and an audit report"
+            )
         if self.train_manifest is not None and self.validation_manifest is not None:
             if self.train_manifest == self.validation_manifest:
                 raise ValueError("train and validation manifests must differ")
+        for name, path, fingerprint in (
+            ("train_manifest", self.train_manifest, self.train_manifest_sha256),
+            ("validation_manifest", self.validation_manifest, self.validation_manifest_sha256),
+            ("dataset_audit_report", self.dataset_audit_report, self.dataset_audit_report_sha256),
+        ):
+            if path is None and fingerprint is not None:
+                raise ValueError(f"{name} SHA-256 requires a manifest path")
+            if fingerprint is not None:
+                _validate_sha256(fingerprint, f"{name}_sha256")
+                if not path or sha256_file(path) != fingerprint:
+                    raise ValueError(f"{name} SHA-256 mismatch")
+        if self.status == "ready":
+            assert self.dataset_audit_report is not None
+            try:
+                audit = json.loads(self.dataset_audit_report.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as error:
+                raise ValueError("ready training contract audit report is unreadable") from error
+            if not isinstance(audit, Mapping) or audit.get("eligible_for_clinical_claim") is not True:
+                raise ValueError("ready training contract requires an eligible dataset audit report")
 
     def to_dict(self, *, root: Path | None = None) -> dict[str, Any]:
         """Render stable, portable configuration for a run manifest."""
@@ -88,6 +121,10 @@ class PublicTrainingContract:
             "data": {
                 "train_manifest": _portable_path(self.train_manifest, root),
                 "validation_manifest": _portable_path(self.validation_manifest, root),
+                "train_manifest_sha256": self.train_manifest_sha256,
+                "validation_manifest_sha256": self.validation_manifest_sha256,
+                "dataset_audit_report": _portable_path(self.dataset_audit_report, root),
+                "dataset_audit_report_sha256": self.dataset_audit_report_sha256,
             },
             "training": {
                 "seed": self.seed,
@@ -135,6 +172,16 @@ def load_public_training_contract(path: str | Path) -> PublicTrainingContract:
         validation_manifest=_resolve_optional_path(
             data.get("validation_manifest"), config_path.parent
         ),
+        train_manifest_sha256=_optional_sha256(data.get("train_manifest_sha256"), "train_manifest_sha256"),
+        validation_manifest_sha256=_optional_sha256(
+            data.get("validation_manifest_sha256"), "validation_manifest_sha256"
+        ),
+        dataset_audit_report=_resolve_optional_path(
+            data.get("dataset_audit_report"), config_path.parent
+        ),
+        dataset_audit_report_sha256=_optional_sha256(
+            data.get("dataset_audit_report_sha256"), "dataset_audit_report_sha256"
+        ),
         seed=_integer(training, "seed"),
         epochs=_number(training, "epochs"),
         batch_size=_integer(training, "batch_size"),
@@ -176,6 +223,14 @@ def _number(payload: Mapping[str, Any], key: str) -> float:
     return number
 
 
+def _optional_sha256(value: Any, field_name: str) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str) or _SHA256.fullmatch(value) is None:
+        raise ValueError(f"{field_name} must be a 64-character lowercase SHA-256 digest or null")
+    return value
+
+
 def _resolve_optional_path(value: Any, root: Path) -> Path | None:
     if value is None:
         return None
@@ -195,3 +250,18 @@ def _portable_path(path: Path | None, root: Path | None) -> str | None:
     if root is None:
         return str(path)
     return path.resolve().relative_to(root.resolve()).as_posix()
+
+
+def sha256_file(path: Path) -> str:
+    """Hash a contract input in chunks so large dataset manifests do not fill memory."""
+
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _validate_sha256(value: str, field_name: str) -> None:
+    if _SHA256.fullmatch(value) is None:
+        raise ValueError(f"{field_name} must be a 64-character lowercase SHA-256 digest")

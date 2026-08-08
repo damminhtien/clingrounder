@@ -20,6 +20,8 @@ pre-release semantic versioning while the public API is still maturing.
   license, split-policy, and human-review publication gates.
 - Refreshed archived GPU and QLoRA run specs after the package lock fingerprint changed in the
   `0.1.0a6` release.
+- Strengthened the public Vietnamese model contract: ready runs now require checksummed data
+  manifests and an eligible dataset-audit report.
 
 ### Fixed
 
