@@ -18,6 +18,8 @@ pre-release semantic versioning while the public API is still maturing.
 - Clean-wheel smoke verification for the bundled offline quickstart in CI and release workflows.
 - Task-neutral benchmark dataset audit command and report contract for fingerprint, leakage,
   license, split-policy, and human-review publication gates.
+- Refreshed archived GPU and QLoRA run specs after the package lock fingerprint changed in the
+  `0.1.0a6` release.
 
 ### Fixed
 
