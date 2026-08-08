@@ -12,6 +12,7 @@ pre-release semantic versioning while the public API is still maturing.
 - Automated GitHub release and PyPI publishing workflow using OIDC Trusted Publishing.
 - CI package build checks and release documentation.
 - Framework-neutral model artifact manifests with SHA-256 and governance verification.
+- Public Vietnamese NER training-contract inspection without optional ML dependencies.
 - Public benchmark expansion and model-training/release contracts.
 
 ### Fixed

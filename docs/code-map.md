@@ -48,6 +48,8 @@ composition root that turns config into a runnable component graph.
 | `benchmarks/phase1/` | Archived task schema, ontology, CLI handlers, scoring, export, and campaign code | Generic evaluation behavior |
 | `validation/` | Core/development/release severity and generic artifact checks | Task-specific ZIP layout |
 | `mining/` | Licensed acquisition, immutable artifacts, parsers, curation, terminology evidence, review, model datasets, and snapshots | Competition schemas or hosted services |
+| `training/` | Framework-neutral run contracts, span datasets, model adapters, and release verification | Hidden defaults or model weights bundled in core |
+| `governance/` | Artifact fingerprints, model governance metadata, audit, and data policy | Clinical safety certification |
 | `cli/` | `argparse` routing and reusable thin IO handlers | Benchmark handlers, metrics, or pipeline algorithms |
 
 ## Rule NER
