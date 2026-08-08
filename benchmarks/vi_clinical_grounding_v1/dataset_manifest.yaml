@@ -13,9 +13,11 @@ splits:
   validation:
     path: data/validation.jsonl
     documents: 2
+    sha256: 1c295fcd1d8bacd2b3fb2e23cfaf152a1f9cc917cc567c61aa4e12f3d6d49425
   test:
     path: data/test.jsonl
     documents: 3
+    sha256: 4ceb6adf3f243f948e2d3ebe12162037998f77f303e0c03321da9ec81ebd31c2
 
 entities: [DISEASE, SYMPTOM, DRUG, LAB_TEST, LAB_RESULT]
 assertions: [PRESENT, NEGATED, HISTORICAL, FAMILY, POSSIBLE]
@@ -25,3 +27,13 @@ policy:
   template_grouping_required: true
   test_used_for_development: false
   private_data: false
+
+review:
+  status: pending
+  reviewers_required: 2
+  double_review_fraction: 0.1
+  agreement_targets:
+    span_type: 0.90
+    assertion: 0.85
+    relation: 0.80
+  adjudication_required: true

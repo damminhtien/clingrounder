@@ -16,8 +16,11 @@ def test_manifest_and_split_paths_are_self_contained() -> None:
     manifest = yaml.safe_load((ROOT / "dataset_manifest.yaml").read_text())
     assert manifest["schema_version"] == "clingrounder.dataset-manifest.v1"
     assert manifest["dataset"]["status"] == "synthetic_pilot"
+    assert manifest["review"]["status"] == "pending"
+    assert manifest["review"]["reviewers_required"] == 2
     for split in manifest["splits"].values():
         assert (ROOT / split["path"]).is_file()
+        assert len(split["sha256"]) == 64
 
 
 def test_schema_is_valid_json_and_declares_fixed_span_contract() -> None:
