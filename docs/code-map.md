@@ -43,7 +43,7 @@ composition root that turns config into a runnable component graph.
 | `context/` | Assertion scope and cue execution | Competition labels |
 | `ontology/` | Reusable suppression-rule contracts | Task schemas or code priorities |
 | `relations/`, `kg/` | Relation extraction and medical constraints | Task packaging |
-| `evaluation/` | Neutral records, matchers, metrics, and report rendering | Benchmark imports |
+| `evaluation/` | Neutral records, matchers, metrics, dataset audits, and report rendering | Benchmark imports |
 | `experiments/` | Ablations, journals, and agent-facing experiment loops | Reusable metrics |
 | `benchmarks/phase1/` | Archived task schema, ontology, CLI handlers, scoring, export, and campaign code | Generic evaluation behavior |
 | `validation/` | Core/development/release severity and generic artifact checks | Task-specific ZIP layout |
@@ -232,6 +232,14 @@ uv run pytest -o addopts='' -m release tests
 
 Markers are `integration`, `release`, `benchmark`, `private`, and `model`. Model tests must use a
 local cache and must not download weights.
+
+The public benchmark evidence gate is task-neutral and can be run before any scorer:
+
+```bash
+clingrounder-benchmark audit \
+  --benchmark benchmarks/vi_clinical_grounding_v1 \
+  --output artifacts/benchmarks/vi-clinical-grounding-v1/audit.json
+```
 
 ## Search Recipes
 

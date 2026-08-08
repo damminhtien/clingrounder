@@ -23,3 +23,19 @@ The primary metric is exact entity micro-F1. A change must improve it while pres
 recall, positive assertion macro-F1, offset validity, deterministic ordering, and bounded p95
 latency. Machine-sensitive runtime values are reported with tolerances, not treated as absolute
 scientific claims.
+
+## Publication audit
+
+Run the dataset audit before treating a result as public clinical evidence:
+
+```bash
+clingrounder-benchmark audit \
+  --benchmark benchmarks/vi_clinical_grounding_v1 \
+  --output artifacts/benchmarks/vi-clinical-grounding-v1/audit.json \
+  --strict
+```
+
+The audit verifies declared split counts and SHA-256 fingerprints, unique document IDs,
+normalized-text and template leakage, license metadata, test isolation, and human-review coverage.
+It never writes raw document text into the report. A synthetic or review-pending dataset can pass
+the engineering checks while correctly failing the clinical-evidence gate.

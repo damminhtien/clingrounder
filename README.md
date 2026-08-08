@@ -381,6 +381,17 @@ clingrounder-benchmark run \
   --output artifacts/benchmarks/vi-clinical-grounding-v1/full
 ```
 
+Audit split leakage and review provenance before publishing results:
+
+```bash
+clingrounder-benchmark audit \
+  --benchmark benchmarks/vi_clinical_grounding_v1 \
+  --output artifacts/benchmarks/vi-clinical-grounding-v1/audit.json
+```
+
+Use `--strict` as a release gate. The checked-in synthetic pilot is intentionally reported as
+not eligible for a clinical claim until a human-reviewed, licensed snapshot replaces it.
+
 It writes `summary.json`, `predictions.jsonl`, `errors.json`, `runtime.json`, a confusion matrix,
 and a Markdown report. The checked-in dataset is a synthetic pilot; measured values must not be
 described as clinical validation. See [benchmark methodology](docs/benchmarks/vi_clinical_grounding_v1/methodology.md).

@@ -2,6 +2,7 @@
 
 from clingrounder.evaluation.adapters import EvaluationAdapter, adapt_evaluation_records
 from clingrounder.evaluation.context_metrics import assertion_attribute_metrics
+from clingrounder.evaluation.dataset_audit import DatasetAuditReport, audit_dataset
 from clingrounder.evaluation.data_profile import profile_dataset, profile_paths, render_markdown
 from clingrounder.evaluation.end_to_end_metrics import evaluate_predictions
 from clingrounder.evaluation.pipeline_report import build_pipeline_report, write_pipeline_report
@@ -33,9 +34,11 @@ __all__ = [
     "SparseLogisticTrainingConfig",
     "adapt_evaluation_records",
     "assertion_attribute_metrics",
+    "audit_dataset",
     "binary_probability_metrics",
     "build_pipeline_report",
     "CandidateBatchBenchmarkReport",
+    "DatasetAuditReport",
     "evaluate_predictions",
     "fit_sparse_logistic",
     "profile_dataset",

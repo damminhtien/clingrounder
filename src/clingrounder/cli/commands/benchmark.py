@@ -12,12 +12,14 @@ from clingrounder.evaluation.promotion_benchmark import (
     run_promotion_benchmark,
 )
 from clingrounder.evaluation.dataset_benchmark import run_dataset_benchmark
+from clingrounder.evaluation.dataset_audit import audit_dataset
 
 __all__ = [
     "compare_runtime_benchmark",
     "list_benchmarks",
     "run_runtime_benchmark",
     "run_dataset_benchmark_command",
+    "audit_dataset_command",
 ]
 
 
@@ -57,6 +59,19 @@ def run_dataset_benchmark_command(args: argparse.Namespace) -> int:
         split=args.split,
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def audit_dataset_command(args: argparse.Namespace) -> int:
+    """Audit split leakage and review provenance before public benchmark use."""
+
+    report = audit_dataset(args.benchmark)
+    payload = report.to_dict()
+    if args.output:
+        _write_report(args.output, payload)
+    print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
+    if args.strict and not report.eligible_for_clinical_claim:
+        return 1
     return 0
 
 

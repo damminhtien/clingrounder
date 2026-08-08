@@ -347,6 +347,19 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     dataset_run.add_argument("--output", required=True)
     dataset_run.add_argument("--split", default="test")
 
+    audit = plugins.add_parser(
+        "audit",
+        help="Audit a neutral benchmark dataset before treating it as public evidence.",
+    )
+    audit.set_defaults(handler="benchmark_dataset_audit")
+    audit.add_argument("--benchmark", required=True)
+    audit.add_argument("--output")
+    audit.add_argument(
+        "--strict",
+        action="store_true",
+        help="Return a non-zero status unless the dataset passes the clinical-evidence gate.",
+    )
+
     compare = plugins.add_parser("compare", help="Compare two promotion benchmark artifacts.")
     compare.set_defaults(handler="benchmark_compare")
     compare.add_argument("baseline")

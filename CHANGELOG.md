@@ -16,6 +16,8 @@ pre-release semantic versioning while the public API is still maturing.
 - Public benchmark expansion and model-training/release contracts.
 - Deterministic synthetic benchmark expansion generator with split/template leakage guards.
 - Clean-wheel smoke verification for the bundled offline quickstart in CI and release workflows.
+- Task-neutral benchmark dataset audit command and report contract for fingerprint, leakage,
+  license, split-policy, and human-review publication gates.
 
 ### Fixed
 

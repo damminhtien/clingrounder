@@ -59,6 +59,10 @@ _HANDLERS = {
         "clingrounder.cli.commands.benchmark",
         "run_dataset_benchmark_command",
     ),
+    "benchmark_dataset_audit": (
+        "clingrounder.cli.commands.benchmark",
+        "audit_dataset_command",
+    ),
     "benchmark_compare": (
         "clingrounder.cli.commands.benchmark",
         "compare_runtime_benchmark",
