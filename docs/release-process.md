@@ -34,6 +34,10 @@ versioned source and wheel artifacts on GitHub.
    uv run --with twine twine check dist/*
    ```
 
+   The CI and release workflows also install the wheel into a fresh virtual environment and run
+   `scripts/smoke_test_installed_wheel.py`. This verifies the bundled offline pack, package data,
+   public `load_pipeline` API, and raw-offset invariant without the source checkout.
+
 4. Commit the version and changelog changes.
 5. Create and push an annotated tag matching the package version:
 

@@ -144,6 +144,12 @@ jobs:
       - name: Validate package metadata
         run: twine check dist/*
 
+      - name: Smoke test installed wheel
+        run: |
+          python -m venv /tmp/clingrounder-wheel-smoke
+          /tmp/clingrounder-wheel-smoke/bin/python -m pip install --disable-pip-version-check dist/*.whl
+          /tmp/clingrounder-wheel-smoke/bin/python scripts/smoke_test_installed_wheel.py
+
       - name: Upload package artifacts
         uses: actions/upload-artifact@v6
         with:

@@ -15,6 +15,7 @@ pre-release semantic versioning while the public API is still maturing.
 - Public Vietnamese NER training-contract inspection without optional ML dependencies.
 - Public benchmark expansion and model-training/release contracts.
 - Deterministic synthetic benchmark expansion generator with split/template leakage guards.
+- Clean-wheel smoke verification for the bundled offline quickstart in CI and release workflows.
 
 ### Fixed
 
