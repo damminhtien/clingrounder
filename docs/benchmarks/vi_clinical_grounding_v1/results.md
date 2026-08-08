@@ -7,16 +7,16 @@ human-reviewed public clinical test set.
 ## Checked-In Pilot
 
 The checked-in `0.1.0` fixture contains three synthetic test documents. The current runner was
-executed on commit `3d55732` on macOS with Python 3.14. All four deterministic profiles produce
+executed on commit `44c0aa3` on macOS with Python 3.14. All four deterministic profiles produce
 the same result because the fixture only exercises concepts covered by the bundled exact
 dictionary.
 
 | System | Entity exact F1 | Assertion macro-F1 | Recall@5 | Top-1 | Relation F1 | p95 ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Exact dictionary | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 8.42 |
-| Lexical | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 9.70 |
-| Hybrid | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 10.07 |
-| Full deterministic | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 13.29 |
+| Exact dictionary | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 8.65 |
+| Lexical | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 9.01 |
+| Hybrid | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 9.09 |
+| Full deterministic | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 12.31 |
 
 Relation F1 is zero because the pilot contains no gold relations. These values verify the output
 contract and are not useful for ranking extraction systems.
@@ -36,7 +36,7 @@ Run fingerprints:
 | Validation | 100 | `a4dad0b5bc27dd8fb26623b1fce91b82ef8b00f6395ac44e0dbd7aded9ae491e` |
 | Test | 200 | `a6b74b1dd37a482efaf379b6609e893376d158ef5834657f419d053f96396192` |
 
-All variants were run on commit `3d55732` using the same generated test split. Correctness metrics
+All variants were run on commit `44c0aa3` using the same generated test split. Correctness metrics
 are identical because the current profile differences do not change the generated entity
 decisions. The bundled pack does not fully cover the generated lab concepts, so the snapshot is
 also useful for exposing coverage gaps; runtime still varies by profile. This is a
@@ -45,18 +45,19 @@ text.
 
 | System | Entity exact F1 | Assertion macro-F1 | Recall@5 | Top-1 | Relation F1 | p95 ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Exact dictionary | 0.8390 | 0.2938 | 0.7023 | 0.7023 | 0.0000 | 4.70 |
-| Lexical | 0.8390 | 0.2938 | 0.7023 | 0.7023 | 0.0000 | 5.93 |
-| Hybrid | 0.8390 | 0.2938 | 0.7023 | 0.7023 | 0.0000 | 6.64 |
-| Full deterministic | 0.8390 | 0.2938 | 0.7023 | 0.7023 | 0.0000 | 6.58 |
+| Exact dictionary | 0.8390 | 0.2938 | 0.7023 | 0.7023 | 0.0000 | 4.35 |
+| Lexical | 0.8390 | 0.2938 | 0.7023 | 0.7023 | 0.0000 | 4.31 |
+| Hybrid | 0.8390 | 0.2938 | 0.7023 | 0.7023 | 0.0000 | 5.60 |
+| Full deterministic | 0.8390 | 0.2938 | 0.7023 | 0.7023 | 0.8475 | 5.48 |
 
 The generated run had exact entity recall `0.8511`, precision `0.8272`, assignment coverage
 `0.8511`, and zero validation errors. By type, the exact baseline measured F1 `1.0000` for
 DISEASE/DRUG, `0.8447` for SYMPTOM, `0.5814` for LAB_TEST, and `0.8366` for LAB_RESULT.
 The largest diagnostic gaps are assertion positive macro-F1 `0.0000`, lab-test recall, and
 linking coverage for the synthetic lab concepts that are intentionally absent from the small
-pack. Relation F1 is `0.0000` because the four public profiles currently disable relation
-extraction; the generated gold relation is retained to make that limitation measurable.
+pack. The `full` profile enables the deterministic relation extractor and KG validation, reaching
+relation F1 `0.8475` on the generated lab relation; the other three profiles intentionally disable
+relations. This is an architectural baseline, not evidence of clinical relation performance.
 These failures are targets for human review and future model/resource work, not reasons to add
 more unvalidated rules.
 
