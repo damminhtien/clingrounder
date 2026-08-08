@@ -1,0 +1,26 @@
+# This contract is intentionally pending until a redistributable, human-reviewed public
+# snapshot exists. It is inspectable on CPU but cannot silently start a training run.
+schema_version: clingrounder.public-training-contract.v1
+run_id: vi-clinical-ner-v1
+status: pending_public_snapshot
+task: five-type-clinical-entity-extraction
+labels: [DISEASE, SYMPTOM, DRUG, LAB_TEST, LAB_RESULT]
+
+model:
+  id: FacebookAI/xlm-roberta-base
+  revision: e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
+
+data:
+  train_manifest: null
+  validation_manifest: null
+
+training:
+  seed: 42
+  epochs: 10
+  batch_size: 16
+  learning_rate: 0.00002
+  weight_decay: 0.01
+
+selection:
+  primary_metric: entity_exact_micro_f1
+  minimum_primary_metric: 0.0

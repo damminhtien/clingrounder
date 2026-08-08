@@ -389,6 +389,13 @@ def _model_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser])
     inspect_dapt.set_defaults(handler="model_inspect_xlmr_dapt_run")
     inspect_dapt.add_argument("--config", required=True)
 
+    inspect_public = operations.add_parser(
+        "inspect-public-training-contract",
+        help="Validate the neutral public model training contract without ML imports.",
+    )
+    inspect_public.set_defaults(handler="model_inspect_public_training_contract")
+    inspect_public.add_argument("--config", required=True)
+
     train_dapt = operations.add_parser(
         "train-xlmr-dapt-run",
         help="Validate Linux/CUDA and train one pinned joint XLM-R DAPT run.",

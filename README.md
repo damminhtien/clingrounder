@@ -267,6 +267,16 @@ RxNorm, ontology, graph, and model artifacts are not bundled in the wheel; acqui
 documented, license-aware workflow and record their fingerprints in the profile or release
 manifest.
 
+The public Vietnamese NER training contract is inspectable without installing the `ml` extra:
+
+```bash
+clingrounder-research model inspect-public-training-contract \
+  --config configs/training/vi_clinical_ner_v1.yaml
+```
+
+It is currently marked `pending_public_snapshot` until a redistributable, human-reviewed dataset
+passes the benchmark release gates.
+
 ### Optional extras
 
 | Extra | Use |

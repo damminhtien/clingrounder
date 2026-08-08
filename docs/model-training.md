@@ -57,6 +57,17 @@ uv run clingrounder-research model inspect-token-classifier-run \
   --config configs/benchmarks/phase1/models/<run-spec>.yaml
 ```
 
+The product-facing Vietnamese NER contract can be inspected without ML dependencies:
+
+```bash
+clingrounder-research model inspect-public-training-contract \
+  --config configs/training/vi_clinical_ner_v1.yaml
+```
+
+The checked-in contract currently reports `pending_public_snapshot`. This is deliberate: it is a
+reproducible training specification, not a claim that a public human-reviewed training corpus or
+released Vietnamese model already exists.
+
 Competition-specific configs and restricted inputs remain optional benchmark/research material.
 They are not part of the quickstart and must not be described as a public ClinGrounder model.
 

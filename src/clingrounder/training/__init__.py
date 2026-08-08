@@ -19,6 +19,10 @@ from clingrounder.training.causal_run_spec import (
     load_causal_qlora_run_spec,
 )
 from clingrounder.training.config import TokenClassifierTrainingConfig
+from clingrounder.training.public_contract import (
+    PublicTrainingContract,
+    load_public_training_contract,
+)
 from clingrounder.training.dapt_corpus import (
     DaptCorpusBuildSpec,
     DaptCorpusLaneKind,
@@ -112,6 +116,7 @@ __all__ = [
     "ListwiseCandidateOption",
     "ListwiseLinkingRecord",
     "PairwiseLinkingExample",
+    "PublicTrainingContract",
     "SpanDatasetSummary",
     "SpanTrainingEntity",
     "SpanTrainingRecord",
@@ -147,6 +152,7 @@ __all__ = [
     "load_causal_instruction_records",
     "load_causal_qlora_run_spec",
     "load_dapt_corpus_build_spec",
+    "load_public_training_contract",
     "load_xlmr_dapt_run_spec",
     "project_record_to_token_windows",
     "render_listwise_input",

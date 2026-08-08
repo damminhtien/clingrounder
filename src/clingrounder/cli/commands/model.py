@@ -21,6 +21,7 @@ from clingrounder.training import (
     finalize_causal_qlora_artifact,
     inspect_causal_qlora_inputs,
     inspect_local_runtime,
+    load_public_training_contract,
     inspect_token_classifier_training_inputs,
     inspect_xlmr_dapt_inputs,
     load_causal_qlora_run_spec,
@@ -43,6 +44,7 @@ __all__ = [
     "finalize_causal_qlora_run",
     "inspect_causal_qlora_run",
     "inspect_inference_budget",
+    "inspect_public_training_contract",
     "inspect_token_classifier_run",
     "inspect_xlmr_dapt_run",
     "train_causal_qlora_run",
@@ -61,6 +63,19 @@ def inspect_inference_budget(args: argparse.Namespace) -> int:
     if output is not None:
         write_json(Path(output), report)
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def inspect_public_training_contract(args: argparse.Namespace) -> int:
+    """Inspect the public model contract without loading a model or dataset."""
+
+    contract = load_public_training_contract(args.config)
+    payload = {
+        "status": "validated",
+        "config": str(contract.config_path),
+        "contract": contract.to_dict(root=contract.config_path.parent),
+    }
+    print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 
 

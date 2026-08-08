@@ -79,6 +79,10 @@ _HANDLERS = {
         "clingrounder.cli.commands.model",
         "inspect_inference_budget",
     ),
+    "model_inspect_public_training_contract": (
+        "clingrounder.cli.commands.model",
+        "inspect_public_training_contract",
+    ),
     "model_build_dapt_corpus": (
         "clingrounder.cli.commands.model",
         "build_dapt_corpus_run",
