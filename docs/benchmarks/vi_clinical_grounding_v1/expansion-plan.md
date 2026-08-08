@@ -25,7 +25,8 @@ uv run python scripts/generate_vi_clinical_benchmark.py \
 ```
 
 The default creates `600/100/200` train/validation/test documents with disjoint template groups,
-stable seed `42`, raw-offset assertions, and a content-addressed manifest. Its status is
+stable seed `42`, all five supported entity types, explicit lab `HAS_VALUE` relations,
+raw-offset assertions, and a content-addressed manifest. Its status is
 `synthetic_pending_human_review`; it must not be used for a clinical claim or silently replace the
 published pilot. A reviewer can promote a later snapshot only after checking the generated cases,
 adding the review record, and rerunning the source/license gates.

@@ -45,3 +45,20 @@ def test_synthetic_snapshot_keeps_template_groups_disjoint(tmp_path: Path) -> No
     assert groups[0].isdisjoint(groups[2])
     assert groups[1].isdisjoint(groups[2])
     assert manifest["dataset"]["human_reviewed"] is False
+
+
+def test_synthetic_snapshot_covers_labs_and_relations(tmp_path: Path) -> None:
+    generate_snapshot(tmp_path, train_documents=5, validation_documents=4, test_documents=4)
+
+    records = [
+        json.loads(line)
+        for line in (tmp_path / "test.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    lab_records = [record for record in records if record["relations"]]
+    assert lab_records
+    for record in lab_records:
+        by_id = {entity["id"]: entity for entity in record["entities"]}
+        for relation in record["relations"]:
+            assert by_id[relation["head"]]["type"] == "LAB_TEST"
+            assert by_id[relation["tail"]]["type"] == "LAB_RESULT"
+            assert relation["type"] == "HAS_VALUE"

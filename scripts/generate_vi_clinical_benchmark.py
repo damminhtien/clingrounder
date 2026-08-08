@@ -45,6 +45,8 @@ CONCEPTS = (
     Mention("tăng huyết áp", "DISEASE", "HISTORICAL", "ICD-10", "I10"),
     Mention("đái tháo đường type 2", "DISEASE", "PRESENT", "ICD-10", "E11"),
     Mention("metformin", "DRUG", "PRESENT", "RxNorm", "6809"),
+    Mention("đường huyết", "LAB_TEST", "PRESENT", "LOCAL", "LAB_TEST_GLUCOSE"),
+    Mention("tăng cao", "LAB_RESULT", "PRESENT", "LOCAL", "LAB_RESULT_HIGH"),
 )
 
 
@@ -97,24 +99,47 @@ def _render(parts: Iterable[str | Mention]) -> tuple[str, list[EntityPayload]]:
 def _templates(split: Split) -> tuple[Template, ...]:
     """Use disjoint surface templates so test templates never leak into training."""
 
+    def concept(concepts: Sequence[Mention], entity_type: str) -> Mention:
+        return next(item for item in concepts if item.entity_type == entity_type)
+
     if split == "train":
         return (
             Template("train.negation", "vi", "clinical", lambda c: _render(["Không ghi nhận ", c[0], "."])),
             Template("train.history", "vi", "clinical", lambda c: _render(["Tiền sử ", c[3], "."])),
             Template("train.medication", "vi-en", "medication_list", lambda c: _render(["Đang dùng ", c[5], " 500 mg po bid."])),
             Template("train.symptoms", "vi", "clinical", lambda c: _render(["Hiện tại bệnh nhân ", c[1], " và ", c[2], "."])),
+            Template("train.lab", "vi", "clinical", lambda c: _render(["Xét nghiệm ", concept(c, "LAB_TEST"), " cho kết quả ", concept(c, "LAB_RESULT"), "."])),
         )
     if split == "validation":
         return (
             Template("validation.negation", "vi", "clinical", lambda c: _render(["Bệnh nhân phủ nhận ", c[0], "."])),
             Template("validation.history", "vi-en", "clinical", lambda c: _render(["PMH: ", c[4], "; history of ", c[3], "."])),
             Template("validation.lab_like", "vi", "clinical", lambda c: _render(["Lý do khám: ", c[2], ", không kèm ", c[0], "."])),
+            Template("validation.lab", "vi", "clinical", lambda c: _render(["Kết quả xét nghiệm ", concept(c, "LAB_TEST"), ": ", concept(c, "LAB_RESULT"), "."])),
         )
     return (
         Template("test.question", "vi", "question_answer", lambda c: _render(["Hỏi: Có ", c[1], " không? Đáp: Có, hiện có ", c[2], "."])),
         Template("test.repeated", "vi", "clinical", lambda c: _render(["Không sốt; theo dõi ", c[0], ". Hiện ", c[1], "."])),
         Template("test.mixed", "vi-en", "educational", lambda c: _render(["Clinical note: ", c[4], ", đang dùng ", c[5], "; symptoms: ", c[2], "."])),
+        Template("test.lab", "vi-en", "clinical", lambda c: _render(["Lab panel: ", concept(c, "LAB_TEST"), " = ", concept(c, "LAB_RESULT"), "."])),
     )
+
+
+def _relations_for(template_name: str, entities: Sequence[EntityPayload]) -> list[dict[str, str]]:
+    """Add one explicit lab relation only to templates that render a test and its result."""
+
+    if not template_name.endswith(".lab"):
+        return []
+    test = next(entity for entity in entities if entity["type"] == "LAB_TEST")
+    result = next(entity for entity in entities if entity["type"] == "LAB_RESULT")
+    return [
+        {
+            "id": "r1",
+            "head": str(test["id"]),
+            "tail": str(result["id"]),
+            "type": "HAS_VALUE",
+        }
+    ]
 
 
 def generate_snapshot(
@@ -150,6 +175,7 @@ def generate_snapshot(
             concepts = list(CONCEPTS)
             rng.shuffle(concepts)
             text, entities = template.render(concepts)
+            relations = _relations_for(template.name, entities)
             rows.append(
                 json.dumps(
                     {
@@ -163,7 +189,7 @@ def generate_snapshot(
                             "human_reviewed": "false",
                         },
                         "entities": entities,
-                        "relations": [],
+                        "relations": relations,
                     },
                     ensure_ascii=False,
                     separators=(",", ":"),

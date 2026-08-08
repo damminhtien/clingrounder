@@ -3,7 +3,10 @@
 import json
 from pathlib import Path
 
+import pytest
 import yaml
+
+from clingrounder.evaluation.dataset_benchmark import _load_examples
 
 
 ROOT = Path("benchmarks/vi_clinical_grounding_v1")
@@ -28,3 +31,81 @@ def test_fixture_offsets_and_ids_are_valid() -> None:
             assert 0 <= start < end <= len(record["text"])
             assert record["text"][start:end] == entity["text"]
 
+
+@pytest.mark.parametrize(
+    ("relation", "message"),
+    [
+        ({"id": "r1", "head": "e1", "tail": "missing", "type": "HAS_VALUE"}, "unknown entity"),
+        ({"id": "r1", "head": "e1", "tail": "e1", "type": "HAS_VALUE"}, "self-loop"),
+        ({"id": "r1", "head": "e1", "tail": "e2", "type": "NOT_A_RELATION"}, "unsupported relation"),
+    ],
+)
+def test_relation_contract_rejects_invalid_records(
+    tmp_path: Path, relation: dict[str, str], message: str
+) -> None:
+    row = {
+        "document_id": "doc-1",
+        "text": "Sốt.",
+        "entities": [
+            {
+                "id": "e1",
+                "span": [0, 3],
+                "text": "Sốt",
+                "type": "SYMPTOM",
+                "assertion": "PRESENT",
+                "code_system": "NONE",
+                "code": None,
+            },
+            {
+                "id": "e2",
+                "span": [0, 3],
+                "text": "Sốt",
+                "type": "SYMPTOM",
+                "assertion": "PRESENT",
+                "code_system": "NONE",
+                "code": None,
+            },
+        ],
+        "relations": [relation],
+    }
+    path = tmp_path / "invalid.jsonl"
+    path.write_text(json.dumps(row) + "\n")
+
+    with pytest.raises(ValueError, match=message):
+        _load_examples(path)
+
+
+def test_relation_contract_rejects_duplicate_relation_ids(tmp_path: Path) -> None:
+    row = {
+        "document_id": "doc-1",
+        "text": "Sốt.",
+        "entities": [
+            {
+                "id": "e1",
+                "span": [0, 3],
+                "text": "Sốt",
+                "type": "SYMPTOM",
+                "assertion": "PRESENT",
+                "code_system": "NONE",
+                "code": None,
+            },
+            {
+                "id": "e2",
+                "span": [0, 3],
+                "text": "Sốt",
+                "type": "SYMPTOM",
+                "assertion": "PRESENT",
+                "code_system": "NONE",
+                "code": None,
+            },
+        ],
+        "relations": [
+            {"id": "r1", "head": "e1", "tail": "e2", "type": "ASSOCIATED_WITH"},
+            {"id": "r1", "head": "e1", "tail": "e2", "type": "ASSOCIATED_WITH"},
+        ],
+    }
+    path = tmp_path / "duplicate.jsonl"
+    path.write_text(json.dumps(row) + "\n")
+
+    with pytest.raises(ValueError, match="duplicate relation id"):
+        _load_examples(path)

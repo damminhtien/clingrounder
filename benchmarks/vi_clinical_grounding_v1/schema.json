@@ -24,7 +24,38 @@
         "additionalProperties": true
       }
     },
-    "relations": {"type": "array", "items": {"type": "object"}}
+    "relations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "head", "tail", "type"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "head": {"type": "string", "minLength": 1},
+          "tail": {"type": "string", "minLength": 1},
+          "type": {
+            "enum": [
+              "TREATS",
+              "HAS_SYMPTOM",
+              "SUGGESTS",
+              "HAS_TEST",
+              "HAS_VALUE",
+              "HAS_DOSE",
+              "HAS_ROUTE",
+              "HAS_FREQUENCY",
+              "HAS_DURATION",
+              "HAS_DOSAGE_FORM",
+              "CAUSED_BY",
+              "ASSOCIATED_WITH",
+              "IS_A",
+              "PART_OF",
+              "NEGATES"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
   },
   "additionalProperties": false
 }

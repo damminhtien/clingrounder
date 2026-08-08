@@ -20,7 +20,7 @@ results:
     linking_recall_at_5: 1.0
     linking_top1_accuracy: 1.0
     relation_micro_f1: null
-    p95_ms: 17.97
+    p95_ms: 11.84
   - variant: lexical
     split: test
     entity_exact_micro_f1: 1.0
@@ -28,7 +28,7 @@ results:
     linking_recall_at_5: 1.0
     linking_top1_accuracy: 1.0
     relation_micro_f1: null
-    p95_ms: 15.52
+    p95_ms: 12.55
   - variant: hybrid
     split: test
     entity_exact_micro_f1: 1.0
@@ -36,7 +36,7 @@ results:
     linking_recall_at_5: 1.0
     linking_top1_accuracy: 1.0
     relation_micro_f1: null
-    p95_ms: 14.78
+    p95_ms: 13.12
   - variant: full
     split: test
     entity_exact_micro_f1: 1.0
@@ -44,4 +44,4 @@ results:
     linking_recall_at_5: 1.0
     linking_top1_accuracy: 1.0
     relation_micro_f1: null
-    p95_ms: 16.12
+    p95_ms: 9.96

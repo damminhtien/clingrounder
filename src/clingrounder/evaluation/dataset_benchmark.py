@@ -24,6 +24,7 @@ import yaml
 from clingrounder.pipeline.factory import PipelineFactory
 from clingrounder.pipeline.config_loader import ResolvedPipelineConfig
 from clingrounder.schema.output import ClinicalPrediction
+from clingrounder.schema.types import RelationType
 
 __all__ = ["run_dataset_benchmark"]
 
@@ -151,6 +152,7 @@ def _load_manifest(path: Path) -> dict[str, Any]:
 
 def _load_examples(path: Path) -> list[BenchmarkExample]:
     examples: list[BenchmarkExample] = []
+    document_ids: set[str] = set()
     for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         if not line.strip():
             continue
@@ -161,16 +163,31 @@ def _load_examples(path: Path) -> list[BenchmarkExample]:
         text = str(row.get("text", ""))
         if not document_id or not text:
             raise ValueError(f"{path}:{line_number}: document_id and text are required")
-        entities = tuple(row.get("entities", ()))
+        if document_id in document_ids:
+            raise ValueError(f"{path}:{line_number}: duplicate document_id {document_id!r}")
+        document_ids.add(document_id)
+        raw_entities = row.get("entities")
+        raw_relations = row.get("relations")
+        if not isinstance(raw_entities, list) or not isinstance(raw_relations, list):
+            raise ValueError(f"{path}:{line_number}: entities and relations must be arrays")
+        entities = tuple(raw_entities)
+        entity_ids: set[str] = set()
         for entity in entities:
             _validate_gold_entity(entity, text, path, line_number)
+            entity_id = str(entity["id"]).strip()
+            if entity_id in entity_ids:
+                raise ValueError(f"{path}:{line_number}: duplicate entity id {entity_id!r}")
+            entity_ids.add(entity_id)
+        relation_ids: set[str] = set()
+        for relation in raw_relations:
+            _validate_gold_relation(relation, entity_ids, relation_ids, path, line_number)
         examples.append(
             BenchmarkExample(
                 document_id=document_id,
                 text=text,
                 metadata={str(k): str(v) for k, v in row.get("metadata", {}).items()},
                 entities=entities,
-                relations=tuple(row.get("relations", ())),
+                relations=tuple(raw_relations),
             )
         )
     if not examples:
@@ -181,6 +198,9 @@ def _load_examples(path: Path) -> list[BenchmarkExample]:
 def _validate_gold_entity(entity: object, text: str, path: Path, line_number: int) -> None:
     if not isinstance(entity, Mapping):
         raise ValueError(f"{path}:{line_number}: entity must be an object")
+    entity_id = str(entity.get("id", "")).strip()
+    if not entity_id:
+        raise ValueError(f"{path}:{line_number}: entity id is required")
     span = entity.get("span")
     if not isinstance(span, list | tuple) or len(span) != 2:
         raise ValueError(f"{path}:{line_number}: entity span must contain two offsets")
@@ -189,6 +209,42 @@ def _validate_gold_entity(entity: object, text: str, path: Path, line_number: in
         raise ValueError(f"{path}:{line_number}: invalid entity span {span!r}")
     if text[start:end] != entity.get("text"):
         raise ValueError(f"{path}:{line_number}: entity span/text mismatch")
+
+
+def _validate_gold_relation(
+    relation: object,
+    entity_ids: set[str],
+    relation_ids: set[str],
+    path: Path,
+    line_number: int,
+) -> None:
+    """Validate neutral relation endpoints before they can affect benchmark metrics."""
+
+    if not isinstance(relation, Mapping):
+        raise ValueError(f"{path}:{line_number}: relation must be an object")
+    relation_id = str(relation.get("id", "")).strip()
+    head = str(relation.get("head", "")).strip()
+    tail = str(relation.get("tail", "")).strip()
+    relation_type = str(relation.get("type", "")).strip()
+    if not relation_id or not head or not tail or not relation_type:
+        raise ValueError(f"{path}:{line_number}: relation id/head/tail/type are required")
+    if relation_id in relation_ids:
+        raise ValueError(f"{path}:{line_number}: duplicate relation id {relation_id!r}")
+    relation_ids.add(relation_id)
+    if head == tail:
+        raise ValueError(f"{path}:{line_number}: relation {relation_id!r} cannot self-loop")
+    if head not in entity_ids or tail not in entity_ids:
+        raise ValueError(
+            f"{path}:{line_number}: relation {relation_id!r} references an unknown entity"
+        )
+    try:
+        relation_enum = RelationType(relation_type)
+    except ValueError as error:
+        raise ValueError(
+            f"{path}:{line_number}: unsupported relation type {relation_type!r}"
+        ) from error
+    if relation_enum is RelationType.UNKNOWN:
+        raise ValueError(f"{path}:{line_number}: UNKNOWN relation type is not valid gold")
 
 
 def _score(
