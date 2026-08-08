@@ -14,6 +14,12 @@ from clingrounder.governance.audit import (
     NoOpAuditSink,
 )
 from clingrounder.governance.models import ModelGovernanceMetadata
+from clingrounder.governance.model_artifacts import (
+    MODEL_ARTIFACT_SCHEMA_VERSION,
+    ModelArtifactManifest,
+    load_model_artifact_manifest,
+    verify_model_artifact,
+)
 from clingrounder.governance.policy import DataPolicy, GovernancePolicy
 
 __all__ = [
@@ -25,6 +31,10 @@ __all__ = [
     "InMemoryAuditSink",
     "NoOpAuditSink",
     "ModelGovernanceMetadata",
+    "MODEL_ARTIFACT_SCHEMA_VERSION",
+    "ModelArtifactManifest",
+    "load_model_artifact_manifest",
+    "verify_model_artifact",
     "fingerprint_artifact",
     "safe_artifact_path",
     "secure_temporary_path",
