@@ -12,7 +12,7 @@ it is not part of the default runtime or evaluation path.
 The PyPI distribution is named `clingrounder`; the Python import namespace remains
 `clingrounder`.
 
-Current release: [`0.1.0a5`](https://pypi.org/project/clingrounder/0.1.0a5/). The project is in
+Current release: [`0.1.0a6`](https://pypi.org/project/clingrounder/0.1.0a6/). The project is in
 alpha: the public contracts and validation invariants are useful, but APIs may still change
 between minor releases.
 
@@ -386,14 +386,15 @@ and a Markdown report. The checked-in dataset is a synthetic pilot; measured val
 described as clinical validation. See [benchmark methodology](docs/benchmarks/vi_clinical_grounding_v1/methodology.md).
 
 Measured pilot snapshot (3 synthetic test documents, one macOS run; latency is not a hardware
-benchmark):
+benchmark). The full generated diagnostic table and fingerprints are in the
+[benchmark results](docs/benchmarks/vi_clinical_grounding_v1/results.md):
 
 | System | Entity exact F1 | Assertion macro-F1 | Recall@5 | Top-1 | Relation F1 | p95 ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Exact dictionary | 1.0000 | 1.0000 | 1.0000 | 1.0000 | N/A* | 17.97 |
-| Lexical | 1.0000 | 1.0000 | 1.0000 | 1.0000 | N/A* | 15.52 |
-| Hybrid | 1.0000 | 1.0000 | 1.0000 | 1.0000 | N/A* | 14.78 |
-| Full deterministic | 1.0000 | 1.0000 | 1.0000 | 1.0000 | N/A* | 16.12 |
+| Exact dictionary | 1.0000 | 1.0000 | 1.0000 | 1.0000 | N/A* | 8.65 |
+| Lexical | 1.0000 | 1.0000 | 1.0000 | 1.0000 | N/A* | 9.01 |
+| Hybrid | 1.0000 | 1.0000 | 1.0000 | 1.0000 | N/A* | 9.09 |
+| Full deterministic | 1.0000 | 1.0000 | 1.0000 | 1.0000 | N/A* | 12.31 |
 
 \* The pilot contains no gold relations, so relation F1 is not estimable. The identical
 correctness scores are an expected limitation of this tiny smoke fixture, not evidence that the
@@ -407,7 +408,7 @@ package:
 
 ```bash
 python -m venv .venv-demo
-.venv-demo/bin/pip install -e "[vi]"
+.venv-demo/bin/pip install -e ".[vi]"
 .venv-demo/bin/pip install -r examples/demo/requirements.txt
 .venv-demo/bin/streamlit run examples/demo/app.py
 ```
