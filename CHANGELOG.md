@@ -14,6 +14,7 @@ pre-release semantic versioning while the public API is still maturing.
 - Framework-neutral model artifact manifests with SHA-256 and governance verification.
 - Public Vietnamese NER training-contract inspection without optional ML dependencies.
 - Public benchmark expansion and model-training/release contracts.
+- Deterministic synthetic benchmark expansion generator with split/template leakage guards.
 
 ### Fixed
 

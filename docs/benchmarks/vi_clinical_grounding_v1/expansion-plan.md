@@ -15,6 +15,21 @@ performance reporting; it does not establish clinical model quality.
 The 500+ target is a release gate, not a claim about the current repository. Expanding the fixture
 without human review would make the benchmark look larger while weakening its scientific value.
 
+## Reproducible synthetic expansion
+
+For pipeline development, generate a larger synthetic snapshot outside the checked-in pilot:
+
+```bash
+uv run python scripts/generate_vi_clinical_benchmark.py \
+  --output-dir /tmp/vi-clinical-grounding-synthetic-v1
+```
+
+The default creates `600/100/200` train/validation/test documents with disjoint template groups,
+stable seed `42`, raw-offset assertions, and a content-addressed manifest. Its status is
+`synthetic_pending_human_review`; it must not be used for a clinical claim or silently replace the
+published pilot. A reviewer can promote a later snapshot only after checking the generated cases,
+adding the review record, and rerunning the source/license gates.
+
 ## Required snapshot contract
 
 Every future snapshot must include:
