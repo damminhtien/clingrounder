@@ -26,6 +26,21 @@ pre-release semantic versioning while the public API is still maturing.
 
 - None.
 
+## [0.1.0a5] - 2026-08-08
+
+### Added
+
+- Expanded the public Vietnamese benchmark generator with laboratory test/result entities and a
+  deterministic `HAS_VALUE` relation slice.
+- Enabled relation extraction and KG validation in the public `full` benchmark profile.
+- Added benchmark relation endpoint/type validation, duplicate-ID checks, and strict public
+  entity code-system consistency checks.
+
+### Documentation
+
+- Published measured benchmark evidence for the relation-enabled full profile and documented the
+  synthetic benchmark's non-clinical status and remaining human-review gap.
+
 ## [0.1.0a4] - 2026-08-08
 
 ### Added
@@ -79,7 +94,8 @@ pre-release semantic versioning while the public API is still maturing.
 - Added architecture, code-map, reproducibility, public-release, security, and API-stability docs.
 - Documented the boundary between reusable toolkit code and optional competition benchmarks.
 
-[Unreleased]: https://github.com/damminhtien/clingrounder/compare/v0.1.0a4...HEAD
+[Unreleased]: https://github.com/damminhtien/clingrounder/compare/v0.1.0a5...HEAD
+[0.1.0a5]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a5
 [0.1.0a4]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a4
 [0.1.0a3]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a3
 [0.1.0a2]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a2

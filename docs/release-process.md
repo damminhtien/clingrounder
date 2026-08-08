@@ -42,8 +42,8 @@ versioned source and wheel artifacts on GitHub.
 5. Create and push an annotated tag matching the package version:
 
    ```bash
-   git tag -a v0.1.0a4 -m "Release ClinGrounder 0.1.0a4"
-   git push origin v0.1.0a4
+   git tag -a v0.1.0a5 -m "Release ClinGrounder 0.1.0a5"
+   git push origin v0.1.0a5
    ```
 
 For an existing tag whose first run failed before publishing, use the GitHub Actions
