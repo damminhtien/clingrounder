@@ -19,6 +19,12 @@ task records
 Adapters own task labels and serialization conventions. Matchers and metrics own no competition
 paths, code aliases, or hidden thresholds.
 
+Benchmark manifests are the source of truth for task taxonomies. A dataset benchmark declares its
+supported entity types, assertion labels, and code systems in `dataset_manifest.yaml`; the neutral
+loader validates records against those declarations rather than a ClinGrounder-specific label list.
+This keeps the evaluator reusable for finding, relation, or domain-specific tasks while preserving
+the same raw-offset and code-system invariants.
+
 ## Metrics
 
 ### Entities

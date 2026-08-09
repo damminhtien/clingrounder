@@ -24,6 +24,8 @@ pre-release semantic versioning while the public API is still maturing.
   manifests and an eligible dataset-audit report.
 - Added `clingrounder-benchmark suite` to run named product profiles and write a deterministic
   ablation index alongside each complete benchmark artifact bundle.
+- Made the neutral dataset benchmark loader derive entity, assertion, and code-system taxonomies
+  from each manifest instead of hard-coding the ClinGrounder product task.
 
 ### Fixed
 

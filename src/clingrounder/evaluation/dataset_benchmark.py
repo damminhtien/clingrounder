@@ -24,22 +24,9 @@ import yaml
 from clingrounder.pipeline.factory import PipelineFactory
 from clingrounder.pipeline.config_loader import ResolvedPipelineConfig
 from clingrounder.schema.output import ClinicalPrediction
-from clingrounder.schema.types import AssertionStatus, CodeSystem, EntityType, RelationType
+from clingrounder.schema.types import CodeSystem, RelationType
 
 __all__ = ["run_dataset_benchmark", "run_dataset_benchmark_suite"]
-
-_PUBLIC_ENTITY_TYPES = frozenset(
-    {EntityType.DISEASE.value, EntityType.SYMPTOM.value, EntityType.DRUG.value,
-     EntityType.LAB_TEST.value, EntityType.LAB_RESULT.value}
-)
-_PUBLIC_ASSERTIONS = frozenset(
-    {AssertionStatus.PRESENT.value, AssertionStatus.NEGATED.value,
-     AssertionStatus.HISTORICAL.value, AssertionStatus.FAMILY.value, AssertionStatus.POSSIBLE.value}
-)
-_PUBLIC_CODE_SYSTEMS = frozenset(
-    {CodeSystem.ICD10.value, CodeSystem.RXNORM.value, CodeSystem.LOCAL.value, CodeSystem.NONE.value}
-)
-
 
 @dataclass(frozen=True, slots=True)
 class BenchmarkExample:
@@ -70,7 +57,12 @@ def run_dataset_benchmark(
         raise ValueError(f"Benchmark split {split!r} is not declared in {manifest_path}")
     input_path = (benchmark_root / str(split_payload["path"])).resolve()
     resolved = ResolvedPipelineConfig.load(config_path, require_profile=True)
-    examples = _load_examples(input_path)
+    examples = _load_examples(
+        input_path,
+        entity_types=_declared_values(manifest, "entities"),
+        assertions=_declared_values(manifest, "assertions"),
+        code_systems=_declared_values(manifest, "code_systems"),
+    )
     output_root.mkdir(parents=True, exist_ok=True)
 
     init_started = perf_counter()
@@ -215,6 +207,17 @@ def _load_manifest(path: Path) -> dict[str, Any]:
     return payload
 
 
+def _declared_values(manifest: Mapping[str, Any], field: str) -> frozenset[str]:
+    """Read a benchmark taxonomy from its manifest instead of a product-specific constant."""
+
+    values = manifest.get(field)
+    if not isinstance(values, list) or not values or not all(
+        isinstance(value, str) and value.strip() for value in values
+    ):
+        raise ValueError(f"Benchmark manifest requires a non-empty string list: {field}")
+    return frozenset(value.strip() for value in values)
+
+
 def _validate_suite_name(name: str) -> str:
     """Keep suite output paths portable and prevent config-name path traversal."""
 
@@ -223,7 +226,13 @@ def _validate_suite_name(name: str) -> str:
     return name
 
 
-def _load_examples(path: Path) -> list[BenchmarkExample]:
+def _load_examples(
+    path: Path,
+    *,
+    entity_types: frozenset[str],
+    assertions: frozenset[str],
+    code_systems: frozenset[str],
+) -> list[BenchmarkExample]:
     examples: list[BenchmarkExample] = []
     document_ids: set[str] = set()
     for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
@@ -246,7 +255,15 @@ def _load_examples(path: Path) -> list[BenchmarkExample]:
         entities = tuple(raw_entities)
         entity_ids: set[str] = set()
         for entity in entities:
-            _validate_gold_entity(entity, text, path, line_number)
+            _validate_gold_entity(
+                entity,
+                text,
+                path,
+                line_number,
+                entity_types=entity_types,
+                assertions=assertions,
+                code_systems=code_systems,
+            )
             entity_id = str(entity["id"]).strip()
             if entity_id in entity_ids:
                 raise ValueError(f"{path}:{line_number}: duplicate entity id {entity_id!r}")
@@ -268,7 +285,16 @@ def _load_examples(path: Path) -> list[BenchmarkExample]:
     return examples
 
 
-def _validate_gold_entity(entity: object, text: str, path: Path, line_number: int) -> None:
+def _validate_gold_entity(
+    entity: object,
+    text: str,
+    path: Path,
+    line_number: int,
+    *,
+    entity_types: frozenset[str],
+    assertions: frozenset[str],
+    code_systems: frozenset[str],
+) -> None:
     if not isinstance(entity, Mapping):
         raise ValueError(f"{path}:{line_number}: entity must be an object")
     entity_id = str(entity.get("id", "")).strip()
@@ -278,11 +304,11 @@ def _validate_gold_entity(entity: object, text: str, path: Path, line_number: in
     assertion = entity.get("assertion")
     code_system = entity.get("code_system")
     code = entity.get("code")
-    if entity_type not in _PUBLIC_ENTITY_TYPES:
+    if entity_type not in entity_types:
         raise ValueError(f"{path}:{line_number}: unsupported entity type {entity_type!r}")
-    if assertion not in _PUBLIC_ASSERTIONS:
+    if assertion not in assertions:
         raise ValueError(f"{path}:{line_number}: unsupported assertion {assertion!r}")
-    if code_system not in _PUBLIC_CODE_SYSTEMS:
+    if code_system not in code_systems:
         raise ValueError(f"{path}:{line_number}: unsupported code system {code_system!r}")
     if code is not None and (not isinstance(code, str) or not code.strip()):
         raise ValueError(f"{path}:{line_number}: code must be null or a non-empty string")

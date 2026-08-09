@@ -1,5 +1,6 @@
 """Contract tests for the public synthetic benchmark pilot."""
 
+import json
 from pathlib import Path
 
 from clingrounder.evaluation.dataset_benchmark import (
@@ -64,3 +65,69 @@ def test_benchmark_suite_rejects_path_traversal_names(tmp_path: Path) -> None:
             {"../escape": "configs/benchmarks/vi_clinical_grounding_v1/exact.yaml"},
             tmp_path / "suite",
         )
+
+
+def test_benchmark_taxonomy_comes_from_manifest(tmp_path: Path) -> None:
+    benchmark = tmp_path / "finding-task"
+    benchmark.mkdir()
+    row = {
+        "document_id": "finding-1",
+        "text": "Lao phổi.",
+        "metadata": {"template_group": "finding"},
+        "entities": [
+            {
+                "id": "e1",
+                "span": [0, 8],
+                "text": "Lao phổi",
+                "type": "FINDING",
+                "assertion": "PRESENT",
+                "code_system": "NONE",
+                "code": None,
+            }
+        ],
+        "relations": [],
+    }
+    (benchmark / "test.jsonl").write_text(
+        json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+    (benchmark / "dataset_manifest.yaml").write_text(
+        """
+schema_version: clingrounder.dataset-manifest.v1
+dataset:
+  id: finding-task
+  version: '1.0.0'
+  status: synthetic_pilot
+  license: MIT
+  license_url: https://opensource.org/license/mit
+  human_reviewed: false
+splits:
+  test:
+    path: test.jsonl
+    documents: 1
+    sha256: placeholder
+entities: [FINDING]
+assertions: [PRESENT]
+code_systems: [NONE]
+policy:
+  template_grouping_required: true
+  test_used_for_development: false
+  private_data: false
+""",
+        encoding="utf-8",
+    )
+    import hashlib
+
+    manifest_path = benchmark / "dataset_manifest.yaml"
+    manifest = manifest_path.read_text(encoding="utf-8").replace(
+        "sha256: placeholder",
+        f"sha256: {hashlib.sha256((benchmark / 'test.jsonl').read_bytes()).hexdigest()}",
+    )
+    manifest_path.write_text(manifest, encoding="utf-8")
+
+    summary = run_dataset_benchmark(
+        benchmark,
+        "configs/benchmarks/vi_clinical_grounding_v1/exact.yaml",
+        tmp_path / "run",
+    )
+
+    assert summary["metrics"]["entity_by_type"]["FINDING"]["gold"] == 1

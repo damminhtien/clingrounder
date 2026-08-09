@@ -12,6 +12,17 @@ from clingrounder.evaluation.dataset_benchmark import _load_examples
 ROOT = Path("benchmarks/vi_clinical_grounding_v1")
 
 
+def _load_fixture_examples(path: Path) -> object:
+    """Call the neutral loader with the taxonomy used by these malformed-record fixtures."""
+
+    return _load_examples(
+        path,
+        entity_types=frozenset({"SYMPTOM"}),
+        assertions=frozenset({"PRESENT"}),
+        code_systems=frozenset({"NONE"}),
+    )
+
+
 def test_manifest_and_split_paths_are_self_contained() -> None:
     manifest = yaml.safe_load((ROOT / "dataset_manifest.yaml").read_text())
     assert manifest["schema_version"] == "clingrounder.dataset-manifest.v1"
@@ -83,7 +94,7 @@ def test_relation_contract_rejects_invalid_records(
     path.write_text(json.dumps(row) + "\n")
 
     with pytest.raises(ValueError, match=message):
-        _load_examples(path)
+        _load_fixture_examples(path)
 
 
 def test_relation_contract_rejects_duplicate_relation_ids(tmp_path: Path) -> None:
@@ -119,7 +130,7 @@ def test_relation_contract_rejects_duplicate_relation_ids(tmp_path: Path) -> Non
     path.write_text(json.dumps(row) + "\n")
 
     with pytest.raises(ValueError, match="duplicate relation id"):
-        _load_examples(path)
+        _load_fixture_examples(path)
 
 
 def test_entity_contract_rejects_inconsistent_code_system(tmp_path: Path) -> None:
@@ -143,4 +154,4 @@ def test_entity_contract_rejects_inconsistent_code_system(tmp_path: Path) -> Non
     path.write_text(json.dumps(row) + "\n")
 
     with pytest.raises(ValueError, match="NONE code system"):
-        _load_examples(path)
+        _load_fixture_examples(path)
