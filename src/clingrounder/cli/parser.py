@@ -403,6 +403,25 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     review_import.add_argument("--output", required=True)
     review_import.add_argument("--split", default="test")
 
+    review_snapshot = plugins.add_parser(
+        "review-snapshot-freeze",
+        help="Freeze completed reviewer/adjudicator labels as a separate dataset snapshot.",
+    )
+    review_snapshot.set_defaults(handler="benchmark_review_snapshot_freeze")
+    review_snapshot.add_argument("--benchmark", required=True)
+    review_snapshot.add_argument(
+        "--import-dir",
+        required=True,
+        help="Validated review-pack-import directory containing adjudication.jsonl.",
+    )
+    review_snapshot.add_argument("--output", required=True)
+    review_snapshot.add_argument("--split", default="test")
+    review_snapshot.add_argument(
+        "--allow-single-review",
+        action="store_true",
+        help="Allow single-review rows; keep disabled for public evidence by default.",
+    )
+
     compare = plugins.add_parser("compare", help="Compare two promotion benchmark artifacts.")
     compare.set_defaults(handler="benchmark_compare")
     compare.add_argument("baseline")

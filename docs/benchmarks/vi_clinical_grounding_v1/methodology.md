@@ -121,7 +121,9 @@ clingrounder-benchmark review-pack-import \
 ```
 
 The resulting `adjudication.jsonl` preserves each independent submission and marks exact
-agreement versus `needs_adjudication`. It is deliberately not a gold dataset. Resolve every
-adjudication item, export a gold layer, validate its agreement artifact, and only then update the
-dataset manifest. The pilot remains ineligible for clinical claims until that evidence is
-genuinely produced.
+agreement versus `needs_adjudication`. Reviewer forms must set `review_complete: true`; an
+untouched form cannot become an agreement by accident. It is deliberately not a gold dataset.
+After an adjudicator resolves every item, use `review-snapshot-freeze` to export a separate
+fingerprinted reviewed snapshot. The default policy requires double-review agreement or explicit
+adjudicator decisions. The source benchmark remains immutable and the pilot remains ineligible
+for clinical claims until that evidence is genuinely produced.

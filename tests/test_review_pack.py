@@ -10,6 +10,7 @@ import pytest
 from clingrounder.evaluation.review_pack import (
     ReviewPackConfig,
     build_review_pack,
+    freeze_reviewed_snapshot,
     import_review_pack,
 )
 
@@ -53,12 +54,14 @@ def test_review_pack_is_deterministic_and_does_not_export_gold(tmp_path: Path) -
                 "annotations",
                 "metadata",
                 "relations",
+                "review_complete",
                 "review_id",
                 "schema_version",
                 "text",
             }
             assert row["annotations"] == []
             assert row["relations"] == []
+            assert row["review_complete"] is False
             assert "entities" not in row
             assert "document_id" not in row
 
@@ -92,6 +95,7 @@ def test_review_pack_import_validates_fingerprints_and_preserves_adjudication(tm
         pack,
         config=ReviewPackConfig(reviewers=("alice", "bob"), double_review_fraction=0.5),
     )
+    _complete_all_reviews(pack)
 
     result = import_review_pack(BENCHMARK, pack, tmp_path / "imported")
 
@@ -108,6 +112,7 @@ def test_review_pack_import_allows_editable_items_and_marks_disagreement(tmp_pat
         pack,
         config=ReviewPackConfig(reviewers=("alice", "bob"), double_review_fraction=1.0),
     )
+    _complete_all_reviews(pack)
     alice_path = pack / "alice" / "items.jsonl"
     rows = [json.loads(line) for line in alice_path.read_text(encoding="utf-8").splitlines()]
     target = next(row for row in rows if "sốt" in row["text"])
@@ -141,6 +146,7 @@ def test_review_pack_import_allows_editable_items_and_marks_disagreement(tmp_pat
 def test_review_pack_import_rejects_offset_mismatch(tmp_path: Path) -> None:
     pack = tmp_path / "pack"
     build_review_pack(BENCHMARK, pack, config=ReviewPackConfig(double_review_fraction=0.0))
+    _complete_all_reviews(pack)
     reviewer_path = pack / "reviewer-1" / "items.jsonl"
     rows = [json.loads(line) for line in reviewer_path.read_text().splitlines()]
     rows[0]["annotations"] = [
@@ -160,3 +166,79 @@ def test_review_pack_import_rejects_offset_mismatch(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="span/text mismatch"):
         import_review_pack(BENCHMARK, pack, tmp_path / "imported")
+
+
+def test_review_pack_import_rejects_uncompleted_form(tmp_path: Path) -> None:
+    pack = tmp_path / "pack"
+    build_review_pack(BENCHMARK, pack, config=ReviewPackConfig(double_review_fraction=1.0))
+
+    with pytest.raises(ValueError, match="review_complete=true"):
+        import_review_pack(BENCHMARK, pack, tmp_path / "imported")
+
+
+def test_reviewed_snapshot_requires_adjudication_for_disagreement(tmp_path: Path) -> None:
+    pack = tmp_path / "pack"
+    build_review_pack(
+        BENCHMARK,
+        pack,
+        config=ReviewPackConfig(reviewers=("alice", "bob"), double_review_fraction=1.0),
+    )
+    _complete_all_reviews(pack)
+    alice_path = pack / "alice" / "items.jsonl"
+    rows = [json.loads(line) for line in alice_path.read_text(encoding="utf-8").splitlines()]
+    target = next(row for row in rows if "sốt" in row["text"])
+    start = target["text"].index("sốt")
+    target["annotations"] = [
+        {
+            "id": "review-e1",
+            "span": [start, start + 3],
+            "text": "sốt",
+            "type": "SYMPTOM",
+            "assertion": "NEGATED",
+            "code_system": "LOCAL",
+            "code": "SYMPTOM_FEVER",
+        }
+    ]
+    alice_path.write_text(
+        "\n".join(json.dumps(row, ensure_ascii=False, sort_keys=True) for row in rows) + "\n",
+        encoding="utf-8",
+    )
+    imported = tmp_path / "imported"
+    import_review_pack(BENCHMARK, pack, imported)
+
+    with pytest.raises(ValueError, match="not ready for snapshot"):
+        freeze_reviewed_snapshot(BENCHMARK, imported, tmp_path / "snapshot")
+
+
+def test_reviewed_snapshot_requires_explicit_completion_and_writes_manifest(tmp_path: Path) -> None:
+    pack = tmp_path / "pack"
+    build_review_pack(
+        BENCHMARK,
+        pack,
+        config=ReviewPackConfig(reviewers=("alice", "bob"), double_review_fraction=1.0),
+    )
+    _complete_all_reviews(pack)
+    imported = tmp_path / "imported"
+    import_review_pack(BENCHMARK, pack, imported)
+    snapshot = tmp_path / "snapshot"
+
+    result = freeze_reviewed_snapshot(BENCHMARK, imported, snapshot)
+
+    assert result["schema_version"] == "clingrounder.reviewed-snapshot.v1"
+    assert result["human_reviewed"] is True
+    assert (snapshot / "test.jsonl").is_file()
+    assert (snapshot / "review-agreement.json").is_file()
+    assert json.loads((snapshot / "manifest.json").read_text())["snapshot_sha256"]
+
+
+def _complete_all_reviews(pack: Path) -> None:
+    """Mark generated forms complete for tests that intentionally use empty labels."""
+
+    for path in pack.glob("*/items.jsonl"):
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+        for row in rows:
+            row["review_complete"] = True
+        path.write_text(
+            "\n".join(json.dumps(row, ensure_ascii=False, sort_keys=True) for row in rows) + "\n",
+            encoding="utf-8",
+        )

@@ -22,6 +22,7 @@ from clingrounder.schema.types import RelationType
 __all__ = [
     "ReviewPackConfig",
     "build_review_pack",
+    "freeze_reviewed_snapshot",
     "import_review_pack",
 ]
 
@@ -298,6 +299,152 @@ def import_review_pack(
     return result
 
 
+def freeze_reviewed_snapshot(
+    benchmark_dir: str | Path,
+    import_dir: str | Path,
+    output_dir: str | Path,
+    *,
+    split: str = "test",
+    allow_single_review: bool = False,
+) -> dict[str, Any]:
+    """Freeze an explicitly completed review import as a separate dataset snapshot.
+
+    The operation is deliberately separate from :func:`import_review_pack`.  Import only
+    validates reviewer submissions and preserves disagreements; freeze requires every document
+    to have either exact multi-reviewer agreement or an explicit adjudicator decision.  It never
+    mutates the source benchmark manifest, so promotion remains a visible repository decision.
+
+    INVARIANT: a blank or unfinished reviewer form cannot become a public gold snapshot.  The
+    reviewer must set ``review_complete`` and an adjudicator must resolve every disagreement.
+    """
+
+    benchmark_root = Path(benchmark_dir).expanduser().resolve()
+    import_root = Path(import_dir).expanduser().resolve()
+    output_root = Path(output_dir).expanduser().resolve()
+    source_manifest_path = benchmark_root / "dataset_manifest.yaml"
+    source_manifest = _load_manifest(source_manifest_path)
+    dataset = _mapping(source_manifest.get("dataset"), "dataset")
+    split_payload = _mapping(_mapping(source_manifest.get("splits"), "splits").get(split), split)
+    source_path = (benchmark_root / str(split_payload["path"])).resolve()
+    if benchmark_root not in source_path.parents:
+        raise ValueError("Benchmark split path escapes the benchmark directory")
+    source_documents = {
+        document.document_id: document for document in _load_documents(source_path)
+    }
+
+    import_manifest_path = import_root / "manifest.json"
+    import_manifest = _load_json_object(import_manifest_path)
+    if import_manifest.get("schema_version") != _IMPORT_SCHEMA_VERSION:
+        raise ValueError(f"Unsupported review import manifest: {import_manifest_path}")
+    if import_manifest.get("source_manifest_sha256") != _sha256_file(source_manifest_path):
+        raise ValueError("Review import source manifest fingerprint does not match benchmark")
+    if import_manifest.get("source_split_sha256") != _sha256_file(source_path):
+        raise ValueError("Review import source split fingerprint does not match benchmark")
+    if import_manifest.get("split") != split:
+        raise ValueError(f"Review import split mismatch: expected {split!r}")
+
+    adjudication_path = import_root / "adjudication.jsonl"
+    adjudications = _load_adjudications(adjudication_path)
+    taxonomy = {
+        "entities": _declared_values(source_manifest, "entities"),
+        "assertions": _declared_values(source_manifest, "assertions"),
+        "code_systems": _declared_values(source_manifest, "code_systems"),
+    }
+    rows: list[dict[str, Any]] = []
+    status_counts: Counter[str] = Counter()
+    seen_documents: set[str] = set()
+    adjudicated_count = 0
+    agreement_count = 0
+    for row in adjudications:
+        document_id = str(row.get("document_id", "")).strip()
+        if document_id in seen_documents or document_id not in source_documents:
+            raise ValueError(f"Review adjudication has invalid or duplicate document: {document_id!r}")
+        seen_documents.add(document_id)
+        status = row.get("status")
+        status_counts[str(status)] += 1
+        if status == "agreement":
+            entities = row.get("agreed_entities")
+            relations = row.get("agreed_relations")
+            agreement_count += 1
+        elif status == "adjudicated":
+            entities = row.get("adjudicated_entities")
+            relations = row.get("adjudicated_relations")
+            adjudicated_count += 1
+        elif status == "reviewed" and allow_single_review:
+            submissions = row.get("submissions")
+            if not isinstance(submissions, list) or len(submissions) != 1:
+                raise ValueError(f"Single-review row has invalid submissions: {document_id!r}")
+            entities = submissions[0].get("entities")
+            relations = submissions[0].get("relations")
+        else:
+            raise ValueError(
+                f"Review document {document_id!r} is not ready for snapshot: {status!r}"
+            )
+        if not isinstance(entities, list) or not isinstance(relations, list):
+            raise ValueError(f"Resolved annotations are missing for {document_id!r}")
+        source_document = source_documents[document_id]
+        _validate_review_annotations(
+            entities,
+            relations,
+            source_document.text,
+            taxonomy,
+            f"snapshot:{document_id}",
+        )
+        rows.append(
+            {
+                "document_id": document_id,
+                "text": source_document.text,
+                "metadata": dict(sorted(source_document.metadata.items())),
+                "entities": entities,
+                "relations": relations,
+            }
+        )
+
+    if seen_documents != set(source_documents):
+        missing = sorted(set(source_documents) - seen_documents)
+        raise ValueError(f"Review adjudication is incomplete; missing documents: {missing}")
+    if not rows:
+        raise ValueError("Review adjudication is empty")
+
+    output_root.mkdir(parents=True, exist_ok=True)
+    snapshot_path = output_root / f"{split}.jsonl"
+    _write_jsonl(snapshot_path, sorted(rows, key=lambda row: row["document_id"]))
+    agreement = {
+        "schema_version": "clingrounder.review-agreement.v1",
+        "dataset": {
+            "id": str(dataset.get("id", "")),
+            "version": str(dataset.get("version", "")),
+        },
+        "split": split,
+        "document_count": len(rows),
+        "agreement_count": agreement_count,
+        "adjudicated_count": adjudicated_count,
+        "status_counts": dict(sorted(status_counts.items())),
+        "double_review_required": not allow_single_review,
+        "human_reviewed": True,
+    }
+    agreement_path = output_root / "review-agreement.json"
+    _write_json(agreement_path, agreement)
+    snapshot_manifest = {
+        "schema_version": "clingrounder.reviewed-snapshot.v1",
+        "dataset": {
+            "id": str(dataset.get("id", "")),
+            "version": str(dataset.get("version", "")),
+        },
+        "split": split,
+        "human_reviewed": True,
+        "source_manifest_sha256": _sha256_file(source_manifest_path),
+        "source_split_sha256": _sha256_file(source_path),
+        "review_import_manifest_sha256": _sha256_file(import_manifest_path),
+        "snapshot_sha256": _sha256_file(snapshot_path),
+        "agreement_sha256": _sha256_file(agreement_path),
+        "documents": len(rows),
+        "files": [snapshot_path.name, agreement_path.name],
+    }
+    _write_json(output_root / "manifest.json", snapshot_manifest)
+    return snapshot_manifest
+
+
 def _load_json_object(path: Path) -> dict[str, Any]:
     """Load one object manifest and reject arrays or scalar JSON values."""
 
@@ -399,7 +546,15 @@ def _load_reviewer_items(path: Path) -> tuple[dict[str, Any], ...]:
         raw = json.loads(line)
         if not isinstance(raw, dict) or raw.get("schema_version") != _ITEM_SCHEMA_VERSION:
             raise ValueError(f"Invalid reviewer item at {path}:{line_number}")
-        if set(raw) != {"schema_version", "review_id", "text", "metadata", "annotations", "relations"}:
+        if set(raw) != {
+            "schema_version",
+            "review_id",
+            "text",
+            "metadata",
+            "annotations",
+            "relations",
+            "review_complete",
+        }:
             raise ValueError(f"Reviewer item has forbidden fields at {path}:{line_number}")
         if not isinstance(raw.get("review_id"), str) or not raw["review_id"].strip():
             raise ValueError(f"Reviewer item requires review_id at {path}:{line_number}")
@@ -413,7 +568,37 @@ def _load_reviewer_items(path: Path) -> tuple[dict[str, Any], ...]:
             raise ValueError(f"Reviewer metadata values must be strings at {path}:{line_number}")
         if not isinstance(raw.get("annotations"), list) or not isinstance(raw.get("relations"), list):
             raise ValueError(f"Reviewer annotations/relations must be lists at {path}:{line_number}")
+        if raw.get("review_complete") is not True:
+            raise ValueError(
+                f"Reviewer item must set review_complete=true at {path}:{line_number}"
+            )
         rows.append(raw)
+    return tuple(rows)
+
+
+def _load_adjudications(path: Path) -> tuple[dict[str, Any], ...]:
+    """Load adjudication rows while preserving explicit unresolved states."""
+
+    rows: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError as error:
+        raise ValueError(f"Unable to read adjudication queue: {path}") from error
+    for line_number, line in enumerate(lines, 1):
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError as error:
+            raise ValueError(f"Invalid adjudication JSON at {path}:{line_number}") from error
+        if not isinstance(row, dict) or row.get("schema_version") != _IMPORT_SCHEMA_VERSION:
+            raise ValueError(f"Invalid adjudication row at {path}:{line_number}")
+        review_id = str(row.get("review_id", "")).strip()
+        if not review_id or review_id in seen:
+            raise ValueError(f"Duplicate/empty adjudication review ID at {path}:{line_number}")
+        seen.add(review_id)
+        rows.append(row)
     return tuple(rows)
 
 
@@ -547,8 +732,10 @@ def _write_import_readme(output_root: Path) -> None:
         "- `submissions.jsonl` preserves each reviewer's independent labels.\n"
         "- `adjudication.jsonl` marks single-review items, exact agreement, and disagreements.\n"
         "- `manifest.json` records source and pack fingerprints.\n\n"
+        "Reviewer forms must set `review_complete: true` after annotation.\n\n"
         "`gold_promoted` is always false here. An adjudicator must resolve `needs_adjudication`,\n"
-        "then explicitly export a gold layer and run the benchmark agreement gate.\n",
+        "then run `review-snapshot-freeze` to explicitly export a reviewed snapshot and run the\n"
+        "benchmark agreement gate.\n",
         encoding="utf-8",
     )
 
@@ -611,6 +798,7 @@ def _review_item(dataset: Mapping[str, Any], split: str, document: _ReviewDocume
         "metadata": dict(sorted(document.metadata.items())),
         "annotations": [],
         "relations": [],
+        "review_complete": False,
     }
 
 
@@ -642,8 +830,9 @@ This pack is a gold-blind annotation handoff for `{dataset.get('id', '')}` versi
 - Double-reviewed documents: {double_count}
 - Assignment seed: {config.seed}
 
-Reviewer files contain only `review_id`, source `text`, safe display metadata, and empty
-`annotations`/`relations` arrays. Do not add source IDs, gold labels, or model predictions to the
+Reviewer files contain only `review_id`, source `text`, safe display metadata, empty
+`annotations`/`relations` arrays, and `review_complete: false`. After annotation, reviewers must
+set `review_complete: true`. Do not add source IDs, gold labels, or model predictions to the
 reviewer handoff. The coordinator must retain `coordinator_document_map.jsonl` and use it to map
 review IDs back to source document IDs after independent review.
 

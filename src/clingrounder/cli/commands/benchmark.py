@@ -17,6 +17,7 @@ from clingrounder.evaluation.dataset_audit import audit_dataset
 from clingrounder.evaluation.review_pack import (
     ReviewPackConfig,
     build_review_pack,
+    freeze_reviewed_snapshot,
     import_review_pack,
 )
 
@@ -28,6 +29,7 @@ __all__ = [
     "run_dataset_benchmark_suite_command",
     "audit_dataset_command",
     "build_review_pack_command",
+    "freeze_reviewed_snapshot_command",
     "import_review_pack_command",
 ]
 
@@ -131,6 +133,20 @@ def import_review_pack_command(args: argparse.Namespace) -> int:
         args.pack,
         args.output,
         split=args.split,
+    )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def freeze_reviewed_snapshot_command(args: argparse.Namespace) -> int:
+    """Freeze only explicitly completed and adjudicated reviewer annotations."""
+
+    report = freeze_reviewed_snapshot(
+        args.benchmark,
+        args.import_dir,
+        args.output,
+        split=args.split,
+        allow_single_review=args.allow_single_review,
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0

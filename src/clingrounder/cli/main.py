@@ -75,6 +75,10 @@ _HANDLERS = {
         "clingrounder.cli.commands.benchmark",
         "import_review_pack_command",
     ),
+    "benchmark_review_snapshot_freeze": (
+        "clingrounder.cli.commands.benchmark",
+        "freeze_reviewed_snapshot_command",
+    ),
     "benchmark_compare": (
         "clingrounder.cli.commands.benchmark",
         "compare_runtime_benchmark",

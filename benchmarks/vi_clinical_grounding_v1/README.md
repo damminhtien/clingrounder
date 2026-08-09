@@ -53,8 +53,9 @@ and empty annotation arrays. Gold annotations and source document IDs stay in th
 mapping. The generated manifest records source fingerprints, assignment counts, and the seed. The
 pack is a handoff artifact, not evidence that the pilot has been human-reviewed.
 
-After reviewers finish editing their assigned `items.jsonl` files, validate and join the
-submissions into an adjudication queue:
+After reviewers finish editing their assigned `items.jsonl` files, set
+`review_complete: true` on every completed item, then validate and join the submissions into an
+adjudication queue:
 
 ```bash
 clingrounder-benchmark review-pack-import \
@@ -67,6 +68,22 @@ clingrounder-benchmark review-pack-import \
 The importer verifies source and assignment fingerprints, raw offsets, entity taxonomy,
 code-system shape, relation endpoints, and reviewer completeness. It marks exact agreement and
 disagreement in `adjudication.jsonl`; it never promotes annotations to gold automatically.
+
+After a human adjudicator resolves every `needs_adjudication` row by adding
+`status: adjudicated`, `adjudicated_entities`, and `adjudicated_relations`, freeze a separate
+reviewed snapshot:
+
+```bash
+clingrounder-benchmark review-snapshot-freeze \
+  --benchmark benchmarks/vi_clinical_grounding_v1 \
+  --import-dir artifacts/review-imports/vi-clinical-grounding-v1 \
+  --output artifacts/reviewed-snapshots/vi-clinical-grounding-v1 \
+  --split test
+```
+
+The freeze command requires double-review agreement or explicit adjudication by default. It
+writes a fingerprinted JSONL snapshot, a text-free agreement report, and a snapshot manifest; it
+does not mutate this benchmark directory or change `human_reviewed` by editing YAML.
 
 ## Dataset policy
 

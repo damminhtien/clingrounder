@@ -114,6 +114,26 @@ def test_public_benchmark_review_pack_import_parser_accepts_paths() -> None:
     assert args.pack == "/tmp/review-pack"
 
 
+def test_public_benchmark_review_snapshot_parser_requires_import_dir() -> None:
+    args = build_parser("benchmark").parse_args(
+        [
+            "benchmark",
+            "review-snapshot-freeze",
+            "--benchmark",
+            "benchmarks/vi_clinical_grounding_v1",
+            "--import-dir",
+            "/tmp/review-import",
+            "--output",
+            "/tmp/reviewed-snapshot",
+            "--split",
+            "test",
+        ]
+    )
+
+    assert args.handler == "benchmark_review_snapshot_freeze"
+    assert args.allow_single_review is False
+
+
 def test_review_quality_parser_can_emit_public_agreement_artifact() -> None:
     args = build_parser("research").parse_args(
         [
