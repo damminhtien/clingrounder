@@ -41,6 +41,8 @@ policy, license metadata, and human-review coverage without writing document tex
 - No private competition data, leaked data, or hosted model output is included.
 - Validation and test records are kept separate from training records in the manifest.
 - Near-duplicate and template leakage checks are required before a clinical release.
+- The pilot includes one synthetic `LAB_TEST -> LAB_RESULT` relation so relation extraction and
+  endpoint validation are exercised; this is an engineering fixture, not clinical evidence.
 - A clinical release requires a human-reviewed status, reviewer agreement metadata, and complete
   review coverage for every declared split.
 
