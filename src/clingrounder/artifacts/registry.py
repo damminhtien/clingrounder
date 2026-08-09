@@ -59,6 +59,7 @@ class BuiltinArtifact:
     def manifest(self) -> dict[str, object]:
         """Return metadata suitable for an experiment or prediction manifest."""
 
+        self.verify_manifest()
         return ArtifactManifest.read(self.manifest_path).as_dict()
 
     @property

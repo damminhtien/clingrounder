@@ -67,6 +67,21 @@ def test_local_downloader_accepts_file_uri_and_rejects_network(tmp_path: Path) -
         downloader.materialize("https://example.invalid/artifact", manifest, ArtifactCache(tmp_path / "other"))
 
 
+def test_cache_rejects_source_manifest_with_different_identity(tmp_path: Path) -> None:
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "payload.txt").write_text("payload", encoding="utf-8")
+    requested = _manifest(source, artifact_id="requested")
+    source_manifest = _manifest(source, artifact_id="different")
+    (source / "manifest.json").write_text(
+        json.dumps(source_manifest.as_dict()),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ArtifactCacheError, match="does not match"):
+        ArtifactCache(tmp_path / "cache").install(source, requested)
+
+
 def test_manifest_rejects_path_traversal_and_unsorted_contents() -> None:
     base = {
         "schema_version": "clingrounder.artifact-manifest.v1",

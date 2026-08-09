@@ -8,7 +8,7 @@ from pathlib import Path
 import shutil
 import tempfile
 
-from clingrounder.artifacts.manifest import ArtifactManifest
+from clingrounder.artifacts.manifest import ArtifactManifest, ArtifactManifestError
 
 __all__ = ["ArtifactCache", "ArtifactCacheError"]
 
@@ -57,6 +57,18 @@ class ArtifactCache:
             manifest.validate_payload(source_root)
         except (OSError, ValueError) as error:
             raise ArtifactCacheError(f"Source artifact failed verification: {source_root}") from error
+        source_manifest_path = source_root / "manifest.json"
+        if source_manifest_path.is_file():
+            try:
+                source_manifest = ArtifactManifest.read(source_manifest_path)
+            except ArtifactManifestError as error:
+                raise ArtifactCacheError(
+                    f"Source artifact has an invalid manifest: {source_manifest_path}"
+                ) from error
+            if source_manifest != manifest:
+                raise ArtifactCacheError(
+                    f"Source manifest identity does not match requested artifact: {source_manifest_path}"
+                )
         existing = self.resolve(manifest)
         if existing is not None:
             return existing
@@ -71,9 +83,9 @@ class ArtifactCache:
                 shutil.copy2(source_root / relative_name, target)
             # Keep the manifest beside the cached payload for offline inspection and later
             # verification.  It is metadata, so it is intentionally excluded from the digest.
-            source_manifest = source_root / "manifest.json"
-            if source_manifest.is_file():
-                shutil.copy2(source_manifest, temporary / "manifest.json")
+            source_manifest_file = source_root / "manifest.json"
+            if source_manifest_file.is_file():
+                shutil.copy2(source_manifest_file, temporary / "manifest.json")
             manifest.validate_payload(temporary)
             # INVARIANT: rename is the publication point; readers see either no cache entry or
             # a complete verified directory, never a partially copied payload.
