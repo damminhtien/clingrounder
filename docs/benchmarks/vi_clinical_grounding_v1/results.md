@@ -7,20 +7,25 @@ human-reviewed public clinical test set.
 ## Checked-In Pilot
 
 The checked-in `0.1.0` fixture contains four synthetic test documents, including one
-`LAB_TEST -> LAB_RESULT` relation. The suite runner was executed on commit `3a04bdb` on macOS with
+`LAB_TEST -> LAB_RESULT` relation. The suite runner was executed on commit `aae7426` on macOS with
 Python 3.14. The relation extractor is enabled only by the full profile. The numbers below are a
 fresh reference run; latency is machine-dependent and is not a portability claim.
 
 | System | Entity exact F1 | Assertion macro-F1 | Recall@5 | Top-1 | Relation F1 | p95 ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Exact dictionary | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 14.50 |
-| Lexical | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 6.79 |
-| Hybrid | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 16.68 |
-| Full deterministic | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 1.0000 | 6.92 |
+| Exact dictionary | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 21.92 |
+| Lexical | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 4.90 |
+| Hybrid | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 5.85 |
+| Full deterministic | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 1.0000 | 12.57 |
 
 Only the full profile predicts the single gold relation because the other profiles intentionally
 disable relation extraction. These values verify the output contract and are not useful for
 ranking extraction systems on clinical data.
+
+The test split contains 9 entities, 8 with gold terminology codes. `Recall@k` and MRR use all 8
+linkable gold entities as their denominator, including entities missed by extraction; assignment
+coverage is the fraction of predicted entities with an assigned primary code (`7/9` in this run).
+This distinction prevents NER misses from disappearing from linking metrics.
 
 ## Generated Expansion Diagnostic
 

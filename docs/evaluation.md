@@ -54,7 +54,10 @@ Always report both:
 - Exact code accuracy on aligned, linkable entities.
 - Candidate recall at `k`.
 - Mean reciprocal rank.
-- Coverage and abstention rate.
+- `linkable_gold_count` counts every gold-coded entity, including entities missed by extraction;
+  this is the denominator for Recall@k, Top-1, and MRR.
+- `assignment_coverage` is assigned primary-code predictions divided by predicted entities;
+  abstentions remain visible instead of being counted as retrieval misses.
 - Metrics by entity type, code system, retrieval source, and terminology release.
 
 Code-system validation runs before scoring. A drug-to-ICD or disease-to-RxNorm assignment is a
