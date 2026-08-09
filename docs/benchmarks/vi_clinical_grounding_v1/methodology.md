@@ -124,6 +124,8 @@ The resulting `adjudication.jsonl` preserves each independent submission and mar
 agreement versus `needs_adjudication`. Reviewer forms must set `review_complete: true`; an
 untouched form cannot become an agreement by accident. It is deliberately not a gold dataset.
 After an adjudicator resolves every item, use `review-snapshot-freeze` to export a separate
-fingerprinted reviewed snapshot. The default policy requires double-review agreement or explicit
-adjudicator decisions. The source benchmark remains immutable and the pilot remains ineligible
-for clinical claims until that evidence is genuinely produced.
+fingerprinted reviewed snapshot. The command emits the JSONL snapshot, a text-free
+`review-agreement.json`, a derived `dataset_manifest.yaml`, and a checksum manifest. The default
+policy requires double-review agreement or explicit adjudicator decisions. The source benchmark
+remains immutable, and a synthetic pilot remains ineligible for clinical claims even after review
+until a licensed clinical snapshot supplies that evidence.

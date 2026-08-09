@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from clingrounder.evaluation.dataset_audit import audit_dataset
 from clingrounder.evaluation.review_pack import (
     ReviewPackConfig,
     build_review_pack,
@@ -228,7 +229,11 @@ def test_reviewed_snapshot_requires_explicit_completion_and_writes_manifest(tmp_
     assert result["human_reviewed"] is True
     assert (snapshot / "test.jsonl").is_file()
     assert (snapshot / "review-agreement.json").is_file()
+    assert (snapshot / "dataset_manifest.yaml").is_file()
     assert json.loads((snapshot / "manifest.json").read_text())["snapshot_sha256"]
+    audit = audit_dataset(snapshot)
+    assert audit.eligible_for_clinical_claim is False
+    assert "clinical_claim_requires_human_review" in audit.warnings
 
 
 def _complete_all_reviews(pack: Path) -> None:

@@ -17,6 +17,7 @@ from typing import Any, Mapping
 
 import yaml
 
+from clingrounder.evaluation.review_agreement import ReviewAgreementArtifact
 from clingrounder.schema.types import RelationType
 
 __all__ = [
@@ -394,7 +395,10 @@ def freeze_reviewed_snapshot(
             {
                 "document_id": document_id,
                 "text": source_document.text,
-                "metadata": dict(sorted(source_document.metadata.items())),
+                "metadata": {
+                    **dict(sorted(source_document.metadata.items())),
+                    "human_reviewed": True,
+                },
                 "entities": entities,
                 "relations": relations,
             }
@@ -409,27 +413,82 @@ def freeze_reviewed_snapshot(
     output_root.mkdir(parents=True, exist_ok=True)
     snapshot_path = output_root / f"{split}.jsonl"
     _write_jsonl(snapshot_path, sorted(rows, key=lambda row: row["document_id"]))
-    agreement = {
-        "schema_version": "clingrounder.review-agreement.v1",
+    double_reviewed_count = sum(
+        1
+        for row in adjudications
+        if isinstance(row.get("submissions"), list) and len(row["submissions"]) > 1
+    )
+    if double_reviewed_count < 1:
+        raise ValueError("A reviewed snapshot requires at least one double-reviewed document")
+    agreement = ReviewAgreementArtifact(
+        dataset_id=str(dataset.get("id", "")),
+        dataset_version=f"{dataset.get('version', '')}-reviewed",
+        reviewed_document_count=len(rows),
+        double_reviewed_document_count=double_reviewed_count,
+        double_review_fraction=double_reviewed_count / len(rows),
+        span_type_agreement=_review_agreement_score(adjudications, _span_type_projection),
+        assertion_agreement=_review_agreement_score(adjudications, _assertion_projection),
+        relation_agreement=_review_agreement_score(adjudications, _relation_projection),
+    )
+    agreement_path = output_root / "review-agreement.json"
+    _write_json(agreement_path, agreement.to_dict())
+    reviewed_version = f"{dataset.get('version', '')}-reviewed"
+    source_is_synthetic = (
+        dataset.get("status") == "synthetic_pilot" or dataset.get("synthetic") is True
+    )
+    snapshot_dataset_manifest = {
+        "schema_version": "clingrounder.dataset-manifest.v1",
         "dataset": {
             "id": str(dataset.get("id", "")),
-            "version": str(dataset.get("version", "")),
+            "version": reviewed_version,
+            # INVARIANT: reviewing a synthetic fixture improves annotation provenance but does
+            # not turn it into clinical evidence. A real licensed source can be released.
+            "status": "synthetic_reviewed" if source_is_synthetic else "released",
+            "synthetic": source_is_synthetic,
+            "language": dataset.get("language", ["und"]),
+            "license": dataset.get("license", ""),
+            "license_url": dataset.get("license_url", ""),
+            "human_reviewed": True,
         },
-        "split": split,
-        "document_count": len(rows),
-        "agreement_count": agreement_count,
-        "adjudicated_count": adjudicated_count,
-        "status_counts": dict(sorted(status_counts.items())),
-        "double_review_required": not allow_single_review,
-        "human_reviewed": True,
+        "splits": {
+            split: {
+                "path": snapshot_path.name,
+                "documents": len(rows),
+                "sha256": _sha256_file(snapshot_path),
+            }
+        },
+        "entities": source_manifest.get("entities", []),
+        "assertions": source_manifest.get("assertions", []),
+        "code_systems": source_manifest.get("code_systems", []),
+        "policy": {
+            **dict(_mapping(source_manifest.get("policy"), "policy")),
+            "test_used_for_development": False,
+            "private_data": False,
+        },
+        "review": {
+            "status": "released",
+            "reviewers_required": max(2, len(import_manifest.get("reviewers", []))),
+            "double_review_fraction": agreement.double_review_fraction,
+            "agreement_targets": dict(
+                _mapping(
+                    _mapping(source_manifest.get("review"), "review").get(
+                        "agreement_targets"
+                    ),
+                    "agreement_targets",
+                )
+            ),
+            "agreement_report": agreement_path.name,
+            "agreement_report_sha256": _sha256_file(agreement_path),
+            "adjudication_required": True,
+        },
     }
-    agreement_path = output_root / "review-agreement.json"
-    _write_json(agreement_path, agreement)
+    dataset_manifest_path = output_root / "dataset_manifest.yaml"
+    _write_yaml(dataset_manifest_path, snapshot_dataset_manifest)
     snapshot_manifest = {
         "schema_version": "clingrounder.reviewed-snapshot.v1",
         "dataset": {
             "id": str(dataset.get("id", "")),
-            "version": str(dataset.get("version", "")),
+            "version": reviewed_version,
         },
         "split": split,
         "human_reviewed": True,
@@ -438,8 +497,16 @@ def freeze_reviewed_snapshot(
         "review_import_manifest_sha256": _sha256_file(import_manifest_path),
         "snapshot_sha256": _sha256_file(snapshot_path),
         "agreement_sha256": _sha256_file(agreement_path),
+        "dataset_manifest_sha256": _sha256_file(dataset_manifest_path),
         "documents": len(rows),
-        "files": [snapshot_path.name, agreement_path.name],
+        "agreement_count": agreement_count,
+        "adjudicated_count": adjudicated_count,
+        "status_counts": dict(sorted(status_counts.items())),
+        "files": [
+            snapshot_path.name,
+            agreement_path.name,
+            dataset_manifest_path.name,
+        ],
     }
     _write_json(output_root / "manifest.json", snapshot_manifest)
     return snapshot_manifest
@@ -600,6 +667,65 @@ def _load_adjudications(path: Path) -> tuple[dict[str, Any], ...]:
         seen.add(review_id)
         rows.append(row)
     return tuple(rows)
+
+
+def _review_agreement_score(
+    adjudications: tuple[dict[str, Any], ...],
+    projection: Any,
+) -> float:
+    """Measure exact inter-reviewer agreement for one annotation projection."""
+
+    scores: list[float] = []
+    for row in adjudications:
+        submissions = row.get("submissions")
+        if not isinstance(submissions, list) or len(submissions) < 2:
+            continue
+        projected = {
+            json.dumps(projection(item), ensure_ascii=False, sort_keys=True)
+            for item in submissions
+        }
+        scores.append(1.0 if len(projected) == 1 else 0.0)
+    if not scores:
+        return 0.0
+    return sum(scores) / len(scores)
+
+
+def _span_type_projection(submission: Mapping[str, Any]) -> tuple[tuple[Any, ...], ...]:
+    return tuple(
+        sorted(
+            (
+                tuple(annotation.get("span", ())),
+                annotation.get("type"),
+            )
+            for annotation in submission.get("entities", [])
+        )
+    )
+
+
+def _assertion_projection(submission: Mapping[str, Any]) -> tuple[tuple[Any, ...], ...]:
+    return tuple(
+        sorted(
+            (
+                tuple(annotation.get("span", ())),
+                annotation.get("type"),
+                annotation.get("assertion"),
+            )
+            for annotation in submission.get("entities", [])
+        )
+    )
+
+
+def _relation_projection(submission: Mapping[str, Any]) -> tuple[tuple[Any, ...], ...]:
+    return tuple(
+        sorted(
+            (
+                relation.get("head"),
+                relation.get("tail"),
+                relation.get("type"),
+            )
+            for relation in submission.get("relations", [])
+        )
+    )
 
 
 def _require_complete_assignments(
@@ -857,6 +983,21 @@ def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
     path.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
+    )
+
+
+def _write_yaml(path: Path, payload: Mapping[str, Any]) -> None:
+    """Write a deterministic dataset manifest without platform-specific line endings."""
+
+    path.write_text(
+        yaml.safe_dump(
+            payload,
+            allow_unicode=True,
+            default_flow_style=False,
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+        newline="\n",
     )
 
 

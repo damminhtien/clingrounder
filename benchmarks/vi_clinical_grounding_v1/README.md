@@ -82,8 +82,12 @@ clingrounder-benchmark review-snapshot-freeze \
 ```
 
 The freeze command requires double-review agreement or explicit adjudication by default. It
-writes a fingerprinted JSONL snapshot, a text-free agreement report, and a snapshot manifest; it
-does not mutate this benchmark directory or change `human_reviewed` by editing YAML.
+writes four portable artifacts: the fingerprinted JSONL snapshot, a text-free
+`review-agreement.json`, a derived `dataset_manifest.yaml`, and a top-level `manifest.json` with
+checksums for all three. The derived dataset manifest marks synthetic review output as
+`synthetic_reviewed`, so review improves annotation provenance without making the pilot clinical
+evidence. The command does not mutate this benchmark directory or change `human_reviewed` by
+editing YAML.
 
 ## Dataset policy
 
