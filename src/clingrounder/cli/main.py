@@ -67,6 +67,10 @@ _HANDLERS = {
         "clingrounder.cli.commands.benchmark",
         "compare_dataset_benchmark_command",
     ),
+    "benchmark_dataset_verify_reference": (
+        "clingrounder.cli.commands.benchmark",
+        "verify_dataset_reference_command",
+    ),
     "benchmark_dataset_audit": (
         "clingrounder.cli.commands.benchmark",
         "audit_dataset_command",

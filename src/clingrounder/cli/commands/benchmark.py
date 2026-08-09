@@ -17,6 +17,7 @@ from clingrounder.evaluation.promotion_benchmark import (
 from clingrounder.evaluation.dataset_benchmark import run_dataset_benchmark
 from clingrounder.evaluation.dataset_benchmark import compare_dataset_benchmarks
 from clingrounder.evaluation.dataset_benchmark import run_dataset_benchmark_suite
+from clingrounder.evaluation.dataset_benchmark import verify_dataset_benchmark_reference
 from clingrounder.evaluation.dataset_audit import audit_dataset
 from clingrounder.evaluation.review_pack import (
     ReviewPackConfig,
@@ -32,6 +33,7 @@ __all__ = [
     "run_dataset_benchmark_command",
     "run_dataset_benchmark_suite_command",
     "compare_dataset_benchmark_command",
+    "verify_dataset_reference_command",
     "audit_dataset_command",
     "build_review_pack_command",
     "freeze_reviewed_snapshot_command",
@@ -110,6 +112,22 @@ def compare_dataset_benchmark_command(args: argparse.Namespace) -> int:
         _write_report(args.output, report)
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0 if report["promote"] else 1
+
+
+def verify_dataset_reference_command(args: argparse.Namespace) -> int:
+    """Verify published correctness values against one generated suite artifact."""
+
+    suite = _read_mapping(args.suite)
+    reference = _read_mapping(args.reference)
+    report = verify_dataset_benchmark_reference(
+        suite,
+        reference,
+        tolerance=args.tolerance,
+    )
+    if args.output:
+        _write_report(args.output, report)
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0 if report["verified"] else 1
 
 
 def audit_dataset_command(args: argparse.Namespace) -> int:

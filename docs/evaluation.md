@@ -110,6 +110,16 @@ uv run clingrounder validate \
   --dictionary data/dictionaries/seed_concepts.jsonl
 ```
 
+For a published product benchmark, verify the generated suite against its checked-in correctness
+reference. This protects the public table from drifting away from the JSON artifacts while leaving
+machine-sensitive p95 latency as an explicitly reported, non-gating value:
+
+```bash
+clingrounder-benchmark verify-reference \
+  --suite artifacts/benchmarks/vi-clinical-grounding-v1/suite/suite.json \
+  --reference benchmarks/vi_clinical_grounding_v1/expected_results.yaml
+```
+
 ## Experiment Discipline
 
 1. Freeze the data split and terminology release before comparing systems.

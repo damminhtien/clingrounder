@@ -11,6 +11,7 @@ from clingrounder.evaluation.dataset_benchmark import (
     compare_dataset_benchmarks,
     run_dataset_benchmark,
     run_dataset_benchmark_suite,
+    verify_dataset_benchmark_reference,
 )
 from clingrounder.schema.annotation import EntityAnnotation
 from clingrounder.schema.output import ClinicalPrediction
@@ -217,6 +218,69 @@ def test_public_benchmark_suite_writes_named_runs_and_index(tmp_path: Path) -> N
     assert (output / "full" / "predictions.jsonl").is_file()
     assert (output / "suite.json").is_file()
     assert "| exact |" in (output / "report.md").read_text(encoding="utf-8")
+
+
+def test_benchmark_reference_verifier_checks_correctness_and_reports_runtime() -> None:
+    suite = {
+        "schema_version": "clingrounder.benchmark-suite.v1",
+        "benchmark": {"id": "fixture"},
+        "split": "test",
+        "git_commit": "candidate-commit",
+        "runs": {
+            "exact": {
+                "metrics": {
+                    "entity_exact_micro_f1": 0.8,
+                    "relation_micro_f1": 1.0,
+                },
+                "performance": {"document_latency_ms": {"p95": 42.0}},
+            }
+        },
+    }
+    reference = {
+        "benchmark": "fixture",
+        "measurement": {"commit": "reference-commit"},
+        "results": [
+            {
+                "variant": "exact",
+                "split": "test",
+                "entity_exact_micro_f1": 0.8,
+                "relation_micro_f1": 1.0,
+                "p95_ms": 10.0,
+            }
+        ],
+    }
+
+    report = verify_dataset_benchmark_reference(suite, reference)
+
+    assert report["verified"] is True
+    assert report["runtime_checked"] is False
+    assert report["reference_commit"] == "reference-commit"
+    assert report["suite_commit"] == "candidate-commit"
+    assert report["variants"]["exact"]["runtime"]["measured_p95_ms"] == 42.0
+
+
+def test_benchmark_reference_verifier_rejects_correctness_drift() -> None:
+    suite = {
+        "benchmark": {"id": "fixture"},
+        "split": "test",
+        "runs": {
+            "exact": {
+                "metrics": {"entity_exact_micro_f1": 0.7},
+                "performance": {"document_latency_ms": {"p95": 42.0}},
+            }
+        },
+    }
+    reference = {
+        "benchmark": "fixture",
+        "results": [
+            {"variant": "exact", "split": "test", "entity_exact_micro_f1": 0.8}
+        ],
+    }
+
+    report = verify_dataset_benchmark_reference(suite, reference)
+
+    assert report["verified"] is False
+    assert report["variants"]["exact"]["checks"]["entity_exact_micro_f1"] is False
 
 
 def test_benchmark_suite_rejects_path_traversal_names(tmp_path: Path) -> None:

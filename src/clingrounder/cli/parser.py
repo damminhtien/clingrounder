@@ -373,6 +373,16 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     dataset_compare.add_argument("--policy", required=True)
     dataset_compare.add_argument("--output")
 
+    dataset_reference = plugins.add_parser(
+        "verify-reference",
+        help="Verify published correctness values against a generated suite artifact.",
+    )
+    dataset_reference.set_defaults(handler="benchmark_dataset_verify_reference")
+    dataset_reference.add_argument("--suite", required=True)
+    dataset_reference.add_argument("--reference", required=True)
+    dataset_reference.add_argument("--output")
+    dataset_reference.add_argument("--tolerance", type=float, default=1e-12)
+
     audit = plugins.add_parser(
         "audit",
         help="Audit a neutral benchmark dataset before treating it as public evidence.",

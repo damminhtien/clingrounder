@@ -34,6 +34,7 @@ __all__ = [
     "compare_dataset_benchmarks",
     "run_dataset_benchmark",
     "run_dataset_benchmark_suite",
+    "verify_dataset_benchmark_reference",
 ]
 
 @dataclass(frozen=True, slots=True)
@@ -213,6 +214,86 @@ def run_dataset_benchmark_suite(
     return payload
 
 
+def verify_dataset_benchmark_reference(
+    suite: Mapping[str, Any],
+    reference: Mapping[str, Any],
+    *,
+    tolerance: float = 1e-12,
+) -> dict[str, Any]:
+    """Verify published correctness values against a generated suite artifact.
+
+    The reference file records one measured publication snapshot; it is not a second scorer.
+    Runtime is reported but not compared because p95 latency is machine-sensitive. Correctness
+    metrics, declared variants, benchmark identity, and split are checked explicitly.
+    """
+
+    if tolerance < 0 or not math.isfinite(tolerance):
+        raise ValueError("tolerance must be a finite non-negative number")
+    suite_benchmark = _mapping_value(suite, "benchmark")
+    reference_benchmark = _string_value(reference, "benchmark")
+    suite_benchmark_id = _string_value(suite_benchmark, "id")
+    if suite_benchmark_id != reference_benchmark:
+        raise ValueError(
+            f"Benchmark identity mismatch: suite={suite_benchmark_id!r}, "
+            f"reference={reference_benchmark!r}"
+        )
+    suite_split = _string_value(suite, "split")
+    raw_results = reference.get("results")
+    if not isinstance(raw_results, list) or not raw_results:
+        raise ValueError("reference results must be a non-empty list")
+    suite_runs = _mapping_value(suite, "runs")
+    variants: dict[str, dict[str, Any]] = {}
+    for expected in raw_results:
+        if not isinstance(expected, Mapping):
+            raise ValueError("reference results must contain mappings")
+        variant = _string_value(expected, "variant")
+        expected_split = _string_value(expected, "split")
+        actual = suite_runs.get(variant)
+        if not isinstance(actual, Mapping):
+            variants[variant] = {
+                "correctness_match": False,
+                "missing": True,
+                "checks": {},
+            }
+            continue
+        actual_metrics = _mapping_value(actual, "metrics")
+        actual_performance = _mapping_value(actual, "performance")
+        checks: dict[str, bool] = {}
+        for name, expected_value in expected.items():
+            if name in {"variant", "split", "p95_ms"}:
+                continue
+            checks[name] = _values_match(actual_metrics.get(name), expected_value, tolerance)
+        runtime_reference = expected.get("p95_ms")
+        latency = _mapping_value(actual_performance, "document_latency_ms")
+        variants[variant] = {
+            "correctness_match": expected_split == suite_split and all(checks.values()),
+            "split_match": expected_split == suite_split,
+            "missing": False,
+            "checks": checks,
+            "runtime": {
+                "reference_p95_ms": runtime_reference,
+                "measured_p95_ms": _optional_finite_number(latency.get("p95")),
+                "checked": False,
+            },
+        }
+    measurement = reference.get("measurement")
+    reference_commit = (
+        _optional_string(measurement.get("commit"))
+        if isinstance(measurement, Mapping)
+        else None
+    )
+    return {
+        "schema_version": "clingrounder.benchmark-reference-verification.v1",
+        "benchmark": reference_benchmark,
+        "reference_commit": reference_commit,
+        "suite_commit": _optional_string(suite.get("git_commit")),
+        "runtime_checked": False,
+        "verified": bool(variants)
+        and all(result["correctness_match"] for result in variants.values()),
+        "variants": variants,
+    }
+
+
 def compare_dataset_benchmarks(
     baseline: Mapping[str, Any],
     candidate: Mapping[str, Any],
@@ -333,6 +414,24 @@ def _metric_value(report: Mapping[str, Any], name: str) -> float | None:
     if not isinstance(metrics, Mapping):
         return None
     return _optional_finite_number(metrics.get(name))
+
+
+def _values_match(actual: object, expected: object, tolerance: float) -> bool:
+    """Compare reference values without accepting booleans or non-finite numbers."""
+
+    actual_number = _optional_finite_number(actual)
+    expected_number = _optional_finite_number(expected)
+    if actual_number is not None or expected_number is not None:
+        return (
+            actual_number is not None
+            and expected_number is not None
+            and math.isclose(actual_number, expected_number, rel_tol=0.0, abs_tol=tolerance)
+        )
+    return actual == expected
+
+
+def _optional_string(value: object) -> str | None:
+    return value if isinstance(value, str) and value.strip() else None
 
 
 def _mapping_value(mapping: Mapping[str, Any], key: str) -> Mapping[str, Any]:

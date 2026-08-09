@@ -49,6 +49,17 @@ The gate requires the configured primary improvement, protects linking/assertion
 latency, and fails closed on invalid offsets, terminology assignments, relations, or validation
 errors. Runtime-only comparison remains available as `clingrounder-benchmark compare`.
 
+Verify that a generated suite still matches the correctness values published in the benchmark
+reference file. The command reports p95 latency for comparison but deliberately does not gate on
+it because latency depends on the host:
+
+```bash
+clingrounder-benchmark verify-reference \
+  --suite artifacts/benchmarks/vi-clinical-grounding-v1/suite/suite.json \
+  --reference benchmarks/vi_clinical_grounding_v1/expected_results.yaml \
+  --output artifacts/benchmarks/vi-clinical-grounding-v1/reference-verification.json
+```
+
 ## Independent review handoff
 
 Create a deterministic gold-blind pack before asking reviewers to annotate a future licensed

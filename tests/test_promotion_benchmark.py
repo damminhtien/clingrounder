@@ -50,6 +50,22 @@ def test_benchmark_commands_are_parseable() -> None:
     assert compare.handler == "benchmark_compare"
 
 
+def test_benchmark_reference_verification_command_is_parseable() -> None:
+    parser = build_parser(scope="benchmark")
+    args = parser.parse_args(
+        [
+            "benchmark",
+            "verify-reference",
+            "--suite",
+            "suite.json",
+            "--reference",
+            "expected.yaml",
+        ]
+    )
+
+    assert args.handler == "benchmark_dataset_verify_reference"
+
+
 def _report(*, candidate_recall: float, assertion_recall: float | None = 1.0) -> dict:
     return {
         "environment": {"commit": "test"},
