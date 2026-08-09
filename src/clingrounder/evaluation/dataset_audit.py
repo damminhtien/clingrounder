@@ -11,6 +11,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 import unicodedata
@@ -194,6 +195,10 @@ def audit_dataset(benchmark_dir: str | Path) -> DatasetAuditReport:
     if status not in _REVIEWED_STATUSES or not human_reviewed:
         warnings.append("clinical_claim_requires_human_review")
 
+    agreement_issue_present = any(
+        item.startswith(("missing_agreement_report", "invalid_agreement_report", "agreement_"))
+        for item in issues
+    )
     checks = {
         "declared_split_counts_match": declared_count_ok,
         "declared_split_fingerprints_match": declared_hash_ok,
@@ -204,10 +209,7 @@ def audit_dataset(benchmark_dir: str | Path) -> DatasetAuditReport:
             item in {"missing_license", "missing_license_url"} for item in issues
         ),
         "review_contract_complete": review_fields_ok,
-        "review_agreement_meets_targets": not any(
-            item.startswith(("missing_agreement_report", "invalid_agreement_report", "agreement_"))
-            for item in issues
-        ) if human_reviewed else True,
+        "review_agreement_meets_targets": not agreement_issue_present if human_reviewed else True,
         "human_reviewed_release": status in _REVIEWED_STATUSES and human_reviewed,
         "test_not_used_for_development": policy.get("test_used_for_development") is False,
     }
@@ -270,10 +272,7 @@ def _review_contract_ok(
     agreement = review.get("agreement_targets")
     if not isinstance(agreement, Mapping):
         return False
-    if any(
-        not isinstance(value, (int, float)) or not 0.0 <= value <= 1.0
-        for value in agreement.values()
-    ):
+    if any(not _unit_interval(value) for value in agreement.values()):
         return False
     if not all(reviewed_counts.get(split, 0) == count for split, count in split_counts.items()):
         return False
@@ -325,30 +324,80 @@ def _load_agreement_report(
         return None, issues
     if payload.get("dataset_id") != dataset.get("id") or payload.get("dataset_version") != dataset.get("version"):
         issues.append("agreement_dataset_mismatch")
+    reviewed_count = payload.get("reviewed_document_count")
+    double_reviewed_count = payload.get("double_reviewed_document_count")
     for key in ("reviewed_document_count", "double_reviewed_document_count"):
-        if not isinstance(payload.get(key), int) or payload[key] < 1:
+        value = payload.get(key)
+        if isinstance(value, bool) or not isinstance(value, int) or value < 1:
             issues.append(f"agreement_invalid:{key}")
+    if (
+        isinstance(reviewed_count, int)
+        and not isinstance(reviewed_count, bool)
+        and isinstance(double_reviewed_count, int)
+        and not isinstance(double_reviewed_count, bool)
+    ):
+        if double_reviewed_count > reviewed_count:
+            issues.append("agreement_invalid:double_reviewed_document_count")
     for key in ("double_review_fraction", "span_type_agreement", "assertion_agreement", "relation_agreement"):
         value = payload.get(key)
-        if value is not None and (not isinstance(value, (int, float)) or not 0.0 <= value <= 1.0):
+        if value is not None and not _unit_interval(value):
             issues.append(f"agreement_invalid:{key}")
+    fraction = payload.get("double_review_fraction")
+    if (
+        isinstance(reviewed_count, int)
+        and not isinstance(reviewed_count, bool)
+        and isinstance(double_reviewed_count, int)
+        and not isinstance(double_reviewed_count, bool)
+        and _unit_value(fraction) is not None
+        and not math.isclose(
+            _unit_value(fraction) or 0.0,
+            double_reviewed_count / reviewed_count,
+            rel_tol=0.0,
+            abs_tol=1e-9,
+        )
+    ):
+        issues.append("agreement_inconsistent:double_review_fraction")
     targets = review.get("agreement_targets")
     if not isinstance(targets, Mapping):
         issues.append("missing_agreement_targets")
     else:
         for key, target in targets.items():
             value = payload.get(f"{key}_agreement")
-            if not isinstance(target, (int, float)) or not 0.0 <= target <= 1.0:
+            target_value = _unit_value(target)
+            value_score = _unit_value(value)
+            if target_value is None:
                 issues.append(f"agreement_invalid_target:{key}")
-            elif not isinstance(value, (int, float)) or value < target:
+            elif value_score is None or value_score < target_value:
                 issues.append(f"agreement_below_target:{key}")
     target_fraction = review.get("double_review_fraction")
     fraction = payload.get("double_review_fraction")
-    if isinstance(target_fraction, (int, float)) and (
-        not isinstance(fraction, (int, float)) or fraction < target_fraction
-    ):
-        issues.append("agreement_below_target:double_review_fraction")
+    target_fraction_value = _unit_value(target_fraction)
+    fraction_value = _unit_value(fraction)
+    if target_fraction_value is not None:
+        if fraction_value is None or fraction_value < target_fraction_value:
+            issues.append("agreement_below_target:double_review_fraction")
     return dict(payload), issues
+
+
+def _unit_interval(value: object) -> bool:
+    """Return whether a reported metric is a finite, non-boolean probability."""
+
+    return _unit_value(value) is not None
+
+
+def _unit_value(value: object) -> float | None:
+    """Return a finite [0, 1] metric as a float, or ``None`` for invalid input."""
+
+    return (
+        float(value)
+        if (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+            and 0.0 <= float(value) <= 1.0
+        )
+        else None
+    )
 
 
 def _cross_split_overlap(values: Mapping[str, set[str]]) -> tuple[str, ...]:
