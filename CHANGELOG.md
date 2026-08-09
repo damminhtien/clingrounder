@@ -31,6 +31,8 @@ pre-release semantic versioning while the public API is still maturing.
 - Added a task-neutral CLI path to export reviewer agreement into that release artifact schema.
 - Added a validated review-pack importer that preserves independent submissions, detects exact
   agreement versus disagreement, and keeps gold promotion as an explicit human step.
+- Corrected neutral benchmark linking metrics so missed coded entities count as Recall@k/MRR misses
+  and assignment coverage reports actual primary-code emission.
 
 ### Fixed
 

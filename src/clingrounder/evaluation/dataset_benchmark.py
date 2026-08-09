@@ -100,9 +100,9 @@ def run_dataset_benchmark(
     performance = {
         "initialization_ms": round(initialization_ms, 6),
         "documents_per_second": round(
-            len(predictions) / (sum(latencies_ms) / 1000), 6
+            len(examples) / (sum(latencies_ms) / 1000), 6
         )
-        if predictions and sum(latencies_ms)
+        if examples and sum(latencies_ms)
         else 0.0,
         "entities_per_second": round(
             correctness["entity_count"] / (sum(latencies_ms) / 1000), 6
@@ -372,6 +372,7 @@ def _score(
     tp_by_type: Counter[str] = Counter()
     assertion_counts: Counter[tuple[str, str]] = Counter()
     linking_total = 0
+    assigned_prediction_count = 0
     linking_hits: Counter[int] = Counter()
     top1_hits = 0
     gold_relation_keys: set[tuple[str, str, str, str]] = set()
@@ -390,15 +391,19 @@ def _score(
             gold_by_type[str(item["type"])] += 1
             key = (tuple(item["span"]), str(item["type"]))
             matched = next((entity for entity in predicted_entities if (entity.span, entity.type.value) == key), None)
+            expected_code = item.get("code")
+            # INVARIANT: linking recall counts every coded gold mention, including a mention
+            # missed by NER. Otherwise extraction failures disappear from linking metrics.
+            if expected_code:
+                linking_total += 1
             if matched is not None:
                 tp_by_type[str(item["type"])] += 1
                 assertion_counts[(str(item["assertion"]), matched.assertion.value)] += 1
-                expected_code = item.get("code")
                 if expected_code:
-                    linking_total += 1
                     codes = [candidate.code for candidate in matched.candidates]
                     if matched.code:
                         codes.insert(0, matched.code)
+                        assigned_prediction_count += 1
                     for k in (1, 5, 10):
                         if expected_code in codes[:k]:
                             linking_hits[k] += 1
@@ -515,10 +520,12 @@ def _score(
             "linking_recall_at_10": _ratio(linking_hits[10], linking_total),
             "linking_top1_accuracy": _ratio(top1_hits, linking_total),
             "linking_mrr": _ratio(reciprocal_rank_total, linking_total),
+            "assigned_prediction_count": assigned_prediction_count,
             "relation_micro_f1": _f1(relation_precision, relation_recall),
             "relation_gold_count": len(gold_relation_keys),
             "relation_predicted_count": len(pred_relation_keys),
-            "assignment_coverage": _ratio(linking_total, gold_total),
+            "linkable_gold_count": linking_total,
+            "assignment_coverage": _ratio(assigned_prediction_count, pred_total),
             "offset_validity": 1.0,
             "validation_error_count": 0,
             "document_error_count": len(errors_by_document),

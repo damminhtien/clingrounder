@@ -22,6 +22,9 @@ def test_public_benchmark_writes_complete_artifact_bundle(tmp_path: Path) -> Non
     assert summary["metrics"]["entity_overlap_micro_f1"] == 1.0
     assert summary["metrics"]["assertion_accuracy"] == 1.0
     assert summary["metrics"]["linking_mrr"] == 0.875
+    assert summary["metrics"]["linkable_gold_count"] == 8
+    assert summary["metrics"]["assigned_prediction_count"] == 7
+    assert summary["metrics"]["assignment_coverage"] == 7 / 9
     assert summary["metrics"]["relation_gold_count"] == 1
     assert summary["metrics"]["relation_predicted_count"] == 1
     assert summary["metrics"]["relation_micro_f1"] == 1.0
@@ -38,6 +41,34 @@ def test_public_benchmark_writes_complete_artifact_bundle(tmp_path: Path) -> Non
         "runtime.json",
     }
     assert {path.name for path in (tmp_path / "artifact").iterdir()} == expected
+
+
+def test_linking_metrics_count_a_missing_gold_entity_as_a_recall_miss() -> None:
+    from clingrounder.evaluation.dataset_benchmark import BenchmarkExample, _score
+
+    example = BenchmarkExample(
+        document_id="missing-link",
+        text="ho metformin",
+        metadata={},
+        entities=(
+            {
+                "id": "g1",
+                "span": [0, 2],
+                "text": "ho",
+                "type": "SYMPTOM",
+                "assertion": "PRESENT",
+                "code_system": "LOCAL",
+                "code": "SYMPTOM_COUGH",
+            },
+        ),
+        relations=(),
+    )
+
+    metrics, _ = _score([example], {})
+
+    assert metrics["linkable_gold_count"] == 1
+    assert metrics["linking_recall_at_5"] == 0.0
+    assert metrics["assignment_coverage"] == 0.0
 
 
 def test_public_benchmark_suite_writes_named_runs_and_index(tmp_path: Path) -> None:
