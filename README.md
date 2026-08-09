@@ -12,7 +12,7 @@ it is not part of the default runtime or evaluation path.
 The PyPI distribution is named `clingrounder`; the Python import namespace remains
 `clingrounder`.
 
-Current release: [`0.1.0a7`](https://pypi.org/project/clingrounder/0.1.0a7/). The project is in
+Current release: [`0.1.0a8`](https://pypi.org/project/clingrounder/0.1.0a8/). The project is in
 alpha: the public contracts and validation invariants are useful, but APIs may still change
 between minor releases.
 

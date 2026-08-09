@@ -49,6 +49,20 @@ pre-release semantic versioning while the public API is still maturing.
 
 - None.
 
+## [0.1.0a8] - 2026-08-09
+
+### Added
+
+- Added structural annotation validation to the public benchmark publication audit, including
+  raw-offset ownership, declared taxonomy, code-system, and relation endpoint checks.
+- Added a CI job that audits and measures the public product benchmark and uploads its evidence
+  artifacts for every push.
+
+### Fixed
+
+- Made benchmark output comparison independent of ZIP archive timestamps and comments by hashing
+  member names and contents.
+
 ## [0.1.0a7] - 2026-08-09
 
 ### Added
@@ -137,7 +151,8 @@ pre-release semantic versioning while the public API is still maturing.
 - Added architecture, code-map, reproducibility, public-release, security, and API-stability docs.
 - Documented the boundary between reusable toolkit code and optional competition benchmarks.
 
-[Unreleased]: https://github.com/damminhtien/clingrounder/compare/v0.1.0a7...HEAD
+[Unreleased]: https://github.com/damminhtien/clingrounder/compare/v0.1.0a8...HEAD
+[0.1.0a8]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a8
 [0.1.0a7]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a7
 [0.1.0a6]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a6
 [0.1.0a5]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a5
