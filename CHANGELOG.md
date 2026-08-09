@@ -28,6 +28,7 @@ pre-release semantic versioning while the public API is still maturing.
   from each manifest instead of hard-coding the ClinGrounder product task.
 - Added a hashed, dataset-bound reviewer-agreement artifact requirement for human-reviewed public
   benchmark releases.
+- Added a task-neutral CLI path to export reviewer agreement into that release artifact schema.
 
 ### Fixed
 

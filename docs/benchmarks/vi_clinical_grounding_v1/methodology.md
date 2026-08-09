@@ -60,3 +60,16 @@ the report fingerprint, dataset identity, and every declared target; a ``human_r
 without this evidence cannot pass the clinical-evidence gate. Reports contain no raw note text or
 reviewer identity by default. A synthetic or review-pending dataset can pass the engineering
 checks while correctly failing the clinical-evidence gate.
+
+Generate the artifact from the existing task-neutral review quality output instead of editing JSON
+by hand:
+
+```bash
+clingrounder-research data review quality \
+  --documents outputs/gold/documents.jsonl \
+  --proposals outputs/gold/annotations.jsonl \
+  --output outputs/review-quality.json \
+  --dataset-id vi-clinical-grounding-v1 \
+  --dataset-version 1.0.0 \
+  --benchmark-output outputs/review-agreement.json
+```
