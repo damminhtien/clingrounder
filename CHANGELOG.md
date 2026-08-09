@@ -35,6 +35,8 @@ pre-release semantic versioning while the public API is still maturing.
   and assignment coverage reports actual primary-code emission.
 - Added an optional offline Streamlit demo for inspecting spans, assertions, candidate provenance,
   and relations without adding UI dependencies to the core package.
+- Added typed artifact manifests, deterministic versioned caches, and explicit local-only artifact
+  acquisition with checksum and path-safety validation.
 
 ### Fixed
 
@@ -50,6 +52,7 @@ pre-release semantic versioning while the public API is still maturing.
   code-system consistency, and relation endpoints before a release can be eligible.
 - CI now runs and uploads the public product benchmark audit and measured ablation suite on every
   push, separate from the historical competition plugin.
+- README benchmark latency values now match the current measured evidence artifact.
 
 ### Changed
 

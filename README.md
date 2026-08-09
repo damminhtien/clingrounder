@@ -359,7 +359,8 @@ workflows:
 Start with [docs/rule-ner.md](docs/rule-ner.md),
 [docs/reference-implementations.md](docs/reference-implementations.md),
 [docs/data-mining.md](docs/data-mining.md), and
-[docs/mining-reproducibility.md](docs/mining-reproducibility.md).
+[docs/mining-reproducibility.md](docs/mining-reproducibility.md). The current evidence and
+research boundaries are summarized in [docs/research-portfolio.md](docs/research-portfolio.md).
 
 ## Data Mining And Provenance
 
@@ -421,10 +422,10 @@ benchmark). The full generated diagnostic table and fingerprints are in the
 
 | System | Entity exact F1 | Assertion macro-F1 | Recall@5 | Top-1 | Relation F1 | p95 ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Exact dictionary | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 14.50 |
-| Lexical | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 6.79 |
-| Hybrid | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 16.68 |
-| Full deterministic | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 1.0000 | 6.92 |
+| Exact dictionary | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 21.92 |
+| Lexical | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 4.90 |
+| Hybrid | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 5.85 |
+| Full deterministic | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 1.0000 | 12.57 |
 
 The pilot contains one synthetic `LAB_TEST -> LAB_RESULT` relation. Only the full profile enables
 the relation extractor, so the ablation intentionally reports relation F1 `0.0000` for the other
