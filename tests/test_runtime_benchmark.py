@@ -30,6 +30,20 @@ def test_runtime_benchmark_aggregates_counters_and_compares_outputs(tmp_path: Pa
     assert "optimized" in (tmp_path / "report/runtime_benchmark.md").read_text()
 
 
+def test_runtime_benchmark_ignores_zip_member_metadata(tmp_path: Path) -> None:
+    baseline_dir = _write_run(tmp_path / "baseline", docs_per_second=2.0)
+    optimized_dir = _write_run(tmp_path / "optimized", docs_per_second=2.0)
+
+    baseline_zip = next(baseline_dir.rglob("*output.zip"))
+    optimized_zip = next(optimized_dir.rglob("*output.zip"))
+    with ZipFile(optimized_zip, "a") as archive:
+        archive.comment = b"different archive metadata"
+    assert baseline_zip.read_bytes() != optimized_zip.read_bytes()
+    assert analyze_runtime_run(baseline_dir)["output_sha256"] == analyze_runtime_run(
+        optimized_dir
+    )["output_sha256"]
+
+
 def _write_run(path: Path, *, docs_per_second: float) -> Path:
     artifact_dir = path / "phase1"
     artifact_dir.mkdir(parents=True)

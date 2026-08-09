@@ -5,6 +5,7 @@ import json
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Mapping, Sequence, cast
+from zipfile import ZipFile
 
 
 def analyze_runtime_run(run_dir: str | Path) -> dict[str, Any]:
@@ -65,7 +66,9 @@ def analyze_runtime_run(run_dir: str | Path) -> dict[str, Any]:
         "stages": stages,
         "bottleneck_document_counts": dict(bottlenecks.most_common()),
         "output_zip": str(zip_path) if zip_path else None,
-        "output_sha256": _sha256(zip_path) if zip_path else None,
+        # INVARIANT: ZIP timestamps and compression metadata are not prediction content and must
+        # not make two semantically identical benchmark outputs compare as different.
+        "output_sha256": _output_fingerprint(zip_path) if zip_path else None,
     }
 
 
@@ -144,8 +147,18 @@ def _read_json(path: Path) -> dict[str, Any]:
     return value
 
 
-def _sha256(path: Path) -> str:
+def _output_fingerprint(path: Path) -> str:
+    """Hash output content while ignoring archive metadata such as member timestamps."""
+
     digest = hashlib.sha256()
+    if path.suffix.casefold() == ".zip":
+        with ZipFile(path) as archive:
+            for name in sorted(info.filename for info in archive.infolist() if not info.is_dir()):
+                digest.update(name.encode("utf-8"))
+                digest.update(b"\0")
+                digest.update(archive.read(name))
+                digest.update(b"\0")
+        return digest.hexdigest()
     with path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)

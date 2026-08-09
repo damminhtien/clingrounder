@@ -38,6 +38,8 @@ pre-release semantic versioning while the public API is still maturing.
   suite run; runtime values remain explicitly machine-dependent.
 - Agreement reports now reject invalid probabilities, inconsistent double-review fractions, and
   values below the manifest's declared publication targets.
+- Runtime benchmark output comparisons now fingerprint ZIP member names and contents without
+  treating archive timestamps or comments as prediction changes.
 
 ### Changed
 
