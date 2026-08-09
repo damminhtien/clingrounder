@@ -37,6 +37,8 @@ pre-release semantic versioning while the public API is still maturing.
   and relations without adding UI dependencies to the core package.
 - Added typed artifact manifests, deterministic versioned caches, and explicit local-only artifact
   acquisition with checksum and path-safety validation.
+- Documented the measured Vietnamese NER/DAPT research track, including a rejected promotion and
+  the provenance boundary that keeps competition checkpoints out of the public runtime.
 
 ### Fixed
 
@@ -52,7 +54,8 @@ pre-release semantic versioning while the public API is still maturing.
   code-system consistency, and relation endpoints before a release can be eligible.
 - CI now runs and uploads the public product benchmark audit and measured ablation suite on every
   push, separate from the historical competition plugin.
-- README benchmark latency values now match the current measured evidence artifact.
+- README benchmark latency values and the standalone benchmark results page now reference the
+  same current pilot run.
 
 ### Changed
 

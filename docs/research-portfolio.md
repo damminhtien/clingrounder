@@ -40,6 +40,10 @@ The following modules are replaceable research adapters, not hidden defaults:
 - Vietnamese data mining and synthetic challenge generation;
 - model training, DAPT, and listwise linking experiments.
 
+The measured Vietnamese NER runs and the rejected DAPT promotion are documented in
+[vi-ner-experiments.md](research/vi-ner-experiments.md). Their manifests are provenance evidence
+for research reproducibility; they are not public model artifacts.
+
 Each experiment should record its configuration, input fingerprints, model revision, environment,
 and output artifact. A local metric can prioritize work, but a release claim requires the relevant
 public benchmark and its audit gates.
