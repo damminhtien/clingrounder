@@ -140,6 +140,45 @@ def test_reviewed_dataset_rejects_agreement_below_manifest_target(tmp_path: Path
     assert "agreement_below_target:span_type" in report.issues
 
 
+def test_audit_rejects_invalid_annotation_structure(tmp_path: Path) -> None:
+    invalid = {
+        "document_id": "train-1",
+        "text": "Sốt.",
+        "metadata": {"template_group": "train-template"},
+        "entities": [
+            {
+                "id": "e1",
+                "span": [0, 99],
+                "text": "Sốt",
+                "type": "SYMPTOM",
+                "assertion": "PRESENT",
+                "code_system": "NONE",
+                "code": "fabricated",
+            }
+        ],
+        "relations": [],
+    }
+    valid = {
+        "document_id": "test-1",
+        "text": "Ho.",
+        "metadata": {"template_group": "test-template"},
+        "entities": [],
+        "relations": [],
+    }
+    (tmp_path / "train.jsonl").write_text(json.dumps(invalid) + "\n", encoding="utf-8")
+    (tmp_path / "test.jsonl").write_text(json.dumps(valid) + "\n", encoding="utf-8")
+    manifest = _manifest(tmp_path, status="synthetic_pilot", human_reviewed=False)
+    (tmp_path / "dataset_manifest.yaml").write_text(
+        yaml.safe_dump(manifest, allow_unicode=True, sort_keys=False), encoding="utf-8"
+    )
+
+    report = audit_dataset(tmp_path)
+
+    assert report.checks["annotation_structure_valid"] is False
+    assert "invalid_entity:train:1" in report.issues
+    assert report.eligible_for_clinical_claim is False
+
+
 def _manifest(tmp_path: Path, *, status: str, human_reviewed: bool) -> dict[str, object]:
     splits: dict[str, dict[str, object]] = {}
     for split in ("train", "test"):

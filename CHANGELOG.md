@@ -40,6 +40,8 @@ pre-release semantic versioning while the public API is still maturing.
   values below the manifest's declared publication targets.
 - Runtime benchmark output comparisons now fingerprint ZIP member names and contents without
   treating archive timestamps or comments as prediction changes.
+- Dataset publication audit now validates annotation spans, raw text ownership, IDs, assertions,
+  code-system consistency, and relation endpoints before a release can be eligible.
 
 ### Changed
 

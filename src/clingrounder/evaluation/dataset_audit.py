@@ -131,7 +131,14 @@ def audit_dataset(benchmark_dir: str | Path) -> DatasetAuditReport:
         if declared_sha is not None and declared_sha != actual_sha:
             declared_hash_ok = False
             issues.append(f"fingerprint_mismatch:{split_name}")
-        rows = _read_rows(path, split_name, issues)
+        rows = _read_rows(
+            path,
+            split_name,
+            issues,
+            entity_types=_declared_values(manifest, "entities"),
+            assertions=_declared_values(manifest, "assertions"),
+            code_systems=_declared_values(manifest, "code_systems"),
+        )
         split_counts[split_name] = len(rows)
         declared_count = split.get("documents")
         if declared_count is not None and declared_count != len(rows):
@@ -199,6 +206,19 @@ def audit_dataset(benchmark_dir: str | Path) -> DatasetAuditReport:
         item.startswith(("missing_agreement_report", "invalid_agreement_report", "agreement_"))
         for item in issues
     )
+    annotation_issue_present = any(
+        item.startswith(
+            (
+                "missing_entities:",
+                "missing_relations:",
+                "invalid_entity:",
+                "invalid_relation:",
+                "duplicate_entity_id:",
+                "duplicate_relation_id:",
+            )
+        )
+        for item in issues
+    )
     checks = {
         "declared_split_counts_match": declared_count_ok,
         "declared_split_fingerprints_match": declared_hash_ok,
@@ -210,6 +230,7 @@ def audit_dataset(benchmark_dir: str | Path) -> DatasetAuditReport:
         ),
         "review_contract_complete": review_fields_ok,
         "review_agreement_meets_targets": not agreement_issue_present if human_reviewed else True,
+        "annotation_structure_valid": not annotation_issue_present,
         "human_reviewed_release": status in _REVIEWED_STATUSES and human_reviewed,
         "test_not_used_for_development": policy.get("test_used_for_development") is False,
     }
@@ -228,7 +249,15 @@ def audit_dataset(benchmark_dir: str | Path) -> DatasetAuditReport:
     )
 
 
-def _read_rows(path: Path, split: str, issues: list[str]) -> list[dict[str, Any]]:
+def _read_rows(
+    path: Path,
+    split: str,
+    issues: list[str],
+    *,
+    entity_types: frozenset[str],
+    assertions: frozenset[str],
+    code_systems: frozenset[str],
+) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
@@ -249,8 +278,114 @@ def _read_rows(path: Path, split: str, issues: list[str]) -> list[dict[str, Any]
         if not isinstance(row.get("text"), str) or not row["text"]:
             issues.append(f"empty_text:{split}:{line_number}")
             continue
+        _validate_row_annotations(
+            row,
+            split,
+            line_number,
+            issues,
+            entity_types=entity_types,
+            assertions=assertions,
+            code_systems=code_systems,
+        )
         rows.append(row)
     return rows
+
+
+def _validate_row_annotations(
+    row: Mapping[str, Any],
+    split: str,
+    line_number: int,
+    issues: list[str],
+    *,
+    entity_types: frozenset[str],
+    assertions: frozenset[str],
+    code_systems: frozenset[str],
+) -> None:
+    """Validate neutral annotation structure without emitting source text in diagnostics."""
+
+    entities = row.get("entities")
+    relations = row.get("relations")
+    label = f"{split}:{line_number}"
+    if not isinstance(entities, list):
+        issues.append(f"missing_entities:{label}")
+        entities = []
+    if not isinstance(relations, list):
+        issues.append(f"missing_relations:{label}")
+        relations = []
+    entity_ids: set[str] = set()
+    for entity in entities:
+        if not isinstance(entity, Mapping):
+            issues.append(f"invalid_entity:{label}")
+            continue
+        entity_id = entity.get("id")
+        if not isinstance(entity_id, str) or not entity_id.strip():
+            issues.append(f"invalid_entity:{label}")
+        elif entity_id in entity_ids:
+            issues.append(f"duplicate_entity_id:{label}")
+        else:
+            entity_ids.add(entity_id)
+        span = entity.get("span")
+        start, end = _span_or_none(span)
+        if start is None or end is None or not 0 <= start < end <= len(row["text"]):
+            issues.append(f"invalid_entity:{label}")
+        elif row["text"][start:end] != entity.get("text"):
+            issues.append(f"invalid_entity:{label}")
+        if entity.get("type") not in entity_types:
+            issues.append(f"invalid_entity:{label}")
+        if entity.get("assertion") not in assertions:
+            issues.append(f"invalid_entity:{label}")
+        code_system = entity.get("code_system")
+        code = entity.get("code")
+        if code_system not in code_systems:
+            issues.append(f"invalid_entity:{label}")
+        elif code_system == "NONE" and code is not None:
+            issues.append(f"invalid_entity:{label}")
+        elif code_system != "NONE" and (not isinstance(code, str) or not code.strip()):
+            issues.append(f"invalid_entity:{label}")
+
+    relation_ids: set[str] = set()
+    for relation in relations:
+        if not isinstance(relation, Mapping):
+            issues.append(f"invalid_relation:{label}")
+            continue
+        relation_id = relation.get("id")
+        head = relation.get("head")
+        tail = relation.get("tail")
+        relation_type = relation.get("type")
+        if not isinstance(relation_id, str) or not relation_id.strip():
+            issues.append(f"invalid_relation:{label}")
+        elif relation_id in relation_ids:
+            issues.append(f"duplicate_relation_id:{label}")
+        else:
+            relation_ids.add(relation_id)
+        if (
+            not isinstance(head, str)
+            or not isinstance(tail, str)
+            or head == tail
+            or head not in entity_ids
+            or tail not in entity_ids
+            or not isinstance(relation_type, str)
+            or not relation_type.strip()
+        ):
+            issues.append(f"invalid_relation:{label}")
+
+
+def _span_or_none(value: object) -> tuple[int, int] | tuple[None, None]:
+    if not isinstance(value, (list, tuple)) or len(value) != 2:
+        return None, None
+    start, end = value
+    if isinstance(start, bool) or not isinstance(start, int):
+        return None, None
+    if isinstance(end, bool) or not isinstance(end, int):
+        return None, None
+    return start, end
+
+
+def _declared_values(manifest: Mapping[str, Any], key: str) -> frozenset[str]:
+    value = manifest.get(key)
+    if not isinstance(value, list) or not all(isinstance(item, str) and item.strip() for item in value):
+        return frozenset()
+    return frozenset(value)
 
 
 def _review_contract_ok(
