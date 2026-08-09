@@ -97,6 +97,17 @@ gold-blind reviewer JSONL. The reviewer payload intentionally contains no `entit
 from the benchmark input. This prevents checked-in synthetic labels, or labels from a later licensed
 snapshot, from silently becoming reviewer supervision.
 
+For the checked-in pilot, the reproducible handoff wrapper is:
+
+```bash
+bash scripts/review_vi_clinical_grounding_v1.sh \
+  artifacts/review-packs/vi-clinical-grounding-v1
+```
+
+The generated directory is intentionally ignored by Git. Keep its manifest and edited reviewer
+files in coordinator-controlled storage; publish only the resulting text-free agreement report
+and dataset fingerprints when a release is authorized.
+
 The coordinator must retain the generated `manifest.json`, source fingerprints, and
 `coordinator_document_map.jsonl`. After two reviewers complete their annotations, validate and join
 the edited files with:

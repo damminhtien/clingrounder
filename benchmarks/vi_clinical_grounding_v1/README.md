@@ -41,14 +41,12 @@ Create a deterministic gold-blind pack before asking reviewers to annotate a fut
 snapshot:
 
 ```bash
-clingrounder-benchmark review-pack \
-  --benchmark benchmarks/vi_clinical_grounding_v1 \
-  --split test \
-  --reviewer reviewer-1 \
-  --reviewer reviewer-2 \
-  --double-review-fraction 0.10 \
-  --output artifacts/review-packs/vi-clinical-grounding-v1
+bash scripts/review_vi_clinical_grounding_v1.sh
 ```
+
+The script is a convenience wrapper around the CLI and accepts an optional output directory as
+its first argument. It uses a fixed seed and reviewer assignment policy so another machine can
+recreate the same handoff.
 
 Each reviewer directory contains only source text, a stable `review_id`, safe display metadata,
 and empty annotation arrays. Gold annotations and source document IDs stay in the coordinator
