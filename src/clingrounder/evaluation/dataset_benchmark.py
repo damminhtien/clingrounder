@@ -11,6 +11,7 @@ from collections import Counter
 from dataclasses import dataclass
 import hashlib
 import json
+import math
 from pathlib import Path
 import platform
 import statistics
@@ -29,7 +30,11 @@ from clingrounder.schema.validator import PredictionValidator
 from clingrounder.schema.types import CodeSystem, RelationType
 from clingrounder.terminology.ports import TerminologyRepository
 
-__all__ = ["run_dataset_benchmark", "run_dataset_benchmark_suite"]
+__all__ = [
+    "compare_dataset_benchmarks",
+    "run_dataset_benchmark",
+    "run_dataset_benchmark_suite",
+]
 
 @dataclass(frozen=True, slots=True)
 class BenchmarkExample:
@@ -208,6 +213,101 @@ def run_dataset_benchmark_suite(
     return payload
 
 
+def compare_dataset_benchmarks(
+    baseline: Mapping[str, Any],
+    candidate: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Apply a correctness-first promotion policy to two benchmark summaries.
+
+    The comparison consumes the neutral ``summary.json`` contract, not a benchmark plugin.
+    Missing metrics fail closed so a partial report cannot accidentally pass a promotion gate.
+    Timing is treated as a protected metric with an explicit tolerance rather than as the
+    primary objective.
+    """
+
+    if "policy" in policy and "primary" not in policy:
+        policy = _mapping_value(policy, "policy")
+    candidate_metrics = _mapping_value(candidate, "metrics")
+    primary_policy = _mapping_value(policy, "primary")
+    primary_name = _string_value(primary_policy, "metric")
+    primary_minimum = _finite_number(primary_policy, "minimum_improvement")
+    baseline_primary = _metric_value(baseline, primary_name)
+    candidate_primary = _metric_value(candidate, primary_name)
+    primary_passed = (
+        baseline_primary is not None
+        and candidate_primary is not None
+        and candidate_primary - baseline_primary >= primary_minimum
+    )
+
+    protected: dict[str, dict[str, Any]] = {}
+    protected_policy = policy.get("protected", {})
+    if not isinstance(protected_policy, Mapping):
+        raise ValueError("promotion policy protected must be a mapping")
+    for name in sorted(protected_policy):
+        raw_rule = protected_policy[name]
+        if not isinstance(raw_rule, Mapping):
+            raise ValueError(f"promotion policy protected.{name} must be a mapping")
+        baseline_value = _metric_value(baseline, str(name))
+        candidate_value = _metric_value(candidate, str(name))
+        if "maximum_regression" in raw_rule:
+            tolerance = _finite_number(raw_rule, "maximum_regression")
+            passed = (
+                baseline_value is not None
+                and candidate_value is not None
+                and candidate_value >= baseline_value - tolerance
+            )
+            rule = "maximum_regression"
+        elif "maximum_regression_ratio" in raw_rule:
+            tolerance = _finite_number(raw_rule, "maximum_regression_ratio")
+            passed = (
+                baseline_value is not None
+                and candidate_value is not None
+                and candidate_value <= baseline_value * (1.0 + tolerance)
+            )
+            rule = "maximum_regression_ratio"
+        else:
+            raise ValueError(
+                f"promotion policy protected.{name} requires maximum_regression or "
+                "maximum_regression_ratio"
+            )
+        protected[str(name)] = {
+            "baseline": baseline_value,
+            "candidate": candidate_value,
+            "rule": rule,
+            "tolerance": tolerance,
+            "passed": passed,
+        }
+
+    correctness_gates = {
+        "offset_validity": candidate_metrics.get("offset_validity") == 1.0,
+        "invalid_assigned_code_rate": candidate_metrics.get("invalid_assigned_code_rate") == 0.0,
+        "invalid_relation_rate": candidate_metrics.get("invalid_relation_rate") == 0.0,
+        "validation_error_count": candidate_metrics.get("validation_error_count") == 0,
+    }
+    promote = primary_passed and all(
+        item["passed"] for item in protected.values()
+    ) and all(correctness_gates.values())
+    return {
+        "schema_version": "clingrounder.dataset-promotion-comparison.v1",
+        "promote": promote,
+        "primary": {
+            "metric": primary_name,
+            "baseline": baseline_primary,
+            "candidate": candidate_primary,
+            "minimum_improvement": primary_minimum,
+            "delta": (
+                candidate_primary - baseline_primary
+                if baseline_primary is not None and candidate_primary is not None
+                else None
+            ),
+            "passed": primary_passed,
+        },
+        "protected": protected,
+        "correctness_gates": correctness_gates,
+    }
+
+
 def _load_manifest(path: Path) -> dict[str, Any]:
     if not path.is_file():
         raise FileNotFoundError(f"Missing benchmark manifest: {path}")
@@ -217,6 +317,50 @@ def _load_manifest(path: Path) -> dict[str, Any]:
     if not isinstance(payload.get("dataset"), Mapping):
         raise ValueError("Benchmark manifest requires a dataset mapping")
     return payload
+
+
+def _metric_value(report: Mapping[str, Any], name: str) -> float | None:
+    """Read a metric from the stable summary contract, including p95 latency."""
+
+    if name == "p95_ms":
+        performance = report.get("performance")
+        if isinstance(performance, Mapping):
+            latency = performance.get("document_latency_ms")
+            if isinstance(latency, Mapping):
+                return _optional_finite_number(latency.get("p95"))
+        return None
+    metrics = report.get("metrics")
+    if not isinstance(metrics, Mapping):
+        return None
+    return _optional_finite_number(metrics.get(name))
+
+
+def _mapping_value(mapping: Mapping[str, Any], key: str) -> Mapping[str, Any]:
+    value = mapping.get(key)
+    if not isinstance(value, Mapping):
+        raise ValueError(f"Expected {key} to be a mapping")
+    return value
+
+
+def _string_value(mapping: Mapping[str, Any], key: str) -> str:
+    value = mapping.get(key)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"Expected {key} to be a non-empty string")
+    return value
+
+
+def _finite_number(mapping: Mapping[str, Any], key: str) -> float:
+    value = _optional_finite_number(mapping.get(key))
+    if value is None:
+        raise ValueError(f"Expected {key} to be a finite number")
+    return value
+
+
+def _optional_finite_number(value: object) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    number = float(value)
+    return number if math.isfinite(number) else None
 
 
 def _declared_values(manifest: Mapping[str, Any], field: str) -> frozenset[str]:

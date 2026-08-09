@@ -363,6 +363,16 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     dataset_suite.add_argument("--output", required=True)
     dataset_suite.add_argument("--split", default="test")
 
+    dataset_compare = plugins.add_parser(
+        "dataset-compare",
+        help="Compare two neutral benchmark summaries with a promotion policy.",
+    )
+    dataset_compare.set_defaults(handler="benchmark_dataset_compare")
+    dataset_compare.add_argument("--baseline", required=True)
+    dataset_compare.add_argument("--candidate", required=True)
+    dataset_compare.add_argument("--policy", required=True)
+    dataset_compare.add_argument("--output")
+
     audit = plugins.add_parser(
         "audit",
         help="Audit a neutral benchmark dataset before treating it as public evidence.",

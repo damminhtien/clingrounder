@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
+
+import yaml
 
 from clingrounder.benchmarks.registry import benchmark_plugins
 
@@ -12,6 +15,7 @@ from clingrounder.evaluation.promotion_benchmark import (
     run_promotion_benchmark,
 )
 from clingrounder.evaluation.dataset_benchmark import run_dataset_benchmark
+from clingrounder.evaluation.dataset_benchmark import compare_dataset_benchmarks
 from clingrounder.evaluation.dataset_benchmark import run_dataset_benchmark_suite
 from clingrounder.evaluation.dataset_audit import audit_dataset
 from clingrounder.evaluation.review_pack import (
@@ -27,6 +31,7 @@ __all__ = [
     "run_runtime_benchmark",
     "run_dataset_benchmark_command",
     "run_dataset_benchmark_suite_command",
+    "compare_dataset_benchmark_command",
     "audit_dataset_command",
     "build_review_pack_command",
     "freeze_reviewed_snapshot_command",
@@ -92,6 +97,19 @@ def run_dataset_benchmark_suite_command(args: argparse.Namespace) -> int:
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
+
+
+def compare_dataset_benchmark_command(args: argparse.Namespace) -> int:
+    """Compare two neutral benchmark summaries with a checked-in policy."""
+
+    baseline = _read_mapping(args.baseline)
+    candidate = _read_mapping(args.candidate)
+    policy = _read_mapping(args.policy)
+    report = compare_dataset_benchmarks(baseline, candidate, policy)
+    if args.output:
+        _write_report(args.output, report)
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0 if report["promote"] else 1
 
 
 def audit_dataset_command(args: argparse.Namespace) -> int:
@@ -176,3 +194,13 @@ def _write_report(path: str, report: dict[str, object]) -> None:
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(report, handle, ensure_ascii=False, indent=2, sort_keys=True)
         handle.write("\n")
+
+
+def _read_mapping(path: str) -> dict[str, object]:
+    """Read JSON summaries and YAML policies through one strict mapping boundary."""
+
+    source = Path(path)
+    payload = yaml.safe_load(source.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"Expected a mapping in {source}")
+    return payload

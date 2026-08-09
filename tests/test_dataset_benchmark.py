@@ -3,9 +3,12 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from clingrounder.evaluation.dataset_benchmark import (
     BenchmarkExample,
     _validate_predictions,
+    compare_dataset_benchmarks,
     run_dataset_benchmark,
     run_dataset_benchmark_suite,
 )
@@ -20,6 +23,63 @@ class _EmptyTerminology:
     def contains(self, code_system: CodeSystem, code: str) -> bool:
         del code_system, code
         return False
+
+
+def _promotion_summary(
+    *,
+    entity_f1: float,
+    linking_recall: float = 0.8,
+    assertion_f1: float = 0.7,
+    p95_ms: float = 100.0,
+) -> dict[str, object]:
+    return {
+        "metrics": {
+            "entity_exact_micro_f1": entity_f1,
+            "linking_recall_at_5": linking_recall,
+            "assertion_positive_macro_f1": assertion_f1,
+            "offset_validity": 1.0,
+            "invalid_assigned_code_rate": 0.0,
+            "invalid_relation_rate": 0.0,
+            "validation_error_count": 0,
+        },
+        "performance": {"document_latency_ms": {"p95": p95_ms}},
+    }
+
+
+def test_dataset_promotion_gate_requires_primary_gain_and_protected_metrics() -> None:
+    policy = {
+        "primary": {
+            "metric": "entity_exact_micro_f1",
+            "minimum_improvement": 0.005,
+        },
+        "protected": {
+            "linking_recall_at_5": {"maximum_regression": 0.003},
+            "assertion_positive_macro_f1": {"maximum_regression": 0.003},
+            "p95_ms": {"maximum_regression_ratio": 0.10},
+        },
+    }
+
+    promoted = compare_dataset_benchmarks(
+        _promotion_summary(entity_f1=0.80),
+        _promotion_summary(entity_f1=0.81, linking_recall=0.798, p95_ms=105.0),
+        policy,
+    )
+    assert promoted["promote"] is True
+    assert promoted["primary"]["delta"] == pytest.approx(0.01)
+    wrapped_policy_result = compare_dataset_benchmarks(
+        _promotion_summary(entity_f1=0.80),
+        _promotion_summary(entity_f1=0.81, linking_recall=0.798, p95_ms=105.0),
+        {"policy": policy},
+    )
+    assert wrapped_policy_result["promote"] is True
+
+    rejected = compare_dataset_benchmarks(
+        _promotion_summary(entity_f1=0.80),
+        _promotion_summary(entity_f1=0.81, linking_recall=0.79, p95_ms=105.0),
+        policy,
+    )
+    assert rejected["promote"] is False
+    assert rejected["protected"]["linking_recall_at_5"]["passed"] is False
 
 
 def test_public_benchmark_writes_complete_artifact_bundle(tmp_path: Path) -> None:

@@ -35,6 +35,20 @@ Add `--strict` in CI or a release workflow. The current synthetic pilot intentio
 checks declared SHA-256 values, document IDs, normalized text leakage, template overlap, split
 policy, license metadata, and human-review coverage without writing document text to the report.
 
+Compare a candidate summary with a previous run using the same task-neutral promotion contract:
+
+```bash
+clingrounder-benchmark dataset-compare \
+  --baseline artifacts/benchmarks/baseline/summary.json \
+  --candidate artifacts/benchmarks/candidate/summary.json \
+  --policy benchmarks/vi_clinical_grounding_v1/expected_results.yaml \
+  --output artifacts/benchmarks/candidate/promotion.json
+```
+
+The gate requires the configured primary improvement, protects linking/assertion metrics and
+latency, and fails closed on invalid offsets, terminology assignments, relations, or validation
+errors. Runtime-only comparison remains available as `clingrounder-benchmark compare`.
+
 ## Independent review handoff
 
 Create a deterministic gold-blind pack before asking reviewers to annotate a future licensed
