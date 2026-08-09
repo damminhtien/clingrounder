@@ -7,8 +7,10 @@ imports that only work because ``src/`` is present.
 
 from __future__ import annotations
 
+from tempfile import TemporaryDirectory
+
 import clingrounder
-from clingrounder import load_pipeline
+from clingrounder import Pipeline, load_pipeline
 
 
 def main() -> None:
@@ -30,6 +32,15 @@ def main() -> None:
     assert by_text["sốt"].assertion.value == "NEGATED"
     assert by_text["tăng huyết áp"].assertion.value == "HISTORICAL"
     assert by_text["metformin"].code == "6809"
+
+    # INVARIANT: the documented download cache must be loadable without source-checkout paths.
+    with TemporaryDirectory(prefix="clingrounder-wheel-artifact-") as cache_dir:
+        cached_path = Pipeline.download("vi-clinical-small", cache_dir=cache_dir)
+        with load_pipeline(cached_path, offline=True) as cached_pipeline:
+            cached_prediction = cached_pipeline(source)
+        assert [item.span for item in cached_prediction.entities] == [
+            item.span for item in prediction.entities
+        ]
     print(f"installed ClinGrounder {clingrounder.__version__}: smoke test passed")
 
 
