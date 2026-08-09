@@ -7,7 +7,7 @@ run_root: ../..
 environment:
   # INVARIANT: fail before training if the dependency lock differs from this run identity.
   lock_path: uv.lock
-  lock_sha256: 2f9de3544c420b7c021b8f8316b652285d5fb52f73aaf8f7c1bd4462aa2ce5e9
+  lock_sha256: 5730b64e36502433e921c0225d200c3cb3b6125aa0d418a6a20aee934cf577ba
 
 dataset:
   path: outputs/mining/model-datasets/open-corpus-v1-full-ner-harmonized-2026-07-18/spans.jsonl
