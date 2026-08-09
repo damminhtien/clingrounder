@@ -6,20 +6,20 @@ human-reviewed public clinical test set.
 
 ## Checked-In Pilot
 
-The checked-in `0.1.0` fixture contains three synthetic test documents. The suite runner was
-executed on commit `f7a70f7` on macOS with Python 3.14. All four deterministic profiles produce
-the same result because the fixture only exercises concepts covered by the bundled exact
-dictionary.
+The checked-in `0.1.0` fixture contains four synthetic test documents, including one
+`LAB_TEST -> LAB_RESULT` relation. The suite runner was executed on commit `073e52c` on macOS with
+Python 3.14. The relation extractor is enabled only by the full profile.
 
 | System | Entity exact F1 | Assertion macro-F1 | Recall@5 | Top-1 | Relation F1 | p95 ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Exact dictionary | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 9.70 |
-| Lexical | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 5.43 |
-| Hybrid | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 8.95 |
-| Full deterministic | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 9.55 |
+| Exact dictionary | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 11.82 |
+| Lexical | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 4.78 |
+| Hybrid | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 7.04 |
+| Full deterministic | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 1.0000 | 5.81 |
 
-Relation F1 is zero because the pilot contains no gold relations. These values verify the output
-contract and are not useful for ranking extraction systems.
+Only the full profile predicts the single gold relation because the other profiles intentionally
+disable relation extraction. These values verify the output contract and are not useful for
+ranking extraction systems on clinical data.
 
 ## Generated Expansion Diagnostic
 

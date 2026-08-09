@@ -399,21 +399,22 @@ It writes one complete artifact bundle per named profile plus `suite.json` and a
 `report.md`. The checked-in dataset is a synthetic pilot; measured values must not be described as
 clinical validation. See [benchmark methodology](docs/benchmarks/vi_clinical_grounding_v1/methodology.md).
 
-Measured pilot snapshot (3 synthetic test documents, one macOS run; latency is not a hardware
+Measured pilot snapshot (4 synthetic test documents, one macOS run; latency is not a hardware
 benchmark). The full generated diagnostic table and fingerprints are in the
 [benchmark results](docs/benchmarks/vi_clinical_grounding_v1/results.md):
 
 | System | Entity exact F1 | Assertion macro-F1 | Recall@5 | Top-1 | Relation F1 | p95 ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Exact dictionary | 1.0000 | 1.0000 | 1.0000 | 1.0000 | N/A* | 8.65 |
-| Lexical | 1.0000 | 1.0000 | 1.0000 | 1.0000 | N/A* | 9.01 |
-| Hybrid | 1.0000 | 1.0000 | 1.0000 | 1.0000 | N/A* | 9.09 |
-| Full deterministic | 1.0000 | 1.0000 | 1.0000 | 1.0000 | N/A* | 12.31 |
+| Exact dictionary | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 11.82 |
+| Lexical | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 4.78 |
+| Hybrid | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 7.04 |
+| Full deterministic | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 1.0000 | 5.81 |
 
-\* The pilot contains no gold relations, so relation F1 is not estimable. The identical
-correctness scores are an expected limitation of this tiny smoke fixture, not evidence that the
-systems are equivalent on clinical data. Re-run the command above to regenerate fingerprints and
-machine-specific runtime values.
+The pilot contains one synthetic `LAB_TEST -> LAB_RESULT` relation. Only the full profile enables
+the relation extractor, so the ablation intentionally reports relation F1 `0.0000` for the other
+profiles and `1.0000` for full. The identical entity/assertion scores are an expected limitation
+of this tiny smoke fixture, not evidence that the systems are equivalent on clinical data. Re-run
+the command above to regenerate fingerprints and machine-specific runtime values.
 
 ## Optional Demo
 
