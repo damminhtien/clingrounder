@@ -49,6 +49,22 @@ pre-release semantic versioning while the public API is still maturing.
 
 - None.
 
+## [0.1.0a9] - 2026-08-09
+
+### Added
+
+- Added a deterministic, gold-blind benchmark review-pack command with coordinator provenance,
+  source fingerprints, and independent reviewer assignments.
+- Added review-pack documentation and regression tests that prevent benchmark gold from entering
+  reviewer payloads.
+
+### Fixed
+
+- Re-pinned checked-in model run specifications to the current environment lock and added a CI
+  integrity test so future lock refreshes cannot silently invalidate reproducibility profiles.
+- Published measured benchmark provenance for the current synthetic pilot without presenting it as
+  clinical validation.
+
 ## [0.1.0a8] - 2026-08-09
 
 ### Added
@@ -151,7 +167,8 @@ pre-release semantic versioning while the public API is still maturing.
 - Added architecture, code-map, reproducibility, public-release, security, and API-stability docs.
 - Documented the boundary between reusable toolkit code and optional competition benchmarks.
 
-[Unreleased]: https://github.com/damminhtien/clingrounder/compare/v0.1.0a8...HEAD
+[Unreleased]: https://github.com/damminhtien/clingrounder/compare/v0.1.0a9...HEAD
+[0.1.0a9]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a9
 [0.1.0a8]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a8
 [0.1.0a7]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a7
 [0.1.0a6]: https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a6

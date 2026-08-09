@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "clingrounder"
-version = "0.1.0a8"
+version = "0.1.0a9"
 description = "Offset-safe clinical text grounding to terminology-linked knowledge graphs"
 readme = "README.md"
 requires-python = ">=3.11"
