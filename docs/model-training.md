@@ -24,6 +24,8 @@ public model release.
 The manifest records:
 
 - model ID and immutable revision;
+- tokenizer ID and immutable revision;
+- the runtime profile used for inference;
 - model artifact and training-config SHA-256 values;
 - dataset snapshot fingerprints;
 - task and metric names;
@@ -38,6 +40,10 @@ from clingrounder.governance import load_model_artifact_manifest, verify_model_a
 manifest = load_model_artifact_manifest("model/manifest.json")
 verify_model_artifact("model", manifest, require_approved=True)
 ```
+
+An approved artifact must include tokenizer and runtime-profile pins. Research manifests may omit
+them while an experiment is still incomplete, but the approved release gate fails closed rather
+than loading a model whose preprocessing or runtime settings are ambiguous.
 
 This check is framework-neutral and can run in CI or on a deployment host before loading
 Transformers, PyTorch, or another optional runtime.

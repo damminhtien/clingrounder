@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 from pathlib import Path
+import re
 from typing import Any, Mapping
 
 from clingrounder.governance.artifacts import verify_artifact
@@ -37,6 +38,12 @@ class ModelArtifactManifest:
     governance: ModelGovernanceMetadata
     training_data_fingerprints: tuple[str, ...]
     config_sha256: str
+    # Research artifacts may omit these until their release evidence is complete.  An approved
+    # artifact must pin both the tokenizer and the runtime profile before it can be loaded under
+    # the release policy.
+    tokenizer_id: str | None = None
+    tokenizer_revision: str | None = None
+    runtime_profile: str | None = None
     metrics: tuple[tuple[str, float], ...] = ()
     schema_version: str = MODEL_ARTIFACT_SCHEMA_VERSION
 
@@ -59,6 +66,14 @@ class ModelArtifactManifest:
             raise ValueError("training_data_fingerprints must not be empty")
         for fingerprint in self.training_data_fingerprints:
             _validate_sha256(fingerprint, "training_data_fingerprint")
+        if (self.tokenizer_id is None) != (self.tokenizer_revision is None):
+            raise ValueError("tokenizer_id and tokenizer_revision must be supplied together")
+        if self.tokenizer_id is not None:
+            if not self.tokenizer_id.strip():
+                raise ValueError("tokenizer_id must be non-empty")
+            _validate_revision(self.tokenizer_revision, "tokenizer_revision")
+        if self.runtime_profile is not None and not self.runtime_profile.strip():
+            raise ValueError("runtime_profile must be non-empty when supplied")
         seen_metrics: set[str] = set()
         for name, value in self.metrics:
             if not name.strip() or name in seen_metrics:
@@ -81,6 +96,12 @@ class ModelArtifactManifest:
             },
             "training_data_fingerprints": list(self.training_data_fingerprints),
             "config_sha256": self.config_sha256,
+            "tokenizer": (
+                None
+                if self.tokenizer_id is None
+                else {"id": self.tokenizer_id, "revision": self.tokenizer_revision}
+            ),
+            "runtime_profile": self.runtime_profile,
             "metrics": dict(self.metrics),
             "governance": {
                 "model_id": self.governance.model_id,
@@ -107,10 +128,59 @@ class ModelArtifactManifest:
     def from_mapping(cls, payload: Mapping[str, Any]) -> "ModelArtifactManifest":
         """Parse a manifest while rejecting unknown shape and missing provenance fields."""
 
+        _reject_unknown(
+            payload,
+            {
+                "schema_version",
+                "artifact_id",
+                "task",
+                "model",
+                "training_data_fingerprints",
+                "config_sha256",
+                "tokenizer",
+                "runtime_profile",
+                "metrics",
+                "governance",
+            },
+            "model artifact",
+        )
         if payload.get("schema_version") != MODEL_ARTIFACT_SCHEMA_VERSION:
             raise ValueError("unsupported model artifact schema")
         model = _mapping(payload, "model")
+        _reject_unknown(
+            model,
+            {"model_id", "revision", "artifact_sha256"},
+            "model",
+        )
         governance_raw = _mapping(payload, "governance")
+        _reject_unknown(
+            governance_raw,
+            {
+                "model_id",
+                "revision",
+                "training_data_description",
+                "intended_use",
+                "excluded_use",
+                "evaluation_summary",
+                "known_limitations",
+                "approval_status",
+                "rollback_model",
+            },
+            "governance",
+        )
+        tokenizer_raw = payload.get("tokenizer")
+        tokenizer_id: str | None = None
+        tokenizer_revision: str | None = None
+        if tokenizer_raw is not None:
+            tokenizer = _mapping_value(tokenizer_raw, "tokenizer")
+            _reject_unknown(tokenizer, {"id", "revision"}, "tokenizer")
+            tokenizer_id = _string(tokenizer, "id")
+            tokenizer_revision = _string(tokenizer, "revision")
+        runtime_profile = payload.get("runtime_profile")
+        if runtime_profile is not None and (
+            not isinstance(runtime_profile, str) or not runtime_profile.strip()
+        ):
+            raise ValueError("runtime_profile must be a non-empty string or null")
         metrics_raw = payload.get("metrics", {})
         if not isinstance(metrics_raw, Mapping):
             raise ValueError("metrics must be an object")
@@ -137,6 +207,9 @@ class ModelArtifactManifest:
             governance=governance,
             training_data_fingerprints=tuple(fingerprints),
             config_sha256=_string(payload, "config_sha256"),
+            tokenizer_id=tokenizer_id,
+            tokenizer_revision=tokenizer_revision,
+            runtime_profile=runtime_profile,
             metrics=tuple((str(name), float(value)) for name, value in metrics_raw.items()),
         )
 
@@ -167,6 +240,14 @@ def verify_model_artifact(
 
     if require_approved and manifest.governance.approval_status != "approved":
         raise ValueError("model artifact is not approved for this load policy")
+    if require_approved and (
+        manifest.tokenizer_id is None
+        or manifest.tokenizer_revision is None
+        or manifest.runtime_profile is None
+    ):
+        raise ValueError(
+            "approved model artifacts must pin tokenizer and runtime_profile provenance"
+        )
     if manifest.governance.model_id != manifest.model_id:
         raise ValueError("governance model_id does not match artifact model_id")
     if manifest.governance.revision != manifest.revision:
@@ -181,6 +262,18 @@ def _mapping(payload: Mapping[str, Any], key: str) -> Mapping[str, Any]:
     return value
 
 
+def _mapping_value(value: object, field_name: str) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{field_name} must be an object")
+    return value
+
+
+def _reject_unknown(payload: Mapping[str, Any], allowed: set[str], field_name: str) -> None:
+    unknown = sorted(set(payload).difference(allowed))
+    if unknown:
+        raise ValueError(f"unknown {field_name} fields: {', '.join(unknown)}")
+
+
 def _string(payload: Mapping[str, Any], key: str) -> str:
     value = payload.get(key)
     if not isinstance(value, str) or not value.strip():
@@ -192,3 +285,8 @@ def _validate_sha256(value: str, field_name: str) -> None:
     normalized = value.lower()
     if len(normalized) != 64 or any(char not in "0123456789abcdef" for char in normalized):
         raise ValueError(f"{field_name} must be a SHA-256 digest")
+
+
+def _validate_revision(value: str | None, field_name: str) -> None:
+    if value is None or re.fullmatch(r"[0-9a-f]{40}", value) is None:
+        raise ValueError(f"{field_name} must be a 40-character lowercase commit SHA")
