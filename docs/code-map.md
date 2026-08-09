@@ -1,6 +1,6 @@
 # Code Map
 
-This map describes ownership and stable extension points in ClinGrounder 0.1.0a8. Start here before
+This map describes ownership and stable extension points in ClinGrounder 0.1.0a9. Start here before
 searching implementation details.
 
 ## Dependency Direction
@@ -51,6 +51,7 @@ composition root that turns config into a runnable component graph.
 | `mining/` | Licensed acquisition, immutable artifacts, parsers, curation, terminology evidence, review, model datasets, and snapshots | Competition schemas or hosted services |
 | `training/` | Framework-neutral run contracts, span datasets, model adapters, and release verification | Hidden defaults or model weights bundled in core |
 | `governance/` | Artifact fingerprints, model governance metadata, audit, and data policy | Clinical safety certification |
+| `artifacts/` | Typed manifests, deterministic fingerprints, versioned local cache, and explicit local acquisition | Hosted registry policy or credential management |
 | `cli/` | `argparse` routing and reusable thin IO handlers | Benchmark handlers, metrics, or pipeline algorithms |
 
 ## Rule NER

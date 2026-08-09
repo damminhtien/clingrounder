@@ -55,6 +55,9 @@ The bundled pack is intentionally small and is a runnable smoke baseline, not a 
 or RxNorm release. Larger terminology and model artifacts are loaded explicitly through pinned
 profiles. See [the v1 product scope](docs/product-scope-v1.md).
 
+Artifact acquisition is explicit and checksum-verified. See [the artifact resource guide](docs/artifacts.md)
+for pinned revisions, versioned caches, and local-only custom artifact installation.
+
 ## Product Scope
 
 ClinGrounder is for clinical NLP researchers and application developers who need inspectable raw
