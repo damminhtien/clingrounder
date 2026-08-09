@@ -26,6 +26,8 @@ pre-release semantic versioning while the public API is still maturing.
   ablation index alongside each complete benchmark artifact bundle.
 - Made the neutral dataset benchmark loader derive entity, assertion, and code-system taxonomies
   from each manifest instead of hard-coding the ClinGrounder product task.
+- Added a hashed, dataset-bound reviewer-agreement artifact requirement for human-reviewed public
+  benchmark releases.
 
 ### Fixed
 
@@ -33,6 +35,8 @@ pre-release semantic versioning while the public API is still maturing.
   reproducibility validation does not fail on a clean checkout.
 - Updated the Vietnamese benchmark reproduction script and pilot table from a current measured
   suite run; runtime values remain explicitly machine-dependent.
+- Agreement reports now reject invalid probabilities, inconsistent double-review fractions, and
+  values below the manifest's declared publication targets.
 
 ### Changed
 
