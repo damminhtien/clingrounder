@@ -21,8 +21,9 @@ from typing import Any, Mapping
 
 import yaml
 
-from clingrounder.pipeline.factory import PipelineFactory
+from clingrounder.evaluation.memory_metrics import peak_rss_bytes
 from clingrounder.pipeline.config_loader import ResolvedPipelineConfig
+from clingrounder.pipeline.factory import PipelineFactory
 from clingrounder.schema.output import ClinicalPrediction
 from clingrounder.schema.validator import PredictionValidator
 from clingrounder.schema.types import CodeSystem, RelationType
@@ -107,7 +108,7 @@ def run_dataset_benchmark(
     prediction_by_id = {prediction.document_id: prediction for prediction in predictions}
     correctness, confusion = _score(examples, prediction_by_id, validation=validation)
     git_commit = _git_commit()
-    peak_rss_bytes = _peak_rss_bytes()
+    peak_rss = peak_rss_bytes()
     performance = {
         "initialization_ms": round(initialization_ms, 6),
         "documents_per_second": round(
@@ -121,8 +122,8 @@ def run_dataset_benchmark(
         if predictions and sum(latencies_ms)
         else 0.0,
         "document_latency_ms": _percentiles(latencies_ms),
-        "peak_rss_bytes": peak_rss_bytes,
-        "peak_rss_mb": round(peak_rss_bytes / (1024 * 1024), 3),
+        "peak_rss_bytes": peak_rss,
+        "peak_rss_mb": round(peak_rss / (1024 * 1024), 3),
         "model_forward_pass_count": 0,
     }
     summary = {
@@ -825,12 +826,3 @@ def _git_commit() -> str | None:
         ).strip()
     except (OSError, subprocess.CalledProcessError):
         return None
-
-
-def _peak_rss_bytes() -> int:
-    try:
-        import resource
-    except ImportError:  # pragma: no cover
-        return 0
-    value = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    return int(value * (1024 if sys.platform == "darwin" else 1))

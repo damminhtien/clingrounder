@@ -19,13 +19,9 @@ from pathlib import Path
 from time import perf_counter
 from typing import Any, Mapping
 
-try:  # ``resource`` is available on Unix, but not on every supported platform.
-    import resource
-except ImportError:  # pragma: no cover - Windows only.
-    resource = None  # type: ignore[assignment]
-
-from clingrounder.pipeline.factory import PipelineFactory
 from clingrounder.pipeline.config_loader import ResolvedPipelineConfig
+from clingrounder.evaluation.memory_metrics import peak_rss_bytes
+from clingrounder.pipeline.factory import PipelineFactory
 from clingrounder.pipeline.runner import PipelineRunner
 from clingrounder.pipeline.tracing import InMemoryPipelineObserver
 from clingrounder.schema.output import ClinicalPrediction
@@ -69,7 +65,7 @@ def run_promotion_benchmark(
 
     repeat_results: list[list[tuple[BenchmarkInput, ClinicalPrediction]]] = []
     timings: list[float] = []
-    rss_before = _peak_rss_bytes()
+    rss_before = peak_rss_bytes()
     try:
         for _ in range(warmup):
             _run_once(runner, inputs)
@@ -77,7 +73,7 @@ def run_promotion_benchmark(
             started = perf_counter()
             repeat_results.append(_run_once(runner, inputs))
             timings.append((perf_counter() - started) * 1000)
-        rss_after = _peak_rss_bytes()
+        rss_after = peak_rss_bytes()
         correctness = _correctness_report(
             repeat_results,
             runner,
@@ -359,13 +355,6 @@ def _relation_count(
     results: list[tuple[BenchmarkInput, ClinicalPrediction]],
 ) -> int:
     return sum(len(prediction.relations) for _, prediction in results)
-
-
-def _peak_rss_bytes() -> int:
-    if resource is None:
-        return 0
-    value = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    return int(value * (1024 if sys.platform == "darwin" else 1))
 
 
 def _git_commit() -> str | None:

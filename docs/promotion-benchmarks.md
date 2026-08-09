@@ -25,7 +25,8 @@ clingrounder-benchmark compare baseline.json candidate.json \
 The report records the commit, profile and terminology fingerprints, runtime
 environment, initialization time, throughput, p50/p95/p99 latency, peak RSS,
 stage latency, model forward-pass counters, candidate recall, assignment
-coverage, and validation errors. Raw clinical text is never emitted.
+coverage, and validation errors. RSS is normalized to bytes and MiB across
+macOS and Linux. Raw clinical text is never emitted.
 
 Correctness gates are strict: offsets must be valid, assigned and relation
 codes must be valid, output must be deterministic, and candidate ordering must

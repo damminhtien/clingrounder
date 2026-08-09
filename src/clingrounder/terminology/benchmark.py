@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import resource
 import subprocess
 import sys
 from pathlib import Path
@@ -12,6 +11,7 @@ from time import perf_counter
 from typing import Any
 
 from clingrounder.dictionaries.dictionary_store import DictionaryStore
+from clingrounder.evaluation.memory_metrics import peak_rss_mb
 from clingrounder.terminology.sqlite_repository import SQLiteTerminologyRepository
 
 __all__ = ["benchmark_terminology_repositories"]
@@ -96,15 +96,9 @@ def _measure_worker(
     return {
         "backend": backend,
         "startup_ms": startup_ms,
-        "peak_rss_mb": _peak_rss_mb(),
+        "peak_rss_mb": peak_rss_mb(),
         "concept_count": float(concept_count),
     }
-
-
-def _peak_rss_mb() -> float:
-    peak = float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-    # macOS reports bytes; Linux reports KiB.
-    return peak / (1024.0 * 1024.0) if sys.platform == "darwin" else peak / 1024.0
 
 
 def _main() -> None:

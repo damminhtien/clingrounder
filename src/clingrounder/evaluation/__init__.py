@@ -18,6 +18,11 @@ from clingrounder.evaluation.linking_batch_benchmark import (
     CandidateBatchBenchmarkReport,
     benchmark_candidate_reranker,
 )
+from clingrounder.evaluation.memory_metrics import (
+    peak_rss_bytes,
+    peak_rss_mb,
+    rss_bytes_from_ru_maxrss,
+)
 from clingrounder.evaluation.sparse_logistic import (
     SparseBinaryExample,
     SparseLogisticModel,
@@ -45,11 +50,14 @@ __all__ = [
     "fit_sparse_logistic",
     "profile_dataset",
     "profile_paths",
+    "peak_rss_bytes",
+    "peak_rss_mb",
     "relation_slice_counts",
     "ReviewAgreementArtifact",
     "ReviewPackConfig",
     "benchmark_candidate_reranker",
     "build_review_pack",
     "render_markdown",
+    "rss_bytes_from_ru_maxrss",
     "write_pipeline_report",
 ]

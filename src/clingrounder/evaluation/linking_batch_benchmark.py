@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import resource
-import sys
 from dataclasses import dataclass
 from statistics import median
 from time import perf_counter
 from typing import Any
 
 from clingrounder.linking.batch import CandidateRerankRequest
+from clingrounder.evaluation.memory_metrics import peak_rss_mb
 
 __all__ = ["CandidateBatchBenchmarkReport", "benchmark_candidate_reranker"]
 
@@ -72,7 +71,7 @@ def benchmark_candidate_reranker(
         scalar_p95_ms=_p95(scalar_times),
         batch_median_ms=median(batch_times),
         batch_p95_ms=_p95(batch_times),
-        peak_rss_mb=_peak_rss_mb(),
+        peak_rss_mb=peak_rss_mb(),
         scalar_tokenizer_calls=scalar_stats_after[0] - scalar_stats_before[0],
         scalar_model_forward_passes=scalar_stats_after[1] - scalar_stats_before[1],
         batch_tokenizer_calls=batch_stats_after[0] - scalar_stats_after[0],
@@ -90,12 +89,3 @@ def _p95(values: list[float]) -> float:
     ordered = sorted(values)
     index = min(len(ordered) - 1, max(0, int(round(0.95 * (len(ordered) - 1)))))
     return ordered[index]
-
-
-def _peak_rss_mb() -> float:
-    """Normalize platform-specific ``ru_maxrss`` units for comparable reports."""
-
-    value = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    # INVARIANT: macOS reports bytes while Linux reports kibibytes.
-    divisor = 1024 * 1024 if sys.platform == "darwin" else 1024
-    return value / divisor
