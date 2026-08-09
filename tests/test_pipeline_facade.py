@@ -55,6 +55,10 @@ def test_bundled_vietnamese_artifact_is_offline_and_callable(tmp_path: Path) -> 
     assert (cached / "seed_concepts.jsonl").is_file()
     assert (cached / "manifest.json").is_file()
 
+    with load_pipeline(cached, offline=True) as pipeline:
+        cached_prediction = pipeline("Bệnh nhân không sốt.")
+    assert cached_prediction.document_id.startswith("text-")
+
 
 def test_artifact_manifest_rejects_payload_tampering(tmp_path: Path) -> None:
     source = get_builtin_artifact("vi-clinical-small")

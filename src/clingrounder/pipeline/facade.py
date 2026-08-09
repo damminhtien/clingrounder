@@ -17,6 +17,7 @@ from clingrounder.pipeline.runner import PipelineRunResult, PipelineRunner
 from clingrounder.pipeline.runtime import PipelineRuntime
 from clingrounder.schema.document import ClinicalDocument
 from clingrounder.schema.output import ClinicalPrediction
+from clingrounder.artifacts.manifest import ArtifactManifest
 from clingrounder.artifacts.registry import BuiltinArtifact, get_builtin_artifact
 
 __all__ = [
@@ -117,6 +118,28 @@ class Pipeline:
 
         del offline  # Bundled artifacts are always local; no network fallback is permitted.
         artifact = get_builtin_artifact(name, revision)
+        config = _builtin_artifact_config(artifact)
+        runtime = PipelineFactory.runtime_from_config(config)
+        return cls(runtime, partial(PipelineFactory.from_config, config))
+
+    @classmethod
+    def from_artifact_path(cls, path: str | Path) -> "Pipeline":
+        """Load a downloaded artifact directory after verifying its manifest.
+
+        ``Pipeline.download`` returns a versioned directory rather than a pipeline YAML file.
+        Keeping this path explicit makes the offline download/load round trip usable on another
+        machine without treating the directory as a config document.
+        """
+
+        artifact_root = Path(path).expanduser().resolve()
+        manifest = ArtifactManifest.read(artifact_root / "manifest.json")
+        artifact = BuiltinArtifact(
+            manifest.artifact_id,
+            manifest.revision,
+            artifact_root,
+            license=manifest.license,
+        )
+        artifact.verify_manifest()
         config = _builtin_artifact_config(artifact)
         runtime = PipelineFactory.runtime_from_config(config)
         return cls(runtime, partial(PipelineFactory.from_config, config))
@@ -290,6 +313,8 @@ def load_pipeline(
     """Load a repository profile or a pinned built-in artifact."""
 
     path = Path(name_or_path).expanduser()
-    if path.exists():
+    if path.is_dir():
+        return Pipeline.from_artifact_path(path)
+    if path.is_file():
         return Pipeline.from_config(path)
     return Pipeline.from_pretrained(str(name_or_path), revision=revision, offline=offline)

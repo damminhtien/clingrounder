@@ -31,6 +31,9 @@ path = Pipeline.download(
     cache_dir=".cache/clingrounder/artifacts",
 )
 print(path)
+
+with load_pipeline(path, offline=True) as pipeline:
+    prediction = pipeline("Bệnh nhân không sốt.")
 ```
 
 The cache layout is:
