@@ -422,10 +422,10 @@ benchmark). The full generated diagnostic table and fingerprints are in the
 
 | System | Entity exact F1 | Assertion macro-F1 | Recall@5 | Top-1 | Relation F1 | p95 ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Exact dictionary | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 21.92 |
-| Lexical | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 4.90 |
-| Hybrid | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 5.85 |
-| Full deterministic | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 1.0000 | 12.57 |
+| Exact dictionary | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 10.381 |
+| Lexical | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 11.017 |
+| Hybrid | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 8.855 |
+| Full deterministic | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 1.0000 | 8.157 |
 
 The pilot contains one synthetic `LAB_TEST -> LAB_RESULT` relation. Only the full profile enables
 the relation extractor, so the ablation intentionally reports relation F1 `0.0000` for the other
