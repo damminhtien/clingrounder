@@ -12,9 +12,10 @@ it is not part of the default runtime or evaluation path.
 The PyPI distribution is named `clingrounder`; the Python import namespace remains
 `clingrounder`.
 
-Current release: [`0.1.0a8`](https://pypi.org/project/clingrounder/0.1.0a8/). The project is in
-alpha: the public contracts and validation invariants are useful, but APIs may still change
-between minor releases.
+Latest published release: [`0.1.0a7`](https://pypi.org/project/clingrounder/0.1.0a7/). The source
+tree currently targets `0.1.0a8`; that release is pending a new tag after the CI lock-fingerprint
+fix. The project is in alpha: public contracts and validation invariants are useful, but APIs may
+still change between minor releases.
 
 > Research software only. It is not a medical device and must not be used as the sole basis for
 > clinical decisions.
@@ -405,10 +406,10 @@ benchmark). The full generated diagnostic table and fingerprints are in the
 
 | System | Entity exact F1 | Assertion macro-F1 | Recall@5 | Top-1 | Relation F1 | p95 ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Exact dictionary | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 11.82 |
-| Lexical | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 4.78 |
-| Hybrid | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 7.04 |
-| Full deterministic | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 1.0000 | 5.81 |
+| Exact dictionary | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 14.50 |
+| Lexical | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 6.79 |
+| Hybrid | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 16.68 |
+| Full deterministic | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 1.0000 | 6.92 |
 
 The pilot contains one synthetic `LAB_TEST -> LAB_RESULT` relation. Only the full profile enables
 the relation extractor, so the ablation intentionally reports relation F1 `0.0000` for the other
