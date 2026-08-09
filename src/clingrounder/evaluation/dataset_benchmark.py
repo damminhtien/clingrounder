@@ -24,7 +24,9 @@ import yaml
 from clingrounder.pipeline.factory import PipelineFactory
 from clingrounder.pipeline.config_loader import ResolvedPipelineConfig
 from clingrounder.schema.output import ClinicalPrediction
+from clingrounder.schema.validator import PredictionValidator
 from clingrounder.schema.types import CodeSystem, RelationType
+from clingrounder.terminology.ports import TerminologyRepository
 
 __all__ = ["run_dataset_benchmark", "run_dataset_benchmark_suite"]
 
@@ -73,6 +75,7 @@ def run_dataset_benchmark(
     predictions: list[ClinicalPrediction] = []
     latencies_ms: list[float] = []
     errors: list[dict[str, Any]] = []
+    validation: dict[str, Any]
     try:
         for example in examples:
             started = perf_counter()
@@ -90,11 +93,19 @@ def run_dataset_benchmark(
                 )
             finally:
                 latencies_ms.append((perf_counter() - started) * 1000)
+        # INVARIANT: score validity against the same terminology repository used for inference,
+        # before runtime shutdown closes its resources.  A benchmark must not report a clean
+        # offset/code/relation gate merely because the pipeline returned a typed object.
+        validation = _validate_predictions(
+            examples,
+            {prediction.document_id: prediction for prediction in predictions},
+            runtime.runner.components.terminology_repository,
+        )
     finally:
         runtime.close()
 
     prediction_by_id = {prediction.document_id: prediction for prediction in predictions}
-    correctness, confusion = _score(examples, prediction_by_id)
+    correctness, confusion = _score(examples, prediction_by_id, validation=validation)
     git_commit = _git_commit()
     peak_rss_bytes = _peak_rss_bytes()
     performance = {
@@ -365,6 +376,8 @@ def _validate_gold_relation(
 def _score(
     examples: list[BenchmarkExample],
     predictions: Mapping[str, ClinicalPrediction],
+    *,
+    validation: Mapping[str, Any] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     gold_total = pred_total = true_positive = 0
     gold_by_type: Counter[str] = Counter()
@@ -504,32 +517,35 @@ def _score(
             except ValueError:
                 pass
 
+    metrics = {
+        "entity_exact_micro_f1": _f1(precision, recall),
+        "entity_exact_precision": precision,
+        "entity_exact_recall": recall,
+        "entity_overlap_micro_f1": _f1(overlap_precision, overlap_recall),
+        "entity_count": pred_total,
+        "entity_by_type": type_rows,
+        "assertion_accuracy": assertion_accuracy,
+        "assertion_macro_f1": assertion_f1,
+        "assertion_positive_macro_f1": positive_assertion_f1,
+        "linking_recall_at_1": _ratio(linking_hits[1], linking_total),
+        "linking_recall_at_5": _ratio(linking_hits[5], linking_total),
+        "linking_recall_at_10": _ratio(linking_hits[10], linking_total),
+        "linking_top1_accuracy": _ratio(top1_hits, linking_total),
+        "linking_mrr": _ratio(reciprocal_rank_total, linking_total),
+        "assigned_prediction_count": assigned_prediction_count,
+        "relation_micro_f1": _f1(relation_precision, relation_recall),
+        "relation_gold_count": len(gold_relation_keys),
+        "relation_predicted_count": len(pred_relation_keys),
+        "linkable_gold_count": linking_total,
+        "assignment_coverage": _ratio(assigned_prediction_count, pred_total),
+        "offset_validity": 1.0,
+        "validation_error_count": 0,
+        "document_error_count": len(errors_by_document),
+    }
+    if validation is not None:
+        metrics.update(validation)
     return (
-        {
-            "entity_exact_micro_f1": _f1(precision, recall),
-            "entity_exact_precision": precision,
-            "entity_exact_recall": recall,
-            "entity_overlap_micro_f1": _f1(overlap_precision, overlap_recall),
-            "entity_count": pred_total,
-            "entity_by_type": type_rows,
-            "assertion_accuracy": assertion_accuracy,
-            "assertion_macro_f1": assertion_f1,
-            "assertion_positive_macro_f1": positive_assertion_f1,
-            "linking_recall_at_1": _ratio(linking_hits[1], linking_total),
-            "linking_recall_at_5": _ratio(linking_hits[5], linking_total),
-            "linking_recall_at_10": _ratio(linking_hits[10], linking_total),
-            "linking_top1_accuracy": _ratio(top1_hits, linking_total),
-            "linking_mrr": _ratio(reciprocal_rank_total, linking_total),
-            "assigned_prediction_count": assigned_prediction_count,
-            "relation_micro_f1": _f1(relation_precision, relation_recall),
-            "relation_gold_count": len(gold_relation_keys),
-            "relation_predicted_count": len(pred_relation_keys),
-            "linkable_gold_count": linking_total,
-            "assignment_coverage": _ratio(assigned_prediction_count, pred_total),
-            "offset_validity": 1.0,
-            "validation_error_count": 0,
-            "document_error_count": len(errors_by_document),
-        },
+        metrics,
         {
             "assertion": {
                 "labels": assertion_labels,
@@ -538,6 +554,61 @@ def _score(
             "documents": errors_by_document,
         },
     )
+
+
+def _validate_predictions(
+    examples: list[BenchmarkExample],
+    predictions: Mapping[str, ClinicalPrediction],
+    terminology: TerminologyRepository | None,
+) -> dict[str, Any]:
+    """Compute fail-closed correctness gates from actual benchmark predictions.
+
+    The dataset scorer intentionally remains independent of any benchmark-specific gold labels.
+    This pass checks only output invariants and active terminology membership, so a malformed
+    adapter cannot make a benchmark look successful by bypassing release validation.
+    """
+
+    validator = PredictionValidator(terminology)
+    assigned_count = 0
+    invalid_assigned_count = 0
+    relation_count = 0
+    invalid_relation_count = 0
+    validation_error_count = 0
+    error_kinds: Counter[str] = Counter()
+    offset_valid = len(predictions) == len(examples)
+
+    for example in examples:
+        prediction = predictions.get(example.document_id)
+        if prediction is None:
+            continue
+        assigned_count += sum(entity.code is not None for entity in prediction.entities)
+        relation_count += len(prediction.relations)
+        issues = validator.validate_prediction(prediction, source_text=example.text)
+        validation_error_count += len(issues)
+        error_kinds.update(issue.kind for issue in issues)
+        offset_valid = offset_valid and not any(issue.kind == "offset" for issue in issues)
+        invalid_assigned_count += sum(
+            issue.kind.startswith(("unknown_", "invalid_code"))
+            and ".candidates[" not in issue.path
+            and ".code" in issue.path
+            for issue in issues
+        )
+        invalid_relation_count += sum(
+            issue.kind.startswith("invalid_relation") for issue in issues
+        )
+
+    return {
+        "offset_validity": float(offset_valid),
+        "invalid_assigned_code_rate": (
+            invalid_assigned_count / assigned_count if assigned_count else 0.0
+        ),
+        "invalid_relation_rate": (
+            invalid_relation_count / relation_count if relation_count else 0.0
+        ),
+        "validation_error_count": validation_error_count,
+        "validation_error_kinds": dict(sorted(error_kinds.items())),
+        "missing_prediction_count": len(examples) - len(predictions),
+    }
 
 
 def _artifact_manifest(

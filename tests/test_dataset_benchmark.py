@@ -4,9 +4,22 @@ import json
 from pathlib import Path
 
 from clingrounder.evaluation.dataset_benchmark import (
+    BenchmarkExample,
+    _validate_predictions,
     run_dataset_benchmark,
     run_dataset_benchmark_suite,
 )
+from clingrounder.schema.annotation import EntityAnnotation
+from clingrounder.schema.output import ClinicalPrediction
+from clingrounder.schema.types import CodeSystem, EntityType
+
+
+class _EmptyTerminology:
+    """Minimal membership port used to prove fabricated codes fail the benchmark gate."""
+
+    def contains(self, code_system: CodeSystem, code: str) -> bool:
+        del code_system, code
+        return False
 
 
 def test_public_benchmark_writes_complete_artifact_bundle(tmp_path: Path) -> None:
@@ -44,7 +57,7 @@ def test_public_benchmark_writes_complete_artifact_bundle(tmp_path: Path) -> Non
 
 
 def test_linking_metrics_count_a_missing_gold_entity_as_a_recall_miss() -> None:
-    from clingrounder.evaluation.dataset_benchmark import BenchmarkExample, _score
+    from clingrounder.evaluation.dataset_benchmark import _score
 
     example = BenchmarkExample(
         document_id="missing-link",
@@ -69,6 +82,62 @@ def test_linking_metrics_count_a_missing_gold_entity_as_a_recall_miss() -> None:
     assert metrics["linkable_gold_count"] == 1
     assert metrics["linking_recall_at_5"] == 0.0
     assert metrics["assignment_coverage"] == 0.0
+
+
+def test_benchmark_validation_reports_offset_and_membership_failures() -> None:
+    prediction = ClinicalPrediction.from_text(
+        "invalid",
+        "ho",
+        [
+            EntityAnnotation(
+                id="e1",
+                span=(0, 2),
+                text="sốt",
+                normalized_text="sốt",
+                type=EntityType.SYMPTOM,
+                code_system=CodeSystem.LOCAL,
+                code="fabricated",
+            )
+        ],
+        [],
+        "test",
+    )
+    example = BenchmarkExample(
+        document_id="invalid",
+        text="ho",
+        metadata={},
+        entities=(),
+        relations=(),
+    )
+
+    metrics = _validate_predictions(
+        [example],
+        {prediction.document_id: prediction},
+        _EmptyTerminology(),
+    )
+
+    assert metrics["offset_validity"] == 0.0
+    assert metrics["invalid_assigned_code_rate"] == 1.0
+    assert metrics["validation_error_count"] == 2
+    assert metrics["validation_error_kinds"] == {
+        "offset": 1,
+        "unknown_dictionary_code": 1,
+    }
+
+
+def test_benchmark_validation_fails_closed_for_missing_prediction() -> None:
+    example = BenchmarkExample(
+        document_id="missing",
+        text="ho",
+        metadata={},
+        entities=(),
+        relations=(),
+    )
+
+    metrics = _validate_predictions([example], {}, _EmptyTerminology())
+
+    assert metrics["offset_validity"] == 0.0
+    assert metrics["missing_prediction_count"] == 1
 
 
 def test_public_benchmark_suite_writes_named_runs_and_index(tmp_path: Path) -> None:

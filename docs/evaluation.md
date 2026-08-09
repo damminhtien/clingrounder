@@ -76,6 +76,21 @@ contract violation, not merely a wrong candidate.
 Runtime reports should include document length and entity count so throughput changes are not
 confused with corpus changes.
 
+### Validation gates
+
+Benchmark runners validate predictions after inference and before reporting promotion metrics.
+These gates are intentionally separate from F1 and recall:
+
+- raw offsets must match the source text for every returned entity;
+- assigned and candidate codes must satisfy type/code-system rules and active terminology
+  membership;
+- relation endpoints, relation types, and evidence spans must be valid;
+- missing predictions and validation failures are counted explicitly.
+
+`validation_error_kinds` in benchmark artifacts is the diagnostic breakdown. A zero-value quality
+metric does not excuse a failed invariant, and a perfect synthetic fixture does not establish
+clinical validity.
+
 ## CLI
 
 ```bash

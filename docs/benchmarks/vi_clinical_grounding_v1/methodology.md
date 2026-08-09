@@ -19,6 +19,21 @@ command runs named profiles independently and adds a deterministic ablation inde
 merge predictions or hide profile provenance. Runtime numbers are machine-dependent and must be
 compared with repeated runs and tolerances.
 
+Every run also performs a post-inference validation pass against the active terminology
+repository. The summary exposes these fail-closed gates separately from task quality metrics:
+
+- `offset_validity`: `1.0` only when every returned entity span matches the source text and every
+  document produced a prediction;
+- `invalid_assigned_code_rate`: invalid assigned codes divided by assigned primary codes;
+- `invalid_relation_rate`: invalid relation edges divided by returned relation edges;
+- `validation_error_count` and `validation_error_kinds`: structural, offset, code-membership, and
+  relation failures grouped for diagnosis;
+- `missing_prediction_count`: documents for which the runtime returned no prediction.
+
+An output with a high F1 but a failed invariant is not a valid promotion candidate. The validator
+uses the same terminology release selected by the pipeline profile; it does not infer membership
+from benchmark gold labels.
+
 ## Promotion policy
 
 The primary metric is exact entity micro-F1. A change must improve it while preserving candidate
