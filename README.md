@@ -536,6 +536,7 @@ endpoints, or evidence spans remain hard gates.
 - [Invariants](docs/invariants.md)
 - [Evaluation](docs/evaluation.md)
 - [Model training and release contract](docs/model-training.md)
+- [Evidence and release checklist](docs/evidence-release-checklist.md)
 - [Benchmark expansion plan](docs/benchmarks/vi_clinical_grounding_v1/expansion-plan.md)
 - [Dictionary and terminology lifecycle](docs/dictionaries.md)
 - [Data mining](docs/data-mining.md)
