@@ -12,10 +12,11 @@ it is not part of the default runtime or evaluation path.
 The PyPI distribution is named `clingrounder`; the Python import namespace remains
 `clingrounder`.
 
-The source tree is prepared for alpha release `0.1.0a9`; the tag-driven workflow publishes the
-matching wheel and source distribution to [PyPI](https://pypi.org/project/clingrounder/). The
-project is in alpha: public contracts and validation invariants are useful, but APIs may still
-change between minor releases.
+Latest published release: [`0.1.0a9`](https://pypi.org/project/clingrounder/0.1.0a9/). The
+matching wheel and source distribution are also attached to the
+[GitHub Release](https://github.com/damminhtien/clingrounder/releases/tag/v0.1.0a9). The project
+is in alpha: public contracts and validation invariants are useful, but APIs may still change
+between minor releases.
 
 > Research software only. It is not a medical device and must not be used as the sole basis for
 > clinical decisions.
