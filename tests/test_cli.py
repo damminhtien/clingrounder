@@ -68,6 +68,31 @@ def test_public_benchmark_suite_parser_accepts_named_configs() -> None:
     ]
 
 
+def test_review_quality_parser_can_emit_public_agreement_artifact() -> None:
+    args = build_parser("research").parse_args(
+        [
+            "data",
+            "review",
+            "quality",
+            "--documents",
+            "documents.jsonl",
+            "--proposals",
+            "proposals.jsonl",
+            "--output",
+            "quality.json",
+            "--dataset-id",
+            "vi-clinical-grounding-v1",
+            "--dataset-version",
+            "1.0.0",
+            "--benchmark-output",
+            "agreement.json",
+        ]
+    )
+
+    assert args.handler == "data_review_quality"
+    assert args.benchmark_output == "agreement.json"
+
+
 def test_pipeline_config_inspection_exposes_effective_defaults(
     capsys: pytest.CaptureFixture[str],
 ) -> None:

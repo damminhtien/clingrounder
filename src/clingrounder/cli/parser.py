@@ -1158,6 +1158,18 @@ def _data_parser(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     review_quality.add_argument("--proposals", required=True)
     review_quality.add_argument("--relations")
     review_quality.add_argument("--output", required=True)
+    review_quality.add_argument(
+        "--dataset-id",
+        help="Optional public dataset ID for a text-free release agreement artifact.",
+    )
+    review_quality.add_argument(
+        "--dataset-version",
+        help="Optional public dataset version paired with --dataset-id.",
+    )
+    review_quality.add_argument(
+        "--benchmark-output",
+        help="Write a clingrounder.review-agreement.v1 artifact for a benchmark manifest.",
+    )
 
     coverage = operations.add_parser("coverage", help="Measure coverage and review priority.")
     coverage_operations = coverage.add_subparsers(dest="data_coverage_command", required=True)

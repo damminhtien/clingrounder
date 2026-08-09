@@ -118,6 +118,7 @@ from clingrounder.mining.records import (
     SourceRequest,
 )
 from clingrounder.mining.quality import GoldAgreementGate, ReviewAgreementEvaluator
+from clingrounder.evaluation.review_agreement import ReviewAgreementArtifact
 from clingrounder.mining.registry import load_source_registry
 from clingrounder.mining.source_status import (
     load_source_processing_index,
@@ -1372,6 +1373,16 @@ def review_quality(args: argparse.Namespace) -> int:
     )
     payload = {**report.to_dict(), "blocking_issues": list(issues)}
     write_json(args.output, payload)
+    if args.benchmark_output is not None:
+        if not args.dataset_id or not args.dataset_version:
+            raise ValueError(
+                "--benchmark-output requires both --dataset-id and --dataset-version"
+            )
+        ReviewAgreementArtifact.from_report(
+            args.dataset_id,
+            args.dataset_version,
+            report.to_dict(),
+        ).write(args.benchmark_output)
     _print_json({"blocking_issue_count": len(issues), "output": args.output})
     return 1 if issues else 0
 
