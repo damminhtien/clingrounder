@@ -132,6 +132,11 @@ outputs/smoke/
 # Generated runs can contain private text or model outputs. Curated examples belong in data/samples.
 outputs/
 
+# Benchmark reports and gold-blind review handoffs are generated locally. Their source
+# fingerprints and reproducibility commands belong in the repository; the generated payloads do
+# not. This prevents reviewer edits or model outputs from entering a release by accident.
+artifacts/
+
 # Shallow third-party checkouts used for architecture audits; only our audit manifests are tracked.
 external/reference_repos/
 
