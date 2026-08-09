@@ -283,6 +283,24 @@ def test_benchmark_reference_verifier_rejects_correctness_drift() -> None:
     assert report["variants"]["exact"]["checks"]["entity_exact_micro_f1"] is False
 
 
+def test_benchmark_reference_verifier_rejects_duplicate_variants() -> None:
+    suite = {
+        "benchmark": {"id": "fixture"},
+        "split": "test",
+        "runs": {},
+    }
+    reference = {
+        "benchmark": "fixture",
+        "results": [
+            {"variant": "exact", "split": "test"},
+            {"variant": "exact", "split": "test"},
+        ],
+    }
+
+    with pytest.raises(ValueError, match="duplicate variant"):
+        verify_dataset_benchmark_reference(suite, reference)
+
+
 def test_benchmark_suite_rejects_path_traversal_names(tmp_path: Path) -> None:
     import pytest
 

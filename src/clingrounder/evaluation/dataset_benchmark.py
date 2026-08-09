@@ -247,6 +247,8 @@ def verify_dataset_benchmark_reference(
         if not isinstance(expected, Mapping):
             raise ValueError("reference results must contain mappings")
         variant = _string_value(expected, "variant")
+        if variant in variants:
+            raise ValueError(f"reference results contain duplicate variant: {variant!r}")
         expected_split = _string_value(expected, "split")
         actual = suite_runs.get(variant)
         if not isinstance(actual, Mapping):

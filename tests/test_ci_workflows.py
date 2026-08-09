@@ -28,4 +28,5 @@ def test_ci_runs_and_uploads_the_public_product_benchmark() -> None:
     assert "name: Public product benchmark" in workflow
     assert ".venv/bin/clingrounder-benchmark audit" in workflow
     assert ".venv/bin/clingrounder-benchmark suite" in workflow
+    assert ".venv/bin/clingrounder-benchmark verify-reference" in workflow
     assert "public-benchmark-${{ github.sha }}" in workflow
