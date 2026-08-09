@@ -74,6 +74,70 @@ def test_reviewed_dataset_passes_the_public_evidence_gate(tmp_path: Path) -> Non
 
     assert report.eligible_for_clinical_claim is True
     assert not report.issues
+    assert report.agreement is not None
+    assert report.checks["review_agreement_meets_targets"] is True
+
+
+def test_reviewed_dataset_requires_measured_agreement(tmp_path: Path) -> None:
+    rows = {
+        "train": {"document_id": "train-1", "text": "Đau đầu."},
+        "test": {"document_id": "test-1", "text": "Khó thở."},
+    }
+    for split, base in rows.items():
+        row = {
+            **base,
+            "metadata": {"template_group": f"{split}-template", "human_reviewed": True},
+            "entities": [],
+            "relations": [],
+        }
+        (tmp_path / f"{split}.jsonl").write_text(
+            json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+    manifest = _manifest(tmp_path, status="human_reviewed", human_reviewed=True)
+    manifest["review"]["agreement_report_sha256"] = "0" * 64  # type: ignore[index]
+    (tmp_path / "dataset_manifest.yaml").write_text(
+        yaml.safe_dump(manifest, allow_unicode=True, sort_keys=False), encoding="utf-8"
+    )
+
+    report = audit_dataset(tmp_path)
+
+    assert report.eligible_for_clinical_claim is False
+    assert "agreement_report_fingerprint_mismatch" in report.issues
+
+
+def test_reviewed_dataset_rejects_agreement_below_manifest_target(tmp_path: Path) -> None:
+    rows = {
+        "train": {"document_id": "train-1", "text": "Đau đầu."},
+        "test": {"document_id": "test-1", "text": "Khó thở."},
+    }
+    for split, base in rows.items():
+        row = {
+            **base,
+            "metadata": {"template_group": f"{split}-template", "human_reviewed": True},
+            "entities": [],
+            "relations": [],
+        }
+        (tmp_path / f"{split}.jsonl").write_text(
+            json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+    manifest = _manifest(tmp_path, status="human_reviewed", human_reviewed=True)
+    agreement_path = tmp_path / "agreement.json"
+    agreement = json.loads(agreement_path.read_text(encoding="utf-8"))
+    agreement["span_type_agreement"] = 0.80
+    agreement_path.write_text(
+        json.dumps(agreement, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    manifest["review"]["agreement_report_sha256"] = hashlib.sha256(  # type: ignore[index]
+        agreement_path.read_bytes()
+    ).hexdigest()
+    (tmp_path / "dataset_manifest.yaml").write_text(
+        yaml.safe_dump(manifest, allow_unicode=True, sort_keys=False), encoding="utf-8"
+    )
+
+    report = audit_dataset(tmp_path)
+
+    assert report.eligible_for_clinical_claim is False
+    assert "agreement_below_target:span_type" in report.issues
 
 
 def _manifest(tmp_path: Path, *, status: str, human_reviewed: bool) -> dict[str, object]:
@@ -85,6 +149,21 @@ def _manifest(tmp_path: Path, *, status: str, human_reviewed: bool) -> dict[str,
             "documents": 1,
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         }
+    agreement = {
+        "schema_version": "clingrounder.review-agreement.v1",
+        "dataset_id": "audit-fixture",
+        "dataset_version": "1.0.0",
+        "reviewed_document_count": 2,
+        "double_reviewed_document_count": 1,
+        "double_review_fraction": 0.5,
+        "span_type_agreement": 0.95,
+        "assertion_agreement": 0.90,
+        "relation_agreement": 0.85,
+    }
+    agreement_path = tmp_path / "agreement.json"
+    agreement_path.write_text(
+        json.dumps(agreement, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8"
+    )
     return {
         "schema_version": "clingrounder.dataset-manifest.v1",
         "dataset": {
@@ -105,5 +184,7 @@ def _manifest(tmp_path: Path, *, status: str, human_reviewed: bool) -> dict[str,
             "reviewers_required": 2,
             "double_review_fraction": 0.1,
             "agreement_targets": {"span_type": 0.9, "assertion": 0.85},
+            "agreement_report": agreement_path.name,
+            "agreement_report_sha256": hashlib.sha256(agreement_path.read_bytes()).hexdigest(),
         },
     }

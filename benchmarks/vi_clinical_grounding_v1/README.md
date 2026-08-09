@@ -43,8 +43,10 @@ policy, license metadata, and human-review coverage without writing document tex
 - Near-duplicate and template leakage checks are required before a clinical release.
 - The pilot includes one synthetic `LAB_TEST -> LAB_RESULT` relation so relation extraction and
   endpoint validation are exercised; this is an engineering fixture, not clinical evidence.
-- A clinical release requires a human-reviewed status, reviewer agreement metadata, and complete
-  review coverage for every declared split.
+- A clinical release requires a human-reviewed status, complete review coverage for every
+  declared split, and a separately hashed ``clingrounder.review-agreement.v1`` report whose
+  measured metrics meet the manifest targets. Merely setting ``human_reviewed: true`` is not
+  sufficient.
 
 See [methodology](../../docs/benchmarks/vi_clinical_grounding_v1/methodology.md) for promotion
 rules and the limitations of this pilot.

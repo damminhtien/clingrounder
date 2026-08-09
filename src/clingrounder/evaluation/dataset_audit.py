@@ -38,6 +38,7 @@ class DatasetAuditReport:
     issues: tuple[str, ...]
     warnings: tuple[str, ...]
     checks: Mapping[str, bool]
+    agreement: Mapping[str, Any] | None = None
 
     @property
     def eligible_for_clinical_claim(self) -> bool:
@@ -62,6 +63,11 @@ class DatasetAuditReport:
             },
             "split_fingerprints": dict(sorted(self.split_fingerprints.items())),
             "checks": dict(sorted(self.checks.items())),
+            "review_agreement": (
+                None
+                if self.agreement is None
+                else {key: self.agreement[key] for key in sorted(self.agreement)}
+            ),
             "issues": list(self.issues),
             "warnings": list(self.warnings),
             "eligible_for_clinical_claim": self.eligible_for_clinical_claim,
@@ -168,7 +174,20 @@ def audit_dataset(benchmark_dir: str | Path) -> DatasetAuditReport:
         issues.append("declared_disjoint_templates_overlap")
 
     review = manifest.get("review")
-    review_fields_ok = _review_contract_ok(review, human_reviewed, reviewed_counts, split_counts)
+    agreement, agreement_issues = _load_agreement_report(
+        root,
+        dataset,
+        review,
+        human_reviewed=human_reviewed,
+    )
+    issues.extend(agreement_issues)
+    review_fields_ok = _review_contract_ok(
+        review,
+        human_reviewed,
+        reviewed_counts,
+        split_counts,
+        agreement,
+    )
     if human_reviewed and not review_fields_ok:
         issues.append("incomplete_review_contract")
 
@@ -185,6 +204,10 @@ def audit_dataset(benchmark_dir: str | Path) -> DatasetAuditReport:
             item in {"missing_license", "missing_license_url"} for item in issues
         ),
         "review_contract_complete": review_fields_ok,
+        "review_agreement_meets_targets": not any(
+            item.startswith(("missing_agreement_report", "invalid_agreement_report", "agreement_"))
+            for item in issues
+        ) if human_reviewed else True,
         "human_reviewed_release": status in _REVIEWED_STATUSES and human_reviewed,
         "test_not_used_for_development": policy.get("test_used_for_development") is False,
     }
@@ -199,6 +222,7 @@ def audit_dataset(benchmark_dir: str | Path) -> DatasetAuditReport:
         issues=tuple(sorted(set(issues))),
         warnings=tuple(sorted(set(warnings))),
         checks=checks,
+        agreement=agreement,
     )
 
 
@@ -232,6 +256,7 @@ def _review_contract_ok(
     human_reviewed: bool,
     reviewed_counts: Mapping[str, int],
     split_counts: Mapping[str, int],
+    agreement: Mapping[str, Any] | None,
 ) -> bool:
     if not human_reviewed:
         return True
@@ -250,7 +275,80 @@ def _review_contract_ok(
         for value in agreement.values()
     ):
         return False
-    return all(reviewed_counts.get(split, 0) == count for split, count in split_counts.items())
+    if not all(reviewed_counts.get(split, 0) == count for split, count in split_counts.items()):
+        return False
+    return agreement is not None
+
+
+def _load_agreement_report(
+    root: Path,
+    dataset: Mapping[str, Any],
+    review: object,
+    *,
+    human_reviewed: bool,
+) -> tuple[dict[str, Any] | None, list[str]]:
+    """Load the signed-off agreement evidence required for a public gold release.
+
+    A boolean ``human_reviewed`` flag is not evidence by itself.  The report is a separate,
+    hashed artifact so reviewers can reproduce the measured agreement without publishing
+    reviewer identities or raw clinical text.
+    """
+
+    if not human_reviewed:
+        return None, []
+    if not isinstance(review, Mapping):
+        return None, ["missing_agreement_report"]
+    raw_report_path = review.get("agreement_report")
+    report_sha = review.get("agreement_report_sha256")
+    issues: list[str] = []
+    if not isinstance(raw_report_path, str) or not raw_report_path.strip():
+        issues.append("missing_agreement_report")
+        return None, issues
+    if not isinstance(report_sha, str) or not re.fullmatch(r"[0-9a-f]{64}", report_sha):
+        issues.append("invalid_agreement_report_sha256")
+        return None, issues
+    report_path = _safe_child(root, raw_report_path, issues, "agreement_report")
+    if report_path is None or not report_path.is_file():
+        issues.append("missing_agreement_report")
+        return None, issues
+    actual_sha = hashlib.sha256(report_path.read_bytes()).hexdigest()
+    if actual_sha != report_sha:
+        issues.append("agreement_report_fingerprint_mismatch")
+        return None, issues
+    try:
+        payload = json.loads(report_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        issues.append("invalid_agreement_report")
+        return None, issues
+    if not isinstance(payload, Mapping) or payload.get("schema_version") != "clingrounder.review-agreement.v1":
+        issues.append("invalid_agreement_report")
+        return None, issues
+    if payload.get("dataset_id") != dataset.get("id") or payload.get("dataset_version") != dataset.get("version"):
+        issues.append("agreement_dataset_mismatch")
+    for key in ("reviewed_document_count", "double_reviewed_document_count"):
+        if not isinstance(payload.get(key), int) or payload[key] < 1:
+            issues.append(f"agreement_invalid:{key}")
+    for key in ("double_review_fraction", "span_type_agreement", "assertion_agreement", "relation_agreement"):
+        value = payload.get(key)
+        if value is not None and (not isinstance(value, (int, float)) or not 0.0 <= value <= 1.0):
+            issues.append(f"agreement_invalid:{key}")
+    targets = review.get("agreement_targets")
+    if not isinstance(targets, Mapping):
+        issues.append("missing_agreement_targets")
+    else:
+        for key, target in targets.items():
+            value = payload.get(f"{key}_agreement")
+            if not isinstance(target, (int, float)) or not 0.0 <= target <= 1.0:
+                issues.append(f"agreement_invalid_target:{key}")
+            elif not isinstance(value, (int, float)) or value < target:
+                issues.append(f"agreement_below_target:{key}")
+    target_fraction = review.get("double_review_fraction")
+    fraction = payload.get("double_review_fraction")
+    if isinstance(target_fraction, (int, float)) and (
+        not isinstance(fraction, (int, float)) or fraction < target_fraction
+    ):
+        issues.append("agreement_below_target:double_review_fraction")
+    return dict(payload), issues
 
 
 def _cross_split_overlap(values: Mapping[str, set[str]]) -> tuple[str, ...]:

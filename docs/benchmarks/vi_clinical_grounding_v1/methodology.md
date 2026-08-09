@@ -39,5 +39,24 @@ clingrounder-benchmark audit \
 
 The audit verifies declared split counts and SHA-256 fingerprints, unique document IDs,
 normalized-text and template leakage, license metadata, test isolation, and human-review coverage.
-It never writes raw document text into the report. A synthetic or review-pending dataset can pass
-the engineering checks while correctly failing the clinical-evidence gate.
+For a human-reviewed release, ``dataset_manifest.yaml`` must also point to a hashed agreement
+report:
+
+```yaml
+review:
+  reviewers_required: 2
+  double_review_fraction: 0.10
+  agreement_targets:
+    span_type: 0.90
+    assertion: 0.85
+    relation: 0.80
+  agreement_report: review/agreement.json
+  agreement_report_sha256: "<sha256>"
+```
+
+The report uses the neutral ``clingrounder.review-agreement.v1`` schema and records measured
+span/type, assertion, and relation agreement plus the double-review fraction. The audit checks
+the report fingerprint, dataset identity, and every declared target; a ``human_reviewed`` boolean
+without this evidence cannot pass the clinical-evidence gate. Reports contain no raw note text or
+reviewer identity by default. A synthetic or review-pending dataset can pass the engineering
+checks while correctly failing the clinical-evidence gate.
