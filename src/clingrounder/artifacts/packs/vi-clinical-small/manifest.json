@@ -13,5 +13,13 @@
     "profile.yaml",
     "seed_concepts.jsonl",
     "vietnamese_medical_alias.jsonl"
-  ]
+  ],
+  "metrics": {
+    "benchmark": "vi-clinical-grounding-v1",
+    "benchmark_status": "synthetic_pilot",
+    "entity_exact_micro_f1": 1.0,
+    "assertion_positive_macro_f1": 1.0,
+    "linking_recall_at_5": 0.875,
+    "relation_micro_f1": 0.0
+  }
 }

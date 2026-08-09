@@ -39,6 +39,8 @@ pre-release semantic versioning while the public API is still maturing.
   acquisition with checksum and path-safety validation.
 - Documented the measured Vietnamese NER/DAPT research track, including a rejected promotion and
   the provenance boundary that keeps competition checkpoints out of the public runtime.
+- Added optional, validated benchmark metrics to artifact manifests and recorded the evidence
+  attached to the bundled Vietnamese resource pack.
 
 ### Fixed
 

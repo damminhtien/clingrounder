@@ -9,9 +9,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
-from typing import Mapping
+from typing import Mapping, TypeAlias
 
 __all__ = [
     "ArtifactManifest",
@@ -23,6 +24,7 @@ __all__ = [
 
 _SCHEMA_VERSION = "clingrounder.artifact-manifest.v1"
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
+ArtifactMetricValue: TypeAlias = str | float
 
 
 class ArtifactManifestError(ValueError):
@@ -31,7 +33,7 @@ class ArtifactManifestError(ValueError):
 
 @dataclass(frozen=True, slots=True)
 class ArtifactManifest:
-    """Immutable identity and payload metadata for one artifact release."""
+    """Immutable identity, evidence, and payload metadata for one artifact release."""
 
     artifact_id: str
     revision: str
@@ -40,6 +42,7 @@ class ArtifactManifest:
     sha256: str
     size_bytes: int
     contents: tuple[str, ...]
+    metrics: tuple[tuple[str, ArtifactMetricValue], ...] = ()
     schema_version: str = _SCHEMA_VERSION
 
     def __post_init__(self) -> None:
@@ -60,6 +63,21 @@ class ArtifactManifest:
             raise ArtifactManifestError("contents must be sorted and unique")
         for name in self.contents:
             _validate_relative_file_name(name)
+        metric_names = tuple(name for name, _ in self.metrics)
+        if tuple(sorted(set(metric_names))) != metric_names:
+            raise ArtifactManifestError("metrics must have sorted, unique names")
+        for name, value in self.metrics:
+            if not name.strip():
+                raise ArtifactManifestError("metric names must be non-empty")
+            if isinstance(value, str):
+                if not value.strip():
+                    raise ArtifactManifestError(f"metric {name!r} must not be empty")
+            elif (
+                not isinstance(value, (int, float))
+                or isinstance(value, bool)
+                or not math.isfinite(float(value))
+            ):
+                raise ArtifactManifestError(f"metric {name!r} must be a finite number or string")
 
     @classmethod
     def from_mapping(cls, payload: Mapping[str, object]) -> "ArtifactManifest":
@@ -75,12 +93,27 @@ class ArtifactManifest:
                 payload,
                 {"schema_version", "artifact", "contents"},
                 "manifest",
+                optional={"metrics"},
             )
             _expect_keys(
                 artifact,
                 {"id", "version", "type", "license", "sha256", "size_bytes"},
                 "artifact",
             )
+            raw_metrics = payload.get("metrics", {})
+            if not isinstance(raw_metrics, Mapping):
+                raise ArtifactManifestError("metrics must be an object")
+            metrics: list[tuple[str, ArtifactMetricValue]] = []
+            for name, value in raw_metrics.items():
+                if not isinstance(name, str) or not name.strip():
+                    raise ArtifactManifestError("metric names must be non-empty strings")
+                if isinstance(value, bool) or not isinstance(value, (str, int, float)):
+                    raise ArtifactManifestError(
+                        f"metric {name!r} must be a finite number or string"
+                    )
+                metrics.append(
+                    (name, float(value) if isinstance(value, (int, float)) else value)
+                )
             values = {
                 "artifact_id": _required_string(artifact, "id"),
                 "revision": _required_string(artifact, "version"),
@@ -89,6 +122,7 @@ class ArtifactManifest:
                 "sha256": _required_string(artifact, "sha256"),
                 "size_bytes": artifact["size_bytes"],
                 "contents": tuple(contents),
+                "metrics": tuple(sorted(metrics)),
                 "schema_version": schema_version,
             }
         except ArtifactManifestError:
@@ -107,6 +141,7 @@ class ArtifactManifest:
             sha256=values["sha256"],
             size_bytes=values["size_bytes"],
             contents=values["contents"],
+            metrics=values["metrics"],
             schema_version=values["schema_version"],
         )
 
@@ -137,6 +172,7 @@ class ArtifactManifest:
                 "size_bytes": self.size_bytes,
             },
             "contents": list(self.contents),
+            "metrics": {name: value for name, value in self.metrics},
         }
 
     def validate_payload(self, root: str | Path) -> None:
@@ -220,8 +256,15 @@ def _required_string(mapping: Mapping[str, object], key: str) -> str:
     return value
 
 
-def _expect_keys(mapping: Mapping[str, object], expected: set[str], label: str) -> None:
-    unknown = sorted(set(mapping) - expected)
+def _expect_keys(
+    mapping: Mapping[str, object],
+    expected: set[str],
+    label: str,
+    *,
+    optional: set[str] | None = None,
+) -> None:
+    allowed = expected | (optional or set())
+    unknown = sorted(set(mapping) - allowed)
     missing = sorted(expected - set(mapping))
     if unknown or missing:
         raise ArtifactManifestError(

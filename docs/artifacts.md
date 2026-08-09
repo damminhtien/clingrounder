@@ -62,10 +62,11 @@ installed = ArtifactDownloader().materialize(
 )
 ```
 
-The manifest covers relative payload names, artifact ID, revision, license, byte size, and a
-deterministic SHA-256. `manifest.json` is metadata and is excluded from the payload digest to
-avoid a circular hash. Absolute paths, traversal components, duplicate names, unknown manifest
-fields, and symlinks are rejected.
+The manifest covers relative payload names, artifact ID, revision, license, byte size, a
+deterministic SHA-256, and optional measured metrics. Metrics are evidence metadata only; they do
+not silently become a clinical quality claim. `manifest.json` is metadata and is excluded from the
+payload digest to avoid a circular hash. Absolute paths, traversal components, duplicate names,
+unknown manifest fields, non-finite metrics, and symlinks are rejected.
 
 The core downloader rejects `http://` and `https://` sources by design. Applications that need a
 remote registry must add an explicit provider that downloads to a trusted local directory, then

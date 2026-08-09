@@ -35,6 +35,7 @@ def test_manifest_round_trip_and_payload_verification(tmp_path: Path) -> None:
     loaded.validate_payload(source)
     assert fingerprint_payload(source) == manifest.sha256
     assert payload_size_bytes(source) == manifest.size_bytes
+    assert dict(loaded.metrics) == {"benchmark": "fixture", "entity_f1": 0.8}
 
 
 def test_cache_is_versioned_and_does_not_overwrite_tampered_entry(tmp_path: Path) -> None:
@@ -100,6 +101,10 @@ def test_manifest_rejects_path_traversal_and_unsorted_contents() -> None:
         ArtifactManifest.from_mapping({**base, "contents": ["../payload.txt"]})
     with pytest.raises(ArtifactManifestError, match="unknown=.*extra"):
         ArtifactManifest.from_mapping({**base, "contents": ["payload.txt"], "extra": True})
+    with pytest.raises(ArtifactManifestError, match="finite number"):
+        ArtifactManifest.from_mapping(
+            {**base, "contents": ["payload.txt"], "metrics": {"p95_ms": float("nan")}}
+        )
 
 
 def _manifest(source: Path, *, artifact_id: str = "fixture", revision: str = "1") -> ArtifactManifest:
@@ -111,4 +116,5 @@ def _manifest(source: Path, *, artifact_id: str = "fixture", revision: str = "1"
         sha256=fingerprint_payload(source),
         size_bytes=payload_size_bytes(source),
         contents=tuple(sorted(path.relative_to(source).as_posix() for path in source.rglob("*") if path.is_file())),
+        metrics=(("benchmark", "fixture"), ("entity_f1", 0.8)),
     )
