@@ -68,6 +68,32 @@ def test_public_benchmark_suite_parser_accepts_named_configs() -> None:
     ]
 
 
+def test_public_benchmark_review_pack_parser_accepts_assignments() -> None:
+    args = build_parser("benchmark").parse_args(
+        [
+            "benchmark",
+            "review-pack",
+            "--benchmark",
+            "benchmarks/vi_clinical_grounding_v1",
+            "--output",
+            "/tmp/review-pack",
+            "--reviewer",
+            "alice",
+            "--reviewer",
+            "bob",
+            "--double-review-fraction",
+            "0.25",
+            "--seed",
+            "7",
+        ]
+    )
+
+    assert args.handler == "benchmark_review_pack"
+    assert args.reviewer == ["alice", "bob"]
+    assert args.double_review_fraction == 0.25
+    assert args.seed == 7
+
+
 def test_review_quality_parser_can_emit_public_agreement_artifact() -> None:
     args = build_parser("research").parse_args(
         [

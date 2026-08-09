@@ -35,6 +35,26 @@ Add `--strict` in CI or a release workflow. The current synthetic pilot intentio
 checks declared SHA-256 values, document IDs, normalized text leakage, template overlap, split
 policy, license metadata, and human-review coverage without writing document text to the report.
 
+## Independent review handoff
+
+Create a deterministic gold-blind pack before asking reviewers to annotate a future licensed
+snapshot:
+
+```bash
+clingrounder-benchmark review-pack \
+  --benchmark benchmarks/vi_clinical_grounding_v1 \
+  --split test \
+  --reviewer reviewer-1 \
+  --reviewer reviewer-2 \
+  --double-review-fraction 0.10 \
+  --output artifacts/review-packs/vi-clinical-grounding-v1
+```
+
+Each reviewer directory contains only source text, a stable `review_id`, safe display metadata,
+and empty annotation arrays. Gold annotations and source document IDs stay in the coordinator
+mapping. The generated manifest records source fingerprints, assignment counts, and the seed. The
+pack is a handoff artifact, not evidence that the pilot has been human-reviewed.
+
 ## Dataset policy
 
 - Current status: synthetic pilot, version `0.1.0`.

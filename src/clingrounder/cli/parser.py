@@ -376,6 +376,23 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
         help="Return a non-zero status unless the dataset passes the clinical-evidence gate.",
     )
 
+    review_pack = plugins.add_parser(
+        "review-pack",
+        help="Create deterministic gold-blind reviewer assignments for a benchmark split.",
+    )
+    review_pack.set_defaults(handler="benchmark_review_pack")
+    review_pack.add_argument("--benchmark", required=True)
+    review_pack.add_argument("--output", required=True)
+    review_pack.add_argument("--split", default="test")
+    review_pack.add_argument(
+        "--reviewer",
+        action="append",
+        default=[],
+        help="Reviewer ID; repeat at least twice. Defaults to reviewer-1 and reviewer-2.",
+    )
+    review_pack.add_argument("--double-review-fraction", type=float, default=0.10)
+    review_pack.add_argument("--seed", type=int, default=42)
+
     compare = plugins.add_parser("compare", help="Compare two promotion benchmark artifacts.")
     compare.set_defaults(handler="benchmark_compare")
     compare.add_argument("baseline")

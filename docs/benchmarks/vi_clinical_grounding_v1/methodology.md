@@ -72,4 +72,18 @@ clingrounder-research data review quality \
   --dataset-id vi-clinical-grounding-v1 \
   --dataset-version 1.0.0 \
   --benchmark-output outputs/review-agreement.json
+
+## Review handoff
+
+The repository provides `clingrounder-benchmark review-pack` for independent annotation. It derives
+review assignments from the dataset and a seed, writes a coordinator-only source-ID map, and emits
+gold-blind reviewer JSONL. The reviewer payload intentionally contains no `entities` or `relations`
+from the benchmark input. This prevents checked-in synthetic labels, or labels from a later licensed
+snapshot, from silently becoming reviewer supervision.
+
+The coordinator must retain the generated `manifest.json`, source fingerprints, and
+`coordinator_document_map.jsonl`. After two reviewers complete their annotations, the coordinator
+maps `review_id` back to the source document, validates raw offsets, imports the annotation layers,
+and runs `clingrounder data review quality` before creating a release agreement artifact. The pilot
+remains ineligible for clinical claims until that evidence is genuinely produced.
 ```

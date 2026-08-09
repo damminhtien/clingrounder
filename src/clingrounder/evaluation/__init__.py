@@ -13,6 +13,7 @@ from clingrounder.evaluation.records import (
 )
 from clingrounder.evaluation.relation_slices import relation_slice_counts
 from clingrounder.evaluation.review_agreement import ReviewAgreementArtifact
+from clingrounder.evaluation.review_pack import ReviewPackConfig, build_review_pack
 from clingrounder.evaluation.linking_batch_benchmark import (
     CandidateBatchBenchmarkReport,
     benchmark_candidate_reranker,
@@ -46,7 +47,9 @@ __all__ = [
     "profile_paths",
     "relation_slice_counts",
     "ReviewAgreementArtifact",
+    "ReviewPackConfig",
     "benchmark_candidate_reranker",
+    "build_review_pack",
     "render_markdown",
     "write_pipeline_report",
 ]
