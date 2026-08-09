@@ -81,6 +81,48 @@ jobs:
       - name: Public repository audit
         run: .venv/bin/clingrounder release audit --root .
 
+  public-benchmark:
+    name: Public product benchmark
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Install locked environment
+        run: |
+          python -m pip install "uv==$UV_VERSION"
+          uv sync --frozen --extra dev --extra data --python "$pythonLocation/bin/python"
+
+      - name: Audit public benchmark dataset
+        run: |
+          mkdir -p artifacts/benchmarks/vi-clinical-grounding-v1
+          .venv/bin/clingrounder-benchmark audit \
+            --benchmark benchmarks/vi_clinical_grounding_v1 \
+            --output artifacts/benchmarks/vi-clinical-grounding-v1/audit.json
+
+      - name: Run measured benchmark suite
+        run: |
+          .venv/bin/clingrounder-benchmark suite \
+            --benchmark benchmarks/vi_clinical_grounding_v1 \
+            --config exact=configs/benchmarks/vi_clinical_grounding_v1/exact.yaml \
+            --config lexical=configs/benchmarks/vi_clinical_grounding_v1/lexical.yaml \
+            --config hybrid=configs/benchmarks/vi_clinical_grounding_v1/hybrid.yaml \
+            --config full=configs/benchmarks/vi_clinical_grounding_v1/full.yaml \
+            --output artifacts/benchmarks/vi-clinical-grounding-v1/suite
+
+      - name: Upload benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: public-benchmark-${{ github.sha }}
+          path: artifacts/benchmarks/vi-clinical-grounding-v1
+          if-no-files-found: error
+
   security-artifacts:
     name: Dependency, secret, and SBOM artifacts
     runs-on: ubuntu-latest

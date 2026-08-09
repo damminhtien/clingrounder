@@ -20,3 +20,12 @@ def test_ci_workflows_install_and_run_from_uv_lock(workflow_path: Path) -> None:
     assert ".venv/bin/ruff check ." in workflow
     assert ".venv/bin/mypy src" in workflow
     assert ".venv/bin/pytest" in workflow
+
+
+def test_ci_runs_and_uploads_the_public_product_benchmark() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+
+    assert "name: Public product benchmark" in workflow
+    assert ".venv/bin/clingrounder-benchmark audit" in workflow
+    assert ".venv/bin/clingrounder-benchmark suite" in workflow
+    assert "public-benchmark-${{ github.sha }}" in workflow

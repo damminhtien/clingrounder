@@ -42,6 +42,8 @@ pre-release semantic versioning while the public API is still maturing.
   treating archive timestamps or comments as prediction changes.
 - Dataset publication audit now validates annotation spans, raw text ownership, IDs, assertions,
   code-system consistency, and relation endpoints before a release can be eligible.
+- CI now runs and uploads the public product benchmark audit and measured ablation suite on every
+  push, separate from the historical competition plugin.
 
 ### Changed
 
