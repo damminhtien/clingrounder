@@ -33,6 +33,8 @@ pre-release semantic versioning while the public API is still maturing.
   agreement versus disagreement, and keeps gold promotion as an explicit human step.
 - Corrected neutral benchmark linking metrics so missed coded entities count as Recall@k/MRR misses
   and assignment coverage reports actual primary-code emission.
+- Added an optional offline Streamlit demo for inspecting spans, assertions, candidate provenance,
+  and relations without adding UI dependencies to the core package.
 
 ### Fixed
 

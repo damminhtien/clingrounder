@@ -34,6 +34,7 @@ composition root that turns config into a runnable component graph.
 | `pipeline/` | Ports, component container, factory, runner, batch execution | Model internals or CLI parsing |
 | `adapters/rules.py` | Rule implementations behind pipeline ports | Pipeline orchestration |
 | `adapters/huggingface/` | Local-only token classifier, encoder, and cross-encoder adapters | Hosted inference or downloads |
+| `examples/demo/` | Optional offline Streamlit inspection demo | Clinical decision support |
 | `adapters/hybrid.py` | Evidence-weighted arbitration of model and dictionary entity proposals | Model loading or task-specific thresholds |
 | `dictionaries/` | Canonical JSONL records and import utilities | Persistent query backend |
 | `terminology/` | Storage-neutral repository port and SQLite FTS5 implementation | Entity extraction policy |

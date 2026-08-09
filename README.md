@@ -134,6 +134,17 @@ generic evaluation ← task adapter ← optional benchmark plugin
 See [docs/architecture.md](docs/architecture.md) and
 [docs/code-map.md](docs/code-map.md) for ownership and extension points.
 
+## Optional Demo
+
+The repository includes a small local Streamlit inspection demo. It uses the bundled offline
+resource pack and shows raw-span highlights, assertions, candidate provenance, and relations:
+
+```bash
+uv run --with streamlit streamlit run examples/demo/app.py
+```
+
+The demo is an inspection surface only; it does not provide diagnosis or treatment advice.
+
 ## Source Checkout Quickstart
 
 Python 3.11 through 3.14 is supported.

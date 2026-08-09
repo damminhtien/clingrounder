@@ -1,1 +1,2 @@
-streamlit>=1.40,<2
+clingrounder[vi]>=0.1.0a9
+streamlit>=1.40

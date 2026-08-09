@@ -1,19 +1,24 @@
-# ClinGrounder demo
+# ClinGrounder Demo
 
-This is an optional local Streamlit viewer for the bundled `vi-clinical-small` resource pack. It
-is an example application, not part of the core runtime and not a clinical decision-support tool.
+This is an optional local Streamlit demo. It uses the bundled `vi-clinical-small` resource pack,
+so the example does not download models or send text to a hosted service.
 
-## Run
-
-From the repository root:
+## Run From PyPI
 
 ```bash
 python -m venv .venv-demo
-.venv-demo/bin/pip install -e "[vi]"
-.venv-demo/bin/pip install -r examples/demo/requirements.txt
-.venv-demo/bin/streamlit run examples/demo/app.py
+.venv-demo/bin/python -m pip install -r requirements.txt
+.venv-demo/bin/streamlit run app.py
 ```
 
-The app runs offline and shows raw spans, entity types, assertion status, terminology codes,
-candidate codes, and relations. Replace the bundled example only with text that is appropriate for
-your local environment; the demo does not provide PHI controls or regulatory compliance.
+## Run From A Checkout
+
+```bash
+uv sync --extra dev
+uv pip install streamlit
+uv run streamlit run examples/demo/app.py
+```
+
+The demo shows raw-offset-safe entity highlights, assertion status, assigned terminology codes,
+candidate provenance, and relations when the configured profile emits them. It is an inspection
+surface, not a clinical decision-support application.
