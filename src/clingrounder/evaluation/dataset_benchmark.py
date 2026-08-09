@@ -570,45 +570,62 @@ def _validate_predictions(
 
     validator = PredictionValidator(terminology)
     assigned_count = 0
-    invalid_assigned_count = 0
     relation_count = 0
-    invalid_relation_count = 0
     validation_error_count = 0
     error_kinds: Counter[str] = Counter()
+    invalid_assigned_entities: set[tuple[str, int]] = set()
+    invalid_relations: set[tuple[str, int]] = set()
     offset_valid = len(predictions) == len(examples)
 
     for example in examples:
         prediction = predictions.get(example.document_id)
         if prediction is None:
             continue
-        assigned_count += sum(entity.code is not None for entity in prediction.entities)
+        assigned_entity_indices = {
+            index for index, entity in enumerate(prediction.entities) if entity.code is not None
+        }
+        assigned_count += len(assigned_entity_indices)
         relation_count += len(prediction.relations)
         issues = validator.validate_prediction(prediction, source_text=example.text)
         validation_error_count += len(issues)
         error_kinds.update(issue.kind for issue in issues)
         offset_valid = offset_valid and not any(issue.kind == "offset" for issue in issues)
-        invalid_assigned_count += sum(
-            issue.kind.startswith(("unknown_", "invalid_code"))
-            and ".candidates[" not in issue.path
-            and ".code" in issue.path
-            for issue in issues
-        )
-        invalid_relation_count += sum(
-            issue.kind.startswith("invalid_relation") for issue in issues
-        )
+        for issue in issues:
+            entity_index = _indexed_path(issue.path, "$.entities[")
+            if (
+                entity_index is not None
+                and entity_index in assigned_entity_indices
+                and ".candidates[" not in issue.path
+                and issue.kind.startswith(("unknown_", "invalid_code"))
+            ):
+                invalid_assigned_entities.add((example.document_id, entity_index))
+            relation_index = _indexed_path(issue.path, "$.relations[")
+            if relation_index is not None:
+                invalid_relations.add((example.document_id, relation_index))
 
     return {
         "offset_validity": float(offset_valid),
         "invalid_assigned_code_rate": (
-            invalid_assigned_count / assigned_count if assigned_count else 0.0
+            len(invalid_assigned_entities) / assigned_count if assigned_count else 0.0
         ),
         "invalid_relation_rate": (
-            invalid_relation_count / relation_count if relation_count else 0.0
+            len(invalid_relations) / relation_count if relation_count else 0.0
         ),
         "validation_error_count": validation_error_count,
         "validation_error_kinds": dict(sorted(error_kinds.items())),
         "missing_prediction_count": len(examples) - len(predictions),
     }
+
+
+def _indexed_path(path: str, prefix: str) -> int | None:
+    """Extract a list index from a validator path without parsing arbitrary user input."""
+
+    if not path.startswith(prefix):
+        return None
+    index_text, separator, _ = path[len(prefix) :].partition("]")
+    if not separator or not index_text.isdigit():
+        return None
+    return int(index_text)
 
 
 def _artifact_manifest(
