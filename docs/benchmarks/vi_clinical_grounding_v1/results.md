@@ -7,16 +7,17 @@ human-reviewed public clinical test set.
 ## Checked-In Pilot
 
 The checked-in `0.1.0` fixture contains four synthetic test documents, including one
-`LAB_TEST -> LAB_RESULT` relation. The suite runner was executed on commit `0b2da98` on macOS with
+`LAB_TEST -> LAB_RESULT` relation. The suite runner was executed on commit `1ac3fb3` on macOS with
 Python 3.14. The relation extractor is enabled only by the full profile. The numbers below are a
-fresh reference run; latency is machine-dependent and is not a portability claim.
+fresh reference run; latency is machine-dependent and is not a portability claim. Regenerate the
+JSON artifact bundle instead of treating these values as a universal speed target.
 
 | System | Entity exact F1 | Assertion macro-F1 | Recall@5 | Top-1 | Relation F1 | p95 ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Exact dictionary | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 10.381 |
-| Lexical | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 11.017 |
-| Hybrid | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 8.855 |
-| Full deterministic | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 1.0000 | 8.157 |
+| Exact dictionary | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 10.650 |
+| Lexical | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 6.372 |
+| Hybrid | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 4.644 |
+| Full deterministic | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 1.0000 | 9.047 |
 
 Only the full profile predicts the single gold relation because the other profiles intentionally
 disable relation extraction. These values verify the output contract and are not useful for
