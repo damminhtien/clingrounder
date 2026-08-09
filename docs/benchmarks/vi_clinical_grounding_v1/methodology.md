@@ -72,6 +72,7 @@ clingrounder-research data review quality \
   --dataset-id vi-clinical-grounding-v1 \
   --dataset-version 1.0.0 \
   --benchmark-output outputs/review-agreement.json
+```
 
 ## Review handoff
 
@@ -82,8 +83,19 @@ from the benchmark input. This prevents checked-in synthetic labels, or labels f
 snapshot, from silently becoming reviewer supervision.
 
 The coordinator must retain the generated `manifest.json`, source fingerprints, and
-`coordinator_document_map.jsonl`. After two reviewers complete their annotations, the coordinator
-maps `review_id` back to the source document, validates raw offsets, imports the annotation layers,
-and runs `clingrounder data review quality` before creating a release agreement artifact. The pilot
-remains ineligible for clinical claims until that evidence is genuinely produced.
+`coordinator_document_map.jsonl`. After two reviewers complete their annotations, validate and join
+the edited files with:
+
+```bash
+clingrounder-benchmark review-pack-import \
+  --benchmark benchmarks/vi_clinical_grounding_v1 \
+  --pack artifacts/review-packs/vi-clinical-grounding-v1 \
+  --split test \
+  --output artifacts/review-imports/vi-clinical-grounding-v1
 ```
+
+The resulting `adjudication.jsonl` preserves each independent submission and marks exact
+agreement versus `needs_adjudication`. It is deliberately not a gold dataset. Resolve every
+adjudication item, export a gold layer, validate its agreement artifact, and only then update the
+dataset manifest. The pilot remains ineligible for clinical claims until that evidence is
+genuinely produced.

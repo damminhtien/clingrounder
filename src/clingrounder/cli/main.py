@@ -71,6 +71,10 @@ _HANDLERS = {
         "clingrounder.cli.commands.benchmark",
         "build_review_pack_command",
     ),
+    "benchmark_review_pack_import": (
+        "clingrounder.cli.commands.benchmark",
+        "import_review_pack_command",
+    ),
     "benchmark_compare": (
         "clingrounder.cli.commands.benchmark",
         "compare_runtime_benchmark",

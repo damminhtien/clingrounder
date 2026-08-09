@@ -29,6 +29,8 @@ pre-release semantic versioning while the public API is still maturing.
 - Added a hashed, dataset-bound reviewer-agreement artifact requirement for human-reviewed public
   benchmark releases.
 - Added a task-neutral CLI path to export reviewer agreement into that release artifact schema.
+- Added a validated review-pack importer that preserves independent submissions, detects exact
+  agreement versus disagreement, and keeps gold promotion as an explicit human step.
 
 ### Fixed
 

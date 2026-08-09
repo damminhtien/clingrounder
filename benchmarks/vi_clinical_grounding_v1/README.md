@@ -55,6 +55,21 @@ and empty annotation arrays. Gold annotations and source document IDs stay in th
 mapping. The generated manifest records source fingerprints, assignment counts, and the seed. The
 pack is a handoff artifact, not evidence that the pilot has been human-reviewed.
 
+After reviewers finish editing their assigned `items.jsonl` files, validate and join the
+submissions into an adjudication queue:
+
+```bash
+clingrounder-benchmark review-pack-import \
+  --benchmark benchmarks/vi_clinical_grounding_v1 \
+  --pack artifacts/review-packs/vi-clinical-grounding-v1 \
+  --split test \
+  --output artifacts/review-imports/vi-clinical-grounding-v1
+```
+
+The importer verifies source and assignment fingerprints, raw offsets, entity taxonomy,
+code-system shape, relation endpoints, and reviewer completeness. It marks exact agreement and
+disagreement in `adjudication.jsonl`; it never promotes annotations to gold automatically.
+
 ## Dataset policy
 
 - Current status: synthetic pilot, version `0.1.0`.

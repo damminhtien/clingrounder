@@ -94,6 +94,26 @@ def test_public_benchmark_review_pack_parser_accepts_assignments() -> None:
     assert args.seed == 7
 
 
+def test_public_benchmark_review_pack_import_parser_accepts_paths() -> None:
+    args = build_parser("benchmark").parse_args(
+        [
+            "benchmark",
+            "review-pack-import",
+            "--benchmark",
+            "benchmarks/vi_clinical_grounding_v1",
+            "--pack",
+            "/tmp/review-pack",
+            "--output",
+            "/tmp/review-import",
+            "--split",
+            "test",
+        ]
+    )
+
+    assert args.handler == "benchmark_review_pack_import"
+    assert args.pack == "/tmp/review-pack"
+
+
 def test_review_quality_parser_can_emit_public_agreement_artifact() -> None:
     args = build_parser("research").parse_args(
         [

@@ -393,6 +393,16 @@ def _benchmark_parser(commands: argparse._SubParsersAction[argparse.ArgumentPars
     review_pack.add_argument("--double-review-fraction", type=float, default=0.10)
     review_pack.add_argument("--seed", type=int, default=42)
 
+    review_import = plugins.add_parser(
+        "review-pack-import",
+        help="Validate completed gold-blind reviewer files and create an adjudication queue.",
+    )
+    review_import.set_defaults(handler="benchmark_review_pack_import")
+    review_import.add_argument("--benchmark", required=True)
+    review_import.add_argument("--pack", required=True)
+    review_import.add_argument("--output", required=True)
+    review_import.add_argument("--split", default="test")
+
     compare = plugins.add_parser("compare", help="Compare two promotion benchmark artifacts.")
     compare.set_defaults(handler="benchmark_compare")
     compare.add_argument("baseline")

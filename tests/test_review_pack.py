@@ -7,7 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from clingrounder.evaluation.review_pack import ReviewPackConfig, build_review_pack
+from clingrounder.evaluation.review_pack import (
+    ReviewPackConfig,
+    build_review_pack,
+    import_review_pack,
+)
 
 
 BENCHMARK = Path("benchmarks/vi_clinical_grounding_v1")
@@ -79,3 +83,80 @@ def test_review_pack_rejects_invalid_assignment_policy() -> None:
         ReviewPackConfig(reviewers=("same", "same"))
     with pytest.raises(ValueError, match=r"\[0, 1\]"):
         ReviewPackConfig(reviewers=("a", "b"), double_review_fraction=1.1)
+
+
+def test_review_pack_import_validates_fingerprints_and_preserves_adjudication(tmp_path: Path) -> None:
+    pack = tmp_path / "pack"
+    build_review_pack(
+        BENCHMARK,
+        pack,
+        config=ReviewPackConfig(reviewers=("alice", "bob"), double_review_fraction=0.5),
+    )
+
+    result = import_review_pack(BENCHMARK, pack, tmp_path / "imported")
+
+    assert result["gold_promoted"] is False
+    assert result["submission_count"] == 6
+    assert result["status_counts"] == {"agreement": 2, "reviewed": 2}
+    assert (tmp_path / "imported" / "adjudication.jsonl").is_file()
+
+
+def test_review_pack_import_allows_editable_items_and_marks_disagreement(tmp_path: Path) -> None:
+    pack = tmp_path / "pack"
+    build_review_pack(
+        BENCHMARK,
+        pack,
+        config=ReviewPackConfig(reviewers=("alice", "bob"), double_review_fraction=1.0),
+    )
+    alice_path = pack / "alice" / "items.jsonl"
+    rows = [json.loads(line) for line in alice_path.read_text(encoding="utf-8").splitlines()]
+    target = next(row for row in rows if "sốt" in row["text"])
+    start = target["text"].index("sốt")
+    target["annotations"] = [
+        {
+            "id": "review-e1",
+            "span": [start, start + 3],
+            "text": "sốt",
+            "type": "SYMPTOM",
+            "assertion": "NEGATED",
+            "code_system": "LOCAL",
+            "code": "SYMPTOM_FEVER",
+        }
+    ]
+    alice_path.write_text(
+        "\n".join(json.dumps(row, ensure_ascii=False, sort_keys=True) for row in rows) + "\n",
+        encoding="utf-8",
+    )
+
+    result = import_review_pack(BENCHMARK, pack, tmp_path / "imported")
+
+    assert result["status_counts"] == {"agreement": 3, "needs_adjudication": 1}
+    adjudications = [
+        json.loads(line)
+        for line in (tmp_path / "imported" / "adjudication.jsonl").read_text().splitlines()
+    ]
+    assert any(row["status"] == "needs_adjudication" for row in adjudications)
+
+
+def test_review_pack_import_rejects_offset_mismatch(tmp_path: Path) -> None:
+    pack = tmp_path / "pack"
+    build_review_pack(BENCHMARK, pack, config=ReviewPackConfig(double_review_fraction=0.0))
+    reviewer_path = pack / "reviewer-1" / "items.jsonl"
+    rows = [json.loads(line) for line in reviewer_path.read_text().splitlines()]
+    rows[0]["annotations"] = [
+        {
+            "id": "bad",
+            "span": [0, 1],
+            "text": "wrong",
+            "type": "SYMPTOM",
+            "assertion": "PRESENT",
+            "code_system": "NONE",
+            "code": None,
+        }
+    ]
+    reviewer_path.write_text(
+        "\n".join(json.dumps(row, ensure_ascii=False, sort_keys=True) for row in rows) + "\n"
+    )
+
+    with pytest.raises(ValueError, match="span/text mismatch"):
+        import_review_pack(BENCHMARK, pack, tmp_path / "imported")

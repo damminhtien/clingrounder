@@ -14,7 +14,11 @@ from clingrounder.evaluation.promotion_benchmark import (
 from clingrounder.evaluation.dataset_benchmark import run_dataset_benchmark
 from clingrounder.evaluation.dataset_benchmark import run_dataset_benchmark_suite
 from clingrounder.evaluation.dataset_audit import audit_dataset
-from clingrounder.evaluation.review_pack import ReviewPackConfig, build_review_pack
+from clingrounder.evaluation.review_pack import (
+    ReviewPackConfig,
+    build_review_pack,
+    import_review_pack,
+)
 
 __all__ = [
     "compare_runtime_benchmark",
@@ -24,6 +28,7 @@ __all__ = [
     "run_dataset_benchmark_suite_command",
     "audit_dataset_command",
     "build_review_pack_command",
+    "import_review_pack_command",
 ]
 
 
@@ -113,6 +118,19 @@ def build_review_pack_command(args: argparse.Namespace) -> int:
             double_review_fraction=args.double_review_fraction,
             seed=args.seed,
         ),
+    )
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def import_review_pack_command(args: argparse.Namespace) -> int:
+    """Validate completed reviewer files and write an adjudication queue."""
+
+    report = import_review_pack(
+        args.benchmark,
+        args.pack,
+        args.output,
+        split=args.split,
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
