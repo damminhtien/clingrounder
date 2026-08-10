@@ -17,7 +17,8 @@ thi cũ được giữ dưới dạng benchmark plugin tùy chọn, không đư�
 
 - Nhận diện bệnh, triệu chứng, thuốc, xét nghiệm, kết quả và thuộc tính thuốc.
 - Bảo toàn chính xác `[start, end)` trên raw text qua normalization và tokenization.
-- Phân loại phủ định, tiền sử, gia đình, nghi ngờ, kế hoạch, điều kiện và đã khỏi.
+- Bản stable v1 phân loại phủ định, tiền sử, gia đình, nghi ngờ và hiện tại. Các trạng thái kế
+  hoạch, điều kiện và đã khỏi vẫn là experimental, chỉ dùng khi cấu hình extension tương ứng.
 - Retrieval và linking ICD-10, RxNorm, terminology nội bộ theo đúng entity type.
 - Trích xuất relation và chặn edge vi phạm ràng buộc y khoa.
 - Xây SQLite FTS5 index bất biến từ JSONL terminology chuẩn.

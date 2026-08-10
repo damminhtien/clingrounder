@@ -72,8 +72,9 @@ transformer adapters, graph reasoning, relations, and mining are experimental ex
 - Supports additional procedure, finding, anatomy, and medication-attribute annotations through
   experimental/configured components; these are not part of the small-pack promise.
 - Preserves exact raw-text spans through normalization, model tokenization, and export.
-- Classifies present, negated, historical, family, possible, planned, conditional, and resolved
-  context when the configured context provider has evidence for the label.
+- Classifies `PRESENT`, `NEGATED`, `HISTORICAL`, `FAMILY`, and `POSSIBLE` context in the stable v1
+  surface. `PLANNED`, `CONDITIONAL`, and `RESOLVED` statuses remain experimental and require an
+  explicitly configured extension.
 - Retrieves and links type-compatible ICD-10, RxNorm, and local terminology concepts.
 - Validates typed relations when the optional relation subsystem is enabled.
 - Builds derived SQLite FTS5 terminology and knowledge-graph indexes from canonical JSONL; JSONL
