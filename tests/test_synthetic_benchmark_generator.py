@@ -114,12 +114,7 @@ def test_synthetic_snapshot_uses_semantic_roles_and_matching_assertion_cues(
 def test_synthetic_snapshot_is_unique_and_auditable_before_human_review(
     tmp_path: Path,
 ) -> None:
-    generate_snapshot(
-        tmp_path,
-        train_documents=180,
-        validation_documents=50,
-        test_documents=70,
-    )
+    manifest = generate_snapshot(tmp_path)
 
     for split in ("train", "validation", "test"):
         records = [
@@ -135,3 +130,5 @@ def test_synthetic_snapshot_is_unique_and_auditable_before_human_review(
     assert report.checks["normalized_text_splits_disjoint"] is True
     assert report.checks["human_reviewed_release"] is False
     assert report.eligible_for_clinical_claim is False
+
+    assert manifest["dataset"]["version"] == "0.2.0"

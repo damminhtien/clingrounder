@@ -126,10 +126,11 @@ def _templates(split: Split) -> tuple[Template, ...]:
         return replace(mention, assertion=assertion)
 
     def context(index: int) -> tuple[str, int]:
-        # The age/day pair keeps large generated splits text-distinct without changing labels.
+        # INVARIANT: the de-identified patient key keeps source text distinct without adding a
+        # temporal phrase that could change assertion scope.
         age = 18 + index % 73
         duration_days = 1 + (index // 73) % 30
-        return f"Bệnh nhân {age} tuổi", duration_days
+        return f"Bệnh nhân mã BN{index + 1:04d}, {age} tuổi", duration_days
 
     def current_symptoms(concepts: Sequence[Mention], index: int) -> tuple[str, list[EntityPayload]]:
         subject, days = context(index)

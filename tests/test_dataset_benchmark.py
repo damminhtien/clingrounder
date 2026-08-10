@@ -92,6 +92,9 @@ def test_public_benchmark_writes_complete_artifact_bundle(tmp_path: Path) -> Non
 
     assert summary["schema_version"] == "clingrounder.benchmark-summary.v1"
     assert summary["benchmark"]["status"] == "synthetic_pilot"
+    assert len(summary["benchmark_manifest_sha256"]) == 64
+    assert len(summary["input_sha256"]) == 64
+    assert len(summary["config_source_sha256"]) == 64
     assert summary["metrics"]["offset_validity"] == 1.0
     assert summary["metrics"]["entity_overlap_micro_f1"] == 1.0
     assert summary["metrics"]["assertion_accuracy"] == 1.0
@@ -214,6 +217,11 @@ def test_public_benchmark_suite_writes_named_runs_and_index(tmp_path: Path) -> N
 
     assert suite["schema_version"] == "clingrounder.benchmark-suite.v1"
     assert list(suite["runs"]) == ["exact", "full"]
+    assert len(suite["benchmark_manifest_sha256"]) == 64
+    assert len(suite["input_sha256"]) == 64
+    assert len(suite["runs"]["exact"]["profile_sha256"]) == 64
+    assert len(suite["runs"]["exact"]["config_source_sha256"]) == 64
+    assert len(suite["runs"]["exact"]["terminology_fingerprint"]) == 64
     assert (output / "exact" / "summary.json").is_file()
     assert (output / "full" / "predictions.jsonl").is_file()
     assert (output / "suite.json").is_file()
@@ -281,6 +289,53 @@ def test_benchmark_reference_verifier_rejects_correctness_drift() -> None:
 
     assert report["verified"] is False
     assert report["variants"]["exact"]["checks"]["entity_exact_micro_f1"] is False
+
+
+def test_benchmark_reference_verifier_checks_snapshot_and_runtime_provenance() -> None:
+    suite = {
+        "benchmark": {"id": "fixture", "version": "2.0.0"},
+        "split": "test",
+        "benchmark_manifest_sha256": "manifest-sha",
+        "input_sha256": "input-sha",
+        "runs": {
+            "exact": {
+                "config_fingerprint": "config-sha",
+                "terminology_fingerprint": "terminology-sha",
+                "metrics": {"entity_exact_micro_f1": 0.8},
+                "performance": {"document_latency_ms": {"p95": 42.0}},
+            }
+        },
+    }
+    reference = {
+        "benchmark": "fixture",
+        "dataset": {
+            "version": "2.0.0",
+            "benchmark_manifest_sha256": "manifest-sha",
+            "input_sha256": "different-input",
+        },
+        "results": [
+            {
+                "variant": "exact",
+                "split": "test",
+                "config_fingerprint": "config-sha",
+                "terminology_fingerprint": "terminology-sha",
+                "entity_exact_micro_f1": 0.8,
+            }
+        ],
+    }
+
+    report = verify_dataset_benchmark_reference(suite, reference)
+
+    assert report["verified"] is False
+    assert report["dataset_checks"] == {
+        "version": True,
+        "benchmark_manifest_sha256": True,
+        "input_sha256": False,
+    }
+    assert report["variants"]["exact"]["provenance_checks"] == {
+        "config_fingerprint": True,
+        "terminology_fingerprint": True,
+    }
 
 
 def test_benchmark_reference_verifier_rejects_duplicate_variants() -> None:

@@ -115,6 +115,9 @@ def run_dataset_benchmark(
     correctness, confusion = _score(examples, prediction_by_id, validation=validation)
     git_commit = _git_commit()
     peak_rss = peak_rss_bytes()
+    benchmark_manifest_sha256 = _sha256_file(manifest_path)
+    input_sha256 = _sha256_file(input_path)
+    config_source_sha256 = _sha256_file(Path(config_path).expanduser().resolve())
     performance = {
         "initialization_ms": round(initialization_ms, 6),
         "documents_per_second": round(
@@ -136,6 +139,9 @@ def run_dataset_benchmark(
         "schema_version": "clingrounder.benchmark-summary.v1",
         "benchmark": manifest["dataset"],
         "split": split,
+        "benchmark_manifest_sha256": benchmark_manifest_sha256,
+        "input_sha256": input_sha256,
+        "config_source_sha256": config_source_sha256,
         "config_fingerprint": configuration_fingerprint,
         "profile_sha256": resolved.inspection_report()["profile_sha256"],
         "terminology_fingerprint": terminology_fingerprint,
@@ -185,6 +191,7 @@ def run_dataset_benchmark_suite(
 
     root = Path(output_dir).expanduser().resolve()
     runs: dict[str, dict[str, Any]] = {}
+    shared_provenance: dict[str, str] | None = None
     for name in sorted(normalized_configs):
         summary = run_dataset_benchmark(
             benchmark_dir,
@@ -192,12 +199,23 @@ def run_dataset_benchmark_suite(
             root / name,
             split=split,
         )
+        provenance = {
+            "benchmark_manifest_sha256": _string_value(summary, "benchmark_manifest_sha256"),
+            "input_sha256": _string_value(summary, "input_sha256"),
+        }
+        if shared_provenance is None:
+            shared_provenance = provenance
+        elif provenance != shared_provenance:
+            raise ValueError("Benchmark suite profiles did not use the same dataset snapshot")
         runs[name] = {
             "config": str(normalized_configs[name]),
             "output": name,
             "metrics": summary["metrics"],
             "performance": summary["performance"],
+            "profile_sha256": summary["profile_sha256"],
+            "config_source_sha256": summary["config_source_sha256"],
             "config_fingerprint": summary["config_fingerprint"],
+            "terminology_fingerprint": summary["terminology_fingerprint"],
         }
 
     benchmark_root = Path(benchmark_dir).expanduser().resolve()
@@ -207,6 +225,7 @@ def run_dataset_benchmark_suite(
         "benchmark": manifest["dataset"],
         "split": split,
         "git_commit": _git_commit(),
+        **(shared_provenance or {}),
         "runs": runs,
     }
     _write_json(root / "suite.json", payload)
@@ -238,6 +257,7 @@ def verify_dataset_benchmark_reference(
             f"reference={reference_benchmark!r}"
         )
     suite_split = _string_value(suite, "split")
+    dataset_checks = _reference_dataset_checks(suite, suite_benchmark, reference)
     raw_results = reference.get("results")
     if not isinstance(raw_results, list) or not raw_results:
         raise ValueError("reference results must be a non-empty list")
@@ -261,17 +281,32 @@ def verify_dataset_benchmark_reference(
         actual_metrics = _mapping_value(actual, "metrics")
         actual_performance = _mapping_value(actual, "performance")
         checks: dict[str, bool] = {}
+        provenance_checks: dict[str, bool] = {}
         for name, expected_value in expected.items():
-            if name in {"variant", "split", "p95_ms"}:
+            if name in {
+                "variant",
+                "split",
+                "p95_ms",
+                "config_fingerprint",
+                "terminology_fingerprint",
+            }:
                 continue
             checks[name] = _values_match(actual_metrics.get(name), expected_value, tolerance)
+        for name in ("config_fingerprint", "terminology_fingerprint"):
+            if name in expected:
+                provenance_checks[name] = _values_match(
+                    actual.get(name), expected.get(name), tolerance
+                )
         runtime_reference = expected.get("p95_ms")
         latency = _mapping_value(actual_performance, "document_latency_ms")
         variants[variant] = {
-            "correctness_match": expected_split == suite_split and all(checks.values()),
+            "correctness_match": expected_split == suite_split
+            and all(checks.values())
+            and all(provenance_checks.values()),
             "split_match": expected_split == suite_split,
             "missing": False,
             "checks": checks,
+            "provenance_checks": provenance_checks,
             "runtime": {
                 "reference_p95_ms": runtime_reference,
                 "measured_p95_ms": _optional_finite_number(latency.get("p95")),
@@ -290,10 +325,40 @@ def verify_dataset_benchmark_reference(
         "reference_commit": reference_commit,
         "suite_commit": _optional_string(suite.get("git_commit")),
         "runtime_checked": False,
-        "verified": bool(variants)
+        "dataset_checks": dataset_checks,
+        "verified": all(dataset_checks.values())
+        and bool(variants)
         and all(result["correctness_match"] for result in variants.values()),
         "variants": variants,
     }
+
+
+def _reference_dataset_checks(
+    suite: Mapping[str, Any],
+    suite_benchmark: Mapping[str, Any],
+    reference: Mapping[str, Any],
+) -> dict[str, bool]:
+    """Verify optional snapshot identity without weakening legacy reference files."""
+
+    raw_dataset = reference.get("dataset")
+    if raw_dataset is None:
+        return {}
+    if not isinstance(raw_dataset, Mapping):
+        raise ValueError("reference dataset must be a mapping")
+    actual = {
+        "version": suite_benchmark.get("version"),
+        "benchmark_manifest_sha256": suite.get("benchmark_manifest_sha256"),
+        "input_sha256": suite.get("input_sha256"),
+    }
+    checks: dict[str, bool] = {}
+    for name in ("version", "benchmark_manifest_sha256", "input_sha256"):
+        if name in raw_dataset:
+            checks[name] = raw_dataset.get(name) == actual[name]
+    if not checks:
+        raise ValueError(
+            "reference dataset requires version, benchmark_manifest_sha256, or input_sha256"
+        )
+    return checks
 
 
 def compare_dataset_benchmarks(
