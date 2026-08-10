@@ -1,0 +1,81 @@
+schema_version: clingrounder.benchmark-results.v1
+benchmark: vi-clinical-grounding-synthetic-v1
+status: synthetic_pending_human_review_measured
+measurement:
+  commit: d7c772a20754d830211cd912dc9854c471a44c30
+  python: "3.14.5"
+  platform: macOS
+  note: Runtime values are reported only; correctness and provenance are verified.
+dataset:
+  version: "0.2.0"
+  benchmark_manifest_sha256: e2e4ea7b15804efdfeb5b5fe8b0eaeb9829a51a16b8d8db0faa23a8614ddb25a
+  input_sha256: a4a71d40825fe2b3db3010d3b43dd0c7a2d36e480ac82f1abb12aeac0e1b444e
+results:
+  - variant: exact
+    split: test
+    config_fingerprint: fdc61a0376cb0a71f643c1aaf7be5973c44166ec8b698debe1b6178474f32b3f
+    terminology_fingerprint: b869bea0a697020bee3515f4ca068662c8fdf05392ca31e86d6e15314441e489
+    entity_exact_micro_f1: 0.5408163265306123
+    entity_exact_precision: 1.0
+    entity_exact_recall: 0.3706293706293706
+    assertion_accuracy: 0.9308176100628931
+    assertion_positive_macro_f1: 1.0
+    linking_recall_at_5: 0.39650872817955113
+    linking_top1_accuracy: 0.39650872817955113
+    relation_micro_f1: 0.0
+    offset_validity: 1.0
+    invalid_assigned_code_rate: 0.0
+    invalid_relation_rate: 0.0
+    validation_error_count: 0
+    p95_ms: 12.780023
+  - variant: lexical
+    split: test
+    config_fingerprint: bacd4538d895b1432f839736b3654fa845dd61f9c3c5b9f5c26b46562919a68c
+    terminology_fingerprint: b869bea0a697020bee3515f4ca068662c8fdf05392ca31e86d6e15314441e489
+    entity_exact_micro_f1: 0.5408163265306123
+    entity_exact_precision: 1.0
+    entity_exact_recall: 0.3706293706293706
+    assertion_accuracy: 0.9308176100628931
+    assertion_positive_macro_f1: 1.0
+    linking_recall_at_5: 0.39650872817955113
+    linking_top1_accuracy: 0.39650872817955113
+    relation_micro_f1: 0.0
+    offset_validity: 1.0
+    invalid_assigned_code_rate: 0.0
+    invalid_relation_rate: 0.0
+    validation_error_count: 0
+    p95_ms: 4.024959
+  - variant: hybrid
+    split: test
+    config_fingerprint: 25c7c97c90cbffd1a49631195d20d9e56ce918772337de0308ab857ab3bab592
+    terminology_fingerprint: b869bea0a697020bee3515f4ca068662c8fdf05392ca31e86d6e15314441e489
+    entity_exact_micro_f1: 0.5408163265306123
+    entity_exact_precision: 1.0
+    entity_exact_recall: 0.3706293706293706
+    assertion_accuracy: 0.9308176100628931
+    assertion_positive_macro_f1: 1.0
+    linking_recall_at_5: 0.39650872817955113
+    linking_top1_accuracy: 0.39650872817955113
+    relation_micro_f1: 0.0
+    offset_validity: 1.0
+    invalid_assigned_code_rate: 0.0
+    invalid_relation_rate: 0.0
+    validation_error_count: 0
+    p95_ms: 5.344843
+  - variant: full
+    split: test
+    config_fingerprint: 2d086218a1c4661ca1facc73af345c8a819ec7e589bf0716ebfb6d2308fd6363
+    terminology_fingerprint: b869bea0a697020bee3515f4ca068662c8fdf05392ca31e86d6e15314441e489
+    entity_exact_micro_f1: 0.5408163265306123
+    entity_exact_precision: 1.0
+    entity_exact_recall: 0.3706293706293706
+    assertion_accuracy: 0.9308176100628931
+    assertion_positive_macro_f1: 1.0
+    linking_recall_at_5: 0.39650872817955113
+    linking_top1_accuracy: 0.39650872817955113
+    relation_micro_f1: 0.0
+    offset_validity: 1.0
+    invalid_assigned_code_rate: 0.0
+    invalid_relation_rate: 0.0
+    validation_error_count: 0
+    p95_ms: 5.949915

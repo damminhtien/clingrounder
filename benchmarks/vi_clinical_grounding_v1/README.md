@@ -50,8 +50,9 @@ latency, and fails closed on invalid offsets, terminology assignments, relations
 errors. Runtime-only comparison remains available as `clingrounder-benchmark compare`.
 
 Verify that a generated suite still matches the correctness values published in the benchmark
-reference file. The command reports p95 latency for comparison but deliberately does not gate on
-it because latency depends on the host:
+reference file. New references also pin the dataset, profile, and terminology fingerprints. The
+command reports p95 latency for comparison but deliberately does not gate on it because latency
+depends on the host:
 
 ```bash
 clingrounder-benchmark verify-reference \
@@ -59,6 +60,10 @@ clingrounder-benchmark verify-reference \
   --reference benchmarks/vi_clinical_grounding_v1/expected_results.yaml \
   --output artifacts/benchmarks/vi-clinical-grounding-v1/reference-verification.json
 ```
+
+The larger generated diagnostic has a separate reference at
+`synthetic_diagnostic_expected_results.yaml`. It remains synthetic and review-pending; CI uses it
+to detect generator or pipeline drift, not to support a clinical claim.
 
 ## Independent review handoff
 

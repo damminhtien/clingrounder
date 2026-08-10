@@ -31,6 +31,12 @@ raw-offset assertions, and a content-addressed manifest. Its status is
 published pilot. A reviewer can promote a later snapshot only after checking the generated cases,
 adding the review record, and rerunning the source/license gates.
 
+Generator version `0.2.0` selects concepts by semantic role rather than shuffled list position,
+derives assertion labels from explicit template cues, and uses split-specific surface forms. CI
+regenerates the default snapshot, audits normalized-text/template leakage, and verifies the
+correctness and provenance reference. This protects engineering evidence but does not substitute
+for independent human review.
+
 ## Required snapshot contract
 
 Every future snapshot must include:

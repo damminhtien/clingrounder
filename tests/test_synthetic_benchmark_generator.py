@@ -1,5 +1,8 @@
+import hashlib
 import json
 from pathlib import Path
+
+import yaml
 
 from clingrounder.evaluation.dataset_audit import audit_dataset
 from scripts.generate_vi_clinical_benchmark import generate_snapshot
@@ -132,3 +135,15 @@ def test_synthetic_snapshot_is_unique_and_auditable_before_human_review(
     assert report.eligible_for_clinical_claim is False
 
     assert manifest["dataset"]["version"] == "0.2.0"
+    reference = yaml.safe_load(
+        Path(
+            "benchmarks/vi_clinical_grounding_v1/"
+            "synthetic_diagnostic_expected_results.yaml"
+        ).read_text(encoding="utf-8")
+    )
+    assert manifest["dataset"]["version"] == reference["dataset"]["version"]
+    assert manifest["splits"]["test"]["sha256"] == reference["dataset"]["input_sha256"]
+    assert (
+        hashlib.sha256((tmp_path / "dataset_manifest.yaml").read_bytes()).hexdigest()
+        == reference["dataset"]["benchmark_manifest_sha256"]
+    )

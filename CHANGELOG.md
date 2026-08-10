@@ -37,6 +37,10 @@ pre-release semantic versioning while the public API is still maturing.
   and relations without adding UI dependencies to the core package.
 - Extended the offline demo with candidate qualification evidence, relation provenance, and
   per-stage runtime latency from the production trace API.
+- Preserved dataset, profile, and terminology fingerprints in benchmark summaries and suite
+  indexes, with optional provenance enforcement in reference verification.
+- Added a CI-regenerated 900-document synthetic diagnostic reference alongside the small public
+  contract fixture.
 - Added typed artifact manifests, deterministic versioned caches, and explicit local-only artifact
   acquisition with checksum and path-safety validation.
 - Documented the measured Vietnamese NER/DAPT research track, including a rejected promotion and

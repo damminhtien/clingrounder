@@ -39,34 +39,41 @@ Run fingerprints:
 
 | Split | Documents | SHA-256 |
 | --- | ---: | --- |
-| Train | 600 | `24c566e41967a6a3034d0f799ea465ee92a78094d3a23cc46e30dfc349dbcc2d` |
-| Validation | 100 | `a4dad0b5bc27dd8fb26623b1fce91b82ef8b00f6395ac44e0dbd7aded9ae491e` |
-| Test | 200 | `a6b74b1dd37a482efaf379b6609e893376d158ef5834657f419d053f96396192` |
+| Train | 600 | `9281dadb0d4ba2bdc28b6d7b5dedd01195b2f429a73193fc73153e463586f3ef` |
+| Validation | 100 | `e025c8e40e8bb60d3a500a352509ceae13cc6a8aae53e588124bbfe77d5369ca` |
+| Test | 200 | `a4a71d40825fe2b3db3010d3b43dd0c7a2d36e480ac82f1abb12aeac0e1b444e` |
 
-All variants were run on commit `44c0aa3` using the same generated test split. Correctness metrics
-are identical because the current profile differences do not change the generated entity
-decisions. The bundled pack does not fully cover the generated lab concepts, so the snapshot is
-also useful for exposing coverage gaps; runtime still varies by profile. This is a
-regression/stress check, not evidence that retrieval variants are equivalent on real clinical
-text.
+The dataset manifest SHA-256 is
+`e2e4ea7b15804efdfeb5b5fe8b0eaeb9829a51a16b8d8db0faa23a8614ddb25a`.
+The audit found zero structural or leakage issues and correctly reported
+`eligible_for_clinical_claim: false` because no independent human review exists.
+
+All variants were run on commit `d7c772a` using the same generated test split. Correctness metrics
+are identical because these profiles change retrieval and graph behavior, not the rule proposal
+vocabulary that dominates this snapshot. This is a regression/stress check, not evidence that the
+retrieval variants are equivalent on real clinical text.
 
 | System | Entity exact F1 | Assertion macro-F1 | Recall@5 | Top-1 | Relation F1 | p95 ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Exact dictionary | 0.8390 | 0.2938 | 0.7023 | 0.7023 | 0.0000 | 4.35 |
-| Lexical | 0.8390 | 0.2938 | 0.7023 | 0.7023 | 0.0000 | 4.31 |
-| Hybrid | 0.8390 | 0.2938 | 0.7023 | 0.7023 | 0.0000 | 5.60 |
-| Full deterministic | 0.8390 | 0.2938 | 0.7023 | 0.7023 | 0.8475 | 5.48 |
+| Exact dictionary | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 12.78 |
+| Lexical | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 4.02 |
+| Hybrid | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 5.34 |
+| Full deterministic | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 5.95 |
 
-The generated run had exact entity recall `0.8511`, precision `0.8272`, assignment coverage
-`0.8511`, and zero validation errors. By type, the exact baseline measured F1 `1.0000` for
-DISEASE/DRUG, `0.8447` for SYMPTOM, `0.5814` for LAB_TEST, and `0.8366` for LAB_RESULT.
-The largest diagnostic gaps are assertion positive macro-F1 `0.0000`, lab-test recall, and
-linking coverage for the synthetic lab concepts that are intentionally absent from the small
-pack. The `full` profile enables the deterministic relation extractor and KG validation, reaching
-relation F1 `0.8475` on the generated lab relation; the other three profiles intentionally disable
-relations. This is an architectural baseline, not evidence of clinical relation performance.
-These failures are targets for human review and future model/resource work, not reasons to add
-more unvalidated rules.
+The generated run had exact entity precision `1.0000`, recall `0.3706`, assignment coverage
+`1.0000` over predicted entities, and zero output-validation errors. By type, the exact baseline
+measured F1 `0.5546` for DISEASE, `0.2985` for DRUG, `0.6705` for SYMPTOM, and `0.0000` for both
+LAB_TEST and LAB_RESULT. The positive assertion macro-F1 of `1.0000` is conditional on exact
+entity matches; it does not compensate for missed entities. The absence of extracted lab
+endpoints also explains relation F1 `0.0000` in the full profile despite 28 gold lab relations.
+
+These values replaced an invalid earlier diagnostic whose shuffled concepts could receive the
+wrong semantic role or assertion cue. The corrected generator intentionally exposes the bundled
+pack's vocabulary and lab-recall limits instead of manufacturing an optimistic result. The
+machine-readable reference is
+`benchmarks/vi_clinical_grounding_v1/synthetic_diagnostic_expected_results.yaml`; CI regenerates
+the 900-document snapshot and verifies its data, config, terminology, and correctness
+fingerprints on every push.
 
 Runtime values are machine-dependent. The authoritative JSON artifacts contain initialization,
 p50/p95/p99 latency, throughput, RSS, and model-forward counters; regenerate them with the
@@ -87,11 +94,21 @@ Generated diagnostic expansion:
 uv run python scripts/generate_vi_clinical_benchmark.py \
   --output-dir /tmp/vi-clinical-grounding-synthetic-v1
 
-uv run clingrounder-benchmark run \
+uv run clingrounder-benchmark audit \
   --benchmark /tmp/vi-clinical-grounding-synthetic-v1 \
-  --config configs/benchmarks/vi_clinical_grounding_v1/full.yaml \
-  --output /tmp/vi-clinical-grounding-synthetic-v1/run \
-  --split test
+  --output /tmp/vi-clinical-grounding-synthetic-v1/audit.json
+
+uv run clingrounder-benchmark suite \
+  --benchmark /tmp/vi-clinical-grounding-synthetic-v1 \
+  --config exact=configs/benchmarks/vi_clinical_grounding_v1/exact.yaml \
+  --config lexical=configs/benchmarks/vi_clinical_grounding_v1/lexical.yaml \
+  --config hybrid=configs/benchmarks/vi_clinical_grounding_v1/hybrid.yaml \
+  --config full=configs/benchmarks/vi_clinical_grounding_v1/full.yaml \
+  --output /tmp/vi-clinical-grounding-synthetic-v1/suite
+
+uv run clingrounder-benchmark verify-reference \
+  --suite /tmp/vi-clinical-grounding-synthetic-v1/suite/suite.json \
+  --reference benchmarks/vi_clinical_grounding_v1/synthetic_diagnostic_expected_results.yaml
 ```
 
 Before publishing a clinical result, replace the synthetic manifest with a licensed,

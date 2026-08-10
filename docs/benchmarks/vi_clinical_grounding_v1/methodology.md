@@ -19,6 +19,13 @@ command runs named profiles independently and adds a deterministic ablation inde
 merge predictions or hide profile provenance. Runtime numbers are machine-dependent and must be
 compared with repeated runs and tolerances.
 
+The single-run summary and suite index retain the benchmark-manifest SHA-256 and evaluated split
+SHA-256. Suite rows also retain the profile source hash, resolved configuration fingerprint, and
+terminology fingerprint. A reference file may pin these values; `verify-reference` then fails if
+the same metric values were produced from a different dataset, profile, or terminology release.
+Older references without provenance fields remain metric-only evidence and should not be used for
+new published measurements.
+
 Every run also performs a post-inference validation pass against the active terminology
 repository. The summary exposes these fail-closed gates separately from task quality metrics:
 

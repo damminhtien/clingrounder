@@ -122,12 +122,33 @@ jobs:
             --reference benchmarks/vi_clinical_grounding_v1/expected_results.yaml \
             --output artifacts/benchmarks/vi-clinical-grounding-v1/reference-verification.json
 
+      - name: Generate expanded synthetic diagnostic
+        run: |
+          mkdir -p artifacts/benchmarks/vi-clinical-grounding-synthetic-v1
+          .venv/bin/python scripts/generate_vi_clinical_benchmark.py \
+            --output-dir artifacts/benchmarks/vi-clinical-grounding-synthetic-v1/dataset \
+            > artifacts/benchmarks/vi-clinical-grounding-synthetic-v1/generation-manifest.json
+          .venv/bin/clingrounder-benchmark audit \
+            --benchmark artifacts/benchmarks/vi-clinical-grounding-synthetic-v1/dataset \
+            --output artifacts/benchmarks/vi-clinical-grounding-synthetic-v1/audit.json
+          .venv/bin/clingrounder-benchmark suite \
+            --benchmark artifacts/benchmarks/vi-clinical-grounding-synthetic-v1/dataset \
+            --config exact=configs/benchmarks/vi_clinical_grounding_v1/exact.yaml \
+            --config lexical=configs/benchmarks/vi_clinical_grounding_v1/lexical.yaml \
+            --config hybrid=configs/benchmarks/vi_clinical_grounding_v1/hybrid.yaml \
+            --config full=configs/benchmarks/vi_clinical_grounding_v1/full.yaml \
+            --output artifacts/benchmarks/vi-clinical-grounding-synthetic-v1/suite
+          .venv/bin/clingrounder-benchmark verify-reference \
+            --suite artifacts/benchmarks/vi-clinical-grounding-synthetic-v1/suite/suite.json \
+            --reference benchmarks/vi_clinical_grounding_v1/synthetic_diagnostic_expected_results.yaml \
+            --output artifacts/benchmarks/vi-clinical-grounding-synthetic-v1/reference-verification.json
+
       - name: Upload benchmark evidence
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: public-benchmark-${{ github.sha }}
-          path: artifacts/benchmarks/vi-clinical-grounding-v1
+          path: artifacts/benchmarks/
           if-no-files-found: error
 
   security-artifacts:
