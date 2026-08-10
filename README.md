@@ -291,7 +291,8 @@ clingrounder-research model inspect-public-training-contract \
 ```
 
 It is currently marked `pending_public_snapshot` until a redistributable, human-reviewed dataset
-passes the benchmark release gates.
+passes the benchmark release gates. See the [model card](docs/model-card-vi-clinical-ner-v1.md)
+for intended use, limitations, and promotion criteria.
 
 ### Optional extras
 
