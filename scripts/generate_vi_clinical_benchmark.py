@@ -9,7 +9,7 @@ human-review pending.  It must never be used to claim clinical validation.
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import hashlib
 import json
 from pathlib import Path
@@ -25,9 +25,9 @@ Split = Literal["train", "validation", "test"]
 class Mention:
     text: str
     entity_type: str
-    assertion: str
     code_system: str
-    code: str
+    code: str | None
+    assertion: str = "PRESENT"
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,19 +35,38 @@ class Template:
     name: str
     language: str
     genre: str
-    render: Callable[[Sequence[Mention]], tuple[str, list[dict[str, object]]]]
+    render: Callable[[Sequence[Mention], int], tuple[str, list[dict[str, object]]]]
 
 
 CONCEPTS = (
-    Mention("sốt", "SYMPTOM", "NEGATED", "LOCAL", "SYMPTOM_FEVER"),
-    Mention("ho", "SYMPTOM", "PRESENT", "LOCAL", "SYMPTOM_COUGH"),
-    Mention("khó thở", "SYMPTOM", "PRESENT", "LOCAL", "SYMPTOM_DYSPNEA"),
-    Mention("tăng huyết áp", "DISEASE", "HISTORICAL", "ICD-10", "I10"),
-    Mention("đái tháo đường type 2", "DISEASE", "PRESENT", "ICD-10", "E11"),
-    Mention("metformin", "DRUG", "PRESENT", "RxNorm", "6809"),
-    Mention("đường huyết", "LAB_TEST", "PRESENT", "LOCAL", "LAB_TEST_GLUCOSE"),
-    Mention("tăng cao", "LAB_RESULT", "PRESENT", "LOCAL", "LAB_RESULT_HIGH"),
+    Mention("sốt", "SYMPTOM", "LOCAL", "SYMPTOM_FEVER"),
+    Mention("ho", "SYMPTOM", "LOCAL", "SYMPTOM_COUGH"),
+    Mention("khó thở", "SYMPTOM", "LOCAL", "SYMPTOM_DYSPNEA"),
+    Mention("đau ngực", "SYMPTOM", "LOCAL", "SYMPTOM_CHEST_PAIN"),
+    Mention("đau đầu", "SYMPTOM", "LOCAL", "SYMPTOM_HEADACHE"),
+    Mention("buồn nôn và nôn", "SYMPTOM", "LOCAL", "SYMPTOM_NAUSEA_VOMITING"),
+    Mention("tăng huyết áp", "DISEASE", "ICD-10", "I10"),
+    Mention("đái tháo đường type 2", "DISEASE", "ICD-10", "E11"),
+    Mention("viêm phổi", "DISEASE", "ICD-10", "J18.9"),
+    Mention("hen phế quản", "DISEASE", "ICD-10", "J45"),
+    Mention("ung thư phổi", "DISEASE", "ICD-10", "C34"),
+    Mention("nhồi máu cơ tim cấp", "DISEASE", "ICD-10", "I21.9"),
+    Mention("metformin", "DRUG", "RxNorm", "6809"),
+    Mention("salbutamol", "DRUG", "RxNorm", "435"),
+    Mention("aspirin", "DRUG", "RxNorm", "1191"),
+    Mention("amoxicillin", "DRUG", "RxNorm", "723"),
+    Mention("atorvastatin", "DRUG", "RxNorm", "83367"),
+    Mention("omeprazole", "DRUG", "RxNorm", "7646"),
+    Mention("đường huyết", "LAB_TEST", "LOCAL", "GLUCOSE"),
+    Mention("creatinin", "LAB_TEST", "LOCAL", "CREATININE"),
+    Mention("HbA1c", "LAB_TEST", "LOCAL", "HBA1C"),
+    Mention("điện tâm đồ", "LAB_TEST", "LOCAL", "ECG"),
+    Mention("tăng", "LAB_RESULT", "NONE", None),
+    Mention("giảm", "LAB_RESULT", "NONE", None),
+    Mention("bình thường", "LAB_RESULT", "NONE", None),
+    Mention("bất thường", "LAB_RESULT", "NONE", None),
 )
+SUPPORTED_ASSERTIONS = ("PRESENT", "NEGATED", "HISTORICAL", "FAMILY", "POSSIBLE")
 
 
 EntityPayload = dict[str, object]
@@ -97,31 +116,160 @@ def _render(parts: Iterable[str | Mention]) -> tuple[str, list[EntityPayload]]:
 
 
 def _templates(split: Split) -> tuple[Template, ...]:
-    """Use disjoint surface templates so test templates never leak into training."""
+    """Use role-safe, split-disjoint templates with assertions owned by their cues."""
 
-    def concept(concepts: Sequence[Mention], entity_type: str) -> Mention:
-        return next(item for item in concepts if item.entity_type == entity_type)
+    def select(concepts: Sequence[Mention], entity_type: str, offset: int = 0) -> Mention:
+        matches = [item for item in concepts if item.entity_type == entity_type]
+        return matches[offset % len(matches)]
+
+    def annotated(mention: Mention, assertion: str) -> Mention:
+        return replace(mention, assertion=assertion)
+
+    def context(index: int) -> tuple[str, int]:
+        # The age/day pair keeps large generated splits text-distinct without changing labels.
+        age = 18 + index % 73
+        duration_days = 1 + (index // 73) % 30
+        return f"Bệnh nhân {age} tuổi", duration_days
+
+    def current_symptoms(concepts: Sequence[Mention], index: int) -> tuple[str, list[EntityPayload]]:
+        subject, days = context(index)
+        first = annotated(select(concepts, "SYMPTOM"), "PRESENT")
+        second = annotated(select(concepts, "SYMPTOM", 1), "PRESENT")
+        return _render([subject, " hiện ", first, ", kèm ", second, f" trong {days} ngày."])
+
+    def negated_symptom(concepts: Sequence[Mention], index: int) -> tuple[str, list[EntityPayload]]:
+        subject, days = context(index)
+        symptom = annotated(select(concepts, "SYMPTOM"), "NEGATED")
+        return _render([subject, " không ghi nhận ", symptom, f" trong {days} ngày qua."])
+
+    def historical_disease(concepts: Sequence[Mention], index: int) -> tuple[str, list[EntityPayload]]:
+        subject, _ = context(index)
+        disease = annotated(select(concepts, "DISEASE"), "HISTORICAL")
+        symptom = annotated(select(concepts, "SYMPTOM"), "PRESENT")
+        return _render([subject, " có tiền sử ", disease, ", hiện xuất hiện ", symptom, "."])
+
+    def family_disease(concepts: Sequence[Mention], index: int) -> tuple[str, list[EntityPayload]]:
+        subject, _ = context(index)
+        disease = annotated(select(concepts, "DISEASE"), "FAMILY")
+        symptom = annotated(select(concepts, "SYMPTOM"), "PRESENT")
+        return _render(["Mẹ của ", subject.casefold(), " mắc ", disease, "; người bệnh hiện ", symptom, "."])
+
+    def medication(concepts: Sequence[Mention], index: int) -> tuple[str, list[EntityPayload]]:
+        subject, _ = context(index)
+        drug = annotated(select(concepts, "DRUG"), "PRESENT")
+        symptom = annotated(select(concepts, "SYMPTOM"), "PRESENT")
+        if split == "train":
+            return _render(
+                [subject, " có thuốc hiện tại là ", drug, "; đồng thời ghi nhận ", symptom, "."]
+            )
+        return _render(
+            ["Danh sách thuốc của ", subject.casefold(), " gồm ", drug, "; chỉ định do ", symptom, "."]
+        )
+
+    def lab(concepts: Sequence[Mention], index: int) -> tuple[str, list[EntityPayload]]:
+        subject, _ = context(index)
+        test = annotated(select(concepts, "LAB_TEST"), "PRESENT")
+        result_options = [
+            item
+            for item in concepts
+            if item.entity_type == "LAB_RESULT"
+            and (
+                item.text in {"bình thường", "bất thường"}
+                if test.text == "điện tâm đồ"
+                else item.text in {"tăng", "giảm", "bình thường"}
+            )
+        ]
+        result = annotated(result_options[0], "PRESENT")
+        lead_by_split = {
+            "train": "Kết quả thường quy của ",
+            "validation": "Đánh giá cận lâm sàng ở ",
+            "test": "Bảng xét nghiệm của ",
+        }
+        return _render([lead_by_split[split], subject.casefold(), ": ", test, " ", result, "."])
+
+    def validation_negation(concepts: Sequence[Mention], index: int) -> tuple[str, list[EntityPayload]]:
+        subject, _ = context(index)
+        symptom = annotated(select(concepts, "SYMPTOM"), "NEGATED")
+        return _render([subject, " phủ nhận triệu chứng ", symptom, "."])
+
+    def validation_history(concepts: Sequence[Mention], index: int) -> tuple[str, list[EntityPayload]]:
+        subject, _ = context(index)
+        first = annotated(select(concepts, "DISEASE"), "HISTORICAL")
+        second = annotated(select(concepts, "DISEASE", 1), "HISTORICAL")
+        return _render([subject, " có PMH gồm ", first, " và history of ", second, "."])
+
+    def possible_disease(concepts: Sequence[Mention], index: int) -> tuple[str, list[EntityPayload]]:
+        subject, _ = context(index)
+        disease = annotated(select(concepts, "DISEASE"), "POSSIBLE")
+        symptom = annotated(select(concepts, "SYMPTOM"), "PRESENT")
+        if split == "validation":
+            return _render(
+                [subject, " được đánh giá khả năng ", disease, "; đồng thời ghi nhận ", symptom, "."]
+            )
+        return _render(
+            [subject, " đang được theo dõi vì có thể mắc ", disease, "; biểu hiện kèm theo là ", symptom, "."]
+        )
+
+    def validation_family(concepts: Sequence[Mention], index: int) -> tuple[str, list[EntityPayload]]:
+        subject, _ = context(index)
+        disease = annotated(select(concepts, "DISEASE"), "FAMILY")
+        symptom = annotated(select(concepts, "SYMPTOM"), "NEGATED")
+        return _render(["Cha của ", subject.casefold(), " từng mắc ", disease, "; bệnh nhân không ", symptom, "."])
+
+    def question_answer(concepts: Sequence[Mention], index: int) -> tuple[str, list[EntityPayload]]:
+        subject, days = context(index)
+        symptom = select(concepts, "SYMPTOM")
+        first = annotated(symptom, "PRESENT")
+        repeated = annotated(symptom, "PRESENT")
+        return _render(
+            ["Hỏi: ", subject, " có ", first, " không? Đáp: Có ", repeated, f" từ {days} ngày nay."]
+        )
+
+    def repeated_context(concepts: Sequence[Mention], index: int) -> tuple[str, list[EntityPayload]]:
+        subject, days = context(index)
+        symptom = select(concepts, "SYMPTOM")
+        negated = annotated(symptom, "NEGATED")
+        present = annotated(symptom, "PRESENT")
+        return _render([subject, " ban đầu không ", negated, "; sau ", str(days), " ngày xuất hiện ", present, "."])
+
+    def mixed_note(concepts: Sequence[Mention], index: int) -> tuple[str, list[EntityPayload]]:
+        subject, _ = context(index)
+        disease = annotated(select(concepts, "DISEASE"), "PRESENT")
+        drug = annotated(select(concepts, "DRUG"), "PRESENT")
+        symptom = annotated(select(concepts, "SYMPTOM"), "PRESENT")
+        return _render(["Clinical note: ", subject.casefold(), " có ", disease, ", dùng ", drug, "; symptom: ", symptom, "."])
+
+    def test_family(concepts: Sequence[Mention], index: int) -> tuple[str, list[EntityPayload]]:
+        subject, _ = context(index)
+        disease = annotated(select(concepts, "DISEASE"), "FAMILY")
+        symptom = annotated(select(concepts, "SYMPTOM"), "PRESENT")
+        return _render([subject, " hiện ", symptom, "; chị gái có tiền sử ", disease, "."])
 
     if split == "train":
         return (
-            Template("train.negation", "vi", "clinical", lambda c: _render(["Không ghi nhận ", c[0], "."])),
-            Template("train.history", "vi", "clinical", lambda c: _render(["Tiền sử ", c[3], "."])),
-            Template("train.medication", "vi-en", "medication_list", lambda c: _render(["Đang dùng ", c[5], " 500 mg po bid."])),
-            Template("train.symptoms", "vi", "clinical", lambda c: _render(["Hiện tại bệnh nhân ", c[1], " và ", c[2], "."])),
-            Template("train.lab", "vi", "clinical", lambda c: _render(["Xét nghiệm ", concept(c, "LAB_TEST"), " cho kết quả ", concept(c, "LAB_RESULT"), "."])),
+            Template("train.current", "vi", "clinical", current_symptoms),
+            Template("train.negation", "vi", "clinical", negated_symptom),
+            Template("train.history", "vi", "clinical", historical_disease),
+            Template("train.family", "vi", "family_history", family_disease),
+            Template("train.medication", "vi-en", "medication_list", medication),
+            Template("train.lab", "vi", "lab_report", lab),
         )
     if split == "validation":
         return (
-            Template("validation.negation", "vi", "clinical", lambda c: _render(["Bệnh nhân phủ nhận ", c[0], "."])),
-            Template("validation.history", "vi-en", "clinical", lambda c: _render(["PMH: ", c[4], "; history of ", c[3], "."])),
-            Template("validation.lab_like", "vi", "clinical", lambda c: _render(["Lý do khám: ", c[2], ", không kèm ", c[0], "."])),
-            Template("validation.lab", "vi", "clinical", lambda c: _render(["Kết quả xét nghiệm ", concept(c, "LAB_TEST"), ": ", concept(c, "LAB_RESULT"), "."])),
+            Template("validation.negation", "vi", "clinical", validation_negation),
+            Template("validation.history", "vi-en", "clinical", validation_history),
+            Template("validation.possible", "vi", "clinical", possible_disease),
+            Template("validation.family", "vi", "family_history", validation_family),
+            Template("validation.lab", "vi", "lab_report", lab),
         )
     return (
-        Template("test.question", "vi", "question_answer", lambda c: _render(["Hỏi: Có ", c[1], " không? Đáp: Có, hiện có ", c[2], "."])),
-        Template("test.repeated", "vi", "clinical", lambda c: _render(["Không sốt; theo dõi ", c[0], ". Hiện ", c[1], "."])),
-        Template("test.mixed", "vi-en", "educational", lambda c: _render(["Clinical note: ", c[4], ", đang dùng ", c[5], "; symptoms: ", c[2], "."])),
-        Template("test.lab", "vi-en", "clinical", lambda c: _render(["Lab panel: ", concept(c, "LAB_TEST"), " = ", concept(c, "LAB_RESULT"), "."])),
+        Template("test.question", "vi", "question_answer", question_answer),
+        Template("test.repeated", "vi", "clinical", repeated_context),
+        Template("test.mixed", "vi-en", "educational", mixed_note),
+        Template("test.possible", "vi", "clinical", possible_disease),
+        Template("test.family", "vi", "family_history", test_family),
+        Template("test.medication", "vi-en", "medication_list", medication),
+        Template("test.lab", "vi-en", "lab_report", lab),
     )
 
 
@@ -174,7 +322,7 @@ def generate_snapshot(
             template = templates[index % len(templates)]
             concepts = list(CONCEPTS)
             rng.shuffle(concepts)
-            text, entities = template.render(concepts)
+            text, entities = template.render(concepts, index)
             relations = _relations_for(template.name, entities)
             rows.append(
                 json.dumps(
@@ -202,9 +350,11 @@ def generate_snapshot(
         "schema_version": "clingrounder.dataset-manifest.v1",
         "dataset": {
             "id": "vi-clinical-grounding-synthetic-v1",
-            "version": "0.1.0",
+            "version": "0.2.0",
             "status": "synthetic_pending_human_review",
+            "language": ["vi", "vi-en"],
             "license": "MIT",
+            "license_url": "https://opensource.org/license/mit",
             "human_reviewed": False,
             "seed": seed,
         },
@@ -218,13 +368,24 @@ def generate_snapshot(
             for split, count in counts.items()
         },
         "entities": sorted({concept.entity_type for concept in CONCEPTS}),
-        "assertions": sorted({concept.assertion for concept in CONCEPTS}),
+        "assertions": list(SUPPORTED_ASSERTIONS),
         "code_systems": sorted({concept.code_system for concept in CONCEPTS}),
         "policy": {
             "template_groups_disjoint": True,
             "test_used_for_development": False,
             "private_data": False,
             "human_review_required_before_clinical_claim": True,
+        },
+        "review": {
+            "status": "pending",
+            "reviewers_required": 2,
+            "double_review_fraction": 0.1,
+            "agreement_targets": {
+                "span_type": 0.90,
+                "assertion": 0.85,
+                "relation": 0.80,
+            },
+            "adjudication_required": True,
         },
     }
     (root / "dataset_manifest.yaml").write_text(

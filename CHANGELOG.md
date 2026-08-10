@@ -46,6 +46,8 @@ pre-release semantic versioning while the public API is still maturing.
 
 ### Fixed
 
+- Synthetic benchmark templates now select concepts by semantic role, derive assertions from
+  explicit cues, and keep normalized document text disjoint across train, validation, and test.
 - Synchronized checked-in research run specifications with the current `uv.lock` fingerprint so
   reproducibility validation does not fail on a clean checkout.
 - Updated the Vietnamese benchmark reproduction script and pilot table from a current measured
