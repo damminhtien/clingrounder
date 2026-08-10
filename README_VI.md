@@ -1,5 +1,7 @@
 # ClinGrounder
 
+PyPI package: `clingrounder`  · Python import: `clingrounder`
+
 Bộ công cụ Clinical NLP bảo toàn offset để trích xuất khái niệm y khoa, phân tích ngữ cảnh,
 chuẩn hóa thuật ngữ và kiểm tra đồ thị quan hệ. Repo ưu tiên tiếng Việt và văn bản trộn
 Việt-Anh, nhưng các contract lõi không phụ thuộc ngôn ngữ.
@@ -72,7 +74,7 @@ Hỗ trợ Python 3.11 đến 3.14.
 
 ```bash
 git clone https://github.com/damminhtien/clingrounder.git
-cd ontological-reasoning-in-medical-knowledge-retrieval
+cd clingrounder
 uv sync --extra dev
 
 uv run clingrounder pipeline run \
@@ -161,7 +163,7 @@ một retrieval pipeline. Type/code-system filter luôn chạy trước assignme
 
 Đọc tiếp:
 
-- [Rule NER V2](docs/rule-ner-v2.md)
+- [Rule NER](docs/rule-ner.md)
 - [Reference implementations](docs/reference-implementations.md)
 - [Data mining](docs/data-mining.md)
 - [Mining reproducibility](docs/mining-reproducibility.md)
