@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+import math
 from typing import Literal, cast
 
 from clingrounder.pipeline.options import (
@@ -95,6 +96,12 @@ class LinkingConfig:
         ):
             if not 0.0 <= value <= 1.0:
                 raise ValueError(f"linking.{name} must be between 0 and 1")
+        for name, values in (
+            ("candidate_thresholds_by_type", self.candidate_thresholds_by_type),
+            ("candidate_thresholds_by_source", self.candidate_thresholds_by_source),
+            ("emit_probabilities_by_source", self.emit_probabilities_by_source),
+        ):
+            _validate_threshold_items(values, f"linking.{name}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -152,6 +159,10 @@ class RuntimeConfig:
     fail_fast: bool = True
 
     def __post_init__(self) -> None:
+        if self.backend not in {"serial", "thread", "process"}:
+            raise ValueError(
+                "runtime.backend must be one of 'serial', 'thread', or 'process'"
+            )
         if self.workers < 1:
             raise ValueError("runtime.workers must be at least 1")
         if self.chunksize < 1:
@@ -285,7 +296,9 @@ def _mapping(value: object, path: str) -> dict[str, object]:
 def _provider(payload: Mapping[str, object], key: str, default: str) -> Provider:
     value = payload.get(key, default)
     if value not in {"disabled", "rules"}:
-        raise ValueError(f"provider must be 'disabled' or 'rules', got {value!r}")
+        raise ValueError(
+            f"{key} must be 'disabled' or 'rules', got {value!r}"
+        )
     return value  # type: ignore[return-value]
 
 
@@ -307,7 +320,10 @@ def _float(payload: Mapping[str, object], key: str, default: float) -> float:
     value = payload.get(key, default)
     if isinstance(value, bool) or not isinstance(value, int | float):
         raise ValueError(f"{key} must be numeric")
-    return float(value)
+    result = float(value)
+    if not math.isfinite(result):
+        raise ValueError(f"{key} must be finite")
+    return result
 
 
 def _string_tuple(payload: Mapping[str, object], key: str, default: tuple[str, ...]) -> tuple[str, ...]:
@@ -320,7 +336,62 @@ def _string_tuple(payload: Mapping[str, object], key: str, default: tuple[str, .
 def _thresholds(payload: Mapping[str, object], key: str, default: tuple[tuple[str, float], ...]) -> tuple[tuple[str, float], ...]:
     value = payload.get(key, default)
     if isinstance(value, Mapping):
-        return tuple(sorted((str(name), _float({"value": threshold}, "value", 0.0)) for name, threshold in value.items()))
+        values = tuple(
+            sorted(
+                (
+                    _threshold_name(name, f"{key}.{name}"),
+                    _probability(
+                        {"value": threshold},
+                        "value",
+                        f"{key}.{name}",
+                    ),
+                )
+                for name, threshold in value.items()
+            )
+        )
+        _validate_threshold_items(values, key)
+        return values
     if isinstance(value, tuple):
+        _validate_threshold_items(value, key)
         return value
     raise ValueError(f"{key} must be a mapping")
+
+
+def _probability(
+    payload: Mapping[str, object],
+    key: str,
+    path: str,
+) -> float:
+    value = payload.get(key)
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise ValueError(f"{path} must be numeric")
+    result = float(value)
+    if not math.isfinite(result) or not 0.0 <= result <= 1.0:
+        raise ValueError(f"{path} must be between 0 and 1")
+    return result
+
+
+def _threshold_name(value: object, path: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{path} must be a non-empty string")
+    return value
+
+
+def _validate_threshold_items(
+    values: tuple[tuple[str, float], ...],
+    path: str,
+) -> None:
+    names: set[str] = set()
+    for item in values:
+        if not isinstance(item, tuple) or len(item) != 2:
+            raise ValueError(f"{path} must contain (name, probability) pairs")
+        name, value = item
+        _threshold_name(name, f"{path}.name")
+        if name in names:
+            raise ValueError(f"{path} must not contain duplicate names")
+        names.add(name)
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            raise ValueError(f"{path}.{name} must be numeric")
+        probability = float(value)
+        if not math.isfinite(probability) or not 0.0 <= probability <= 1.0:
+            raise ValueError(f"{path}.{name} must be between 0 and 1")

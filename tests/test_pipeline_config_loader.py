@@ -196,6 +196,49 @@ def test_pipeline_factory_rejects_unsupported_normalization_version() -> None:
         PipelineFactory.from_config({"normalization": {"version": "future-v2"}})
 
 
+def test_pipeline_profile_rejects_non_finite_threshold(tmp_path: Path) -> None:
+    profile = tmp_path / "profile.yaml"
+    profile.write_text(
+        """
+schema_version: clingrounder.pipeline-profile
+profile:
+  id: strict
+  title: Strict profile
+  description: Reject non-finite thresholds
+  maturity: stable
+pipeline:
+  linking:
+    candidate_thresholds_by_source:
+      exact: .nan
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="candidate_thresholds_by_source.exact"):
+        ResolvedPipelineConfig.load(profile, require_profile=True)
+
+
+def test_pipeline_profile_rejects_unknown_runtime_backend(tmp_path: Path) -> None:
+    profile = tmp_path / "profile.yaml"
+    profile.write_text(
+        """
+schema_version: clingrounder.pipeline-profile
+profile:
+  id: strict
+  title: Strict profile
+  description: Reject unknown runtime backend
+  maturity: stable
+pipeline:
+  runtime:
+    backend: magic
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="runtime.backend"):
+        ResolvedPipelineConfig.load(profile, require_profile=True)
+
+
 def test_rebased_pipeline_profile_round_trips_effective_paths(tmp_path: Path) -> None:
     source_dir = tmp_path / "source"
     source_dir.mkdir()
