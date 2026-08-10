@@ -321,7 +321,7 @@ For a full training run that requires the exact lockfile environment rather than
 Torch, use the isolated lane below and account for its bootstrap time explicitly:
 
 ```bash
-cd /workspace/ontological-reasoning-in-medical-knowledge-retrieval
+cd /workspace/clingrounder
 git checkout <RECORDED_COMMIT>
 git status --porcelain
 
