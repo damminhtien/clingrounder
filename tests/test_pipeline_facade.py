@@ -60,6 +60,26 @@ def test_bundled_vietnamese_artifact_is_offline_and_callable(tmp_path: Path) -> 
     assert cached_prediction.document_id.startswith("text-")
 
 
+def test_bundled_artifact_trace_exposes_latency_and_candidate_evidence() -> None:
+    with load_pipeline("vi-clinical-small", offline=True) as pipeline:
+        result = pipeline.predict_with_trace(
+            "Bệnh nhân đang dùng metformin.",
+            document_id="trace-evidence",
+        )
+
+    assert result.trace.stages
+    assert result.trace.total_ms >= 0.0
+    assert all(stage.elapsed_ms >= 0.0 for stage in result.trace.stages)
+    metformin = next(
+        entity for entity in result.prediction.entities if entity.text == "metformin"
+    )
+    assert metformin.candidates
+    candidate = metformin.candidates[0]
+    assert candidate.source in candidate.evidence_sources
+    assert candidate.matched_alias
+    assert candidate.qualification_reason
+
+
 def test_artifact_manifest_rejects_payload_tampering(tmp_path: Path) -> None:
     source = get_builtin_artifact("vi-clinical-small")
     source.install(tmp_path)

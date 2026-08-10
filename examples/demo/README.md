@@ -20,5 +20,5 @@ uv run streamlit run examples/demo/app.py
 ```
 
 The demo shows raw-offset-safe entity highlights, assertion status, assigned terminology codes,
-candidate provenance, and relations when the configured profile emits them. It is an inspection
-surface, not a clinical decision-support application.
+top-k candidate provenance and qualification reasons, relation evidence, and per-stage latency.
+It is an inspection surface, not a clinical decision-support application.

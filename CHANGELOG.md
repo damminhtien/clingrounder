@@ -35,6 +35,8 @@ pre-release semantic versioning while the public API is still maturing.
   and assignment coverage reports actual primary-code emission.
 - Added an optional offline Streamlit demo for inspecting spans, assertions, candidate provenance,
   and relations without adding UI dependencies to the core package.
+- Extended the offline demo with candidate qualification evidence, relation provenance, and
+  per-stage runtime latency from the production trace API.
 - Added typed artifact manifests, deterministic versioned caches, and explicit local-only artifact
   acquisition with checksum and path-safety validation.
 - Documented the measured Vietnamese NER/DAPT research track, including a rejected promotion and

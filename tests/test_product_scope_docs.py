@@ -25,3 +25,19 @@ def test_public_docs_use_the_current_repository_path() -> None:
 
     assert "/workspace/ontological-reasoning-in-medical-knowledge-retrieval" not in runbook
     assert "cd /workspace/clingrounder" in runbook
+
+
+def test_demo_exposes_the_declared_explainability_contract() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    demo_readme = (ROOT / "examples" / "demo" / "README.md").read_text(
+        encoding="utf-8"
+    )
+    app = (ROOT / "examples" / "demo" / "app.py").read_text(encoding="utf-8")
+
+    assert readme.count("## Optional Demo") == 1
+    assert "per-stage latency" in readme
+    assert "qualification reasons" in demo_readme
+    assert "predict_with_trace" in app
+    assert "qualification_reason" in app
+    assert "evidence_sources" in app
+    assert 'st.subheader("Stage latency")' in app

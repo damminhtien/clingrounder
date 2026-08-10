@@ -141,13 +141,16 @@ See [docs/architecture.md](docs/architecture.md) and
 ## Optional Demo
 
 The repository includes a small local Streamlit inspection demo. It uses the bundled offline
-resource pack and shows raw-span highlights, assertions, candidate provenance, and relations:
+resource pack and shows raw-span highlights, assertions, candidate qualification evidence,
+relations, and per-stage latency:
 
 ```bash
 uv run --with streamlit streamlit run examples/demo/app.py
 ```
 
-The demo is an inspection surface only; it does not provide diagnosis or treatment advice.
+For an isolated environment or a PyPI installation, see
+[the demo README](examples/demo/README.md). The demo is an inspection surface only; it does not
+provide diagnosis, treatment advice, PHI controls, or regulatory compliance.
 
 ## Source Checkout Quickstart
 
@@ -434,21 +437,6 @@ the relation extractor, so the ablation intentionally reports relation F1 `0.000
 profiles and `1.0000` for full. The identical entity/assertion scores are an expected limitation
 of this tiny smoke fixture, not evidence that the systems are equivalent on clinical data. Re-run
 the command above to regenerate fingerprints and machine-specific runtime values.
-
-## Optional Demo
-
-An inspectable local UI is available as an example, without adding a web framework to the core
-package:
-
-```bash
-python -m venv .venv-demo
-.venv-demo/bin/pip install -e ".[vi]"
-.venv-demo/bin/pip install -r examples/demo/requirements.txt
-.venv-demo/bin/streamlit run examples/demo/app.py
-```
-
-See [the demo README](examples/demo/README.md). The demo is for research inspection only and does
-not provide clinical decision support, PHI controls, or regulatory compliance.
 
 ## Optional Benchmark Plugin
 

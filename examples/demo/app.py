@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from html import escape
 from typing import Any
 
@@ -58,17 +59,68 @@ def _highlighted_text(text: str, entities: list[Any]) -> str:
 
 
 def _candidate_rows(entity: Any) -> list[dict[str, object]]:
+    """Project candidate evidence into a compact, inspectable table."""
+
     return [
         {
             "code_system": candidate.code_system.value,
             "code": candidate.code,
             "name": candidate.name,
-            "source": candidate.source,
-            "score": round(candidate.retrieval_score, 4),
+            "retrieval_score": round(candidate.retrieval_score, 4),
+            "emit_probability": round(candidate.emit_probability, 4),
+            "primary_source": candidate.source,
+            "evidence_sources": ", ".join(candidate.evidence_sources),
+            "matched_alias": candidate.matched_alias,
             "qualified": candidate.qualified,
+            "qualification_reason": candidate.qualification_reason,
         }
         for candidate in entity.candidates
     ]
+
+
+def _relation_rows(relations: list[Any]) -> list[dict[str, object]]:
+    """Expose relation confidence and provenance without rendering source text."""
+
+    rows: list[dict[str, object]] = []
+    for relation in relations:
+        evidence = relation.evidence
+        rows.append(
+            {
+                "type": relation.type.value,
+                "head": relation.head,
+                "tail": relation.tail,
+                "confidence": round(relation.confidence, 4),
+                "evidence_span": relation.evidence_span,
+                "evidence_source": evidence.source if evidence else None,
+                "rule_id": evidence.rule_id if evidence else None,
+                "support_score": (
+                    round(evidence.support_score, 4) if evidence else None
+                ),
+                "provenance": evidence.provenance if evidence else None,
+            }
+        )
+    return rows
+
+
+def _stage_rows(trace: Any) -> list[dict[str, object]]:
+    """Return stable stage timings and bounded counters from a pipeline trace."""
+
+    return [
+        {
+            "stage": stage.name,
+            "status": stage.status,
+            "elapsed_ms": round(stage.elapsed_ms, 3),
+            "entity_count": stage.entity_count,
+            "counters": dict(stage.counters),
+        }
+        for stage in trace.stages
+    ]
+
+
+def _document_id(text: str) -> str:
+    """Create the same deterministic, PHI-free identifier shape as the public facade."""
+
+    return f"demo-{hashlib.sha256(text.encode('utf-8')).hexdigest()[:12]}"
 
 
 def main() -> None:
@@ -86,7 +138,8 @@ def main() -> None:
         return
 
     with st.spinner("Running local pipeline..."):
-        prediction = _pipeline()(text)
+        result = _pipeline().predict_with_trace(text, document_id=_document_id(text))
+        prediction = result.prediction
 
     st.subheader("Grounded text")
     st.markdown(_highlighted_text(text, prediction.entities), unsafe_allow_html=True)
@@ -114,18 +167,18 @@ def main() -> None:
     if prediction.relations:
         st.subheader("Relations")
         st.dataframe(
-            [
-                {
-                    "type": relation.type.value,
-                    "head": relation.head,
-                    "tail": relation.tail,
-                    "evidence_span": relation.evidence_span,
-                }
-                for relation in prediction.relations
-            ],
+            _relation_rows(prediction.relations),
             use_container_width=True,
             hide_index=True,
         )
+
+    st.subheader("Stage latency")
+    bottleneck = result.trace.bottleneck()
+    latency_columns = st.columns(3)
+    latency_columns[0].metric("Total", f"{result.trace.total_ms:.2f} ms")
+    latency_columns[1].metric("Stages", len(result.trace.stages))
+    latency_columns[2].metric("Bottleneck", bottleneck.name if bottleneck else "n/a")
+    st.dataframe(_stage_rows(result.trace), use_container_width=True, hide_index=True)
 
 
 if __name__ == "__main__":
