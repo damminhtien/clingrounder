@@ -21,8 +21,10 @@ compared with repeated runs and tolerances.
 
 The single-run summary and suite index retain the benchmark-manifest SHA-256 and evaluated split
 SHA-256. Suite rows also retain the profile source hash, resolved configuration fingerprint, and
-terminology fingerprint. A reference file may pin these values; `verify-reference` then fails if
-the same metric values were produced from a different dataset, profile, or terminology release.
+terminology fingerprint. Publication references pin the portable profile source hash and
+terminology fingerprint. The resolved fingerprint remains diagnostic because rebased absolute
+resource paths intentionally make it host-specific. `verify-reference` therefore fails if the
+same metric values were produced from a different dataset, profile source, or terminology release.
 Older references without provenance fields remain metric-only evidence and should not be used for
 new published measurements.
 

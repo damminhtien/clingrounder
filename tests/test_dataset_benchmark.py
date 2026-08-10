@@ -299,7 +299,10 @@ def test_benchmark_reference_verifier_checks_snapshot_and_runtime_provenance() -
         "input_sha256": "input-sha",
         "runs": {
             "exact": {
-                "config_fingerprint": "config-sha",
+                "profile_sha256": "profile-sha",
+                "config_source_sha256": "profile-sha",
+                # Resolved fingerprints may contain host-specific absolute paths.
+                "config_fingerprint": "linux-resolved-config-sha",
                 "terminology_fingerprint": "terminology-sha",
                 "metrics": {"entity_exact_micro_f1": 0.8},
                 "performance": {"document_latency_ms": {"p95": 42.0}},
@@ -317,7 +320,8 @@ def test_benchmark_reference_verifier_checks_snapshot_and_runtime_provenance() -
             {
                 "variant": "exact",
                 "split": "test",
-                "config_fingerprint": "config-sha",
+                "profile_sha256": "profile-sha",
+                "config_source_sha256": "profile-sha",
                 "terminology_fingerprint": "terminology-sha",
                 "entity_exact_micro_f1": 0.8,
             }
@@ -333,7 +337,8 @@ def test_benchmark_reference_verifier_checks_snapshot_and_runtime_provenance() -
         "input_sha256": False,
     }
     assert report["variants"]["exact"]["provenance_checks"] == {
-        "config_fingerprint": True,
+        "config_source_sha256": True,
+        "profile_sha256": True,
         "terminology_fingerprint": True,
     }
 

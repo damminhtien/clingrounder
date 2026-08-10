@@ -13,7 +13,8 @@ dataset:
 results:
   - variant: exact
     split: test
-    config_fingerprint: fdc61a0376cb0a71f643c1aaf7be5973c44166ec8b698debe1b6178474f32b3f
+    profile_sha256: a460a8cd374095f53c475013f621a6458df5ae9f032e16dd7ddf08ad24401210
+    config_source_sha256: a460a8cd374095f53c475013f621a6458df5ae9f032e16dd7ddf08ad24401210
     terminology_fingerprint: b869bea0a697020bee3515f4ca068662c8fdf05392ca31e86d6e15314441e489
     entity_exact_micro_f1: 0.5408163265306123
     entity_exact_precision: 1.0
@@ -30,7 +31,8 @@ results:
     p95_ms: 12.780023
   - variant: lexical
     split: test
-    config_fingerprint: bacd4538d895b1432f839736b3654fa845dd61f9c3c5b9f5c26b46562919a68c
+    profile_sha256: 8f8e82359dcf41e230f7d85a93377fb9171e5a1925ff65c7aef87c2c00abc62e
+    config_source_sha256: 8f8e82359dcf41e230f7d85a93377fb9171e5a1925ff65c7aef87c2c00abc62e
     terminology_fingerprint: b869bea0a697020bee3515f4ca068662c8fdf05392ca31e86d6e15314441e489
     entity_exact_micro_f1: 0.5408163265306123
     entity_exact_precision: 1.0
@@ -47,7 +49,8 @@ results:
     p95_ms: 4.024959
   - variant: hybrid
     split: test
-    config_fingerprint: 25c7c97c90cbffd1a49631195d20d9e56ce918772337de0308ab857ab3bab592
+    profile_sha256: 186b6b3239e852a875b4d5e2b1961a7a95f3ca856656d61a3d354403a5bd82a2
+    config_source_sha256: 186b6b3239e852a875b4d5e2b1961a7a95f3ca856656d61a3d354403a5bd82a2
     terminology_fingerprint: b869bea0a697020bee3515f4ca068662c8fdf05392ca31e86d6e15314441e489
     entity_exact_micro_f1: 0.5408163265306123
     entity_exact_precision: 1.0
@@ -64,7 +67,8 @@ results:
     p95_ms: 5.344843
   - variant: full
     split: test
-    config_fingerprint: 2d086218a1c4661ca1facc73af345c8a819ec7e589bf0716ebfb6d2308fd6363
+    profile_sha256: 942588a48bdfcc5e7f6976bba0cf0c562a914b24c69205fe94ecad31f126fb14
+    config_source_sha256: 942588a48bdfcc5e7f6976bba0cf0c562a914b24c69205fe94ecad31f126fb14
     terminology_fingerprint: b869bea0a697020bee3515f4ca068662c8fdf05392ca31e86d6e15314441e489
     entity_exact_micro_f1: 0.5408163265306123
     entity_exact_precision: 1.0

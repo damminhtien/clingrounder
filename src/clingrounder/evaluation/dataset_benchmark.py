@@ -282,17 +282,20 @@ def verify_dataset_benchmark_reference(
         actual_performance = _mapping_value(actual, "performance")
         checks: dict[str, bool] = {}
         provenance_checks: dict[str, bool] = {}
+        # INVARIANT: New references use profile/config-source hashes because resolved
+        # fingerprints may contain host-specific absolute paths. Keep the resolved field
+        # available for older references and diagnostics.
+        provenance_fields = (
+            "profile_sha256",
+            "config_source_sha256",
+            "config_fingerprint",
+            "terminology_fingerprint",
+        )
         for name, expected_value in expected.items():
-            if name in {
-                "variant",
-                "split",
-                "p95_ms",
-                "config_fingerprint",
-                "terminology_fingerprint",
-            }:
+            if name in {"variant", "split", "p95_ms"} or name in provenance_fields:
                 continue
             checks[name] = _values_match(actual_metrics.get(name), expected_value, tolerance)
-        for name in ("config_fingerprint", "terminology_fingerprint"):
+        for name in provenance_fields:
             if name in expected:
                 provenance_checks[name] = _values_match(
                     actual.get(name), expected.get(name), tolerance
