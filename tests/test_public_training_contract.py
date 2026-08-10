@@ -107,6 +107,26 @@ def test_contract_rejects_unpinned_model_revision(tmp_path: Path) -> None:
         load_public_training_contract(path)
 
 
+def test_contract_rejects_unsupported_schema_version(tmp_path: Path) -> None:
+    payload = _payload(status="pending_public_snapshot")
+    payload["schema_version"] = "clingrounder.public-training-contract.v2"
+    path = tmp_path / "contract.yaml"
+    path.write_text(yaml.safe_dump(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="schema_version: unsupported"):
+        load_public_training_contract(path)
+
+
+def test_contract_rejects_unknown_nested_field_with_full_path(tmp_path: Path) -> None:
+    payload = _payload(status="pending_public_snapshot")
+    payload["training"]["warmup_ratio"] = 0.1  # type: ignore[index]
+    path = tmp_path / "contract.yaml"
+    path.write_text(yaml.safe_dump(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unknown field: training.warmup_ratio"):
+        load_public_training_contract(path)
+
+
 def _payload(*, status: str) -> dict[str, object]:
     return {
         "schema_version": "clingrounder.public-training-contract.v1",

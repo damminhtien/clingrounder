@@ -26,6 +26,28 @@ _SCHEMA = "clingrounder.public-training-contract.v1"
 _SHA = re.compile(r"[0-9a-f]{40}")
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 _STATUS = Literal["pending_public_snapshot", "ready"]
+_ROOT_FIELDS = {
+    "schema_version",
+    "run_id",
+    "status",
+    "task",
+    "labels",
+    "model",
+    "data",
+    "training",
+    "selection",
+}
+_MODEL_FIELDS = {"id", "revision"}
+_DATA_FIELDS = {
+    "train_manifest",
+    "validation_manifest",
+    "train_manifest_sha256",
+    "validation_manifest_sha256",
+    "dataset_audit_report",
+    "dataset_audit_report_sha256",
+}
+_TRAINING_FIELDS = {"seed", "epochs", "batch_size", "learning_rate", "weight_decay"}
+_SELECTION_FIELDS = {"primary_metric", "minimum_primary_metric"}
 
 
 @dataclass(frozen=True, slots=True)
@@ -150,10 +172,18 @@ def load_public_training_contract(path: str | Path) -> PublicTrainingContract:
         raise ValueError(f"cannot read public training contract: {config_path}") from error
     if not isinstance(raw, Mapping):
         raise ValueError("public training contract must be a YAML object")
-    model = _mapping(raw, "model")
-    data = _mapping(raw, "data")
-    training = _mapping(raw, "training")
-    selection = _mapping(raw, "selection")
+    schema_version = raw.get("schema_version")
+    if schema_version != _SCHEMA:
+        raise ValueError(f"schema_version: unsupported public training schema: {schema_version!r}")
+    _reject_unknown(raw, _ROOT_FIELDS, "")
+    model = _mapping(raw, "model", "model")
+    data = _mapping(raw, "data", "data")
+    training = _mapping(raw, "training", "training")
+    selection = _mapping(raw, "selection", "selection")
+    _reject_unknown(model, _MODEL_FIELDS, "model")
+    _reject_unknown(data, _DATA_FIELDS, "data")
+    _reject_unknown(training, _TRAINING_FIELDS, "training")
+    _reject_unknown(selection, _SELECTION_FIELDS, "selection")
     status = raw.get("status")
     if status not in {"pending_public_snapshot", "ready"}:
         raise ValueError("status must be pending_public_snapshot or ready")
@@ -189,14 +219,24 @@ def load_public_training_contract(path: str | Path) -> PublicTrainingContract:
         weight_decay=_number(training, "weight_decay"),
         primary_metric=_string(selection, "primary_metric"),
         minimum_primary_metric=_number(selection, "minimum_primary_metric"),
+        schema_version=schema_version,
     )
 
 
-def _mapping(payload: Mapping[str, Any], key: str) -> Mapping[str, Any]:
+def _mapping(payload: Mapping[str, Any], key: str, path: str) -> Mapping[str, Any]:
     value = payload.get(key)
     if not isinstance(value, Mapping):
-        raise ValueError(f"{key} must be an object")
+        raise ValueError(f"{path} must be an object")
     return value
+
+
+def _reject_unknown(payload: Mapping[str, Any], allowed: set[str], path: str) -> None:
+    """Fail closed so a typo cannot silently turn into a defaulted training option."""
+
+    for key in payload:
+        if key not in allowed:
+            field_path = f"{path}.{key}" if path else str(key)
+            raise ValueError(f"unknown field: {field_path}")
 
 
 def _string(payload: Mapping[str, Any], key: str) -> str:
