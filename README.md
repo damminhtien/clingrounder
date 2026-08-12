@@ -36,18 +36,23 @@ from clingrounder import load_pipeline
 
 with load_pipeline("vi-clinical-small", offline=True) as pipeline:
     result = pipeline(
-        "Bệnh nhân không sốt. Tiền sử tăng huyết áp. Đang dùng metformin."
+        "Bệnh nhân nữ 67 tuổi nhập viện vì khó thở và ho tăng dần trong 3 ngày. "
+        "Tiền sử tăng huyết áp và đái tháo đường type 2; đang dùng metformin 500 mg "
+        "ngày hai lần. Bệnh nhân không sốt, không đau ngực và không nôn. "
+        "Khám ghi nhận khò khè nhẹ, mạch 96 lần/phút và huyết áp 148/86 mmHg. "
+        "Xét nghiệm glucose 186 mg/dL tăng, xét nghiệm COVID-19 âm tính."
     )
 
 for entity in result.entities:
     print(entity.text, entity.type.value, entity.assertion.value, entity.code)
 ```
 
-Example output from the bundled pack:
+Example output from the bundled pack includes:
 
 ```text
 sốt SYMPTOM NEGATED None
 tăng huyết áp DISEASE HISTORICAL I10
+đái tháo đường type 2 DISEASE HISTORICAL E11
 metformin DRUG PRESENT 6809
 ```
 
@@ -140,17 +145,36 @@ See [docs/architecture.md](docs/architecture.md) and
 
 ## Optional Demo
 
-The repository includes a small local Streamlit inspection demo. It uses the bundled offline
-resource pack and shows raw-span highlights, assertions, candidate qualification evidence,
-relations, and per-stage latency:
+ClinGrounder includes a graphical, browser-based Streamlit demo for inspecting one clinical note
+at a time. It runs locally with the bundled offline resource pack: text stays on the machine, no
+hosted model is called, and no external terminology download is required.
+
+Start it from a source checkout:
 
 ```bash
 uv run --with streamlit streamlit run examples/demo/app.py
 ```
 
-For an isolated environment or a PyPI installation, see
-[the demo README](examples/demo/README.md). The demo is an inspection surface only; it does not
-provide diagnosis, treatment advice, PHI controls, or regulatory compliance.
+Then open [http://127.0.0.1:8501](http://127.0.0.1:8501) in a browser. For an isolated environment
+or a PyPI installation, see [the demo README](examples/demo/README.md).
+
+The interface provides:
+
+- an editable clinical-text input with a ready-to-run Vietnamese example;
+- color-coded raw-text highlights for diseases, symptoms, drugs, and laboratory concepts;
+- exact `[start, end)` spans, entity types, and assertion status;
+- assigned terminology codes and candidate tables with retrieval score, source, matched alias,
+  qualification status, and evidence reasons;
+- relation rows with endpoints, evidence spans, rule identifiers, support scores, and provenance;
+- per-stage latency, total runtime, stage count, and bottleneck reporting.
+
+Example run with the bundled Vietnamese admission note:
+
+![ClinGrounder graphical demo after analyzing a sample note](docs/images/demo-clingrounder.png)
+
+The demo is an inspection surface only. It does not provide diagnosis or treatment advice, PHI
+protection, hosted inference, or regulatory compliance. Do not paste identifiable patient data into
+the demo unless the local environment has been approved for that data.
 
 ## Source Checkout Quickstart
 
@@ -360,6 +384,12 @@ workflows:
 - **Data mining:** source connectors, immutable artifacts, parsers, deduplication, proposal
   labeling, review queues, coverage planning, and provenance-aware snapshots are reproducible
   stages. Access and license policy is checked before acquisition.
+
+The same capabilities are available as reusable library and CLI surfaces: use the Python API for
+embedded applications, typed pipeline ports for custom extractors/retrievers, the CLI for
+repeatable batch jobs, and the graphical demo for interactive inspection. The demo and CLI use the
+same pipeline contracts, so displayed spans and evidence are produced by the same runtime rather
+than a separate showcase implementation.
 
 Start with [docs/rule-ner.md](docs/rule-ner.md),
 [docs/reference-implementations.md](docs/reference-implementations.md),

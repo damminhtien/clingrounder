@@ -12,8 +12,11 @@ from clingrounder import load_pipeline
 
 
 _SAMPLE_TEXT = (
-    "Bệnh nhân không sốt, tiền sử tăng huyết áp và đang dùng metformin 500 mg "
-    "ngày hai lần."
+    "Bệnh nhân nữ 67 tuổi nhập viện vì khó thở và ho tăng dần trong 3 ngày. "
+    "Tiền sử tăng huyết áp và đái tháo đường type 2; đang dùng metformin 500 mg "
+    "ngày hai lần. Bệnh nhân không sốt, không đau ngực và không nôn. "
+    "Khám ghi nhận khò khè nhẹ, mạch 96 lần/phút và huyết áp 148/86 mmHg. "
+    "Xét nghiệm glucose 186 mg/dL tăng, xét nghiệm COVID-19 âm tính."
 )
 _TYPE_COLORS = {
     "DISEASE": "#fee2e2",
@@ -129,7 +132,7 @@ def main() -> None:
     st.set_page_config(page_title="ClinGrounder", page_icon="🩺", layout="wide")
     st.title("ClinGrounder")
     st.caption("Offline Vietnamese clinical text grounding")
-    text = st.text_area("Clinical text", value=_SAMPLE_TEXT, height=150)
+    text = st.text_area("Clinical text", value=_SAMPLE_TEXT, height=260)
 
     if not st.button("Analyze", type="primary"):
         return
