@@ -76,8 +76,24 @@ The default snapshot contains 600 train, 100 validation, and 200 test documents 
 split-disjoint templates. The command writes the generated dataset, split audit, per-profile
 benchmark artifacts, suite report, and reference verification under the supplied directory. Set
 `CLINGROUNDER_BIN` or `PYTHON_BIN` when using a non-default environment. The generated records are
-synthetic diagnostic fixtures and remain ineligible for clinical claims until independently
-reviewed and adjudicated.
+synthetic diagnostic fixtures and remain ineligible for clinical claims even after technical
+review; only a separately sourced, human-reviewed licensed clinical snapshot can satisfy that
+gate.
+
+Run the independent technical review for the generated test split:
+
+```bash
+python scripts/review_vi_clinical_synthetic.py \
+  --benchmark artifacts/benchmarks/vi-clinical-grounding-synthetic-v1 \
+  --split test \
+  --output artifacts/benchmarks/vi-clinical-grounding-synthetic-v1/technical-review.json
+```
+
+The review checks all documents against the declared seven-template contract, raw offset/text
+ownership, entity type and assertion values, fixture terminology membership, duplicate IDs, and
+relation endpoints. Its report is PHI-safe and records `reviewer: codex`,
+`review_kind: template_and_invariant_review`, and `human_clinical_review: false`. It is an
+engineering QA artifact, not a human annotation or clinical claim.
 
 ## Independent review handoff
 

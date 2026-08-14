@@ -30,6 +30,8 @@ def test_ci_runs_and_uploads_the_public_product_benchmark() -> None:
     assert ".venv/bin/clingrounder-benchmark suite" in workflow
     assert ".venv/bin/clingrounder-benchmark verify-reference" in workflow
     assert "scripts/generate_vi_clinical_benchmark.py" in workflow
+    assert "scripts/review_vi_clinical_synthetic.py" in workflow
+    assert "technical-review.json" in workflow
     assert "synthetic_diagnostic_expected_results.yaml" in workflow
     assert ".venv/bin/clingrounder-benchmark review-pack" in workflow
     assert "--double-review-fraction 1.0" in workflow

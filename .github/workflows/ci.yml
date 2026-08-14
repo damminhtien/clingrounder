@@ -131,6 +131,10 @@ jobs:
           .venv/bin/clingrounder-benchmark audit \
             --benchmark artifacts/benchmarks/vi-clinical-grounding-synthetic-v1/dataset \
             --output artifacts/benchmarks/vi-clinical-grounding-synthetic-v1/audit.json
+          .venv/bin/python scripts/review_vi_clinical_synthetic.py \
+            --benchmark artifacts/benchmarks/vi-clinical-grounding-synthetic-v1/dataset \
+            --split test \
+            --output artifacts/benchmarks/vi-clinical-grounding-synthetic-v1/technical-review.json
           .venv/bin/clingrounder-benchmark review-pack \
             --benchmark artifacts/benchmarks/vi-clinical-grounding-synthetic-v1/dataset \
             --split test \

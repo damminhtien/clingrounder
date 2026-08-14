@@ -144,3 +144,19 @@ split. Download `public-benchmark-<commit>` from the CI run and use
 `vi-clinical-grounding-synthetic-v1/review-pack/`. Both reviewer files contain all 200 documents,
 while `coordinator_document_map.jsonl` remains separate. This artifact is review-ready but still
 contains no human labels and makes no clinical claim.
+
+For engineering QA, the repository also provides an independent technical contract review:
+
+```bash
+python scripts/review_vi_clinical_synthetic.py \
+  --benchmark artifacts/benchmarks/vi-clinical-grounding-synthetic-v1 \
+  --split test \
+  --output artifacts/benchmarks/vi-clinical-grounding-synthetic-v1/technical-review.json
+```
+
+This review is intentionally not routed through the human review-pack importer. It validates every
+document against an independently maintained template contract, including exact raw offsets,
+type/assertion combinations, fixture code ownership, duplicate IDs, relation endpoints, and
+context cues. The report contains hashes, counts, template groups, and failure codes but no raw
+text. A passing technical review is useful for reproducibility and generator regression testing;
+it does not change `eligible_for_clinical_claim`, which remains false for synthetic data.
