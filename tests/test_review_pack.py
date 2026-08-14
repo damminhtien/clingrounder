@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
+import yaml
 
 from clingrounder.evaluation.dataset_audit import audit_dataset
 from clingrounder.evaluation.review_pack import (
@@ -14,6 +15,7 @@ from clingrounder.evaluation.review_pack import (
     freeze_reviewed_snapshot,
     import_review_pack,
 )
+from scripts.generate_vi_clinical_benchmark import generate_snapshot
 
 
 BENCHMARK = Path("benchmarks/vi_clinical_grounding_v1")
@@ -234,6 +236,36 @@ def test_reviewed_snapshot_requires_explicit_completion_and_writes_manifest(tmp_
     audit = audit_dataset(snapshot)
     assert audit.eligible_for_clinical_claim is False
     assert "clinical_claim_requires_human_review" in audit.warnings
+
+
+def test_reviewed_pending_synthetic_snapshot_cannot_become_clinical_release(
+    tmp_path: Path,
+) -> None:
+    benchmark = tmp_path / "synthetic-benchmark"
+    generate_snapshot(
+        benchmark,
+        train_documents=2,
+        validation_documents=2,
+        test_documents=2,
+        seed=42,
+    )
+    pack = tmp_path / "pack"
+    build_review_pack(
+        benchmark,
+        pack,
+        config=ReviewPackConfig(double_review_fraction=1.0),
+    )
+    _complete_all_reviews(pack)
+    imported = tmp_path / "imported"
+    import_review_pack(benchmark, pack, imported)
+    snapshot = tmp_path / "snapshot"
+
+    freeze_reviewed_snapshot(benchmark, imported, snapshot)
+
+    manifest = yaml.safe_load((snapshot / "dataset_manifest.yaml").read_text(encoding="utf-8"))
+    assert manifest["dataset"]["status"] == "synthetic_reviewed"
+    assert manifest["dataset"]["synthetic"] is True
+    assert audit_dataset(snapshot).eligible_for_clinical_claim is False
 
 
 def _complete_all_reviews(pack: Path) -> None:

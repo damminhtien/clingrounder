@@ -433,9 +433,7 @@ def freeze_reviewed_snapshot(
     agreement_path = output_root / "review-agreement.json"
     _write_json(agreement_path, agreement.to_dict())
     reviewed_version = f"{dataset.get('version', '')}-reviewed"
-    source_is_synthetic = (
-        dataset.get("status") == "synthetic_pilot" or dataset.get("synthetic") is True
-    )
+    source_is_synthetic = _is_synthetic_dataset(dataset)
     snapshot_dataset_manifest = {
         "schema_version": "clingrounder.dataset-manifest.v1",
         "dataset": {
@@ -522,6 +520,18 @@ def _load_json_object(path: Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError(f"JSON manifest must be an object: {path}")
     return payload
+
+
+def _is_synthetic_dataset(dataset: Mapping[str, Any]) -> bool:
+    """Recognize every declared synthetic lifecycle state conservatively.
+
+    INVARIANT: Human review can improve synthetic annotation quality, but it cannot change the
+    source class into clinical evidence. New synthetic states therefore inherit this boundary
+    without requiring an exact status allowlist update.
+    """
+
+    status = str(dataset.get("status", "")).strip().casefold()
+    return dataset.get("synthetic") is True or status.startswith("synthetic")
 
 
 def _verify_pack_files(pack_root: Path, manifest: Mapping[str, Any]) -> None:

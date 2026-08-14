@@ -41,6 +41,8 @@ pre-release semantic versioning while the public API is still maturing.
   indexes, with optional provenance enforcement in reference verification.
 - Added a CI-regenerated 900-document synthetic diagnostic reference alongside the small public
   contract fixture.
+- Added a fully double-assigned, gold-blind review pack to the expanded benchmark CI artifact and
+  kept every reviewed synthetic lifecycle state permanently outside clinical-release status.
 - Added typed artifact manifests, deterministic versioned caches, and explicit local-only artifact
   acquisition with checksum and path-safety validation.
 - Documented the measured Vietnamese NER/DAPT research track, including a rejected promotion and

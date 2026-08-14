@@ -138,3 +138,9 @@ fingerprinted reviewed snapshot. The command emits the JSONL snapshot, a text-fr
 policy requires double-review agreement or explicit adjudicator decisions. The source benchmark
 remains immutable, and a synthetic pilot remains ineligible for clinical claims even after review
 until a licensed clinical snapshot supplies that evidence.
+
+CI also creates a fully double-assigned handoff for the generated 200-document diagnostic test
+split. Download `public-benchmark-<commit>` from the CI run and use
+`vi-clinical-grounding-synthetic-v1/review-pack/`. Both reviewer files contain all 200 documents,
+while `coordinator_document_map.jsonl` remains separate. This artifact is review-ready but still
+contains no human labels and makes no clinical claim.

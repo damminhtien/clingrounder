@@ -75,6 +75,12 @@ machine-readable reference is
 the 900-document snapshot and verifies its data, config, terminology, and correctness
 fingerprints on every push.
 
+The same CI job emits a gold-blind review pack for all 200 generated test documents with two
+independent assignments per document. It is included under
+`vi-clinical-grounding-synthetic-v1/review-pack/` in the `public-benchmark-<commit>` artifact.
+Generating the handoff does not change the dataset's pending-review status; only completed,
+validated reviewer submissions and explicit adjudication can produce a reviewed snapshot.
+
 Runtime values are machine-dependent. The authoritative JSON artifacts contain initialization,
 p50/p95/p99 latency, throughput, RSS, and model-forward counters; regenerate them with the
 commands below instead of comparing numbers across machines.
