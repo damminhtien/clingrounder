@@ -6,7 +6,13 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 OUTPUT="${1:-artifacts/benchmarks/vi-clinical-grounding-v1/suite}"
-exec clingrounder-benchmark suite \
+if [[ -n "${CLINGROUNDER_BIN:-}" ]]; then
+  CLI_CMD=("$CLINGROUNDER_BIN")
+else
+  CLI_CMD=(uv run clingrounder-benchmark)
+fi
+
+exec "${CLI_CMD[@]}" suite \
   --benchmark benchmarks/vi_clinical_grounding_v1 \
   --config exact=configs/benchmarks/vi_clinical_grounding_v1/exact.yaml \
   --config lexical=configs/benchmarks/vi_clinical_grounding_v1/lexical.yaml \

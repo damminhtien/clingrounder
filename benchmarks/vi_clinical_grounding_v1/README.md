@@ -65,6 +65,20 @@ The larger generated diagnostic has a separate reference at
 `synthetic_diagnostic_expected_results.yaml`. It remains synthetic and review-pending; CI uses it
 to detect generator or pipeline drift, not to support a clinical claim.
 
+Reproduce that larger snapshot locally with the repository wrapper:
+
+```bash
+bash scripts/reproduce_vi_clinical_grounding_expanded.sh \
+  artifacts/benchmarks/vi-clinical-grounding-synthetic-v1
+```
+
+The default snapshot contains 600 train, 100 validation, and 200 test documents generated from
+split-disjoint templates. The command writes the generated dataset, split audit, per-profile
+benchmark artifacts, suite report, and reference verification under the supplied directory. Set
+`CLINGROUNDER_BIN` or `PYTHON_BIN` when using a non-default environment. The generated records are
+synthetic diagnostic fixtures and remain ineligible for clinical claims until independently
+reviewed and adjudicated.
+
 ## Independent review handoff
 
 Create a deterministic gold-blind pack before asking reviewers to annotate a future licensed
