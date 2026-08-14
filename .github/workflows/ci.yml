@@ -152,7 +152,7 @@ jobs:
 
       - name: Upload benchmark evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: public-benchmark-${{ github.sha }}
           path: artifacts/benchmarks/
@@ -192,7 +192,7 @@ jobs:
 
       - name: Upload security artifacts
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: security-artifacts-${{ github.sha }}
           path: artifacts/security
@@ -228,7 +228,7 @@ jobs:
           /tmp/clingrounder-wheel-smoke/bin/python scripts/smoke_test_installed_wheel.py
 
       - name: Upload package artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: package-${{ github.sha }}
           path: dist/
