@@ -45,20 +45,22 @@ Run fingerprints:
 
 The dataset manifest SHA-256 is
 `e2e4ea7b15804efdfeb5b5fe8b0eaeb9829a51a16b8d8db0faa23a8614ddb25a`.
-The audit found zero structural or leakage issues and correctly reported
+The audit found zero structural or leakage issues. It reports
+`eligible_for_engineering_use: true` for reproducible development and correctly reports
 `eligible_for_clinical_claim: false` because no independent human review exists.
 
-All variants were run on commit `d7c772a` using the same generated test split. Correctness metrics
+The latest reproducibility run was executed on commit `4af26af51c7b1b4e6df87aca9f1c1f3c3b24594f`
+using the same generated test split. Correctness metrics
 are identical because these profiles change retrieval and graph behavior, not the rule proposal
 vocabulary that dominates this snapshot. This is a regression/stress check, not evidence that the
 retrieval variants are equivalent on real clinical text.
 
 | System | Entity exact F1 | Assertion macro-F1 | Recall@5 | Top-1 | Relation F1 | p95 ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Exact dictionary | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 12.78 |
-| Lexical | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 4.02 |
-| Hybrid | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 5.34 |
-| Full deterministic | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 5.95 |
+| Exact dictionary | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 8.384 |
+| Lexical | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 6.723 |
+| Hybrid | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 8.012 |
+| Full deterministic | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 7.421 |
 
 The generated run had exact entity precision `1.0000`, recall `0.3706`, assignment coverage
 `1.0000` over predicted entities, and zero output-validation errors. By type, the exact baseline
