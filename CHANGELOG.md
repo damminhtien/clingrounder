@@ -64,6 +64,8 @@ pre-release semantic versioning while the public API is still maturing.
   treating archive timestamps or comments as prediction changes.
 - Dataset publication audit now validates annotation spans, raw text ownership, IDs, assertions,
   code-system consistency, and relation endpoints before a release can be eligible.
+- Negation scope no longer crosses a comma into an explicit `tiền sử`/`history of` clause, so
+  historical mentions are not incorrectly marked as negated.
 - CI now runs and uploads the public product benchmark audit and measured ablation suite on every
   push, separate from the historical competition plugin.
 - README benchmark latency values and the standalone benchmark results page now reference the

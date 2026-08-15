@@ -274,6 +274,17 @@ def test_negation_coordination_stops_at_present_patient_clause() -> None:
     assert classifier.classify(present, sentence) == AssertionStatus.PRESENT
 
 
+def test_negation_coordination_stops_at_historical_clause() -> None:
+    """A history segment after a comma must not inherit the prior negation cue."""
+
+    text = "Bệnh nhân không sốt, tiền sử tăng huyết áp."
+    sentence = Sentence(span=(0, len(text)), text=text)
+    classifier = AssertionClassifier()
+
+    historical = _entity_in_sentence(text, "tăng huyết áp")
+    assert classifier.classify(historical, sentence) == AssertionStatus.HISTORICAL
+
+
 def test_negation_from_intolerance_does_not_leak_to_switched_medication() -> None:
     text = "Bệnh nhân không dung nạp amoxicillin do tiêu chảy nên được chuyển sang sử dụng azithromycin."
     sentence = Sentence(span=(0, len(text)), text=text)

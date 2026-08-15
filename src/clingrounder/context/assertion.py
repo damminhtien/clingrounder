@@ -43,7 +43,7 @@ _NEGATION_COORDINATION_BOUNDARY_RE = re.compile(r"[\n.;!?]", flags=re.UNICODE)
 _NEGATION_COORDINATION_BREAK_RE = re.compile(
     r"(?<!\w)(nhưng|tuy\s+nhiên|song|however|but|bệnh\s+nhân\s+có|bn\s+có|ghi\s+nhận\s+có|kèm\s+theo|có"
     r"|bệnh\s+nhân\s+bị|hậu\s+phẫu|chuyển\s+sang\s+(?:sử\s+dụng|điều\s+trị\s+bằng)|bắt\s+đầu\s+dùng"
-    r"|chẩn\s+đoán|có\s+khả\s+năng|được\s+kê|được\s+chỉ\s+định)(?!\w)",
+    r"|chẩn\s+đoán|có\s+khả\s+năng|được\s+kê|được\s+chỉ\s+định|tiền\s+sử|history\s+of)(?!\w)",
     flags=re.IGNORECASE | re.UNICODE,
 )
 _FAMILY_FALSE_POSITIVE_PATTERNS = (
