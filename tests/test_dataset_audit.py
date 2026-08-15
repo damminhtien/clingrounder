@@ -19,6 +19,7 @@ def test_synthetic_pilot_is_explicitly_not_clinical_evidence() -> None:
 
     assert report.status == "synthetic_pilot"
     assert report.human_reviewed is False
+    assert report.eligible_for_engineering_use is True
     assert report.eligible_for_clinical_claim is False
     assert "clinical_claim_requires_human_review" in report.warnings
     assert report.checks["template_groups_disjoint"] is True

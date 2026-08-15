@@ -168,6 +168,7 @@ def review_synthetic_snapshot(
         "reviewer": "codex",
         "review_kind": "template_and_invariant_review",
         "human_clinical_review": False,
+        "eligible_for_engineering_use": not failures and all(checks.values()),
         "eligible_for_clinical_claim": False,
         "dataset": {
             "id": str(dataset.get("id", "")),

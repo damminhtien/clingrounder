@@ -159,4 +159,5 @@ document against an independently maintained template contract, including exact 
 type/assertion combinations, fixture code ownership, duplicate IDs, relation endpoints, and
 context cues. The report contains hashes, counts, template groups, and failure codes but no raw
 text. A passing technical review is useful for reproducibility and generator regression testing;
-it does not change `eligible_for_clinical_claim`, which remains false for synthetic data.
+it does not change `eligible_for_clinical_claim`, which remains false for synthetic data. The
+separate engineering gate may be true when all reproducibility and structural checks pass.

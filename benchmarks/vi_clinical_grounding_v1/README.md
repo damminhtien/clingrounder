@@ -93,7 +93,8 @@ The review checks all documents against the declared seven-template contract, ra
 ownership, entity type and assertion values, fixture terminology membership, duplicate IDs, and
 relation endpoints. Its report is PHI-safe and records `reviewer: codex`,
 `review_kind: template_and_invariant_review`, and `human_clinical_review: false`. It is an
-engineering QA artifact, not a human annotation or clinical claim.
+engineering QA artifact. A passing report may be used as `eligible_for_engineering_use: true`,
+but it is not a human annotation or clinical claim.
 
 ## Independent review handoff
 

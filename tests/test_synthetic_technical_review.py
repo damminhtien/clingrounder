@@ -16,6 +16,7 @@ def test_synthetic_technical_review_passes_without_clinical_eligibility(tmp_path
     report = review_synthetic_snapshot(benchmark, output_path=tmp_path / "review.json")
 
     assert report["status"] == "technical_review_pass"
+    assert report["eligible_for_engineering_use"] is True
     assert report["eligible_for_clinical_claim"] is False
     assert report["human_clinical_review"] is False
     assert report["documents"]["reviewed"] == 14
@@ -36,6 +37,7 @@ def test_synthetic_technical_review_reports_offset_failure_without_text_leakage(
     report = review_synthetic_snapshot(benchmark)
 
     assert report["status"] == "technical_review_failed"
+    assert report["eligible_for_engineering_use"] is False
     assert "offset_text_mismatch" in report["failures"][0]["checks"]
     rendered = json.dumps(report, ensure_ascii=False)
     assert "tampered" not in rendered

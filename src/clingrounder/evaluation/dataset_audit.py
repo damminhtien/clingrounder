@@ -47,6 +47,19 @@ class DatasetAuditReport:
 
         return not self.issues and all(self.checks.values())
 
+    @property
+    def eligible_for_engineering_use(self) -> bool:
+        """Return whether the dataset is safe for reproducible engineering workflows.
+
+        Synthetic and review-pending fixtures may pass structural, licensing, and split checks
+        without being clinical evidence. Keep this gate separate so development benchmarks can
+        be used without weakening the clinical-claim contract.
+        """
+
+        return not self.issues and all(
+            value for key, value in self.checks.items() if key != "human_reviewed_release"
+        )
+
     def to_dict(self) -> dict[str, Any]:
         """Render stable JSON without exposing document text or mention strings."""
 
@@ -71,6 +84,7 @@ class DatasetAuditReport:
             ),
             "issues": list(self.issues),
             "warnings": list(self.warnings),
+            "eligible_for_engineering_use": self.eligible_for_engineering_use,
             "eligible_for_clinical_claim": self.eligible_for_clinical_claim,
         }
 
