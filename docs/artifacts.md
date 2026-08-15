@@ -3,6 +3,9 @@
 ClinGrounder keeps models, terminology releases, and small runnable packs explicit and
 fingerprinted. The default Python import path never contacts a hosted registry.
 
+The package requires Python 3.11 or newer. A clean-wheel smoke test should use the same supported
+interpreter range; Python 3.9 is rejected by package metadata before runtime loading.
+
 ## Bundled pack
 
 The wheel contains `vi-clinical-small`, a deliberately small Vietnamese smoke baseline. It is

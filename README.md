@@ -23,6 +23,12 @@ between minor releases.
 
 ## 30-Second Quickstart
 
+Requires Python 3.11 or newer. Verify the interpreter used by the shell before installing:
+
+```bash
+python --version
+```
+
 Install the small, offline Vietnamese resource pack:
 
 ```bash
