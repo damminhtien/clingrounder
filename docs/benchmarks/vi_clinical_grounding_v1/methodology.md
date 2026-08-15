@@ -85,6 +85,11 @@ without this evidence cannot pass the clinical-evidence gate. Reports contain no
 reviewer identity by default. A synthetic or review-pending dataset can pass the engineering
 checks while correctly failing the clinical-evidence gate.
 
+Audit reports expose ``clinical_claim_blockers`` alongside the eligibility boolean. A synthetic
+source, missing human review, or unreleased review status remains an explicit blocker. Technical
+consistency review can therefore promote engineering use without silently promoting a clinical
+claim.
+
 Generate the artifact from the existing task-neutral review quality output instead of editing JSON
 by hand:
 

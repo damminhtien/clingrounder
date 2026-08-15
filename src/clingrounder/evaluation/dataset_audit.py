@@ -45,7 +45,29 @@ class DatasetAuditReport:
     def eligible_for_clinical_claim(self) -> bool:
         """Return whether the manifest and files meet the public clinical-evidence gate."""
 
-        return not self.issues and all(self.checks.values())
+        return not self.clinical_claim_blockers and all(self.checks.values())
+
+    @property
+    def clinical_claim_blockers(self) -> tuple[str, ...]:
+        """Explain why this dataset cannot support a clinical performance claim.
+
+        INVARIANT: a synthetic or review-pending dataset must never become eligible because a
+        caller copied ``eligible_for_clinical_claim`` into a manifest.  Keeping stable blocker
+        codes beside the boolean makes release reports actionable without exposing source text.
+        """
+
+        blockers: list[str] = []
+        if self.status.casefold().startswith("synthetic"):
+            blockers.append("synthetic_source")
+        if not self.human_reviewed:
+            blockers.append("human_review_required")
+        if self.status not in _REVIEWED_STATUSES:
+            blockers.append("release_status_not_reviewed")
+        if not self.checks.get("review_agreement_meets_targets", True):
+            blockers.append("review_agreement_below_target")
+        if self.issues:
+            blockers.append("dataset_audit_issues")
+        return tuple(blockers)
 
     @property
     def eligible_for_engineering_use(self) -> bool:
@@ -84,6 +106,7 @@ class DatasetAuditReport:
             ),
             "issues": list(self.issues),
             "warnings": list(self.warnings),
+            "clinical_claim_blockers": list(self.clinical_claim_blockers),
             "eligible_for_engineering_use": self.eligible_for_engineering_use,
             "eligible_for_clinical_claim": self.eligible_for_clinical_claim,
         }

@@ -48,6 +48,9 @@ The dataset manifest SHA-256 is
 The audit found zero structural or leakage issues. It reports
 `eligible_for_engineering_use: true` for reproducible development and correctly reports
 `eligible_for_clinical_claim: false` because no independent human review exists.
+The machine-readable audit also reports the blockers `synthetic_source`,
+`human_review_required`, and `release_status_not_reviewed`; these are release-governance
+signals, not model-quality failures.
 
 The latest reproducibility run was executed on commit `4af26af51c7b1b4e6df87aca9f1c1f3c3b24594f`
 using the same generated test split. Correctness metrics

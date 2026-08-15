@@ -170,6 +170,10 @@ def review_synthetic_snapshot(
         "human_clinical_review": False,
         "eligible_for_engineering_use": not failures and all(checks.values()),
         "eligible_for_clinical_claim": False,
+        "clinical_claim_blockers": [
+            "synthetic_source",
+            "human_clinical_review_required",
+        ],
         "dataset": {
             "id": str(dataset.get("id", "")),
             "version": str(dataset.get("version", "")),

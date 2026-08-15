@@ -18,6 +18,10 @@ def test_synthetic_technical_review_passes_without_clinical_eligibility(tmp_path
     assert report["status"] == "technical_review_pass"
     assert report["eligible_for_engineering_use"] is True
     assert report["eligible_for_clinical_claim"] is False
+    assert report["clinical_claim_blockers"] == [
+        "synthetic_source",
+        "human_clinical_review_required",
+    ]
     assert report["human_clinical_review"] is False
     assert report["documents"]["reviewed"] == 14
     assert report["documents"]["failed"] == 0

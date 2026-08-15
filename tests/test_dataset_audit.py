@@ -21,6 +21,11 @@ def test_synthetic_pilot_is_explicitly_not_clinical_evidence() -> None:
     assert report.human_reviewed is False
     assert report.eligible_for_engineering_use is True
     assert report.eligible_for_clinical_claim is False
+    assert report.clinical_claim_blockers == (
+        "synthetic_source",
+        "human_review_required",
+        "release_status_not_reviewed",
+    )
     assert "clinical_claim_requires_human_review" in report.warnings
     assert report.checks["template_groups_disjoint"] is True
     assert report.checks["normalized_text_splits_disjoint"] is True
