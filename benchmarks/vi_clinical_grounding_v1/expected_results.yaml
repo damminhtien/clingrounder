@@ -2,10 +2,14 @@ schema_version: clingrounder.benchmark-results.v1
 benchmark: vi-clinical-grounding-v1
 status: synthetic_pilot_measured
 measurement:
-  commit: 02cb7a96bb17452160977725de3627391c028f01
+  commit: ae7de751f7fb2d36e02200ee2ee6ffde1eaf17d6
   python: "3.14"
-  platform: macOS
+  platform: ubuntu-latest
   note: Runtime values are a reference run, not a portable performance guarantee.
+dataset:
+  version: "0.1.0"
+  benchmark_manifest_sha256: 59641934c47f2134b2db68ebe1c682677424ace7a843eb4f6ad2a15229a41ea8
+  input_sha256: 249687697616f893f6fef603f438780fe260339637e3df66b50a45fad33a2a3c
 policy:
   primary:
     metric: entity_exact_micro_f1
@@ -25,7 +29,10 @@ results:
     linking_recall_at_5: 0.875
     linking_top1_accuracy: 0.875
     relation_micro_f1: 0.0
-    p95_ms: 9.580078
+    p95_ms: 7.262592
+    profile_sha256: a460a8cd374095f53c475013f621a6458df5ae9f032e16dd7ddf08ad24401210
+    config_source_sha256: a460a8cd374095f53c475013f621a6458df5ae9f032e16dd7ddf08ad24401210
+    terminology_fingerprint: b869bea0a697020bee3515f4ca068662c8fdf05392ca31e86d6e15314441e489
   - variant: lexical
     split: test
     entity_exact_micro_f1: 1.0
@@ -33,7 +40,10 @@ results:
     linking_recall_at_5: 0.875
     linking_top1_accuracy: 0.875
     relation_micro_f1: 0.0
-    p95_ms: 5.589209
+    p95_ms: 2.354705
+    profile_sha256: 8f8e82359dcf41e230f7d85a93377fb9171e5a1925ff65c7aef87c2c00abc62e
+    config_source_sha256: 8f8e82359dcf41e230f7d85a93377fb9171e5a1925ff65c7aef87c2c00abc62e
+    terminology_fingerprint: b869bea0a697020bee3515f4ca068662c8fdf05392ca31e86d6e15314441e489
   - variant: hybrid
     split: test
     entity_exact_micro_f1: 1.0
@@ -41,7 +51,10 @@ results:
     linking_recall_at_5: 0.875
     linking_top1_accuracy: 0.875
     relation_micro_f1: 0.0
-    p95_ms: 5.983279
+    p95_ms: 3.591943
+    profile_sha256: 186b6b3239e852a875b4d5e2b1961a7a95f3ca856656d61a3d354403a5bd82a2
+    config_source_sha256: 186b6b3239e852a875b4d5e2b1961a7a95f3ca856656d61a3d354403a5bd82a2
+    terminology_fingerprint: b869bea0a697020bee3515f4ca068662c8fdf05392ca31e86d6e15314441e489
   - variant: full
     split: test
     entity_exact_micro_f1: 1.0
@@ -49,4 +62,7 @@ results:
     linking_recall_at_5: 0.875
     linking_top1_accuracy: 0.875
     relation_micro_f1: 1.0
-    p95_ms: 6.866699
+    p95_ms: 3.704479
+    profile_sha256: 942588a48bdfcc5e7f6976bba0cf0c562a914b24c69205fe94ecad31f126fb14
+    config_source_sha256: 942588a48bdfcc5e7f6976bba0cf0c562a914b24c69205fe94ecad31f126fb14
+    terminology_fingerprint: b869bea0a697020bee3515f4ca068662c8fdf05392ca31e86d6e15314441e489

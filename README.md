@@ -457,16 +457,16 @@ It writes one complete artifact bundle per named profile plus `suite.json` and a
 `report.md`. The checked-in dataset is a synthetic pilot; measured values must not be described as
 clinical validation. See [benchmark methodology](docs/benchmarks/vi_clinical_grounding_v1/methodology.md).
 
-Measured pilot snapshot (4 synthetic test documents, one macOS run; latency is not a hardware
-benchmark). The full generated diagnostic table and fingerprints are in the
+Measured pilot snapshot (4 synthetic test documents, one GitHub CI Ubuntu run; latency is not a
+hardware benchmark). The full generated diagnostic table and fingerprints are in the
 [benchmark results](docs/benchmarks/vi_clinical_grounding_v1/results.md):
 
 | System | Entity exact F1 | Assertion macro-F1 | Recall@5 | Top-1 | Relation F1 | p95 ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Exact dictionary | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 9.580 |
-| Lexical | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 5.589 |
-| Hybrid | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 5.983 |
-| Full deterministic | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 1.0000 | 6.867 |
+| Exact dictionary | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 7.263 |
+| Lexical | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 2.355 |
+| Hybrid | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 3.592 |
+| Full deterministic | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 1.0000 | 3.704 |
 
 The pilot contains one synthetic `LAB_TEST -> LAB_RESULT` relation. Only the full profile enables
 the relation extractor, so the ablation intentionally reports relation F1 `0.0000` for the other

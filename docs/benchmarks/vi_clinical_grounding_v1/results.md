@@ -7,17 +7,18 @@ human-reviewed public clinical test set.
 ## Checked-In Pilot
 
 The checked-in `0.1.0` fixture contains four synthetic test documents, including one
-`LAB_TEST -> LAB_RESULT` relation. The suite runner was executed on commit `02cb7a9` on macOS with
-Python 3.14. The relation extractor is enabled only by the full profile. The numbers below are a
-fresh reference run; latency is machine-dependent and is not a portability claim. Regenerate the
-JSON artifact bundle instead of treating these values as a universal speed target.
+`LAB_TEST -> LAB_RESULT` relation. The suite runner was executed on commit `ae7de75` in GitHub CI
+on Ubuntu with Python 3.14. The relation extractor is enabled only by the full profile. The
+numbers below are a fresh reference run; latency is machine-dependent and is not a portability
+claim. Regenerate the JSON artifact bundle instead of treating these values as a universal speed
+target.
 
 | System | Entity exact F1 | Assertion macro-F1 | Recall@5 | Top-1 | Relation F1 | p95 ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Exact dictionary | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 9.580 |
-| Lexical | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 5.589 |
-| Hybrid | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 5.983 |
-| Full deterministic | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 1.0000 | 6.867 |
+| Exact dictionary | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 7.263 |
+| Lexical | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 2.355 |
+| Hybrid | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 0.0000 | 3.592 |
+| Full deterministic | 1.0000 | 1.0000 | 0.8750 | 0.8750 | 1.0000 | 3.704 |
 
 Only the full profile predicts the single gold relation because the other profiles intentionally
 disable relation extraction. These values verify the output contract and are not useful for
@@ -52,7 +53,7 @@ The machine-readable audit also reports the blockers `synthetic_source`,
 `human_review_required`, and `release_status_not_reviewed`; these are release-governance
 signals, not model-quality failures.
 
-The latest reproducibility run was executed on commit `4af26af51c7b1b4e6df87aca9f1c1f3c3b24594f`
+The latest reproducibility run was executed on commit `ae7de751f7fb2d36e02200ee2ee6ffde1eaf17d6`
 using the same generated test split. Correctness metrics
 are identical because these profiles change retrieval and graph behavior, not the rule proposal
 vocabulary that dominates this snapshot. This is a regression/stress check, not evidence that the
@@ -60,10 +61,10 @@ retrieval variants are equivalent on real clinical text.
 
 | System | Entity exact F1 | Assertion macro-F1 | Recall@5 | Top-1 | Relation F1 | p95 ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Exact dictionary | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 8.384 |
-| Lexical | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 6.723 |
-| Hybrid | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 8.012 |
-| Full deterministic | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 7.421 |
+| Exact dictionary | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 2.162 |
+| Lexical | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 2.112 |
+| Hybrid | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 2.936 |
+| Full deterministic | 0.5408 | 1.0000 | 0.3965 | 0.3965 | 0.0000 | 3.010 |
 
 The generated run had exact entity precision `1.0000`, recall `0.3706`, assignment coverage
 `1.0000` over predicted entities, and zero output-validation errors. By type, the exact baseline
