@@ -427,6 +427,8 @@ uv run clingrounder release audit \
 ```
 
 See [docs/public-release.md](docs/public-release.md) for restore and publication rules.
+The current promotion state and the exact evidence needed for a clinical claim are summarized in
+[docs/release-status.md](docs/release-status.md).
 
 ## Public Product Benchmark
 
