@@ -21,7 +21,10 @@ compared with repeated runs and tolerances.
 
 The single-run summary and suite index retain the benchmark-manifest SHA-256 and evaluated split
 SHA-256. Suite rows also retain the profile source hash, resolved configuration fingerprint, and
-terminology fingerprint. Publication references pin the portable profile source hash and
+terminology fingerprint. The suite's human-readable config reference is stored as a relative path
+plus SHA-256 when the config belongs to the invocation tree; external configs store only their
+basename plus SHA-256. Absolute checkout or home-directory paths are never serialized into the
+portable suite artifact. Publication references pin the portable profile source hash and
 terminology fingerprint. The resolved fingerprint remains diagnostic because rebased absolute
 resource paths intentionally make it host-specific. `verify-reference` therefore fails if the
 same metric values were produced from a different dataset, profile source, or terminology release.

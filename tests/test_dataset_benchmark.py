@@ -222,10 +222,40 @@ def test_public_benchmark_suite_writes_named_runs_and_index(tmp_path: Path) -> N
     assert len(suite["runs"]["exact"]["profile_sha256"]) == 64
     assert len(suite["runs"]["exact"]["config_source_sha256"]) == 64
     assert len(suite["runs"]["exact"]["terminology_fingerprint"]) == 64
+    config_reference = suite["runs"]["exact"]["config"]
+    assert config_reference["path"] == "configs/benchmarks/vi_clinical_grounding_v1/exact.yaml"
+    assert config_reference["external"] is False
+    assert len(config_reference["sha256"]) == 64
+    assert str(Path.cwd()) not in json.dumps(suite)
     assert (output / "exact" / "summary.json").is_file()
     assert (output / "full" / "predictions.jsonl").is_file()
     assert (output / "suite.json").is_file()
     assert "| exact |" in (output / "report.md").read_text(encoding="utf-8")
+
+
+def test_benchmark_suite_hides_absolute_external_config_paths(tmp_path: Path) -> None:
+    config = tmp_path / "external-profile.yaml"
+    source_config = Path("configs/benchmarks/vi_clinical_grounding_v1/exact.yaml")
+    config_text = source_config.read_text(encoding="utf-8")
+    resource_root = Path("src/clingrounder/artifacts/packs/vi-clinical-small").resolve()
+    config_text = config_text.replace(
+        "../../../src/clingrounder/artifacts/packs/vi-clinical-small",
+        str(resource_root),
+    )
+    config.write_text(config_text, encoding="utf-8")
+    suite = run_dataset_benchmark_suite(
+        "benchmarks/vi_clinical_grounding_v1",
+        {"external": config},
+        tmp_path / "suite",
+    )
+
+    reference = suite["runs"]["external"]["config"]
+    assert reference == {
+        "path": "external-profile.yaml",
+        "sha256": reference["sha256"],
+        "external": True,
+    }
+    assert str(tmp_path) not in json.dumps(suite)
 
 
 def test_benchmark_reference_verifier_checks_correctness_and_reports_runtime() -> None:

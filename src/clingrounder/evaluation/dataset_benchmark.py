@@ -208,7 +208,10 @@ def run_dataset_benchmark_suite(
         elif provenance != shared_provenance:
             raise ValueError("Benchmark suite profiles did not use the same dataset snapshot")
         runs[name] = {
-            "config": str(normalized_configs[name]),
+            # REPRODUCIBILITY: absolute machine paths make an otherwise portable suite
+            # artifact differ between checkout locations. Keep a human-readable relative
+            # path when possible and always retain the content hash below as the identity.
+            "config": _portable_config_reference(normalized_configs[name]),
             "output": name,
             "metrics": summary["metrics"],
             "performance": summary["performance"],
@@ -549,6 +552,29 @@ def _validate_suite_name(name: str) -> str:
     if not name or name in {".", ".."} or any(character not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_" for character in name):
         raise ValueError(f"Invalid benchmark suite config name: {name!r}")
     return name
+
+
+def _portable_config_reference(path: Path) -> dict[str, str | bool]:
+    """Describe a config without serializing a host-specific absolute path.
+
+    Benchmark artifacts can be copied between machines.  A config's content hash is the
+    authoritative identity; the path is only a display hint and is therefore made relative to
+    the invocation directory when the file belongs to that tree.  External configs retain only
+    their basename so a user's home directory cannot leak into a published artifact.
+    """
+
+    root = Path.cwd().resolve()
+    try:
+        display_path = path.relative_to(root).as_posix()
+        external = False
+    except ValueError:
+        display_path = path.name
+        external = True
+    return {
+        "path": display_path,
+        "sha256": _sha256_file(path),
+        "external": external,
+    }
 
 
 def _load_examples(
